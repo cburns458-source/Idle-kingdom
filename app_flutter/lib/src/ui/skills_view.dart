@@ -20,7 +20,6 @@ class SkillsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final save = controller.save;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -33,16 +32,31 @@ class SkillsView extends StatelessWidget {
               child: Text('Skills', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
             ),
         Expanded(
-          child: GridView.extent(
+          child: Padding(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            maxCrossAxisExtent: 76,
-            mainAxisSpacing: 5,
-            crossAxisSpacing: 5,
-            childAspectRatio: 0.86,
-            children: [
-              for (final skill in save.skills)
-                _SkillTile(controller: controller, skillId: skill.skillId),
-            ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const columns = 4;
+                const rows = 4;
+                const gap = 5.0;
+                final cellW = (constraints.maxWidth - gap * (columns - 1)) / columns;
+                final cellH = (constraints.maxHeight - gap * (rows - 1)) / rows;
+                final skills = controller.db.skills
+                    .where((row) => row.releasePhase == 'Launch')
+                    .toList();
+                return GridView.count(
+                  crossAxisCount: columns,
+                  mainAxisSpacing: gap,
+                  crossAxisSpacing: gap,
+                  childAspectRatio: cellW > 0 && cellH > 0 ? cellW / cellH : 1,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    for (final skill in skills)
+                      _SkillTile(controller: controller, skillId: skill.skillId),
+                  ],
+                );
+              },
+            ),
           ),
         ),
         _Totals(controller: controller),

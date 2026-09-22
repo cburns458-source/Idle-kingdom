@@ -41,10 +41,8 @@ describe('skill menu entries', () => {
   it('lists combat enemies by combat level and keeps steel battleaxes on Basic metal', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const combat = skillMenuView(launch, 'SKL-0001')
-    expect(combat.tabs[0]?.label).toBe('Enemies')
-    const goblin = combat.tabs[0]?.sections[0]?.entries.find((item) => item.displayName === 'Goblin Scout')
-    expect(goblin?.level).toEqual(expect.any(Number))
-    expect(skillMenuLine(goblin!)).toMatch(/^\d+\. Goblin Scout$/)
+    expect(combat.tabs[0]?.label).toBe('Weapons')
+    expect(combat.tabs[0]?.sections[0]?.entries.find((item) => item.displayName === 'Goblin Scout')).toBeUndefined()
 
     const smithing = skillMenuView(launch, 'SKL-0011')
     expect(smithing.tabs.map((tab) => tab.label)).toEqual(['Basic metal'])
@@ -77,11 +75,14 @@ describe('skill menu entries', () => {
 
   it('groups same-tier combat armor as material equipment', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const combat = skillMenuView(launch, 'SKL-0001')
-    expect(combat.tabs.map((tab) => tab.label)).toEqual(['Enemies', 'Equipment', 'Weapons', 'Other'])
-    const gear = combat.tabs.find((tab) => tab.id === 'gear')?.sections[0]?.entries ?? []
-    const weapons = combat.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
-    const other = combat.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
+    const might = skillMenuView(launch, 'SKL-0001')
+    const vitality = skillMenuView(launch, 'SKL-0016')
+    expect(might.tabs.map((tab) => tab.label)).toEqual(['Weapons', 'Other'])
+    expect(vitality.tabs.map((tab) => tab.label)).toEqual(['Equipment', 'Other'])
+    const gear = vitality.tabs.find((tab) => tab.id === 'gear')?.sections[0]?.entries ?? []
+    const weapons = might.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
+    const mightOther = might.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
+    const vitalityOther = vitality.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
     expect(gear.some((item) => item.displayName === 'Tungsten equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(false)
@@ -99,12 +100,15 @@ describe('skill menu entries', () => {
     expect(weapons.some((item) => item.displayName === 'Steel Warhammer')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Cedar Bow')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
-    expect(other.some((item) => item.displayName === 'Bull Horn Helmet')).toBe(true)
-    expect(other.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
-    expect(other.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
-    expect(other.some((item) => item.displayName === 'Leather equipment')).toBe(false)
-    expect(other.some((item) => item.displayName === 'Cedar Bow')).toBe(true)
-    expect(other.some((item) => item.displayName === 'Boar Spear')).toBe(true)
+    expect(mightOther.some((item) => item.displayName === 'Bull Horn Helmet')).toBe(false)
+    expect(mightOther.some((item) => item.displayName === 'Wooden Sword')).toBe(true)
+    expect(mightOther.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
+    expect(mightOther.some((item) => item.displayName === 'Leather equipment')).toBe(false)
+    expect(mightOther.some((item) => item.displayName === 'Cedar Bow')).toBe(true)
+    expect(mightOther.some((item) => item.displayName === 'Boar Spear')).toBe(true)
+    expect(vitalityOther.some((item) => item.displayName === 'Bull Horn Helmet')).toBe(true)
+    expect(vitalityOther.some((item) => item.displayName === 'Wooden Sword')).toBe(false)
+    expect(vitalityOther.some((item) => item.displayName === 'Cedar Bow')).toBe(false)
   })
 
   it('lists smithing projects by output item name and required level', () => {

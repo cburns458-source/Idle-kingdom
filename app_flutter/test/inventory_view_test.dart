@@ -211,6 +211,8 @@ void main() {
     expect(find.descendant(of: popup, matching: find.text('DR')), findsOne);
     expect(find.text('Show bonuses'), findsOne);
     expect(find.text('Show sources'), findsOne);
+    expect(find.text('Attack style'), findsNothing);
+    expect(find.text('Offensive'), findsNothing);
     expect(find.textContaining('Eat at'), findsNothing);
     final bonuses = tester.getRect(find.text('Show bonuses'));
     final sources = tester.getRect(find.text('Show sources'));
@@ -229,6 +231,35 @@ void main() {
     expect(find.text('Unarmed'), findsOne);
     expect(find.text('Damage reduction'), findsOne);
     expect(find.text('Total'), findsWidgets);
+  });
+
+  testWidgets('Stance opens its own menu and updates the selected style', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    expect(controller.save.attackStyle, 'balanced');
+
+    await tester.tap(find.byKey(const Key('inventory-stance')));
+    await tester.pumpAndSettle();
+
+    final popup = find.byKey(const Key('game-popup'));
+    expect(find.descendant(of: popup, matching: find.text('Stance')), findsOne);
+    expect(find.textContaining('No stance bonus'), findsOne);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Offensive'));
+    await tester.pump();
+    expect(controller.save.attackStyle, 'offensive');
+    expect(find.textContaining('+1% damage'), findsOne);
+    expect(
+      tester.widget<GameButton>(find.widgetWithText(GameButton, 'Offensive')).selected,
+      isTrue,
+    );
+
+    await tester.tap(find.widgetWithText(GameButton, 'Defensive'));
+    await tester.pump();
+    expect(controller.save.attackStyle, 'defensive');
+    expect(find.textContaining('+1 DR'), findsOne);
   });
 
   testWidgets('equipment page lists potion and race bonuses', (tester) async {
@@ -513,30 +544,31 @@ void main() {
     await tester.tap(mining.first);
     await tester.pump();
 
-    expect(controller.save.equipmentPresets[0].icon.kind, 'skill');
-    expect(controller.save.equipmentPresets[0].icon.skillId, 'SKL-0002');
+    expect(controller.save.equipmentPresets[0].icon.kind, isNot('skill'));
 
     await tester.ensureVisible(find.byTooltip('Coin').first);
     await tester.tap(find.byTooltip('Coin').first);
     await tester.pump();
-    expect(controller.save.equipmentPresets[0].icon.kind, 'coin');
+    expect(controller.save.equipmentPresets[0].icon.kind, isNot('coin'));
 
     await tester.ensureVisible(mining.at(1));
     await tester.tap(mining.at(1));
     await tester.pump();
-    expect(controller.save.equipmentPresets[1].icon.kind, 'skill');
-    expect(controller.save.equipmentPresets[1].icon.skillId, 'SKL-0002');
-    expect(controller.save.equipmentPresets[0].icon.kind, 'coin');
+    expect(controller.save.equipmentPresets[0].icon.kind, isNot('skill'));
+    expect(controller.save.equipmentPresets[1].icon.skillId, isNot('SKL-0002'));
 
-    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
+    await tester.tap(find.widgetWithText(GameButton, 'Save'));
     await tester.pumpAndSettle();
     expect(controller.save.equipmentPresets[0].icon.kind, 'coin');
+    expect(controller.save.equipmentPresets[1].icon.kind, 'skill');
     expect(controller.save.equipmentPresets[1].icon.skillId, 'SKL-0002');
   });
 
-  testWidgets('preset names save when an icon is picked even if Cancel is tapped', (tester) async {
+  testWidgets('Cancel on the preset editor drops name and icon edits', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
+    final beforeName = controller.save.equipmentPresets[0].name;
+    final beforeIcon = controller.save.equipmentPresets[0].icon;
 
     await pumpPanel(tester, InventoryView(controller: controller));
 
@@ -548,11 +580,13 @@ void main() {
     await tester.ensureVisible(mining.first);
     await tester.tap(mining.first);
     await tester.pump();
-    expect(controller.save.equipmentPresets[0].name, 'Farm Kit');
+    expect(controller.save.equipmentPresets[0].name, beforeName);
 
     await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
     await tester.pumpAndSettle();
-    expect(controller.save.equipmentPresets[0].name, 'Farm Kit');
+    expect(controller.save.equipmentPresets[0].name, beforeName);
+    expect(controller.save.equipmentPresets[0].icon.kind, beforeIcon.kind);
+    expect(controller.save.equipmentPresets[0].icon.skillId, beforeIcon.skillId);
   });
 
   testWidgets('presets sit left of the doll; Attributes and Eat sit right', (tester) async {
@@ -566,6 +600,7 @@ void main() {
     expect(find.byKey(const Key('save-preset')), findsOne);
     expect(find.byKey(const Key('preset-settings')), findsOne);
     expect(find.byKey(const Key('inventory-attributes')), findsOne);
+    expect(find.byKey(const Key('inventory-stance')), findsOne);
     expect(find.byKey(const Key('inventory-eat')), findsOne);
     expect(find.textContaining('Eat at'), findsNothing);
 
@@ -574,6 +609,7 @@ void main() {
     final saveChip = tester.getRect(find.byKey(const Key('save-preset')));
     final settings = tester.getRect(find.byKey(const Key('preset-settings')));
     final attributes = tester.getRect(find.byKey(const Key('inventory-attributes')));
+    final stance = tester.getRect(find.byKey(const Key('inventory-stance')));
     final eat = tester.getRect(find.byKey(const Key('inventory-eat')));
     expect(preset.right, lessThan(helmet.left));
     expect(saveChip.right, lessThan(helmet.left));
@@ -581,8 +617,10 @@ void main() {
     expect(saveChip.top, greaterThan(preset.bottom - 1));
     expect(settings.top, greaterThan(saveChip.bottom - 1));
     expect(attributes.left, greaterThan(helmet.right));
+    expect(stance.left, greaterThan(helmet.right));
     expect(eat.left, greaterThan(helmet.right));
-    expect(eat.top, greaterThan(attributes.bottom - 1));
+    expect(stance.top, greaterThan(attributes.bottom - 1));
+    expect(eat.top, greaterThan(stance.bottom - 1));
     expect(
       tester
           .getSize(

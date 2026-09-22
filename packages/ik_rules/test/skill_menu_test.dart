@@ -64,16 +64,16 @@ void main() {
     expect(actionsForSkill(db, combatSkillId).any((row) => row.displayName == 'Monk'), isTrue);
   });
 
-  test('combat enemies use combat level and the enemy name', () {
-    final view = skillMenuView(db, combatSkillId);
-    expect(view.tabs.first.label, 'Enemies');
-    final goblin = view.tabs.first.sections.first.entries.firstWhere(
-      (row) => row.displayName == 'Goblin Scout',
+  test('Might lists weapons and Vitality lists equipment', () {
+    final might = skillMenuView(db, combatSkillId);
+    final vitality = skillMenuView(db, vitalitySkillId);
+    expect(might.tabs.map((tab) => tab.label), ['Weapons', 'Other']);
+    expect(vitality.tabs.map((tab) => tab.label), ['Equipment', 'Other']);
+    expect(
+      might.tabs.first.sections.first.entries.any((row) => row.displayName == 'Goblin Scout'),
+      isFalse,
     );
-    expect(goblin.level, isNotNull);
-    expect(skillMenuLine(goblin), matches(RegExp(r'^\d+\. Goblin Scout$')));
-    expect(view.tabs.map((tab) => tab.label), ['Enemies', 'Equipment', 'Weapons', 'Other']);
-    final weapons = view.tabs
+    final weapons = might.tabs
         .firstWhere((tab) => tab.id == 'weapons')
         .sections
         .expand((section) => section.entries);
@@ -85,7 +85,7 @@ void main() {
     expect(weapons.any((row) => row.displayName == 'Steel Warhammer'), isFalse);
     expect(weapons.any((row) => row.displayName == 'Cedar Bow'), isFalse);
     expect(weapons.any((row) => row.displayName == 'Tungsten Shield'), isFalse);
-    final gear = view.tabs
+    final gear = vitality.tabs
         .firstWhere((tab) => tab.id == 'gear')
         .sections
         .expand((section) => section.entries);
@@ -98,16 +98,23 @@ void main() {
     expect(gear.any((row) => row.displayName == 'Tungsten Helmet'), isFalse);
     expect(gear.any((row) => row.displayName == 'Tungsten Shield'), isFalse);
     expect(gear.any((row) => row.displayName == 'Tungsten Sword'), isFalse);
-    final other = view.tabs
+    final mightOther = might.tabs
         .firstWhere((tab) => tab.id == 'other')
         .sections
         .expand((section) => section.entries);
-    expect(other.any((row) => row.displayName == 'Bull Horn Helmet'), isTrue);
-    expect(other.any((row) => row.displayName == 'Wooden Sword' && row.level == 1), isTrue);
-    expect(other.any((row) => row.displayName == 'Leather Helmet'), isFalse);
-    expect(other.any((row) => row.displayName == 'Leather equipment'), isFalse);
-    expect(other.any((row) => row.displayName == 'Cedar Bow'), isTrue);
-    expect(other.any((row) => row.displayName == 'Boar Spear'), isTrue);
+    final vitalityOther = vitality.tabs
+        .firstWhere((tab) => tab.id == 'other')
+        .sections
+        .expand((section) => section.entries);
+    expect(mightOther.any((row) => row.displayName == 'Bull Horn Helmet'), isFalse);
+    expect(mightOther.any((row) => row.displayName == 'Wooden Sword' && row.level == 1), isTrue);
+    expect(mightOther.any((row) => row.displayName == 'Leather Helmet'), isFalse);
+    expect(mightOther.any((row) => row.displayName == 'Leather equipment'), isFalse);
+    expect(mightOther.any((row) => row.displayName == 'Cedar Bow'), isTrue);
+    expect(mightOther.any((row) => row.displayName == 'Boar Spear'), isTrue);
+    expect(vitalityOther.any((row) => row.displayName == 'Bull Horn Helmet'), isTrue);
+    expect(vitalityOther.any((row) => row.displayName == 'Wooden Sword'), isFalse);
+    expect(vitalityOther.any((row) => row.displayName == 'Cedar Bow'), isFalse);
   });
 
   test('hunting tools include sling and bola', () {

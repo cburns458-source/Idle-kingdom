@@ -1,7 +1,7 @@
 import type { ActionRow, GameDatabase, ItemRow, RequirementRow } from '../data/types'
 import type { ProjectRow } from '../data/projectTypes'
 import { requirementsForEntity } from '../activity/requirements'
-import { COMBAT_SKILL_ID, MIGHT_SKILL_ID, VITALITY_SKILL_ID } from '../combat/stats'
+import { MIGHT_SKILL_ID, VITALITY_SKILL_ID } from '../combat/stats'
 import { ARTISANRY_SKILL_ID, ARCANA_SKILL_ID, SMITHING_SKILL_ID } from '../npcs/knowledge'
 import { isCompleteRecipe } from '../production/recipes'
 import {
@@ -293,12 +293,16 @@ export function projectOutputName(db: GameDatabase, project: ProjectRow): string
 }
 
 function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
-  if (skillId === COMBAT_SKILL_ID || skillId === VITALITY_SKILL_ID || skillId === MIGHT_SKILL_ID) {
+  if (skillId === MIGHT_SKILL_ID) {
     return [
-      listTab('enemies', 'Enemies', combatEnemyEntries(db)),
-      listTab('gear', 'Equipment', combatEquipmentEntries(db)),
       listTab('weapons', 'Weapons', combatWeaponEntries(db)),
-      listTab('other', 'Other', combatOtherEntries(db)),
+      listTab('other', 'Other', combatOtherWeaponEntries(db)),
+    ]
+  }
+  if (skillId === VITALITY_SKILL_ID) {
+    return [
+      listTab('gear', 'Equipment', combatEquipmentEntries(db)),
+      listTab('other', 'Other', combatOtherEquipmentEntries(db)),
     ]
   }
   if (skillId === FISHING_SKILL_ID) return fishingTabs(db)
@@ -537,27 +541,6 @@ function arcanaEssenceEntries(db: GameDatabase): SkillMenuListItem[] {
   return [{ id: item['Item ID'], displayName: item['Display Name'], level: 1 }]
 }
 
-function combatEnemyEntries(db: GameDatabase): SkillMenuListItem[] {
-  const items: SkillMenuListItem[] = []
-  const seen = new Set<string>()
-  for (const action of db.Actions) {
-    if (action['Relevant Skill ID'] !== MIGHT_SKILL_ID) continue
-    if (action.Status === 'Needs Data') continue
-    if (actionIsQuestOnly(db, action['Action ID'])) continue
-    const enemy = enemyForCombatAction(db, action)
-    if (!enemy) continue
-    const name = enemy['Display Name'].trim()
-    if (!name || seen.has(name)) continue
-    seen.add(name)
-    items.push({
-      id: action['Action ID'],
-      displayName: name,
-      level: typeof enemy['Combat Level'] === 'number' ? enemy['Combat Level'] : null,
-    })
-  }
-  return dedupeByName(items)
-}
-
 function combatGearItems(db: GameDatabase): SkillMenuListItem[] {
   return [
     ...projectItemsWhere(db, (item) => isCombatGearItem(item), new Set([SMITHING_SKILL_ID, ARTISANRY_SKILL_ID])),
@@ -612,6 +595,14 @@ function combatOtherEntries(db: GameDatabase): SkillMenuListItem[] {
       return true
     }),
   )
+}
+
+function combatOtherWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
+  return combatOtherEntries(db).filter((item) => !armorMaterial(item.displayName))
+}
+
+function combatOtherEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
+  return combatOtherEntries(db).filter((item) => Boolean(armorMaterial(item.displayName)))
 }
 
 function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
@@ -840,13 +831,6 @@ function itemByName(db: GameDatabase, name: string): ItemRow | undefined {
 
 function projectOutputId(db: GameDatabase, projectId: string): string {
   return db.Projects.find((row) => row['Project ID'] === projectId)?.['Output Item / Target ID'] ?? ''
-}
-
-function enemyForCombatAction(db: GameDatabase, action: ActionRow) {
-  if (action.Category !== 'Combat') return undefined
-  const targetId = action['Target ID']
-  if (!targetId) return undefined
-  return db.Enemies.find((row) => row['Enemy ID'] === targetId)
 }
 
 function projectLevelForSkill(project: ProjectRow, skillId: string): number | null {
