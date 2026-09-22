@@ -122,4 +122,11 @@ void main() {
     expect(summary.mainhandBreakdown.last.label, 'Total');
     expect(summary.offhandBreakdown, isEmpty);
   });
+
+  test('a missing stance is Offensive, and a stored Balanced choice is kept', () {
+    expect(normalizeAttackStyle(null), 'offensive');
+    expect(normalizeAttackStyle('balanced'), 'balanced');
+    expect(normalizeAttackStyle('defensive'), 'defensive');
+    expect(createNewSave(db, 0).attackStyle, 'offensive');
+  });
 }

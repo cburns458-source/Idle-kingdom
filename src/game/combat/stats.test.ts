@@ -6,6 +6,7 @@ import { createNewSave } from '../save/saveStore'
 import {
   combatLevelOf,
   mightDamageMultiplier,
+  normalizeAttackStyle,
   playerDamageRange,
   playerDamageReduction,
   playerMaxHp,
@@ -96,6 +97,15 @@ describe('might / vitality combat stats', () => {
     expect(playerDamageRange(launch, unarmed)).toEqual({ min: 11, max: 33 })
   })
 
+  it('defaults a missing stance to offensive and keeps a stored balanced choice', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(normalizeAttackStyle(undefined)).toBe('offensive')
+    expect(normalizeAttackStyle(null)).toBe('offensive')
+    expect(normalizeAttackStyle('balanced')).toBe('balanced')
+    expect(normalizeAttackStyle('defensive')).toBe('defensive')
+    expect(createNewSave(launch).attackStyle).toBe('offensive')
+  })
+
   it('applies offensive damage and defensive DR stance bonuses; balanced gets none', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
@@ -134,6 +144,7 @@ describe('might / vitality combat stats', () => {
     })
     const power = {
       ...withSkills,
+      attackStyle: 'balanced' as const,
       equipment: {
         slots: {
           ...withSkills.equipment.slots,

@@ -41,7 +41,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     characterName: null,
     motto: null,
     raceId: null,
-    attackStyle: 'balanced',
+    attackStyle: 'offensive',
     skills: skills,
     inventory: const <InventoryStack>[],
     bank: const <InventoryStack>[],

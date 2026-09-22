@@ -63,9 +63,12 @@ void main() {
     expect(UiChrome.wood.primaryFill.colors, isNot(contains(const Color(0xFF7F9D63))));
     expect(UiChrome.wood.primaryFill.colors.first, const Color(0xFF8B5E34));
     expect(UiChrome.wood.embossFace, const Color(0xFF7A5F24));
-    expect(UiChrome.stone.primaryFill.colors.first, const Color(0xFF6A6E78));
-    expect(UiChrome.stone.embossFace, const Color(0xFF4A4E56));
-    expect(UiChrome.stone.embossShade, const Color(0xFF141618));
+    expect(UiChrome.stone.primaryFill.colors.first, const Color(0xFF717171));
+    expect(UiChrome.stone.embossFace, const Color(0xFF4F4F4F));
+    expect(UiChrome.stone.embossShade, const Color(0xFF141414));
+    expect(UiChrome.stone.board, const Color(0xFF2C2C2C));
+    expect(UiChrome.stone.slot, const Color(0xFF3D3D3D));
+    expect(UiChrome.stone.iconButtonFill, const Color(0xFF363636));
   });
 
   testWidgets('Stone chat and dropdowns drop the wood parchment fill', (tester) async {

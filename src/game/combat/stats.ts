@@ -31,7 +31,7 @@ export const ATTACK_STYLES = ['offensive', 'defensive', 'balanced'] as const
 
 export function normalizeAttackStyle(value: unknown): AttackStyle {
   if (value === 'offensive' || value === 'defensive' || value === 'balanced') return value
-  return 'balanced'
+  return 'offensive'
 }
 
 /**

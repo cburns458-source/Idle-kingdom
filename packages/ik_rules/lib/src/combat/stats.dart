@@ -36,7 +36,7 @@ String normalizeAttackStyle(Object? value) {
   if (value == 'offensive' || value == 'defensive' || value == 'balanced') {
     return value as String;
   }
-  return 'balanced';
+  return 'offensive';
 }
 
 /// Combined Combat Level = ceil((Might + Vitality) × 0.75).

@@ -157,7 +157,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     );
 
     if (result == null) return;
-    var next = controller.save;
+    var next = trackActiveEquipmentPreset(controller.save);
     for (var i = 0; i < result.length; i += 1) {
       next = renameEquipmentPreset(next, i, result[i].name);
       next = setEquipmentPresetIcon(next, i, result[i].icon);
@@ -221,7 +221,10 @@ class EquipmentPresetsBar extends StatelessWidget {
                           Expanded(
                             child: GameButton(
                               label: 'Save',
-                              onPressed: () => Navigator.of(context).pop(true),
+                              onPressed: () {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                Navigator.of(context).pop(true);
+                              },
                             ),
                           ),
                         ],
@@ -574,6 +577,7 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
   }
 
   void _save() {
+    FocusManager.instance.primaryFocus?.unfocus();
     final next = <EquipmentPreset>[
       for (var i = 0; i < widget.presets.length; i += 1)
         widget.presets[i].copyWith(name: _nameControllers[i].text, icon: _icons[i]),
@@ -583,48 +587,49 @@ class _AllPresetsSettingsDialogState extends State<_AllPresetsSettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 360,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Preset settings', style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    for (var i = 0; i < widget.presets.length; i += 1) ...[
-                      if (i > 0) const SizedBox(height: 12),
-                      _rowAt(i),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : MediaQuery.sizeOf(context).height * 0.62;
+        return SizedBox(
+          width: 360,
+          height: height,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Text('Preset settings', style: TextStyle(fontSize: 16)),
+                const SizedBox(height: 8),
                 Expanded(
-                  child: GameButton(
-                    label: 'Cancel',
-                    tone: GameButtonTone.secondary,
-                    onPressed: () => Navigator.of(context).pop(),
+                  child: ListView.separated(
+                    itemCount: widget.presets.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (_, index) => _rowAt(index),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GameButton(label: 'Save', onPressed: _save),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GameButton(
+                        label: 'Cancel',
+                        tone: GameButtonTone.secondary,
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GameButton(label: 'Save', onPressed: _save),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
