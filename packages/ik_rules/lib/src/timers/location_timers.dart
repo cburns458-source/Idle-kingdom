@@ -21,7 +21,58 @@ const String grandFeastQuestId = 'QST-0001';
 const String firstPlantingQuestId = 'QST-0011';
 const String fennelNpcId = 'NPC-0014';
 const String potatoSeedItemId = 'ITEM-0324';
+const String carrotSeedItemId = 'ITEM-0339';
+const String grapeSeedItemId = 'ITEM-0340';
+const String fernleafSeedItemId = 'ITEM-0333';
+const String augurWeedSeedItemId = 'ITEM-0336';
+const String moonblossomSeedItemId = 'ITEM-0337';
+const String turnipSeedItemId = 'ITEM-0369';
+const String elderBerrySeedItemId = 'ITEM-0371';
+const String hagrootSeedItemId = 'ITEM-0373';
+const String emberblossomSeedItemId = 'ITEM-0375';
 const String shallowsLocationId = 'LOC-0043';
+
+/// Parent pairs that can return a different seed when both are in the planted pool.
+class BotanySeedMutation {
+  const BotanySeedMutation({required this.parents, required this.product});
+
+  final List<String> parents;
+  final String product;
+}
+
+const List<BotanySeedMutation> botanySeedMutations = [
+  BotanySeedMutation(parents: [potatoSeedItemId, carrotSeedItemId], product: turnipSeedItemId),
+  BotanySeedMutation(parents: [grapeSeedItemId, potatoSeedItemId], product: elderBerrySeedItemId),
+  BotanySeedMutation(
+    parents: [fernleafSeedItemId, augurWeedSeedItemId],
+    product: hagrootSeedItemId,
+  ),
+  BotanySeedMutation(
+    parents: [augurWeedSeedItemId, moonblossomSeedItemId],
+    product: emberblossomSeedItemId,
+  ),
+];
+
+/// After the 50% seed-return succeeds, a parent in an active combo is 50% itself
+/// and the other 50% is split among those products. Pool-based, not order-based.
+String rollReturnedBotanySeed(
+  List<String> plantedSeedIds,
+  String returningSeedId,
+  num Function() random,
+) {
+  final pool = plantedSeedIds.toSet();
+  final products = <String>[
+    for (final combo in botanySeedMutations)
+      if (combo.parents.contains(returningSeedId) && combo.parents.every(pool.contains))
+        combo.product,
+  ];
+  if (products.isEmpty) return returningSeedId;
+  final roll = random();
+  if (roll < 0.5) return returningSeedId;
+  final share = 0.5 / products.length;
+  final index = ((roll - 0.5) / share).floor().clamp(0, products.length - 1);
+  return products[index];
+}
 
 const String fishingPotItemId = 'ITEM-0347';
 const int potBaitCount = 3;
@@ -845,7 +896,8 @@ LocationTimerCollectResult collectLocationTimer(
     }
     for (final seedItemId in plantedIds) {
       if (rng() < 0.5) {
-        returned[seedItemId] = (returned[seedItemId] ?? 0) + 1;
+        final returnedId = rollReturnedBotanySeed(plantedIds, seedItemId, rng);
+        returned[returnedId] = (returned[returnedId] ?? 0) + 1;
       }
     }
     for (final entry in produce.entries) {

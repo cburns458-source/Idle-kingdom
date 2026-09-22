@@ -25,6 +25,7 @@ import 'reward_strip.dart';
 import 'shop_panel.dart';
 import 'botany_plant_popup.dart';
 import 'pot_bait_popup.dart';
+import 'tracker_view.dart';
 
 /// Whatever the player has open on top of the location, if anything.
 sealed class LocationPanel {
@@ -306,7 +307,7 @@ class _LocationViewState extends State<LocationView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: _LocationHead(db: controller.db, location: location),
+                              child: _LocationHead(controller: controller, location: location),
                             ),
                             const SizedBox(width: 11),
                             Row(
@@ -1071,17 +1072,26 @@ class _BandTabButton extends StatelessWidget {
   }
 }
 
-/// The name of the place, what it is, and what it will do to you.
+/// The name of the place, XP/Loot chips, and what it will do to you.
 class _LocationHead extends StatelessWidget {
-  const _LocationHead({required this.db, required this.location});
+  const _LocationHead({required this.controller, required this.location});
 
-  final GameDatabase db;
+  final GameController controller;
   final LocationRow location;
 
   @override
   Widget build(BuildContext context) {
     final danger = location.dangerHostility;
-    final showDanger = danger != null && locationShowsDangerWarning(db, location.locationId);
+    final showDanger =
+        danger != null && locationShowsDangerWarning(controller.db, location.locationId);
+    const chipStyle = TextStyle(
+      fontFamily: gameFontFamily,
+      fontSize: 10,
+      fontWeight: FontWeight.w400,
+      color: Palette.heading,
+      height: 1,
+      shadows: overlayShadow,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1095,7 +1105,38 @@ class _LocationHead extends StatelessWidget {
             shadows: overlayShadow,
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            OverlayChipButton(
+              key: const Key('location-tracker-xp'),
+              tooltip: 'XP',
+              width: 32,
+              height: 20,
+              onPressed: () => showTrackerPopup(
+                context: context,
+                controller: controller,
+                kind: TrackerKind.xp,
+                origin: popupOrigin(context),
+              ),
+              child: const Text('XP', style: chipStyle),
+            ),
+            const SizedBox(width: 6),
+            OverlayChipButton(
+              key: const Key('location-tracker-loot'),
+              tooltip: 'Loot',
+              width: 32,
+              height: 20,
+              onPressed: () => showTrackerPopup(
+                context: context,
+                controller: controller,
+                kind: TrackerKind.loot,
+                origin: popupOrigin(context),
+              ),
+              child: const Text('Loot', style: chipStyle),
+            ),
+          ],
+        ),
         if (showDanger)
           Padding(
             padding: const EdgeInsets.only(top: 3),

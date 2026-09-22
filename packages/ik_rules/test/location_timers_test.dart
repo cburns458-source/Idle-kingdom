@@ -334,4 +334,61 @@ void main() {
     expect(readyLocationTimerCount(save, 5_000), 1);
     expect(readyLocationTimerCount(save, 10_000), 2);
   });
+
+  test('splits returned seeds by planted pool, not plant order', () {
+    const planted = [potatoSeedItemId, carrotSeedItemId, grapeSeedItemId];
+    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.0), potatoSeedItemId);
+    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.49), potatoSeedItemId);
+    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.5), turnipSeedItemId);
+    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.74), turnipSeedItemId);
+    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.75), elderBerrySeedItemId);
+    expect(rollReturnedBotanySeed(planted, grapeSeedItemId, () => 0.5), elderBerrySeedItemId);
+    expect(rollReturnedBotanySeed(planted, carrotSeedItemId, () => 0.5), turnipSeedItemId);
+
+    const twoPotato = [potatoSeedItemId, potatoSeedItemId, carrotSeedItemId];
+    expect(rollReturnedBotanySeed(twoPotato, potatoSeedItemId, () => 0.5), turnipSeedItemId);
+    expect(rollReturnedBotanySeed(twoPotato, carrotSeedItemId, () => 0.5), turnipSeedItemId);
+    expect(
+      rollReturnedBotanySeed([potatoSeedItemId], potatoSeedItemId, () => 0.9),
+      potatoSeedItemId,
+    );
+  });
+
+  test('returns mutated seeds on a mixed harvest when the return roll succeeds', () {
+    final save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0031',
+      skills: const [SkillProgress(skillId: 'SKL-0014', level: 55, xp: 0)],
+      inventory: const [
+        InventoryStack(itemId: potatoSeedItemId, quantity: 1),
+        InventoryStack(itemId: carrotSeedItemId, quantity: 1),
+        InventoryStack(itemId: grapeSeedItemId, quantity: 1),
+      ],
+    );
+    final planted = plantBotanySelection(db, save, const [
+      potatoSeedItemId,
+      carrotSeedItemId,
+      grapeSeedItemId,
+    ], nowMs: 0);
+    expect(planted.ok, isTrue);
+    final rolls = <num>[0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6];
+    var i = 0;
+    final collected = collectLocationTimer(
+      db,
+      planted.save!,
+      'LOC-0031',
+      'botany',
+      nowMs: 10800 * 1000,
+      random: () => rolls[i++],
+    );
+    expect(collected.ok, isTrue);
+    expect(collected.loot.where((row) => row.itemId == turnipSeedItemId).first.quantity, 2);
+    expect(collected.loot.where((row) => row.itemId == elderBerrySeedItemId).first.quantity, 1);
+    expect(collected.loot.any((row) => row.itemId == potatoSeedItemId), isFalse);
+  });
+
+  test('lets moonblossom seeds plant at botany 70', () {
+    expect(parseBotanySeedSpec(db, moonblossomSeedItemId)?.requiresLevel, 70);
+    expect(parseBotanySeedSpec(db, turnipSeedItemId)?.xp, 6000);
+    expect(parseBotanySeedSpec(db, turnipSeedItemId)?.requiresLevel, 27);
+  });
 }

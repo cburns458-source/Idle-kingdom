@@ -24,16 +24,15 @@ void main() {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
-    await pumpPanel(tester, TrackerView(controller: controller));
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.xp));
     expect(find.text('XP'), findsOne);
-    expect(find.text('Loot'), findsOne);
     expect(find.text('Gain XP to start an XP tracker.'), findsOne);
     expect(find.byKey(const Key('tracker-on-xp')), findsOne);
     expect(find.byKey(const Key('tracker-off-xp')), findsOne);
     expect(find.byKey(const Key('tracker-reset-all-xp')), findsOne);
 
-    await tester.tap(find.text('Loot'));
-    await tester.pump();
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.loot));
+    expect(find.text('Loot'), findsOne);
     expect(find.text('Finish an action to start a loot tracker.'), findsOne);
     expect(find.byKey(const Key('tracker-on-loot')), findsOne);
     expect(find.byKey(const Key('tracker-off-loot')), findsOne);
@@ -53,9 +52,7 @@ void main() {
     );
     controller.commit(victory.save);
 
-    await pumpPanel(tester, TrackerView(controller: controller));
-    await tester.tap(find.text('Loot'));
-    await tester.pump();
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.loot));
     expect(find.text('Cow'), findsOne);
     expect(find.textContaining('kill'), findsOne);
     expect(find.byKey(const Key('tracker-reset-loot-enemy:ENM-0001')), findsOne);
@@ -80,7 +77,7 @@ void main() {
     );
     controller.commit(victory.save);
 
-    await pumpPanel(tester, TrackerView(controller: controller));
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.xp));
     expect(find.text('Total XP'), findsOne);
     expect(find.text('Might'), findsOne);
     expect(find.textContaining('XP/hr'), findsWidgets);
@@ -113,11 +110,10 @@ void main() {
     expect(finished, isNotNull);
     controller.commit(finished!.save);
 
-    await pumpPanel(tester, TrackerView(controller: controller));
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.xp));
     expect(find.text('Total XP'), findsOne);
 
-    await tester.tap(find.text('Loot'));
-    await tester.pump();
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.loot));
     expect(find.text('Finish an action to start a loot tracker.'), findsOne);
   });
 
@@ -135,9 +131,7 @@ void main() {
       ),
     );
 
-    await pumpPanel(tester, TrackerView(controller: controller));
-    await tester.tap(find.text('Loot'));
-    await tester.pump();
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.loot));
     expect(find.text('Cow'), findsOne);
     expect(find.text('1 kill'), findsOne);
     expect(find.textContaining('kill ·'), findsNothing);
@@ -156,9 +150,7 @@ void main() {
     save = creditXpTracker(save, totalXpTrackerId, 50, testStartMs);
     controller.commit(save);
 
-    await pumpPanel(tester, TrackerView(controller: controller));
-    await tester.tap(find.text('Loot'));
-    await tester.pump();
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.loot));
     expect(
       find.byWidgetPredicate(
         (widget) => widget is GameImage && widget.path == actionAssetPath(harvest.actionId),
@@ -170,8 +162,7 @@ void main() {
       findsOne,
     );
 
-    await tester.tap(find.text('XP'));
-    await tester.pump();
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.xp));
     final totalRow = find.ancestor(of: find.text('Total XP'), matching: find.byType(GamePanel));
     expect(find.descendant(of: totalRow, matching: find.byType(GameImage)), findsNothing);
     final combatRow = find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first;
@@ -186,7 +177,7 @@ void main() {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
 
-    await pumpPanel(tester, TrackerView(controller: controller));
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.xp));
     expect(find.byKey(const Key('tracker-on-xp')), findsOne);
     expect(find.byKey(const Key('tracker-off-xp')), findsOne);
     expect(find.byKey(const Key('tracker-reset-all-xp')), findsOne);
@@ -202,8 +193,7 @@ void main() {
     await tester.pump();
     expect(xpTrackersPaused(controller.save), isTrue);
 
-    await tester.tap(find.text('Loot'));
-    await tester.pump();
+    await pumpPanel(tester, TrackerView(controller: controller, kind: TrackerKind.loot));
     expect(find.byKey(const Key('tracker-on-loot')), findsOne);
     expect(find.byKey(const Key('tracker-off-loot')), findsOne);
     expect(find.byKey(const Key('tracker-reset-all-loot')), findsOne);

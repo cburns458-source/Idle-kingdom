@@ -467,9 +467,20 @@ class MultiplayerController extends ChangeNotifier {
       if (!isSignedIn) return null;
       final mine = session?.playSessionId;
       final active = await service.activePlaySessionId();
-      if (mine != null && active != null && mine != active) {
-        await _kickFromOtherDevice();
-        return remoteSignedInElsewhere;
+      final seatLost = mine != null && active != null && mine != active;
+      final named = (localHint.characterName?.trim() ?? '').isNotEmpty;
+      if (seatLost) {
+        if (named) {
+          await _kickFromOtherDevice();
+          return remoteSignedInElsewhere;
+        }
+        final playable = await _adoptAccountSave(localHint, adopt);
+        if (playable == null && _cloudLoadProblem != null) {
+          _notice = _cloudLoadProblem;
+        }
+        await refresh(playable ?? localHint);
+        if (playable != null) await publishRanking(playable);
+        return null;
       }
       await service.claimPlaySession();
       final playable = await _adoptAccountSave(localHint, adopt);

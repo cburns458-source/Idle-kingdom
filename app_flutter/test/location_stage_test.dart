@@ -673,6 +673,88 @@ void main() {
     expect(controller.save.activeEquipmentPresetIndex, 2);
   });
 
+  testWidgets('location stage eat now sits under presets and stays dark in combat', (tester) async {
+    var save = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    save = addItemsToInventory(save, 'ITEM-0028', 2).save;
+    final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0028');
+    expect(equipped.ok, isTrue);
+    final controller = buildController(database, seed: equipped.save!);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    final eat = find.byKey(const Key('stage-eat-now'));
+    expect(eat, findsOne);
+    expect(tester.getSize(eat), const Size(44, 44));
+    expect(tester.getTopLeft(eat).dx, tester.getTopLeft(find.byKey(const Key('preset-chip-0'))).dx);
+
+    final before = controller.save.equipment.slots[foodSlotId]?.quantity ?? 0;
+    await tester.tap(eat);
+    await tester.pump();
+    expect(controller.save.equipment.slots[foodSlotId]?.quantity ?? 0, before - 1);
+
+    controller.commit(controller.save.copyWith(combatEnemyId: 'ENM-0001'));
+    await tester.pump();
+    expect(tester.widget<InkWell>(eat).onTap, isNull);
+  });
+
+  testWidgets('hiding the eat setting removes the stage eat chip', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: 'LOC-0001',
+        settings: startedCharacter(database).settings.copyWith(showEatButton: false),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+    expect(find.byKey(const Key('stage-eat-now')), findsNothing);
+    expect(find.byType(EquipmentPresetsBar), findsOne);
+  });
+
+  testWidgets('location name XP and Loot chips open the tracker overlays', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    final xp = find.byKey(const Key('location-tracker-xp'));
+    final loot = find.byKey(const Key('location-tracker-loot'));
+    expect(xp, findsOne);
+    expect(loot, findsOne);
+    expect(tester.getSize(xp), const Size(32, 20));
+    expect(tester.getSize(loot), const Size(32, 20));
+
+    await tester.tap(xp);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tracker-on-xp')), findsOne);
+    await tester.tapAt(const Offset(8, 8));
+    await tester.pumpAndSettle();
+
+    await tester.tap(loot);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tracker-on-loot')), findsOne);
+  });
+
+  test('the reward strip keeps six completed actions', () {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    for (var i = 0; i < 7; i += 1) {
+      controller.noteReward(
+        ActionRewardBundle(
+          id: 'r$i',
+          xpRewards: const [],
+          loot: [LootGrant(itemId: 'ITEM-0025', quantity: 1, displayName: 'Potato')],
+          goldGained: 0,
+        ),
+      );
+    }
+    expect(controller.recentRewards, hasLength(6));
+    expect(controller.recentRewards.first.id, 'r6');
+    expect(controller.recentRewards.last.id, 'r1');
+  });
+
   testWidgets('an inked Mother Squid round shows a full-stage splat', (tester) async {
     final clock = TestClock();
     final db = database.launch;

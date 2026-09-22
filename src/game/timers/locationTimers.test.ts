@@ -8,6 +8,14 @@ import {
   canPlaceTrap,
   canPlantBotanySeed,
   collectLocationTimer,
+  CARROT_SEED_ITEM_ID,
+  ELDER_BERRY_SEED_ITEM_ID,
+  GRAPE_SEED_ITEM_ID,
+  MOONBLOSSOM_SEED_ITEM_ID,
+  parseBotanySeedSpec,
+  POTATO_SEED_ITEM_ID,
+  rollReturnedBotanySeed,
+  TURNIP_SEED_ITEM_ID,
   discoverTimerSpotsForLocation,
   FISHING_POT_ITEM_ID,
   TIMER_INVENTORY_FULL_CATCH_REASON,
@@ -524,5 +532,80 @@ describe('locationTimers', () => {
     expect(collected.loot.find((row) => row.itemId === 'ITEM-0027')?.quantity).toBe(1)
     expect(collected.loot.some((row) => row.itemId === 'ITEM-0324')).toBe(false)
     expect(collected.loot.some((row) => row.itemId === 'ITEM-0339')).toBe(false)
+  })
+
+  it('splits returned seeds by planted pool, not plant order', () => {
+    const planted = [POTATO_SEED_ITEM_ID, CARROT_SEED_ITEM_ID, GRAPE_SEED_ITEM_ID]
+    expect(rollReturnedBotanySeed(planted, POTATO_SEED_ITEM_ID, () => 0.0)).toBe(POTATO_SEED_ITEM_ID)
+    expect(rollReturnedBotanySeed(planted, POTATO_SEED_ITEM_ID, () => 0.49)).toBe(
+      POTATO_SEED_ITEM_ID,
+    )
+    expect(rollReturnedBotanySeed(planted, POTATO_SEED_ITEM_ID, () => 0.5)).toBe(TURNIP_SEED_ITEM_ID)
+    expect(rollReturnedBotanySeed(planted, POTATO_SEED_ITEM_ID, () => 0.74)).toBe(TURNIP_SEED_ITEM_ID)
+    expect(rollReturnedBotanySeed(planted, POTATO_SEED_ITEM_ID, () => 0.75)).toBe(
+      ELDER_BERRY_SEED_ITEM_ID,
+    )
+    expect(rollReturnedBotanySeed(planted, GRAPE_SEED_ITEM_ID, () => 0.5)).toBe(
+      ELDER_BERRY_SEED_ITEM_ID,
+    )
+    expect(rollReturnedBotanySeed(planted, CARROT_SEED_ITEM_ID, () => 0.5)).toBe(TURNIP_SEED_ITEM_ID)
+
+    const twoPotato = [POTATO_SEED_ITEM_ID, POTATO_SEED_ITEM_ID, CARROT_SEED_ITEM_ID]
+    expect(rollReturnedBotanySeed(twoPotato, POTATO_SEED_ITEM_ID, () => 0.5)).toBe(
+      TURNIP_SEED_ITEM_ID,
+    )
+    expect(rollReturnedBotanySeed(twoPotato, CARROT_SEED_ITEM_ID, () => 0.5)).toBe(
+      TURNIP_SEED_ITEM_ID,
+    )
+    expect(rollReturnedBotanySeed([POTATO_SEED_ITEM_ID], POTATO_SEED_ITEM_ID, () => 0.9)).toBe(
+      POTATO_SEED_ITEM_ID,
+    )
+  })
+
+  it('returns mutated seeds on a mixed harvest when the return roll succeeds', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentLocationId: 'LOC-0031',
+      skills: save.skills.map((row) =>
+        row.skillId === 'SKL-0014' ? { ...row, level: 55, xp: 0 } : row,
+      ),
+      inventory: [
+        { itemId: POTATO_SEED_ITEM_ID, quantity: 1 },
+        { itemId: CARROT_SEED_ITEM_ID, quantity: 1 },
+        { itemId: GRAPE_SEED_ITEM_ID, quantity: 1 },
+      ],
+    }
+    const planted = plantBotanySelection(launch, save, [
+      POTATO_SEED_ITEM_ID,
+      CARROT_SEED_ITEM_ID,
+      GRAPE_SEED_ITEM_ID,
+    ], 0)
+    expect(planted.ok).toBe(true)
+    if (!planted.ok) return
+    // 3 produce rolls, 3 successful returns, then potato/grape/carrot mutations.
+    const rolls = [0, 0, 0, 0, 0, 0, 0.6, 0.6, 0.6]
+    let i = 0
+    const collected = collectLocationTimer(
+      launch,
+      planted.save,
+      'LOC-0031',
+      'botany',
+      10800 * 1000,
+      () => rolls[i++] ?? 0,
+    )
+    expect(collected.ok).toBe(true)
+    if (!collected.ok) return
+    expect(collected.loot.find((row) => row.itemId === TURNIP_SEED_ITEM_ID)?.quantity).toBe(2)
+    expect(collected.loot.find((row) => row.itemId === ELDER_BERRY_SEED_ITEM_ID)?.quantity).toBe(1)
+    expect(collected.loot.some((row) => row.itemId === POTATO_SEED_ITEM_ID)).toBe(false)
+  })
+
+  it('lets moonblossom seeds plant at botany 70', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(parseBotanySeedSpec(launch, MOONBLOSSOM_SEED_ITEM_ID)?.requiresLevel).toBe(70)
+    expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.xp).toBe(6000)
+    expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.requiresLevel).toBe(27)
   })
 })

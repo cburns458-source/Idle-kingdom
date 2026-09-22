@@ -170,13 +170,23 @@ class LocationIdlePlayer extends StatelessWidget {
                     player: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        EquipmentPresetsBar(
-                          controller: controller,
-                          axis: Axis.vertical,
-                          compact: true,
-                          showSaveButton: false,
-                          allowLongPressEdit: false,
-                          onMessage: controller.announce,
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            EquipmentPresetsBar(
+                              controller: controller,
+                              axis: Axis.vertical,
+                              compact: true,
+                              showSaveButton: false,
+                              allowLongPressEdit: false,
+                              onMessage: controller.announce,
+                            ),
+                            if (controller.showEatButton) ...[
+                              const SizedBox(height: 4),
+                              _StageEatNowButton(controller: controller),
+                            ],
+                          ],
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -1491,4 +1501,54 @@ Widget? _playerFloaters(
 Offset _floaterOffset(int seq, int salt) {
   final mixed = seq * 31 + salt * 17;
   return Offset(((mixed % 49) - 24).toDouble(), (((mixed ~/ 7) % 37) - 18).toDouble());
+}
+
+const double _stageEatSide = 44;
+const String _cookedPheasantItemId = 'ITEM-0065';
+
+/// Icon-only Eat now under the location-stage presets. Dark while fighting.
+class _StageEatNowButton extends StatelessWidget {
+  const _StageEatNowButton({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !isInCombat(controller.save);
+    final item = controller.indexes.itemsById[_cookedPheasantItemId];
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: 'Eat now',
+      child: Opacity(
+        opacity: enabled ? 1 : 0.45,
+        child: Tooltip(
+          message: 'Eat now',
+          child: Material(
+            color: Colors.transparent,
+            shape: PixelSteppedBorder(step: 2, side: const BorderSide(color: Palette.edge)),
+            clipBehavior: Clip.antiAlias,
+            child: Ink(
+              decoration: chromeSlotFill(context),
+              child: InkWell(
+                key: const Key('stage-eat-now'),
+                onTap: enabled
+                    ? () {
+                        final reason = controller.eatFood();
+                        if (reason != null) controller.announce(reason);
+                      }
+                    : null,
+                customBorder: PixelSteppedBorder(step: 2),
+                child: SizedBox(
+                  width: _stageEatSide,
+                  height: _stageEatSide,
+                  child: Center(child: ItemIcon(item: item, size: 36)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

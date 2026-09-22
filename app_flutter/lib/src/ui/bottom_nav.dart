@@ -20,7 +20,6 @@ const List<(GameScreen, String)> nestMenuItems = [
   (GameScreen.menu, 'Settings'),
   (GameScreen.codex, 'Codex'),
   (GameScreen.timers, 'Timers'),
-  (GameScreen.tracker, 'Tracker'),
   (GameScreen.bazaar, 'Bazaar'),
   (GameScreen.leaderboards, 'Leaderboards'),
   (GameScreen.guilds, 'Guilds'),

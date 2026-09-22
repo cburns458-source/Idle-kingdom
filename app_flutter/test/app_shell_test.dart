@@ -342,6 +342,88 @@ void main() {
     secondNet.stopPolling();
   });
 
+  testWidgets('a create-screen session is not kicked until it enters the game', (tester) async {
+    final transport = FakeTransport();
+    final unnamed = createNewSave(database.launch, testStartMs);
+
+    final firstGame = buildController(database, seed: unnamed);
+    final firstNet = buildRemoteMultiplayer(database, transport: transport);
+    firstNet.onAccountCleared = firstGame.resetUnsigned;
+    addTearDown(firstGame.dispose);
+    addTearDown(firstNet.dispose);
+    await firstNet.signUp(
+      'create@example.com',
+      'Vari',
+      'secret',
+      unnamed,
+      adopt: firstGame.adoptAccountSave,
+    );
+    expect(firstNet.isSignedIn, isTrue);
+    expect(firstGame.save.characterName, isNull);
+
+    final secondGame = buildController(database);
+    final secondNet = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(secondGame.dispose);
+    addTearDown(secondNet.dispose);
+    await secondNet.signIn(
+      'create@example.com',
+      'secret',
+      secondGame.save,
+      adopt: secondGame.adoptAccountSave,
+    );
+
+    await tester.pump(MultiplayerController.pollInterval);
+    await tester.pump();
+    expect(firstNet.isSignedIn, isTrue);
+
+    await firstNet.resumeAccount(firstGame.save, adopt: firstGame.adoptAccountSave);
+    expect(firstNet.isSignedIn, isTrue);
+    expect(firstNet.notice, isNot(remoteSignedInElsewhere));
+
+    firstNet.startPolling(() => firstGame.save);
+    await tester.pump(MultiplayerController.pollInterval);
+    await tester.pump();
+    expect(firstNet.isSignedIn, isFalse);
+    expect(firstNet.notice, remoteSignedInElsewhere);
+    firstNet.stopPolling();
+    secondNet.stopPolling();
+  });
+
+  testWidgets('reopening a named seat that was taken signs that device out', (tester) async {
+    final transport = FakeTransport();
+    final stored = startedCharacter(database).copyWith(characterName: 'Vari', gold: 50);
+
+    final firstGame = buildController(database, seed: stored);
+    final firstNet = buildRemoteMultiplayer(database, transport: transport);
+    firstNet.onAccountCleared = firstGame.resetUnsigned;
+    addTearDown(firstGame.dispose);
+    addTearDown(firstNet.dispose);
+    await firstNet.signUp(
+      'reopen@example.com',
+      'Vari',
+      'secret',
+      stored,
+      adopt: firstGame.adoptAccountSave,
+    );
+
+    final secondGame = buildController(database);
+    final secondNet = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(secondGame.dispose);
+    addTearDown(secondNet.dispose);
+    await secondNet.signIn(
+      'reopen@example.com',
+      'secret',
+      secondGame.save,
+      adopt: secondGame.adoptAccountSave,
+    );
+
+    await firstNet.resumeAccount(firstGame.save, adopt: firstGame.adoptAccountSave);
+    expect(firstNet.isSignedIn, isFalse);
+    expect(firstNet.notice, remoteSignedInElsewhere);
+    expect(firstGame.save.characterName, isNull);
+    secondNet.stopPolling();
+  });
+
   testWidgets('the location screen starts and stops an activity', (tester) async {
     // Standing in the meadow, which has a plain gathering activity.
     final controller = buildController(
@@ -602,7 +684,7 @@ void main() {
     expect(find.text('Settings'), findsOne);
     expect(find.text('Log'), findsNothing);
     expect(find.text('Codex'), findsOne);
-    expect(find.text('Tracker'), findsOne);
+    expect(find.text('Tracker'), findsNothing);
     expect(find.text('Leaderboards'), findsOne);
     expect(find.text('Guilds'), findsOne);
     expect(find.text('Account'), findsNothing);

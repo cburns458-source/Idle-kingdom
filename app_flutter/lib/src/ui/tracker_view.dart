@@ -10,20 +10,43 @@ import '../theme.dart';
 import 'format.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
+import 'game_popup.dart';
 import 'page_header.dart';
 
-enum _TrackerTab { xp, loot }
+enum TrackerKind { xp, loot }
 
 String? _firstString(Iterable<String> values) {
   final iterator = values.iterator;
   return iterator.moveNext() ? iterator.current : null;
 }
 
+Future<void> showTrackerPopup({
+  required BuildContext context,
+  required GameController controller,
+  required TrackerKind kind,
+  Rect? origin,
+}) {
+  return showGamePopup<void>(
+    context: context,
+    origin: origin,
+    maxWidth: 320,
+    maxHeight: 420,
+    builder: (dialogContext) {
+      return SizedBox(
+        width: 320,
+        height: 420,
+        child: TrackerView(controller: controller, kind: kind),
+      );
+    },
+  );
+}
+
 /// RuneScape-style loot and XP trackers that persist on the save until reset.
 class TrackerView extends StatefulWidget {
-  const TrackerView({super.key, required this.controller, this.onClose});
+  const TrackerView({super.key, required this.controller, required this.kind, this.onClose});
 
   final GameController controller;
+  final TrackerKind kind;
   final VoidCallback? onClose;
 
   @override
@@ -31,10 +54,10 @@ class TrackerView extends StatefulWidget {
 }
 
 class _TrackerViewState extends State<TrackerView> {
-  _TrackerTab _tab = _TrackerTab.xp;
   Timer? _ticker;
 
   GameController get controller => widget.controller;
+  TrackerKind get kind => widget.kind;
 
   @override
   void initState() {
@@ -55,36 +78,21 @@ class _TrackerViewState extends State<TrackerView> {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
+        final title = kind == TrackerKind.loot ? 'Loot' : 'XP';
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (widget.onClose != null)
-              PageHeader(title: 'Tracker', onClose: widget.onClose!)
+              PageHeader(title: title, onClose: widget.onClose!)
             else
-              const Padding(
-                padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Text('Tracker', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                ),
               ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-              child: Row(
-                children: [
-                  for (final tab in _TrackerTab.values) ...[
-                    if (tab != _TrackerTab.xp) const SizedBox(width: 6),
-                    Expanded(
-                      child: GameButton(
-                        label: tab == _TrackerTab.loot ? 'Loot' : 'XP',
-                        compact: true,
-                        selected: _tab == tab,
-                        tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
-                        onPressed: () => setState(() => _tab = tab),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Expanded(child: _tab == _TrackerTab.xp ? _xpTab() : _lootTab()),
+            Expanded(child: kind == TrackerKind.xp ? _xpTab() : _lootTab()),
           ],
         );
       },

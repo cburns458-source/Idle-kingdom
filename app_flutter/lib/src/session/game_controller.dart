@@ -202,7 +202,7 @@ class GameController extends ChangeNotifier {
   int _stagePhaseTold = 0;
 
   /// How many completed actions the reward strip keeps.
-  static const int _rewardHistory = 3;
+  static const int _rewardHistory = 6;
 
   final List<ActionRewardBundle> _recentRewards = <ActionRewardBundle>[];
   String? _message;

@@ -17,7 +17,47 @@ export const GRAND_FEAST_QUEST_ID = 'QST-0001'
 export const FIRST_PLANTING_QUEST_ID = 'QST-0011'
 export const FENNEL_NPC_ID = 'NPC-0014'
 export const POTATO_SEED_ITEM_ID = 'ITEM-0324'
+export const CARROT_SEED_ITEM_ID = 'ITEM-0339'
+export const GRAPE_SEED_ITEM_ID = 'ITEM-0340'
+export const FERNLEAF_SEED_ITEM_ID = 'ITEM-0333'
+export const AUGUR_WEED_SEED_ITEM_ID = 'ITEM-0336'
+export const MOONBLOSSOM_SEED_ITEM_ID = 'ITEM-0337'
+export const TURNIP_SEED_ITEM_ID = 'ITEM-0369'
+export const ELDER_BERRY_SEED_ITEM_ID = 'ITEM-0371'
+export const HAGROOT_SEED_ITEM_ID = 'ITEM-0373'
+export const EMBERBLOSSOM_SEED_ITEM_ID = 'ITEM-0375'
 export const SHALLOWS_LOCATION_ID = 'LOC-0043'
+
+/** Parent pairs that can return a different seed when both are in the planted pool. */
+export const BOTANY_SEED_MUTATIONS: ReadonlyArray<{ parents: readonly string[]; product: string }> =
+  [
+    { parents: [POTATO_SEED_ITEM_ID, CARROT_SEED_ITEM_ID], product: TURNIP_SEED_ITEM_ID },
+    { parents: [GRAPE_SEED_ITEM_ID, POTATO_SEED_ITEM_ID], product: ELDER_BERRY_SEED_ITEM_ID },
+    { parents: [FERNLEAF_SEED_ITEM_ID, AUGUR_WEED_SEED_ITEM_ID], product: HAGROOT_SEED_ITEM_ID },
+    {
+      parents: [AUGUR_WEED_SEED_ITEM_ID, MOONBLOSSOM_SEED_ITEM_ID],
+      product: EMBERBLOSSOM_SEED_ITEM_ID,
+    },
+  ]
+
+/** After the 50% seed-return succeeds, a parent in an active combo is 50% itself
+ * and the other 50% is split among those products. Pool-based, not order-based. */
+export function rollReturnedBotanySeed(
+  plantedSeedIds: readonly string[],
+  returningSeedId: string,
+  random: () => number,
+): string {
+  const pool = new Set(plantedSeedIds)
+  const products = BOTANY_SEED_MUTATIONS.filter(
+    (combo) => combo.parents.includes(returningSeedId) && combo.parents.every((id) => pool.has(id)),
+  ).map((combo) => combo.product)
+  if (products.length === 0) return returningSeedId
+  const roll = random()
+  if (roll < 0.5) return returningSeedId
+  const share = 0.5 / products.length
+  const index = Math.min(products.length - 1, Math.max(0, Math.floor((roll - 0.5) / share)))
+  return products[index] ?? returningSeedId
+}
 
 export const FISHING_POT_ITEM_ID = 'ITEM-0347'
 /** @deprecated Use FISHING_POT_ITEM_ID */
@@ -757,7 +797,8 @@ export function collectLocationTimer(
     }
     for (const seedItemId of plantedIds) {
       if (random() < 0.5) {
-        returned.set(seedItemId, (returned.get(seedItemId) ?? 0) + 1)
+        const returnedId = rollReturnedBotanySeed(plantedIds, seedItemId, random)
+        returned.set(returnedId, (returned.get(returnedId) ?? 0) + 1)
       }
     }
     for (const [itemId, quantity] of produce) grants.push({ itemId, quantity })

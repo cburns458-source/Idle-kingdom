@@ -398,7 +398,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       _saverTick?.cancel();
       _saverTick = null;
     }
-    final shouldPoll = multiplayer.isSignedIn;
+    final shouldPoll = _canPlay;
     if (shouldPoll && (!_polling || _saverPolling != saver)) {
       _polling = true;
       _saverPolling = saver;
@@ -1107,7 +1107,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       case GameScreen.timers:
         return TimersView(controller: controller, onClose: _popPage, onTravel: _travelFromTimers);
       case GameScreen.tracker:
-        return TrackerView(controller: controller, onClose: _popPage);
+        return TrackerView(controller: controller, kind: TrackerKind.xp, onClose: _popPage);
       case GameScreen.leaderboards:
         return SocialView(
           controller: controller,

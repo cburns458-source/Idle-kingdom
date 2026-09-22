@@ -967,11 +967,15 @@ class OverlayChipButton extends StatelessWidget {
     this.highlight = false,
     this.highlightColor,
     this.plain = false,
+    this.width = 32,
+    this.height = 32,
   });
 
   final String tooltip;
   final VoidCallback onPressed;
   final Widget child;
+  final double width;
+  final double height;
 
   /// The nearby chip is brown rather than the map's parchment green.
   final bool dark;
@@ -1014,7 +1018,11 @@ class OverlayChipButton extends StatelessWidget {
           child: InkWell(
             onTap: onPressed,
             customBorder: PixelSteppedBorder(step: PixelChrome.step),
-            child: SizedBox(width: 32, height: 32, child: Center(child: child)),
+            child: SizedBox(
+              width: width,
+              height: height,
+              child: Center(child: child),
+            ),
           ),
         ),
       ),
