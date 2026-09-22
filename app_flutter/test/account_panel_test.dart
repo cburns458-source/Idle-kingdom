@@ -4,6 +4,7 @@ import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/account_panel.dart';
+import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
@@ -52,15 +53,24 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('shows play time on the character card', (tester) async {
+  testWidgets('shows play time and the day the save was made', (tester) async {
     final net = buildMultiplayer(database, signedIn: false);
     await pumpAccount(
       tester,
       net,
-      seed: startedCharacter(database).copyWith(playTimeMs: 3 * 3600000 + 12 * 60000),
+      seed: startedCharacter(database)
+          .copyWith(playTimeMs: 3 * 3600000 + 12 * 60000, createdAt: '2026-09-22T10:30:00.000Z'),
     );
 
     expect(find.text('Play time: 3h 12m'), findsOne);
+    expect(find.text('Created: ${formatSaveDate('2026-09-22T10:30:00.000Z')}'), findsOne);
+  });
+
+  testWidgets('a save with no written date shows no created line', (tester) async {
+    final net = buildMultiplayer(database, signedIn: false);
+    await pumpAccount(tester, net, seed: startedCharacter(database).copyWith(createdAt: ''));
+
+    expect(find.textContaining('Created:'), findsNothing);
   });
 
   testWidgets('a local build says so and offers no magic link', (tester) async {

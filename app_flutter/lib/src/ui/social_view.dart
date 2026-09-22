@@ -68,7 +68,7 @@ class _SocialViewState extends State<SocialView> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge(<Listenable>[net, widget.controller.progress]),
+      listenable: Listenable.merge(<Listenable>[net, widget.controller.secondsProgress]),
       builder: (context, _) => _buildSection(),
     );
   }

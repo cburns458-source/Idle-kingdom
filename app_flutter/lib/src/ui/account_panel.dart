@@ -101,7 +101,7 @@ class _AccountPanelState extends State<AccountPanel> {
     return ListenableBuilder(
       listenable: Listenable.merge(<Listenable>[
         widget.controller,
-        widget.controller.progress,
+        widget.controller.secondsProgress,
         net,
       ]),
       builder: (context, _) => _build(),
@@ -176,6 +176,7 @@ class _AccountPanelState extends State<AccountPanel> {
           ),
           MutedText('Race: ${raceDisplayName(widget.controller.db, save.raceId) ?? 'Unchosen'}'),
           MutedText('Play time: ${formatPlayTimeMs(save.playTimeMs)}'),
+          if (formatSaveDate(save.createdAt) case final created?) MutedText('Created: $created'),
           const SizedBox(height: 10),
           TextField(
             controller: _motto,

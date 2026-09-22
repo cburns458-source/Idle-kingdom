@@ -168,9 +168,38 @@ class GameController extends ChangeNotifier {
 
   /// Clock-driven progress bars and timers.
   ///
-  /// [tick] always notifies this. The main [ChangeNotifier] only fires when
+  /// [tick] notifies this every frame while something is moving in frames, and
+  /// four times a second otherwise. The main [ChangeNotifier] only fires when
   /// save/UI structure changes, so shell chrome is not rebuilt every frame.
   final ChangeNotifier progress = ChangeNotifier();
+
+  /// The slower cousin of [progress], for pages that only show whole seconds.
+  ///
+  /// Play time, a plot's countdown, how long ago a chat line landed: none can
+  /// show a change inside a second, and the pages carrying them are among the
+  /// largest in the game. They rebuild once a second rather than behind every
+  /// frame of a progress bar somewhere else on the screen.
+  final ChangeNotifier secondsProgress = ChangeNotifier();
+
+  /// How often [secondsProgress] fires while the game runs.
+  static const num secondsProgressPeriodMs = 1000;
+
+  num? _secondsNotifiedAtMs;
+
+  /// How often a quiet frame still notifies [progress].
+  ///
+  /// With nothing running, everything the clock touches is written in whole
+  /// seconds: play time, a plot's countdown, how long ago a chat line landed.
+  /// Four notices a second read the same as sixty and leave the other
+  /// fifty-six frames with nothing to rebuild, which is most of the shell's
+  /// cost while a player reads a menu or stands in town.
+  static const num quietProgressPeriodMs = 250;
+
+  num? _progressNotifiedAtMs;
+
+  /// The [stagePhase] the chrome was last told about. Zero is the still stage,
+  /// which is where a booted save starts.
+  int _stagePhaseTold = 0;
 
   /// How many completed actions the reward strip keeps.
   static const int _rewardHistory = 3;
@@ -442,6 +471,42 @@ class GameController extends ChangeNotifier {
     final total = configNumber(db, 'death_pause', 30) * 1000;
     if (total <= 0) return 1;
     return ((total - remaining) / total).clamp(0, 1).toDouble();
+  }
+
+  /// Which stage the action area is showing, as one comparable value.
+  ///
+  /// Every part of it turns on a clock the player cannot act on — a half-second
+  /// blow hold, a banner, a floater's second. [tick] compares this across the
+  /// frame and counts a change as structural, which is what lets the stage art
+  /// hang off this listenable instead of being rebuilt with every bar frame.
+  int get stagePhase {
+    var bits = 0;
+    if (showRecoveringStage) bits |= 1;
+    if (combatBlowHold) bits |= 2;
+    if (defeatedFlash) bits |= 4;
+    if (showLastRoundFloaters) bits |= 8;
+    if (craftPopup != null) bits |= 16;
+    if (healPopup != null) bits |= 32;
+    if (damagePopup != null) bits |= 64;
+    if (inkPopup != null) bits |= 128;
+    return bits;
+  }
+
+  /// True while something on screen counts in frames rather than in seconds: a
+  /// bar filling, a hit number rising, the pause before a revive.
+  ///
+  /// [tick] uses this to decide how often [progress] is worth notifying.
+  bool get framePacedOnScreen {
+    if (save.currentActivityId != null) return true;
+    if (isRecovering) return true;
+    if (_outcomeHold != null && _holdElapsedMs < combatBlowHoldMs + combatDefeatedBannerMs) {
+      return true;
+    }
+    return craftPopup != null ||
+        healPopup != null ||
+        damagePopup != null ||
+        inkPopup != null ||
+        showLastRoundFloaters;
   }
 
   double get actionProgress => session.actionProgress.toDouble();
@@ -728,7 +793,6 @@ class GameController extends ChangeNotifier {
       _adoptResumeCatchUp(away);
       _queueSkillLevelUps(previous, save);
       onSaveCommitted?.call(previous, save);
-      progress.notifyListeners();
       notifyListeners();
       return;
     }
@@ -742,8 +806,6 @@ class GameController extends ChangeNotifier {
     if (gameplayChanged || skillUpsBefore != _pendingSkillLevelUps.length) {
       onSaveCommitted?.call(previous, save);
     }
-    // Progress bars / timers always move with the clock.
-    progress.notifyListeners();
     // Shell chrome only rebuilds when activity/UI structure changes.
     // Do not use identical(previous, save): live play-time crediting allocates a
     // new save every frame even when nothing gameplay-visible changed.
@@ -757,14 +819,53 @@ class GameController extends ChangeNotifier {
         skillUpsBefore != _pendingSkillLevelUps.length ||
         !identical(messageBefore, _message) ||
         !identical(activityErrorBefore, _activityError) ||
-        !identical(discoveryBefore, _discoveryNotice);
-    if (structural) notifyListeners();
+        !identical(discoveryBefore, _discoveryNotice) ||
+        // Against the phase the chrome was last told about, not the phase at the
+        // top of this tick: a hold ends because the clock moved, which is the
+        // same clock both readings inside one tick would use.
+        stagePhase != _stagePhaseTold;
+    // Bars and timers move with the clock. On a structural frame the notice
+    // comes through [notifyListeners] instead, so nothing waits out the gap.
+    if (structural) {
+      notifyListeners();
+    } else {
+      _notifyProgress();
+    }
+  }
+
+  void _notifyProgress({bool force = false}) {
+    final nowMs = session.clock();
+    final sinceSeconds = _secondsNotifiedAtMs;
+    if (force || sinceSeconds == null || nowMs - sinceSeconds >= secondsProgressPeriodMs) {
+      _secondsNotifiedAtMs = nowMs;
+      secondsProgress.notifyListeners();
+    }
+    if (!force && !framePacedOnScreen) {
+      final last = _progressNotifiedAtMs;
+      if (last != null && nowMs - last < quietProgressPeriodMs) return;
+    }
+    _progressNotifiedAtMs = nowMs;
+    progress.notifyListeners();
+  }
+
+  /// Chrome and the clock-driven leaves are told together.
+  ///
+  /// A structural change moves bars as well — gold spent, food eaten, a round
+  /// resolved — so the quiet period never holds one back behind the other.
+  @override
+  void notifyListeners() {
+    if (_alive) {
+      _stagePhaseTold = stagePhase;
+      _notifyProgress(force: true);
+    }
+    super.notifyListeners();
   }
 
   @override
   void dispose() {
     _alive = false;
     progress.dispose();
+    secondsProgress.dispose();
     super.dispose();
   }
 

@@ -15,6 +15,7 @@ import 'format.dart';
 import 'equipment_presets_bar.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
+import 'out_of_sight.dart';
 import 'playable_frame.dart';
 
 /// Portrait slot stays 152 so the stage does not jump between activities.
@@ -79,10 +80,12 @@ class ActionStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Stage selection is mostly structural; meters/floaters need [progress].
-    // Keep both, but the idle stand below no longer rebuilds every quiet tick.
+    // Structural only. Which stage is showing turns on holds and banners, and
+    // [GameController.stagePhase] makes each of those a structural change, so
+    // the portraits and scene art are not rebuilt behind every bar frame. The
+    // bars and captions that do move with the clock take [progress] themselves.
     return ListenableBuilder(
-      listenable: Listenable.merge(<Listenable>[controller, controller.progress]),
+      listenable: controller,
       builder: (context, _) {
         return MediaQuery(
           data: MediaQuery.of(context)
@@ -502,7 +505,7 @@ class _StageHopHost extends StatefulWidget {
 
 class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderStateMixin {
   Ticker? _ticker;
-  Duration _elapsed = Duration.zero;
+  double _t = 1;
 
   @override
   void didChangeDependencies() {
@@ -531,20 +534,26 @@ class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderS
   void _startTicker() {
     if (_ticker != null) return;
     _ticker = createTicker((elapsed) {
-      setState(() => _elapsed = elapsed);
+      final next = _periodT(elapsed);
+      // Every kind rests at [Offset.zero] once the motion window is past, so the
+      // three seconds between hops need no rebuild at all: hold the clock at
+      // rest rather than publishing a new number the portraits cannot show.
+      if (next == _t) return;
+      setState(() => _t = next);
     })..start();
   }
 
   void _stopTicker({required bool reset}) {
     _ticker?.dispose();
     _ticker = null;
-    if (reset) _elapsed = Duration.zero;
+    if (reset) _t = 1;
   }
 
   double _periodT(Duration elapsed) {
     final ms = elapsed.inMilliseconds;
     if (ms < _stageHopDelayMs) return 1;
-    return ((ms - _stageHopDelayMs) % _stageHopPeriodMs) / _stageHopPeriodMs;
+    final t = ((ms - _stageHopDelayMs) % _stageHopPeriodMs) / _stageHopPeriodMs;
+    return t >= _stageHopMotionEnd ? 1 : t;
   }
 
   @override
@@ -555,7 +564,7 @@ class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
-    return _StageHopTicker(t: _periodT(_elapsed), child: widget.child);
+    return _StageHopTicker(t: _t, child: widget.child);
   }
 }
 
@@ -722,6 +731,28 @@ class _SceneName extends StatelessWidget {
   }
 }
 
+/// Wraps the one part of a stage that moves between structural changes.
+///
+/// Bars and the numbers over them are cheap to rebuild; the art beside them is
+/// not, so only this much sits on [GameController.progress].
+class _OnTheClock extends StatelessWidget {
+  const _OnTheClock({required this.controller, required this.builder});
+
+  final GameController controller;
+  final WidgetBuilder builder;
+
+  @override
+  Widget build(BuildContext context) {
+    // A stage behind an open page keeps its last reading. A bar nobody can see
+    // is not worth a frame, and closing the page rebuilds this anyway.
+    if (OutOfSight.of(context)) return builder(context);
+    return ListenableBuilder(
+      listenable: controller.progress,
+      builder: (context, _) => builder(context),
+    );
+  }
+}
+
 /// A health bar drawn like the HUD: the outline stays full width and the fill
 /// shrinks as HP drops.
 class _Meter extends StatelessWidget {
@@ -808,9 +839,6 @@ class _CombatStage extends StatelessWidget {
       1,
       enemy == null ? 1 : enemyEncounterMaxHp(controller.db, save, enemy).toInt(),
     );
-    final enemyHp = controller.stagedEnemyHp;
-    final maxHp = playerMaxHp(controller.db, save);
-    final playerHp = controller.stagedPlayerHp;
     final round = controller.lastRound;
     final seq = controller.lastRoundSeq;
     final showFloaters = controller.showLastRoundFloaters;
@@ -901,38 +929,56 @@ class _CombatStage extends StatelessWidget {
             ],
           ),
         ),
-        playerCaption: _FighterCaption(
-          name: save.characterName ?? 'Adventurer',
-          hpLabel: '${playerHp.round()}/${maxHp.round()}',
-          alignEnd: false,
-          meter: _Meter(
-            label: 'Player health',
-            semanticsValue: '${playerHp.round()} / ${maxHp.round()}',
-            value: maxHp <= 0 ? 0 : (playerHp / maxHp).clamp(0, 1).toDouble(),
-            gradient: Meters.hudHp,
-          ),
+        // Hit points move with natural regain as well as with a round, so both
+        // captions read the live save every frame rather than the staged one.
+        playerCaption: _OnTheClock(
+          controller: controller,
+          builder: (context) {
+            final hp = controller.stagedPlayerHp;
+            final max = playerMaxHp(controller.db, controller.save);
+            return _FighterCaption(
+              name: controller.save.characterName ?? 'Adventurer',
+              hpLabel: '${hp.round()}/${max.round()}',
+              alignEnd: false,
+              meter: _Meter(
+                label: 'Player health',
+                semanticsValue: '${hp.round()} / ${max.round()}',
+                value: max <= 0 ? 0 : (hp / max).clamp(0, 1).toDouble(),
+                gradient: Meters.hudHp,
+              ),
+            );
+          },
         ),
-        sceneCaption: _FighterCaption(
-          name: enemyName,
-          hpLabel: '${enemyHp.round()}/${enemyMaxHp.round()}',
-          alignEnd: true,
-          meter: _Meter(
-            label: '$enemyName health',
-            semanticsValue: '${enemyHp.round()} / ${enemyMaxHp.round()}',
-            value: (enemyHp / enemyMaxHp).clamp(0, 1).toDouble(),
-            gradient: Meters.hudHp,
-          ),
+        sceneCaption: _OnTheClock(
+          controller: controller,
+          builder: (context) {
+            final hp = controller.stagedEnemyHp;
+            return _FighterCaption(
+              name: enemyName,
+              hpLabel: '${hp.round()}/${enemyMaxHp.round()}',
+              alignEnd: true,
+              meter: _Meter(
+                label: '$enemyName health',
+                semanticsValue: '${hp.round()} / ${enemyMaxHp.round()}',
+                value: (hp / enemyMaxHp).clamp(0, 1).toDouble(),
+                gradient: Meters.hudHp,
+              ),
+            );
+          },
         ),
       ),
       // The timer stays through the defeat flash so the bar does not vanish
       // between one enemy and the next.
       footer: Semantics(
         label: 'Round progress',
-        child: PillBar(
-          value: controller.combatRoundProgress,
-          gradient: Meters.combatRound,
-          height: _stageFooterHeight,
-          borderColor: const Color(0x38FFECC4),
+        child: _OnTheClock(
+          controller: controller,
+          builder: (context) => PillBar(
+            value: controller.combatRoundProgress,
+            gradient: Meters.combatRound,
+            height: _stageFooterHeight,
+            borderColor: const Color(0x38FFECC4),
+          ),
         ),
       ),
     );
@@ -986,11 +1032,14 @@ class _RecoveringStage extends StatelessWidget {
       ),
       footer: Semantics(
         label: 'Resume progress',
-        child: PillBar(
-          value: controller.deathPauseProgress,
-          gradient: Meters.combatRound,
-          height: _stageFooterHeight,
-          borderColor: const Color(0x38FFECC4),
+        child: _OnTheClock(
+          controller: controller,
+          builder: (context) => PillBar(
+            value: controller.deathPauseProgress,
+            gradient: Meters.combatRound,
+            height: _stageFooterHeight,
+            borderColor: const Color(0x38FFECC4),
+          ),
         ),
       ),
     );
@@ -1082,9 +1131,12 @@ class _GatheringStage extends StatelessWidget {
           ),
         ),
       ),
-      footer: _ActionProgress(
-        progress: controller.actionProgress,
-        durationMs: save.actionDurationMs ?? 0,
+      footer: _OnTheClock(
+        controller: controller,
+        builder: (context) => _ActionProgress(
+          progress: controller.actionProgress,
+          durationMs: controller.save.actionDurationMs ?? 0,
+        ),
       ),
     );
   }
@@ -1166,9 +1218,12 @@ class _ProductionStage extends StatelessWidget {
           ),
         ),
       ),
-      footer: _ActionProgress(
-        progress: controller.actionProgress,
-        durationMs: save.actionDurationMs ?? 0,
+      footer: _OnTheClock(
+        controller: controller,
+        builder: (context) => _ActionProgress(
+          progress: controller.actionProgress,
+          durationMs: controller.save.actionDurationMs ?? 0,
+        ),
       ),
     );
   }
