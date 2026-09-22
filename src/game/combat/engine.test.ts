@@ -61,6 +61,7 @@ describe('combat engine', () => {
     let save = createNewSave(launch)
     save = {
       ...save,
+      attackStyle: 'balanced',
       currentHp: 900,
       equipment: {
         ...save.equipment,
