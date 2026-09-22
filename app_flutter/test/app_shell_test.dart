@@ -6,7 +6,9 @@ import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
+import 'package:idle_kingdoms/src/ui/inventory_view.dart';
 import 'package:idle_kingdoms/src/ui/menu_view.dart';
+import 'package:idle_kingdoms/src/ui/skills_view.dart';
 import 'package:idle_kingdoms/src/ui/notification_bubble.dart';
 import 'package:idle_kingdoms/src/ui/playable_frame.dart';
 import 'package:idle_kingdoms/src/ui/reward_strip.dart';
@@ -528,6 +530,7 @@ void main() {
     await pumpShell(tester, controller);
 
     await openChinInventory(tester);
+    final inventoryHeight = tester.getSize(find.byType(InventoryView)).height;
     expect(find.textContaining('slots'), findsOne);
     expect(find.widgetWithText(GameButton, 'Attributes'), findsOne);
     expect(find.text('Damage'), findsNothing);
@@ -538,6 +541,7 @@ void main() {
     expect(find.text('Sell items'), findsOne);
 
     await openChinSkills(tester);
+    expect(tester.getSize(find.byType(SkillsView)).height, inventoryHeight);
     expect(find.text('Might'), findsWidgets);
     expect(find.text('Total level'), findsOne);
   });

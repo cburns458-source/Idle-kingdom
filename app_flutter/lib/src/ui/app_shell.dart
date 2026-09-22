@@ -1128,12 +1128,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         ),
         Align(
           alignment: Alignment.bottomCenter,
-          child: FractionallySizedBox(
-            // Skills tiles give leftover height to the icon; keep this sheet tall.
-            heightFactor: _screen == GameScreen.skills ? 0.94 : 0.78,
-            widthFactor: 1,
-            child: page,
-          ),
+          child: FractionallySizedBox(heightFactor: 0.78, widthFactor: 1, child: page),
         ),
       ],
     );

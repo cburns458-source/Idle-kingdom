@@ -57,16 +57,8 @@ void main() {
         )
         .toList();
     expect(skillIcons, hasLength(16));
-    expect(skillIcons.first.fit, BoxFit.contain);
-
-    final iconRect = tester.getRect(
-      find.byWidgetPredicate((widget) => widget is GameImage && widget.path.contains('skl_might')),
-    );
-    final tile = tester.getRect(
-      find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first,
-    );
-    expect(iconRect.shortestSide, greaterThan(tile.shortestSide * 0.25));
-    expect(iconRect.shortestSide, lessThan(tile.shortestSide * 0.5));
+    expect(skillIcons.first.width, 24);
+    expect(skillIcons.first.height, 24);
   });
 
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {

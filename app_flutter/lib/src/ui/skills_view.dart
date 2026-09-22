@@ -88,35 +88,22 @@ class _SkillTile extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: GamePanel(
-        padding: const EdgeInsets.fromLTRB(2, 2, 2, 3),
+        padding: const EdgeInsets.fromLTRB(4, 5, 4, 4),
         child: InkWell(
           onTap: () => _openSkillMenu(context, controller, skillId, row?.displayName ?? skillId),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final side = constraints.maxWidth < constraints.maxHeight
-                        ? constraints.maxWidth
-                        : constraints.maxHeight;
-                    return Center(
-                      child: GameImage(
-                        skillIconPath(row),
-                        width: side * 0.5,
-                        height: side * 0.5,
-                        fit: BoxFit.contain,
-                      ),
-                    );
-                  },
-                ),
-              ),
+              GameImage(skillIconPath(row), width: 24, height: 24),
               const SizedBox(height: 2),
-              Text(
-                row?.displayName ?? skillId,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w400, height: 1.15),
+              Flexible(
+                child: Text(
+                  row?.displayName ?? skillId,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w400, height: 1.15),
+                ),
               ),
               const SizedBox(height: 1),
               Text(
