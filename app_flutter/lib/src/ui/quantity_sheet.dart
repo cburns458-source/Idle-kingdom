@@ -30,6 +30,7 @@ Future<int?> askQuantity(
 }) {
   return showGamePopup<int>(
     context: context,
+    maxHeight: 560,
     builder: (context) => _QuantitySheet(
       title: title,
       subtitle: subtitle,
@@ -118,7 +119,10 @@ class _QuantitySheetState extends State<_QuantitySheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.subtitle case final subtitle?) MutedText(subtitle),
-            Text(widget.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+            Text(
+              widget.title,
+              style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+            ),
             for (final line in widget.details)
               Padding(padding: const EdgeInsets.only(top: 2), child: MutedText(line)),
             const SizedBox(height: 10),

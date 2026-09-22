@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 50;
+const int saveVersion = 51;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -746,6 +746,108 @@ class LootTrackerEntry {
   }
 }
 
+/// Item attached to a mailbox message. Claimed into the bag all at once.
+class MailAttachment {
+  const MailAttachment({required this.itemId, required this.quantity});
+
+  factory MailAttachment.fromJson(Map<String, Object?> json) {
+    return MailAttachment(itemId: json['itemId'] as String, quantity: json['quantity'] as num);
+  }
+
+  final String itemId;
+
+  final num quantity;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{'itemId': itemId, 'quantity': quantity};
+  }
+
+  MailAttachment copyWith({String? itemId, num? quantity}) {
+    return MailAttachment(itemId: itemId ?? this.itemId, quantity: quantity ?? this.quantity);
+  }
+}
+
+/// One mailbox message. System mail uses [catalogId]; player gifts may leave it null.
+class MailMessage {
+  const MailMessage({
+    required this.id,
+    this.catalogId,
+    required this.subject,
+    required this.body,
+    required this.sentAt,
+    this.readAt,
+    required this.attachments,
+    this.claimedAt,
+  });
+
+  factory MailMessage.fromJson(Map<String, Object?> json) {
+    return MailMessage(
+      id: json['id'] as String,
+      catalogId: json['catalogId'] as String?,
+      subject: json['subject'] as String,
+      body: json['body'] as String,
+      sentAt: json['sentAt'] as String,
+      readAt: json['readAt'] as String?,
+      attachments: listOf(
+        json['attachments'],
+        (Object? entry) => MailAttachment.fromJson(asJsonMap(entry)),
+      ),
+      claimedAt: json['claimedAt'] as String?,
+    );
+  }
+
+  final String id;
+
+  final String? catalogId;
+
+  final String subject;
+
+  final String body;
+
+  final String sentAt;
+
+  final String? readAt;
+
+  final List<MailAttachment> attachments;
+
+  final String? claimedAt;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'catalogId': catalogId,
+      'subject': subject,
+      'body': body,
+      'sentAt': sentAt,
+      'readAt': readAt,
+      'attachments': attachments.map((entry) => entry.toJson()).toList(),
+      'claimedAt': claimedAt,
+    };
+  }
+
+  MailMessage copyWith({
+    String? id,
+    Object? catalogId = _unset,
+    String? subject,
+    String? body,
+    String? sentAt,
+    Object? readAt = _unset,
+    List<MailAttachment>? attachments,
+    Object? claimedAt = _unset,
+  }) {
+    return MailMessage(
+      id: id ?? this.id,
+      catalogId: catalogId == _unset ? this.catalogId : catalogId as String?,
+      subject: subject ?? this.subject,
+      body: body ?? this.body,
+      sentAt: sentAt ?? this.sentAt,
+      readAt: readAt == _unset ? this.readAt : readAt as String?,
+      attachments: attachments ?? this.attachments,
+      claimedAt: claimedAt == _unset ? this.claimedAt : claimedAt as String?,
+    );
+  }
+}
+
 /// Selected Appearance Option ID per category.
 class PlayerAppearance {
   const PlayerAppearance({
@@ -890,6 +992,7 @@ class PlayerSave {
     required this.xpTrackers,
     this.lootTrackerPausedAtMs,
     this.xpTrackerPausedAtMs,
+    required this.mailbox,
   });
 
   factory PlayerSave.fromJson(Map<String, Object?> json) {
@@ -1014,6 +1117,7 @@ class PlayerSave {
       ),
       lootTrackerPausedAtMs: json['lootTrackerPausedAtMs'] as num?,
       xpTrackerPausedAtMs: json['xpTrackerPausedAtMs'] as num?,
+      mailbox: listOf(json['mailbox'], (Object? entry) => MailMessage.fromJson(asJsonMap(entry))),
     );
   }
 
@@ -1236,6 +1340,10 @@ class PlayerSave {
   /// existing XP rows stay until On.
   final num? xpTrackerPausedAtMs;
 
+  /// Kingdom post. Unread until opened, stays after read, and drops 90 days
+  /// after [MailMessage.sentAt].
+  final List<MailMessage> mailbox;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'saveVersion': saveVersion,
@@ -1316,6 +1424,7 @@ class PlayerSave {
       'xpTrackers': xpTrackers.map((key, value) => MapEntry(key, value.toJson())),
       'lootTrackerPausedAtMs': lootTrackerPausedAtMs,
       'xpTrackerPausedAtMs': xpTrackerPausedAtMs,
+      'mailbox': mailbox.map((entry) => entry.toJson()).toList(),
     };
   }
 
@@ -1398,6 +1507,7 @@ class PlayerSave {
     Map<String, XpTrackerEntry>? xpTrackers,
     Object? lootTrackerPausedAtMs = _unset,
     Object? xpTrackerPausedAtMs = _unset,
+    List<MailMessage>? mailbox,
   }) {
     return PlayerSave(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1522,6 +1632,7 @@ class PlayerSave {
       xpTrackerPausedAtMs: xpTrackerPausedAtMs == _unset
           ? this.xpTrackerPausedAtMs
           : xpTrackerPausedAtMs as num?,
+      mailbox: mailbox ?? this.mailbox,
     );
   }
 }

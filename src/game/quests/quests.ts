@@ -570,6 +570,31 @@ export function questStatusLabel(
   return 'Not started'
 }
 
+/** Drops selected quest rows and their miniquest completion stamps. */
+export function resetQuestProgress(save: PlayerSave, questIds: string[]): PlayerSave {
+  const ids = new Set(questIds)
+  if (ids.size === 0) return save
+  const miniquestCompletedAt = { ...save.miniquestCompletedAt }
+  for (const questId of ids) delete miniquestCompletedAt[questId]
+  return {
+    ...save,
+    quests: save.quests.filter((quest) => !ids.has(quest.questId)),
+    miniquestCompletedAt,
+  }
+}
+
+/** Clears first-run intro flags so those hints can fire again. */
+export function resetIntroFlags(
+  save: PlayerSave,
+  flags: { fennel?: boolean; wardrobe?: boolean },
+): PlayerSave {
+  return {
+    ...save,
+    hasSeenFennelIntro: flags.fennel ? false : save.hasSeenFennelIntro,
+    hasSeenWardrobeIntro: flags.wardrobe ? false : save.hasSeenWardrobeIntro,
+  }
+}
+
 function questXpGrants(
   quest: QuestRow,
   parsed: ReturnType<typeof parseStructuredObjectives>,

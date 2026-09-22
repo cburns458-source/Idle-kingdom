@@ -22,7 +22,7 @@ Future<void> showSkillLevelUp(BuildContext context, SkillLevelUpNotice notice, {
                 Text(
                   'Level ${notice.level} ${notice.skillName}',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: gamePopupTitleSize,
                     fontWeight: FontWeight.w400,
                     color: UiChrome.of(context).panelInk,
                   ),

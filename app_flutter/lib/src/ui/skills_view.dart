@@ -121,11 +121,7 @@ class _SkillTile extends StatelessWidget {
               const SizedBox(height: 1),
               Text(
                 'Lv ${progress.level}',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  color: Palette.gold,
-                ),
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
               ),
               const SizedBox(height: 3),
               MeterBar(value: fraction, color: Palette.skillXp, height: 4),

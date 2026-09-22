@@ -62,7 +62,11 @@ class _PotBaitGridPopupState extends State<_PotBaitGridPopup> {
               const MutedText('Fishing pot'),
               Text(
                 'Add three bait fish, or place it empty',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400, color: chrome.panelInk),
+                style: TextStyle(
+                  fontSize: gamePopupTitleSize,
+                  fontWeight: FontWeight.w400,
+                  color: chrome.panelInk,
+                ),
               ),
               const SizedBox(height: 10),
               if (widget.options.isEmpty)

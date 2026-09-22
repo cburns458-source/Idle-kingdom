@@ -1,4 +1,5 @@
 import type { GameDatabase } from '../data/types'
+import { syncSystemMail } from '../mail/mail'
 import { migrateSave } from './migrations'
 import {
   DEFAULT_BEARD_ID,
@@ -48,7 +49,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     slots[slot['Slot ID']] = null
   }
 
-  return {
+  const save: PlayerSave = {
     saveVersion: SAVE_VERSION,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -150,7 +151,9 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     xpTrackers: {},
     lootTrackerPausedAtMs: nowMs,
     xpTrackerPausedAtMs: nowMs,
+    mailbox: [],
   }
+  return syncSystemMail(save, nowMs)
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -180,7 +183,7 @@ export function parseSave(raw: unknown, nowMs: number = Date.now()): PlayerSave 
   }
 
   const save = raw as unknown as PlayerSave
-  return migrateSave(save, nowMs)
+  return syncSystemMail(migrateSave(save, nowMs), nowMs)
 }
 
 /** The pure half of a save write: stamp the touch time. */

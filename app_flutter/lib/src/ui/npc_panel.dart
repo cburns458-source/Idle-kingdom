@@ -628,7 +628,10 @@ Future<void> showQuestRewards(
         mainAxisSize: MainAxisSize.min,
         children: [
           const MutedText('Thank you'),
-          Text(questName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+          Text(
+            questName,
+            style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+          ),
           if (spokenLine case final spoken?) ...[
             const SizedBox(height: 8),
             Text(spoken, style: const TextStyle(fontSize: 15)),
@@ -668,7 +671,7 @@ Future<void> showSkillXpPicker(
           const MutedText('Choose a skill'),
           Text(
             '${formatThousands(amount)} XP',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+            style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
           ),
           const SizedBox(height: 8),
           ConstrainedBox(

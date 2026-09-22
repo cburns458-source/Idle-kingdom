@@ -2,6 +2,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../config.dart';
 import '../equipment/presets.dart';
+import '../mail/mail.dart';
 import '../time.dart';
 import 'generated/save_models.dart';
 import 'json_save.dart';
@@ -34,7 +35,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     for (final slot in db.equipmentSlots) slot.raw['Slot ID']! as String: null,
   };
 
-  return PlayerSave(
+  final save = PlayerSave(
     saveVersion: saveVersion,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -135,7 +136,9 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     xpTrackers: const <String, XpTrackerEntry>{},
     lootTrackerPausedAtMs: nowMs,
     xpTrackerPausedAtMs: nowMs,
+    mailbox: const <MailMessage>[],
   );
+  return syncSystemMail(save, nowMs);
 }
 
 /// Validate the few fields a save cannot be read without, then migrate it.
@@ -162,7 +165,7 @@ PlayerSave parseSave(Object? raw, num nowMs) {
     throw SaveParseException('Save missing gold');
   }
 
-  return PlayerSave.fromJson(migrateSaveJson(json, nowMs));
+  return syncSystemMail(PlayerSave.fromJson(migrateSaveJson(json, nowMs)), nowMs);
 }
 
 /// The pure half of a save write: stamp the touch time.

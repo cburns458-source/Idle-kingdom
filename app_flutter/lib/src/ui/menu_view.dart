@@ -12,6 +12,7 @@ import '../session/pick_local_png.dart';
 import '../theme.dart';
 import 'account_panel.dart';
 import 'catalog_popup.dart';
+import 'quest_reset_popup.dart';
 import 'page_header.dart';
 import 'player_sprite.dart';
 
@@ -604,6 +605,15 @@ class _MenuViewState extends State<MenuView> {
                 onPressed: () => _runTool(controller.debugResetAllSkills),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          GameButton(
+            label: 'Reset quests…',
+            onPressed: () => showQuestResetPopup(
+              context: context,
+              controller: controller,
+              onRan: (notice) => setState(() => _toolNotice = notice),
+            ),
           ),
           if (_toolNotice case final notice?) ...[
             const SizedBox(height: 8),

@@ -21,6 +21,8 @@ Future<void> showProductionPicker(
   return showGamePopup<void>(
     context: context,
     origin: origin,
+    maxWidth: 360,
+    maxHeight: 560,
     builder: (context) => SizedBox(
       width: 360,
       child: SingleChildScrollView(

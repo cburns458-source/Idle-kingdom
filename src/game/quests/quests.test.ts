@@ -9,6 +9,7 @@ import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import { createNewSave } from '../save/saveStore'
+import type { PlayerSave } from '../save/types'
 import {
   applyQuestActionProgress,
   applyQuestAutoStartOnSeed,
@@ -27,6 +28,8 @@ import {
   donateForQuest,
   getQuest,
   getQuestProgress,
+  resetIntroFlags,
+  resetQuestProgress,
 } from './quests'
 import { formatQuestProgressLine, questLegacyJournalSteps } from './objectives'
 import { questActionProgressForActivity, questStepJournal } from './steps'
@@ -681,5 +684,30 @@ describe('quest tours', () => {
       inventory: [{ itemId: 'ITEM-0324', quantity: 3 }],
     })
     expect(getQuestProgress(again, 'QST-0011').status).toBe('completed')
+  })
+
+  it('resets selected quests and intro flags only', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save: PlayerSave = {
+      ...createNewSave(launch),
+      hasSeenFennelIntro: true,
+      hasSeenWardrobeIntro: true,
+      quests: [
+        { questId: 'QST-0004', status: 'completed' as const, progress: 3 },
+        { questId: 'QST-0006', status: 'active' as const, progress: 1 },
+      ],
+      miniquestCompletedAt: { 'QST-0003': '2026-01-01T00:00:00.000Z' },
+    }
+    save = resetQuestProgress(save, ['QST-0004'])
+    expect(getQuestProgress(save, 'QST-0004').status).toBe('inactive')
+    expect(getQuestProgress(save, 'QST-0006').status).toBe('active')
+    expect(save.miniquestCompletedAt['QST-0003']).toBe('2026-01-01T00:00:00.000Z')
+
+    save = resetQuestProgress(save, ['QST-0003'])
+    expect(save.miniquestCompletedAt['QST-0003']).toBeUndefined()
+
+    save = resetIntroFlags(save, { fennel: true })
+    expect(save.hasSeenFennelIntro).toBe(false)
+    expect(save.hasSeenWardrobeIntro).toBe(true)
   })
 })

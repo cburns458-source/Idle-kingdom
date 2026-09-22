@@ -829,6 +829,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 50,
     }),
   },
+  {
+    fromVersion: 50,
+    toVersion: 51,
+    migrate: (save) => {
+      const legacy = save as PlayerSave & { mailbox?: unknown }
+      return {
+        ...save,
+        mailbox: Array.isArray(legacy.mailbox) ? legacy.mailbox : [],
+        saveVersion: 51,
+      }
+    },
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

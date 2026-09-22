@@ -832,6 +832,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 50,
+    toVersion: 51,
+    migrate: (save, _) {
+      final next = _bumped(save, 51);
+      next['mailbox'] = arrayOrEmpty(save, 'mailbox');
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

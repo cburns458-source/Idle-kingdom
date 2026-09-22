@@ -54,6 +54,7 @@ void main() {
     expect(find.text('Friend request'), findsOne);
     expect(find.text('Ignore'), findsOne);
 
+    await tester.ensureVisible(find.text('Ignore'));
     await tester.tap(find.text('Ignore'));
     await tester.pump();
     await tester.pump();

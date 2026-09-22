@@ -421,6 +421,9 @@ String uiLogAssetPath() => '$_assetRoot/icons/ui/ui_log.webp';
 /// Chin hamburger nest (signpost).
 String uiMenuAssetPath() => '$_assetRoot/icons/ui/ui_menu.webp';
 
+/// HUD mailbox button.
+String uiMailboxAssetPath() => '$_assetRoot/icons/ui/ui_mailbox.webp';
+
 /// The pixel ring drawn over the HUD portrait.
 String avatarFrameAssetPath() => '$_assetRoot/player/avatar_frame_pixel.png';
 

@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
@@ -157,6 +158,21 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller));
     await tester.longPress(find.byTooltip('Clay'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('×5'), findsOne);
+    expect(find.textContaining('value each'), findsOne);
+  });
+
+  testWidgets('right-click opens the same item detail as long-press', (tester) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: [const InventoryStack(itemId: 'ITEM-0002', quantity: 5)],
+    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.byTooltip('Clay'), buttons: kSecondaryButton);
     await tester.pumpAndSettle();
 
     expect(find.text('×5'), findsOne);

@@ -123,14 +123,14 @@ class UiChrome {
     primaryLabel: const Color(0xFFFFF6E4),
     secondaryLabel: const Color(0xFFFFF4D4),
     iconButtonFill: const Color(0xFF45301F),
-    embossFace: const Color(0xFF7A5F24),
-    embossHighlight: const Color(0xFF7A6434),
-    embossShade: const Color(0xFF3A2A0C),
-    embossFaceSelected: const Color(0xFF967A32),
-    embossHighlightSelected: const Color(0xFF968040),
-    embossShadeSelected: const Color(0xFF3A2A0A),
-    rivetFill: const Color(0xFF8A6B28),
-    rivetShade: const Color(0xFF3F2E0C),
+    embossFace: const Color(0xFFD4AF37),
+    embossHighlight: const Color(0xFFE8C84A),
+    embossShade: const Color(0xFF7A5A12),
+    embossFaceSelected: const Color(0xFFE0B82E),
+    embossHighlightSelected: const Color(0xFFF0D45C),
+    embossShadeSelected: const Color(0xFF6B4E10),
+    rivetFill: const Color(0xFFC9A227),
+    rivetShade: const Color(0xFF6B4E12),
   );
 
   static final stone = UiChrome(

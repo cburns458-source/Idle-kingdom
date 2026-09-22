@@ -61,6 +61,7 @@ export 'src/inventory/sort.dart';
 export 'src/js_compat.dart';
 export 'src/json_support.dart';
 export 'src/log/log.dart';
+export 'src/mail/mail.dart';
 export 'src/loot/drop_chance.dart';
 export 'src/npcs/conversation.dart';
 export 'src/npcs/knowledge.dart';

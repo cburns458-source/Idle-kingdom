@@ -44,7 +44,10 @@ Future<int?> showGameCatalogPopup({
               mainAxisSize: MainAxisSize.min,
               children: [
                 MutedText(eyebrow),
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+                ),
                 const SizedBox(height: 10),
                 Flexible(
                   child: ListView(
