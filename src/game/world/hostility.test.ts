@@ -7,6 +7,8 @@ import {
   applyHostileTravelArrival,
   forcedHostileActivity,
   hostileForceMessage,
+  hostileTravelWarningMessage,
+  locationDangerWarningLevel,
   locationIsHostileFor,
   locationShowsDangerWarning,
 } from './hostility'
@@ -57,6 +59,15 @@ describe('hostile travel forcing', () => {
     expect(locationShowsDangerWarning(launch, 'LOC-0002')).toBe(false)
     // The Depths keeps its Fishing travel gate but is not a hostile force-start.
     expect(locationShowsDangerWarning(launch, 'LOC-0042')).toBe(false)
+  })
+
+  it('builds the travel confirm copy from the danger warning level', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(locationDangerWarningLevel(launch, 'LOC-0003')).toBe(10)
+    expect(locationDangerWarningLevel(launch, 'LOC-0009')).toBeNull()
+    expect(hostileTravelWarningMessage(10)).toBe(
+      'Are you sure you want to travel here? You may be attacked. Combat level warning: 10',
+    )
   })
 
   it('does not treat Old Ent Grove as hostile', () => {

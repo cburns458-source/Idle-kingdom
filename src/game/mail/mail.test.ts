@@ -5,6 +5,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { migrateSave } from '../save/migrations'
 import type { MailMessage, PlayerSave } from '../save/types'
+import { SAVE_VERSION } from '../save/types'
 import {
   MAILBOX_TEST_CATALOG_ID,
   MAILBOX_TTL_MS,
@@ -96,7 +97,8 @@ describe('mailbox', () => {
     const { mailbox: _dropped, ...rest } = created
     const legacy = { ...rest, saveVersion: 50, mailbox: undefined }
     const migrated = migrateSave(legacy as unknown as PlayerSave, NOW_MS)
-    expect(migrated.saveVersion).toBe(51)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.mailbox).toEqual([])
+    expect(migrated.settings.skipHostileTravelWarning).toBe(false)
   })
 })

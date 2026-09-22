@@ -100,6 +100,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
       autoEat: true,
       eatHealthThresholdPercent: 100,
       eatHealthThresholdAsPercent: false,
+      skipHostileTravelWarning: false,
     ),
     currentLocationId: startingLocationId,
     currentActivityId: null,

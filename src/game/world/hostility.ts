@@ -32,6 +32,24 @@ export function hostileActivitiesAt(db: GameDatabase, locationId: string): Activ
   )
 }
 
+/** Lowest Danger Warning Combat Level at this location, if any. */
+export function locationDangerWarningLevel(
+  db: GameDatabase,
+  locationId: string,
+): number | null {
+  const first = hostileActivitiesAt(db, locationId)[0]
+  const warning = first?.['Danger Warning Combat Level']
+  return typeof warning === 'number' && Number.isFinite(warning) && warning > 0 ? warning : null
+}
+
+/** Map-travel confirm copy for a hostile destination. */
+export function hostileTravelWarningMessage(combatLevelWarning: number): string {
+  return (
+    `Are you sure you want to travel here? You may be attacked. ` +
+    `Combat level warning: ${combatLevelWarning}`
+  )
+}
+
 /** The player is under-level for a danger-warning activity here. */
 export function locationIsHostileFor(
   db: GameDatabase,

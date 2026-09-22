@@ -59,6 +59,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
       autoEat: true,
       eatHealthThresholdPercent: 100,
       eatHealthThresholdAsPercent: false,
+      skipHostileTravelWarning: false,
     },
     characterName: 'Tester',
     motto: null,

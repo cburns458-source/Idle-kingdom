@@ -183,3 +183,56 @@ Future<bool> showGameAlert({
   );
   return result ?? false;
 }
+
+/// Choice from the hostile-location travel confirm.
+enum HostileTravelChoice { cancel, travel, dontAskAgain }
+
+/// Confirm before travelling into a danger-warning location.
+Future<HostileTravelChoice> showHostileTravelWarning({
+  required BuildContext context,
+  required String message,
+  Rect? origin,
+}) async {
+  final result = await showGamePopup<HostileTravelChoice>(
+    context: context,
+    placement: GamePopupPlacement.center,
+    origin: origin,
+    barrierDismissible: true,
+    builder: (context) {
+      return GamePopupCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(message, style: const TextStyle(height: 1.4)),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                GameButton(
+                  label: 'Cancel',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  onPressed: () => Navigator.of(context).pop(HostileTravelChoice.cancel),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GameButton(
+                    label: 'Travel',
+                    onPressed: () => Navigator.of(context).pop(HostileTravelChoice.travel),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            GameButton(
+              label: "Don't ask again",
+              tone: GameButtonTone.secondary,
+              onPressed: () => Navigator.of(context).pop(HostileTravelChoice.dontAskAgain),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+  return result ?? HostileTravelChoice.cancel;
+}

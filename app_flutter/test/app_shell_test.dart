@@ -511,6 +511,97 @@ void main() {
     expect(controller.save.currentLocationId, 'LOC-0001');
   });
 
+  testWidgets('hostile map travel asks before leaving', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    controller.setMapTravelAnimation(false);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('Goblin Camp'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.text(
+        'Are you sure you want to travel here? You may be attacked. Combat level warning: 10',
+      ),
+      findsOne,
+    );
+    expect(controller.save.currentLocationId, 'LOC-0009');
+
+    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(controller.save.currentLocationId, 'LOC-0009');
+    expect(find.byKey(const Key('game-popup')), findsNothing);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(GameButton, 'Travel').last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controller.save.currentLocationId, 'LOC-0003');
+    expect(controller.save.settings.skipHostileTravelWarning, isFalse);
+  });
+
+  testWidgets('hostile map travel skip suppresses later confirms', (tester) async {
+    final base = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: base.copyWith(
+        currentLocationId: 'LOC-0009',
+        settings: base.settings.copyWith(skipHostileTravelWarning: true),
+      ),
+    );
+    controller.setMapTravelAnimation(false);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('Goblin Camp'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('game-popup')), findsNothing);
+    expect(controller.save.currentLocationId, 'LOC-0003');
+  });
+
+  testWidgets("hostile map travel Don't ask again persists the skip", (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    controller.setMapTravelAnimation(false);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('Goblin Camp'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(GameButton, "Don't ask again"));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controller.save.currentLocationId, 'LOC-0003');
+    expect(controller.save.settings.skipHostileTravelWarning, isTrue);
+  });
+
   testWidgets('map travel walks a sprite, then arrives', (tester) async {
     final controller = buildController(
       database,

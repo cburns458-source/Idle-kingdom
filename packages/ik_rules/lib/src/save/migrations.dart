@@ -120,6 +120,7 @@ SaveJson _normalizeSettings(SaveJson save, int version) {
       settings['eatHealthThresholdPercent'] ?? 100,
     ),
     'eatHealthThresholdAsPercent': settings['eatHealthThresholdAsPercent'] ?? false,
+    'skipHostileTravelWarning': settings['skipHostileTravelWarning'] ?? false,
   };
   return next;
 }
@@ -841,6 +842,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(fromVersion: 51, toVersion: 52, migrate: (save, _) => _normalizeSettings(save, 52)),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

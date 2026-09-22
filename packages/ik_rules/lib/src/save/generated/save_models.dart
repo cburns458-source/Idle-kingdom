@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 51;
+const int saveVersion = 52;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1646,6 +1646,7 @@ class PlayerSettings {
     required this.autoEat,
     required this.eatHealthThresholdPercent,
     required this.eatHealthThresholdAsPercent,
+    required this.skipHostileTravelWarning,
   });
 
   factory PlayerSettings.fromJson(Map<String, Object?> json) {
@@ -1657,6 +1658,7 @@ class PlayerSettings {
       autoEat: json['autoEat'] as bool,
       eatHealthThresholdPercent: json['eatHealthThresholdPercent'] as num,
       eatHealthThresholdAsPercent: json['eatHealthThresholdAsPercent'] as bool,
+      skipHostileTravelWarning: json['skipHostileTravelWarning'] as bool,
     );
   }
 
@@ -1683,6 +1685,10 @@ class PlayerSettings {
   /// When true, the Equipment eat-at slider is shown as a percent.
   final bool eatHealthThresholdAsPercent;
 
+  /// When true, skip the hostile-location travel confirm popup.
+  /// Set by the "Don't ask again" control on that popup.
+  final bool skipHostileTravelWarning;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'soundEnabled': soundEnabled,
@@ -1692,6 +1698,7 @@ class PlayerSettings {
       'autoEat': autoEat,
       'eatHealthThresholdPercent': eatHealthThresholdPercent,
       'eatHealthThresholdAsPercent': eatHealthThresholdAsPercent,
+      'skipHostileTravelWarning': skipHostileTravelWarning,
     };
   }
 
@@ -1703,6 +1710,7 @@ class PlayerSettings {
     bool? autoEat,
     num? eatHealthThresholdPercent,
     bool? eatHealthThresholdAsPercent,
+    bool? skipHostileTravelWarning,
   }) {
     return PlayerSettings(
       soundEnabled: soundEnabled ?? this.soundEnabled,
@@ -1712,6 +1720,7 @@ class PlayerSettings {
       autoEat: autoEat ?? this.autoEat,
       eatHealthThresholdPercent: eatHealthThresholdPercent ?? this.eatHealthThresholdPercent,
       eatHealthThresholdAsPercent: eatHealthThresholdAsPercent ?? this.eatHealthThresholdAsPercent,
+      skipHostileTravelWarning: skipHostileTravelWarning ?? this.skipHostileTravelWarning,
     );
   }
 }

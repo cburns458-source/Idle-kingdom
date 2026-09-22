@@ -96,6 +96,7 @@ function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSet
       settings?.eatHealthThresholdPercent ?? 100,
     ),
     eatHealthThresholdAsPercent: settings?.eatHealthThresholdAsPercent ?? false,
+    skipHostileTravelWarning: settings?.skipHostileTravelWarning ?? false,
   }
 }
 
@@ -840,6 +841,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         saveVersion: 51,
       }
     },
+  },
+  {
+    fromVersion: 51,
+    toVersion: 52,
+    migrate: (save) => ({
+      ...save,
+      settings: normalizeSettings(save.settings),
+      saveVersion: 52,
+    }),
   },
 ]
 

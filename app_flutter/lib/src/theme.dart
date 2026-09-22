@@ -19,10 +19,10 @@ abstract final class Palette {
   static const parchment = Color(0xFF5C4027);
   static const parchmentDeep = Color(0xFF3D2A1A);
 
-  /// Yellow gold used for rims, amounts, and wood emboss.
-  static const gold = Color(0xFFD4AF37);
-  static const goldHighlight = Color(0xFFE8C84A);
-  static const goldShade = Color(0xFF7A5A12);
+  /// Mid gold between antique brass and bright jewelry — rims, amounts, emboss.
+  static const gold = Color(0xFFA7872D);
+  static const goldHighlight = Color(0xFFBFA445);
+  static const goldShade = Color(0xFF5A420E);
 
   /// Outer board / wood chrome.
   static const wood = Color(0xFF2A1C12);
@@ -53,7 +53,7 @@ abstract final class Palette {
   static const warning = Color(0xFFEFB07A);
 
   /// Hairline gold used for panel edges.
-  static const edge = Color(0x73D4AF37);
+  static const edge = Color(0x73A7872D);
 
   /// The behind-everything wash — dark wood base under the plank texture.
   static const shellGradient = LinearGradient(

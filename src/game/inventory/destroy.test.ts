@@ -62,6 +62,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
       autoEat: true,
       eatHealthThresholdPercent: 100,
       eatHealthThresholdAsPercent: false,
+      skipHostileTravelWarning: false,
     },
     currentLocationId: 'LOC-0002',
     currentActivityId: null,
