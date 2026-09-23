@@ -149,6 +149,19 @@ void main() {
     expect(skeleton.drops.firstWhere((row) => row.itemId == 'ITEM-0129').dropRatePercent, 60);
     expect(codex.enemy('ENM-0009')!.drops.map((row) => row.itemId), isNot(contains('ITEM-0286')));
     expect(codex.enemy('ENM-0006')!.drops.map((row) => row.itemId), isNot(contains('ITEM-0144')));
+
+    final scout = codex.enemy('ENM-0003')!;
+    expect(scout.combatLevel, 15);
+    expect(scout.maximumHp, 462);
+    expect(scout.minDamage, 33);
+    expect(scout.maxDamage, 66);
+
+    final rat = codex.enemy('ENM-0025')!;
+    expect(rat.displayName, 'Giant Rat');
+    expect(rat.combatLevel, 5);
+    expect(rat.maximumHp, 150);
+    expect(rat.drops, isEmpty);
+    expect(rat.locations, isEmpty);
   });
 
   test('lists secondary combat action loot as obtain sources that open the bestiary enemy', () {

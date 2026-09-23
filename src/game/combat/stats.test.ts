@@ -113,7 +113,7 @@ describe('might / vitality combat stats', () => {
       ['ENM-0035', 'Demon', 82, 15000, 475, 745, 64500],
       ['ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 82000],
     ] as const
-    const addedIds = new Set(added.map(([id]) => id))
+    const addedIds = new Set<string>(added.map(([id]) => id))
     for (const [id, name, level, hp, min, max, xp] of added) {
       const enemy = launch.Enemies.find((row) => row['Enemy ID'] === id)
       expect(enemy, id).toBeDefined()

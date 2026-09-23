@@ -166,4 +166,16 @@ void main() {
     expect(find.text('Goblin Chief'), findsWidgets);
     expect(find.text('Drops'), findsOne);
   });
+
+  testWidgets('opens a placeholder bestiary enemy with derived combat level', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller, initialEnemyId: 'ENM-0025'));
+    expect(find.text('Giant Rat'), findsWidgets);
+    expect(find.text('Level 5'), findsOne);
+    expect(find.textContaining('Health 150'), findsOne);
+    expect(find.textContaining('Damage 12–26'), findsOne);
+    expect(find.text('No item drops.'), findsOne);
+  });
 }
