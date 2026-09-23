@@ -82,9 +82,12 @@ void main() {
     expect(find.text('Might'), findsOne);
     expect(find.textContaining('XP/hr'), findsWidgets);
 
-    final title = tester.getRect(find.text('Might'));
-    final reset = tester.getRect(find.byKey(const Key('tracker-reset-xp-$combatSkillId')));
-    final xpText = find.textContaining('XP/hr').first;
+    final combatRow = find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first;
+    final title = tester.getRect(find.descendant(of: combatRow, matching: find.text('Might')));
+    final reset = tester.getRect(
+      find.descendant(of: combatRow, matching: find.byKey(Key('tracker-reset-xp-$combatSkillId'))),
+    );
+    final xpText = find.descendant(of: combatRow, matching: find.textContaining('XP/hr'));
     final xpLine = tester.getRect(find.ancestor(of: xpText, matching: find.byType(FittedBox)));
     expect(find.text('🔄'), findsWidgets);
     expect(reset.center.dy, closeTo(title.center.dy, 8));
