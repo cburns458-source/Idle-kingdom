@@ -11,7 +11,9 @@ const String mailboxTestCatalogId = 'mail-mailbox-test';
 
 const String mailUpdate20260922CatalogId = 'mail-update-2026-09-22';
 
-const String _mailUpdate20260922Body = '''Combat
+const String _mailUpdate20260922Body = '''Update (Sep 22–23)
+
+Combat
 - Added copper sword and dagger
 - New Combat Level leaderboard!
 - New characters default to Offensive stance
@@ -74,7 +76,7 @@ const List<SystemMailCatalogEntry> systemMailCatalog = <SystemMailCatalogEntry>[
   ),
   SystemMailCatalogEntry(
     id: mailUpdate20260922CatalogId,
-    subject: 'Sep 22–23',
+    subject: 'Update (Sep 22–23)',
     body: _mailUpdate20260922Body,
     sentAt: '2026-09-23T00:00:00.000Z',
   ),
