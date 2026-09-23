@@ -404,9 +404,9 @@ function botanyTabs(db: GameDatabase): SkillMenuTab[] {
     })
   }
   return [
-    listTab('flowers', 'Flowers', buckets.flowers ?? []),
     listTab('crops', 'Crops', buckets.crops ?? []),
     listTab('herbs', 'Herbs', buckets.herbs ?? []),
+    listTab('flowers', 'Flowers', buckets.flowers ?? []),
     listTab('trees', 'Trees', buckets.trees ?? []),
     listTab('fruit_trees', 'Fruit trees', buckets.fruit_trees ?? []),
   ]

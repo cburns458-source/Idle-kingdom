@@ -136,7 +136,7 @@ void main() {
 
   test('botany lists plants by kind without seed or sapling words', () {
     final botany = skillMenuView(db, botanySkillMenuId);
-    expect(botany.tabs.map((tab) => tab.label), ['Flowers', 'Crops', 'Herbs', 'Trees']);
+    expect(botany.tabs.map((tab) => tab.label), ['Crops', 'Herbs', 'Flowers', 'Trees']);
     final flowers = botany.tabs.firstWhere((tab) => tab.id == 'flowers').sections.first.entries;
     final crops = botany.tabs.firstWhere((tab) => tab.id == 'crops').sections.first.entries;
     final herbs = botany.tabs.firstWhere((tab) => tab.id == 'herbs').sections.first.entries;

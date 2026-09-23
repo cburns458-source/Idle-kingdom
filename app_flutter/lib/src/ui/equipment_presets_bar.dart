@@ -485,11 +485,14 @@ class _PresetIcon extends StatelessWidget {
       );
     }
     final n = (icon.numeral ?? 1).floor().clamp(1, 4);
+    // Roman marks sit inside a 30–32 chip; size-1 filled the square. Keep
+    // them smaller than skill/coin icons so I–IV read as labels.
+    final numeralSize = size >= 26 ? 15.0 : 14.0;
     return Text(
       _roman[n - 1],
       style: TextStyle(
         fontFamily: gameFontFamily,
-        fontSize: size - 1,
+        fontSize: numeralSize,
         fontWeight: FontWeight.w400,
         color: Palette.heading,
         height: 1,

@@ -634,6 +634,7 @@ void main() {
     expect(numeral.style?.color, Palette.heading);
     expect(numeral.style?.fontFamily, gameFontFamily);
     expect(numeral.style?.fontWeight, FontWeight.w400);
+    expect(numeral.style?.fontSize, 15);
 
     final square = tester.getSize(
       find.ancestor(of: stageNumeral('II'), matching: find.byType(InkWell)),

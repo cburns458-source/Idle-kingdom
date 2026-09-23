@@ -494,9 +494,9 @@ List<SkillMenuTab> _botanyTabs(GameDatabase db) {
     });
   }
   return <SkillMenuTab>[
-    _listTab('flowers', 'Flowers', buckets['flowers']!),
     _listTab('crops', 'Crops', buckets['crops']!),
     _listTab('herbs', 'Herbs', buckets['herbs']!),
+    _listTab('flowers', 'Flowers', buckets['flowers']!),
     _listTab('trees', 'Trees', buckets['trees']!),
     _listTab('fruit_trees', 'Fruit trees', buckets['fruit_trees']!),
   ];

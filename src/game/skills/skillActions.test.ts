@@ -205,7 +205,7 @@ describe('skill menu entries', () => {
   it('lists Botany plants by kind without seed or sapling words', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const botany = skillMenuView(launch, 'SKL-0014')
-    expect(botany.tabs.map((tab) => tab.label)).toEqual(['Flowers', 'Crops', 'Herbs', 'Trees'])
+    expect(botany.tabs.map((tab) => tab.label)).toEqual(['Crops', 'Herbs', 'Flowers', 'Trees'])
     const flowers = botany.tabs.find((tab) => tab.id === 'flowers')?.sections[0]?.entries ?? []
     const crops = botany.tabs.find((tab) => tab.id === 'crops')?.sections[0]?.entries ?? []
     const herbs = botany.tabs.find((tab) => tab.id === 'herbs')?.sections[0]?.entries ?? []
