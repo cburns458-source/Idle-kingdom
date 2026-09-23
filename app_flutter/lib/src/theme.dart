@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'pixel_chrome.dart';
+import 'session/battery_saver_pref.dart';
 import 'session/ui_chrome.dart';
 export 'pixel_chrome.dart';
 export 'session/ui_chrome.dart';
@@ -1057,6 +1058,9 @@ class QuestHintPulse extends StatefulWidget {
   final Widget child;
   final bool circle;
 
+  /// Peak rim color at the end of the pulse.
+  static const Color peakTint = Color(0xE6B42318);
+
   @override
   State<QuestHintPulse> createState() => _QuestHintPulseState();
 }
@@ -1068,15 +1072,27 @@ class _QuestHintPulseState extends State<QuestHintPulse> with SingleTickerProvid
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
-    if (widget.enabled) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncTicker();
   }
 
   @override
   void didUpdateWidget(QuestHintPulse oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.enabled && !_controller.isAnimating) {
-      _controller.repeat(reverse: true);
-    } else if (!widget.enabled && _controller.isAnimating) {
+    _syncTicker();
+  }
+
+  void _syncTicker() {
+    final animate = widget.enabled && !BatterySaverScope.of(context);
+    if (animate) {
+      if (!_controller.isAnimating) _controller.repeat(reverse: true);
+      return;
+    }
+    if (_controller.isAnimating) {
       _controller
         ..stop()
         ..value = 0;
@@ -1089,27 +1105,35 @@ class _QuestHintPulseState extends State<QuestHintPulse> with SingleTickerProvid
     super.dispose();
   }
 
+  Widget _rim(Color tint, Widget child) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: widget.circle ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: widget.circle ? null : BorderRadius.zero,
+        border: Border.all(color: tint, width: 2),
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
+    // Battery saver keeps the hint readable without a continuous ticker.
+    if (BatterySaverScope.of(context)) {
+      return _rim(QuestHintPulse.peakTint, widget.child);
+    }
     return AnimatedBuilder(
       animation: _controller,
+      child: widget.child,
       builder: (context, child) {
         final tint = Color.lerp(
           const Color(0x00B42318),
-          const Color(0xE6B42318),
+          QuestHintPulse.peakTint,
           _controller.value,
         )!;
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            shape: widget.circle ? BoxShape.circle : BoxShape.rectangle,
-            borderRadius: widget.circle ? null : BorderRadius.zero,
-            border: Border.all(color: tint, width: 2),
-          ),
-          child: child,
-        );
+        return _rim(tint, child!);
       },
-      child: widget.child,
     );
   }
 }

@@ -505,8 +505,17 @@ class _StageShell extends StatelessWidget {
 class _InkSplatOverlay extends StatelessWidget {
   const _InkSplatOverlay({super.key});
 
+  static Widget _splat() {
+    return ColoredBox(
+      color: const Color(0x73120818),
+      child: Center(child: GameImage(uiInkSplatAssetPath(), width: 196, height: 196)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Battery saver keeps the splat at its final look — no fade/scale ticker.
+    if (BatterySaverScope.of(context)) return _splat();
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: const Duration(milliseconds: 180),
@@ -517,10 +526,7 @@ class _InkSplatOverlay extends StatelessWidget {
           child: Transform.scale(scale: 0.82 + 0.18 * value, child: child),
         );
       },
-      child: ColoredBox(
-        color: const Color(0x73120818),
-        child: Center(child: GameImage(uiInkSplatAssetPath(), width: 196, height: 196)),
-      ),
+      child: _splat(),
     );
   }
 }

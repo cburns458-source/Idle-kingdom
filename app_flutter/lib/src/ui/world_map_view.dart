@@ -4,6 +4,7 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
+import '../session/battery_saver_pref.dart';
 import '../session/game_controller.dart';
 import '../session/map_geometry.dart';
 import '../session/map_walk.dart';
@@ -290,6 +291,9 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
   /// tap back for the whole double-tap window before selecting anything.
   static const Duration _window = Duration(milliseconds: 300);
 
+  /// Peak quest-hint border while battery saver holds the pulse still.
+  static const Color _hintPeak = Color(0xFFB42318);
+
   DateTime? _lastTap;
   late final AnimationController _hint;
 
@@ -297,15 +301,27 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
   void initState() {
     super.initState();
     _hint = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
-    if (widget.hintPulse) _hint.repeat(reverse: true);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncHint();
   }
 
   @override
   void didUpdateWidget(_MapNode oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.hintPulse && !_hint.isAnimating) {
-      _hint.repeat(reverse: true);
-    } else if (!widget.hintPulse && _hint.isAnimating) {
+    _syncHint();
+  }
+
+  void _syncHint() {
+    final animate = widget.hintPulse && !BatterySaverScope.of(context);
+    if (animate) {
+      if (!_hint.isAnimating) _hint.repeat(reverse: true);
+      return;
+    }
+    if (_hint.isAnimating) {
       _hint
         ..stop()
         ..value = 0;
@@ -349,17 +365,19 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
             child: Padding(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
               child: widget.hintPulse
-                  ? AnimatedBuilder(
-                      animation: _hint,
-                      builder: (context, _) {
-                        final border = Color.lerp(
-                          const Color(0xB3B42318),
-                          const Color(0xFFB42318),
-                          _hint.value,
-                        )!;
-                        return _mapDot(fill: fill, border: border, width: 2);
-                      },
-                    )
+                  ? BatterySaverScope.of(context)
+                        ? _mapDot(fill: fill, border: _hintPeak, width: 2)
+                        : AnimatedBuilder(
+                            animation: _hint,
+                            builder: (context, _) {
+                              final border = Color.lerp(
+                                const Color(0xB3B42318),
+                                _hintPeak,
+                                _hint.value,
+                              )!;
+                              return _mapDot(fill: fill, border: border, width: 2);
+                            },
+                          )
                   : _mapDot(
                       fill: fill,
                       border: isSelected ? Palette.gold : Palette.parchment,

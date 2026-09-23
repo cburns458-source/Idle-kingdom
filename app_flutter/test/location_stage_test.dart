@@ -854,6 +854,35 @@ void main() {
     expect(find.byKey(ValueKey('ink-${controller.inkPopup!.seq}')), findsOne);
   });
 
+  testWidgets('battery saver still shows the ink splat without a tween', (tester) async {
+    final clock = TestClock();
+    final db = database.launch;
+    final squid = getEnemy(db, 'ENM-0023')!;
+    final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0178');
+    final base = startedCharacter(database)
+        .copyWith(currentLocationId: 'LOC-0042', currentActivityId: 'ACT-0045', currentHp: 20000);
+    final fighting = beginCombatSave(
+      db,
+      base,
+      action,
+      squid,
+      isoFromMs(testStartMs),
+    ).copyWith(combatEnemyHp: 200, combatBossAddsTriggered: true);
+    final controller = buildController(database, seed: fighting, clock: clock);
+    addTearDown(controller.dispose);
+    controller.setBatterySaver(true);
+    await pumpShell(tester, controller, size: const Size(900, 2400));
+
+    final roundMs = configNumber(db, 'combat_round_duration', 4) * 1000;
+    clock.advance(roundMs);
+    controller.tick();
+    await tester.pump();
+
+    expect(controller.inkPopup, isNotNull);
+    expect(find.byKey(ValueKey('ink-${controller.inkPopup!.seq}')), findsOne);
+    expect(find.byType(TweenAnimationBuilder<double>), findsNothing);
+  });
+
   testWidgets('gathering hops the adventurer inward and nudges action art back', (tester) async {
     final controller = buildController(
       database,
