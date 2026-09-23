@@ -48,6 +48,13 @@ class _CodexViewState extends State<CodexView> {
   _CodexTab _tab = _CodexTab.items;
   int? _group;
 
+  List<CodexItemEntry>? _cachedItems;
+  List<CodexEnemyEntry>? _cachedEnemies;
+  List<Object>? _cachedActionRows;
+  int? _cacheGroup;
+  String? _cacheQuery;
+  _CodexTab? _cacheTab;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +74,65 @@ class _CodexViewState extends State<CodexView> {
   void dispose() {
     _search.dispose();
     super.dispose();
+  }
+
+  void _invalidateCatalogCache() {
+    _cachedItems = null;
+    _cachedEnemies = null;
+    _cachedActionRows = null;
+    _cacheGroup = null;
+    _cacheQuery = null;
+    _cacheTab = null;
+  }
+
+  List<CodexItemEntry> _itemRows() {
+    final query = _search.text;
+    if (_cachedItems != null &&
+        _cacheTab == _CodexTab.items &&
+        _cacheGroup == _group &&
+        _cacheQuery == query) {
+      return _cachedItems!;
+    }
+    final rows = _codex.itemsMatching(group: _group, query: query);
+    _cachedItems = rows;
+    _cacheTab = _CodexTab.items;
+    _cacheGroup = _group;
+    _cacheQuery = query;
+    return rows;
+  }
+
+  List<CodexEnemyEntry> _enemyRows() {
+    final query = _search.text;
+    if (_cachedEnemies != null && _cacheTab == _CodexTab.bestiary && _cacheQuery == query) {
+      return _cachedEnemies!;
+    }
+    final rows = _codex.enemiesMatching(query);
+    _cachedEnemies = rows;
+    _cacheTab = _CodexTab.bestiary;
+    _cacheQuery = query;
+    return rows;
+  }
+
+  List<Object> _actionRows() {
+    final query = _search.text;
+    if (_cachedActionRows != null && _cacheTab == _CodexTab.actions && _cacheQuery == query) {
+      return _cachedActionRows!;
+    }
+    final rows = _codex.actionsMatching(query);
+    final items = <Object>[];
+    String? lastSkill;
+    for (final entry in rows) {
+      final skill = entry.skillName ?? 'Other';
+      if (skill != lastSkill) {
+        items.add(skill);
+        lastSkill = skill;
+      }
+      items.add(entry);
+    }
+    _cachedActionRows = items;
+    _cacheTab = _CodexTab.actions;
+    _cacheQuery = query;
+    return items;
   }
 
   void _openItem(String itemId) {
@@ -180,7 +246,10 @@ class _CodexViewState extends State<CodexView> {
                     compact: true,
                     selected: _tab == tab,
                     tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
-                    onPressed: () => setState(() => _tab = tab),
+                    onPressed: () {
+                      _invalidateCatalogCache();
+                      setState(() => _tab = tab);
+                    },
                   ),
                 ),
               ],
@@ -192,7 +261,10 @@ class _CodexViewState extends State<CodexView> {
           child: TextField(
             controller: _search,
             decoration: const InputDecoration(hintText: 'Search by name', isDense: true),
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) {
+              _invalidateCatalogCache();
+              setState(() {});
+            },
           ),
         ),
         if (_tab == _CodexTab.items)
@@ -206,7 +278,10 @@ class _CodexViewState extends State<CodexView> {
                   key: const Key('codex-filter-all'),
                   label: 'All',
                   selected: _group == null,
-                  onPressed: () => setState(() => _group = null),
+                  onPressed: () {
+                    _invalidateCatalogCache();
+                    setState(() => _group = null);
+                  },
                 ),
                 for (final group in inventoryGroupOrder) ...[
                   const SizedBox(width: 6),
@@ -214,25 +289,30 @@ class _CodexViewState extends State<CodexView> {
                     key: Key('codex-filter-$group'),
                     label: inventoryGroupLabel(group),
                     selected: _group == group,
-                    onPressed: () => setState(() => _group = group),
+                    onPressed: () {
+                      _invalidateCatalogCache();
+                      setState(() => _group = group);
+                    },
                   ),
                 ],
               ],
             ),
           ),
         Expanded(
-          child: switch (_tab) {
-            _CodexTab.items => _itemGrid(),
-            _CodexTab.actions => _actionList(),
-            _CodexTab.bestiary => _enemyList(),
-          },
+          child: RepaintBoundary(
+            child: switch (_tab) {
+              _CodexTab.items => _itemGrid(),
+              _CodexTab.actions => _actionList(),
+              _CodexTab.bestiary => _enemyList(),
+            },
+          ),
         ),
       ],
     );
   }
 
   Widget _itemGrid() {
-    final rows = _codex.itemsMatching(group: _group, query: _search.text);
+    final rows = _itemRows();
     if (rows.isEmpty) {
       return const Center(child: MutedText('Nothing in the Codex matches.'));
     }
@@ -265,21 +345,11 @@ class _CodexViewState extends State<CodexView> {
   }
 
   Widget _actionList() {
-    final rows = _codex.actionsMatching(_search.text);
-    if (rows.isEmpty) {
+    final items = _actionRows();
+    if (items.isEmpty) {
       return const Center(child: MutedText('Nothing in the Codex matches.'));
     }
     final chrome = UiChrome.of(context);
-    final items = <Object>[];
-    String? lastSkill;
-    for (final entry in rows) {
-      final skill = entry.skillName ?? 'Other';
-      if (skill != lastSkill) {
-        items.add(skill);
-        lastSkill = skill;
-      }
-      items.add(entry);
-    }
     return ListView.separated(
       key: const Key('codex-action-list'),
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -320,7 +390,7 @@ class _CodexViewState extends State<CodexView> {
   }
 
   Widget _enemyList() {
-    final rows = _codex.enemiesMatching(_search.text);
+    final rows = _enemyRows();
     if (rows.isEmpty) {
       return const Center(child: MutedText('Nothing in the Bestiary matches.'));
     }

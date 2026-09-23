@@ -23,6 +23,14 @@ class _BankPanelState extends State<BankPanel> {
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
   String? _error;
 
+  List<({int index, InventoryStack stack})>? _cachedBag;
+  List<({int index, InventoryStack stack})>? _cachedChest;
+  int? _bagInventoryIdentity;
+  int? _bagInventoryLength;
+  int? _chestBankIdentity;
+  int? _chestBankLength;
+  String? _cacheSearch;
+
   GameController get controller => widget.controller;
   PlayerSave get save => controller.save;
 
@@ -31,6 +39,7 @@ class _BankPanelState extends State<BankPanel> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       _sorter = InventorySorter(widget.controller.db);
+      _invalidateCaches();
     }
   }
 
@@ -40,12 +49,65 @@ class _BankPanelState extends State<BankPanel> {
     super.dispose();
   }
 
+  void _invalidateCaches() {
+    _cachedBag = null;
+    _cachedChest = null;
+    _bagInventoryIdentity = null;
+    _bagInventoryLength = null;
+    _chestBankIdentity = null;
+    _chestBankLength = null;
+    _cacheSearch = null;
+  }
+
   bool _matches(InventoryStack stack) {
     final query = _search.text.trim().toLowerCase();
     if (query.isEmpty) return true;
     final item = controller.indexes.itemsById[stack.itemId];
     final name = (item?.displayName ?? stack.itemId).toLowerCase();
     return name.contains(query) || stack.itemId.toLowerCase().contains(query);
+  }
+
+  List<({int index, InventoryStack stack})> _bagRows(PlayerSave save) {
+    final identity = identityHashCode(save.inventory);
+    final length = save.inventory.length;
+    final search = _search.text;
+    if (_cachedBag != null &&
+        _bagInventoryIdentity == identity &&
+        _bagInventoryLength == length &&
+        _cacheSearch == search) {
+      return _cachedBag!;
+    }
+    final bag = <({int index, InventoryStack stack})>[
+      for (final entry in save.inventory.indexed)
+        if (!stackIsUnbankable(entry.$2) && _matches(entry.$2)) (index: entry.$1, stack: entry.$2),
+    ]..sort((a, b) => _sorter.compareGrouped(a.stack, b.stack, a.index, b.index));
+    _cachedBag = bag;
+    _bagInventoryIdentity = identity;
+    _bagInventoryLength = length;
+    _cacheSearch = search;
+    return bag;
+  }
+
+  List<({int index, InventoryStack stack})> _chestRows(PlayerSave save) {
+    final stacks = bankStacks(save);
+    final identity = identityHashCode(stacks);
+    final length = stacks.length;
+    final search = _search.text;
+    if (_cachedChest != null &&
+        _chestBankIdentity == identity &&
+        _chestBankLength == length &&
+        _cacheSearch == search) {
+      return _cachedChest!;
+    }
+    final chest = <({int index, InventoryStack stack})>[
+      for (final entry in stacks.indexed)
+        if (_matches(entry.$2)) (index: entry.$1, stack: entry.$2),
+    ];
+    _cachedChest = chest;
+    _chestBankIdentity = identity;
+    _chestBankLength = length;
+    _cacheSearch = search;
+    return chest;
   }
 
   Future<void> _deposit(int index, InventoryStack stack) async {
@@ -69,6 +131,7 @@ class _BankPanelState extends State<BankPanel> {
       return;
     }
     controller.commitLoadout(result.save!);
+    _invalidateCaches();
     setState(() => _error = null);
   }
 
@@ -93,19 +156,15 @@ class _BankPanelState extends State<BankPanel> {
       return;
     }
     controller.commitLoadout(result.save!);
+    _invalidateCaches();
     setState(() => _error = null);
   }
 
   @override
   Widget build(BuildContext context) {
-    final bag = <({int index, InventoryStack stack})>[
-      for (final entry in save.inventory.indexed)
-        if (!stackIsUnbankable(entry.$2) && _matches(entry.$2)) (index: entry.$1, stack: entry.$2),
-    ]..sort((a, b) => _sorter.compareGrouped(a.stack, b.stack, a.index, b.index));
-    final chest = <({int index, InventoryStack stack})>[
-      for (final entry in bankStacks(save).indexed)
-        if (_matches(entry.$2)) (index: entry.$1, stack: entry.$2),
-    ];
+    final bag = _bagRows(save);
+    final chest = _chestRows(save);
+    final bankLen = bankStacks(save).length;
 
     return GamePanel(
       framed: true,
@@ -127,13 +186,16 @@ class _BankPanelState extends State<BankPanel> {
           ),
           MutedText(
             'Bag ${formatThousands(save.inventory.length)}/$inventorySlotLimit · '
-            'Bank ${formatThousands(bankStacks(save).length)}/$inventorySlotLimit',
+            'Bank ${formatThousands(bankLen)}/$inventorySlotLimit',
           ),
           const SizedBox(height: 8),
           TextField(
             controller: _search,
             decoration: const InputDecoration(hintText: 'Search items', isDense: true),
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) {
+              _invalidateCaches();
+              setState(() {});
+            },
           ),
           if (_error case final error?) ...[
             const SizedBox(height: 6),
@@ -147,17 +209,16 @@ class _BankPanelState extends State<BankPanel> {
                 Expanded(
                   child: _Column(
                     heading: 'Bank',
-                    empty: bankStacks(save).isEmpty
-                        ? 'The chest is empty.'
-                        : 'Nothing in the bank matches.',
-                    tiles: [
-                      for (final row in chest)
-                        _tileFor(
-                          key: ValueKey('bank-${row.index}'),
-                          stack: row.stack,
-                          onTap: () => _withdraw(row.index, row.stack),
-                        ),
-                    ],
+                    empty: bankLen == 0 ? 'The chest is empty.' : 'Nothing in the bank matches.',
+                    itemCount: chest.length,
+                    itemBuilder: (context, i) {
+                      final row = chest[i];
+                      return _tileFor(
+                        key: ValueKey('bank-${row.index}'),
+                        stack: row.stack,
+                        onTap: () => _withdraw(row.index, row.stack),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 9),
@@ -169,14 +230,15 @@ class _BankPanelState extends State<BankPanel> {
                         : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
                         ? 'Nothing in the bag to deposit.'
                         : 'Nothing in the bag matches.',
-                    tiles: [
-                      for (final row in bag)
-                        _tileFor(
-                          key: ValueKey('bag-${row.index}'),
-                          stack: row.stack,
-                          onTap: () => _deposit(row.index, row.stack),
-                        ),
-                    ],
+                    itemCount: bag.length,
+                    itemBuilder: (context, i) {
+                      final row = bag[i];
+                      return _tileFor(
+                        key: ValueKey('bag-${row.index}'),
+                        stack: row.stack,
+                        onTap: () => _deposit(row.index, row.stack),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -226,11 +288,17 @@ class _BankPanelState extends State<BankPanel> {
 }
 
 class _Column extends StatelessWidget {
-  const _Column({required this.heading, required this.empty, required this.tiles});
+  const _Column({
+    required this.heading,
+    required this.empty,
+    required this.itemCount,
+    required this.itemBuilder,
+  });
 
   final String heading;
   final String empty;
-  final List<Widget> tiles;
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -239,17 +307,21 @@ class _Column extends StatelessWidget {
       children: [
         Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
         const SizedBox(height: 5),
-        if (tiles.isEmpty)
+        if (itemCount == 0)
           MutedText(empty)
         else
           Expanded(
-            child: GridView.extent(
-              maxCrossAxisExtent: 78,
-              padding: EdgeInsets.zero,
-              mainAxisSpacing: 5,
-              crossAxisSpacing: 5,
-              childAspectRatio: 1,
-              children: tiles,
+            child: RepaintBoundary(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 78,
+                  mainAxisSpacing: 5,
+                  crossAxisSpacing: 5,
+                  childAspectRatio: 1,
+                ),
+                itemCount: itemCount,
+                itemBuilder: itemBuilder,
+              ),
             ),
           ),
       ],
