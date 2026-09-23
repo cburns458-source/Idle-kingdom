@@ -25,6 +25,18 @@ export const ENEMY_ASSET_PATHS: Record<string, string> = {
   'ENM-0022': '/assets/enemies/enm_ghost.webp',
   'ENM-0023': '/assets/enemies/enm_mother_squid.webp',
   'ENM-0024': '/assets/enemies/enm_squidling.webp',
+  'ENM-0025': '/assets/enemies/enm_wild_boar.webp',
+  'ENM-0026': '/assets/enemies/enm_pirate.webp',
+  'ENM-0027': '/assets/enemies/enm_seagull.webp',
+  'ENM-0028': '/assets/enemies/enm_monk.webp',
+  'ENM-0029': '/assets/enemies/enm_pirate.webp',
+  'ENM-0030': '/assets/enemies/enm_seagull.webp',
+  'ENM-0031': '/assets/enemies/enm_rock_troll.webp',
+  'ENM-0032': '/assets/enemies/enm_rock_troll.webp',
+  'ENM-0033': '/assets/enemies/enm_dragon.webp',
+  'ENM-0034': '/assets/enemies/enm_elder_rock_troll.webp',
+  'ENM-0035': '/assets/enemies/enm_corrupted_ent.webp',
+  'ENM-0036': '/assets/enemies/enm_elder_rock_troll.webp',
 }
 
 export function enemyAssetPath(enemyId: string): string {

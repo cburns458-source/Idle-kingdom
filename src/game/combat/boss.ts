@@ -1,7 +1,7 @@
 import type { EnemyRow } from '../data/enemyTypes'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
-import { playerBaseMaxHp } from './stats'
+import { enemyScaledDamageRange, enemyScaledMaxHp, playerBaseMaxHp } from './stats'
 
 export const DEFAULT_BOSS_SLEEP_ROUNDS = 4
 export const DEFAULT_BOSS_WAKE_HP_RATIO = 0.5
@@ -104,7 +104,7 @@ export function enemyEncounterMaxHp(
   if (profile?.playerBaseHpScale != null) {
     return Math.max(1, Math.floor(playerBaseMaxHp(db, save) * profile.playerBaseHpScale))
   }
-  return enemy['Maximum HP']
+  return enemyScaledMaxHp(enemy)
 }
 
 /** Read player-base damage % notes from any enemy (boss or add). */
@@ -135,7 +135,7 @@ export function enemyEncounterDamageRange(
     const max = Math.max(min, Math.floor((base * pct.max) / 100))
     return { min, max }
   }
-  return { min: enemy['Min Damage'], max: enemy['Max Damage'] }
+  return enemyScaledDamageRange(enemy)
 }
 
 export function isBossAddFight(save: PlayerSave): boolean {

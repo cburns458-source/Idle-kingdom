@@ -5,6 +5,11 @@ export interface EnemyRow {
   'Internal Key': string
   'Display Name': string
   'Location ID': string | null
+  /** Might skill level. Scales encounter damage the same way player Might does. */
+  'Might Level': number | null
+  /** Vitality skill level. Scales encounter HP the same way player Vitality does. */
+  'Vitality Level': number | null
+  /** Derived Combat Level = ceil((Might + Vitality) × 0.75). */
   'Combat Level': number | null
   'Maximum HP': number
   'Min Damage': number

@@ -183,6 +183,13 @@ class EnemyRow extends DbRow {
 
   String? get locationId => stringOrNull('Location ID');
 
+  /// Might skill level. Scales encounter damage the same way player Might does.
+  num? get mightLevel => numberOrNull('Might Level');
+
+  /// Vitality skill level. Scales encounter HP the same way player Vitality does.
+  num? get vitalityLevel => numberOrNull('Vitality Level');
+
+  /// Derived Combat Level = ceil((Might + Vitality) × 0.75).
   num? get combatLevel => numberOrNull('Combat Level');
 
   num get maximumHp => numberValue('Maximum HP');

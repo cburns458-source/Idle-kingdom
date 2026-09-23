@@ -1,3 +1,4 @@
+import type { EnemyRow } from '../data/enemyTypes'
 import type { EquipmentRow, GameDatabase } from '../data/types'
 import { getSkillProgress } from '../activity/xp'
 import {
@@ -36,12 +37,53 @@ export function normalizeAttackStyle(value: unknown): AttackStyle {
 
 /**
  * Combined Combat Level = ceil((Might + Vitality) × 0.75).
+ * Shared by players and enemies.
+ */
+export function combatLevelFromSkills(mightLevel: number, vitalityLevel: number): number {
+  return Math.ceil((Number(mightLevel) + Number(vitalityLevel)) * 0.75)
+}
+
+/**
+ * Combined Combat Level = ceil((Might + Vitality) × 0.75).
  * Replaces the old single Combat skill level everywhere gates/UI need it.
  */
 export function combatLevelOf(save: Pick<PlayerSave, 'skills'>): number {
   const might = getSkillProgress(save as PlayerSave, MIGHT_SKILL_ID).level
   const vitality = getSkillProgress(save as PlayerSave, VITALITY_SKILL_ID).level
-  return Math.ceil((might + vitality) * 0.75)
+  return combatLevelFromSkills(might, vitality)
+}
+
+function enemySkillLevel(raw: number | null | undefined, fallback: number | null | undefined): number {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof fallback === 'number' && Number.isFinite(fallback)) return fallback
+  return 0
+}
+
+export function enemyMightLevel(enemy: EnemyRow): number {
+  return enemySkillLevel(enemy['Might Level'], enemy['Combat Level'])
+}
+
+export function enemyVitalityLevel(enemy: EnemyRow): number {
+  return enemySkillLevel(enemy['Vitality Level'], enemy['Combat Level'])
+}
+
+export function enemyCombatLevel(enemy: EnemyRow): number {
+  return combatLevelFromSkills(enemyMightLevel(enemy), enemyVitalityLevel(enemy))
+}
+
+/** Encounter HP from table base × Vitality bonus. Boss player-base overrides sit elsewhere. */
+export function enemyScaledMaxHp(enemy: EnemyRow): number {
+  return Math.max(
+    1,
+    scaleStat(Number(enemy['Maximum HP'] ?? 0), skillLevelBonusMultiplier(enemyVitalityLevel(enemy))),
+  )
+}
+
+/** Encounter damage from table base × Might bonus. Boss player-base overrides sit elsewhere. */
+export function enemyScaledDamageRange(enemy: EnemyRow): { min: number; max: number } {
+  const multiplier = skillLevelBonusMultiplier(enemyMightLevel(enemy))
+  const min = scaleStat(Number(enemy['Min Damage'] ?? 0), multiplier)
+  return { min, max: Math.max(min, scaleStat(Number(enemy['Max Damage'] ?? 0), multiplier)) }
 }
 
 /** Multiplier from a single skill's level (Might or Vitality). */

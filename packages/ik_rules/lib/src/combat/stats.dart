@@ -40,10 +40,55 @@ String normalizeAttackStyle(Object? value) {
 }
 
 /// Combined Combat Level = ceil((Might + Vitality) × 0.75).
+/// Shared by players and enemies.
+num combatLevelFromSkills(num mightLevel, num vitalityLevel) {
+  return ((jsNumber(mightLevel) + jsNumber(vitalityLevel)) * 0.75).ceil();
+}
+
+/// Combined Combat Level = ceil((Might + Vitality) × 0.75).
 num combatLevelOf(PlayerSave save) {
   final might = getSkillProgress(save, mightSkillId).level;
   final vitality = getSkillProgress(save, vitalitySkillId).level;
-  return ((might + vitality) * 0.75).ceil();
+  return combatLevelFromSkills(might, vitality);
+}
+
+num _enemySkillLevel(Object? raw, Object? fallback) {
+  if (raw is num && raw.isFinite) return raw;
+  if (fallback is num && fallback.isFinite) return fallback;
+  return 0;
+}
+
+num enemyMightLevel(EnemyRow enemy) {
+  return _enemySkillLevel(enemy.raw['Might Level'], enemy.raw['Combat Level']);
+}
+
+num enemyVitalityLevel(EnemyRow enemy) {
+  return _enemySkillLevel(enemy.raw['Vitality Level'], enemy.raw['Combat Level']);
+}
+
+num enemyCombatLevel(EnemyRow enemy) {
+  return combatLevelFromSkills(enemyMightLevel(enemy), enemyVitalityLevel(enemy));
+}
+
+/// Encounter HP from table base × Vitality bonus. Boss player-base overrides sit elsewhere.
+num enemyScaledMaxHp(EnemyRow enemy) {
+  return math.max(
+    1,
+    _scaleStat(
+      jsNumber(enemy.raw['Maximum HP']),
+      skillLevelBonusMultiplier(enemyVitalityLevel(enemy)),
+    ),
+  );
+}
+
+/// Encounter damage from table base × Might bonus. Boss player-base overrides sit elsewhere.
+DamageRange enemyScaledDamageRange(EnemyRow enemy) {
+  final multiplier = skillLevelBonusMultiplier(enemyMightLevel(enemy));
+  final min = _scaleStat(jsNumber(enemy.raw['Min Damage']), multiplier);
+  return DamageRange(
+    min: min,
+    max: math.max(min, _scaleStat(jsNumber(enemy.raw['Max Damage']), multiplier)),
+  );
 }
 
 /// Multiplier from a single skill's level (Might or Vitality).

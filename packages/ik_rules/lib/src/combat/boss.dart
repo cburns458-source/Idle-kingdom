@@ -113,7 +113,7 @@ num enemyEncounterMaxHp(GameDatabase db, PlayerSave save, EnemyRow enemy) {
   if (profile?.playerBaseHpScale != null) {
     return math.max(1, (playerBaseMaxHp(db, save) * profile!.playerBaseHpScale!).floor());
   }
-  return jsNumber(enemy.raw['Maximum HP']);
+  return enemyScaledMaxHp(enemy);
 }
 
 ({num min, num max})? _playerBaseDamagePctFromNotes(EnemyRow enemy) {
@@ -136,10 +136,7 @@ DamageRange enemyEncounterDamageRange(GameDatabase db, PlayerSave save, EnemyRow
     final max = math.max(min, (base * pct.max / 100).floor());
     return DamageRange(min: min, max: max);
   }
-  return DamageRange(
-    min: jsNumber(enemy.raw['Min Damage']),
-    max: jsNumber(enemy.raw['Max Damage']),
-  );
+  return enemyScaledDamageRange(enemy);
 }
 
 bool isBossAddFight(PlayerSave save) {

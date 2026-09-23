@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../combat/stats.dart';
 import '../equipment/tooltips.dart';
 import '../inventory/sort.dart';
 import '../js_compat.dart';
@@ -710,7 +711,7 @@ class CodexIndex {
 
     final enemyRows = [...db.enemies];
     enemyRows.sort((a, b) {
-      final level = jsNumber(a.combatLevel ?? 0).compareTo(jsNumber(b.combatLevel ?? 0));
+      final level = enemyCombatLevel(a).compareTo(enemyCombatLevel(b));
       if (level != 0) return level;
       return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
     });
@@ -731,10 +732,10 @@ class CodexIndex {
       _enemies[enemy.enemyId] = CodexEnemyEntry(
         enemyId: enemy.enemyId,
         displayName: enemy.displayName,
-        combatLevel: enemy.combatLevel,
-        maximumHp: enemy.maximumHp,
-        minDamage: enemy.minDamage,
-        maxDamage: enemy.maxDamage,
+        combatLevel: enemyCombatLevel(enemy),
+        maximumHp: enemyScaledMaxHp(enemy),
+        minDamage: enemyScaledDamageRange(enemy).min,
+        maxDamage: enemyScaledDamageRange(enemy).max,
         combatXp: enemy.combatXp,
         xpSkillLabel: fishingEnemyIds.contains(enemy.enemyId) ? 'Fishing' : 'Might',
         minimumGold: enemy.minimumGold,

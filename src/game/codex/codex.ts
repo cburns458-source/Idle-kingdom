@@ -1,4 +1,9 @@
 import { equipmentForItemId, equipmentTooltipStatLines } from '../equipment/tooltips'
+import {
+  enemyCombatLevel,
+  enemyScaledDamageRange,
+  enemyScaledMaxHp,
+} from '../combat/stats'
 import type { ActionRow, EnemyRow, FacilityRow, GameDatabase } from '../data/types'
 import {
   INVENTORY_GROUP_ORDER,
@@ -484,7 +489,7 @@ export class CodexIndex {
 
     const enemies = [...this.db.Enemies]
     enemies.sort((a, b) => {
-      const level = (a['Combat Level'] ?? 0) - (b['Combat Level'] ?? 0)
+      const level = enemyCombatLevel(a) - enemyCombatLevel(b)
       if (level !== 0) return level
       return a['Display Name'].toLowerCase().localeCompare(b['Display Name'].toLowerCase())
     })
@@ -501,10 +506,10 @@ export class CodexIndex {
       this.enemiesById.set(enemy['Enemy ID'], {
         enemyId: enemy['Enemy ID'],
         displayName: enemy['Display Name'],
-        combatLevel: enemy['Combat Level'],
-        maximumHp: enemy['Maximum HP'],
-        minDamage: enemy['Min Damage'],
-        maxDamage: enemy['Max Damage'],
+        combatLevel: enemyCombatLevel(enemy),
+        maximumHp: enemyScaledMaxHp(enemy),
+        minDamage: enemyScaledDamageRange(enemy).min,
+        maxDamage: enemyScaledDamageRange(enemy).max,
         combatXp: enemy['Combat XP'],
         xpSkillLabel: fishingEnemyIds.has(enemy['Enemy ID']) ? 'Fishing' : 'Might',
         minimumGold: enemy['Minimum Gold'],

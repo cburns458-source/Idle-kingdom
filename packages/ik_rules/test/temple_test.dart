@@ -79,10 +79,12 @@ void main() {
     expect(save.currentActionId, 'ACN-0109');
   });
 
-  test('the Monk is a level-10 unarmed training fight with no loot', () {
+  test('the Monk is a Might/Vitality 10 unarmed training fight with no loot', () {
     final enemy = getEnemy(db, 'ENM-0020')!;
     expect(enemy.raw['Display Name'], 'Monk');
-    expect(enemy.raw['Combat Level'], 10);
+    expect(enemy.raw['Might Level'], 10);
+    expect(enemy.raw['Vitality Level'], 10);
+    expect(enemy.raw['Combat Level'], 15);
     expect(enemy.raw['Maximum HP'], 420);
     expect(enemy.raw['Min Damage'], 11);
     expect(enemy.raw['Max Damage'], 33);
@@ -109,7 +111,7 @@ void main() {
     expect(save.currentActivityId, 'ACT-0035');
     expect(save.currentActionId, 'ACN-0172');
     expect(save.combatEnemyId, 'ENM-0020');
-    expect(save.combatEnemyHp, 420);
+    expect(save.combatEnemyHp, 462);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0100'), isTrue);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0145'), isTrue);
   });

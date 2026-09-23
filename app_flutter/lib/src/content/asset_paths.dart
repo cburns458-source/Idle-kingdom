@@ -136,6 +136,18 @@ const Map<String, String> _enemyArt = <String, String>{
   'ENM-0022': 'enemies/enm_ghost.webp',
   'ENM-0023': 'enemies/enm_mother_squid.webp',
   'ENM-0024': 'enemies/enm_squidling.webp',
+  'ENM-0025': 'enemies/enm_wild_boar.webp',
+  'ENM-0026': 'enemies/enm_pirate.webp',
+  'ENM-0027': 'enemies/enm_seagull.webp',
+  'ENM-0028': 'enemies/enm_monk.webp',
+  'ENM-0029': 'enemies/enm_pirate.webp',
+  'ENM-0030': 'enemies/enm_seagull.webp',
+  'ENM-0031': 'enemies/enm_rock_troll.webp',
+  'ENM-0032': 'enemies/enm_rock_troll.webp',
+  'ENM-0033': 'enemies/enm_dragon.webp',
+  'ENM-0034': 'enemies/enm_elder_rock_troll.webp',
+  'ENM-0035': 'enemies/enm_corrupted_ent.webp',
+  'ENM-0036': 'enemies/enm_elder_rock_troll.webp',
 };
 
 /// Transparent workstation art for Standard Production stations.

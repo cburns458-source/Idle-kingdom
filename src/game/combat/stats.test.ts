@@ -3,8 +3,15 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
+import { enemyEncounterDamageRange, enemyEncounterMaxHp } from './boss'
 import {
+  combatLevelFromSkills,
   combatLevelOf,
+  enemyCombatLevel,
+  enemyMightLevel,
+  enemyScaledDamageRange,
+  enemyScaledMaxHp,
+  enemyVitalityLevel,
   mightDamageMultiplier,
   normalizeAttackStyle,
   playerDamageRange,
@@ -64,8 +71,73 @@ describe('might / vitality combat stats', () => {
   it('rounds Combat Level up from Might and Vitality', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
+    expect(combatLevelFromSkills(1, 1)).toBe(2)
     expect(combatLevelOf(save)).toBe(2)
     expect(combatLevelOf(withSkillLevels(save, { 'SKL-0001': 10, 'SKL-0016': 3 }))).toBe(10)
+  })
+
+  it('gives existing enemies Might and Vitality equal to their original combat level', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    const cow = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    const scout = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0003')!
+    expect(enemyMightLevel(cow)).toBe(1)
+    expect(enemyVitalityLevel(cow)).toBe(1)
+    expect(enemyCombatLevel(cow)).toBe(2)
+    expect(enemyScaledMaxHp(cow)).toBe(100)
+    expect(enemyEncounterMaxHp(launch, save, cow)).toBe(100)
+    expect(enemyEncounterDamageRange(launch, save, cow)).toEqual({ min: 10, max: 20 })
+
+    expect(enemyMightLevel(scout)).toBe(10)
+    expect(enemyVitalityLevel(scout)).toBe(10)
+    expect(enemyCombatLevel(scout)).toBe(15)
+    expect(enemyScaledMaxHp(scout)).toBe(462)
+    expect(enemyScaledDamageRange(scout)).toEqual({ min: 33, max: 66 })
+    expect(enemyEncounterMaxHp(launch, save, scout)).toBe(462)
+    expect(enemyEncounterDamageRange(launch, save, scout)).toEqual({ min: 33, max: 66 })
+  })
+
+  it('keeps the new roster out of locations and drop pools', () => {
+    const { launch, source } = prepareDatabase(rawDatabase)
+    const added = [
+      ['ENM-0025', 'Giant Rat', 3, 150, 12, 26, 200],
+      ['ENM-0026', 'Bandit', 6, 260, 16, 40, 350],
+      ['ENM-0027', 'Cave Bat', 14, 580, 37, 73, 870],
+      ['ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1200],
+      ['ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 1600],
+      ['ENM-0030', 'Harpy', 48, 3860, 152, 268, 9000],
+      ['ENM-0031', 'Giant', 51, 4440, 164, 288, 10800],
+      ['ENM-0032', 'Gargoyle', 58, 5940, 192, 338, 16600],
+      ['ENM-0033', 'Wyvern', 67, 7920, 236, 404, 26000],
+      ['ENM-0034', 'Cyclops', 70, 9000, 260, 440, 31250],
+      ['ENM-0035', 'Demon', 82, 15000, 475, 745, 64500],
+      ['ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 82000],
+    ] as const
+    const addedIds = new Set(added.map(([id]) => id))
+    for (const [id, name, level, hp, min, max, xp] of added) {
+      const enemy = launch.Enemies.find((row) => row['Enemy ID'] === id)
+      expect(enemy, id).toBeDefined()
+      expect(enemy!['Display Name']).toBe(name)
+      expect(enemyMightLevel(enemy!)).toBe(level)
+      expect(enemyVitalityLevel(enemy!)).toBe(level)
+      expect(enemyCombatLevel(enemy!)).toBe(combatLevelFromSkills(level, level))
+      expect(enemy!['Maximum HP']).toBe(hp)
+      expect(enemy!['Min Damage']).toBe(min)
+      expect(enemy!['Max Damage']).toBe(max)
+      expect(enemy!['Combat XP']).toBe(xp)
+      expect(enemy!['Location ID']).toBeNull()
+      expect(enemy!['Drop Chance']).toBe(0)
+      expect(enemy!['Reward Table ID']).toBeNull()
+      expect(enemy!['Minimum Gold']).toBe(0)
+      expect(enemy!['Maximum Gold']).toBe(0)
+    }
+    expect(source.Actions.some((row) => addedIds.has(String(row['Target ID'] ?? '')))).toBe(false)
+    expect(
+      source.PoolEntries.some((row) => {
+        const action = source.Actions.find((entry) => entry['Action ID'] === row['Action ID'])
+        return action ? addedIds.has(String(action['Target ID'] ?? '')) : false
+      }),
+    ).toBe(false)
   })
 
   it('gives no level bonus below skill level 10', () => {
