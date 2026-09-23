@@ -34,6 +34,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     this.showSettingsButton = false,
     this.allowLongPressEdit = true,
     this.listenToController = true,
+    this.tight = false,
     this.onSelectPreset,
     this.onMessage,
   });
@@ -51,6 +52,9 @@ class EquipmentPresetsBar extends StatelessWidget {
   /// with [controller] (e.g. inventory under the shell listen).
   final bool listenToController;
 
+  /// Intrinsic-width row of square chips (stage strip). Horizontal chips otherwise expand.
+  final bool tight;
+
   final ValueChanged<int>? onSelectPreset;
   final ValueChanged<String>? onMessage;
 
@@ -60,7 +64,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     return ListenableBuilder(listenable: controller, builder: (context, _) => _bar(context));
   }
 
-  bool get _stageSquareChips => compact && axis == Axis.vertical;
+  bool get _stageSquareChips => compact && (axis == Axis.vertical || tight);
 
   Widget _bar(BuildContext context) {
     final save = controller.save;
@@ -108,10 +112,11 @@ class EquipmentPresetsBar extends StatelessWidget {
     }
     final buttons = [...presetButtons, ?saveChip, ?settings];
     return Row(
+      mainAxisSize: tight ? MainAxisSize.min : MainAxisSize.max,
       children: [
         for (var i = 0; i < buttons.length; i += 1) ...[
           if (i > 0) SizedBox(width: gap),
-          Expanded(child: buttons[i]),
+          if (tight) buttons[i] else Expanded(child: buttons[i]),
         ],
       ],
     );

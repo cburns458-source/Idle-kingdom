@@ -32,6 +32,11 @@ const double _stageFooterHeight = 8;
 /// to shoulder in the middle of a wide window instead of drifting apart.
 const double _stageMaxWidth = 460;
 
+/// Preset + food + potion strip under the portraits. Same height as the chips.
+const double _stageChipSide = 44;
+const double _stageLoadoutStripHeight = _stageChipSide;
+const double _stageLoadoutStripGap = 6;
+
 const Color _playerHitColor = Color(0xFFFF8A3D);
 const Color _critHitColor = Color(0xFFFFD166);
 const Color _offhandHitColor = Color(0xFFF0A868);
@@ -167,54 +172,20 @@ class LocationIdlePlayer extends StatelessWidget {
                   active: save.currentActivityId != null,
                   actionKey: save.currentActivityId,
                   child: _TwoPortraits(
-                    player: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            EquipmentPresetsBar(
-                              controller: controller,
-                              axis: Axis.vertical,
-                              compact: true,
-                              showSaveButton: false,
-                              allowLongPressEdit: false,
-                              listenToController: false,
-                              onMessage: controller.announce,
-                            ),
-                            if (controller.showEatButton) ...[
-                              const SizedBox(height: 4),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _StageEatNowButton(controller: controller),
-                                  const SizedBox(width: 4),
-                                  _StagePotionButton(controller: controller),
-                                ],
-                              ),
-                            ],
-                          ],
+                    player: IgnorePointer(
+                      child: _playerWithPet(
+                        save: save,
+                        player: _Portrait(
+                          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                          bytes: controller.localPlayerPng,
+                          semanticsLabel: 'Adventurer',
+                          alignment: Alignment.centerRight,
+                          height: _playerArtHeight,
+                          slotHeight: _portraitSlotHeight,
+                          filterQuality: FilterQuality.high,
+                          hop: save.currentActivityId != null ? _StageHopKind.player : null,
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: IgnorePointer(
-                            child: _playerWithPet(
-                              save: save,
-                              player: _Portrait(
-                                assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-                                bytes: controller.localPlayerPng,
-                                semanticsLabel: 'Adventurer',
-                                alignment: Alignment.centerRight,
-                                height: _playerArtHeight,
-                                slotHeight: _portraitSlotHeight,
-                                filterQuality: FilterQuality.high,
-                                hop: save.currentActivityId != null ? _StageHopKind.player : null,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     scene: _groundedSceneArt(controller),
                     playerCaption: ExcludeSemantics(
@@ -235,6 +206,8 @@ class LocationIdlePlayer extends StatelessWidget {
                     sceneCaption: const SizedBox(height: _captionMinHeight),
                   ),
                 ),
+                const SizedBox(height: _stageLoadoutStripGap),
+                _StageLoadoutStrip(controller: controller),
                 const SizedBox(height: 7),
                 const SizedBox(height: _stageFooterHeight),
               ],
@@ -484,11 +457,19 @@ class PvpActionStage extends StatelessWidget {
 }
 
 class _StageShell extends StatelessWidget {
-  const _StageShell({required this.semanticsLabel, required this.scene, required this.footer});
+  const _StageShell({
+    required this.semanticsLabel,
+    required this.scene,
+    required this.footer,
+    this.reserveLoadoutStrip = false,
+  });
 
   final String semanticsLabel;
   final Widget scene;
   final Widget footer;
+
+  /// Leave a hole under the captions so the location-plate loadout strip shows.
+  final bool reserveLoadoutStrip;
 
   @override
   Widget build(BuildContext context) {
@@ -505,7 +486,15 @@ class _StageShell extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [scene, const SizedBox(height: 7), footer],
+            children: [
+              scene,
+              if (reserveLoadoutStrip) ...[
+                const SizedBox(height: _stageLoadoutStripGap),
+                const SizedBox(height: _stageLoadoutStripHeight),
+              ],
+              const SizedBox(height: 7),
+              footer,
+            ],
           ),
         ),
       ),
@@ -892,6 +881,7 @@ class _CombatStage extends StatelessWidget {
 
     final shell = _StageShell(
       semanticsLabel: 'Combat',
+      reserveLoadoutStrip: true,
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -1150,6 +1140,7 @@ class _GatheringStage extends StatelessWidget {
 
     return _StageShell(
       semanticsLabel: 'Gathering',
+      reserveLoadoutStrip: true,
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -1213,6 +1204,7 @@ class _ProductionStage extends StatelessWidget {
 
     return _StageShell(
       semanticsLabel: 'Production',
+      reserveLoadoutStrip: true,
       scene: _TwoPortraits(
         player: const SizedBox(height: _portraitSlotHeight),
         scene: _Portrait(
@@ -1444,10 +1436,43 @@ Offset _floaterOffset(int seq, int salt) {
   return Offset(((mixed % 49) - 24).toDouble(), (((mixed ~/ 7) % 37) - 18).toDouble());
 }
 
-/// Shared stage chip for equipped food / potion under the presets.
-const double _stageChipSide = 44;
+/// Presets, food, and potion under the portraits for any primary activity.
+class _StageLoadoutStrip extends StatelessWidget {
+  const _StageLoadoutStrip({required this.controller});
 
-/// Icon-only Eat now under the location-stage presets. Uses equipped food;
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _stageLoadoutStripHeight,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            EquipmentPresetsBar(
+              controller: controller,
+              compact: true,
+              tight: true,
+              showSaveButton: false,
+              allowLongPressEdit: false,
+              listenToController: false,
+              onMessage: controller.announce,
+            ),
+            const SizedBox(width: 8),
+            _StageEatNowButton(controller: controller),
+            const SizedBox(width: 4),
+            _StagePotionButton(controller: controller),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Icon-only Eat now on the location-stage loadout strip. Uses equipped food;
 /// when auto-eat is off, one tap per combat round is allowed.
 class _StageEatNowButton extends StatelessWidget {
   const _StageEatNowButton({required this.controller});
@@ -1540,6 +1565,8 @@ class _StagePotionButton extends StatelessWidget {
     final itemId = effect?.itemId ?? potion?.itemId;
     final item = itemId == null ? null : controller.indexes.itemsById[itemId];
     final stackQty = potion?.quantity ?? 0;
+    final equipped = potion != null && stackQty > 0;
+    final lastAction = !equipped && remaining > 0;
     final label = paused
         ? 'Potions paused'
         : remaining > 0
@@ -1553,61 +1580,66 @@ class _StagePotionButton extends StatelessWidget {
       label: label,
       child: Tooltip(
         message: paused ? 'Resume potions' : 'Pause potions',
-        child: Material(
-          color: Colors.transparent,
-          shape: PixelSteppedBorder(step: 2, side: const BorderSide(color: Palette.edge)),
-          clipBehavior: Clip.antiAlias,
-          child: Ink(
-            decoration: chromeSlotFill(context),
-            child: InkWell(
-              onTap: controller.togglePotionsPaused,
-              customBorder: PixelSteppedBorder(step: 2),
-              child: SizedBox(
-                width: _stageChipSide,
-                height: _stageChipSide,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Center(
-                      child: item == null
-                          ? SlotGlyph(slotId: potionSlotId, size: 36)
-                          : ItemIcon(item: item, size: 36),
-                    ),
-                    if (stackQty > 0)
-                      Positioned(
-                        right: 1,
-                        bottom: 0,
-                        child: Text(
-                          '${stackQty.round()}',
-                          style: TextStyle(
-                            fontFamily: gameFontFamily,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w400,
-                            color: Palette.parchmentText,
-                            shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+        child: Opacity(
+          opacity: equipped ? 1 : 0.45,
+          child: Material(
+            color: Colors.transparent,
+            shape: PixelSteppedBorder(step: 2, side: const BorderSide(color: Palette.edge)),
+            clipBehavior: Clip.antiAlias,
+            child: Ink(
+              decoration: chromeSlotFill(context),
+              child: InkWell(
+                onTap: controller.togglePotionsPaused,
+                customBorder: PixelSteppedBorder(step: 2),
+                child: SizedBox(
+                  width: _stageChipSide,
+                  height: _stageChipSide,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Center(
+                        child: item == null
+                            ? SlotGlyph(slotId: potionSlotId, size: 36)
+                            : ItemIcon(item: item, size: 36),
+                      ),
+                      if (equipped || lastAction)
+                        Positioned(
+                          right: 1,
+                          bottom: 0,
+                          child: Text(
+                            '${stackQty.round()}',
+                            style: TextStyle(
+                              fontFamily: gameFontFamily,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w400,
+                              color: Palette.parchmentText,
+                              shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+                            ),
                           ),
                         ),
-                      ),
-                    if (remaining > 0)
-                      Positioned(
-                        right: 0,
-                        top: -1,
-                        child: Text(
-                          '${remaining.round()}',
-                          style: TextStyle(
-                            fontFamily: gameFontFamily,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Palette.gold,
-                            shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+                      if (remaining > 0)
+                        Positioned(
+                          right: 0,
+                          top: -1,
+                          child: Text(
+                            '${remaining.round()}',
+                            style: TextStyle(
+                              fontFamily: gameFontFamily,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Palette.gold,
+                              shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
+                            ),
                           ),
                         ),
-                      ),
-                    if (paused)
-                      const Positioned.fill(
-                        child: Center(child: Text('🚫', style: TextStyle(fontSize: 22, height: 1))),
-                      ),
-                  ],
+                      if (paused)
+                        const Positioned.fill(
+                          child: Center(
+                            child: Text('🚫', style: TextStyle(fontSize: 22, height: 1)),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

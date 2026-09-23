@@ -689,7 +689,16 @@ void main() {
     expect(potion, findsOne);
     expect(tester.getSize(eat), const Size(44, 44));
     expect(tester.getSize(potion), const Size(44, 44));
-    expect(tester.getTopLeft(eat).dx, tester.getTopLeft(find.byKey(const Key('preset-chip-0'))).dx);
+    final player = tester.getRect(
+      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
+    );
+    final presets = tester.getRect(find.byKey(const Key('preset-chip-0')));
+    expect(presets.top, greaterThan(player.bottom - 4));
+    expect(tester.getTopLeft(eat).dy, closeTo(presets.top, 12));
+    expect(
+      tester.getTopLeft(eat).dx,
+      greaterThan(tester.getBottomRight(find.byKey(const Key('preset-chip-3'))).dx),
+    );
     expect(tester.getTopLeft(potion).dy, tester.getTopLeft(eat).dy);
     expect(tester.getTopLeft(potion).dx, greaterThan(tester.getTopLeft(eat).dx));
 
@@ -736,6 +745,12 @@ void main() {
     expect(potion, findsOne);
     expect(tester.getTopLeft(potion).dy, tester.getTopLeft(eat).dy);
     expect(tester.getTopLeft(potion).dx, greaterThan(tester.getTopLeft(eat).dx));
+    expect(
+      tester
+          .widgetList<Opacity>(find.descendant(of: potion, matching: find.byType(Opacity)))
+          .any((fade) => fade.opacity == 0.45),
+      isTrue,
+    );
 
     await tester.tap(potion);
     await tester.pump();
@@ -743,7 +758,7 @@ void main() {
     expect(find.text('🚫'), findsOne);
   });
 
-  testWidgets('hiding the eat setting removes the stage eat chip', (tester) async {
+  testWidgets('hiding the eat setting keeps the stage eat and potion chips', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(
@@ -753,8 +768,8 @@ void main() {
     );
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
-    expect(find.byKey(const Key('stage-eat-now')), findsNothing);
-    expect(find.byKey(const Key('stage-potion')), findsNothing);
+    expect(find.byKey(const Key('stage-eat-now')), findsOne);
+    expect(find.byKey(const Key('stage-potion')), findsOne);
     expect(find.byType(EquipmentPresetsBar), findsOne);
   });
 
@@ -1005,5 +1020,33 @@ void main() {
     await tester.pump();
     expect(controller.save.settings.potionsPaused, isTrue);
     expect(find.text('🚫'), findsOne);
+  });
+
+  testWidgets('an emptying potion chip shows 0 while the last action runs', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: 'LOC-0001',
+        currentActivityId: 'ACT-0001',
+        activePotionEffect: const ActivePotionEffect(
+          scope: 'one_action',
+          itemId: 'ITEM-0070',
+          relativeDropChanceBonusPercent: 25,
+          actionsRemaining: 2,
+        ),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    final potion = find.byKey(const Key('stage-potion'));
+    expect(potion, findsOne);
+    expect(find.descendant(of: potion, matching: find.text('0')), findsOne);
+    expect(
+      tester
+          .widgetList<Opacity>(find.descendant(of: potion, matching: find.byType(Opacity)))
+          .any((fade) => fade.opacity == 0.45),
+      isTrue,
+    );
   });
 }

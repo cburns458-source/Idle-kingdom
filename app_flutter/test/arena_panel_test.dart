@@ -237,5 +237,8 @@ void main() {
       }),
       findsOne,
     );
+    expect(find.byKey(const Key('stage-eat-now')), findsNothing);
+    expect(find.byKey(const Key('stage-potion')), findsNothing);
+    expect(find.byKey(const Key('preset-chip-0')), findsNothing);
   });
 }
