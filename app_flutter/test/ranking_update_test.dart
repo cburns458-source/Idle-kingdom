@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/ui/social_bits.dart';
 import 'package:idle_kingdoms/src/ui/social_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
@@ -9,6 +10,22 @@ import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import 'support/harness.dart';
+
+int _visibleOwnRows(WidgetTester tester, String name) {
+  final list = tester.getRect(find.byType(ListView));
+  var visible = 0;
+  for (final element
+      in find
+          .byWidgetPredicate((widget) => widget is SocialRow && widget.title == name)
+          .evaluate()) {
+    final box = element.renderObject as RenderBox?;
+    if (box == null || !box.hasSize) continue;
+    final rect = box.localToGlobal(Offset.zero) & box.size;
+    final overlap = rect.intersect(list);
+    if (overlap.height > 8 && overlap.width > 8) visible += 1;
+  }
+  return visible;
+}
 
 void main() {
   late LoadedDatabase database;
@@ -224,7 +241,7 @@ void main() {
       service.backend.submitLeaderboardSnapshot(
         database.launch,
         created.session!.userId,
-        boosted(template, level),
+        boosted(template.copyWith(characterName: 'Rival$i'), level),
       );
     }
   }
@@ -291,6 +308,38 @@ void main() {
 
     expect(find.byKey(const ValueKey('own-pin-top')), findsOne);
     expect(find.byKey(const ValueKey('own-pin-bottom')), findsNothing);
+    expect(_visibleOwnRows(tester, 'Vari'), 1);
+    final pin = tester.getRect(find.byKey(const ValueKey('own-pin-top')));
+    final list = tester.getRect(find.byType(ListView));
+    expect(pin.top, greaterThanOrEqualTo(list.top - 1));
+  });
+
+  testWidgets('a visible own row is not pinned above the list', (tester) async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database).copyWith(characterName: 'Vari');
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (save, {nowMs}) {});
+    seedRivals(net.service as LocalMultiplayerService, save, count: 1, level: 40);
+    await net.openLeaderboards(save);
+
+    final game = buildController(database, seed: save, clock: clock);
+    addTearDown(game.dispose);
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: net,
+        builder: (context, _) =>
+            SocialView(controller: game, multiplayer: net, section: SocialTab.leaderboards),
+      ),
+      size: const Size(420, 360),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('own-pin-top')), findsNothing);
+    expect(find.byKey(const ValueKey('own-pin-bottom')), findsNothing);
+    expect(_visibleOwnRows(tester, 'Vari'), 1);
   });
 
   test('a draft name color waits for the scheduled ranking submit', () async {

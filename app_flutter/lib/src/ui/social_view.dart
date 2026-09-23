@@ -258,11 +258,25 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
     final ownHeight = _ownHeight!;
     final ownDy = _ownContentY! - pixels;
 
-    // Pin one row sooner than fully off-screen, but never while the row is still
-    // fully inside the viewport (e.g. sitting at the top of the list).
-    final pinMargin = ownHeight + 6;
-    final leavingTop = ownDy < 0 && ownDy + ownHeight <= pinMargin;
-    final leavingBottom = ownDy + ownHeight > listHeight && ownDy >= listHeight - pinMargin;
+    // Prefer the live list row when it is built: a stale content-Y would keep
+    // the pin on after the row is still fully on screen.
+    var leavingTop = ownDy + ownHeight <= 0;
+    var leavingBottom = ownDy >= listHeight;
+    if (ownContext != null) {
+      final ownBox = ownContext.findRenderObject();
+      if (ownBox is RenderBox && ownBox.hasSize) {
+        final liveDy = ownBox.localToGlobal(Offset.zero, ancestor: listBox).dy;
+        final liveBottom = liveDy + ownBox.size.height;
+        if (liveDy >= -1 && liveBottom <= listHeight + 1) {
+          leavingTop = false;
+          leavingBottom = false;
+        } else {
+          leavingTop = liveBottom <= 0;
+          leavingBottom = liveDy >= listHeight;
+        }
+      }
+    }
+
     final next = leavingTop
         ? _OwnPin.top
         : leavingBottom
@@ -343,53 +357,60 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
             },
           ),
           const SizedBox(height: 10),
-          if (own != null && _pin == _OwnPin.top) ...[
-            KeyedSubtree(
-              key: const ValueKey('own-pin-top'),
-              child: _row(context, own, pinned: true),
-            ),
-            const SizedBox(height: 6),
-          ],
           Expanded(
             child: rows.isEmpty
                 ? ListView(
                     padding: EdgeInsets.zero,
                     children: [MutedText(emptyBoardMessage(multiplayer.boardKey))],
                   )
-                : NotificationListener<ScrollNotification>(
-                    onNotification: (_) {
-                      _updatePin();
-                      return false;
-                    },
-                    child: ListView.builder(
-                      key: _listKey,
-                      controller: _scroll,
-                      padding: EdgeInsets.zero,
-                      itemCount: rows.length,
-                      itemBuilder: (context, index) {
-                        final row = rows[index];
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            KeyedSubtree(
-                              key: _isOwn(row) ? _ownKey : ValueKey(row.entryId),
-                              child: _row(context, row),
-                            ),
-                            const SizedBox(height: 6),
-                          ],
-                        );
-                      },
-                    ),
+                : Stack(
+                    clipBehavior: Clip.hardEdge,
+                    children: [
+                      NotificationListener<ScrollNotification>(
+                        onNotification: (_) {
+                          _updatePin();
+                          return false;
+                        },
+                        child: ListView.builder(
+                          key: _listKey,
+                          controller: _scroll,
+                          padding: EdgeInsets.zero,
+                          itemCount: rows.length,
+                          itemBuilder: (context, index) {
+                            final row = rows[index];
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                KeyedSubtree(
+                                  key: _isOwn(row) ? _ownKey : ValueKey(row.entryId),
+                                  child: _row(context, row),
+                                ),
+                                const SizedBox(height: 6),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      if (own != null && _pin == _OwnPin.top)
+                        Align(
+                          alignment: Alignment.topCenter,
+                          child: KeyedSubtree(
+                            key: const ValueKey('own-pin-top'),
+                            child: _row(context, own, pinned: true),
+                          ),
+                        ),
+                      if (own != null && _pin == _OwnPin.bottom)
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: KeyedSubtree(
+                            key: const ValueKey('own-pin-bottom'),
+                            child: _row(context, own, pinned: true),
+                          ),
+                        ),
+                    ],
                   ),
           ),
-          if (own != null && _pin == _OwnPin.bottom) ...[
-            const SizedBox(height: 6),
-            KeyedSubtree(
-              key: const ValueKey('own-pin-bottom'),
-              child: _row(context, own, pinned: true),
-            ),
-          ],
         ],
       ),
     );
