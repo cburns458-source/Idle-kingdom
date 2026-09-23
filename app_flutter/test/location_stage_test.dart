@@ -97,6 +97,9 @@ void main() {
     expect(find.bySemanticsLabel('Adventurer'), findsOne);
     expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')), findsOne);
     expect(find.bySemanticsLabel('Action progress'), findsOne);
+    final actionBar = tester.getRect(find.bySemanticsLabel('Action progress'));
+    final gatherPresets = tester.getRect(find.byKey(const Key('preset-chip-0')));
+    expect(actionBar.bottom, lessThanOrEqualTo(gatherPresets.top + 2));
 
     final player = tester.getRect(find.bySemanticsLabel('Adventurer'));
     final action = tester.getRect(
@@ -217,6 +220,9 @@ void main() {
     expect(find.bySemanticsLabel('Player health'), findsOne);
     expect(find.bySemanticsLabel('${enemy.displayName} health'), findsOne);
     expect(find.bySemanticsLabel('Round progress'), findsOne);
+    final roundBar = tester.getRect(find.bySemanticsLabel('Round progress'));
+    final combatPresets = tester.getRect(find.byKey(const Key('preset-chip-0')));
+    expect(roundBar.bottom, lessThanOrEqualTo(combatPresets.top + 2));
 
     clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
     controller.tick();

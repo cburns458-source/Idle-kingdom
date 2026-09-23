@@ -206,10 +206,10 @@ class LocationIdlePlayer extends StatelessWidget {
                     sceneCaption: const SizedBox(height: _captionMinHeight),
                   ),
                 ),
-                const SizedBox(height: _stageLoadoutStripGap),
-                _StageLoadoutStrip(controller: controller),
                 const SizedBox(height: 7),
                 const SizedBox(height: _stageFooterHeight),
+                const SizedBox(height: _stageLoadoutStripGap),
+                _StageLoadoutStrip(controller: controller),
               ],
             ),
           ),
@@ -468,7 +468,7 @@ class _StageShell extends StatelessWidget {
   final Widget scene;
   final Widget footer;
 
-  /// Leave a hole under the captions so the location-plate loadout strip shows.
+  /// Leave a hole under the timer so the location-plate loadout strip shows.
   final bool reserveLoadoutStrip;
 
   @override
@@ -488,12 +488,12 @@ class _StageShell extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               scene,
+              const SizedBox(height: 7),
+              footer,
               if (reserveLoadoutStrip) ...[
                 const SizedBox(height: _stageLoadoutStripGap),
                 const SizedBox(height: _stageLoadoutStripHeight),
               ],
-              const SizedBox(height: 7),
-              footer,
             ],
           ),
         ),
