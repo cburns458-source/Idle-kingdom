@@ -73,7 +73,7 @@ void main() {
     expect(hunt.tables.map((table) => table.label), ['Drops']);
     expect(
       hunt.tables.first.drops.map((row) => row.displayName),
-      containsAll(['Venison', 'Leather', 'Elk Horns', 'Animal Tendons']),
+      containsAll(['Venison', 'Elk Hide', 'Elk Horns', 'Animal Tendons']),
     );
   });
 
@@ -134,7 +134,8 @@ void main() {
     expect(beef.obtainedFrom.any((row) => row.kind == CodexObtainKind.enemy), isTrue);
 
     final cow = codex.enemy('ENM-0001')!;
-    expect(cow.drops.map((row) => row.itemId), containsAll(['ITEM-0054', 'ITEM-0045']));
+    expect(cow.drops.map((row) => row.itemId), containsAll(['ITEM-0054', 'ITEM-0378']));
+    expect(cow.drops.map((row) => row.itemId), isNot(contains('ITEM-0045')));
     expect(cow.drops.where((row) => row.itemId == 'ITEM-0054').length, 1);
     expect(cow.drops.firstWhere((row) => row.itemId == 'ITEM-0054').dropRatePercent, isNotNull);
     expect(cow.locations.map((row) => row.displayName), contains('The Farm'));

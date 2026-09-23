@@ -25,6 +25,7 @@ import {
   type QuestRow,
 } from '../quests/quests'
 import { changeRaceAtNpc, raceChangeOffer, VESPER_ID, type RaceChangeOffer } from '../races/changeRace'
+import { isTannerNpc, tannerOffer, type TannerOffer } from './tanner'
 import {
   currentStepTalkKey,
   getCurrentStepIndex,
@@ -231,6 +232,8 @@ export interface NpcConversation {
   whereabouts?: NpcWhereabouts
   /** Weekly race-change service. Present only on Vesper. */
   raceChange?: RaceChangeOffer
+  /** Hide-to-leather service. Present only on tanners. */
+  tanner?: TannerOffer
 }
 
 function completedNote(
@@ -408,6 +411,7 @@ export function npcConversation(
     .map((quest) => questBlock(db, save, quest, npcId))
   const whereabouts = whereaboutsFor(db, npcId, nowMs)
   const raceChange = npcId === VESPER_ID ? raceChangeOffer(db, save, nowMs) : undefined
+  const tanner = isTannerNpc(npc) ? tannerOffer(db, save) : undefined
   const archmageLocked =
     npcId === ARCHMAGE_ID && getQuestProgress(save, WIZARD_STUDIES_QUEST_ID).status === 'inactive'
   return {
@@ -425,6 +429,7 @@ export function npcConversation(
     quests,
     ...(whereabouts ? { whereabouts } : {}),
     ...(raceChange ? { raceChange } : {}),
+    ...(tanner ? { tanner } : {}),
   }
 }
 

@@ -399,6 +399,8 @@ const Map<String, String> _npcArt = <String, String>{
   'NPC-0014': 'npc/npc_fennel.png',
   'NPC-0015': 'npc/npc_helge.png',
   'NPC-0016': 'npc/npc_wizard_shopkeeper.png',
+  'NPC-0018': 'npc/npc_general_store_merchant.png',
+  'NPC-0019': 'npc/npc_general_store_merchant.png',
 };
 
 /// Named plate for an NPC, copied from a gender-matched player sprite.

@@ -1286,6 +1286,17 @@ class GameController extends ChangeNotifier {
     return null;
   }
 
+  /// Pays the hide tanner to turn selected hides into leather.
+  String? tanHidesWithTanner(String npcId, Map<String, num> quantities) {
+    final npc = db.npcs.where((row) => row.npcId == npcId).firstOrNull;
+    if (npc == null) return 'This person is not here.';
+    final result = confirmTannerJob(db, save, npc, quantities);
+    if (!result.ok) return result.reason;
+    commit(result.save!);
+    announce(result.message!);
+    return null;
+  }
+
   /// Swaps race after the first pick. Does not re-grant a starter kit.
   String? debugChangeRace(String raceId) {
     final result = assignRace(db, save, raceId);

@@ -724,6 +724,20 @@ void main() {
     expect(find.text('Smithing forge'), findsOne);
   });
 
+  testWidgets('the workshop People tab lists the hide tanner', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0025'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.widgetWithText(GameButton, 'People'), findsOne);
+    await tester.tap(find.widgetWithText(GameButton, 'People'));
+    await tester.pump();
+    expect(find.text('Hide Tanner'), findsOne);
+  });
+
   testWidgets('the option band shows one tab per group at the kitchen', (tester) async {
     final controller = buildController(
       database,

@@ -66,7 +66,8 @@ describe('codex index', () => {
     const hunt = codex.action('ACN-0014')!
     expect(hunt.tables.map((table) => table.label)).toEqual(['Drops'])
     const names = hunt.tables[0]!.drops.map((row) => row.displayName)
-    expect(names).toEqual(expect.arrayContaining(['Venison', 'Leather', 'Elk Horns', 'Animal Tendons']))
+    expect(names).toEqual(expect.arrayContaining(['Venison', 'Elk Hide', 'Elk Horns', 'Animal Tendons']))
+    expect(names).not.toContain('Leather')
   })
 
   it('uses the same inventory groups as the bag', () => {
@@ -120,7 +121,7 @@ describe('codex index', () => {
     )
     const cow = codex.enemy('ENM-0001')!
     expect(cow.drops.map((row) => row.itemId)).toEqual(
-      expect.arrayContaining(['ITEM-0054', 'ITEM-0045']),
+      expect.arrayContaining(['ITEM-0054', 'ITEM-0378']),
     )
     expect(cow.drops.filter((row) => row.itemId === 'ITEM-0054')).toHaveLength(1)
     expect(cow.drops.find((row) => row.itemId === 'ITEM-0054')?.dropRatePercent).toEqual(

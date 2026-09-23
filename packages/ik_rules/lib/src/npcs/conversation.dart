@@ -15,6 +15,7 @@ import '../save/generated/save_models.dart';
 import '../world/hostility.dart';
 import 'knowledge.dart';
 import 'roaming.dart';
+import 'tanner.dart';
 
 const String _fallbackMerchantTip = 'Last I heard, Quill was nearby.';
 const String _fallbackMerchantTipSpent = 'Last I heard, Quill was nearby.';
@@ -314,6 +315,7 @@ class NpcConversation {
     required this.quests,
     this.whereabouts,
     this.raceChange,
+    this.tanner,
   });
 
   final String npcId;
@@ -327,6 +329,7 @@ class NpcConversation {
   final List<NpcQuestBlock> quests;
   final NpcWhereabouts? whereabouts;
   final RaceChangeOffer? raceChange;
+  final TannerOffer? tanner;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'npcId': npcId,
@@ -340,6 +343,7 @@ class NpcConversation {
     'quests': quests.map((quest) => quest.toJson()).toList(),
     if (whereabouts != null) 'whereabouts': whereabouts!.toJson(),
     if (raceChange != null) 'raceChange': raceChange!.toJson(),
+    if (tanner != null) 'tanner': tanner!.toJson(),
   };
 }
 
@@ -514,6 +518,7 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, nu
     quests: quests,
     whereabouts: whereabouts,
     raceChange: npcId == vesperId ? raceChangeOffer(db, save, clock) : null,
+    tanner: isTannerNpc(npc) ? tannerOffer(db, save) : null,
   );
 }
 

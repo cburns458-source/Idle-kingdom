@@ -6628,6 +6628,40 @@
       "Notes": null,
       "Base Sell Value": 0,
       "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0378",
+      "Internal Key": "cow_hide",
+      "Display Name": "Cow Hide",
+      "Category": "Resource",
+      "Subtype": "Creature material",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Functional / Source Tags": "cow_or_bull_drop; crafting_input",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A raw hide. A hide tanner can turn it into leather.",
+      "Icon Asset Key": "goat_hide",
+      "Notes": "Placeholder art. Cow and bull drop this instead of leather.",
+      "Base Sell Value": 90,
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0379",
+      "Internal Key": "elk_hide",
+      "Display Name": "Elk Hide",
+      "Category": "Resource",
+      "Subtype": "Creature material",
+      "Associated Skill ID": "SKL-0005",
+      "Equipment Slot ID": null,
+      "Functional / Source Tags": "hunting_output; crafting_input",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A raw hide. A hide tanner can turn it into leather.",
+      "Icon Asset Key": "great_stag_hide",
+      "Notes": "Placeholder art. Elk hunts drop this instead of leather.",
+      "Base Sell Value": 180,
+      "Stackable": null
     }
   ],
   "Equipment": [
@@ -20343,14 +20377,14 @@
       "Reward Table Name": "Cow Drops",
       "Purpose": "Enemy item drops",
       "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0045",
+      "Reward ID / Value": "ITEM-0378",
       "Weight": 88,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Equal drop chance/weight as matching Beef entry."
+      "Notes": "Equal drop chance/weight as matching Beef entry. Cow Hide instead of leather."
     },
     {
       "Reward Entry ID": "RWE-0159",
@@ -20358,14 +20392,14 @@
       "Reward Table Name": "Cow Drops",
       "Purpose": "Enemy item drops",
       "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0045",
+      "Reward ID / Value": "ITEM-0378",
       "Weight": 12,
       "Minimum Quantity": 2,
       "Maximum Quantity": 2,
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Equal drop chance/weight as matching Beef entry."
+      "Notes": "Equal drop chance/weight as matching Beef entry. Cow Hide instead of leather."
     },
     {
       "Reward Entry ID": "RWE-0160",
@@ -20373,14 +20407,14 @@
       "Reward Table Name": "Bull Drops",
       "Purpose": "Enemy item drops",
       "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0045",
+      "Reward ID / Value": "ITEM-0378",
       "Weight": 75,
       "Minimum Quantity": 2,
       "Maximum Quantity": 2,
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Equal drop chance/weight as matching Beef entry."
+      "Notes": "Equal drop chance/weight as matching Beef entry. Cow Hide instead of leather."
     },
     {
       "Reward Entry ID": "RWE-0161",
@@ -20388,14 +20422,14 @@
       "Reward Table Name": "Bull Drops",
       "Purpose": "Enemy item drops",
       "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0045",
+      "Reward ID / Value": "ITEM-0378",
       "Weight": 20,
       "Minimum Quantity": 3,
       "Maximum Quantity": 3,
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Equal drop chance/weight as matching Beef entry."
+      "Notes": "Equal drop chance/weight as matching Beef entry. Cow Hide instead of leather."
     },
     {
       "Reward Entry ID": "RWE-0162",
@@ -20508,14 +20542,14 @@
       "Reward Table Name": "Venison Main Reward",
       "Purpose": "Primary Gathering output",
       "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0045",
+      "Reward ID / Value": "ITEM-0379",
       "Weight": 50,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Elk primary drop is split evenly between venison and leather."
+      "Notes": "Elk primary drop is split evenly between venison and Elk Hide."
     },
     {
       "Reward Entry ID": "RWE-0170",
@@ -27110,6 +27144,30 @@
       "Release Phase": "Launch",
       "Description": "Watches the vine-choked path into the deeper woods.",
       "Notes": "Quest giver for Through the Thicket (QST-0010)."
+    },
+    {
+      "NPC ID": "NPC-0018",
+      "Internal Key": "foundry_hide_tanner",
+      "Display Name": "Hide Tanner",
+      "Location ID": "LOC-0025",
+      "Role": "Tanner",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Tans animal hides into leather at the crafting workshop, for a small gold fee.",
+      "Notes": "Trades hides for leather. 2 gold per leather produced.",
+      "Sprite Asset Key": "npc/npc_general_store_merchant.png"
+    },
+    {
+      "NPC ID": "NPC-0019",
+      "Internal Key": "citadel_hide_tanner",
+      "Display Name": "Hide Tanner",
+      "Location ID": "LOC-0030",
+      "Role": "Tanner",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Tans animal hides into leather at the crafting workshop, for a small gold fee.",
+      "Notes": "Trades hides for leather. 2 gold per leather produced.",
+      "Sprite Asset Key": "npc/npc_general_store_merchant.png"
     }
   ],
   "Shops": [
