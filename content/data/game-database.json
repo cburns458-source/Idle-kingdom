@@ -6641,8 +6641,8 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A raw hide. A hide tanner can turn it into leather.",
-      "Icon Asset Key": "goat_hide",
-      "Notes": "Placeholder art. Cow and bull drop this instead of leather.",
+      "Icon Asset Key": "cow_hide",
+      "Notes": "Cow and bull drop this instead of leather.",
       "Base Sell Value": 90,
       "Stackable": null
     },
@@ -6658,8 +6658,8 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A raw hide. A hide tanner can turn it into leather.",
-      "Icon Asset Key": "great_stag_hide",
-      "Notes": "Placeholder art. Elk hunts drop this instead of leather.",
+      "Icon Asset Key": "elk_hide",
+      "Notes": "Elk hunts drop this instead of leather.",
       "Base Sell Value": 180,
       "Stackable": null
     }
