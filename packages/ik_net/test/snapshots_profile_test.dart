@@ -7,6 +7,34 @@ import 'package:test/test.dart';
 GameDatabase _database() => assertGameDatabaseShape(contentDatabaseJson());
 
 void main() {
+  test('ranks Combat Level from Might and Vitality', () {
+    final db = _database();
+    final save = createNewSave(db, 1786568400000);
+    final snapshot = buildLeaderboardSnapshot(db, save);
+    final combat = snapshot.boards.where((board) => board.boardKey == boardCombatLevel).single;
+    expect(combat.value, combatLevelOf(save));
+    expect(combat.secondaryValue, 0);
+
+    final fighter = save.copyWith(
+      skills: [
+        for (final skill in save.skills)
+          skill.skillId == mightSkillId
+              ? skill.copyWith(level: 10, xp: 400)
+              : skill.skillId == vitalitySkillId
+              ? skill.copyWith(level: 6, xp: 120)
+              : skill,
+      ],
+    );
+    final raised = buildLeaderboardSnapshot(
+      db,
+      fighter,
+    ).boards.where((board) => board.boardKey == boardCombatLevel).single;
+    expect(raised.value, 12);
+    expect(raised.secondaryValue, 520);
+    expect(boardLabel(db, boardCombatLevel), 'Combat Level');
+    expect(launchBoardKeys(db).contains(boardCombatLevel), isTrue);
+  });
+
   test('rebuilds public profile skills from the same snapshot rows', () {
     final db = _database();
     final base = createNewSave(db, 1786568400000);

@@ -49,10 +49,14 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
 
   final level = totalLevel(save);
   final xp = totalSkillXp(save);
+  final combatLevel = combatLevelOf(save);
+  final combatXp =
+      getSkillProgress(save, mightSkillId).xp + getSkillProgress(save, vitalitySkillId).xp;
   final pacifist = isPacifistSave(save);
 
   final boards = <LeaderboardBoardValue>[
     LeaderboardBoardValue(boardKey: boardTotalLevel, value: level, secondaryValue: xp),
+    LeaderboardBoardValue(boardKey: boardCombatLevel, value: combatLevel, secondaryValue: combatXp),
     // Zero keeps a fighter off the board without needing a delete: the read
     // drops zero rows, and one is written again the moment they qualify.
     LeaderboardBoardValue(
@@ -105,6 +109,7 @@ LeaderboardSnapshotValues buildLeaderboardSnapshot(GameDatabase db, PlayerSave s
 
 String boardLabel(GameDatabase db, MultiplayerBoardKey boardKey) {
   if (boardKey == boardTotalLevel) return 'Total Level & XP';
+  if (boardKey == boardCombatLevel) return 'Combat Level';
   if (boardKey == boardGuildTotalLevel) return 'Guild Total Level';
   if (boardKey == boardPacifistTotalLevel) return 'Pacifist Total Level';
   if (boardKey == boardTotalExperience) return 'Total XP';
@@ -203,6 +208,7 @@ List<LeaderboardEntry> rankLeaderboardEntries(List<LeaderboardEntry> entries) {
 /// Total XP has no board of its own: it rides along on Total Level & XP.
 List<MultiplayerBoardKey> launchBoardKeys(GameDatabase db) => <MultiplayerBoardKey>[
   boardTotalLevel,
+  boardCombatLevel,
   boardGuildTotalLevel,
   boardPacifistTotalLevel,
   boardGoldEarned,

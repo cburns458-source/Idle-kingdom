@@ -185,11 +185,14 @@ class LocationIdlePlayer extends StatelessWidget {
                             ),
                             if (controller.showEatButton) ...[
                               const SizedBox(height: 4),
-                              _StageEatNowButton(controller: controller),
-                            ],
-                            if (_showStagePotion(controller.save)) ...[
-                              const SizedBox(height: 4),
-                              _StagePotionButton(controller: controller),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _StageEatNowButton(controller: controller),
+                                  const SizedBox(width: 4),
+                                  _StagePotionButton(controller: controller),
+                                ],
+                              ),
                             ],
                           ],
                         ),
@@ -1443,13 +1446,6 @@ Offset _floaterOffset(int seq, int salt) {
 
 /// Shared stage chip for equipped food / potion under the presets.
 const double _stageChipSide = 44;
-
-bool _showStagePotion(PlayerSave save) {
-  if (save.settings.potionsPaused) return true;
-  if (save.activePotionEffect != null) return true;
-  final potion = slotStack(save, potionSlotId);
-  return potion != null && potion.quantity > 0;
-}
 
 /// Icon-only Eat now under the location-stage presets. Uses equipped food;
 /// when auto-eat is off, one tap per combat round is allowed.

@@ -134,6 +134,40 @@ void main() {
     expect(find.byTooltip('Wooden Shield'), findsOne);
   });
 
+  testWidgets('the player profile card is wide enough for skills and long names', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: demoMiraLocationId),
+    );
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await signIn(net);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => openPlayerProfile(
+                context,
+                controller: controller,
+                multiplayer: net,
+                userId: demoMiraId,
+              ),
+              child: const Text('Open profile'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open profile'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Player profile'), findsOne);
+    expect(tester.getSize(find.byKey(const Key('game-popup'))).width, playerProfileCardWidth);
+  });
+
   testWidgets('a profile shows a tall bust with skills beside it', (tester) async {
     final controller = buildController(
       database,

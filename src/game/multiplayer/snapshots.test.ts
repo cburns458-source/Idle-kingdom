@@ -35,6 +35,7 @@ describe('leaderboard snapshot builder', () => {
     const snapshot = buildLeaderboardSnapshot(launch, save)
     const keys = snapshot.boards.map((board) => board.boardKey)
     expect(keys).toContain('total_level')
+    expect(keys).toContain('combat_level')
     expect(keys).toContain('total_level_combat_1')
     // Total XP rides along on the total level board instead of holding its own.
     expect(keys).not.toContain('total_experience')
@@ -60,6 +61,7 @@ describe('leaderboard snapshot builder', () => {
       expect(keys).toContain(`skill:${skill['Skill ID']}`)
     }
     expect(boardLabel(launch, 'total_level')).toBe('Total Level & XP')
+    expect(boardLabel(launch, 'combat_level')).toBe('Combat Level')
     expect(boardLabel(launch, 'total_level_combat_1')).toBe('Pacifist Total Level')
     expect(boardLabel(launch, 'guild_total_level')).toBe('Guild Total Level')
     expect(boardLabel(launch, 'gold')).toBe('Gold')
@@ -95,6 +97,29 @@ describe('leaderboard snapshot builder', () => {
     const total = snapshot.boards.find((board) => board.boardKey === 'total_level')
     expect(total?.value).toBe(totalLevel(save))
     expect(total?.secondaryValue).toBe(totalSkillXp(save))
+  })
+
+  it('ranks Combat Level from Might and Vitality', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = createNewSave(launch)
+    const snapshot = buildLeaderboardSnapshot(launch, save)
+    const combat = snapshot.boards.find((board) => board.boardKey === 'combat_level')
+    expect(combat?.value).toBe(2)
+    expect(combat?.secondaryValue).toBe(0)
+
+    const fighter = {
+      ...save,
+      skills: save.skills.map((skill) => {
+        if (skill.skillId === COMBAT_SKILL_ID) return { ...skill, level: 10, xp: 400 }
+        if (skill.skillId === 'SKL-0016') return { ...skill, level: 6, xp: 120 }
+        return skill
+      }),
+    }
+    const raised = buildLeaderboardSnapshot(launch, fighter).boards.find(
+      (board) => board.boardKey === 'combat_level',
+    )
+    expect(raised?.value).toBe(12)
+    expect(raised?.secondaryValue).toBe(520)
   })
 
   it('stands a fresh character on the pacifist board and a fighter off it', () => {

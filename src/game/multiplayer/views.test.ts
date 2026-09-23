@@ -348,6 +348,7 @@ describe('leaderboard views', () => {
     const db = prepareDatabase(rawDatabase).launch
     const options = boardOptions(db)
     expect(options[0]).toEqual({ key: 'total_level', label: 'Total Level & XP' })
+    expect(options[1]).toEqual({ key: 'combat_level', label: 'Combat Level' })
     expect(options.some((option) => option.key === 'guild_total_level')).toBe(true)
     expect(options.some((option) => option.key === 'log_completion')).toBe(true)
     expect(options.find((option) => option.key === 'log_completion')?.label).toBe('Log Completion')

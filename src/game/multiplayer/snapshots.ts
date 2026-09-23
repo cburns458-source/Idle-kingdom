@@ -4,6 +4,8 @@ import { levelForTotalXp } from '../activity/xp'
 import { logCompletion } from '../log/log'
 import { rankedPvpKd } from '../pvp/matchmaking'
 import { enemyKillCount, launchBossEnemies, totalBossKills } from '../combat/boss'
+import { getSkillProgress } from '../activity/xp'
+import { combatLevelOf, MIGHT_SKILL_ID, VITALITY_SKILL_ID } from '../combat/stats'
 import { isPacifistSave, totalLevel, totalSkillXp } from '../skills/totals'
 import {
   publicEquipmentFromSave,
@@ -37,10 +39,14 @@ export function buildLeaderboardSnapshot(
   )
   const level = totalLevel(save)
   const xp = totalSkillXp(save)
+  const combatLevel = combatLevelOf(save)
+  const combatXp =
+    getSkillProgress(save, MIGHT_SKILL_ID).xp + getSkillProgress(save, VITALITY_SKILL_ID).xp
   const pacifist = isPacifistSave(save)
 
   const boards: LeaderboardBoardValue[] = [
     { boardKey: 'total_level', value: level, secondaryValue: xp },
+    { boardKey: 'combat_level', value: combatLevel, secondaryValue: combatXp },
     // Zero keeps a fighter off the board without needing a delete: the read
     // drops zero rows, and one is written again the moment they qualify.
     {
@@ -83,6 +89,7 @@ export function buildLeaderboardSnapshot(
 
 export function boardLabel(db: GameDatabase, boardKey: MultiplayerBoardKey): string {
   if (boardKey === 'total_level') return 'Total Level & XP'
+  if (boardKey === 'combat_level') return 'Combat Level'
   if (boardKey === 'guild_total_level') return 'Guild Total Level'
   if (boardKey === 'total_level_combat_1') return 'Pacifist Total Level'
   if (boardKey === 'total_experience') return 'Total XP'

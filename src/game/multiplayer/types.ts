@@ -47,6 +47,8 @@ export type MultiplayerBoardKey =
   | 'total_experience'
   /** Total level among players who have never raised Combat past level 1. */
   | 'total_level_combat_1'
+  /** Combined Combat Level = ceil((Might + Vitality) × 0.75). */
+  | 'combat_level'
   | 'gold_earned'
   /** Current purse, not lifetime gold earned. */
   | 'gold'
@@ -70,6 +72,7 @@ export function boardCarriesExperience(boardKey: MultiplayerBoardKey): boolean {
   return (
     boardKey === 'total_level' ||
     boardKey === 'total_level_combat_1' ||
+    boardKey === 'combat_level' ||
     boardKey.startsWith('skill:')
   )
 }

@@ -389,6 +389,13 @@ void main() {
 
     expect(await service.leaderboard(boardPacifistTotalLevel), isEmpty);
     expect((await service.leaderboard(boardTotalLevel)).single.value, totalLevel(fighter));
+
+    final combat = await service.leaderboard(boardCombatLevel);
+    expect(combat.single.value, combatLevelOf(fighter));
+    expect(
+      combat.single.secondaryValue,
+      getSkillProgress(fighter, mightSkillId).xp + getSkillProgress(fighter, vitalitySkillId).xp,
+    );
   });
 
   test('a ranking submit publishes equipped gear onto the public profile', () async {

@@ -20,6 +20,9 @@ const String boardTotalExperience = 'total_experience';
 /// Total level among players who have never raised Combat past level 1.
 const String boardPacifistTotalLevel = 'total_level_combat_1';
 
+/// Combined Combat Level = ceil((Might + Vitality) × 0.75).
+const String boardCombatLevel = 'combat_level';
+
 const String boardGoldEarned = 'gold_earned';
 
 /// Current purse, not lifetime gold earned.
@@ -49,6 +52,7 @@ bool isBossBoardKey(MultiplayerBoardKey boardKey) =>
 bool boardCarriesExperience(MultiplayerBoardKey boardKey) =>
     boardKey == boardTotalLevel ||
     boardKey == boardPacifistTotalLevel ||
+    boardKey == boardCombatLevel ||
     boardKey.startsWith(skillBoardPrefix);
 
 /// A board only some players stand on, where a zero means "does not qualify"

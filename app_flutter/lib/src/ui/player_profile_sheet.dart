@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -13,6 +15,10 @@ import 'motto_text.dart';
 import 'player_gear_sheet.dart';
 import 'social_bits.dart';
 
+/// Wider than the shared 320 popup so a long name and the skill grid sit
+/// beside the bust instead of wrapping after a couple of icons.
+const double playerProfileCardWidth = 440;
+
 /// Opens a player's public profile as a centered card.
 Future<void> openPlayerProfile(
   BuildContext context, {
@@ -20,13 +26,16 @@ Future<void> openPlayerProfile(
   required MultiplayerController multiplayer,
   required String userId,
 }) {
+  final width = math.min(playerProfileCardWidth, MediaQuery.sizeOf(context).width - 32);
   return showGamePopup<void>(
     context: context,
     origin: popupOrigin(context),
-    maxWidth: 320,
+    maxWidth: width,
     maxHeight: 560,
-    builder: (context) =>
-        PlayerProfileSheet(controller: controller, multiplayer: multiplayer, userId: userId),
+    builder: (context) => SizedBox(
+      width: width,
+      child: PlayerProfileSheet(controller: controller, multiplayer: multiplayer, userId: userId),
+    ),
   );
 }
 

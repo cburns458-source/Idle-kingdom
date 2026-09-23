@@ -683,9 +683,14 @@ void main() {
     await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
 
     final eat = find.byKey(const Key('stage-eat-now'));
+    final potion = find.byKey(const Key('stage-potion'));
     expect(eat, findsOne);
+    expect(potion, findsOne);
     expect(tester.getSize(eat), const Size(44, 44));
+    expect(tester.getSize(potion), const Size(44, 44));
     expect(tester.getTopLeft(eat).dx, tester.getTopLeft(find.byKey(const Key('preset-chip-0'))).dx);
+    expect(tester.getTopLeft(potion).dy, tester.getTopLeft(eat).dy);
+    expect(tester.getTopLeft(potion).dx, greaterThan(tester.getTopLeft(eat).dx));
 
     final before = controller.save.equipment.slots[foodSlotId]?.quantity ?? 0;
     await tester.tap(eat);
@@ -716,6 +721,27 @@ void main() {
     expect(tester.widget<InkWell>(eat).onTap, isNull);
   });
 
+  testWidgets('stage potion chip stays visible with no potion equipped', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    final eat = find.byKey(const Key('stage-eat-now'));
+    final potion = find.byKey(const Key('stage-potion'));
+    expect(eat, findsOne);
+    expect(potion, findsOne);
+    expect(tester.getTopLeft(potion).dy, tester.getTopLeft(eat).dy);
+    expect(tester.getTopLeft(potion).dx, greaterThan(tester.getTopLeft(eat).dx));
+
+    await tester.tap(potion);
+    await tester.pump();
+    expect(controller.save.settings.potionsPaused, isTrue);
+    expect(find.text('🚫'), findsOne);
+  });
+
   testWidgets('hiding the eat setting removes the stage eat chip', (tester) async {
     final controller = buildController(
       database,
@@ -727,6 +753,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
     expect(find.byKey(const Key('stage-eat-now')), findsNothing);
+    expect(find.byKey(const Key('stage-potion')), findsNothing);
     expect(find.byType(EquipmentPresetsBar), findsOne);
   });
 

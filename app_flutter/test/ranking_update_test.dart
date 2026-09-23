@@ -154,6 +154,36 @@ void main() {
     expect(find.text('${totalSkillXp(save)} xp'), findsOne);
   });
 
+  testWidgets('the combat level board sits in the picker and ranks the save', (tester) async {
+    final clock = TestClock();
+    final net = buildMultiplayer(database, clock: clock);
+    addTearDown(net.dispose);
+    final save = startedCharacter(database).copyWith(characterName: 'Vari');
+    await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (save, {nowMs}) {});
+
+    final game = buildController(database, seed: save, clock: clock);
+    addTearDown(game.dispose);
+    await pumpPanel(
+      tester,
+      ListenableBuilder(
+        listenable: net,
+        builder: (context, _) =>
+            SocialView(controller: game, multiplayer: net, section: SocialTab.leaderboards),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text(boardLabel(database.launch, boardTotalLevel)));
+    await tester.pumpAndSettle();
+    expect(find.text('Combat Level'), findsWidgets);
+    await tester.tap(find.text('Combat Level').last);
+    await tester.pumpAndSettle();
+
+    expect(net.boardKey, boardCombatLevel);
+    expect(find.text('${combatLevelOf(save)}'), findsWidgets);
+  });
+
   testWidgets('an empty board no longer asks the player to sync', (tester) async {
     final clock = TestClock();
     final net = buildMultiplayer(database, clock: clock, signedIn: false);
