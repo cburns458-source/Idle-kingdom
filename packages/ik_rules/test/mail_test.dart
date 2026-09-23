@@ -27,7 +27,7 @@ void main() {
   test('delivers the test letter to a new save', () {
     final save = createNewSave(db, nowMs);
     expect(save.mailbox.map((message) => message.id), contains(mailboxTestCatalogId));
-    expect(unreadMailCount(save, nowMs), 1);
+    expect(unreadMailCount(save, nowMs), 2);
     expect(visibleMailbox(save, nowMs).first.attachments, isEmpty);
   });
 
@@ -38,13 +38,13 @@ void main() {
       read.mailbox.where((message) => message.id == mailboxTestCatalogId).first.readAt,
       isoFromMs(nowMs),
     );
-    expect(unreadMailCount(read, nowMs), 0);
+    expect(unreadMailCount(read, nowMs), 1);
     expect(syncSystemMail(read, nowMs).mailbox.length, save.mailbox.length);
   });
 
   test('drops letters 90 days after they were sent', () {
     final save = createNewSave(db, nowMs);
-    final later = nowMs + mailboxTtlMs;
+    final later = nowMs + mailboxTtlMs + 24 * 60 * 60 * 1000;
     expect(pruneExpiredMail(save, later).mailbox, isEmpty);
     expect(syncSystemMail(save, later).mailbox, isEmpty);
   });

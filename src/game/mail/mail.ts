@@ -7,6 +7,45 @@ export const MAILBOX_TTL_MS = 90 * 24 * 60 * 60 * 1000
 
 export const MAILBOX_TEST_CATALOG_ID = 'mail-mailbox-test'
 
+export const MAIL_UPDATE_2026_09_22_CATALOG_ID = 'mail-update-2026-09-22'
+
+const MAIL_UPDATE_2026_09_22_BODY = `Update (Sep 22–23)
+
+Combat
+- Added copper sword and dagger
+- New Combat Level leaderboard!
+- New characters default to Offensive stance
+- View an opponent's gear before PvP
+
+Gathering
+- Rebalanced gather and craft success
+- Pot fishing XP increased
+
+Food and potions
+- Eat now on your equipment screen
+- Auto-eat tweaks
+- Potion icon while adventuring; tap to pause
+
+Botany
+- Plants can fail when they grow; gather compost on Patches and use it when planting to improve your odds
+- New botany seeds and mutations, including Moonblossom at Botany 70
+- Botany menu: Crops, Herbs, Flowers, Trees
+- Pruners give reduced Botany XP
+
+Features
+- New in-game mailbox! Open mail from the top bar, read messages, and claim attached items
+- Bazaar expanded to six offer slots; recent trades open from a button on the page
+- XP and Loot trackers under your location name on the map
+- Lockpicks require Thievery 20
+- Added soup stock, go to a kitchen and combine water and kitchen scraps, used to make stews and soups
+- Signing in on another device ends your other active session while you are playing
+
+Minor balance changes
+Minor UI tweaks
+Minor art updates
+
+Vari - ❤️`
+
 export interface SystemMailCatalogEntry {
   id: string
   subject: string
@@ -26,6 +65,13 @@ export const SYSTEM_MAIL_CATALOG: readonly SystemMailCatalogEntry[] = [
     subject: 'Mailbox',
     body: 'This is a test of the kingdom post. Update lists will arrive here.',
     sentAt: '2026-09-22T00:00:00.000Z',
+    attachments: [],
+  },
+  {
+    id: MAIL_UPDATE_2026_09_22_CATALOG_ID,
+    subject: 'Update (Sep 22–23)',
+    body: MAIL_UPDATE_2026_09_22_BODY,
+    sentAt: '2026-09-23T00:00:00.000Z',
     attachments: [],
   },
 ]
