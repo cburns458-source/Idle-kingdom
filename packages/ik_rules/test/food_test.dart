@@ -90,12 +90,12 @@ void main() {
     );
   });
 
-  test('Gluttony counts extra victory eats and does not eat between rounds', () {
+  test('Gluttony counts extra auto-eats', () {
     expect(extraFoodPerRound(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 0)), 0);
     expect(extraFoodPerRound(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 2)), 2);
   });
 
-  test('victory eats the usual bite plus one per Gluttony', () {
+  test('auto-eat takes the usual bite plus one per Gluttony', () {
     final none = consumeFoodAfterVictory(db, _withFoodAndSpells(db, foodQty: 4, gluttonyCount: 0));
     expect(none.consumed, isTrue);
     expect(none.save.equipment.slots[foodSlotId]?.quantity, 3);
@@ -209,6 +209,27 @@ void main() {
     );
     expect(nextRound.ok, isTrue);
     expect(nextRound.save!.equipment.slots[foodSlotId]?.quantity, 1);
+  });
+
+  test('stage eat is blocked at full HP unless the food damages', () {
+    final healing = _withFoodAndSpells(db, foodQty: 2, gluttonyCount: 0);
+    expect(
+      stageEatBlockedReason(db, healing.copyWith(currentHp: healing.maxHp)),
+      'Already at full health.',
+    );
+    expect(stageEatBlockedReason(db, healing.copyWith(currentHp: 900)), isNull);
+
+    final base = createNewSave(db, 0);
+    final poison = base.copyWith(
+      currentHp: 99_999,
+      equipment: EquipmentLoadout(
+        slots: {
+          ...base.equipment.slots,
+          foodSlotId: const EquippedStack(itemId: 'ITEM-0028', quantity: 1),
+        },
+      ),
+    );
+    expect(stageEatBlockedReason(db, poison), isNull);
   });
 
   test('manual eat still works outside combat when auto-eat is off', () {

@@ -702,11 +702,13 @@ void main() {
     expect(presets.top, greaterThan(player.bottom - 4));
     expect(tester.getTopLeft(eat).dy, closeTo(presets.top, 12));
     expect(
-      tester.getTopLeft(eat).dx,
+      tester.getTopLeft(potion).dx,
       greaterThan(tester.getBottomRight(find.byKey(const Key('preset-chip-3'))).dx),
     );
     expect(tester.getTopLeft(potion).dy, tester.getTopLeft(eat).dy);
-    expect(tester.getTopLeft(potion).dx, greaterThan(tester.getTopLeft(eat).dx));
+    expect(tester.getTopLeft(eat).dx, greaterThan(tester.getTopLeft(potion).dx));
+    final stand = tester.getRect(find.bySemanticsLabel('Adventurer stand'));
+    expect(tester.getRect(eat).right, closeTo(stand.right - 2, 8));
 
     final before = controller.save.equipment.slots[foodSlotId]?.quantity ?? 0;
     await tester.tap(eat);
@@ -737,6 +739,24 @@ void main() {
     expect(tester.widget<InkWell>(eat).onTap, isNull);
   });
 
+  testWidgets('stage eat stays off at full health unless food damages', (tester) async {
+    var save = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    save = addItemsToInventory(save, 'ITEM-0058', 2).save;
+    final equipped = equipItemFromInventory(database.launch, save, 'ITEM-0058');
+    expect(equipped.ok, isTrue);
+    final maxHp = playerMaxHp(database.launch, equipped.save!);
+    final controller = buildController(database, seed: equipped.save!.copyWith(currentHp: maxHp));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 420 * 16 / 9));
+
+    final eat = find.byKey(const Key('stage-eat-now'));
+    expect(tester.widget<InkWell>(eat).onTap, isNull);
+
+    controller.commit(controller.save.copyWith(currentHp: maxHp - 40));
+    await tester.pump();
+    expect(tester.widget<InkWell>(eat).onTap, isNotNull);
+  });
+
   testWidgets('stage potion chip stays visible with no potion equipped', (tester) async {
     final controller = buildController(
       database,
@@ -750,7 +770,7 @@ void main() {
     expect(eat, findsOne);
     expect(potion, findsOne);
     expect(tester.getTopLeft(potion).dy, tester.getTopLeft(eat).dy);
-    expect(tester.getTopLeft(potion).dx, greaterThan(tester.getTopLeft(eat).dx));
+    expect(tester.getTopLeft(eat).dx, greaterThan(tester.getTopLeft(potion).dx));
     expect(
       tester
           .widgetList<Opacity>(find.descendant(of: potion, matching: find.byType(Opacity)))

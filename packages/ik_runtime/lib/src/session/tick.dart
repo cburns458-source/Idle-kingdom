@@ -135,6 +135,11 @@ ActionRewardBundle _victoryRewardBundle(
   );
 }
 
+void _emitRoundEndAutoEat(_TickOutput out, FoodConsumption food) {
+  if (!food.consumed || food.healed == 0) return;
+  out.emit(FoodHealedEvent(healed: food.healed, foodName: jsString(food.foodName)));
+}
+
 String _roundMessage(EnemyRow enemy, CombatRoundResult round) {
   final inkLabel = round.bossInkActive ? ' Ink clouds your strike!' : '';
   final hitLabel = round.playerCrit
@@ -236,13 +241,6 @@ void _resolveDueCombatRound(
       enemy,
       random,
       roundEnd,
-      skipVictoryFood: shouldSkipVictoryHealingFood(
-        enemy,
-        before.combatEnemyHp,
-        round.enemyHit,
-        round.playerHp,
-        before.currentHp,
-      ),
     );
     out.set(victory.save);
     out.creditCritterTime(roundMs, roundEnd, random);
@@ -262,18 +260,13 @@ void _resolveDueCombatRound(
     );
     out.emit(
       MessageEvent(
-        victory.foodConsumed
-            ? 'Ate ${jsString(victory.foodName)} (${victory.foodHealed > 0 ? '+' : ''}${jsNumberToString(victory.foodHealed)} HP)'
-            : round.thornsHit > 0
+        round.thornsHit > 0
             ? 'Thorns reflects ${jsNumberToString(round.thornsHit)} and defeats $enemyName!'
             : round.playerCrit
             ? 'Critical hit! Defeated $enemyName'
             : 'Defeated $enemyName',
       ),
     );
-    if (victory.foodConsumed && victory.foodHealed != 0) {
-      out.emit(FoodHealedEvent(healed: victory.foodHealed, foodName: jsString(victory.foodName)));
-    }
     out.emit(EnemyDefeatedEvent(enemyId: enemyId, enemyName: enemyName));
     _continueActivity(
       db,
@@ -297,9 +290,13 @@ void _resolveDueCombatRound(
   if (round.bossAddsTriggered && round.bossPendingHp != null) {
     final profile = bossProfile(enemy);
     if (profile?.squidlingEnemyId != null) {
-      final addsStarted = beginBossAddsEncounter(
+      final fed = consumeFoodAfterVictory(
         db,
         before.copyWith(currentHp: round.playerHp, combatBossInkActive: round.bossInkActive),
+      );
+      final addsStarted = beginBossAddsEncounter(
+        db,
+        fed.save,
         enemy,
         profile!,
         round.bossPendingHp!,
@@ -307,6 +304,7 @@ void _resolveDueCombatRound(
       );
       out.set(addsStarted);
       out.creditCritterTime(roundMs, roundEnd, random);
+      _emitRoundEndAutoEat(out, fed);
       out.emit(
         MessageEvent(
           '${jsString(enemy.raw['Display Name'])} releases squidlings! Defeat them to continue.',
@@ -316,16 +314,20 @@ void _resolveDueCombatRound(
     }
   }
 
-  final continued = before.copyWith(
-    currentHp: round.playerHp,
-    combatEnemyHp: round.enemyHp,
-    combatRoundStartedAt: isoFromMs(roundEnd),
-    combatSkipEnemyAttack: round.skipNextEnemyAttack,
-    combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-    combatBossInkActive: round.bossInkActive,
+  final continued = consumeFoodAfterVictory(
+    db,
+    before.copyWith(
+      currentHp: round.playerHp,
+      combatEnemyHp: round.enemyHp,
+      combatRoundStartedAt: isoFromMs(roundEnd),
+      combatSkipEnemyAttack: round.skipNextEnemyAttack,
+      combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
+      combatBossInkActive: round.bossInkActive,
+    ),
   );
-  out.set(continued);
+  out.set(continued.save);
   out.creditCritterTime(roundMs, roundEnd, random);
+  _emitRoundEndAutoEat(out, continued);
   out.emit(MessageEvent(_roundMessage(enemy, round)));
 }
 

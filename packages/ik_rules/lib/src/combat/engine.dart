@@ -23,7 +23,6 @@ import '../save/generated/save_models.dart';
 import '../time.dart';
 import '../trackers/trackers.dart';
 import 'boss.dart';
-import 'food.dart';
 import '../skills/skill_actions.dart' show fishingSkillId;
 import 'stats.dart';
 
@@ -422,29 +421,14 @@ CombatRoundResult resolveCombatRound(
   );
 }
 
-/// One-hit kill from full enemy HP with no player damage: skip healing food.
-bool shouldSkipVictoryHealingFood(
-  EnemyRow enemy,
-  num? incomingEnemyHp,
-  num? enemyHit,
-  num playerHpAfter,
-  num playerHpBefore, {
-  num? encounterMaxHp,
-}) {
-  final maxHp = encounterMaxHp ?? jsNumber(enemy.raw['Maximum HP'] ?? 0);
-  final startedAtFull = incomingEnemyHp == null || incomingEnemyHp == maxHp;
-  return startedAtFull && enemyHit == null && playerHpAfter == playerHpBefore;
-}
-
 CombatVictoryResult applyCombatVictory(
   GameDatabase db,
   PlayerSave save,
   ActionRow action,
   EnemyRow enemy,
   RandomFn random,
-  num nowMs, {
-  bool skipVictoryFood = false,
-}) {
+  num nowMs,
+) {
   final maxHp = playerMaxHp(db, save);
   var next = save.copyWith(
     maxHp: maxHp,
@@ -515,8 +499,8 @@ CombatVictoryResult applyCombatVictory(
     );
   }
 
-  final food = consumeFoodAfterVictory(db, next, skipHealing: skipVictoryFood);
-  next = withBossRespawn(tickPotionAction(clearCombatSave(food.save)), enemy, nowMs);
+  // Auto-eat happens at the end of an ongoing combat round, not on a kill.
+  next = withBossRespawn(tickPotionAction(clearCombatSave(next)), enemy, nowMs);
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);
   next = withoutHeldAction(next, save.currentActivityId);
@@ -537,9 +521,9 @@ CombatVictoryResult applyCombatVictory(
     xpAwards: xpAwards,
     goldGained: goldGained,
     loot: rewarded.loot,
-    foodConsumed: food.consumed,
-    foodHealed: food.healed,
-    foodName: food.foodName,
+    foodConsumed: false,
+    foodHealed: 0,
+    foodName: null,
   );
 }
 

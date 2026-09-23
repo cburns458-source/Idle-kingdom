@@ -17,8 +17,8 @@ import {
   deathPauseRemainingMs,
   getEnemy,
   resolveCombatRound,
-  shouldSkipVictoryHealingFood,
 } from '../combat/engine'
+import { consumeFoodAfterVictory } from '../combat/food'
 import { bossProfile } from '../combat/boss'
 import { applySquidlingVictory, beginBossAddsEncounter, isSquidlingVictory } from '../combat/bossPhase'
 import type { GameDatabase } from '../data/types'
@@ -238,15 +238,6 @@ export function resolveUnattendedProgress(
           // Credit the kill to the hour it happened in, not to the hour the
           // player happens to come back in.
           roundEnd,
-          {
-            skipVictoryFood: shouldSkipVictoryHealingFood(
-              enemy,
-              current.combatEnemyHp,
-              round.enemyHit,
-              round.playerHp,
-              current.currentHp,
-            ),
-          },
         )
         combatVictories += 1
         let next = victory.save
@@ -293,7 +284,7 @@ export function resolveUnattendedProgress(
         continue
       }
 
-      let continued: PlayerSave = {
+      let continued: PlayerSave = consumeFoodAfterVictory(db, {
         ...current,
         currentHp: round.playerHp,
         combatEnemyHp: round.enemyHp,
@@ -301,7 +292,7 @@ export function resolveUnattendedProgress(
         combatSkipEnemyAttack: round.skipNextEnemyAttack,
         combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
         combatBossInkActive: round.bossInkActive,
-      }
+      }).save
 
       if (round.bossAddsTriggered && round.bossPendingHp != null) {
         const profile = bossProfile(enemy)

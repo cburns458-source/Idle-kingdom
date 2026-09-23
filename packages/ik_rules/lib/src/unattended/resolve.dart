@@ -8,6 +8,7 @@ import '../activity/transition.dart';
 import '../combat/boss.dart';
 import '../combat/boss_phase.dart';
 import '../combat/engine.dart';
+import '../combat/food.dart';
 import '../config.dart';
 import '../critters/critters.dart';
 import '../js_compat.dart';
@@ -243,13 +244,6 @@ UnattendedResult resolveUnattendedProgress(
           // Credit the kill to the hour it happened in, not to the hour the
           // player happens to come back in.
           roundEnd,
-          skipVictoryFood: shouldSkipVictoryHealingFood(
-            enemy,
-            current.combatEnemyHp,
-            round.enemyHit,
-            round.playerHp,
-            current.currentHp,
-          ),
         );
         combatVictories += 1;
         var next = victory.save;
@@ -292,14 +286,17 @@ UnattendedResult resolveUnattendedProgress(
         continue;
       }
 
-      var continued = current.copyWith(
-        currentHp: round.playerHp,
-        combatEnemyHp: round.enemyHp,
-        combatRoundStartedAt: isoFromMs(roundEnd),
-        combatSkipEnemyAttack: round.skipNextEnemyAttack,
-        combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-        combatBossInkActive: round.bossInkActive,
-      );
+      var continued = consumeFoodAfterVictory(
+        db,
+        current.copyWith(
+          currentHp: round.playerHp,
+          combatEnemyHp: round.enemyHp,
+          combatRoundStartedAt: isoFromMs(roundEnd),
+          combatSkipEnemyAttack: round.skipNextEnemyAttack,
+          combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
+          combatBossInkActive: round.bossInkActive,
+        ),
+      ).save;
 
       if (round.bossAddsTriggered && round.bossPendingHp != null) {
         final profile = bossProfile(enemy);

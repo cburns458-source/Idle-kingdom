@@ -733,7 +733,7 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller));
     expect(find.byKey(const Key('inventory-eat')), findsOne);
-    expect(find.byKey(const Key('inventory-eat-now')), findsOne);
+    expect(find.byKey(const Key('inventory-eat-now')), findsNothing);
     expect(find.textContaining('Eat at'), findsNothing);
 
     await tester.tap(find.byKey(const Key('inventory-eat')));
@@ -752,22 +752,7 @@ void main() {
     expect(find.text('Auto-eat off'), findsOne);
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
-
-    final before = controller.save.equipment.slots[foodSlotId]?.quantity ?? 0;
-    expect(before, greaterThan(0));
-    await tester.tap(find.byKey(const Key('inventory-eat-now')));
-    await tester.pumpAndSettle();
-    expect(controller.save.equipment.slots[foodSlotId]?.quantity ?? 0, before - 1);
-  });
-
-  testWidgets('Eat now with an empty food slot says so', (tester) async {
-    final controller = buildController(database, seed: unequippedCharacter());
-    addTearDown(controller.dispose);
-
-    await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.tap(find.byKey(const Key('inventory-eat-now')));
-    await tester.pump();
-    expect(find.text('Nothing to eat.'), findsOne);
+    expect(find.byKey(const Key('inventory-eat-now')), findsNothing);
   });
 
   testWidgets('the doll row stays usable on a phone-wide sheet', (tester) async {

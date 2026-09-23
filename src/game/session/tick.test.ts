@@ -95,6 +95,48 @@ describe('session tick', () => {
     expect(resolved.save.combatEnemyHp!).toBeLessThan(fighting.combatEnemyHp!)
   })
 
+  it('auto-eats at the end of an ongoing combat round, not on a kill', () => {
+    const armed = newSave({
+      currentLocationId: 'LOC-0003',
+      currentHp: 500,
+      maxHp: 1000,
+      equipment: {
+        ...newSave().equipment,
+        slots: {
+          ...newSave().equipment.slots,
+          'SLOT-0011': { itemId: 'ITEM-0058', quantity: 3 },
+        },
+      },
+    })
+    const begun = beginActivitySave(armed, 'ACT-0002', START_ISO)
+    const generated = generateNextAction(db, begun, 'ACT-0002', firstOfPool, START_MS)
+    const fighting = generated!.save
+    expect(fighting.combatEnemyId).toBeTruthy()
+    expect(fighting.equipment.slots['SLOT-0011']?.quantity).toBe(3)
+
+    const resolved = advanceSession(db, fighting, START_MS + 4_000, firstOfPool)
+    const round = resolved.events.find((event) => event.kind === 'combat-round')
+    expect(round && round.kind === 'combat-round' && round.outcome).toBe('ongoing')
+    expect(resolved.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
+    expect(resolved.events.map((event) => event.kind)).toContain('food-healed')
+
+    const kill = advanceSession(
+      db,
+      {
+        ...resolved.save,
+        combatEnemyHp: 1,
+        currentHp: 400,
+        combatRoundStartedAt: resolved.save.combatRoundStartedAt,
+      },
+      Date.parse(resolved.save.combatRoundStartedAt!) + 4_000,
+      () => 0,
+    )
+    const killRound = kill.events.find((event) => event.kind === 'combat-round')
+    expect(killRound && killRound.kind === 'combat-round' && killRound.outcome).toBe('victory')
+    expect(kill.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
+    expect(kill.events.map((event) => event.kind)).not.toContain('food-healed')
+  })
+
   it('holds everything until a death pause elapses, then recovers', () => {
     const paused: PlayerSave = {
       ...gathering(),

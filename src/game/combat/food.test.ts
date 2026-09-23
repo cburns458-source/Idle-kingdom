@@ -12,6 +12,7 @@ import {
   eatEquippedFood,
   eatInventoryFood,
   extraFoodPerRound,
+  stageEatBlockedReason,
 } from './food'
 
 const rawDatabase = JSON.parse(
@@ -89,14 +90,14 @@ describe('cooked beef and tablet recipes', () => {
   })
 })
 
-describe('gluttony food on victory', () => {
-  it('counts one extra eat per equipped Gluttony and does not eat between rounds', () => {
+describe('gluttony extra auto-eats', () => {
+  it('counts one extra eat per equipped Gluttony', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(extraFoodPerRound(launch, withFoodAndSpells(launch, 4, 0))).toBe(0)
     expect(extraFoodPerRound(launch, withFoodAndSpells(launch, 4, 2))).toBe(2)
   })
 
-  it('adds one victory eat per Gluttony on top of the usual bite', () => {
+  it('adds one auto-eat per Gluttony on top of the usual bite', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const none = consumeFoodAfterVictory(launch, withFoodAndSpells(launch, 4, 0))
     expect(none.consumed).toBe(true)
@@ -233,6 +234,28 @@ describe('manual eat', () => {
     expect(nextRound.ok).toBe(true)
     if (!nextRound.ok) return
     expect(nextRound.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
+  })
+
+  it('blocks the stage eat chip at full HP unless the food damages', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const healing = withFoodAndSpells(launch, 2, 0)
+    expect(stageEatBlockedReason(launch, { ...healing, currentHp: healing.maxHp })).toBe(
+      'Already at full health.',
+    )
+    expect(stageEatBlockedReason(launch, { ...healing, currentHp: 900 })).toBeNull()
+
+    const poison = {
+      ...createNewSave(launch),
+      currentHp: 99_999,
+      equipment: {
+        ...createNewSave(launch).equipment,
+        slots: {
+          ...createNewSave(launch).equipment.slots,
+          'SLOT-0011': { itemId: 'ITEM-0028', quantity: 1 },
+        },
+      },
+    }
+    expect(stageEatBlockedReason(launch, poison)).toBeNull()
   })
 
   it('still lets manual eat work outside combat when auto-eat is off', () => {

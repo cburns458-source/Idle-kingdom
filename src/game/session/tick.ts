@@ -19,8 +19,8 @@ import {
   deathPauseRemainingMs,
   getEnemy,
   resolveCombatRound,
-  shouldSkipVictoryHealingFood,
 } from '../combat/engine'
+import { consumeFoodAfterVictory, type FoodConsumption } from '../combat/food'
 import { bossProfile } from '../combat/boss'
 import { applySquidlingVictory, beginBossAddsEncounter, isSquidlingVictory } from '../combat/bossPhase'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
@@ -158,6 +158,15 @@ function victoryRewardBundle(
   }
 }
 
+function emitRoundEndAutoEat(out: TickOutput, food: FoodConsumption): void {
+  if (!food.consumed || food.healed === 0) return
+  out.emit({
+    kind: 'food-healed',
+    healed: food.healed,
+    foodName: String(food.foodName ?? ''),
+  })
+}
+
 function roundMessage(enemy: EnemyRow, round: ReturnType<typeof resolveCombatRound>): string {
   const inkLabel = round.bossInkActive ? ' Ink clouds your strike!' : ''
   const hitLabel = round.playerCrit ? `crit for ${round.playerHit}` : `hit ${round.playerHit}`
@@ -250,15 +259,6 @@ function resolveDueCombatRound(
       enemy,
       random,
       roundEnd,
-      {
-        skipVictoryFood: shouldSkipVictoryHealingFood(
-          enemy,
-          before.combatEnemyHp,
-          round.enemyHit,
-          round.playerHp,
-          before.currentHp,
-        ),
-      },
     )
     out.set(victory.save)
     out.creditCritterTime(roundMs, roundEnd, random)
@@ -277,21 +277,12 @@ function resolveDueCombatRound(
     })
     out.emit({
       kind: 'message',
-      text: victory.foodConsumed
-        ? `Ate ${victory.foodName} (${victory.foodHealed > 0 ? '+' : ''}${victory.foodHealed} HP)`
-        : round.thornsHit > 0
-          ? `Thorns reflects ${round.thornsHit} and defeats ${enemy['Display Name']}!`
-          : round.playerCrit
-            ? `Critical hit! Defeated ${enemy['Display Name']}`
-            : `Defeated ${enemy['Display Name']}`,
+      text: round.thornsHit > 0
+        ? `Thorns reflects ${round.thornsHit} and defeats ${enemy['Display Name']}!`
+        : round.playerCrit
+          ? `Critical hit! Defeated ${enemy['Display Name']}`
+          : `Defeated ${enemy['Display Name']}`,
     })
-    if (victory.foodConsumed && victory.foodHealed !== 0) {
-      out.emit({
-        kind: 'food-healed',
-        healed: victory.foodHealed,
-        foodName: String(victory.foodName ?? ''),
-      })
-    }
     out.emit({
       kind: 'enemy-defeated',
       enemyId: enemy['Enemy ID'],
@@ -316,13 +307,14 @@ function resolveDueCombatRound(
   if (round.bossAddsTriggered && round.bossPendingHp != null) {
     const profile = bossProfile(enemy)
     if (profile?.squidlingEnemyId) {
+      const fed = consumeFoodAfterVictory(db, {
+        ...before,
+        currentHp: round.playerHp,
+        combatBossInkActive: round.bossInkActive,
+      })
       const addsStarted = beginBossAddsEncounter(
         db,
-        {
-          ...before,
-          currentHp: round.playerHp,
-          combatBossInkActive: round.bossInkActive,
-        },
+        fed.save,
         enemy,
         profile,
         round.bossPendingHp,
@@ -330,6 +322,7 @@ function resolveDueCombatRound(
       )
       out.set(addsStarted)
       out.creditCritterTime(roundMs, roundEnd, random)
+      emitRoundEndAutoEat(out, fed)
       out.emit({
         kind: 'message',
         text: `${enemy['Display Name']} releases squidlings! Defeat them to continue.`,
@@ -338,7 +331,7 @@ function resolveDueCombatRound(
     }
   }
 
-  const continued = {
+  const continued = consumeFoodAfterVictory(db, {
     ...before,
     currentHp: round.playerHp,
     combatEnemyHp: round.enemyHp,
@@ -346,9 +339,10 @@ function resolveDueCombatRound(
     combatSkipEnemyAttack: round.skipNextEnemyAttack,
     combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
     combatBossInkActive: round.bossInkActive,
-  }
-  out.set(continued)
+  })
+  out.set(continued.save)
   out.creditCritterTime(roundMs, roundEnd, random)
+  emitRoundEndAutoEat(out, continued)
   out.emit({ kind: 'message', text: roundMessage(enemy, round) })
 }
 

@@ -1453,27 +1453,23 @@ class _StageLoadoutStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: _stageLoadoutStripHeight,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            EquipmentPresetsBar(
-              controller: controller,
-              compact: true,
-              tight: true,
-              showSaveButton: false,
-              allowLongPressEdit: false,
-              listenToController: false,
-              onMessage: controller.announce,
-            ),
-            const SizedBox(width: 8),
-            _StageEatNowButton(controller: controller),
-            const SizedBox(width: 4),
-            _StagePotionButton(controller: controller),
-          ],
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          EquipmentPresetsBar(
+            controller: controller,
+            compact: true,
+            tight: true,
+            showSaveButton: false,
+            allowLongPressEdit: false,
+            listenToController: false,
+            onMessage: controller.announce,
+          ),
+          const Spacer(),
+          _StagePotionButton(controller: controller),
+          const SizedBox(width: 4),
+          _StageEatNowButton(controller: controller),
+        ],
       ),
     );
   }
@@ -1490,7 +1486,7 @@ class _StageEatNowButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final save = controller.save;
     final food = slotStack(save, foodSlotId);
-    final blocked = manualEatBlockedReason(save);
+    final blocked = stageEatBlockedReason(controller.db, save);
     final enabled = food != null && food.quantity > 0 && blocked == null;
     final item = food == null ? null : controller.indexes.itemsById[food.itemId];
     final label = blocked ?? (food == null ? 'No food equipped' : 'Eat now');

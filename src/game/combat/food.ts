@@ -101,7 +101,7 @@ function extraFoodFromItem(db: GameDatabase, itemId: string): number {
   return extra
 }
 
-/** Extra victory eats. One per Gluttony stack. Does not fire between rounds. */
+/** Extra auto-eats on top of the usual bite. One per Gluttony stack. */
 export function extraFoodPerRound(db: GameDatabase, save: PlayerSave): number {
   let extra = 0
   for (const stack of equippedSpellStacks(save)) {
@@ -144,6 +144,20 @@ export function manualEatBlockedReason(save: PlayerSave): string | null {
   if (save.combatRoundStartedAt == null) {
     return 'You cannot eat during combat.'
   }
+  return null
+}
+
+/**
+ * Why the location-stage Eat chip is disabled, besides an empty slot.
+ * Healing food is refused at full HP; damaging food is not.
+ */
+export function stageEatBlockedReason(db: GameDatabase, save: PlayerSave): string | null {
+  const blocked = manualEatBlockedReason(save)
+  if (blocked) return blocked
+  const food = slotStack(save, FOOD_SLOT_ID)
+  if (!food || food.quantity <= 0) return null
+  if (foodHealAmount(db, food.itemId) < 0) return null
+  if (save.currentHp >= playerMaxHp(db, save)) return 'Already at full health.'
   return null
 }
 
@@ -250,8 +264,8 @@ export function eatEquippedFood(db: GameDatabase, save: PlayerSave): EatFoodResu
 }
 
 /**
- * Victory already eats one food. Each Gluttony stack adds another eat on top.
- * Combat rounds do not eat.
+ * Auto-eat after a gather, thievery action, or finished combat round.
+ * Combat kills do not eat. Each Gluttony stack adds another bite on top.
  */
 export function consumeFoodAfterVictory(
   db: GameDatabase,

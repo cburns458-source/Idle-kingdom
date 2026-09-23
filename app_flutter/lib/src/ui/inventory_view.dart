@@ -508,21 +508,6 @@ class _InventoryViewState extends State<InventoryView> {
                 dense: true,
                 onPressed: _openEatMenu,
               ),
-              const SizedBox(height: 8),
-              GameButton(
-                key: const Key('inventory-eat-now'),
-                label: 'Eat now',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                dense: true,
-                onPressed: isInCombat(save)
-                    ? null
-                    : () {
-                        final reason = controller.eatFood();
-                        if (reason == null || !mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
-                      },
-              ),
             ],
           ),
         ),
@@ -678,7 +663,7 @@ class _InventoryViewState extends State<InventoryView> {
                   ),
                   const SizedBox(height: 6),
                   const MutedText(
-                    'Eats after a finished gather, thievery, or combat victory when HP is at the threshold. Off also stops combat and thievery auto-eat. Manual Eat still works outside combat.',
+                    'Eats after a finished gather, thievery, or combat round when HP is at the threshold. Off also stops combat and thievery auto-eat. Manual Eat still works outside combat.',
                   ),
                 ],
               );

@@ -116,7 +116,7 @@ num _extraFoodFromItem(GameDatabase db, String itemId) {
   return extra;
 }
 
-/// Extra victory eats. One per Gluttony stack. Does not fire between rounds.
+/// Extra auto-eats on top of the usual bite. One per Gluttony stack.
 num extraFoodPerRound(GameDatabase db, PlayerSave save) {
   var extra = 0.0;
   for (final stack in equippedSpellStacks(save)) {
@@ -125,9 +125,9 @@ num extraFoodPerRound(GameDatabase db, PlayerSave save) {
   return extra;
 }
 
-/// Victory already eats one food. Each Gluttony stack adds another eat on top.
-/// Combat rounds do not eat. [skipHealing] skips healing food (and extras) but
-/// still eats damaging food.
+/// Auto-eat after a gather, thievery action, or finished combat round.
+/// Combat kills do not eat. Each Gluttony stack adds another bite on top.
+/// [skipHealing] skips healing food (and extras) but still eats damaging food.
 FoodConsumption consumeFoodAfterVictory(
   GameDatabase db,
   PlayerSave save, {
@@ -183,6 +183,18 @@ String? manualEatBlockedReason(PlayerSave save) {
   if (save.combatRoundStartedAt == null) {
     return 'You cannot eat during combat.';
   }
+  return null;
+}
+
+/// Why the location-stage Eat chip is disabled, besides an empty slot.
+/// Healing food is refused at full HP; damaging food is not.
+String? stageEatBlockedReason(GameDatabase db, PlayerSave save) {
+  final blocked = manualEatBlockedReason(save);
+  if (blocked != null) return blocked;
+  final food = slotStack(save, foodSlotId);
+  if (food == null || food.quantity <= 0) return null;
+  if (foodHealAmount(db, food.itemId) < 0) return null;
+  if (save.currentHp >= playerMaxHp(db, save)) return 'Already at full health.';
   return null;
 }
 

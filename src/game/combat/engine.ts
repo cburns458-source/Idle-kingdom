@@ -10,7 +10,6 @@ import { revokeCosmetic } from '../cosmetics/cosmetics'
 import { STARTER_TITLE_COSMETIC_ID } from '../save/types'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from '../activity/types'
-import { consumeFoodAfterVictory } from './food'
 import {
   applyPotionEnemyRoundDamage,
   tickPotionAction,
@@ -374,20 +373,6 @@ export function resolveCombatRound(
   }
 }
 
-/** One-hit kill from full enemy HP with no player damage: skip healing food. */
-export function shouldSkipVictoryHealingFood(
-  enemy: EnemyRow,
-  incomingEnemyHp: number | null | undefined,
-  enemyHit: number | null,
-  playerHpAfter: number,
-  playerHpBefore: number,
-  encounterMaxHp?: number,
-): boolean {
-  const maxHp = encounterMaxHp ?? Number(enemy['Maximum HP'] ?? 0)
-  const startedAtFull = incomingEnemyHp == null || incomingEnemyHp === maxHp
-  return startedAtFull && enemyHit == null && playerHpAfter === playerHpBefore
-}
-
 export function applyCombatVictory(
   db: GameDatabase,
   save: PlayerSave,
@@ -395,7 +380,6 @@ export function applyCombatVictory(
   enemy: EnemyRow,
   random: RandomFn = Math.random,
   nowMs: number = Date.now(),
-  options?: { skipVictoryFood?: boolean },
 ): CombatVictoryResult {
   const maxHp = playerMaxHp(db, save)
   let next: PlayerSave = {
@@ -475,8 +459,8 @@ export function applyCombatVictory(
     }
   }
 
-  const food = consumeFoodAfterVictory(db, next, { skipHealing: options?.skipVictoryFood })
-  next = withBossRespawn(tickPotionAction(clearCombatSave(food.save)), enemy, nowMs)
+  // Auto-eat happens at the end of an ongoing combat round, not on a kill.
+  next = withBossRespawn(tickPotionAction(clearCombatSave(next)), enemy, nowMs)
   next = applyQuestDefeatProgress(db, next, enemy['Enemy ID'], 1)
   next = applyBountyDefeatProgress(next, enemy['Enemy ID'], 1, nowMs)
   next = withoutHeldAction(next, save.currentActivityId)
@@ -490,9 +474,9 @@ export function applyCombatVictory(
     xpAwards,
     goldGained,
     loot: rewarded.loot,
-    foodConsumed: food.consumed,
-    foodHealed: food.healed,
-    foodName: food.foodName,
+    foodConsumed: false,
+    foodHealed: 0,
+    foodName: null,
   }
 }
 
