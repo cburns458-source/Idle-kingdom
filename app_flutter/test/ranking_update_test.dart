@@ -281,7 +281,12 @@ void main() {
     expect(find.byKey(const ValueKey('own-pin-top')), findsNothing);
     expect(find.byKey(const ValueKey('own-pin-bottom')), findsNothing);
 
-    await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -2400));
+    final scrollable = find.descendant(
+      of: find.byType(SocialView),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(scrollable).position;
+    position.jumpTo(position.maxScrollExtent);
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('own-pin-top')), findsOne);
