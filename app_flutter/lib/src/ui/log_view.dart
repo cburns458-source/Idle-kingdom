@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
@@ -167,68 +168,90 @@ class _LogViewState extends State<LogView> {
                   _MiniquestList(rows: miniQuestLog(db, save, controller.session.clock())),
             ),
           ),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            children: [
-              switch (_tab) {
-                _LogTab.achievements => _AchievementBands(rows: achievementLog(db, save)),
-                _LogTab.milestones => _Rows([
-                  for (final row in milestoneLog(db, save))
-                    _LogRow(
-                      title: row.name,
-                      detail: row.note,
-                      highlight: row.unlocked,
-                      dimmed: !row.unlocked,
-                    ),
-                ]),
-                _LogTab.quests => _Rows([
-                  for (final row in organizeQuestLog(
-                    questLog(db, save),
-                    sort: controller.questLogSort.sort,
-                    hideUnstartable: _hideUnstartableQuests,
-                  ))
-                    _QuestJournalRow(row: row),
-                ]),
-                _LogTab.critters => _Rows([
-                  for (final row in critterLog(save))
-                    _LogRow(
-                      title: row.name,
-                      detail: row.description,
-                      trailing: row.count > 1 ? '×${formatThousands(row.count)}' : null,
-                      highlight: row.found,
-                      leading: row.found
-                          ? GameImage(critterAssetPath(row.internalKey), width: 28, height: 28)
-                          : const Icon(Icons.help_outline, size: 24, color: Palette.edge),
-                    ),
-                ]),
-              },
-            ],
-          ),
-        ),
+        Expanded(child: _logList(db, save)),
       ],
     );
   }
-}
 
-class _AchievementBands extends StatelessWidget {
-  const _AchievementBands({required this.rows});
-
-  final List<AchievementLogRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final difficulty in achievementDifficulties)
-          _DifficultyBand(
-            difficulty: difficulty,
-            rows: achievementLogForDifficulty(rows, difficulty),
-            completion: achievementDifficultyCompletion(rows, difficulty),
-          ),
-      ],
-    );
+  Widget _logList(GameDatabase db, PlayerSave save) {
+    const padding = EdgeInsets.fromLTRB(12, 0, 12, 12);
+    switch (_tab) {
+      case _LogTab.achievements:
+        final rows = achievementLog(db, save);
+        return ListView.builder(
+          padding: padding,
+          itemCount: achievementDifficulties.length,
+          itemBuilder: (context, index) {
+            final difficulty = achievementDifficulties[index];
+            return _DifficultyBand(
+              difficulty: difficulty,
+              rows: achievementLogForDifficulty(rows, difficulty),
+              completion: achievementDifficultyCompletion(rows, difficulty),
+            );
+          },
+        );
+      case _LogTab.milestones:
+        final rows = milestoneLog(db, save);
+        return ListView.builder(
+          padding: padding,
+          itemCount: rows.length,
+          itemBuilder: (context, index) {
+            final row = rows[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _LogRow(
+                title: row.name,
+                detail: row.note,
+                highlight: row.unlocked,
+                dimmed: !row.unlocked,
+              ),
+            );
+          },
+        );
+      case _LogTab.quests:
+        final rows = organizeQuestLog(
+          questLog(db, save),
+          sort: controller.questLogSort.sort,
+          hideUnstartable: _hideUnstartableQuests,
+        );
+        return ListView.builder(
+          padding: padding,
+          itemCount: rows.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _QuestJournalRow(row: rows[index]),
+            );
+          },
+        );
+      case _LogTab.critters:
+        final rows = critterLog(save);
+        return ListView.builder(
+          padding: padding,
+          itemCount: rows.length,
+          itemBuilder: (context, index) {
+            final row = rows[index];
+            final dimmed = !row.found;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _LogRow(
+                title: row.name,
+                detail: row.description,
+                trailing: row.count > 1 ? '×${formatThousands(row.count)}' : null,
+                highlight: row.found,
+                dimmed: dimmed,
+                leading: row.found
+                    ? GameImage(critterAssetPath(row.internalKey), width: 28, height: 28)
+                    : Icon(
+                        Icons.help_outline,
+                        size: 24,
+                        color: Palette.edge.withValues(alpha: dimmed ? _LogRow.dimAlpha : 1),
+                      ),
+              ),
+            );
+          },
+        );
+    }
   }
 }
 
@@ -297,22 +320,6 @@ class _DifficultyBand extends StatelessWidget {
   }
 }
 
-class _Rows extends StatelessWidget {
-  const _Rows(this.rows);
-
-  final List<Widget> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final row in rows) Padding(padding: const EdgeInsets.only(bottom: 8), child: row),
-      ],
-    );
-  }
-}
-
 class _LogRow extends StatelessWidget {
   const _LogRow({
     required this.title,
@@ -322,6 +329,8 @@ class _LogRow extends StatelessWidget {
     this.highlight = false,
     this.dimmed = false,
   });
+
+  static const dimAlpha = 0.45;
 
   final String title;
   final String? detail;
@@ -338,11 +347,17 @@ class _LogRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final row = _body(context);
-    return dimmed ? Opacity(opacity: 0.45, child: row) : row;
+    return _body(context);
+  }
+
+  Color _inkColor(Color base) {
+    return dimmed ? base.withValues(alpha: dimAlpha) : base;
   }
 
   Widget _body(BuildContext context) {
+    final chrome = UiChrome.of(context);
+    final titleColor = _inkColor(highlight ? chrome.embossFace : chrome.panelInk);
+    final mutedColor = dimmed ? chrome.panelMuted.withValues(alpha: dimAlpha) : chrome.panelMuted;
     return GamePanel(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
@@ -355,18 +370,16 @@ class _LogRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    color: highlight
-                        ? UiChrome.of(context).embossFace
-                        : UiChrome.of(context).panelInk,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w400, color: titleColor),
                 ),
-                if (detail case final detail?) MutedText(detail),
+                if (detail case final detail?) MutedText(detail, color: mutedColor),
               ],
             ),
           ),
-          if (trailing case final trailing?) ...[const SizedBox(width: 8), MutedText(trailing)],
+          if (trailing case final trailing?) ...[
+            const SizedBox(width: 8),
+            MutedText(trailing, color: mutedColor),
+          ],
         ],
       ),
     );

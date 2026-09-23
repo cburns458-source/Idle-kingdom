@@ -186,6 +186,12 @@ class GameController extends ChangeNotifier {
 
   num? _secondsNotifiedAtMs;
 
+  /// Stage popups, holds, and banners — art that lives on the action stage.
+  ///
+  /// Phase-only ticks notify this instead of the main listenable, so shell
+  /// chrome is not rebuilt every time a floater appears or a blow hold ends.
+  final ChangeNotifier stageFx = ChangeNotifier();
+
   /// How often a quiet frame still notifies [progress].
   ///
   /// With nothing running, everything the clock touches is written in whole
@@ -477,8 +483,9 @@ class GameController extends ChangeNotifier {
   ///
   /// Every part of it turns on a clock the player cannot act on — a half-second
   /// blow hold, a banner, a floater's second. [tick] compares this across the
-  /// frame and counts a change as structural, which is what lets the stage art
-  /// hang off this listenable instead of being rebuilt with every bar frame.
+  /// frame; a phase-only change notifies [stageFx] so stage art updates without
+  /// rebuilding shell chrome. Structural save/UI changes still use the main
+  /// listenable, which also refreshes [_stagePhaseTold].
   int get stagePhase {
     var bits = 0;
     if (showRecoveringStage) bits |= 1;
@@ -818,6 +825,7 @@ class GameController extends ChangeNotifier {
     // Shell chrome only rebuilds when activity/UI structure changes.
     // Do not use identical(previous, save): live play-time crediting allocates a
     // new save every frame even when nothing gameplay-visible changed.
+    final phaseChanged = stagePhase != _stagePhaseTold;
     final structural =
         result.changed ||
         result.events.isNotEmpty ||
@@ -828,15 +836,17 @@ class GameController extends ChangeNotifier {
         skillUpsBefore != _pendingSkillLevelUps.length ||
         !identical(messageBefore, _message) ||
         !identical(activityErrorBefore, _activityError) ||
-        !identical(discoveryBefore, _discoveryNotice) ||
-        // Against the phase the chrome was last told about, not the phase at the
-        // top of this tick: a hold ends because the clock moved, which is the
-        // same clock both readings inside one tick would use.
-        stagePhase != _stagePhaseTold;
+        !identical(discoveryBefore, _discoveryNotice);
     // Bars and timers move with the clock. On a structural frame the notice
     // comes through [notifyListeners] instead, so nothing waits out the gap.
+    // Phase-only ticks (blow hold, floaters) stay on [stageFx] so the shell's
+    // board textures are not rebuilt with every stage banner.
     if (structural) {
       notifyListeners();
+    } else if (phaseChanged) {
+      _stagePhaseTold = stagePhase;
+      stageFx.notifyListeners();
+      _notifyProgress();
     } else {
       _notifyProgress();
     }
@@ -875,6 +885,7 @@ class GameController extends ChangeNotifier {
     _alive = false;
     progress.dispose();
     secondsProgress.dispose();
+    stageFx.dispose();
     super.dispose();
   }
 

@@ -244,6 +244,13 @@ class _LocationViewState extends State<LocationView> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[controller, controller.stageFx]),
+      builder: (context, _) => _buildLocation(context),
+    );
+  }
+
+  Widget _buildLocation(BuildContext context) {
     final location = controller.location;
     if (location == null) {
       return const Center(child: Text('This place is not on any map.'));
@@ -287,7 +294,7 @@ class _LocationViewState extends State<LocationView> {
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  _locationPlate(locationId),
+                  RepaintBoundary(child: _locationPlate(locationId)),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -400,94 +407,99 @@ class _LocationViewState extends State<LocationView> {
                           child: _RecoveringPanel(controller: controller),
                         ),
                       Expanded(
-                        child: Stack(
-                          children: [
-                            if (!liftArena)
-                              Positioned(
-                                top: 0,
-                                left: 13,
-                                right: 13,
-                                bottom: _collapsedBand + 8,
-                                child: _groundedStage(
-                                  // Separate bottom layers so starting a gather
-                                  // does not resize a shared stack and jump the art.
-                                  Stack(
-                                    fit: StackFit.expand,
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      Align(
-                                        alignment: Alignment.bottomCenter,
-                                        child: OverflowBox(
-                                          maxHeight: double.infinity,
-                                          alignment: Alignment.bottomCenter,
-                                          child: LocationIdlePlayer(controller: controller),
-                                        ),
-                                      ),
-                                      if (running)
+                        child: RepaintBoundary(
+                          child: Stack(
+                            children: [
+                              if (!liftArena)
+                                Positioned(
+                                  top: 0,
+                                  left: 13,
+                                  right: 13,
+                                  bottom: _collapsedBand + 8,
+                                  child: _groundedStage(
+                                    // Separate bottom layers so starting a gather
+                                    // does not resize a shared stack and jump the art.
+                                    Stack(
+                                      fit: StackFit.expand,
+                                      clipBehavior: Clip.none,
+                                      children: [
                                         Align(
                                           alignment: Alignment.bottomCenter,
                                           child: OverflowBox(
                                             maxHeight: double.infinity,
                                             alignment: Alignment.bottomCenter,
-                                            child: IgnorePointer(
-                                              child: ActivityPanel(controller: controller),
-                                            ),
+                                            child: LocationIdlePlayer(controller: controller),
                                           ),
                                         ),
-                                    ],
+                                        if (running)
+                                          Align(
+                                            alignment: Alignment.bottomCenter,
+                                            child: OverflowBox(
+                                              maxHeight: double.infinity,
+                                              alignment: Alignment.bottomCenter,
+                                              child: IgnorePointer(
+                                                child: ActivityPanel(controller: controller),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            if (stage != null && !running && !liftArena)
-                              Positioned(
-                                top: _overlayGap,
-                                left: 13,
-                                right: 13,
-                                bottom: _collapsedBand + 8 + _overlayGap,
-                                child: openPanel is ArenaOpen
-                                    ? stage
-                                    : _fittedPanel(stage, fill: _panelFillsSlot(openPanel)),
-                              ),
-                            if (overlayPanel != null && !liftArena)
-                              Positioned(
-                                top: _overlayGap,
-                                left: 13,
-                                right: 13,
-                                bottom: _collapsedBand + 8 + _overlayGap,
-                                child: openPanel is ArenaOpen
-                                    ? overlayPanel
-                                    : _fittedPanel(overlayPanel, fill: _panelFillsSlot(openPanel)),
-                              ),
-                            if (liftArena && (overlayPanel ?? stage) != null)
-                              Positioned(
-                                left: 10,
-                                right: 10,
-                                bottom: 8 + keyboard + _overlayGap,
-                                child: SizedBox(
-                                  height: (card.maxHeight - keyboard - 16 - _overlayGap).clamp(
-                                    180,
-                                    card.maxHeight * 0.62,
+                              if (stage != null && !running && !liftArena)
+                                Positioned(
+                                  top: _overlayGap,
+                                  left: 13,
+                                  right: 13,
+                                  bottom: _collapsedBand + 8 + _overlayGap,
+                                  child: openPanel is ArenaOpen
+                                      ? stage
+                                      : _fittedPanel(stage, fill: _panelFillsSlot(openPanel)),
+                                ),
+                              if (overlayPanel != null && !liftArena)
+                                Positioned(
+                                  top: _overlayGap,
+                                  left: 13,
+                                  right: 13,
+                                  bottom: _collapsedBand + 8 + _overlayGap,
+                                  child: openPanel is ArenaOpen
+                                      ? overlayPanel
+                                      : _fittedPanel(
+                                          overlayPanel,
+                                          fill: _panelFillsSlot(openPanel),
+                                        ),
+                                ),
+                              if (liftArena && (overlayPanel ?? stage) != null)
+                                Positioned(
+                                  left: 10,
+                                  right: 10,
+                                  bottom: 8 + keyboard + _overlayGap,
+                                  child: SizedBox(
+                                    height: (card.maxHeight - keyboard - 16 - _overlayGap).clamp(
+                                      180,
+                                      card.maxHeight * 0.62,
+                                    ),
+                                    child: overlayPanel ?? stage,
                                   ),
-                                  child: overlayPanel ?? stage,
                                 ),
-                              ),
-                            if (controller.recentRewards.isNotEmpty)
+                              if (controller.recentRewards.isNotEmpty)
+                                Positioned(
+                                  top: 6,
+                                  left: 13,
+                                  right: 13,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: RewardStrip(controller: controller),
+                                  ),
+                                ),
                               Positioned(
-                                top: 6,
-                                left: 13,
-                                right: 13,
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: RewardStrip(controller: controller),
-                                ),
+                                top: 24,
+                                left: 0,
+                                right: 0,
+                                child: Center(child: CritterOverlay(controller: controller)),
                               ),
-                            Positioned(
-                              top: 24,
-                              left: 0,
-                              right: 0,
-                              child: Center(child: CritterOverlay(controller: controller)),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],

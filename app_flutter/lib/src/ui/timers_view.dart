@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -27,23 +25,7 @@ class TimersView extends StatefulWidget {
 }
 
 class _TimersViewState extends State<TimersView> {
-  Timer? _ticker;
-
   GameController get controller => widget.controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
 
   void _travel(String locationId, String mapId) {
     final travel = widget.onTravel;
@@ -69,8 +51,8 @@ class _TimersViewState extends State<TimersView> {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    return AnimatedBuilder(
-      animation: controller,
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[controller, controller.secondsProgress]),
       builder: (context, _) {
         final save = controller.save;
         final db = controller.db;

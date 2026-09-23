@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -58,29 +56,13 @@ class TrackerView extends StatefulWidget {
 }
 
 class _TrackerViewState extends State<TrackerView> {
-  Timer? _ticker;
-
   GameController get controller => widget.controller;
   TrackerKind get kind => widget.kind;
 
   @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
+    return ListenableBuilder(
+      listenable: Listenable.merge(<Listenable>[controller, controller.secondsProgress]),
       builder: (context, _) {
         final title = kind == TrackerKind.loot ? 'Loot' : 'XP';
         return Column(

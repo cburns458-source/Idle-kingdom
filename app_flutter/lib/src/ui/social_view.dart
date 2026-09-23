@@ -145,13 +145,19 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
   final _ownKey = GlobalKey();
   _OwnPin _pin = _OwnPin.none;
 
+  /// Scroll-content Y of the own row's top, last measured while it was built.
+  /// When [ListView.builder] recycles the row, pin math still uses this.
+  double? _ownContentY;
+  double? _ownHeight;
+  String? _ownTrackId;
+
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_updatePin);
+    _scroll.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _updatePin());
   }
 
@@ -163,9 +169,18 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
 
   @override
   void dispose() {
-    _scroll.removeListener(_updatePin);
+    _scroll.removeListener(_onScroll);
     _scroll.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    _updatePin();
+    // jumpTo notifies before the list has laid out recycled children; pin again
+    // after the frame so off-screen own rows use stored content Y.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updatePin();
+    });
   }
 
   bool _isOwn(LeaderboardRowView row) {
@@ -174,27 +189,80 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
         : row.entryId == multiplayer.session?.userId;
   }
 
+  void _forgetOwnMetrics() {
+    _ownContentY = null;
+    _ownHeight = null;
+    _ownTrackId = null;
+  }
+
   void _updatePin() {
     if (!mounted) return;
+    final rows = leaderboardRows(
+      multiplayer.board,
+      tagForGuildName: (name) => guildTagForName(
+        name,
+        ownName: multiplayer.guild?.name,
+        ownTag: multiplayer.guild?.tag,
+        listings: multiplayer.listings,
+      ),
+    );
+    final ownIndex = rows.indexWhere(_isOwn);
+    if (ownIndex < 0) {
+      _forgetOwnMetrics();
+      if (_pin != _OwnPin.none) setState(() => _pin = _OwnPin.none);
+      return;
+    }
+    final ownId = rows[ownIndex].entryId;
+    if (ownId != _ownTrackId) {
+      _forgetOwnMetrics();
+      _ownTrackId = ownId;
+    }
+
     final listContext = _listKey.currentContext;
-    final ownContext = _ownKey.currentContext;
-    if (listContext == null || ownContext == null) {
+    if (listContext == null || !_scroll.hasClients) {
       if (_pin != _OwnPin.none) setState(() => _pin = _OwnPin.none);
       return;
     }
     final listBox = listContext.findRenderObject();
-    final ownBox = ownContext.findRenderObject();
-    if (listBox is! RenderBox || ownBox is! RenderBox || !listBox.hasSize || !ownBox.hasSize) {
-      return;
-    }
+    if (listBox is! RenderBox || !listBox.hasSize) return;
+
     final listHeight = listBox.size.height;
-    final ownOffset = ownBox.localToGlobal(Offset.zero, ancestor: listBox);
+    final pixels = _scroll.position.pixels;
+    final ownContext = _ownKey.currentContext;
+
+    // Refresh content metrics from the render box only when layout agrees with
+    // the scroll offset. jumpTo updates [pixels] before children lay out, and
+    // trusting those frames would rewrite content Y to "still at dy=0".
+    if (ownContext != null) {
+      final ownBox = ownContext.findRenderObject();
+      if (ownBox is RenderBox && ownBox.hasSize) {
+        final offset = ownBox.localToGlobal(Offset.zero, ancestor: listBox);
+        if (_ownContentY == null) {
+          _ownContentY = pixels + offset.dy;
+          _ownHeight = ownBox.size.height;
+        } else {
+          final expectedDy = _ownContentY! - pixels;
+          if ((offset.dy - expectedDy).abs() < 2) {
+            _ownContentY = pixels + offset.dy;
+            _ownHeight = ownBox.size.height;
+          }
+        }
+      }
+    } else if (_ownContentY == null) {
+      // Never measured (below the fold on first open): estimate from index.
+      const estimatedExtent = 78.0;
+      _ownContentY = ownIndex * estimatedExtent;
+      _ownHeight = estimatedExtent - 6;
+    }
+
+    final ownHeight = _ownHeight!;
+    final ownDy = _ownContentY! - pixels;
+
     // Pin one row sooner than fully off-screen, but never while the row is still
     // fully inside the viewport (e.g. sitting at the top of the list).
-    final pinMargin = ownBox.size.height + 6;
-    final leavingTop = ownOffset.dy < 0 && ownOffset.dy + ownBox.size.height <= pinMargin;
-    final leavingBottom =
-        ownOffset.dy + ownBox.size.height > listHeight && ownOffset.dy >= listHeight - pinMargin;
+    final pinMargin = ownHeight + 6;
+    final leavingTop = ownDy < 0 && ownDy + ownHeight <= pinMargin;
+    final leavingBottom = ownDy + ownHeight > listHeight && ownDy >= listHeight - pinMargin;
     final next = leavingTop
         ? _OwnPin.top
         : leavingBottom
@@ -293,20 +361,25 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                       _updatePin();
                       return false;
                     },
-                    child: SingleChildScrollView(
+                    child: ListView.builder(
                       key: _listKey,
                       controller: _scroll,
-                      child: Column(
-                        children: [
-                          for (final row in rows) ...[
+                      padding: EdgeInsets.zero,
+                      itemCount: rows.length,
+                      itemBuilder: (context, index) {
+                        final row = rows[index];
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                             KeyedSubtree(
                               key: _isOwn(row) ? _ownKey : ValueKey(row.entryId),
                               child: _row(context, row),
                             ),
                             const SizedBox(height: 6),
                           ],
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
           ),

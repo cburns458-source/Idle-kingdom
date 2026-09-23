@@ -145,15 +145,12 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
         ],
         const SizedBox(height: 10),
         Flexible(
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              if (entries.isEmpty)
-                const MutedText('Nothing listed for this skill yet.')
-              else
-                for (final entry in entries) _SkillMenuRow(entry: entry),
-            ],
-          ),
+          child: entries.isEmpty
+              ? ListView(children: const [MutedText('Nothing listed for this skill yet.')])
+              : ListView.builder(
+                  itemCount: entries.length,
+                  itemBuilder: (context, index) => _SkillMenuRow(entry: entries[index]),
+                ),
         ),
       ],
     );
@@ -167,17 +164,13 @@ class _SkillMenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: entry.dimmed ? 0.55 : 1,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          entry.title,
-          style: TextStyle(
-            fontWeight: FontWeight.w400,
-            color: entry.emphasized ? Palette.gold : UiChrome.of(context).panelInk,
-          ),
-        ),
+    final baseColor = entry.emphasized ? Palette.gold : UiChrome.of(context).panelInk;
+    final color = entry.dimmed ? baseColor.withValues(alpha: 0.55) : baseColor;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        entry.title,
+        style: TextStyle(fontWeight: FontWeight.w400, color: color),
       ),
     );
   }

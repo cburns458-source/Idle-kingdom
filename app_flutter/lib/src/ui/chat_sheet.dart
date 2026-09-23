@@ -112,6 +112,8 @@ class _ChatSheetState extends State<ChatSheet> {
   String? _pinnedDm;
   int _pinnedCount = -1;
   double _pinnedInset = -1;
+  List<ChatLineView>? _cachedLines;
+  Object? _linesCacheKey;
 
   MultiplayerController get net => widget.multiplayer;
   PlayerSave get save => widget.controller.save;
@@ -177,6 +179,28 @@ class _ChatSheetState extends State<ChatSheet> {
     if (mounted && net.notice == null) _body.clear();
   }
 
+  List<ChatLineView> _chatLines(List<ChatMessage> source) {
+    final key = Object.hash(
+      identityHashCode(source),
+      source.length,
+      net.chatTab,
+      net.selectedDmPeerId,
+      net.filterChatProfanity,
+      net.showGuildMilestones,
+    );
+    if (_linesCacheKey == key && _cachedLines != null) {
+      return _cachedLines!;
+    }
+    _linesCacheKey = key;
+    _cachedLines = chatLines(
+      source,
+      net.session?.userId,
+      filterProfanityEnabled: net.filterChatProfanity,
+      hideGuildMilestones: !net.showGuildMilestones,
+    );
+    return _cachedLines!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -201,12 +225,7 @@ class _ChatSheetState extends State<ChatSheet> {
           unread: net.unreadByTab,
         );
         final source = net.chatTab == ChatTab.dm ? net.messagesForSelectedDm() : net.messages;
-        final lines = chatLines(
-          source,
-          net.session?.userId,
-          filterProfanityEnabled: net.filterChatProfanity,
-          hideGuildMilestones: !net.showGuildMilestones,
-        );
+        final lines = _chatLines(source);
         final showComposer = net.chatTab != ChatTab.dm || net.selectedDmPeerId != null;
         final inset = MediaQuery.viewInsetsOf(context).bottom;
         _considerPin(net.chatTab, net.selectedDmPeerId, lines.length);

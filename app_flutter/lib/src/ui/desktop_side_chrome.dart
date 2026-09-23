@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../session/game_controller.dart';
@@ -11,7 +9,7 @@ import 'chat_sheet.dart';
 import 'notification_bubble.dart';
 
 /// Left rail: the hamburger destinations, as navigation only.
-class DesktopMenuRail extends StatefulWidget {
+class DesktopMenuRail extends StatelessWidget {
   const DesktopMenuRail({
     super.key,
     required this.screen,
@@ -27,41 +25,20 @@ class DesktopMenuRail extends StatefulWidget {
   final MultiplayerController multiplayer;
   final num Function()? nowMs;
 
-  @override
-  State<DesktopMenuRail> createState() => _DesktopMenuRailState();
-}
-
-class _DesktopMenuRailState extends State<DesktopMenuRail> {
-  Timer? _ticker;
-
-  num _clock() => widget.nowMs?.call() ?? widget.controller.session.clock();
+  num _clock() => nowMs?.call() ?? controller.session.clock();
 
   int _badgeFor(GameScreen screen) {
     return switch (screen) {
-      GameScreen.timers => timerReadyBadgeCount(widget.controller.save, _clock()),
-      GameScreen.bazaar => bazaarReadyBadgeCount(widget.multiplayer.market),
+      GameScreen.timers => timerReadyBadgeCount(controller.save, _clock()),
+      GameScreen.bazaar => bazaarReadyBadgeCount(multiplayer.market),
       _ => 0,
     };
   }
 
   @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge(<Listenable>[widget.controller, widget.multiplayer]),
+      listenable: Listenable.merge(<Listenable>[controller.secondsProgress, multiplayer]),
       builder: (context, _) {
         return DecoratedBox(
           decoration: chromeBoardFill(
@@ -84,10 +61,9 @@ class _DesktopMenuRailState extends State<DesktopMenuRail> {
                       count: _badgeFor(item.$1),
                       child: GameButton(
                         label: item.$2,
-                        selected: widget.screen == item.$1,
-                        onPressed: () => widget.onSelect(
-                          widget.screen == item.$1 ? GameScreen.location : item.$1,
-                        ),
+                        selected: screen == item.$1,
+                        onPressed: () =>
+                            onSelect(screen == item.$1 ? GameScreen.location : item.$1),
                       ),
                     ),
                   ),

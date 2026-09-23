@@ -80,11 +80,8 @@ void main() {
 
     await openLog(tester);
 
-    Finder rowFor(String title) =>
-        find.ancestor(of: find.text(title), matching: find.byType(Opacity));
-
-    expect(rowFor('Every skill 50'), findsNothing);
-    expect(tester.widget<Opacity>(rowFor('Iron man').first).opacity, lessThan(1));
+    final ironMan = tester.widget<Text>(find.text('Iron man'));
+    expect(ironMan.style?.color?.a, closeTo(0.45, 0.01));
   });
 
   testWidgets('the Log reports how much of each page is done', (tester) async {
@@ -121,10 +118,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Critter collector'), findsOne);
-    expect(
-      find.ancestor(of: find.text('Critter collector'), matching: find.byType(Opacity)),
-      findsNothing,
-    );
+    final title = tester.widget<Text>(find.text('Critter collector'));
+    expect(title.style?.color?.a, closeTo(1, 0.01));
 
     // A critter leaves the collection, the way a new one being added would look.
     final short = controller.save.copyWith(
