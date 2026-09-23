@@ -320,6 +320,7 @@ class GameButton extends StatefulWidget {
     this.selected = false,
     this.tooltip,
     this.semanticLabel,
+    this.symbol = false,
   });
 
   final String label;
@@ -339,6 +340,9 @@ class GameButton extends StatefulWidget {
 
   /// Spoken name when [label] is a symbol.
   final String? semanticLabel;
+
+  /// Draw [label] with the system emoji font instead of Pixeloid.
+  final bool symbol;
 
   @override
   State<GameButton> createState() => _GameButtonState();
@@ -374,7 +378,7 @@ class _GameButtonState extends State<GameButton> {
                 ? (down || widget.selected ? chrome.primaryPressed : chrome.primaryFill)
                 : (down || widget.selected ? chrome.secondaryPressed : chrome.secondaryFill),
             padding: widget.dense
-                ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
+                ? EdgeInsets.symmetric(horizontal: widget.symbol ? 5 : 7, vertical: 3)
                 : widget.compact
                 ? const EdgeInsets.symmetric(horizontal: 8, vertical: 5)
                 : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -392,13 +396,19 @@ class _GameButtonState extends State<GameButton> {
                   maxLines: widget.compact || widget.dense ? 1 : 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: gameFontFamily,
-                    fontSize: widget.dense
+                    fontFamily: widget.symbol ? null : gameFontFamily,
+                    fontFamilyFallback: widget.symbol
+                        ? const ['Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji']
+                        : null,
+                    fontSize: widget.symbol
+                        ? 15
+                        : widget.dense
                         ? 10.5
                         : widget.compact
                         ? 11
                         : 11.5,
                     fontWeight: FontWeight.w400,
+                    height: widget.symbol ? 1 : null,
                     color: primary ? chrome.primaryLabel : chrome.secondaryLabel,
                   ),
                 ),

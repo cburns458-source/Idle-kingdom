@@ -1,4 +1,9 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/content/asset_paths.dart';
 import 'package:idle_kingdoms/src/theme.dart';
@@ -12,8 +17,20 @@ import 'support/harness.dart';
 void main() {
   late LoadedDatabase database;
 
-  setUpAll(() {
+  setUpAll(() async {
     database = loadDatabaseFromRepo();
+    final fontFile = File('fonts/PixeloidSans.ttf');
+    if (fontFile.existsSync()) {
+      final loader = FontLoader('PixeloidSans');
+      loader.addFont(Future.value(ByteData.sublistView(fontFile.readAsBytesSync())));
+      await loader.load();
+    }
+    const emojiPath = '/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf';
+    if (File(emojiPath).existsSync()) {
+      final emoji = FontLoader('Noto Color Emoji');
+      emoji.addFont(Future.value(ByteData.sublistView(File(emojiPath).readAsBytesSync())));
+      await emoji.load();
+    }
   });
 
   ActionRow action(String id) => database.launch.actions.firstWhere((row) => row.actionId == id);
@@ -99,6 +116,68 @@ void main() {
     await tester.tap(find.byKey(const Key('tracker-reset-all-xp')));
     await tester.pump();
     expect(find.text('Gain XP to start an XP tracker.'), findsOne);
+  });
+
+  testWidgets('large XP rates stay on one line under a top 🔄 in a narrow panel', (tester) async {
+    final clock = TestClock();
+    final controller = buildController(database, seed: startedCharacter(database), clock: clock);
+    addTearDown(controller.dispose);
+    var save = resumeXpTrackers(controller.save, testStartMs);
+    save = creditXpTracker(save, harvestingSkillId, 425001, testStartMs);
+    save = creditXpTracker(save, botanySkillMenuId, 148500, testStartMs);
+    save = creditXpTracker(save, thieverySkillMenuId, 6120, testStartMs);
+    save = creditXpTracker(save, totalXpTrackerId, 579621, testStartMs);
+    controller.commit(save);
+    clock.advance(3_600_000);
+
+    tester.view.physicalSize = const Size(260, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: Scaffold(
+          body: RepaintBoundary(
+            key: const Key('xp-tracker-shot'),
+            child: TrackerView(controller: controller, kind: TrackerKind.xp),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('🔄'), findsWidgets);
+    expect(find.text('Harvesting'), findsOne);
+    expect(find.textContaining('425,001 XP'), findsOne);
+    expect(find.textContaining('148,500 XP'), findsOne);
+
+    final harvestRow = find.ancestor(of: find.text('Harvesting'), matching: find.byType(GamePanel));
+    final title = tester.getRect(
+      find.descendant(of: harvestRow, matching: find.text('Harvesting')),
+    );
+    final reset = tester.getRect(
+      find.descendant(of: harvestRow, matching: find.byKey(const Key('tracker-reset-xp-SKL-0004'))),
+    );
+    final xpText = find.descendant(of: harvestRow, matching: find.textContaining('XP/hr'));
+    final xpLine = tester.getRect(find.ancestor(of: xpText, matching: find.byType(FittedBox)));
+    expect(reset.center.dy, closeTo(title.center.dy, 8));
+    expect(xpLine.top, greaterThan(title.bottom - 2));
+    expect(xpLine.left, closeTo(title.left, 2));
+    expect(xpLine.right, closeTo(reset.right, 8));
+    expect(tester.getSize(xpText).height, lessThan(22));
+    expect(xpLine.height, lessThan(24));
+
+    await tester.runAsync(() async {
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byKey(const Key('xp-tracker-shot')),
+      );
+      final image = await boundary.toImage(pixelRatio: 2);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      for (final dir in ['/tmp/ui-verify', '/opt/cursor/artifacts/screenshots']) {
+        Directory(dir).createSync(recursive: true);
+        File('$dir/xp_tracker_reset_top.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+      }
+    });
   });
 
   testWidgets('standard production does not open a loot section', (tester) async {
