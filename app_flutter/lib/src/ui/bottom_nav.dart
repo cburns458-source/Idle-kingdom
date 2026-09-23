@@ -155,7 +155,12 @@ class _BottomNavState extends State<BottomNav> {
         widget.multiplayer,
       ]),
       builder: (context, _) {
-        _nestEntry?.markNeedsBuild();
+        final nest = _nestEntry;
+        if (nest != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_nestEntry == nest) nest.markNeedsBuild();
+          });
+        }
         return DecoratedBox(
           decoration: chromeBarFill(
             context,
