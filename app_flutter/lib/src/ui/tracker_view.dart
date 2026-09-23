@@ -244,7 +244,9 @@ class _LootCard extends StatelessWidget {
               ),
               GameButton(
                 key: Key('tracker-reset-loot-${entry.key}'),
-                label: 'Reset',
+                label: '🔄',
+                semanticLabel: 'Reset',
+                tooltip: 'Reset',
                 compact: true,
                 dense: true,
                 tone: GameButtonTone.secondary,
@@ -434,9 +436,13 @@ class _XpRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
+    final xpLine =
+        '${formatThousands(entry.xpGained)} XP · ${formatThousands(xpPerHour(entry, nowMs, save))} XP/hr';
     return GamePanel(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (iconPath != null) ...[
             GameImage(iconPath!, width: 30, height: 30),
@@ -444,22 +450,41 @@ class _XpRow extends StatelessWidget {
           ],
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(title, style: const TextStyle(fontSize: 15)),
-                MutedText(
-                  '${formatThousands(entry.xpGained)} XP · ${formatThousands(xpPerHour(entry, nowMs, save))} XP/hr',
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                    ),
+                    GameButton(
+                      key: Key('tracker-reset-xp-${entry.skillId}'),
+                      label: '🔄',
+                      semanticLabel: 'Reset',
+                      tooltip: 'Reset',
+                      compact: true,
+                      dense: true,
+                      tone: GameButtonTone.secondary,
+                      onPressed: onReset,
+                    ),
+                  ],
+                ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    xpLine,
+                    maxLines: 1,
+                    style: TextStyle(fontSize: 12.5, height: 1.35, color: chrome.panelMuted),
+                  ),
                 ),
               ],
             ),
-          ),
-          GameButton(
-            key: Key('tracker-reset-xp-${entry.skillId}'),
-            label: 'Reset',
-            compact: true,
-            dense: true,
-            tone: GameButtonTone.secondary,
-            onPressed: onReset,
           ),
         ],
       ),

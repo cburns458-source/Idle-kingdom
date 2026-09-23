@@ -319,6 +319,7 @@ class GameButton extends StatefulWidget {
     this.dense = false,
     this.selected = false,
     this.tooltip,
+    this.semanticLabel,
   });
 
   final String label;
@@ -336,6 +337,9 @@ class GameButton extends StatefulWidget {
 
   final String? tooltip;
 
+  /// Spoken name when [label] is a symbol.
+  final String? semanticLabel;
+
   @override
   State<GameButton> createState() => _GameButtonState();
 }
@@ -351,7 +355,7 @@ class _GameButtonState extends State<GameButton> {
     final button = Semantics(
       button: true,
       enabled: widget.onPressed != null,
-      label: widget.label,
+      label: widget.semanticLabel ?? widget.label,
       child: ExcludeSemantics(
         child: Opacity(
           opacity: widget.onPressed == null ? 0.55 : 1,

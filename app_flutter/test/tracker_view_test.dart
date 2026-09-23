@@ -82,6 +82,17 @@ void main() {
     expect(find.text('Might'), findsOne);
     expect(find.textContaining('XP/hr'), findsWidgets);
 
+    final title = tester.getRect(find.text('Might'));
+    final reset = tester.getRect(find.byKey(const Key('tracker-reset-xp-$combatSkillId')));
+    final xpText = find.textContaining('XP/hr').first;
+    final xpLine = tester.getRect(find.ancestor(of: xpText, matching: find.byType(FittedBox)));
+    expect(find.text('🔄'), findsWidgets);
+    expect(reset.center.dy, closeTo(title.center.dy, 8));
+    expect(xpLine.top, greaterThan(title.bottom - 2));
+    expect(xpLine.left, closeTo(title.left, 2));
+    expect(xpLine.right, closeTo(reset.right, 8));
+    expect(tester.getSize(xpText).height, lessThan(22));
+
     await tester.tap(find.byKey(const Key('tracker-reset-all-xp')));
     await tester.pump();
     expect(find.text('Gain XP to start an XP tracker.'), findsOne);
