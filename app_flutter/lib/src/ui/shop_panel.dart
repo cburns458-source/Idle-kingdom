@@ -256,16 +256,17 @@ class _ShopPanelState extends State<ShopPanel> {
                   child: _Column(
                     heading: 'Buy',
                     empty: 'No stock listed.',
-                    tiles: [
-                      for (final entry in stock)
-                        _tileFor(
-                          itemId: entry.itemId,
-                          unit: playerBuyPrice(db, shop, entry.itemId),
-                          offered: _buys[entry.itemId],
-                          remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
-                          onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
-                        ),
-                    ],
+                    itemCount: stock.length,
+                    itemBuilder: (context, i) {
+                      final entry = stock[i];
+                      return _tileFor(
+                        itemId: entry.itemId,
+                        unit: playerBuyPrice(db, shop, entry.itemId),
+                        offered: _buys[entry.itemId],
+                        remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
+                        onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 9),
@@ -273,16 +274,17 @@ class _ShopPanelState extends State<ShopPanel> {
                   child: _Column(
                     heading: 'Sell',
                     empty: 'Nothing here that this shop will buy.',
-                    tiles: [
-                      for (final row in sellable)
-                        _tileFor(
-                          itemId: row.itemId,
-                          unit: row.unit,
-                          owned: row.owned,
-                          offered: _sells[row.itemId],
-                          onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
-                        ),
-                    ],
+                    itemCount: sellable.length,
+                    itemBuilder: (context, i) {
+                      final row = sellable[i];
+                      return _tileFor(
+                        itemId: row.itemId,
+                        unit: row.unit,
+                        owned: row.owned,
+                        offered: _sells[row.itemId],
+                        onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -406,13 +408,20 @@ class _ShopPanelState extends State<ShopPanel> {
 /// One side of the counter: a heading over a tight grid of items.
 ///
 /// The grid fills leftover height under the offer so extra stock scrolls
-/// inside the inventory instead of stretching the location page.
+/// inside the inventory instead of stretching the location page. Only visible
+/// tiles are built (same look as the inventory bag).
 class _Column extends StatelessWidget {
-  const _Column({required this.heading, required this.empty, required this.tiles});
+  const _Column({
+    required this.heading,
+    required this.empty,
+    required this.itemCount,
+    required this.itemBuilder,
+  });
 
   final String heading;
   final String empty;
-  final List<Widget> tiles;
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
 
   static const double _tileExtent = 78;
   static const double _gap = 5;
@@ -424,17 +433,21 @@ class _Column extends StatelessWidget {
       children: [
         Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
         const SizedBox(height: 5),
-        if (tiles.isEmpty)
+        if (itemCount == 0)
           MutedText(empty)
         else
           Expanded(
-            child: GridView.extent(
-              maxCrossAxisExtent: _tileExtent,
-              padding: EdgeInsets.zero,
-              mainAxisSpacing: _gap,
-              crossAxisSpacing: _gap,
-              childAspectRatio: 1,
-              children: tiles,
+            child: RepaintBoundary(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: _tileExtent,
+                  mainAxisSpacing: _gap,
+                  crossAxisSpacing: _gap,
+                  childAspectRatio: 1,
+                ),
+                itemCount: itemCount,
+                itemBuilder: itemBuilder,
+              ),
             ),
           ),
       ],
