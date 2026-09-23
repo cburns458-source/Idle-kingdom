@@ -127,15 +127,12 @@ class _RecipeBookBodyState extends State<_RecipeBookBody> {
         ],
         const SizedBox(height: 10),
         Flexible(
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              if (rows.isEmpty)
-                MutedText(widget.emptyMessage)
-              else
-                for (final entry in rows) _RecipeBookRow(entry: entry),
-            ],
-          ),
+          child: rows.isEmpty
+              ? ListView(children: [MutedText(widget.emptyMessage)])
+              : ListView.builder(
+                  itemCount: rows.length,
+                  itemBuilder: (context, index) => _RecipeBookRow(entry: rows[index]),
+                ),
         ),
         const SizedBox(height: 8),
         GameButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
@@ -161,23 +158,21 @@ class _RecipeBookRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: entry.dimmed ? 0.55 : 1,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              entry.title,
-              style: TextStyle(
-                fontWeight: FontWeight.w400,
-                color: entry.emphasized ? Palette.gold : UiChrome.of(context).panelInk,
-              ),
-            ),
-            if (entry.detail case final detail?) MutedText(detail),
-          ],
-        ),
+    final chrome = UiChrome.of(context);
+    final baseTitleColor = entry.emphasized ? Palette.gold : chrome.panelInk;
+    final titleColor = entry.dimmed ? baseTitleColor.withValues(alpha: 0.55) : baseTitleColor;
+    final mutedColor = entry.dimmed ? chrome.panelMuted.withValues(alpha: 0.55) : null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            entry.title,
+            style: TextStyle(fontWeight: FontWeight.w400, color: titleColor),
+          ),
+          if (entry.detail case final detail?) MutedText(detail, color: mutedColor),
+        ],
       ),
     );
   }

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../content/asset_paths.dart';
@@ -59,7 +57,6 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   final LayerLink _nestLink = LayerLink();
   OverlayEntry? _nestEntry;
-  Timer? _ticker;
 
   bool get _nestOpen => _nestEntry != null;
   bool get _nestActive => _nestOpen || nestMenuScreens.contains(widget.screen);
@@ -81,18 +78,7 @@ class _BottomNavState extends State<BottomNav> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() {});
-      _nestEntry?.markNeedsBuild();
-    });
-  }
-
-  @override
   void dispose() {
-    _ticker?.cancel();
     _nestEntry?.remove();
     _nestEntry = null;
     super.dispose();
@@ -161,87 +147,99 @@ class _BottomNavState extends State<BottomNav> {
 
   @override
   Widget build(BuildContext context) {
+    // Badges only need whole-second clock + market polls — not every structural
+    // controller notice (which already force-fires [secondsProgress]).
     return ListenableBuilder(
-      listenable: Listenable.merge(<Listenable>[widget.controller, widget.multiplayer]),
-      builder: (context, _) => DecoratedBox(
-        decoration: chromeBarFill(
-          context,
-          border: const Border(top: BorderSide(color: Palette.edge)),
-        ),
-        child: SizedBox(
-          height: chinHeight,
-          child: Row(
-            children: [
-              Expanded(
-                child: _NavSection(
-                  selected: widget.screen == GameScreen.character,
-                  tooltip: 'Inventory',
-                  semanticsLabel: 'Inventory',
-                  onTap: () => _selectTab(GameScreen.character),
-                  child: GameImage(
-                    uiInventoryAssetPath(),
-                    width: _chinIconSize,
-                    height: _chinIconSize,
+      listenable: Listenable.merge(<Listenable>[
+        widget.controller.secondsProgress,
+        widget.multiplayer,
+      ]),
+      builder: (context, _) {
+        _nestEntry?.markNeedsBuild();
+        return DecoratedBox(
+          decoration: chromeBarFill(
+            context,
+            border: const Border(top: BorderSide(color: Palette.edge)),
+          ),
+          child: SizedBox(
+            height: chinHeight,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _NavSection(
+                    selected: widget.screen == GameScreen.character,
+                    tooltip: 'Inventory',
+                    semanticsLabel: 'Inventory',
+                    onTap: () => _selectTab(GameScreen.character),
+                    child: GameImage(
+                      uiInventoryAssetPath(),
+                      width: _chinIconSize,
+                      height: _chinIconSize,
+                    ),
                   ),
                 ),
-              ),
-              _divider,
-              Expanded(
-                child: _NavSection(
-                  selected: widget.screen == GameScreen.skills,
-                  tooltip: 'Skills',
-                  semanticsLabel: 'Skills',
-                  onTap: () => _selectTab(GameScreen.skills),
-                  child: GameImage(uiStatsAssetPath(), width: _chinIconSize, height: _chinIconSize),
-                ),
-              ),
-              _divider,
-              Expanded(
-                child: _NavSection(
-                  label: widget.locationName,
-                  selected: widget.screen == GameScreen.location,
-                  tooltip: widget.locationName,
-                  onTap: () => _selectTab(GameScreen.location),
-                ),
-              ),
-              _divider,
-              Expanded(
-                child: _NavSection(
-                  selected: widget.screen == GameScreen.log,
-                  tooltip: 'Log',
-                  semanticsLabel: 'Log',
-                  onTap: () => _selectTab(GameScreen.log),
-                  child: GameImage(uiLogAssetPath(), width: _chinIconSize, height: _chinIconSize),
-                ),
-              ),
-              if (widget.showMenu) ...[
                 _divider,
                 Expanded(
-                  child: CompositedTransformTarget(
-                    link: _nestLink,
-                    child: _NavSection(
-                      selected: _nestActive,
-                      tooltip: 'Open menu',
-                      semanticsLabel: _menuReady > 0
-                          ? 'Open menu, $_menuReady waiting'
-                          : 'Open menu',
-                      onTap: _toggleNest,
-                      child: Badged(
-                        count: _menuReady,
-                        child: GameImage(
-                          uiMenuAssetPath(),
-                          width: _chinIconSize,
-                          height: _chinIconSize,
+                  child: _NavSection(
+                    selected: widget.screen == GameScreen.skills,
+                    tooltip: 'Skills',
+                    semanticsLabel: 'Skills',
+                    onTap: () => _selectTab(GameScreen.skills),
+                    child: GameImage(
+                      uiStatsAssetPath(),
+                      width: _chinIconSize,
+                      height: _chinIconSize,
+                    ),
+                  ),
+                ),
+                _divider,
+                Expanded(
+                  child: _NavSection(
+                    label: widget.locationName,
+                    selected: widget.screen == GameScreen.location,
+                    tooltip: widget.locationName,
+                    onTap: () => _selectTab(GameScreen.location),
+                  ),
+                ),
+                _divider,
+                Expanded(
+                  child: _NavSection(
+                    selected: widget.screen == GameScreen.log,
+                    tooltip: 'Log',
+                    semanticsLabel: 'Log',
+                    onTap: () => _selectTab(GameScreen.log),
+                    child: GameImage(uiLogAssetPath(), width: _chinIconSize, height: _chinIconSize),
+                  ),
+                ),
+                if (widget.showMenu) ...[
+                  _divider,
+                  Expanded(
+                    child: CompositedTransformTarget(
+                      link: _nestLink,
+                      child: _NavSection(
+                        selected: _nestActive,
+                        tooltip: 'Open menu',
+                        semanticsLabel: _menuReady > 0
+                            ? 'Open menu, $_menuReady waiting'
+                            : 'Open menu',
+                        onTap: _toggleNest,
+                        child: Badged(
+                          count: _menuReady,
+                          child: GameImage(
+                            uiMenuAssetPath(),
+                            width: _chinIconSize,
+                            height: _chinIconSize,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

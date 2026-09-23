@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -48,19 +47,21 @@ class WorldMapView extends StatelessWidget {
   /// Opens the location page for the node the player is already standing on.
   final VoidCallback? onOpenHere;
 
+  /// Closes the map overlay.
   final VoidCallback? onClose;
 
-  /// Nodes to omit — the Guild Hall until the player has joined a guild.
+  /// Locations hidden on this browse (e.g. guild hall without a guild).
   final List<String> hiddenLocationIds;
 
   /// The node the walking sprite left, when a map walk is in flight.
   final String? walkFromId;
 
-  /// The node the walking sprite is heading to.
+  /// The node the walking sprite is heading toward.
   final String? walkToId;
 
-  /// 0–1 along the walk. Null when nobody is walking.
-  final double? walkProgress;
+  /// Walk progress 0→1 while a map walk is in flight. A listenable keeps the
+  /// shell from setState-ing on every animation frame.
+  final ValueListenable<double>? walkProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -123,21 +124,26 @@ class WorldMapView extends StatelessWidget {
                     ),
                   ),
                 if (walking)
-                  _PinnedToArt(
-                    position: lerpNodePosition(
-                      positionOnBrowseMap(walkFromId!, browseMapId, fromRow, controller.db),
-                      positionOnBrowseMap(walkToId!, browseMapId, toRow, controller.db),
-                      walkProgress!,
-                    ),
-                    box: box,
-                    aspectRatio: artAspect,
-                    anchorFromTop: mapWalkerSize / 2,
-                    child: _MapWalker(
-                      progress: walkProgress!,
-                      appearance: save.appearance,
-                      raceId: save.raceId,
-                      bytes: controller.localPlayerPng,
-                    ),
+                  ValueListenableBuilder<double>(
+                    valueListenable: walkProgress!,
+                    builder: (context, progress, _) {
+                      return _PinnedToArt(
+                        position: lerpNodePosition(
+                          positionOnBrowseMap(walkFromId!, browseMapId, fromRow, controller.db),
+                          positionOnBrowseMap(walkToId!, browseMapId, toRow, controller.db),
+                          progress,
+                        ),
+                        box: box,
+                        aspectRatio: artAspect,
+                        anchorFromTop: mapWalkerSize / 2,
+                        child: _MapWalker(
+                          progress: progress,
+                          appearance: save.appearance,
+                          raceId: save.raceId,
+                          bytes: controller.localPlayerPng,
+                        ),
+                      );
+                    },
                   ),
               ],
             );

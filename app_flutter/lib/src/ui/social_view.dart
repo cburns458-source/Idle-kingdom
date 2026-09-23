@@ -293,20 +293,25 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                       _updatePin();
                       return false;
                     },
-                    child: SingleChildScrollView(
+                    child: ListView.builder(
                       key: _listKey,
                       controller: _scroll,
-                      child: Column(
-                        children: [
-                          for (final row in rows) ...[
+                      padding: EdgeInsets.zero,
+                      itemCount: rows.length,
+                      itemBuilder: (context, index) {
+                        final row = rows[index];
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                             KeyedSubtree(
                               key: _isOwn(row) ? _ownKey : ValueKey(row.entryId),
                               child: _row(context, row),
                             ),
                             const SizedBox(height: 6),
                           ],
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
           ),

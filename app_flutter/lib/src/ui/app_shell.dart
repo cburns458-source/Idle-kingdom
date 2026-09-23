@@ -124,12 +124,17 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   GameScreen get _screen => _stack.last;
   final GlobalKey _toastKey = GlobalKey();
   AnimationController? _mapWalk;
+  final ValueNotifier<double> _walkProgress = ValueNotifier<double>(0);
   String? _walkFromId;
   String? _walkToId;
   bool _returnHoldArmed = false;
   Timer? _returnHold;
   bool _questRewardQueued = false;
   String? _codexItemId;
+
+  /// Last auth gate we rebuilt the shell for. Multiplayer polls must not
+  /// rebuild LocationView — chat / nearby / HUD badge listen on their own.
+  bool? _shellSignedIn;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
@@ -154,6 +159,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
     multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
+    _shellSignedIn = multiplayer.isSignedIn;
     controller.onSaveCommitted = (before, after) {
       unawaited(multiplayer.announceGuildSkillMilestones(before, after, controller.db));
     };
@@ -172,7 +178,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   void _onMultiplayerChanged() {
     if (!mounted) return;
     _syncPlayLoop();
-    setState(() {});
+    // Auth gate flips the whole frame (sign-in sheet vs play). Everything else
+    // multiplayer paints listens on its own ListenableBuilder.
+    final signedIn = multiplayer.isSignedIn;
+    if (_shellSignedIn != signedIn) {
+      _shellSignedIn = signedIn;
+      setState(() {});
+    }
     _maybePresentSocialNotice();
   }
 
@@ -445,6 +457,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _saverTick?.cancel();
     _saverTick = null;
     _mapWalk?.dispose();
+    _walkProgress.dispose();
     _removeRootSocialAlert();
     multiplayer.stopPolling();
     super.dispose();
@@ -455,6 +468,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _mapWalk = null;
     _walkFromId = null;
     _walkToId = null;
+    _walkProgress.value = 0;
   }
 
   /// Whether Local chat should use the shared Citadel room.
@@ -674,13 +688,14 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _mapWalk?.dispose();
     _walkFromId = fromId;
     _walkToId = locationId;
+    _walkProgress.value = 0;
     _mapWalk =
         AnimationController(
             vsync: this,
             duration: Duration(milliseconds: durationMs.round()),
           )
           ..addListener(() {
-            if (mounted) setState(() {});
+            _walkProgress.value = _mapWalk?.value ?? 0;
           })
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed && _walkToId == locationId) {
@@ -745,10 +760,19 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   @override
   Widget build(BuildContext context) {
     // Structural / save changes only — clock ticks notify [GameController.progress]
-    // so shell board textures are not rebuilt every frame.
+    // so shell board textures are not rebuilt every frame. LocationView listens
+    // itself and is passed as [child] so chrome rebuilds leave the plate alone.
     return ListenableBuilder(
       listenable: controller,
-      builder: (context, _) {
+      child: LocationView(
+        controller: controller,
+        multiplayer: multiplayer,
+        onOpenMap: _showMap,
+        onOpenSubMap: _browseSubMap,
+        onEnterGateway: _enterGateway,
+        onOpenGuilds: () => _selectScreen(GameScreen.guilds),
+      ),
+      builder: (context, locationChild) {
         return UiChromeScope(
           chrome: controller.chrome,
           child: Builder(
@@ -794,6 +818,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                                       context,
                                       sideChat: sideChat,
                                       showMenu: !sideRails,
+                                      locationChild: locationChild!,
                                     ),
                                   ),
                                 ),
@@ -866,7 +891,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     );
   }
 
-  Widget _buildFrame(BuildContext context, {required bool sideChat, required bool showMenu}) {
+  Widget _buildFrame(
+    BuildContext context, {
+    required bool sideChat,
+    required bool showMenu,
+    required Widget locationChild,
+  }) {
     if (_needsAuth) {
       return AuthGateSheet(controller: controller, multiplayer: multiplayer);
     }
@@ -924,14 +954,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                 children: [
                   OutOfSight(
                     hidden: _screen != GameScreen.location || _wardrobeOpen,
-                    child: LocationView(
-                      controller: controller,
-                      multiplayer: multiplayer,
-                      onOpenMap: _showMap,
-                      onOpenSubMap: _browseSubMap,
-                      onEnterGateway: _enterGateway,
-                      onOpenGuilds: () => _selectScreen(GameScreen.guilds),
-                    ),
+                    child: locationChild,
                   ),
                   if (_screen != GameScreen.location) _sheetLayer(context),
                   if (_wardrobeOpen)
@@ -980,29 +1003,35 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             ),
           ],
         ),
-        if (!sideChat && !multiplayer.hideChatBubble)
+        if (!sideChat)
           Positioned(
             right: 12,
             bottom: _screen == GameScreen.map ? chatLauncherBottomOnMap : chatLauncherBottom,
-            child: ChatLauncher(
-              open: _chatOpen,
-              multiplayer: multiplayer,
-              onToggle: () {
-                if (_chatOpen) {
-                  _closeChat();
-                  return;
-                }
-                // Open first — do not wait on history fetch / name-color lookups.
-                setState(() => _chatOpen = true);
-                if (multiplayer.canSeeSocialPages) {
-                  unawaited(
-                    multiplayer.selectChatTab(
-                      multiplayer.chatTab,
-                      save.currentLocationId,
-                      citadelHub: _inCitadel,
-                    ),
-                  );
-                }
+            child: ListenableBuilder(
+              listenable: multiplayer,
+              builder: (context, _) {
+                if (multiplayer.hideChatBubble) return const SizedBox.shrink();
+                return ChatLauncher(
+                  open: _chatOpen,
+                  multiplayer: multiplayer,
+                  onToggle: () {
+                    if (_chatOpen) {
+                      _closeChat();
+                      return;
+                    }
+                    // Open first — do not wait on history fetch / name-color lookups.
+                    setState(() => _chatOpen = true);
+                    if (multiplayer.canSeeSocialPages) {
+                      unawaited(
+                        multiplayer.selectChatTab(
+                          multiplayer.chatTab,
+                          save.currentLocationId,
+                          citadelHub: _inCitadel,
+                        ),
+                      );
+                    }
+                  },
+                );
               },
             ),
           ),
@@ -1129,7 +1158,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               : const <String>[],
           walkFromId: _walkFromId,
           walkToId: _walkToId,
-          walkProgress: _mapWalk?.value,
+          walkProgress: _walkFromId == null ? null : _walkProgress,
         );
       case GameScreen.character:
         return InventoryView(

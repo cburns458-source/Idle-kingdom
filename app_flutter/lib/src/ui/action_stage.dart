@@ -91,7 +91,7 @@ class ActionStage extends StatelessWidget {
     // the portraits and scene art are not rebuilt behind every bar frame. The
     // bars and captions that do move with the clock take [progress] themselves.
     return ListenableBuilder(
-      listenable: controller,
+      listenable: Listenable.merge(<Listenable>[controller, controller.stageFx]),
       builder: (context, _) {
         return MediaQuery(
           data: MediaQuery.of(context)
@@ -132,7 +132,7 @@ class LocationIdlePlayer extends StatelessWidget {
     // Recovering is clock-driven ([progress]). While idle with no death hold,
     // only structural changes need a rebuild — do not repaint portraits every tick.
     return ListenableBuilder(
-      listenable: controller,
+      listenable: Listenable.merge(<Listenable>[controller, controller.stageFx]),
       builder: (context, _) {
         if (!controller.isRecovering && !controller.showingDeathHold) {
           return _buildIdle(context);
@@ -540,7 +540,7 @@ class _StageHopHost extends StatefulWidget {
 
 class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderStateMixin {
   Ticker? _ticker;
-  double _t = 1;
+  final ValueNotifier<double> _t = ValueNotifier<double>(1);
 
   @override
   void didChangeDependencies() {
@@ -573,15 +573,15 @@ class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderS
       // Every kind rests at [Offset.zero] once the motion window is past, so the
       // three seconds between hops need no rebuild at all: hold the clock at
       // rest rather than publishing a new number the portraits cannot show.
-      if (next == _t) return;
-      setState(() => _t = next);
+      if (next == _t.value) return;
+      _t.value = next;
     })..start();
   }
 
   void _stopTicker({required bool reset}) {
     _ticker?.dispose();
     _ticker = null;
-    if (reset) _t = 1;
+    if (reset) _t.value = 1;
   }
 
   double _periodT(Duration elapsed) {
@@ -594,12 +594,19 @@ class _StageHopHostState extends State<_StageHopHost> with SingleTickerProviderS
   @override
   void dispose() {
     _ticker?.dispose();
+    _t.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return _StageHopTicker(t: _t, child: widget.child);
+    // [ValueListenableBuilder] keeps [widget.child] stable across hop frames so
+    // only dependents of [_StageHopTicker] rebuild, not the whole portrait tree.
+    return ValueListenableBuilder<double>(
+      valueListenable: _t,
+      child: widget.child,
+      builder: (context, t, child) => _StageHopTicker(t: t, child: child!),
+    );
   }
 }
 
