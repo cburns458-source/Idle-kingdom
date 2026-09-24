@@ -344,7 +344,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         }
         for (final haul in timerCollects) {
           if (!mounted) return;
-          await showQuestRewards(context, questName: haul.title, rewards: haul.rewards);
+          await showQuestRewards(
+            context,
+            questName: haul.title,
+            rewards: haul.rewards,
+            thankYou: haul.kind != 'botany',
+          );
           if (!mounted) return;
           if (haul.kind == 'botany') {
             await _offerBotanyReplant(haul.locationId);

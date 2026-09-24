@@ -19,6 +19,7 @@ void main() {
       citadelMapId,
       forestMapId,
       depthsMapId,
+      mountainsMapId,
     ];
     for (final mapId in mapIds) {
       final hardcoded = layoutForMap(mapId);

@@ -610,6 +610,15 @@ class _EnemyPage extends StatelessWidget {
                       'Level ${formatThousands(entry.combatLevel!)}',
                       style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
                     ),
+                  if (entry.mightLevel != null || entry.vitalityLevel != null)
+                    Text(
+                      [
+                        if (entry.mightLevel != null) 'Might ${formatThousands(entry.mightLevel!)}',
+                        if (entry.vitalityLevel != null)
+                          'Vitality ${formatThousands(entry.vitalityLevel!)}',
+                      ].join(' · '),
+                      style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
+                    ),
                   if (places.isNotEmpty)
                     Text(places, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35)),
                 ],

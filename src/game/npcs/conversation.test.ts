@@ -38,7 +38,7 @@ describe('npc conversation', () => {
     expect(conversation.shopId).toBe('SHP-0001')
     expect(conversation.whereabouts?.label).toBe('Ask about Quill')
     expect(conversation.whereabouts?.line).toMatch(
-      /^Last I heard, Quill was at the (Meadow|Old Ent Grove|Gathering Outskirts|Mountains)\.$/,
+      /^Last I heard, Quill was at the (Meadow|Old Ent Grove|Gathering Outskirts|The Slopes)\.$/,
     )
     expect(takeMerchantTip(launch, save, 'NPC-0007')).toBeNull()
   })
@@ -121,7 +121,7 @@ describe('npc conversation', () => {
   })
 
   it('describes a mentor’s projects by their skill', () => {
-    const save = saveAt('LOC-0006')
+    const save = saveAt('LOC-0046')
     const before = npcConversation(launch, save, npc('NPC-0003'))
     expect(before.mentor).toEqual({
       known: false,
@@ -141,7 +141,7 @@ describe('npc conversation', () => {
     const conversation = npcConversation(launch, saveAt('LOC-0012'), npc('NPC-0008'), nowMs)
     expect(conversation.whereabouts?.label).toBe('Ask where the Master Dwarf is')
     expect(conversation.whereabouts?.line).toMatch(
-      /^The Master Dwarf is at the (Mountains|Deep Mines) today\.$/,
+      /^The Master Dwarf is at the (The Slopes|Deep Mines) today\.$/,
     )
   })
 

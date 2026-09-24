@@ -6,6 +6,7 @@ import {
   DEPTHS_MAP_ID,
   FOREST_MAP_ID,
   MAIN_MAP_ID,
+  MOUNTAINS_MAP_ID,
   TOWN_MAP_ID,
 } from './constants'
 
@@ -24,9 +25,7 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0013': { x: 26, y: 33 },
   // Forest Gate north of the castle, into the Ancient Forest
   'LOC-0039': { x: 22, y: 23 },
-  // Temple on the ridge between castle and mountains
-  'LOC-0036': { x: 45, y: 25 },
-  // Mountain peaks / ridge
+  // Mountains gateway on the ridge
   'LOC-0006': { x: 68, y: 21 },
   // Cave mouth at the foot of the mountains
   'LOC-0010': { x: 58, y: 36 },
@@ -108,6 +107,21 @@ export const FOREST_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0018': { x: 48, y: 28 },
 }
 
+export const MOUNTAINS_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
+  // Mountains gateway at the south-east threshold (hidden on this submap)
+  'LOC-0006': { x: 88, y: 88 },
+  // The Slopes landing, bottom right
+  'LOC-0046': { x: 82, y: 78 },
+  // Temple, bottom left
+  'LOC-0036': { x: 18, y: 78 },
+  // The Peak, top middle
+  'LOC-0047': { x: 50, y: 18 },
+  // Badlands, middle right
+  'LOC-0048': { x: 82, y: 48 },
+  // Giant Camp, middle middle
+  'LOC-0049': { x: 50, y: 48 },
+}
+
 export const DEPTHS_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Sunken Approach at the drowned stairs (hidden on this submap)
   'LOC-0041': { x: 50, y: 86 },
@@ -146,6 +160,7 @@ const LAYOUTS: Record<string, Record<string, NodePosition>> = {
   [CITADEL_MAP_ID]: CITADEL_MAP_NODE_LAYOUT,
   [FOREST_MAP_ID]: FOREST_MAP_NODE_LAYOUT,
   [DEPTHS_MAP_ID]: DEPTHS_MAP_NODE_LAYOUT,
+  [MOUNTAINS_MAP_ID]: MOUNTAINS_MAP_NODE_LAYOUT,
 }
 
 export function layoutForMap(mapId: string): Record<string, NodePosition> {

@@ -243,7 +243,9 @@ class CodexEnemyEntry {
     required this.minDamage,
     required this.maxDamage,
     this.combatXp,
-    this.xpSkillLabel = 'Might',
+    this.xpSkillLabel = 'Combat',
+    this.mightLevel,
+    this.vitalityLevel,
     this.minimumGold,
     this.maximumGold,
     this.dropChance,
@@ -261,6 +263,8 @@ class CodexEnemyEntry {
 
   /// Skill name shown beside XP (Fishing for Mother Squid / Squidlings).
   final String xpSkillLabel;
+  final num? mightLevel;
+  final num? vitalityLevel;
   final num? minimumGold;
   final num? maximumGold;
   final num? dropChance;
@@ -276,6 +280,8 @@ class CodexEnemyEntry {
     'maxDamage': maxDamage,
     if (combatXp != null) 'combatXp': combatXp,
     'xpSkillLabel': xpSkillLabel,
+    if (mightLevel != null) 'mightLevel': mightLevel,
+    if (vitalityLevel != null) 'vitalityLevel': vitalityLevel,
     if (minimumGold != null) 'minimumGold': minimumGold,
     if (maximumGold != null) 'maximumGold': maximumGold,
     if (dropChance != null) 'dropChance': dropChance,
@@ -737,7 +743,9 @@ class CodexIndex {
         minDamage: enemyScaledDamageRange(enemy).min,
         maxDamage: enemyScaledDamageRange(enemy).max,
         combatXp: enemy.combatXp,
-        xpSkillLabel: fishingEnemyIds.contains(enemy.enemyId) ? 'Fishing' : 'Might',
+        xpSkillLabel: fishingEnemyIds.contains(enemy.enemyId) ? 'Fishing' : 'Combat',
+        mightLevel: enemyMightLevel(enemy),
+        vitalityLevel: enemyVitalityLevel(enemy),
         minimumGold: enemy.minimumGold,
         maximumGold: enemy.maximumGold,
         dropChance: enemy.dropChance,
