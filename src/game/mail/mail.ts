@@ -9,6 +9,37 @@ export const MAILBOX_TEST_CATALOG_ID = 'mail-mailbox-test'
 
 export const MAIL_UPDATE_2026_09_22_CATALOG_ID = 'mail-update-2026-09-22'
 
+export const MAIL_UPDATE_2026_09_24_CATALOG_ID = 'mail-update-2026-09-24'
+
+const MAIL_UPDATE_2026_09_24_BODY = `Update (Sep 23–24)
+
+Combat
+- Enemies now use Might and Vitality; bestiary shows Combat XP plus those stats
+- Rebalanced XP for defeating monsters
+- Danger warnings updated for Goblin Camp, Docks, Queen's Quarters, and Castle Crypt
+- Auto-eat after each combat round; Eat now on the map on the right (inventory Eat menu unchanged)
+- Twelve new foes listed in the bestiary (not placed in the world yet)
+
+Mountains
+- Mountains are a sub-map with The Slopes, Temple, The Peak, Badlands, and Giant Camp
+- The Peak and Giant Camp are hostile areas with new fights
+
+Gathering
+- Expanded gathering and recipes through higher levels: wild boar hunt, new trees and mines, marlin and swordfish, and more
+- Added willow, cinnamon, ironwood, Elder Yew, and Heartwood woodcutting
+- Added chromium and vanadium ore and bars
+- Rebalanced Starroot; added Bleeding Tooth mushrooms
+- Man of War at the jellyfish tier
+- New gathering actions are in menus and the codex but not placed at a location yet (wild boar hunt in Kingswoods is live)
+
+Leather
+- Cows, bulls, and elk drop hides instead of leather
+- Tanner at each Crafting Workshop: tan hides from your bag or bank for gold
+
+Minor UI tweaks
+
+Vari - ❤️`
+
 const MAIL_UPDATE_2026_09_22_BODY = `Update (Sep 22–23)
 
 Combat
@@ -72,6 +103,13 @@ export const SYSTEM_MAIL_CATALOG: readonly SystemMailCatalogEntry[] = [
     subject: 'Update (Sep 22–23)',
     body: MAIL_UPDATE_2026_09_22_BODY,
     sentAt: '2026-09-23T00:00:00.000Z',
+    attachments: [],
+  },
+  {
+    id: MAIL_UPDATE_2026_09_24_CATALOG_ID,
+    subject: 'Update (Sep 23–24)',
+    body: MAIL_UPDATE_2026_09_24_BODY,
+    sentAt: '2026-09-24T00:00:00.000Z',
     attachments: [],
   },
 ]
