@@ -13,6 +13,7 @@ const String townMapId = 'MAP-0006';
 const String citadelMapId = 'MAP-0007';
 const String forestMapId = 'MAP-0008';
 const String depthsMapId = 'MAP-0009';
+const String mountainsMapId = 'MAP-0010';
 
 const String caveEntranceId = 'LOC-0010';
 const String caveMiningStoreId = 'LOC-0012';
@@ -49,6 +50,13 @@ const String starlightGladeId = 'LOC-0044';
 const String sunkenApproachId = 'LOC-0041';
 const String theDepthsId = 'LOC-0042';
 const String theShallowsId = 'LOC-0043';
+
+/// Mountains range (MAP-0010).
+const String mountainsGatewayId = 'LOC-0006';
+const String theSlopesId = 'LOC-0046';
+const String thePeakId = 'LOC-0047';
+const String badlandsId = 'LOC-0048';
+const String giantCampId = 'LOC-0049';
 
 bool isFutureHorizonLocation(String locationId) {
   return locationId == westHorizonId || locationId == eastHorizonId;

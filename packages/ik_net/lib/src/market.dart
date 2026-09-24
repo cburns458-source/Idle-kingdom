@@ -106,6 +106,8 @@ const String bazaarEmptyHistory = 'No trades yet.';
 
 const String bazaarEmptyCollection = 'The collection box is empty.';
 
+const String bazaarLoadingOrders = 'Loading orders…';
+
 const String bazaarWithdrawFirst = 'Withdraw items from the bank before listing them.';
 
 /// One of a player's own offers.

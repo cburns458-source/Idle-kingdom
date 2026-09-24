@@ -1,8 +1,10 @@
 import { equipmentForItemId, equipmentTooltipStatLines } from '../equipment/tooltips'
 import {
   enemyCombatLevel,
+  enemyMightLevel,
   enemyScaledDamageRange,
   enemyScaledMaxHp,
+  enemyVitalityLevel,
 } from '../combat/stats'
 import type { ActionRow, EnemyRow, FacilityRow, GameDatabase } from '../data/types'
 import {
@@ -138,6 +140,8 @@ export interface CodexEnemyEntry {
   combatXp?: number | null
   /** Skill name shown beside XP (Fishing for Mother Squid / Squidlings). */
   xpSkillLabel: string
+  mightLevel?: number | null
+  vitalityLevel?: number | null
   minimumGold?: number | null
   maximumGold?: number | null
   dropChance?: number | null
@@ -511,7 +515,9 @@ export class CodexIndex {
         minDamage: enemyScaledDamageRange(enemy).min,
         maxDamage: enemyScaledDamageRange(enemy).max,
         combatXp: enemy['Combat XP'],
-        xpSkillLabel: fishingEnemyIds.has(enemy['Enemy ID']) ? 'Fishing' : 'Might',
+        xpSkillLabel: fishingEnemyIds.has(enemy['Enemy ID']) ? 'Fishing' : 'Combat',
+        mightLevel: enemyMightLevel(enemy),
+        vitalityLevel: enemyVitalityLevel(enemy),
         minimumGold: enemy['Minimum Gold'],
         maximumGold: enemy['Maximum Gold'],
         dropChance: enemy['Drop Chance'],

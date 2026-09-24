@@ -19,6 +19,7 @@ class NpcPanel extends StatefulWidget {
     required this.npc,
     required this.onClose,
     this.onOpenShop,
+    this.onOpenTanner,
   });
 
   final GameController controller;
@@ -27,6 +28,9 @@ class NpcPanel extends StatefulWidget {
 
   /// Opens the counter a merchant keeps, when the location has one.
   final void Function(String shopId)? onOpenShop;
+
+  /// Opens the hide-to-leather counter a tanner keeps.
+  final VoidCallback? onOpenTanner;
 
   @override
   State<NpcPanel> createState() => _NpcPanelState();
@@ -38,9 +42,6 @@ class _NpcPanelState extends State<NpcPanel> {
   String? _error;
   String? _selectedRaceId;
   bool _pickingRace = false;
-  bool _tanning = false;
-  bool _confirmingTanner = false;
-  final Map<String, int> _tannerQty = <String, int>{};
 
   GameController get controller => widget.controller;
 
@@ -382,8 +383,27 @@ class _NpcPanelState extends State<NpcPanel> {
       );
     }
 
-    if (conversation.tanner case final tanner?) {
-      return _tannerDialogue(conversation, tanner);
+    if (conversation.tanner != null) {
+      return _playerDialogue(
+        name: conversation.name,
+        line: conversation.description,
+        error: _error,
+        actions: [
+          GameButton(
+            label: 'Done',
+            tone: GameButtonTone.secondary,
+            compact: true,
+            onPressed: _close,
+          ),
+          GameButton(
+            label: 'Tan hides',
+            onPressed: () {
+              widget.onClose();
+              widget.onOpenTanner?.call();
+            },
+          ),
+        ],
+      );
     }
 
     if (conversation.raceChange case final raceChange?) {
@@ -397,126 +417,6 @@ class _NpcPanelState extends State<NpcPanel> {
       error: _error,
       actions: [GameButton(label: 'Done', onPressed: _close)],
     );
-  }
-
-  Widget _tannerDialogue(NpcConversation conversation, TannerOffer tanner) {
-    if (_confirmingTanner) {
-      final quote = quoteTannerJob(controller.db, controller.save, _selectedTannerQuantities());
-      return _playerDialogue(
-        name: conversation.name,
-        line:
-            'That is ${formatThousands(quote.leather)} leather for ${formatThousands(quote.gold)} gold.',
-        extra: tanner.hides.isEmpty
-            ? null
-            : _TannerHideList(
-                hides: tanner.hides,
-                quantities: _tannerQty,
-                readOnly: true,
-                onChanged: null,
-              ),
-        error: _error,
-        actions: [
-          GameButton(
-            label: 'Back',
-            tone: GameButtonTone.secondary,
-            compact: true,
-            onPressed: () => setState(() {
-              _confirmingTanner = false;
-              _error = null;
-            }),
-          ),
-          GameButton(
-            label: quote.leather <= 0
-                ? 'Select hides'
-                : controller.save.gold < quote.gold
-                ? 'Need gold'
-                : 'Accept',
-            onPressed: quote.leather <= 0 || controller.save.gold < quote.gold
-                ? null
-                : () {
-                    final reason = controller.tanHidesWithTanner(
-                      conversation.npcId,
-                      _selectedTannerQuantities(),
-                    );
-                    if (reason != null) {
-                      setState(() => _error = reason);
-                      return;
-                    }
-                    _close();
-                  },
-          ),
-        ],
-      );
-    }
-
-    if (_tanning) {
-      if (tanner.hides.isEmpty) {
-        return _playerDialogue(
-          name: conversation.name,
-          line: 'You have no hides to tan.',
-          error: _error,
-          actions: [
-            GameButton(
-              label: 'Back',
-              tone: GameButtonTone.secondary,
-              compact: true,
-              onPressed: () => setState(() {
-                _tanning = false;
-                _error = null;
-              }),
-            ),
-          ],
-        );
-      }
-      final anySelected = _tannerQty.values.any((qty) => qty > 0);
-      return _playerDialogue(
-        name: conversation.name,
-        line: tanner.prompt,
-        extra: _TannerHideList(
-          hides: tanner.hides,
-          quantities: _tannerQty,
-          readOnly: false,
-          onChanged: (itemId, qty) => setState(() {
-            _tannerQty[itemId] = qty;
-            _error = null;
-          }),
-        ),
-        error: _error,
-        actions: [
-          GameButton(
-            label: 'Back',
-            tone: GameButtonTone.secondary,
-            compact: true,
-            onPressed: () => setState(() {
-              _tanning = false;
-              _tannerQty.clear();
-              _error = null;
-            }),
-          ),
-          GameButton(
-            label: 'Next',
-            onPressed: anySelected ? () => setState(() => _confirmingTanner = true) : null,
-          ),
-        ],
-      );
-    }
-
-    return _playerDialogue(
-      name: conversation.name,
-      line: conversation.description,
-      error: _error,
-      actions: [
-        GameButton(label: 'Done', tone: GameButtonTone.secondary, compact: true, onPressed: _close),
-        GameButton(label: 'Tan hides', onPressed: () => setState(() => _tanning = true)),
-      ],
-    );
-  }
-
-  Map<String, num> _selectedTannerQuantities() {
-    return <String, num>{
-      for (final entry in _tannerQty.entries)
-        if (entry.value > 0) entry.key: entry.value,
-    };
   }
 
   Widget _raceChangeDialogue(NpcConversation conversation, RaceChangeOffer raceChange) {
@@ -647,69 +547,6 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 }
 
-class _TannerHideList extends StatelessWidget {
-  const _TannerHideList({
-    required this.hides,
-    required this.quantities,
-    required this.readOnly,
-    required this.onChanged,
-  });
-
-  final List<TannerHideOption> hides;
-  final Map<String, int> quantities;
-  final bool readOnly;
-  final void Function(String itemId, int quantity)? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (final hide in hides)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${hide.displayName} · ${formatThousands(hide.leatherEach)} leather each',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-                if (readOnly)
-                  Text('${quantities[hide.itemId] ?? 0}', style: const TextStyle(fontSize: 13))
-                else ...[
-                  GameButton(
-                    label: '−',
-                    tone: GameButtonTone.secondary,
-                    compact: true,
-                    onPressed: (quantities[hide.itemId] ?? 0) <= 0
-                        ? null
-                        : () => onChanged?.call(hide.itemId, (quantities[hide.itemId] ?? 0) - 1),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      '${quantities[hide.itemId] ?? 0} / ${formatThousands(hide.owned)}',
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                  GameButton(
-                    label: '+',
-                    tone: GameButtonTone.secondary,
-                    compact: true,
-                    onPressed: (quantities[hide.itemId] ?? 0) >= hide.owned
-                        ? null
-                        : () => onChanged?.call(hide.itemId, (quantities[hide.itemId] ?? 0) + 1),
-                  ),
-                ],
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 /// A greeting, over the panel it belongs to.
 class _DialogueCard extends StatelessWidget {
   const _DialogueCard({
@@ -814,6 +651,7 @@ Future<void> showQuestRewards(
   required String questName,
   required List<String> rewards,
   String? spokenLine,
+  bool thankYou = true,
 }) {
   return showGamePopup<void>(
     context: context,
@@ -822,7 +660,7 @@ Future<void> showQuestRewards(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const MutedText('Thank you'),
+          if (thankYou) const MutedText('Thank you'),
           Text(
             questName,
             style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),

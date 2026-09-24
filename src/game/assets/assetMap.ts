@@ -12,6 +12,7 @@ export const MAP_ASSET_PATHS: Record<string, string> = {
   'MAP-0007': '/assets/maps/map_citadel.webp',
   'MAP-0008': '/assets/maps/map_ancient_forest.webp',
   'MAP-0009': '/assets/maps/map_the_depths.webp',
+  'MAP-0010': '/assets/locations/loc_mountains.webp',
 }
 
 export const LOCATION_ASSET_PATHS: Record<string, string> = {
@@ -40,6 +41,10 @@ export const LOCATION_ASSET_PATHS: Record<string, string> = {
   'LOC-0043': '/assets/locations/loc_the_shallows.webp',
   'LOC-0044': '/assets/locations/loc_starlight_glade.webp',
   'LOC-0045': '/assets/locations/loc_the_shallows.webp',
+  'LOC-0046': '/assets/locations/loc_mountains.webp',
+  'LOC-0047': '/assets/locations/loc_mountains.webp',
+  'LOC-0048': '/assets/locations/loc_mountains.webp',
+  'LOC-0049': '/assets/locations/loc_mountains.webp',
   'LOC-0021': '/assets/locations/loc_queens_quarters.webp',
   'LOC-0022': '/assets/locations/loc_abandoned_mineshaft.webp',
   'LOC-0038': '/assets/locations/loc_town_foundry.webp',

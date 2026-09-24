@@ -19,9 +19,7 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   'LOC-0013': NodePosition(x: 26, y: 33),
   // Forest Gate north of the castle, into the Ancient Forest
   'LOC-0039': NodePosition(x: 22, y: 23),
-  // Temple on the ridge between castle and mountains
-  'LOC-0036': NodePosition(x: 45, y: 25),
-  // Mountain peaks / ridge
+  // Mountains gateway on the ridge
   'LOC-0006': NodePosition(x: 68, y: 21),
   // Cave mouth at the foot of the mountains
   'LOC-0010': NodePosition(x: 58, y: 36),
@@ -103,6 +101,21 @@ const Map<String, NodePosition> forestMapNodeLayout = <String, NodePosition>{
   'LOC-0018': NodePosition(x: 48, y: 28),
 };
 
+const Map<String, NodePosition> mountainsMapNodeLayout = <String, NodePosition>{
+  // Mountains gateway at the south-east threshold (hidden on this submap)
+  'LOC-0006': NodePosition(x: 88, y: 88),
+  // The Slopes landing, bottom right
+  'LOC-0046': NodePosition(x: 82, y: 78),
+  // Temple, bottom left
+  'LOC-0036': NodePosition(x: 18, y: 78),
+  // The Peak, top middle
+  'LOC-0047': NodePosition(x: 50, y: 18),
+  // Badlands, middle right
+  'LOC-0048': NodePosition(x: 82, y: 48),
+  // Giant Camp, middle middle
+  'LOC-0049': NodePosition(x: 50, y: 48),
+};
+
 const Map<String, NodePosition> depthsMapNodeLayout = <String, NodePosition>{
   // Sunken Approach at the drowned stairs (hidden on this submap)
   'LOC-0041': NodePosition(x: 50, y: 86),
@@ -141,6 +154,7 @@ const Map<String, Map<String, NodePosition>> _layouts = <String, Map<String, Nod
   citadelMapId: citadelMapNodeLayout,
   forestMapId: forestMapNodeLayout,
   depthsMapId: depthsMapNodeLayout,
+  mountainsMapId: mountainsMapNodeLayout,
 };
 
 List<Map<String, Object?>> mapNodesOf(GameDatabase db) {

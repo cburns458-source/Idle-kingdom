@@ -218,6 +218,12 @@ class _BazaarViewState extends State<BazaarView> {
   // --- The six slots ---------------------------------------------------------
 
   Widget _slots() {
+    if (!net.marketReady) {
+      return _framed(
+        itemCount: 1,
+        itemBuilder: (context, index) => const MutedText(bazaarLoadingOrders),
+      );
+    }
     final slots = bazaarSlotViews(net.market.orders);
     final box = net.market.collect;
     final itemCount = slots.length * 2 + 1 + (box.isEmpty ? 1 : box.length) + 1;
