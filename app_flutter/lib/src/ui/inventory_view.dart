@@ -1244,6 +1244,7 @@ class _ItemTile extends StatelessWidget {
       selected: selected,
       onTap: onTap,
       onLongPress: onLongPress,
+      onSecondaryTap: onLongPress,
       child: DefaultTextStyle.merge(
         style: const TextStyle(color: Palette.panelInk),
         child: marks,

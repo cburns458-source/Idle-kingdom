@@ -15,6 +15,7 @@ class FloatingItemSlot extends StatelessWidget {
     required this.child,
     this.onTap,
     this.onLongPress,
+    this.onSecondaryTap,
     this.tooltip,
     this.selected = false,
     this.enabled = true,
@@ -24,6 +25,7 @@ class FloatingItemSlot extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onSecondaryTap;
   final String? tooltip;
   final bool selected;
   final bool enabled;
@@ -38,6 +40,7 @@ class FloatingItemSlot extends StatelessWidget {
       child: InkWell(
         onTap: enabled ? onTap : null,
         onLongPress: enabled ? onLongPress : null,
+        onSecondaryTap: enabled ? onSecondaryTap : null,
         splashColor: Colors.white24,
         highlightColor: Colors.white12,
         child: Padding(padding: padding, child: child),
