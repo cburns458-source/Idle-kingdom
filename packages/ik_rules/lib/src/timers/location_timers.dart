@@ -116,6 +116,7 @@ num inventoryCompostCount(PlayerSave save) {
 bool isCompostCollectActivity(ActivityRow activity) => activity.poolId == compostCollectPoolId;
 
 ActivityRow? compostCollectActivityAt(GameDatabase db, String locationId) {
+  if (!locationHasCompostCollect(locationId)) return null;
   return db.activities.firstWhereOrNull(
     (row) => row.locationId == locationId && isCompostCollectActivity(row),
   );
@@ -151,14 +152,13 @@ bool isTimerInventoryFullReason(String reason) =>
 /// Deprecated alias for [fishingPotItemId].
 const String fishingTrapItemId = fishingPotItemId;
 
-/// Botany patches: Farm, Courtyard, Gathering Outskirts, The Slopes, Shallows, Temple, Meadow.
+/// Botany patches: Farm, Courtyard, Gathering Outskirts, The Slopes, Shallows, Meadow.
 const Set<String> botanyPatchLocations = <String>{
   'LOC-0001',
   'LOC-0014',
   'LOC-0031',
   'LOC-0046',
   'LOC-0043',
-  'LOC-0036',
   'LOC-0009',
 };
 

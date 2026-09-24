@@ -306,6 +306,8 @@ class _InventoryViewState extends State<InventoryView> {
         onOpenCodex: itemId != null && widget.onOpenCodexItem != null
             ? () => widget.onOpenCodexItem!(itemId)
             : null,
+        favorite: stack != null && isFavoriteStack(stack),
+        onToggleFavorite: inventoryIndex != null ? () => _toggleFavorite(inventoryIndex) : null,
       ),
     );
   }
@@ -729,7 +731,6 @@ class _InventoryViewState extends State<InventoryView> {
                     }
                   },
                   onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
-                  onToggleFavorite: () => _toggleFavorite(index),
                 );
               },
             ),
@@ -914,7 +915,6 @@ class _InventoryViewState extends State<InventoryView> {
             iconSize: iconSize,
             onTap: () => _unequip(slotId),
             onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
-            onToggleFavorite: null,
           );
         },
       ),
@@ -1117,6 +1117,7 @@ class _Stat extends StatelessWidget {
 }
 
 /// One bag tile: art, count, and the marks for enchanted and favorite.
+/// Favorite/unfavorite lives on the hold-to-reveal sheet, not on the tile.
 /// The name lives on a tooltip so the icon can fill the cell.
 ///
 /// Paper-doll equipment wells stay bordered ([framedWell]); bag cells float.
@@ -1130,7 +1131,6 @@ class _ItemTile extends StatelessWidget {
     required this.selecting,
     required this.onTap,
     required this.onLongPress,
-    required this.onToggleFavorite,
     this.iconSize = inventoryBagIconSize,
     this.framedWell = false,
   });
@@ -1145,7 +1145,6 @@ class _ItemTile extends StatelessWidget {
   final bool framedWell;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
-  final VoidCallback? onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -1168,7 +1167,7 @@ class _ItemTile extends StatelessWidget {
               ),
             ),
           ),
-        if (enchanted || (onToggleFavorite != null && !selecting))
+        if (enchanted || favorite)
           Positioned(
             right: 0,
             top: 0,
@@ -1177,21 +1176,10 @@ class _ItemTile extends StatelessWidget {
               children: [
                 if (enchanted)
                   const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
-                if (onToggleFavorite != null && !selecting)
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: onToggleFavorite,
-                    child: Tooltip(
-                      message: favorite ? 'Unfavorite' : 'Favorite',
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          favorite ? Icons.favorite : Icons.favorite_border,
-                          size: 14,
-                          color: favorite ? Palette.gold : const Color(0x80F4E7C8),
-                        ),
-                      ),
-                    ),
+                if (favorite)
+                  const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.favorite, size: 14, color: Palette.gold),
                   ),
               ],
             ),

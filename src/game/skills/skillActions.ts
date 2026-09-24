@@ -449,6 +449,8 @@ const COOKING_FISH_NAMES = [
   'crab',
   'lobster',
   'eel',
+  'swordfish',
+  'marlin',
 ]
 
 const COOKING_MEAT_NAMES = ['rabbit', 'pheasant', 'beef', 'venison']

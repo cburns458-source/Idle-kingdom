@@ -282,6 +282,42 @@ void main() {
     );
     expect(
       view.tabs
+          .firstWhere((tab) => tab.id == 'fish')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName == 'Cooked swordfish'),
+      isTrue,
+    );
+    expect(
+      view.tabs
+          .firstWhere((tab) => tab.id == 'fish')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName == 'Cooked marlin'),
+      isTrue,
+    );
+    expect(
+      view.tabs
+          .firstWhere((tab) => tab.id == 'other')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName == 'Cooked swordfish'),
+      isFalse,
+    );
+    expect(
+      view.tabs
+          .firstWhere((tab) => tab.id == 'other')
+          .sections
+          .first
+          .entries
+          .any((row) => row.displayName == 'Cooked marlin'),
+      isFalse,
+    );
+    expect(
+      view.tabs
           .firstWhere((tab) => tab.id == 'meat')
           .sections
           .first

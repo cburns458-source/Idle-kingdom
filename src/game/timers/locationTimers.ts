@@ -105,6 +105,7 @@ export function isCompostCollectActivity(activity: {
 }
 
 export function compostCollectActivityAt(db: GameDatabase, locationId: string) {
+  if (!locationHasCompostCollect(locationId)) return undefined
   return db.Activities.find(
     (row) => row['Location ID'] === locationId && isCompostCollectActivity(row),
   )
@@ -129,14 +130,13 @@ export const POT_BAIT_TO_CATCH: Record<string, string> = {
   'ITEM-0191': 'ITEM-0357', // Baby Giant Squid → Lobster
 }
 
-/** Botany patches: Farm, Courtyard, Gathering Outskirts, The Slopes, Shallows, Temple, Meadow. */
+/** Botany patches: Farm, Courtyard, Gathering Outskirts, The Slopes, Shallows, Meadow. */
 export const BOTANY_PATCH_LOCATIONS = new Set([
   'LOC-0001',
   'LOC-0014',
   'LOC-0031',
   'LOC-0046',
   'LOC-0043',
-  'LOC-0036',
   'LOC-0009',
 ])
 

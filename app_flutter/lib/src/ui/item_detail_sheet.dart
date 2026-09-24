@@ -24,6 +24,8 @@ class ItemDetailSheet extends StatelessWidget {
     this.onEat,
     this.eatEnabled = true,
     this.onOpenCodex,
+    this.onToggleFavorite,
+    this.favorite = false,
   });
 
   final GameController controller;
@@ -46,6 +48,12 @@ class ItemDetailSheet extends StatelessWidget {
 
   /// Opens this item in the Codex encyclopedia.
   final VoidCallback? onOpenCodex;
+
+  /// Pins or unpins this bag stack. Omitted for worn gear and empty slots.
+  final VoidCallback? onToggleFavorite;
+
+  /// Whether this bag stack is already pinned.
+  final bool favorite;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +129,18 @@ class ItemDetailSheet extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 10),
+            if (onToggleFavorite != null) ...[
+              GameButton(
+                label: favorite ? 'Unfavorite' : 'Favorite',
+                compact: true,
+                tone: GameButtonTone.secondary,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onToggleFavorite!();
+                },
+              ),
+              const SizedBox(height: 6),
+            ],
             Row(
               children: [
                 if (onEat != null) ...[
