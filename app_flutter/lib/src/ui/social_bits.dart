@@ -5,6 +5,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
 import '../theme.dart';
+import 'floating_slot.dart';
 import 'game_image.dart';
 
 /// A guild banner: the chosen color with the chosen mark on it.
@@ -156,30 +157,40 @@ class SocialRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GamePanel(
-      highlight: highlight,
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Row(
-        children: [
-          if (leading case final leading?) ...[leading, const SizedBox(width: 10)],
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w400),
+    final chrome = UiChrome.of(context);
+    // Opaque panel wash when highlighted so a pin overlay covers scroll content;
+    // otherwise stay clear so the framed board behind shows through.
+    final fill = highlight ? floatingSelectTint(chrome.panel) : Colors.transparent;
+    return Material(
+      color: fill,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.white24,
+        highlightColor: Colors.white12,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              if (leading case final leading?) ...[leading, const SizedBox(width: 10)],
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w400),
+                    ),
+                    if (subtitle.isNotEmpty) MutedText(subtitle),
+                  ],
                 ),
-                if (subtitle.isNotEmpty) MutedText(subtitle),
-              ],
-            ),
+              ),
+              if (trailing case final trailing?) ...[const SizedBox(width: 8), trailing],
+            ],
           ),
-          if (trailing case final trailing?) ...[const SizedBox(width: 8), trailing],
-        ],
+        ),
       ),
     );
   }

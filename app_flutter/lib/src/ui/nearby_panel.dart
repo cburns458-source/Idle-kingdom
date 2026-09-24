@@ -6,6 +6,7 @@ import 'package:ik_net/ik_net.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'floating_slot.dart';
 import 'game_popup.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
@@ -127,35 +128,39 @@ class _NearbyPanelState extends State<NearbyPanel> {
         else
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.38),
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: rows.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 6),
-              itemBuilder: (context, index) {
-                final row = rows[index];
-                final peer = net.peers[index];
-                final activity = peer.currentActivityId == null
-                    ? null
-                    : widget.controller.indexes.activitiesById[peer.currentActivityId!];
-                final activityName = activity?.contextualName ?? activity?.internalKey;
-                final subtitle = <String>[row.statusLabel, ?activityName].join(' · ');
-                final allied = net.isAlliedUser(row.userId);
-                return SocialRow(
-                  title: _peerTitle(peer),
-                  subtitle: subtitle,
-                  leading: SocialPortrait(
-                    appearance: peer.appearance,
-                    raceId: peer.raceId,
-                    borderColor: allied ? Palette.softGreen : null,
-                  ),
-                  onTap: () => openPlayerProfile(
-                    context,
-                    controller: widget.controller,
-                    multiplayer: net,
-                    userId: row.userId,
-                  ),
-                );
-              },
+            child: GamePanel(
+              framed: true,
+              padding: const EdgeInsets.all(6),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: rows.length,
+                separatorBuilder: (_, _) => floatingRowGap,
+                itemBuilder: (context, index) {
+                  final row = rows[index];
+                  final peer = net.peers[index];
+                  final activity = peer.currentActivityId == null
+                      ? null
+                      : widget.controller.indexes.activitiesById[peer.currentActivityId!];
+                  final activityName = activity?.contextualName ?? activity?.internalKey;
+                  final subtitle = <String>[row.statusLabel, ?activityName].join(' · ');
+                  final allied = net.isAlliedUser(row.userId);
+                  return SocialRow(
+                    title: _peerTitle(peer),
+                    subtitle: subtitle,
+                    leading: SocialPortrait(
+                      appearance: peer.appearance,
+                      raceId: peer.raceId,
+                      borderColor: allied ? Palette.softGreen : null,
+                    ),
+                    onTap: () => openPlayerProfile(
+                      context,
+                      controller: widget.controller,
+                      multiplayer: net,
+                      userId: row.userId,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
       ],

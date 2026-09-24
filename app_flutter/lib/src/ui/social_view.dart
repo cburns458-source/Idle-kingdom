@@ -6,6 +6,7 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_panel.dart';
 import 'catalog_popup.dart';
+import 'floating_slot.dart';
 import 'guild_panel.dart';
 import 'page_header.dart';
 import 'player_profile_sheet.dart';
@@ -276,58 +277,62 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
           ),
           const SizedBox(height: 10),
           Expanded(
-            child: rows.isEmpty
-                ? ListView(
-                    padding: EdgeInsets.zero,
-                    children: [MutedText(emptyBoardMessage(multiplayer.boardKey))],
-                  )
-                : Stack(
-                    clipBehavior: Clip.hardEdge,
-                    children: [
-                      NotificationListener<ScrollNotification>(
-                        onNotification: (_) {
-                          _updatePin();
-                          return false;
-                        },
-                        child: SingleChildScrollView(
-                          key: _listKey,
-                          controller: _scroll,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              for (final row in rows) ...[
-                                KeyedSubtree(
-                                  key: _isOwn(row) ? _ownKey : ValueKey(row.entryId),
-                                  child: _row(context, row),
-                                ),
-                                const SizedBox(height: 6),
+            child: GamePanel(
+              framed: true,
+              padding: const EdgeInsets.all(6),
+              child: rows.isEmpty
+                  ? ListView(
+                      padding: EdgeInsets.zero,
+                      children: [MutedText(emptyBoardMessage(multiplayer.boardKey))],
+                    )
+                  : Stack(
+                      clipBehavior: Clip.hardEdge,
+                      children: [
+                        NotificationListener<ScrollNotification>(
+                          onNotification: (_) {
+                            _updatePin();
+                            return false;
+                          },
+                          child: SingleChildScrollView(
+                            key: _listKey,
+                            controller: _scroll,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                for (final row in rows) ...[
+                                  KeyedSubtree(
+                                    key: _isOwn(row) ? _ownKey : ValueKey(row.entryId),
+                                    child: _row(context, row),
+                                  ),
+                                  floatingRowGap,
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                      if (own != null && _pin == _OwnPin.top)
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: KeyedSubtree(
-                            key: const ValueKey('own-pin-top'),
-                            child: _row(context, own, pinned: true),
+                        if (own != null && _pin == _OwnPin.top)
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: KeyedSubtree(
+                              key: const ValueKey('own-pin-top'),
+                              child: _row(context, own, pinned: true),
+                            ),
                           ),
-                        ),
-                      if (own != null && _pin == _OwnPin.bottom)
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: KeyedSubtree(
-                            key: const ValueKey('own-pin-bottom'),
-                            child: _row(context, own, pinned: true),
+                        if (own != null && _pin == _OwnPin.bottom)
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: KeyedSubtree(
+                              key: const ValueKey('own-pin-bottom'),
+                              child: _row(context, own, pinned: true),
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    ),
+            ),
           ),
         ],
       ),
@@ -379,27 +384,36 @@ class _CitadelTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final visitors = multiplayer.citadelVisitors;
     final summary = citadelHubSummary(visitors.length);
-    return ListView(
+    return Padding(
       padding: const EdgeInsets.all(12),
-      children: [
-        Text(summary.note),
-        const SizedBox(height: 4),
-        MutedText('Plaza presence: ${summary.visitorCount} · Chat channel: ${summary.chatChannel}'),
-        const SizedBox(height: 10),
-        if (visitors.isEmpty)
-          const MutedText(
-            'No visitors on the Plaza right now. Travel to The Citadel to meet others.',
-          )
-        else
-          for (final visitor in visitors) ...[
-            SocialRow(
-              title: visitor.username,
-              subtitle: citadelVisitorSubtitle(visitor),
-              leading: SocialPortrait(appearance: visitor.appearance, raceId: visitor.raceId),
+      child: GamePanel(
+        framed: true,
+        padding: const EdgeInsets.all(10),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Text(summary.note),
+            const SizedBox(height: 4),
+            MutedText(
+              'Plaza presence: ${summary.visitorCount} · Chat channel: ${summary.chatChannel}',
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 10),
+            if (visitors.isEmpty)
+              const MutedText(
+                'No visitors on the Plaza right now. Travel to The Citadel to meet others.',
+              )
+            else
+              for (final visitor in visitors) ...[
+                SocialRow(
+                  title: visitor.username,
+                  subtitle: citadelVisitorSubtitle(visitor),
+                  leading: SocialPortrait(appearance: visitor.appearance, raceId: visitor.raceId),
+                ),
+                floatingRowGap,
+              ],
           ],
-      ],
+        ),
+      ),
     );
   }
 }

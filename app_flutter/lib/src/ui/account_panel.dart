@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_auth_form.dart';
+import 'floating_slot.dart';
 import 'format.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
@@ -365,7 +366,12 @@ class _PeopleFoldState extends State<_PeopleFold> {
             ),
           ),
         ),
-        if (_open) ..._rows(),
+        if (_open)
+          GamePanel(
+            framed: true,
+            padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _rows()),
+          ),
       ],
     );
   }
@@ -399,7 +405,7 @@ class _PeopleFoldState extends State<_PeopleFold> {
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          floatingRowGap,
         ],
       ];
     }
@@ -412,7 +418,7 @@ class _PeopleFoldState extends State<_PeopleFold> {
           trailing: widget.trailing?.call(contact),
           onTap: () => widget.onOpen(contact),
         ),
-        const SizedBox(height: 6),
+        floatingRowGap,
       ],
     ];
   }

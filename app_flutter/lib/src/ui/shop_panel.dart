@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'floating_slot.dart';
 import 'format.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
@@ -338,68 +339,54 @@ class _ShopPanelState extends State<ShopPanel> {
     final soldOut = remaining != null && remaining <= 0;
     final enabled = unit != null && (owned == null || owned > 0) && !soldOut;
 
-    return Tooltip(
-      message: name,
-      child: PixelInkPlate(
-        onTap: enabled ? () => onTap(unit, name) : null,
-        step: PixelChrome.stepTight,
-        fillColor: offered != null
-            ? Color.lerp(UiChrome.of(context).slot, UiChrome.of(context).embossFace, 0.18)!
-            : UiChrome.of(context).slot,
-        material: PixelPlateMaterial.grain,
-        strokeWidth: offered != null ? 2.5 : 2,
-        selected: offered != null,
-        shadow: false,
-        padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
-        child: Opacity(
-          opacity: enabled ? 1 : 0.45,
-          child: DefaultTextStyle.merge(
-            style: const TextStyle(color: Palette.parchmentText),
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ItemIcon(item: item, size: 36),
-                    const SizedBox(height: 2),
-                    Text(
-                      unit == null
-                          ? '—'
-                          : owned != null
-                          ? '${formatThousands(unit)}g · ${formatThousands(owned)}'
-                          : remaining == null
-                          ? '${formatThousands(unit)}g'
-                          : soldOut
-                          ? 'sold out'
-                          : '${formatThousands(unit)}g · ${formatThousands(remaining)} left',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 10.5, color: Palette.muted, height: 1.1),
-                    ),
-                  ],
-                ),
-                if (offered != null)
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: const BoxDecoration(color: Color(0xE69A7B32)),
-                      child: Text(
-                        '×${formatThousands(offered)}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF1A1208),
-                          height: 1.2,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+    return FloatingItemSlot(
+      tooltip: name,
+      selected: offered != null,
+      enabled: enabled,
+      padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
+      onTap: enabled ? () => onTap(unit, name) : null,
+      child: Stack(
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ItemIcon(item: item, size: 36),
+              const SizedBox(height: 2),
+              Text(
+                unit == null
+                    ? '—'
+                    : owned != null
+                    ? '${formatThousands(unit)}g · ${formatThousands(owned)}'
+                    : remaining == null
+                    ? '${formatThousands(unit)}g'
+                    : soldOut
+                    ? 'sold out'
+                    : '${formatThousands(unit)}g · ${formatThousands(remaining)} left',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10.5, color: Palette.panelMuted, height: 1.1),
+              ),
+            ],
           ),
-        ),
+          if (offered != null)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: const BoxDecoration(color: Color(0xE69A7B32)),
+                child: Text(
+                  '×${formatThousands(offered)}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF1A1208),
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

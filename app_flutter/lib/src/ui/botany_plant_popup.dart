@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'floating_slot.dart';
 import 'format.dart';
 import 'game_popup.dart';
 import 'item_icon.dart';
@@ -242,58 +243,43 @@ class _PlantTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slot = UiChrome.of(context).slot;
     final enabled = onTap != null;
-    final fill = selected
-        ? Color.lerp(slot, Palette.gold, 0.18)!
-        : enabled
-        ? slot
-        : Color.lerp(slot, const Color(0xFF000000), 0.25)!;
-    return Tooltip(
-      message: enabled ? option.displayName : option.reason,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.55,
-        child: PixelInkPlate(
-          onTap: onTap,
-          step: PixelChrome.stepTight,
-          fillColor: fill,
-          material: PixelPlateMaterial.grain,
-          strokeWidth: selected ? 2.5 : 2,
-          selected: selected,
-          shadow: false,
-          padding: const EdgeInsets.all(4),
-          child: Stack(
-            children: [
-              Center(child: ItemIcon(item: item, size: 36)),
-              if (option.owned > 1)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Text(
-                    '${option.owned.round()}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: Palette.parchmentText,
-                    ),
-                  ),
+    return FloatingItemSlot(
+      tooltip: enabled ? option.displayName : option.reason,
+      selected: selected,
+      enabled: enabled,
+      padding: const EdgeInsets.all(4),
+      onTap: onTap,
+      child: Stack(
+        children: [
+          Center(child: ItemIcon(item: item, size: 36)),
+          if (option.owned > 1)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Text(
+                '${option.owned.round()}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  color: Palette.panelInk,
                 ),
-              if (selectedCount > 0)
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  child: Text(
-                    '$selectedCount',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: Palette.gold,
-                    ),
-                  ),
+              ),
+            ),
+          if (selectedCount > 0)
+            Positioned(
+              left: 0,
+              top: 0,
+              child: Text(
+                '$selectedCount',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  color: Palette.gold,
                 ),
-            ],
-          ),
-        ),
+              ),
+            ),
+        ],
       ),
     );
   }
