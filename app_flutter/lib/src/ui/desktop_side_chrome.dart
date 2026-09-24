@@ -110,11 +110,7 @@ class DesktopTrackerRail extends StatelessWidget {
   Widget build(BuildContext context) {
     return GamePopupCard(
       padding: EdgeInsets.zero,
-      child: TrackerView(
-        controller: controller,
-        kind: kind,
-        onClose: onClose,
-      ),
+      child: TrackerView(controller: controller, kind: kind, onClose: onClose),
     );
   }
 }

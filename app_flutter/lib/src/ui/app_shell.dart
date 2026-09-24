@@ -865,7 +865,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                                         if (_railTracker != null)
                                           Expanded(
                                             child: Padding(
-                                              padding: const EdgeInsets.only(right: desktopRailGutter),
+                                              padding: const EdgeInsets.only(
+                                                right: desktopRailGutter,
+                                              ),
                                               child: DesktopTrackerRail(
                                                 controller: controller,
                                                 kind: _railTracker!,

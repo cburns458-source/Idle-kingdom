@@ -15,11 +15,7 @@ enum TrackerKind { xp, loot }
 /// When the desktop rails are up, XP / Loot dock left of the menu instead of
 /// covering the stage.
 class SideRailTrackerHost extends InheritedWidget {
-  const SideRailTrackerHost({
-    super.key,
-    required this.open,
-    required super.child,
-  });
+  const SideRailTrackerHost({super.key, required this.open, required super.child});
 
   final void Function(TrackerKind kind) open;
 
@@ -123,10 +119,7 @@ class _TrackerViewState extends State<TrackerView> {
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: gamePopupTitleSize,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
                 ),
               ),
             Expanded(child: kind == TrackerKind.xp ? _xpTab() : _lootTab()),
@@ -515,7 +508,11 @@ class _XpRow extends StatelessWidget {
                   child: Text(
                     xpLine,
                     maxLines: 1,
-                    style: TextStyle(fontSize: gamePopupBodySize, height: 1.35, color: chrome.panelMuted),
+                    style: TextStyle(
+                      fontSize: gamePopupBodySize,
+                      height: 1.35,
+                      color: chrome.panelMuted,
+                    ),
                   ),
                 ),
               ],
