@@ -132,6 +132,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   bool _questRewardQueued = false;
   String? _codexItemId;
 
+  /// XP / Loot panel docked left of the desktop menu when side rails are up.
+  TrackerKind? _railTracker;
+
   /// Last auth gate we rebuilt the shell for. Multiplayer polls must not
   /// rebuild LocationView — chat / nearby / HUD badge listen on their own.
   bool? _shellSignedIn;
@@ -792,6 +795,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                         final frame = playableFrameSize(available);
                         final sideChat = playableFrameHasSideChat(available);
                         final sideRails = sideChat && _canPlay;
+                        if (!sideRails && _railTracker != null) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted && _railTracker != null) {
+                              setState(() => _railTracker = null);
+                            }
+                          });
+                        }
                         final game = SizedBox(
                           width: frame.width,
                           height: frame.height,
@@ -832,41 +842,74 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                           ),
                         );
                         if (!sideRails) return Center(child: game);
-                        return Center(
+                        final railText = MediaQuery.of(context).copyWith(
+                          textScaler: playableUiTextScaler(MediaQuery.textScalerOf(context)),
+                        );
+                        return SideRailTrackerHost(
+                          open: (kind) {
+                            if (!mounted) return;
+                            setState(() => _railTracker = kind);
+                          },
                           child: SizedBox(
+                            width: available.width,
                             height: frame.height,
                             child: Row(
-                              mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                SizedBox(
-                                  width: desktopRailWidth,
+                                Expanded(
                                   child: MediaQuery(
-                                    data: MediaQuery.of(context).copyWith(
-                                      textScaler: playableUiTextScaler(
-                                        MediaQuery.textScalerOf(context),
-                                      ),
-                                    ),
-                                    child: DesktopMenuRail(
-                                      screen: _screen,
-                                      onSelect: _selectScreen,
-                                      controller: controller,
-                                      multiplayer: multiplayer,
-                                      nowMs: controller.session.clock,
+                                    data: railText,
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        if (_railTracker != null)
+                                          Expanded(
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                right: desktopRailGutter,
+                                              ),
+                                              child: DesktopTrackerRail(
+                                                controller: controller,
+                                                kind: _railTracker!,
+                                                onClose: () {
+                                                  if (!mounted) return;
+                                                  setState(() => _railTracker = null);
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        if (_railTracker != null)
+                                          SizedBox(
+                                            width: desktopMenuRailWidth,
+                                            child: DesktopMenuRail(
+                                              screen: _screen,
+                                              onSelect: _selectScreen,
+                                              controller: controller,
+                                              multiplayer: multiplayer,
+                                              nowMs: controller.session.clock,
+                                            ),
+                                          )
+                                        else
+                                          Expanded(
+                                            child: DesktopMenuRail(
+                                              screen: _screen,
+                                              onSelect: _selectScreen,
+                                              controller: controller,
+                                              multiplayer: multiplayer,
+                                              nowMs: controller.session.clock,
+                                              expand: true,
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: desktopRailGutter),
                                 game,
                                 const SizedBox(width: desktopRailGutter),
-                                SizedBox(
-                                  width: desktopRailWidth,
+                                Expanded(
                                   child: MediaQuery(
-                                    data: MediaQuery.of(context).copyWith(
-                                      textScaler: playableUiTextScaler(
-                                        MediaQuery.textScalerOf(context),
-                                      ),
-                                    ),
+                                    data: railText,
                                     child: ListenableBuilder(
                                       listenable: multiplayer,
                                       builder: (context, _) {

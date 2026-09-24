@@ -6,9 +6,15 @@ import '../theme.dart';
 import 'app_shell.dart';
 import 'bottom_nav.dart';
 import 'chat_sheet.dart';
+import 'game_popup.dart';
 import 'notification_bubble.dart';
+import 'playable_frame.dart';
+import 'tracker_view.dart';
 
 /// Left rail: the hamburger destinations, as navigation only.
+///
+/// When [expand] is true the board fills leftover width while the buttons stay
+/// [desktopMenuRailWidth] and hug the playable column.
 class DesktopMenuRail extends StatelessWidget {
   const DesktopMenuRail({
     super.key,
@@ -17,6 +23,7 @@ class DesktopMenuRail extends StatelessWidget {
     required this.controller,
     required this.multiplayer,
     this.nowMs,
+    this.expand = false,
   });
 
   final GameScreen screen;
@@ -24,6 +31,9 @@ class DesktopMenuRail extends StatelessWidget {
   final GameController controller;
   final MultiplayerController multiplayer;
   final num Function()? nowMs;
+
+  /// Stretch the board across leftover left width; keep buttons narrow.
+  final bool expand;
 
   num _clock() => nowMs?.call() ?? controller.session.clock();
 
@@ -40,27 +50,25 @@ class DesktopMenuRail extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge(<Listenable>[controller.secondsProgress, multiplayer]),
       builder: (context, _) {
-        return DecoratedBox(
-          decoration: chromeBoardFill(
-            context,
-            border: const Border(right: BorderSide(color: Palette.edge)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
+        final body = Padding(
+          padding: const EdgeInsets.fromLTRB(8, 14, 8, 10),
+          child: SizedBox(
+            width: desktopMenuRailWidth - 16,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Menu', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
-                const SizedBox(height: 4),
+                const Text('Menu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+                const SizedBox(height: 2),
                 const MutedText('Codex, Timers, and social pages.'),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 for (final item in nestMenuItems)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: Badged(
                       count: _badgeFor(item.$1),
                       child: GameButton(
                         label: item.$2,
+                        compact: true,
                         selected: screen == item.$1,
                         onPressed: () =>
                             onSelect(screen == item.$1 ? GameScreen.location : item.$1),
@@ -71,7 +79,38 @@ class DesktopMenuRail extends StatelessWidget {
             ),
           ),
         );
+        return DecoratedBox(
+          decoration: chromeBoardFill(
+            context,
+            border: const Border(right: BorderSide(color: Palette.edge)),
+          ),
+          child: expand
+              ? Align(alignment: Alignment.topRight, child: body)
+              : SizedBox(width: desktopMenuRailWidth, child: body),
+        );
       },
+    );
+  }
+}
+
+/// XP / Loot tracker docked in the left desktop rail beside the menu.
+class DesktopTrackerRail extends StatelessWidget {
+  const DesktopTrackerRail({
+    super.key,
+    required this.controller,
+    required this.kind,
+    required this.onClose,
+  });
+
+  final GameController controller;
+  final TrackerKind kind;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return GamePopupCard(
+      padding: EdgeInsets.zero,
+      child: TrackerView(controller: controller, kind: kind, onClose: onClose),
     );
   }
 }

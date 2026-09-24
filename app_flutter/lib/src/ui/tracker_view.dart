@@ -9,9 +9,23 @@ import 'format.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
 import 'game_popup.dart';
-import 'page_header.dart';
 
 enum TrackerKind { xp, loot }
+
+/// When the desktop rails are up, XP / Loot dock left of the menu instead of
+/// covering the stage.
+class SideRailTrackerHost extends InheritedWidget {
+  const SideRailTrackerHost({super.key, required this.open, required super.child});
+
+  final void Function(TrackerKind kind) open;
+
+  static SideRailTrackerHost? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<SideRailTrackerHost>();
+  }
+
+  @override
+  bool updateShouldNotify(covariant SideRailTrackerHost oldWidget) => open != oldWidget.open;
+}
 
 String? _firstString(Iterable<String> values) {
   final iterator = values.iterator;
@@ -24,6 +38,11 @@ Future<void> showTrackerPopup({
   required TrackerKind kind,
   Rect? origin,
 }) {
+  final host = SideRailTrackerHost.maybeOf(context);
+  if (host != null) {
+    host.open(kind);
+    return Future<void>.value();
+  }
   return showGamePopup<void>(
     context: context,
     origin: origin,
@@ -69,13 +88,38 @@ class _TrackerViewState extends State<TrackerView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (widget.onClose != null)
-              PageHeader(title: title, onClose: widget.onClose!)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: gamePopupTitleSize,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    GameButton(
+                      label: 'Close',
+                      tone: GameButtonTone.secondary,
+                      compact: true,
+                      dense: true,
+                      tooltip: 'Close',
+                      onPressed: widget.onClose!,
+                    ),
+                  ],
+                ),
+              )
             else
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                  style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
                 ),
               ),
             Expanded(child: kind == TrackerKind.xp ? _xpTab() : _lootTab()),
@@ -219,7 +263,7 @@ class _LootCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_lootTitle(), style: const TextStyle(fontSize: 15)),
+                    Text(_lootTitle(), style: const TextStyle(fontSize: gamePopupTitleSize)),
                     MutedText(_lootDetail()),
                   ],
                 ),
@@ -340,9 +384,9 @@ class _DropChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ItemIcon(item: item, size: 24),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 13)),
+        ItemIcon(item: item, size: 20),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: gamePopupBodySize)),
       ],
     );
   }
@@ -442,7 +486,7 @@ class _XpRow extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 15),
+                        style: const TextStyle(fontSize: gamePopupTitleSize),
                       ),
                     ),
                     GameButton(
@@ -464,7 +508,11 @@ class _XpRow extends StatelessWidget {
                   child: Text(
                     xpLine,
                     maxLines: 1,
-                    style: TextStyle(fontSize: 12.5, height: 1.35, color: chrome.panelMuted),
+                    style: TextStyle(
+                      fontSize: gamePopupBodySize,
+                      height: 1.35,
+                      color: chrome.panelMuted,
+                    ),
                   ),
                 ),
               ],
