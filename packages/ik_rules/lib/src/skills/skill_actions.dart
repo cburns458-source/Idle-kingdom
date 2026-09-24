@@ -536,6 +536,8 @@ const List<String> _cookingFishNames = <String>[
   'crab',
   'lobster',
   'eel',
+  'swordfish',
+  'marlin',
 ];
 
 const List<String> _cookingMeatNames = <String>['rabbit', 'pheasant', 'beef', 'venison'];

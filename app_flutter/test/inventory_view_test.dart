@@ -119,6 +119,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Equip'), findsOne);
+    expect(find.text('Favorite'), findsOne);
     await tester.tap(find.text('Equip'));
     await tester.pumpAndSettle();
 
@@ -147,6 +148,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Woodcutting: -3% action time'), findsOne);
     expect(find.text('Equip'), findsNothing);
+    expect(find.text('Favorite'), findsOne);
+    await tester.tap(find.text('Favorite'));
+    await tester.pumpAndSettle();
+    expect(isFavoriteEquipped(controller.save.equipment.slots[weaponToolSlotId]), isTrue);
+    expect(find.byIcon(Icons.favorite), findsOne);
+
+    await tester.longPress(find.byTooltip('Copper Hatchet').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Unfavorite'), findsOne);
+    await tester.tap(find.text('Unfavorite'));
+    await tester.pumpAndSettle();
+    expect(isFavoriteEquipped(controller.save.equipment.slots[weaponToolSlotId]), isFalse);
+    expect(find.byIcon(Icons.favorite), findsNothing);
   });
 
   testWidgets('the detail sheet reports what an item is worth', (tester) async {
@@ -424,7 +438,9 @@ void main() {
     expect(find.byTooltip('Potato'), findsNothing);
   });
 
-  testWidgets('the favorite heart sits at the top-right of an item tile', (tester) async {
+  testWidgets('favorited tiles keep a heart mark; pin and unpin from the detail sheet', (
+    tester,
+  ) async {
     final seed = unequippedCharacter().copyWith(
       inventory: [
         const InventoryStack(
@@ -440,14 +456,37 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller));
 
+    expect(find.byTooltip('Unfavorite'), findsNothing);
+    expect(find.byTooltip('Favorite'), findsNothing);
     final tile = tester.getRect(find.byTooltip('Clay'));
-    final heart = tester.getRect(find.byTooltip('Unfavorite'));
+    final heart = tester.getRect(find.byIcon(Icons.favorite));
     expect(heart.right, closeTo(tile.right, 12));
     expect(heart.top, closeTo(tile.top, 12));
 
     final star = tester.getRect(find.text('★'));
     expect(star.right, lessThanOrEqualTo(heart.right));
     expect(star.top, closeTo(tile.top, 12));
+
+    await tester.longPress(find.byTooltip('Clay'));
+    await tester.pumpAndSettle();
+    final popup = find.byKey(const Key('game-popup'));
+    expect(find.descendant(of: popup, matching: find.text('Unfavorite')), findsOne);
+    await tester.tap(find.text('Unfavorite'));
+    await tester.pumpAndSettle();
+    expect(isFavoriteStack(controller.save.inventory.single), isFalse);
+    expect(find.byIcon(Icons.favorite), findsNothing);
+    expect(find.byKey(const Key('game-popup')), findsNothing);
+
+    await tester.longPress(find.byTooltip('Clay'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byKey(const Key('game-popup')), matching: find.text('Favorite')),
+      findsOne,
+    );
+    await tester.tap(find.text('Favorite'));
+    await tester.pumpAndSettle();
+    expect(isFavoriteStack(controller.save.inventory.single), isTrue);
+    expect(find.byIcon(Icons.favorite), findsOne);
   });
 
   testWidgets('food tiles do not say Eat; the detail sheet still does', (tester) async {

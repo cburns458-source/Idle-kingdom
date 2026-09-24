@@ -43,6 +43,7 @@ void main() {
       'Pick weeds',
       'Collect compost',
     ]);
+    expect(locationHasBotanyPatch('LOC-0036'), isTrue);
     expect(db.activities.any((row) => row.activityId == 'ACT-0036'), isFalse);
   });
 

@@ -54,4 +54,25 @@ void main() {
     expect(isFavoriteStack(added.save.inventory.first), isTrue);
     expect(added.save.inventory, hasLength(inventorySlotLimit));
   });
+
+  test('toggles favorite on worn gear and keeps it through unequip', () {
+    var save = createNewSave(db, 0).copyWith(inventory: const <InventoryStack>[]);
+    save = addItemToInventory(save, 'ITEM-0124', 1);
+    final equipped = equipInventoryIndex(db, save, 0);
+    expect(equipped.ok, isTrue);
+    save = equipped.save!;
+    expect(save.equipment.slots[weaponToolSlotId]?.favorite, isNull);
+
+    save = toggleEquippedFavorite(save, weaponToolSlotId)!;
+    expect(isFavoriteEquipped(save.equipment.slots[weaponToolSlotId]), isTrue);
+
+    final unequipped = unequipSlot(save, weaponToolSlotId);
+    expect(unequipped.ok, isTrue);
+    expect(
+      isFavoriteStack(
+        unequipped.save!.inventory.firstWhere((stack) => stack.itemId == 'ITEM-0124'),
+      ),
+      isTrue,
+    );
+  });
 }

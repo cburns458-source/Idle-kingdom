@@ -402,10 +402,14 @@ void main() {
 
   test('offers compost collect at every botany patch except The Shallows', () {
     expect(locationHasCompostCollect('LOC-0001'), isTrue);
+    expect(locationHasCompostCollect('LOC-0046'), isTrue);
     expect(locationHasCompostCollect('LOC-0043'), isFalse);
+    expect(locationHasCompostCollect('LOC-0036'), isTrue);
     expect(locationHasCompostCollect('LOC-0002'), isFalse);
     expect(compostCollectActivityAt(db, 'LOC-0001')?.activityId, 'ACT-0062');
+    expect(compostCollectActivityAt(db, 'LOC-0046')?.activityId, 'ACT-0065');
     expect(compostCollectActivityAt(db, 'LOC-0043'), isNull);
+    expect(compostCollectActivityAt(db, 'LOC-0036')?.activityId, 'ACT-0066');
     expect(db.items.any((item) => item.itemId == compostItemId), isTrue);
   });
 

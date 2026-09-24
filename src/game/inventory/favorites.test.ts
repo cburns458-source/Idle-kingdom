@@ -6,7 +6,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { equipInventoryIndex, unequipSlot } from '../equipment/loadout'
 import { createNewSave } from '../save/saveStore'
 import { confirmShopOffer } from '../shops/transactions'
-import { toggleInventoryFavorite, isFavoriteStack } from './favorites'
+import { toggleInventoryFavorite, toggleEquippedFavorite, isFavoriteStack } from './favorites'
 import { sellInventoryIndexes } from './sell'
 
 const rawDatabase = JSON.parse(
@@ -58,6 +58,29 @@ describe('inventory favorites', () => {
     save = unequipped.save
     const back = save.inventory.find((stack) => stack.itemId === 'ITEM-0124')
     expect(isFavoriteStack(back)).toBe(true)
+  })
+
+  it('toggles favorite on worn gear and keeps it through unequip', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, inventory: [] }
+    save = addItemToInventory(save, 'ITEM-0124', 1)
+    const equipped = equipInventoryIndex(launch, save, 0)
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = equipped.save
+    expect(save.equipment.slots['SLOT-0001']?.favorite).toBeUndefined()
+
+    const favorited = toggleEquippedFavorite(save, 'SLOT-0001')
+    expect(favorited).toBeTruthy()
+    save = favorited!
+    expect(save.equipment.slots['SLOT-0001']?.favorite).toBe(true)
+
+    const unequipped = unequipSlot(save, 'SLOT-0001')
+    expect(unequipped.ok).toBe(true)
+    if (!unequipped.ok) return
+    save = unequipped.save
+    expect(isFavoriteStack(save.inventory.find((stack) => stack.itemId === 'ITEM-0124'))).toBe(true)
   })
 
   it('adds collected items onto an existing favorited stack', () => {

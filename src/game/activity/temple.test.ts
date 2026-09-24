@@ -9,6 +9,7 @@ import { forcedHostileActivity, locationIsHostileFor } from '../world/hostility'
 import { canTravelTo } from '../world/travel'
 import { MAIN_MAP_ID, MOUNTAINS_MAP_ID, THE_SLOPES_ID } from '../world/constants'
 import { locationHasBlessing, requestBlessing } from '../world/blessing'
+import { locationHasBotanyPatch } from '../timers/locationTimers'
 import { requestActivityStart } from './transition'
 
 const rawDatabase = JSON.parse(
@@ -29,6 +30,7 @@ describe('Temple', () => {
       (row) => row['Contextual Name'],
     )
     expect(names).toEqual(['Train with the monks', 'Pick weeds', 'Collect compost'])
+    expect(locationHasBotanyPatch('LOC-0036')).toBe(true)
     expect(launch.Activities.some((row) => row['Activity ID'] === 'ACT-0036')).toBe(false)
   })
 

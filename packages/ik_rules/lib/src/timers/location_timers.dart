@@ -116,6 +116,7 @@ num inventoryCompostCount(PlayerSave save) {
 bool isCompostCollectActivity(ActivityRow activity) => activity.poolId == compostCollectPoolId;
 
 ActivityRow? compostCollectActivityAt(GameDatabase db, String locationId) {
+  if (!locationHasCompostCollect(locationId)) return null;
   return db.activities.firstWhereOrNull(
     (row) => row.locationId == locationId && isCompostCollectActivity(row),
   );

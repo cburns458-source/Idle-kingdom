@@ -274,6 +274,10 @@ describe('skill menu entries', () => {
     const stew = cooking.tabs.find((tab) => tab.id === 'stew')?.sections[0]?.entries ?? []
     const other = cooking.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
     expect(fish.some((item) => item.displayName === 'Cooked perch')).toBe(true)
+    expect(fish.some((item) => item.displayName === 'Cooked swordfish')).toBe(true)
+    expect(fish.some((item) => item.displayName === 'Cooked marlin')).toBe(true)
+    expect(other.some((item) => item.displayName === 'Cooked swordfish')).toBe(false)
+    expect(other.some((item) => item.displayName === 'Cooked marlin')).toBe(false)
     expect(meat.some((item) => item.displayName === 'Cooked beef')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Crawfish Stew')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Soup Stock')).toBe(true)

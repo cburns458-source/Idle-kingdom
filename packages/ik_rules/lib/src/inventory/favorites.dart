@@ -32,3 +32,17 @@ PlayerSave? toggleInventoryFavorite(PlayerSave save, int index) {
   }).toList();
   return sortInventoryFavoritesFirst(save.copyWith(inventory: inventory));
 }
+
+/// Toggles the favorite flag on a worn stack, or null when the slot is empty.
+PlayerSave? toggleEquippedFavorite(PlayerSave save, String slotId) {
+  final stack = save.equipment.slots[slotId];
+  if (stack == null) return null;
+  final next = isFavoriteEquipped(stack)
+      ? stack.copyWith(favorite: null)
+      : stack.copyWith(favorite: true);
+  return save.copyWith(
+    equipment: save.equipment.copyWith(
+      slots: <String, EquippedStack?>{...save.equipment.slots, slotId: next},
+    ),
+  );
+}

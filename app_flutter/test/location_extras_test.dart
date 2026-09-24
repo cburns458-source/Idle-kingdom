@@ -809,6 +809,32 @@ void main() {
     expect(find.text('Plant'), findsOne);
   });
 
+  testWidgets('Temple still has a botany patch', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0036'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    expect(find.widgetWithText(GameButton, 'Patches'), findsOne);
+    await selectLocationBandTab(tester, 'Patches');
+    expect(find.text('Botany patch'), findsOne);
+    expect(find.text('Collect compost'), findsOne);
+  });
+
+  testWidgets('The Slopes still has a botany patch', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0046'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    expect(find.widgetWithText(GameButton, 'Patches'), findsOne);
+    await selectLocationBandTab(tester, 'Patches');
+    expect(find.text('Botany patch'), findsOne);
+    expect(find.text('Collect compost'), findsOne);
+  });
+
   testWidgets('the docks option band has a Traps tab', (tester) async {
     final controller = buildController(
       database,

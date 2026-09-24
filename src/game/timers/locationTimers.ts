@@ -105,6 +105,7 @@ export function isCompostCollectActivity(activity: {
 }
 
 export function compostCollectActivityAt(db: GameDatabase, locationId: string) {
+  if (!locationHasCompostCollect(locationId)) return undefined
   return db.Activities.find(
     (row) => row['Location ID'] === locationId && isCompostCollectActivity(row),
   )
