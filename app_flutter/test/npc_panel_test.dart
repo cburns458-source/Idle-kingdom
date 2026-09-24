@@ -365,4 +365,27 @@ void main() {
     expect(closed, 1);
     expect(opened, 1);
   });
+
+  testWidgets('timer hauls can omit Thank you', (tester) async {
+    await pumpPanel(
+      tester,
+      Builder(
+        builder: (context) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            showQuestRewards(
+              context,
+              questName: 'Pot haul',
+              rewards: const ['Perch'],
+              thankYou: false,
+            );
+          });
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Thank you'), findsNothing);
+    expect(find.text('Pot haul'), findsOne);
+    expect(find.textContaining('Perch'), findsOne);
+  });
 }

@@ -348,7 +348,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             context,
             questName: haul.title,
             rewards: haul.rewards,
-            thankYou: haul.kind != 'botany',
+            thankYou: haul.kind != 'botany' && haul.kind != 'fishing_pot',
           );
           if (!mounted) return;
           if (haul.kind == 'botany') {
