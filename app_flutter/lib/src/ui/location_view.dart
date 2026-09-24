@@ -904,7 +904,9 @@ class _LocationViewState extends State<LocationView> {
           padding: const EdgeInsets.only(bottom: 8),
           child: _InteractionCard(
             title: npc.displayName,
-            subtitle: npc.role?.toLowerCase() == 'quest giver' ? null : npc.role,
+            subtitle: npc.role?.toLowerCase() == 'quest giver' || npc.role == npc.displayName
+                ? null
+                : npc.role,
             actionLabel: 'Talk',
             onPressed: () => _openPanel(NpcOpen(npc)),
           ),
