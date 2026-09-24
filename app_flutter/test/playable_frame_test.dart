@@ -33,8 +33,8 @@ void main() {
     expect(playableFrameSize(const Size(1080, 810)), const Size(810 * 9 / 16, 810));
   });
 
-  test('both rails need 540 leftover after the 9:16 column', () {
-    expect(playableFrameSideChatMinLeftover, 540);
+  test('both rails need 456 leftover after the 9:16 column', () {
+    expect(playableFrameSideChatMinLeftover, 456);
     expect(playableFrameHasSideChat(const Size(1024, 768)), isTrue);
     expect(playableFrameHasSideChat(const Size(1000, 900)), isFalse);
   });

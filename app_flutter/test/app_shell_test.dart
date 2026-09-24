@@ -7,6 +7,7 @@ import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
+import 'package:idle_kingdoms/src/ui/desktop_side_chrome.dart';
 import 'package:idle_kingdoms/src/ui/game_image.dart';
 import 'package:idle_kingdoms/src/ui/inventory_view.dart';
 import 'package:idle_kingdoms/src/ui/menu_view.dart';
@@ -961,7 +962,32 @@ void main() {
     expect(find.text('Codex, Timers, and social pages.'), findsOne);
     final frame = tester.getSize(find.byType(AppShell));
     expect(frame.height, 1080);
-    expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, desktopRailWidth);
+    final column = 1080 * 9 / 16;
+    final leftover = 1920 - column - desktopRailGutter * 2;
+    final expectedChat = leftover / 2;
+    expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, closeTo(expectedChat, 0.5));
+    expect(tester.getSize(find.byType(DesktopMenuRail)).width, desktopMenuRailWidth);
+  });
+
+  testWidgets('wide rails dock the loot tracker left of the menu', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(1920, 1080));
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('location-tracker-loot')));
+    await tester.pump();
+
+    expect(find.byKey(const Key('tracker-on-loot')), findsOne);
+    expect(find.byType(DesktopTrackerRail), findsOne);
+    expect(find.byKey(const Key('game-popup')), findsNothing);
+
+    final tracker = tester.getRect(find.byType(DesktopTrackerRail));
+    final menu = tester.getRect(find.byType(DesktopMenuRail));
+    final chat = tester.getRect(find.byKey(const Key('chat-panel')));
+    expect(tracker.right, lessThanOrEqualTo(menu.left + 0.5));
+    expect(menu.right, lessThan(chat.left));
+    expect(chat.right, closeTo(1920, 0.5));
   });
 
   testWidgets('desktop rails open Log in the phone column', (tester) async {

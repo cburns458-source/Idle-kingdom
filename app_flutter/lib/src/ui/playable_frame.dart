@@ -6,14 +6,21 @@ const double playableFrameMaxWidth = 420;
 /// Width / height of a phone column.
 const double playableFrameAspect = 9 / 16;
 
-/// Fixed width of the desktop menu and chat rails.
-const double desktopRailWidth = 252;
+/// Narrow menu rail — only needs room for short labels (Codex, Guilds, …).
+const double desktopMenuRailWidth = 168;
+
+/// Chat rail grows with leftover width; never thinner than this.
+const double desktopChatRailMinWidth = 252;
+
+/// Legacy alias for the chat rail minimum (tests / older call sites).
+const double desktopRailWidth = desktopChatRailMinWidth;
 
 /// Gap between each rail and the 9:16 column.
 const double desktopRailGutter = 18;
 
-/// Leftover width after a 9:16 column that fits both rails and their gutters.
-const double playableFrameSideChatMinLeftover = desktopRailWidth * 2 + desktopRailGutter * 2;
+/// Leftover width after a 9:16 column that fits menu, chat min, and gutters.
+const double playableFrameSideChatMinLeftover =
+    desktopMenuRailWidth + desktopChatRailMinWidth + desktopRailGutter * 2;
 
 /// Skip side chat on short windows (including the 800×600 widget-test surface).
 ///

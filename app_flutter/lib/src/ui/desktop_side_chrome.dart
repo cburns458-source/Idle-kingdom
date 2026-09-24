@@ -6,7 +6,9 @@ import '../theme.dart';
 import 'app_shell.dart';
 import 'bottom_nav.dart';
 import 'chat_sheet.dart';
+import 'game_popup.dart';
 import 'notification_bubble.dart';
+import 'tracker_view.dart';
 
 /// Left rail: the hamburger destinations, as navigation only.
 class DesktopMenuRail extends StatelessWidget {
@@ -46,21 +48,22 @@ class DesktopMenuRail extends StatelessWidget {
             border: const Border(right: BorderSide(color: Palette.edge)),
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 18, 12, 12),
+            padding: const EdgeInsets.fromLTRB(8, 14, 8, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Menu', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
-                const SizedBox(height: 4),
+                const Text('Menu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+                const SizedBox(height: 2),
                 const MutedText('Codex, Timers, and social pages.'),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 for (final item in nestMenuItems)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: Badged(
                       count: _badgeFor(item.$1),
                       child: GameButton(
                         label: item.$2,
+                        compact: true,
                         selected: screen == item.$1,
                         onPressed: () =>
                             onSelect(screen == item.$1 ? GameScreen.location : item.$1),
@@ -72,6 +75,32 @@ class DesktopMenuRail extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// XP / Loot tracker docked in the left desktop rail beside the menu.
+class DesktopTrackerRail extends StatelessWidget {
+  const DesktopTrackerRail({
+    super.key,
+    required this.controller,
+    required this.kind,
+    required this.onClose,
+  });
+
+  final GameController controller;
+  final TrackerKind kind;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return GamePopupCard(
+      padding: EdgeInsets.zero,
+      child: TrackerView(
+        controller: controller,
+        kind: kind,
+        onClose: onClose,
+      ),
     );
   }
 }
