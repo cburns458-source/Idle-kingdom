@@ -12155,7 +12155,7 @@
       "Contextual Name": "Try to reason with the pirates",
       "Location ID": "LOC-0004",
       "Description": "Pirate Combat encounters at the docks.",
-      "Danger Warning Combat Level": 3,
+      "Danger Warning Combat Level": 75,
       "Pool ID": "POOL-0018",
       "Pool Internal Key": "dock_pirates",
       "Status": "Planned",
@@ -13103,14 +13103,6 @@
       "Weight": 80,
       "Status": "Planned",
       "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0065",
-      "Pool ID": "POOL-0018",
-      "Action ID": "ACN-0173",
-      "Weight": 20,
-      "Status": "Planned",
-      "Notes": "A seagull turns up instead of the pirates one roll in five."
     },
     {
       "Pool Entry ID": "PEN-0050",
