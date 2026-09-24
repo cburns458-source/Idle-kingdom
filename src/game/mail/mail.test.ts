@@ -7,6 +7,7 @@ import { migrateSave } from '../save/migrations'
 import type { MailMessage, PlayerSave } from '../save/types'
 import { SAVE_VERSION } from '../save/types'
 import {
+  MAIL_UPDATE_2026_09_24_CATALOG_ID,
   MAIL_UPDATE_2026_09_22_CATALOG_ID,
   MAILBOX_TEST_CATALOG_ID,
   MAILBOX_TTL_MS,
@@ -43,7 +44,8 @@ describe('mailbox', () => {
     const save = createNewSave(source, NOW_MS)
     expect(save.mailbox.map((message) => message.id)).toContain(MAILBOX_TEST_CATALOG_ID)
     expect(save.mailbox.map((message) => message.id)).toContain(MAIL_UPDATE_2026_09_22_CATALOG_ID)
-    expect(unreadMailCount(save, NOW_MS)).toBe(2)
+    expect(save.mailbox.map((message) => message.id)).toContain(MAIL_UPDATE_2026_09_24_CATALOG_ID)
+    expect(unreadMailCount(save, NOW_MS)).toBe(3)
     expect(visibleMailbox(save, NOW_MS)[0]?.attachments).toEqual([])
   })
 
@@ -54,14 +56,14 @@ describe('mailbox', () => {
     expect(read.mailbox.find((message) => message.id === MAILBOX_TEST_CATALOG_ID)?.readAt).toBe(
       new Date(NOW_MS).toISOString(),
     )
-    expect(unreadMailCount(read, NOW_MS)).toBe(1)
+    expect(unreadMailCount(read, NOW_MS)).toBe(2)
     expect(syncSystemMail(read, NOW_MS).mailbox).toHaveLength(save.mailbox.length)
   })
 
   it('drops letters 90 days after they were sent', () => {
     const { source } = prepareDatabase(rawDatabase)
     const save = createNewSave(source, NOW_MS)
-    const later = NOW_MS + MAILBOX_TTL_MS + 24 * 60 * 60 * 1000
+    const later = NOW_MS + MAILBOX_TTL_MS + 3 * 24 * 60 * 60 * 1000
     expect(pruneExpiredMail(save, later).mailbox).toEqual([])
     expect(syncSystemMail(save, later).mailbox).toEqual([])
   })
