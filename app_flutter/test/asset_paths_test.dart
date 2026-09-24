@@ -110,6 +110,9 @@ void main() {
     expect(uiSettingsAssetPath(), 'content/assets/icons/ui/ui_settings.webp');
     expect(uiHudGoldAssetPath(), 'content/assets/icons/ui/ui_hud_gold.webp');
     expect(uiRestoriaAssetPath(), 'content/assets/icons/ui/ui_restoria.webp');
+    expect(templeSkyAssetPath(), 'content/assets/locations/loc_temple_sky.webp');
+    expect(templeTerrainAssetPath(), 'content/assets/locations/loc_temple_terrain.webp');
+    expect(templeForegroundAssetPath(), 'content/assets/locations/loc_temple_foreground.webp');
     expect(slotIconPath('SLOT-0003'), 'content/assets/icons/slots/slot_helmet.webp');
     expect(enemyAssetPath('ENM-0006'), 'content/assets/enemies/enm_dragon.webp');
     expect(enemyAssetPath('ENM-0020'), 'content/assets/enemies/enm_monk.webp');

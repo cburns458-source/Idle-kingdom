@@ -309,6 +309,12 @@ String locationAssetPath(String locationId, {GameDatabase? db}) {
   return '$_assetRoot/${_locationArt[locationId] ?? 'locations/loc_town.webp'}';
 }
 
+String templeSkyAssetPath() => '$_assetRoot/locations/loc_temple_sky.webp';
+
+String templeTerrainAssetPath() => '$_assetRoot/locations/loc_temple_terrain.webp';
+
+String templeForegroundAssetPath() => '$_assetRoot/locations/loc_temple_foreground.webp';
+
 /// An item's icon, by id when one is pinned and by [itemIconStem] otherwise.
 String itemIconPath(ItemRow? item) {
   return '$_assetRoot/icons/items/item_${itemIconStem(item)}.webp';

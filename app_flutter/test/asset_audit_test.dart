@@ -128,6 +128,9 @@ void main() {
         'location ${location.locationId}',
       );
     }
+    expectBundled(templeSkyAssetPath(), 'the Temple sky layer');
+    expectBundled(templeTerrainAssetPath(), 'the Temple terrain layer');
+    expectBundled(templeForegroundAssetPath(), 'the Temple foliage layer');
   });
 
   test('every enemy has its own art', () {

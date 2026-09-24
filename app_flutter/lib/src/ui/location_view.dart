@@ -27,6 +27,7 @@ import 'tanner_panel.dart';
 import 'botany_plant_popup.dart';
 import 'pot_bait_popup.dart';
 import 'tracker_view.dart';
+import 'temple_stage.dart';
 
 /// Whatever the player has open on top of the location, if anything.
 sealed class LocationPanel {
@@ -298,21 +299,63 @@ class _LocationViewState extends State<LocationView> {
           clipper: const PixelSteppedClipper(step: 3),
           child: LayoutBuilder(
             builder: (context, card) {
-              final bandTop = _bandExpanded ? 8.0 : card.maxHeight - _collapsedBand - 8;
+              final temple = usesTempleLayeredBackground(locationId);
+              final collapsedBand = _collapsedBand + (temple ? 52.0 : 0);
+              final bandTop = _bandExpanded
+                  ? 8.0
+                  : card.maxHeight - collapsedBand - (temple ? 0 : 8);
+              final stageBottom = card.maxHeight - bandTop;
               return Stack(
                 fit: StackFit.expand,
                 children: [
-                  RepaintBoundary(child: _locationPlate(locationId)),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x6B140D08), Color(0x2E140D08), Color(0xB8140D08)],
-                        stops: [0, 0.28, 1],
+                  if (temple)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: stageBottom,
+                      child: const TempleLayeredBackdrop(),
+                    )
+                  else
+                    RepaintBoundary(child: _locationPlate(locationId)),
+                  if (!temple)
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0x6B140D08), Color(0x2E140D08), Color(0xB8140D08)],
+                          stops: [0, 0.28, 1],
+                        ),
                       ),
                     ),
-                  ),
+                  if (temple && !liftArena)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: stageBottom,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        clipBehavior: Clip.none,
+                        children: [
+                          LocationIdlePlayer(controller: controller),
+                          if (running)
+                            Positioned(
+                              left: 13,
+                              right: 13,
+                              top: 64,
+                              child: IgnorePointer(
+                                child: UnconstrainedBox(
+                                  constrainedAxis: Axis.horizontal,
+                                  alignment: Alignment.topCenter,
+                                  child: ActivityPanel(controller: controller),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -418,7 +461,7 @@ class _LocationViewState extends State<LocationView> {
                         child: RepaintBoundary(
                           child: Stack(
                             children: [
-                              if (!liftArena)
+                              if (!liftArena && !temple)
                                 Positioned(
                                   top: 0,
                                   left: 13,
@@ -513,12 +556,19 @@ class _LocationViewState extends State<LocationView> {
                     ],
                   ),
                   Positioned(
-                    left: 10,
-                    right: 10,
-                    bottom: 8,
+                    left: temple ? 0 : 10,
+                    right: temple ? 0 : 10,
+                    bottom: temple ? 0 : 8,
                     top: bandTop,
                     child: _FloatingOptionBand(
                       expanded: _bandExpanded,
+                      opaque: temple,
+                      leading: temple
+                          ? Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                              child: StageLoadoutStrip(controller: controller),
+                            )
+                          : null,
                       onToggle: () => setState(() => _bandExpanded = !_bandExpanded),
                       tabs: _optionSections(locationId).map((section) => section.label).toList(),
                       selectedTab: _selectedBandTab(locationId),
@@ -1040,9 +1090,13 @@ class _FloatingOptionBand extends StatelessWidget {
     required this.selectedTab,
     required this.onSelectTab,
     required this.child,
+    this.opaque = false,
+    this.leading,
   });
 
   final bool expanded;
+  final bool opaque;
+  final Widget? leading;
   final VoidCallback onToggle;
   final List<String> tabs;
   final String? selectedTab;
@@ -1052,17 +1106,20 @@ class _FloatingOptionBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.zero /* pixel step 3 */,
-        border: Border.all(color: const Color(0x479A7B32)),
-      ),
+      decoration: opaque
+          ? chromeBoardFill(context)
+          : BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.zero /* pixel step 3 */,
+              border: Border.all(color: const Color(0x479A7B32)),
+            ),
       child: Stack(
         children: [
           Positioned.fill(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (leading != null) leading!,
                 if (tabs.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(6, 4, 40, 0),
