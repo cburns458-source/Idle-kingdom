@@ -20,13 +20,16 @@ const double templeViewWidth = 320;
 /// Crop from each side of the 360-wide plate so 320 art pixels fill the stage.
 const double templeViewCrop = (templeDesignWidth - templeViewWidth) / 2;
 
-/// Left (player) ellipse center in 360×480 design space.
+/// Left (player) foot in 360×480 design space.
 ///
-/// Measured from the 1440×1920 foliage PNG (4×).
-const Offset templePlayerFootDesign = Offset(138.875, 398.875);
+/// The 1440×1920 foliage ellipse is 428–683 × 1548–1643 (÷4). The foot sits a
+/// few art pixels below the ellipse center, on the lower-middle of the oval.
+const Offset templePlayerFootDesign = Offset(138.875, 404.8125);
 
-/// Right (action / enemy) ellipse center in 360×480 design space.
-const Offset templeActionFootDesign = Offset(222.375, 398.375);
+/// Right (action / enemy) foot in 360×480 design space.
+///
+/// Foliage ellipse 764–1015 × 1544–1643 (÷4); same lower-middle sit as the player.
+const Offset templeActionFootDesign = Offset(222.375, 404.5625);
 
 /// Night sky sampled from the top of the sky layer, for any gap above the plate.
 const Color templeSkyFill = Color(0xFF14163B);

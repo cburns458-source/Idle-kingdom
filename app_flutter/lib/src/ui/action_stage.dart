@@ -536,6 +536,7 @@ class _StageShell extends StatelessWidget {
     required this.scene,
     required this.footer,
     this.reserveLoadoutStrip = false,
+    this.fillStage = false,
   });
 
   final String semanticsLabel;
@@ -545,8 +546,24 @@ class _StageShell extends StatelessWidget {
   /// Leave a hole under the timer so the location-plate loadout strip shows.
   final bool reserveLoadoutStrip;
 
+  /// Temple: stretch so names and bars sit on the dirt just above the panel.
+  final bool fillStage;
+
   @override
   Widget build(BuildContext context) {
+    final body = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        scene,
+        const SizedBox(height: 7),
+        footer,
+        if (reserveLoadoutStrip) ...[
+          const SizedBox(height: _stageLoadoutStripGap),
+          const SizedBox(height: _stageLoadoutStripHeight),
+        ],
+      ],
+    );
     return Semantics(
       container: true,
       explicitChildNodes: true,
@@ -557,19 +574,7 @@ class _StageShell extends StatelessWidget {
         // location slot, or the gathering PNG jumps when the stage appears.
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              scene,
-              const SizedBox(height: 7),
-              footer,
-              if (reserveLoadoutStrip) ...[
-                const SizedBox(height: _stageLoadoutStripGap),
-                const SizedBox(height: _stageLoadoutStripHeight),
-              ],
-            ],
-          ),
+          child: fillStage ? Align(alignment: Alignment.bottomCenter, child: body) : body,
         ),
       ),
     );
@@ -839,6 +844,7 @@ class _SceneName extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
+      key: ValueKey('stage-scene-name:$text'),
       textAlign: alignEnd ? TextAlign.right : TextAlign.left,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
@@ -966,9 +972,11 @@ class _CombatStage extends StatelessWidget {
     final showFloaters = controller.showLastRoundFloaters;
     final ink = controller.inkPopup;
 
+    final temple = usesTempleLayeredBackground(save.currentLocationId);
     final shell = _StageShell(
       semanticsLabel: 'Combat',
-      reserveLoadoutStrip: !usesTempleLayeredBackground(save.currentLocationId),
+      reserveLoadoutStrip: !temple,
+      fillStage: temple,
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -1135,8 +1143,10 @@ class _RecoveringStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final temple = usesTempleLayeredBackground(controller.save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Recovering',
+      fillStage: temple,
       scene: _TwoPortraits(
         player: const _Portrait(
           assetPath: null,
@@ -1225,9 +1235,11 @@ class _GatheringStage extends StatelessWidget {
     final actionName = action?.displayName ?? 'Preparing…';
     final slow = action != null && isBelowProficiency(save, action);
 
+    final temple = usesTempleLayeredBackground(save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Gathering',
-      reserveLoadoutStrip: !usesTempleLayeredBackground(save.currentLocationId),
+      reserveLoadoutStrip: !temple,
+      fillStage: temple,
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -1289,9 +1301,11 @@ class _ProductionStage extends StatelessWidget {
     final popupItem = popup == null ? null : controller.indexes.itemsById[popup.itemId];
     final stationName = recipe?.displayName ?? popup?.displayName ?? 'Workstation';
 
+    final temple = usesTempleLayeredBackground(save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Production',
-      reserveLoadoutStrip: !usesTempleLayeredBackground(save.currentLocationId),
+      reserveLoadoutStrip: !temple,
+      fillStage: temple,
       scene: _TwoPortraits(
         player: const SizedBox(height: _portraitSlotHeight),
         scene: _Portrait(

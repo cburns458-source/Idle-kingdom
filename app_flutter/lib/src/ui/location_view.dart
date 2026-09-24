@@ -346,14 +346,9 @@ class _LocationViewState extends State<LocationView> {
                               Positioned(
                                 left: 13,
                                 right: 13,
-                                top: 64,
-                                child: IgnorePointer(
-                                  child: UnconstrainedBox(
-                                    constrainedAxis: Axis.horizontal,
-                                    alignment: Alignment.topCenter,
-                                    child: ActivityPanel(controller: controller),
-                                  ),
-                                ),
+                                top: 0,
+                                bottom: 0,
+                                child: IgnorePointer(child: ActivityPanel(controller: controller)),
                               ),
                           ],
                         ),
@@ -1119,47 +1114,44 @@ class _FloatingOptionBand extends StatelessWidget {
               borderRadius: BorderRadius.zero /* pixel step 3 */,
               border: Border.all(color: const Color(0x479A7B32)),
             ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Positioned.fill(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          ?leading,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(6, 4, 2, 0),
+            child: Row(
               children: [
-                ?leading,
-                if (tabs.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(6, 4, 40, 0),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (final tab in tabs)
-                            _BandTabButton(
-                              label: tab,
-                              selected: tab == selectedTab,
-                              onPressed: () => onSelectTab(tab),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
                 Expanded(
-                  child: SingleChildScrollView(
-                    clipBehavior: Clip.hardEdge,
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-                    child: child,
-                  ),
+                  child: tabs.isEmpty
+                      ? const SizedBox.shrink()
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (final tab in tabs)
+                                _BandTabButton(
+                                  label: tab,
+                                  selected: tab == selectedTab,
+                                  onPressed: () => onSelectTab(tab),
+                                ),
+                            ],
+                          ),
+                        ),
+                ),
+                GameIconButton(
+                  tooltip: expanded ? 'Collapse list' : 'Expand list',
+                  onPressed: onToggle,
+                  icon: expanded ? Icons.expand_more : Icons.expand_less,
                 ),
               ],
             ),
           ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: GameIconButton(
-              tooltip: expanded ? 'Collapse list' : 'Expand list',
-              onPressed: onToggle,
-              icon: expanded ? Icons.expand_more : Icons.expand_less,
+          Expanded(
+            child: SingleChildScrollView(
+              clipBehavior: Clip.hardEdge,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+              child: child,
             ),
           ),
         ],
