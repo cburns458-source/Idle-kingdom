@@ -276,23 +276,6 @@ class LocationIdlePlayer extends StatelessWidget {
   }
 }
 
-/// Temple drops the empty portrait slots so names sit on the dirt. Floaters
-/// still paint upward over the sprites.
-Widget _stageArtSlot({required bool temple, required Widget child, double height = _portraitSlotHeight}) {
-  if (!temple) {
-    return SizedBox(height: height, width: double.infinity, child: child);
-  }
-  return SizedBox(
-    height: 0,
-    width: double.infinity,
-    child: OverflowBox(
-      maxHeight: height,
-      alignment: Alignment.bottomCenter,
-      child: SizedBox(height: height, width: double.infinity, child: child),
-    ),
-  );
-}
-
 Widget _templeFootedPortrait({
   required Offset foot,
   required double height,
@@ -995,8 +978,9 @@ class _CombatStage extends StatelessWidget {
       reserveLoadoutStrip: !temple,
       fillStage: temple,
       scene: _TwoPortraits(
-        player: _stageArtSlot(
-          temple: temple,
+        player: SizedBox(
+          height: _portraitSlotHeight,
+          width: double.infinity,
           child:
               _playerFloaters(
                 round,
@@ -1007,9 +991,7 @@ class _CombatStage extends StatelessWidget {
               ) ??
               const SizedBox.expand(),
         ),
-        scene: _stageArtSlot(
-          temple: temple,
-          child: _Portrait(
+        scene: _Portrait(
           assetPath: null,
           semanticsLabel: enemyName,
           height: _enemyArtHeight,
@@ -1086,7 +1068,6 @@ class _CombatStage extends StatelessWidget {
                 ),
             ],
           ),
-        ),
         ),
         // Hit points move with natural regain as well as with a round, so both
         // captions read the live save every frame rather than the staged one.
@@ -1260,13 +1241,14 @@ class _GatheringStage extends StatelessWidget {
       reserveLoadoutStrip: !temple,
       fillStage: temple,
       scene: _TwoPortraits(
-        player: _stageArtSlot(
-          temple: temple,
+        player: SizedBox(
+          height: _portraitSlotHeight,
+          width: double.infinity,
           child:
               _playerFloaters(null, 0, false, controller.healPopup, controller.damagePopup) ??
               const SizedBox.expand(),
         ),
-        scene: _stageArtSlot(temple: temple, child: const SizedBox.expand()),
+        scene: const SizedBox(height: _portraitSlotHeight),
         playerCaption: const SizedBox(height: _captionMinHeight),
         sceneCaption: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: _captionMinHeight),
@@ -1325,10 +1307,8 @@ class _ProductionStage extends StatelessWidget {
       reserveLoadoutStrip: !temple,
       fillStage: temple,
       scene: _TwoPortraits(
-        player: _stageArtSlot(temple: temple, child: const SizedBox.expand()),
-        scene: _stageArtSlot(
-          temple: temple,
-          child: _Portrait(
+        player: const SizedBox(height: _portraitSlotHeight),
+        scene: _Portrait(
           assetPath: null,
           semanticsLabel: stationName,
           height: _actionArtHeight,
@@ -1364,7 +1344,6 @@ class _ProductionStage extends StatelessWidget {
                     ),
                   ),
                 ),
-        ),
         ),
         playerCaption: const SizedBox(height: _captionMinHeight),
         sceneCaption: ConstrainedBox(

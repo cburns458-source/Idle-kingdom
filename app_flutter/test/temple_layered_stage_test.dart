@@ -97,12 +97,10 @@ void main() {
     final presets = tester.getRect(find.byType(StageLoadoutStrip));
     final name = tester.getRect(find.byKey(const ValueKey('stage-scene-name:Gather augur weed')));
     final timer = tester.getRect(find.textContaining('0s /'));
-    expect(name.top, greaterThan(backdrop.center.dy));
     expect(name.bottom, lessThanOrEqualTo(presets.top + 8));
-    expect(timer.top, greaterThan(player.bottom - 8));
-    expect(timer.top, greaterThan(action.bottom - 8));
     expect(timer.bottom, lessThanOrEqualTo(presets.top + 8));
     expect(presets.top - timer.bottom, lessThan(40));
+    expect(name.top, greaterThan(backdrop.top + backdrop.height * 0.35));
   });
 
   test('Temple layer paths sit next to the existing plate', () {
