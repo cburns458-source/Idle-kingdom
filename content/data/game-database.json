@@ -6632,7 +6632,7 @@
     {
       "Item ID": "ITEM-0378",
       "Internal Key": "cow_hide",
-      "Display Name": "Cow Hide",
+      "Display Name": "Cowhide",
       "Category": "Resource",
       "Subtype": "Creature material",
       "Associated Skill ID": null,
@@ -6640,7 +6640,7 @@
       "Functional / Source Tags": "cow_or_bull_drop; crafting_input",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A raw hide. A hide tanner can turn it into leather.",
+      "Description": "A raw hide. A tanner can turn it into leather.",
       "Icon Asset Key": "cow_hide",
       "Notes": "Cow and bull drop this instead of leather.",
       "Base Sell Value": 90,
@@ -6657,7 +6657,7 @@
       "Functional / Source Tags": "hunting_output; crafting_input",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A raw hide. A hide tanner can turn it into leather.",
+      "Description": "A raw hide. A tanner can turn it into leather.",
       "Icon Asset Key": "elk_hide",
       "Notes": "Elk hunts drop this instead of leather.",
       "Base Sell Value": 180,
@@ -20384,7 +20384,7 @@
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Equal drop chance/weight as matching Beef entry. Cow Hide instead of leather."
+      "Notes": "Equal drop chance/weight as matching Beef entry. Cowhide instead of leather."
     },
     {
       "Reward Entry ID": "RWE-0159",
@@ -20399,7 +20399,7 @@
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Equal drop chance/weight as matching Beef entry. Cow Hide instead of leather."
+      "Notes": "Equal drop chance/weight as matching Beef entry. Cowhide instead of leather."
     },
     {
       "Reward Entry ID": "RWE-0160",
@@ -20414,7 +20414,7 @@
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Equal drop chance/weight as matching Beef entry. Cow Hide instead of leather."
+      "Notes": "Equal drop chance/weight as matching Beef entry. Cowhide instead of leather."
     },
     {
       "Reward Entry ID": "RWE-0161",
@@ -20429,7 +20429,7 @@
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": "Equal drop chance/weight as matching Beef entry. Cow Hide instead of leather."
+      "Notes": "Equal drop chance/weight as matching Beef entry. Cowhide instead of leather."
     },
     {
       "Reward Entry ID": "RWE-0162",
@@ -27148,7 +27148,7 @@
     {
       "NPC ID": "NPC-0018",
       "Internal Key": "foundry_hide_tanner",
-      "Display Name": "Hide Tanner",
+      "Display Name": "Tanner",
       "Location ID": "LOC-0025",
       "Role": "Tanner",
       "Status": "Planned",
@@ -27160,7 +27160,7 @@
     {
       "NPC ID": "NPC-0019",
       "Internal Key": "citadel_hide_tanner",
-      "Display Name": "Hide Tanner",
+      "Display Name": "Tanner",
       "Location ID": "LOC-0030",
       "Role": "Tanner",
       "Status": "Planned",

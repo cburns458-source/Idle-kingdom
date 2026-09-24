@@ -442,12 +442,7 @@ class _NpcPanelState extends State<NpcPanel> {
                       setState(() => _error = reason);
                       return;
                     }
-                    setState(() {
-                      _error = null;
-                      _tanning = false;
-                      _confirmingTanner = false;
-                      _tannerQty.clear();
-                    });
+                    _close();
                   },
           ),
         ],

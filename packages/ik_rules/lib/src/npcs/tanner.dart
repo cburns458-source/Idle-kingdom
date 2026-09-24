@@ -2,12 +2,12 @@ import 'package:ik_content/ik_content.dart';
 
 import '../inventory/add_items.dart';
 import '../js_compat.dart';
-import '../production/inventory.dart';
 import '../production/recipes.dart';
 import '../save/generated/save_models.dart';
 
 const String leatherItemId = 'ITEM-0045';
 const num tannerGoldPerLeather = 2;
+const String craftingWorkshopFacilityId = 'FAC-0003';
 
 /// Leather produced per hide, keyed by Internal Key.
 const Map<String, num> hideLeatherYields = <String, num>{
@@ -81,13 +81,56 @@ class TannerJobResult {
   bool get ok => reason == null;
 }
 
-num _ownedQuantity(PlayerSave save, String itemId) {
+num _stackQuantity(InventoryStack stack) {
+  return jsNumber(stack.quantity).floor().clamp(0, 1 << 30);
+}
+
+num _quantityIn(Iterable<InventoryStack> stacks, String itemId) {
   var sum = 0.0;
-  for (final stack in save.inventory) {
+  for (final stack in stacks) {
     if (stack.itemId != itemId) continue;
-    sum += jsNumber(stack.quantity).floor().clamp(0, 1 << 30);
+    sum += _stackQuantity(stack);
   }
   return sum;
+}
+
+num _ownedQuantity(PlayerSave save, String itemId) {
+  return _quantityIn(save.inventory, itemId) + _quantityIn(save.bank, itemId);
+}
+
+({List<InventoryStack> stacks, num remaining}) _takeFromStacks(
+  List<InventoryStack> stacks,
+  String itemId,
+  num need,
+) {
+  var remaining = need;
+  final next = <InventoryStack>[];
+  for (final stack in stacks) {
+    if (stack.itemId != itemId || remaining <= 0) {
+      next.add(stack);
+      continue;
+    }
+    final have = _stackQuantity(stack);
+    final take = have < remaining ? have : remaining;
+    remaining -= take;
+    final left = have - take;
+    if (left > 0) next.add(stack.copyWith(quantity: left));
+  }
+  return (stacks: next, remaining: remaining);
+}
+
+PlayerSave? _removeHides(PlayerSave save, List<RecipeIngredient> ingredients) {
+  var inventory = [...save.inventory];
+  var bank = [...save.bank];
+  for (final row in ingredients) {
+    final fromBag = _takeFromStacks(inventory, row.itemId, row.quantity);
+    inventory = fromBag.stacks;
+    if (fromBag.remaining <= 0) continue;
+    final fromBank = _takeFromStacks(bank, row.itemId, fromBag.remaining);
+    if (fromBank.remaining > 0) return null;
+    bank = fromBank.stacks;
+  }
+  return save.copyWith(inventory: inventory, bank: bank);
 }
 
 String? _hideInternalKey(ItemRow item) {
@@ -99,6 +142,34 @@ String? _hideInternalKey(ItemRow item) {
 bool isTannerNpc(NpcRow? npc) {
   if (npc == null) return false;
   return jsString(npc.raw['Role']).toLowerCase() == 'tanner';
+}
+
+bool isCraftingWorkshopLocation(GameDatabase db, String locationId) {
+  return db.facilities.any((facility) {
+    if (facility.locationId != locationId) return false;
+    if (projectFacilityIdForLookup(facility.facilityId) == craftingWorkshopFacilityId) {
+      return true;
+    }
+    return facility.internalKey.endsWith('crafting_workshop');
+  });
+}
+
+NpcRow? tannerNpcAtLocation(GameDatabase db, String locationId) {
+  if (!isCraftingWorkshopLocation(db, locationId)) return null;
+  for (final npc in db.npcs) {
+    if (npc.locationId == locationId && isTannerNpc(npc)) return npc;
+  }
+  return NpcRow(<String, Object?>{
+    'NPC ID': 'NPC-TANNER-$locationId',
+    'Internal Key': 'tanner_${locationId.toLowerCase()}',
+    'Display Name': 'Tanner',
+    'Location ID': locationId,
+    'Role': 'Tanner',
+    'Status': 'Planned',
+    'Release Phase': 'Launch',
+    'Description': 'Tans animal hides into leather at the crafting workshop, for a small gold fee.',
+    'Notes': 'Trades hides for leather. 2 gold per leather produced.',
+  });
 }
 
 num leatherPerHide(ItemRow item) {
@@ -166,8 +237,8 @@ TannerJobResult confirmTannerJob(
   if (!isTannerNpc(npc)) {
     return const TannerJobResult.failed('This person does not tan hides.');
   }
-  if (save.currentLocationId != npc.locationId) {
-    return const TannerJobResult.failed('Speak with the hide tanner at a crafting workshop.');
+  if (save.currentLocationId != npc.locationId || !isCraftingWorkshopLocation(db, npc.locationId)) {
+    return const TannerJobResult.failed('Speak with the tanner at a crafting workshop.');
   }
 
   final quote = quoteTannerJob(db, save, quantities);
@@ -188,7 +259,7 @@ TannerJobResult confirmTannerJob(
     ingredients.add(RecipeIngredient(itemId: entry.key, quantity: take));
   }
 
-  final spentItems = removeIngredients(save, ingredients);
+  final spentItems = _removeHides(save, ingredients);
   if (spentItems == null) {
     return const TannerJobResult.failed('You do not have those hides.');
   }

@@ -7,6 +7,7 @@ import '../quests/miniquests.dart';
 import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
 import 'roaming.dart';
+import 'tanner.dart';
 
 const String masterDwarfId = 'NPC-0003';
 const String archmageId = 'NPC-0004';
@@ -47,7 +48,12 @@ bool npcVisibleForSave(NpcRow npc, PlayerSave save) {
 
 List<NpcRow> npcsAtLocation(GameDatabase db, String locationId, num nowMs) {
   final clock = nowMs;
-  return db.npcs.where((npc) => npcLocationAt(npc, clock) == locationId).toList();
+  final listed = db.npcs.where((npc) => npcLocationAt(npc, clock) == locationId).toList();
+  final tanner = tannerNpcAtLocation(db, locationId);
+  if (tanner != null && listed.every((npc) => npc.npcId != tanner.npcId)) {
+    return [...listed, tanner];
+  }
+  return listed;
 }
 
 List<NpcRow> npcsAtLocationForSave(GameDatabase db, PlayerSave save, String locationId, num nowMs) {

@@ -369,16 +369,17 @@ describe('npc conversation', () => {
     expect(helge.quests[0]!.completedNote).toMatch(/rebuild our empire/)
   })
 
-  it('offers the hide tanner on hides in the bag', () => {
+  it('offers the tanner on hides in the bag', () => {
     const save = {
       ...saveAt('LOC-0025'),
       inventory: [{ itemId: 'ITEM-0378', quantity: 1 }],
     }
     const conversation = npcConversation(launch, save, npc('NPC-0018'))
+    expect(conversation.name).toBe('Tanner')
     expect(conversation.tanner?.prompt).toBe('Which hides should I tan?')
     expect(conversation.tanner?.feeEach).toBe(2)
     expect(conversation.tanner?.hides).toEqual([
-      { itemId: 'ITEM-0378', displayName: 'Cow Hide', owned: 1, leatherEach: 3 },
+      { itemId: 'ITEM-0378', displayName: 'Cowhide', owned: 1, leatherEach: 3 },
     ])
     expect(npcConversation(launch, saveAt('LOC-0025'), npc('NPC-0018')).tanner?.hides).toEqual([])
   })

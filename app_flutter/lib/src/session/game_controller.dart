@@ -1286,9 +1286,13 @@ class GameController extends ChangeNotifier {
     return null;
   }
 
-  /// Pays the hide tanner to turn selected hides into leather.
+  /// Pays the tanner to turn selected hides into leather.
   String? tanHidesWithTanner(String npcId, Map<String, num> quantities) {
-    final npc = db.npcs.where((row) => row.npcId == npcId).firstOrNull;
+    final npc = npcsAtLocation(
+      db,
+      save.currentLocationId,
+      session.clock(),
+    ).where((row) => row.npcId == npcId).firstOrNull;
     if (npc == null) return 'This person is not here.';
     final result = confirmTannerJob(db, save, npc, quantities);
     if (!result.ok) return result.reason;

@@ -4,6 +4,7 @@ import { meetsTotalLevelRequirement } from '../quests/miniquests'
 import { getQuestProgress } from '../quests/quests'
 import type { PlayerSave } from '../save/types'
 import { npcLocationAt } from './roaming'
+import { tannerNpcAtLocation } from './tanner'
 
 export const MASTER_DWARF_ID = 'NPC-0003'
 export const ARCHMAGE_ID = 'NPC-0004'
@@ -46,7 +47,12 @@ export function npcsAtLocation(
   locationId: string,
   nowMs: number = Date.now(),
 ): NpcRow[] {
-  return db.NPCs.filter((npc) => npcLocationAt(npc, nowMs) === locationId)
+  const listed = db.NPCs.filter((npc) => npcLocationAt(npc, nowMs) === locationId)
+  const tanner = tannerNpcAtLocation(db, locationId)
+  if (tanner && !listed.some((npc) => npc['NPC ID'] === tanner['NPC ID'])) {
+    return [...listed, tanner]
+  }
+  return listed
 }
 
 export function npcsAtLocationForSave(

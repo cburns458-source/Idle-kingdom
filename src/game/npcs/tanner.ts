@@ -1,10 +1,11 @@
 import { addItemToInventoryExact } from '../activity/rewards'
 import type { GameDatabase, ItemRow, NpcRow } from '../data/types'
-import { removeIngredients } from '../production/inventory'
-import type { PlayerSave } from '../save/types'
+import { projectFacilityIdForLookup } from '../production/recipes'
+import type { InventoryStack, PlayerSave } from '../save/types'
 
 export const LEATHER_ITEM_ID = 'ITEM-0045'
 export const TANNER_GOLD_PER_LEATHER = 2
+export const CRAFTING_WORKSHOP_FACILITY_ID = 'FAC-0003'
 
 /** Leather produced per hide, keyed by Internal Key. */
 export const HIDE_LEATHER_YIELDS: Record<string, number> = {
@@ -36,11 +37,57 @@ export interface TannerQuote {
   hideCount: number
 }
 
-function ownedQuantity(save: PlayerSave, itemId: string): number {
-  return save.inventory.reduce((sum, stack) => {
+function stackQuantity(stack: InventoryStack): number {
+  return Math.max(0, Math.floor(Number(stack.quantity) || 0))
+}
+
+function quantityIn(stacks: InventoryStack[] | undefined, itemId: string): number {
+  return (stacks ?? []).reduce((sum, stack) => {
     if (stack.itemId !== itemId) return sum
-    return sum + Math.max(0, Math.floor(Number(stack.quantity) || 0))
+    return sum + stackQuantity(stack)
   }, 0)
+}
+
+function ownedQuantity(save: PlayerSave, itemId: string): number {
+  return quantityIn(save.inventory, itemId) + quantityIn(save.bank, itemId)
+}
+
+function takeFromStacks(
+  stacks: InventoryStack[],
+  itemId: string,
+  need: number,
+): { stacks: InventoryStack[]; remaining: number } {
+  let remaining = need
+  const next: InventoryStack[] = []
+  for (const stack of stacks) {
+    if (stack.itemId !== itemId || remaining <= 0) {
+      next.push({ ...stack })
+      continue
+    }
+    const have = stackQuantity(stack)
+    const take = Math.min(have, remaining)
+    remaining -= take
+    const left = have - take
+    if (left > 0) next.push({ ...stack, quantity: left })
+  }
+  return { stacks: next, remaining }
+}
+
+function removeHides(
+  save: PlayerSave,
+  ingredients: { itemId: string; quantity: number }[],
+): PlayerSave | null {
+  let inventory = save.inventory.map((stack) => ({ ...stack }))
+  let bank = (save.bank ?? []).map((stack) => ({ ...stack }))
+  for (const row of ingredients) {
+    const fromBag = takeFromStacks(inventory, row.itemId, row.quantity)
+    inventory = fromBag.stacks
+    if (fromBag.remaining <= 0) continue
+    const fromBank = takeFromStacks(bank, row.itemId, fromBag.remaining)
+    if (fromBank.remaining > 0) return null
+    bank = fromBank.stacks
+  }
+  return { ...save, inventory, bank }
 }
 
 function hideInternalKey(item: ItemRow): string | null {
@@ -52,6 +99,34 @@ function hideInternalKey(item: ItemRow): string | null {
 export function isTannerNpc(npc: NpcRow | null | undefined): boolean {
   if (!npc) return false
   return (npc.Role ?? '').toLowerCase() === 'tanner'
+}
+
+export function isCraftingWorkshopLocation(db: GameDatabase, locationId: string): boolean {
+  return db.Facilities.some((facility) => {
+    if (facility['Location ID'] !== locationId) return false
+    if (projectFacilityIdForLookup(facility['Facility ID']) === CRAFTING_WORKSHOP_FACILITY_ID) {
+      return true
+    }
+    const key = facility['Internal Key']
+    return typeof key === 'string' && key.endsWith('crafting_workshop')
+  })
+}
+
+export function tannerNpcAtLocation(db: GameDatabase, locationId: string): NpcRow | null {
+  if (!isCraftingWorkshopLocation(db, locationId)) return null
+  const existing = db.NPCs.find((npc) => npc['Location ID'] === locationId && isTannerNpc(npc))
+  if (existing) return existing
+  return {
+    'NPC ID': `NPC-TANNER-${locationId}`,
+    'Internal Key': `tanner_${locationId.toLowerCase()}`,
+    'Display Name': 'Tanner',
+    'Location ID': locationId,
+    Role: 'Tanner',
+    Status: 'Planned',
+    'Release Phase': 'Launch',
+    Description: 'Tans animal hides into leather at the crafting workshop, for a small gold fee.',
+    Notes: 'Trades hides for leather. 2 gold per leather produced.',
+  }
 }
 
 export function leatherPerHide(item: ItemRow): number {
@@ -121,8 +196,8 @@ export function confirmTannerJob(
   quantities: Record<string, number>,
 ): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
   if (!isTannerNpc(npc)) return { ok: false, reason: 'This person does not tan hides.' }
-  if (save.currentLocationId !== npc['Location ID']) {
-    return { ok: false, reason: 'Speak with the hide tanner at a crafting workshop.' }
+  if (save.currentLocationId !== npc['Location ID'] || !isCraftingWorkshopLocation(db, npc['Location ID'])) {
+    return { ok: false, reason: 'Speak with the tanner at a crafting workshop.' }
   }
 
   const quote = quoteTannerJob(db, save, quantities)
@@ -139,7 +214,7 @@ export function confirmTannerJob(
     }))
     .filter((row) => row.quantity > 0 && (yields.get(row.itemId) ?? 0) > 0)
 
-  const spentItems = removeIngredients(save, ingredients)
+  const spentItems = removeHides(save, ingredients)
   if (!spentItems) return { ok: false, reason: 'You do not have those hides.' }
   const spentGold = { ...spentItems, gold: spentItems.gold - quote.gold }
   const granted = addItemToInventoryExact(spentGold, LEATHER_ITEM_ID, quote.leather, null, false, db)

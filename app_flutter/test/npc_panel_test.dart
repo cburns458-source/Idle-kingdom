@@ -342,7 +342,8 @@ void main() {
     expect(find.textContaining('Come back in'), findsOne);
   });
 
-  testWidgets('the hide tanner quotes leather and gold, then tans selected hides', (tester) async {
+  testWidgets('the tanner quotes leather and gold, then tans selected hides', (tester) async {
+    var closed = 0;
     final controller = buildController(
       database,
       seed: standing(
@@ -358,14 +359,15 @@ void main() {
 
     await pumpPanel(
       tester,
-      NpcPanel(controller: controller, npc: npcOf('NPC-0018'), onClose: () {}),
+      NpcPanel(controller: controller, npc: npcOf('NPC-0018'), onClose: () => closed += 1),
     );
+    expect(find.text('Tanner'), findsOne);
     expect(find.text('Tan hides'), findsOne);
 
     await tester.tap(find.text('Tan hides'));
     await tester.pump();
     expect(find.textContaining('Which hides should I tan?'), findsOne);
-    expect(find.textContaining('Cow Hide'), findsOne);
+    expect(find.textContaining('Cowhide'), findsOne);
     expect(find.textContaining('Goat Hide'), findsOne);
 
     final plus = find.text('+');
@@ -383,12 +385,12 @@ void main() {
 
     await tester.tap(find.text('Accept'));
     await tester.pump();
+    expect(closed, 1);
     expect(controller.save.gold, 84);
     expect(
       controller.save.inventory.where((stack) => stack.itemId == 'ITEM-0045').single.quantity,
       8,
     );
     expect(controller.save.inventory.any((stack) => stack.itemId == 'ITEM-0378'), isFalse);
-    expect(find.text('Tan hides'), findsOne);
   });
 }

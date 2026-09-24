@@ -57,5 +57,49 @@ void main() {
       'LOC-0025',
       'LOC-0030',
     ]);
+    expect(db.npcs.where((row) => row.role == 'Tanner').map((row) => row.displayName), [
+      'Tanner',
+      'Tanner',
+    ]);
+  });
+
+  test('counts bank hides and spends the bag first', () {
+    final tanner = db.npcs.firstWhere((row) => row.npcId == 'NPC-0018');
+    final save = createNewSave(db, 0).copyWith(
+      currentLocationId: 'LOC-0025',
+      gold: 20,
+      inventory: const [InventoryStack(itemId: 'ITEM-0378', quantity: 1)],
+      bank: const [InventoryStack(itemId: 'ITEM-0378', quantity: 1)],
+    );
+    expect(tannerOffer(db, save).hides.single.owned, 2);
+    final done = confirmTannerJob(db, save, tanner, {'ITEM-0378': 2});
+    expect(done.ok, isTrue);
+    expect(done.save!.gold, 8);
+    expect(done.save!.inventory.where((stack) => stack.itemId == 'ITEM-0045').single.quantity, 6);
+    expect(done.save!.inventory.any((stack) => stack.itemId == 'ITEM-0378'), isFalse);
+    expect(done.save!.bank.any((stack) => stack.itemId == 'ITEM-0378'), isFalse);
+  });
+
+  test('stands at a future crafting workshop without a database NPC row', () {
+    final raw = Map<String, Object?>.from(db.raw);
+    raw['Facilities'] = [
+      ...(raw['Facilities']! as List<Object?>),
+      <String, Object?>{
+        'Facility ID': 'FAC-9999',
+        'Internal Key': 'outpost_crafting_workshop',
+        'Display Name': 'Outpost Crafting Workshop',
+        'Facility Type': 'Production Station',
+        'Location ID': 'LOC-9999',
+        'Skill ID': 'SKL-0009',
+        'Status': 'Planned',
+        'Release Phase': 'Launch',
+      },
+    ];
+    final extra = GameDatabase(raw);
+    expect(tannerNpcAtLocation(extra, 'LOC-9999')!.displayName, 'Tanner');
+    expect(
+      npcsAtLocation(extra, 'LOC-9999', 0).map((row) => row.npcId),
+      contains('NPC-TANNER-LOC-9999'),
+    );
   });
 }

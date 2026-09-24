@@ -3,7 +3,8 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { confirmTannerJob, quoteTannerJob, tannerOffer } from './tanner'
+import { npcsAtLocation } from './knowledge'
+import { confirmTannerJob, quoteTannerJob, tannerNpcAtLocation, tannerOffer } from './tanner'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -68,5 +69,57 @@ describe('hide tanner', () => {
     expect(cowTable.some((row) => row['Reward ID / Value'] === 'ITEM-0045')).toBe(false)
     const elkHunt = launch.RewardEntries.find((row) => row['Reward Entry ID'] === 'RWE-0169')!
     expect(elkHunt['Reward ID / Value']).toBe('ITEM-0379')
+    expect(launch.NPCs.filter((row) => row.Role === 'Tanner').map((row) => row['Display Name'])).toEqual([
+      'Tanner',
+      'Tanner',
+    ])
+  })
+
+  it('counts bank hides and spends the bag first', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const tanner = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0018')!
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0025',
+      gold: 20,
+      inventory: [{ itemId: 'ITEM-0378', quantity: 1 }],
+      bank: [{ itemId: 'ITEM-0378', quantity: 1 }],
+    }
+    expect(tannerOffer(launch, save).hides).toEqual([
+      { itemId: 'ITEM-0378', displayName: 'Cowhide', owned: 2, leatherEach: 3 },
+    ])
+    const done = confirmTannerJob(launch, save, tanner, { 'ITEM-0378': 2 })
+    expect(done.ok).toBe(true)
+    if (!done.ok) return
+    expect(done.save.gold).toBe(8)
+    expect(done.save.inventory.find((stack) => stack.itemId === 'ITEM-0045')?.quantity).toBe(6)
+    expect(done.save.inventory.some((stack) => stack.itemId === 'ITEM-0378')).toBe(false)
+    expect(done.save.bank.some((stack) => stack.itemId === 'ITEM-0378')).toBe(false)
+  })
+
+  it('stands at a future crafting workshop without a database NPC row', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const extra = {
+      ...launch,
+      Facilities: [
+        ...launch.Facilities,
+        {
+          'Facility ID': 'FAC-9999',
+          'Internal Key': 'outpost_crafting_workshop',
+          'Display Name': 'Outpost Crafting Workshop',
+          'Facility Type': 'Production Station',
+          'Location ID': 'LOC-9999',
+          'Skill ID': 'SKL-0009',
+          Status: 'Planned' as const,
+          'Release Phase': 'Launch' as const,
+          Description: null,
+          Notes: null,
+        },
+      ],
+    }
+    const npc = tannerNpcAtLocation(extra, 'LOC-9999')
+    expect(npc?.['Display Name']).toBe('Tanner')
+    expect(npc?.['NPC ID']).toBe('NPC-TANNER-LOC-9999')
+    expect(npcsAtLocation(extra, 'LOC-9999', 0).map((row) => row['NPC ID'])).toContain('NPC-TANNER-LOC-9999')
   })
 })
