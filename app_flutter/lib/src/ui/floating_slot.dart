@@ -5,7 +5,35 @@ import '../theme.dart';
 /// Tiny white wash used when a floating cell or list row is selected / own.
 Color floatingSelectTint(Color base) => Color.lerp(base, Colors.white, 0.16)!;
 
-/// Borderless tappable well: the icon floats on the outer panel; no slot stroke.
+/// One large dark slot well — same chrome as the old per-item tiles, wrapping a
+/// whole bag / shop / catalog grid so icons float inside one recessed board.
+class FloatingItemWell extends StatelessWidget {
+  const FloatingItemWell({super.key, required this.child, this.padding = const EdgeInsets.all(6)});
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return PixelPlate(
+      step: PixelChrome.stepTight,
+      fillColor: UiChrome.of(context).slot,
+      material: PixelPlateMaterial.grain,
+      strokeWidth: 2,
+      shadow: false,
+      padding: padding,
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(color: Palette.parchmentText),
+        child: IconTheme.merge(
+          data: const IconThemeData(color: Palette.parchmentText),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Borderless tappable cell: the icon floats on [FloatingItemWell]; no slot stroke.
 ///
 /// Empty cells stay invisible (transparent child). Selection is a light white
 /// tint; ripple stays so taps still feel pressable.
@@ -34,7 +62,8 @@ class FloatingItemSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final fill = selected ? floatingSelectTint(chrome.panel) : Colors.transparent;
+    // White wash on the dark slot board, not the tan outer panel.
+    final fill = selected ? floatingSelectTint(chrome.slot) : Colors.transparent;
     Widget body = Material(
       color: fill,
       child: InkWell(

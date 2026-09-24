@@ -153,21 +153,25 @@ class _TannerPanelState extends State<TannerPanel> {
           const SizedBox(height: 12),
           const Text('Hides', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
           const SizedBox(height: 5),
-          if (hides.isEmpty)
-            const MutedText('You have no hides to tan.')
-          else
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 78,
-                  mainAxisSpacing: 5,
-                  crossAxisSpacing: 5,
-                  childAspectRatio: 1,
-                ),
-                itemCount: hides.length,
-                itemBuilder: (context, index) => _hideTile(hides[index]),
-              ),
+          Expanded(
+            child: FloatingItemWell(
+              child: hides.isEmpty
+                  ? const Align(
+                      alignment: Alignment.topLeft,
+                      child: MutedText('You have no hides to tan.', color: Palette.muted),
+                    )
+                  : GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 78,
+                        mainAxisSpacing: 5,
+                        crossAxisSpacing: 5,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: hides.length,
+                      itemBuilder: (context, index) => _hideTile(hides[index]),
+                    ),
             ),
+          ),
         ],
       ),
     );
@@ -195,7 +199,7 @@ class _TannerPanelState extends State<TannerPanel> {
                 '${formatThousands(hide.owned)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10.5, color: Palette.panelMuted, height: 1.1),
+                style: const TextStyle(fontSize: 10.5, color: Palette.muted, height: 1.1),
               ),
             ],
           ),

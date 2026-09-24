@@ -364,7 +364,7 @@ class _ShopPanelState extends State<ShopPanel> {
                     : '${formatThousands(unit)}g · ${formatThousands(remaining)} left',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10.5, color: Palette.panelMuted, height: 1.1),
+                style: const TextStyle(fontSize: 10.5, color: Palette.muted, height: 1.1),
               ),
             ],
           ),
@@ -420,23 +420,27 @@ class _Column extends StatelessWidget {
       children: [
         Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
         const SizedBox(height: 5),
-        if (itemCount == 0)
-          MutedText(empty)
-        else
-          Expanded(
-            child: RepaintBoundary(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: _tileExtent,
-                  mainAxisSpacing: _gap,
-                  crossAxisSpacing: _gap,
-                  childAspectRatio: 1,
-                ),
-                itemCount: itemCount,
-                itemBuilder: itemBuilder,
-              ),
-            ),
+        Expanded(
+          child: FloatingItemWell(
+            child: itemCount == 0
+                ? Align(
+                    alignment: Alignment.topLeft,
+                    child: MutedText(empty, color: Palette.muted),
+                  )
+                : RepaintBoundary(
+                    child: GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: _tileExtent,
+                        mainAxisSpacing: _gap,
+                        crossAxisSpacing: _gap,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: itemCount,
+                      itemBuilder: itemBuilder,
+                    ),
+                  ),
           ),
+        ),
       ],
     );
   }
