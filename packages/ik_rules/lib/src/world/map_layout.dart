@@ -103,17 +103,17 @@ const Map<String, NodePosition> forestMapNodeLayout = <String, NodePosition>{
 
 const Map<String, NodePosition> mountainsMapNodeLayout = <String, NodePosition>{
   // Mountains gateway at the south-east threshold (hidden on this submap)
-  'LOC-0006': NodePosition(x: 88, y: 88),
-  // The Slopes landing, bottom right
-  'LOC-0046': NodePosition(x: 82, y: 78),
-  // Temple, bottom left
-  'LOC-0036': NodePosition(x: 18, y: 78),
-  // The Peak, top middle
-  'LOC-0047': NodePosition(x: 50, y: 18),
+  'LOC-0006': NodePosition(x: 74, y: 80),
+  // The Slopes landing, lower right
+  'LOC-0046': NodePosition(x: 70, y: 70),
+  // Temple, lower left
+  'LOC-0036': NodePosition(x: 30, y: 70),
+  // The Peak, upper middle
+  'LOC-0047': NodePosition(x: 50, y: 24),
   // Badlands, middle right
-  'LOC-0048': NodePosition(x: 82, y: 48),
+  'LOC-0048': NodePosition(x: 70, y: 46),
   // Giant Camp, middle middle
-  'LOC-0049': NodePosition(x: 50, y: 48),
+  'LOC-0049': NodePosition(x: 50, y: 46),
 };
 
 const Map<String, NodePosition> depthsMapNodeLayout = <String, NodePosition>{

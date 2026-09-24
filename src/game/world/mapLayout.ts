@@ -109,17 +109,17 @@ export const FOREST_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 
 export const MOUNTAINS_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Mountains gateway at the south-east threshold (hidden on this submap)
-  'LOC-0006': { x: 88, y: 88 },
-  // The Slopes landing, bottom right
-  'LOC-0046': { x: 82, y: 78 },
-  // Temple, bottom left
-  'LOC-0036': { x: 18, y: 78 },
-  // The Peak, top middle
-  'LOC-0047': { x: 50, y: 18 },
+  'LOC-0006': { x: 74, y: 80 },
+  // The Slopes landing, lower right
+  'LOC-0046': { x: 70, y: 70 },
+  // Temple, lower left
+  'LOC-0036': { x: 30, y: 70 },
+  // The Peak, upper middle
+  'LOC-0047': { x: 50, y: 24 },
   // Badlands, middle right
-  'LOC-0048': { x: 82, y: 48 },
+  'LOC-0048': { x: 70, y: 46 },
   // Giant Camp, middle middle
-  'LOC-0049': { x: 50, y: 48 },
+  'LOC-0049': { x: 50, y: 46 },
 }
 
 export const DEPTHS_MAP_NODE_LAYOUT: Record<string, NodePosition> = {

@@ -31486,8 +31486,8 @@
       "Map Node ID": "MN-0003",
       "Map ID": "MAP-0010",
       "Location ID": "LOC-0036",
-      "X": 18,
-      "Y": 78,
+      "X": 30,
+      "Y": 70,
       "Status": "Confirmed",
       "Release Phase": "Launch"
     },
@@ -31909,8 +31909,8 @@
       "Map Node ID": "MN-0050",
       "Map ID": "MAP-0010",
       "Location ID": "LOC-0006",
-      "X": 88,
-      "Y": 88,
+      "X": 74,
+      "Y": 80,
       "Status": "Confirmed",
       "Release Phase": "Launch"
     },
@@ -31918,8 +31918,8 @@
       "Map Node ID": "MN-0051",
       "Map ID": "MAP-0010",
       "Location ID": "LOC-0046",
-      "X": 82,
-      "Y": 78,
+      "X": 70,
+      "Y": 70,
       "Status": "Confirmed",
       "Release Phase": "Launch"
     },
@@ -31928,7 +31928,7 @@
       "Map ID": "MAP-0010",
       "Location ID": "LOC-0047",
       "X": 50,
-      "Y": 18,
+      "Y": 24,
       "Status": "Confirmed",
       "Release Phase": "Launch"
     },
@@ -31936,8 +31936,8 @@
       "Map Node ID": "MN-0053",
       "Map ID": "MAP-0010",
       "Location ID": "LOC-0048",
-      "X": 82,
-      "Y": 48,
+      "X": 70,
+      "Y": 46,
       "Status": "Confirmed",
       "Release Phase": "Launch"
     },
@@ -31946,7 +31946,7 @@
       "Map ID": "MAP-0010",
       "Location ID": "LOC-0049",
       "X": 50,
-      "Y": 48,
+      "Y": 46,
       "Status": "Confirmed",
       "Release Phase": "Launch"
     }

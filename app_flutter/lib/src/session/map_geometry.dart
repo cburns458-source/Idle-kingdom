@@ -5,7 +5,8 @@ import 'package:ik_rules/ik_rules.dart';
 /// District maps that have not been redrawn still ship square.
 const double mapArtAspectRatio = 1;
 
-/// Portrait plates match the phone column.
+/// Portrait plates match the phone column. Mountains uses the same 9:16
+/// location plate as a stand-in map until dedicated highland art exists.
 const double mainMapArtAspectRatio = 9 / 16;
 
 /// Cover-fit aspect for [mapId]'s background. Nodes are percentages of that art.
@@ -14,7 +15,8 @@ double artAspectRatioForMap(String mapId) {
           mapId == townMapId ||
           mapId == castleMapId ||
           mapId == caveMapId ||
-          mapId == citadelMapId
+          mapId == citadelMapId ||
+          mapId == mountainsMapId
       ? mainMapArtAspectRatio
       : mapArtAspectRatio;
 }

@@ -70,18 +70,28 @@ void main() {
     );
   });
 
-  test(
-    'the overworld, town, castle, cave, and citadel use portrait plates; west and east stay square',
-    () {
-      expect(artAspectRatioForMap(mainMapId), mainMapArtAspectRatio);
-      expect(artAspectRatioForMap(townMapId), mainMapArtAspectRatio);
-      expect(artAspectRatioForMap(castleMapId), mainMapArtAspectRatio);
-      expect(artAspectRatioForMap(caveMapId), mainMapArtAspectRatio);
-      expect(artAspectRatioForMap(citadelMapId), mainMapArtAspectRatio);
-      expect(artAspectRatioForMap(westMapId), mapArtAspectRatio);
-      expect(artAspectRatioForMap(eastMapId), mapArtAspectRatio);
-    },
-  );
+  test('the overworld, town, castle, cave, citadel, and mountains use portrait plates; west and east stay square', () {
+    expect(artAspectRatioForMap(mainMapId), mainMapArtAspectRatio);
+    expect(artAspectRatioForMap(townMapId), mainMapArtAspectRatio);
+    expect(artAspectRatioForMap(castleMapId), mainMapArtAspectRatio);
+    expect(artAspectRatioForMap(caveMapId), mainMapArtAspectRatio);
+    expect(artAspectRatioForMap(citadelMapId), mainMapArtAspectRatio);
+    expect(artAspectRatioForMap(mountainsMapId), mainMapArtAspectRatio);
+    expect(artAspectRatioForMap(westMapId), mapArtAspectRatio);
+    expect(artAspectRatioForMap(eastMapId), mapArtAspectRatio);
+  });
+
+  test('mountain nodes stay inside a 9:16 phone column', () {
+    const box = Size(360, 640);
+    const aspect = mainMapArtAspectRatio;
+    const visible = <String>{'LOC-0036', 'LOC-0046', 'LOC-0047', 'LOC-0048', 'LOC-0049'};
+    for (final entry in mountainsMapNodeLayout.entries) {
+      if (!visible.contains(entry.key)) continue;
+      final offset = mapArtOffset(entry.value, box, aspectRatio: aspect);
+      expect(offset.dx, inInclusiveRange(40, 320), reason: entry.key);
+      expect(offset.dy, inInclusiveRange(40, 600), reason: entry.key);
+    }
+  });
 
   test('an unmeasured box does not throw', () {
     expect(mapArtRect(Size.zero), const Rect.fromLTWH(0, 0, 0, 0));
