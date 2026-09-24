@@ -69,9 +69,13 @@ describe('recipe knowledge', () => {
     }
     expect(knowsRecipe(thiefCrafter, launch, 'RCP-0062')).toBe(true)
     expect(canKnowRecipe(thiefCrafter, launch, lockpicks!)).toBe(true)
-    const leftover = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0044')
-    expect(leftover?.Status).toBe('Needs Data')
-    expect(leftover?.['Ingredient 3 Item ID']).toBe('ITEM-0208')
+    const marlin = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0044')
+    expect(marlin?.Status).toBe('Planned')
+    expect(marlin?.['Display Name']).toBe('Cooked Marlin')
+    expect(marlin?.['Ingredient 1 Item ID']).toBe(
+      launch.Items.find((item) => item['Internal Key'] === 'raw_marlin')?.['Item ID'],
+    )
+    expect(marlin?.['Ingredient 3 Item ID']).toBeNull()
     const soup = entries.find((entry) => entry.name === 'Squid Noodle Soup')
     expect(soup?.materials).toContain('Soup Stock')
     expect(soup?.materials).not.toContain('Starroot')
