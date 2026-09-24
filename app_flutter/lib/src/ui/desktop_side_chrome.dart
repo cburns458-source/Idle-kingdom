@@ -8,9 +8,13 @@ import 'bottom_nav.dart';
 import 'chat_sheet.dart';
 import 'game_popup.dart';
 import 'notification_bubble.dart';
+import 'playable_frame.dart';
 import 'tracker_view.dart';
 
 /// Left rail: the hamburger destinations, as navigation only.
+///
+/// When [expand] is true the board fills leftover width while the buttons stay
+/// [desktopMenuRailWidth] and hug the playable column.
 class DesktopMenuRail extends StatelessWidget {
   const DesktopMenuRail({
     super.key,
@@ -19,6 +23,7 @@ class DesktopMenuRail extends StatelessWidget {
     required this.controller,
     required this.multiplayer,
     this.nowMs,
+    this.expand = false,
   });
 
   final GameScreen screen;
@@ -26,6 +31,9 @@ class DesktopMenuRail extends StatelessWidget {
   final GameController controller;
   final MultiplayerController multiplayer;
   final num Function()? nowMs;
+
+  /// Stretch the board across leftover left width; keep buttons narrow.
+  final bool expand;
 
   num _clock() => nowMs?.call() ?? controller.session.clock();
 
@@ -42,13 +50,10 @@ class DesktopMenuRail extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge(<Listenable>[controller.secondsProgress, multiplayer]),
       builder: (context, _) {
-        return DecoratedBox(
-          decoration: chromeBoardFill(
-            context,
-            border: const Border(right: BorderSide(color: Palette.edge)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 14, 8, 10),
+        final body = Padding(
+          padding: const EdgeInsets.fromLTRB(8, 14, 8, 10),
+          child: SizedBox(
+            width: desktopMenuRailWidth - 16,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -73,6 +78,15 @@ class DesktopMenuRail extends StatelessWidget {
               ],
             ),
           ),
+        );
+        return DecoratedBox(
+          decoration: chromeBoardFill(
+            context,
+            border: const Border(right: BorderSide(color: Palette.edge)),
+          ),
+          child: expand
+              ? Align(alignment: Alignment.topRight, child: body)
+              : SizedBox(width: desktopMenuRailWidth, child: body),
         );
       },
     );

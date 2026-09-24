@@ -875,19 +875,29 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                                                 },
                                               ),
                                             ),
+                                          ),
+                                        if (_railTracker != null)
+                                          SizedBox(
+                                            width: desktopMenuRailWidth,
+                                            child: DesktopMenuRail(
+                                              screen: _screen,
+                                              onSelect: _selectScreen,
+                                              controller: controller,
+                                              multiplayer: multiplayer,
+                                              nowMs: controller.session.clock,
+                                            ),
                                           )
                                         else
-                                          const Spacer(),
-                                        SizedBox(
-                                          width: desktopMenuRailWidth,
-                                          child: DesktopMenuRail(
-                                            screen: _screen,
-                                            onSelect: _selectScreen,
-                                            controller: controller,
-                                            multiplayer: multiplayer,
-                                            nowMs: controller.session.clock,
+                                          Expanded(
+                                            child: DesktopMenuRail(
+                                              screen: _screen,
+                                              onSelect: _selectScreen,
+                                              controller: controller,
+                                              multiplayer: multiplayer,
+                                              nowMs: controller.session.clock,
+                                              expand: true,
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                   ),

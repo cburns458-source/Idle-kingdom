@@ -1,4 +1,8 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/content/asset_paths.dart';
 import 'package:idle_kingdoms/src/session/battery_saver_pref.dart';
@@ -966,13 +970,40 @@ void main() {
     final leftover = 1920 - column - desktopRailGutter * 2;
     final expectedChat = leftover / 2;
     expect(tester.getSize(find.byKey(const Key('chat-panel'))).width, closeTo(expectedChat, 0.5));
-    expect(tester.getSize(find.byType(DesktopMenuRail)).width, desktopMenuRailWidth);
+    // Menu board fills the left leftover; buttons stay narrow inside it.
+    expect(tester.getSize(find.byType(DesktopMenuRail)).width, closeTo(expectedChat, 0.5));
   });
 
   testWidgets('wide rails dock the loot tracker left of the menu', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller, size: const Size(1920, 1080));
+    var save = resumeLootTrackers(controller.save, testStartMs);
+    save = creditLootTracker(
+      save,
+      'action',
+      'ACN-0027',
+      const [
+        LootGrant(itemId: 'ITEM-0010', quantity: 146, displayName: 'Tungsten Ore'),
+        LootGrant(itemId: 'ITEM-0012', quantity: 2, displayName: 'Sapphire'),
+      ],
+      258,
+      testStartMs,
+    );
+    controller.commit(save);
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final net = buildMultiplayer(controller.database);
+    addTearDown(net.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: RepaintBoundary(
+          key: const Key('wide-layout-shot'),
+          child: AppShell(controller: controller, multiplayer: net),
+        ),
+      ),
+    );
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('location-tracker-loot')));
@@ -981,6 +1012,7 @@ void main() {
     expect(find.byKey(const Key('tracker-on-loot')), findsOne);
     expect(find.byType(DesktopTrackerRail), findsOne);
     expect(find.byKey(const Key('game-popup')), findsNothing);
+    expect(find.textContaining('Tungsten'), findsWidgets);
 
     final tracker = tester.getRect(find.byType(DesktopTrackerRail));
     final menu = tester.getRect(find.byType(DesktopMenuRail));
@@ -988,6 +1020,59 @@ void main() {
     expect(tracker.right, lessThanOrEqualTo(menu.left + 0.5));
     expect(menu.right, lessThan(chat.left));
     expect(chat.right, closeTo(1920, 0.5));
+    expect(tracker.left, closeTo(0, 0.5));
+    // Title should fit on one line in the expanded tracker rail.
+    final title = find.text('Mine tungsten ore');
+    expect(title, findsOne);
+    expect(tester.getSize(title).height, lessThan(20));
+
+    await tester.runAsync(() async {
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byKey(const Key('wide-layout-shot')),
+      );
+      final image = await boundary.toImage(pixelRatio: 1);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      for (final dir in ['/tmp/ui-verify', '/opt/cursor/artifacts/screenshots']) {
+        Directory(dir).createSync(recursive: true);
+        File('$dir/wide_layout_loot_rail.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+      }
+    });
+  });
+
+  testWidgets('wide rails fill leftover width with menu and chat', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(1920, 1080));
+    await tester.pump();
+
+    final chat = tester.getRect(find.byKey(const Key('chat-panel')));
+    final menu = tester.getRect(find.byType(DesktopMenuRail));
+    expect(chat.left, greaterThan(menu.right));
+    expect(chat.right, closeTo(1920, 0.5));
+    expect(menu.left, closeTo(0, 0.5));
+    expect(menu.width, greaterThan(desktopMenuRailWidth));
+    expect(find.text('Leaderboards'), findsOne);
+    final leaders = tester.getRect(find.text('Leaderboards'));
+    // Compact buttons stay in the rightmost menu strip beside the column.
+    expect(menu.right - leaders.right, lessThan(desktopMenuRailWidth));
+    expect(leaders.left, greaterThan(menu.right - desktopMenuRailWidth - 8));
+
+    await tester.runAsync(() async {
+      final boundary = find
+          .byType(RepaintBoundary)
+          .evaluate()
+          .map((e) => e.renderObject as RenderRepaintBoundary?)
+          .whereType<RenderRepaintBoundary>()
+          .where((b) => b.hasSize && b.size.width >= 1900)
+          .firstOrNull;
+      if (boundary == null) return;
+      final image = await boundary.toImage(pixelRatio: 1);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      for (final dir in ['/tmp/ui-verify', '/opt/cursor/artifacts/screenshots']) {
+        Directory(dir).createSync(recursive: true);
+        File('$dir/wide_layout_rails.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+      }
+    });
   });
 
   testWidgets('desktop rails open Log in the phone column', (tester) async {
