@@ -152,13 +152,14 @@ bool isTimerInventoryFullReason(String reason) =>
 /// Deprecated alias for [fishingPotItemId].
 const String fishingTrapItemId = fishingPotItemId;
 
-/// Botany patches: Farm, Courtyard, Gathering Outskirts, The Slopes, Shallows, Meadow.
+/// Botany patches: Farm, Courtyard, Gathering Outskirts, The Slopes, Shallows, Temple, Meadow.
 const Set<String> botanyPatchLocations = <String>{
   'LOC-0001',
   'LOC-0014',
   'LOC-0031',
   'LOC-0046',
   'LOC-0043',
+  'LOC-0036',
   'LOC-0009',
 };
 

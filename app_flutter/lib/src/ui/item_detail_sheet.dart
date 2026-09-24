@@ -49,10 +49,10 @@ class ItemDetailSheet extends StatelessWidget {
   /// Opens this item in the Codex encyclopedia.
   final VoidCallback? onOpenCodex;
 
-  /// Pins or unpins this bag stack. Omitted for worn gear and empty slots.
+  /// Pins or unpins this bag or worn stack. Omitted for empty slots.
   final VoidCallback? onToggleFavorite;
 
-  /// Whether this bag stack is already pinned.
+  /// Whether this bag or worn stack is already pinned.
   final bool favorite;
 
   @override

@@ -181,6 +181,13 @@ class _InventoryViewState extends State<InventoryView> {
     controller.commitLoadout(next);
   }
 
+  void _toggleEquippedFavorite(String slotId) {
+    final next = toggleEquippedFavorite(save, slotId);
+    if (next == null) return;
+    setState(() => _message = null);
+    controller.commitLoadout(next);
+  }
+
   Future<void> _toggleSelection(int index) async {
     final stack = save.inventory[index];
     if (isFavoriteStack(stack)) {
@@ -306,8 +313,12 @@ class _InventoryViewState extends State<InventoryView> {
         onOpenCodex: itemId != null && widget.onOpenCodexItem != null
             ? () => widget.onOpenCodexItem!(itemId)
             : null,
-        favorite: stack != null && isFavoriteStack(stack),
-        onToggleFavorite: inventoryIndex != null ? () => _toggleFavorite(inventoryIndex) : null,
+        favorite: stack != null ? isFavoriteStack(stack) : isFavoriteEquipped(equipped),
+        onToggleFavorite: inventoryIndex != null
+            ? () => _toggleFavorite(inventoryIndex)
+            : slotId != null && equipped != null
+            ? () => _toggleEquippedFavorite(slotId)
+            : null,
       ),
     );
   }
@@ -908,7 +919,7 @@ class _InventoryViewState extends State<InventoryView> {
             item: controller.indexes.itemsById[stack.itemId],
             quantity: stack.quantity,
             enchanted: stack.enchantmentId != null,
-            favorite: false,
+            favorite: isFavoriteEquipped(stack),
             selected: false,
             selecting: false,
             framedWell: true,

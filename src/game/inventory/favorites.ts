@@ -36,3 +36,22 @@ export function toggleInventoryFavorite(
   })
   return sortInventoryFavoritesFirst({ ...save, inventory })
 }
+
+/** Toggles the favorite flag on a worn stack, or null when the slot is empty. */
+export function toggleEquippedFavorite(save: PlayerSave, slotId: string): PlayerSave | null {
+  const stack = save.equipment.slots[slotId]
+  if (!stack) return null
+  const next = isFavoriteStack(stack)
+    ? (() => {
+        const { favorite: _removed, ...rest } = stack
+        return rest
+      })()
+    : { ...stack, favorite: true }
+  return {
+    ...save,
+    equipment: {
+      ...save.equipment,
+      slots: { ...save.equipment.slots, [slotId]: next },
+    },
+  }
+}

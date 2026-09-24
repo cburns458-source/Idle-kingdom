@@ -77,7 +77,7 @@ describe('Mountains sub-map', () => {
     )
     expect(BOTANY_PATCH_LOCATIONS.has(THE_SLOPES_ID)).toBe(true)
     expect(BOTANY_PATCH_LOCATIONS.has(MOUNTAINS_GATEWAY_ID)).toBe(false)
-    expect(BOTANY_PATCH_LOCATIONS.has('LOC-0036')).toBe(false)
+    expect(BOTANY_PATCH_LOCATIONS.has('LOC-0036')).toBe(true)
   })
 
   it('writes Peak, Badlands, and Giant Camp pools', () => {

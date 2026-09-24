@@ -148,8 +148,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Woodcutting: -3% action time'), findsOne);
     expect(find.text('Equip'), findsNothing);
-    expect(find.text('Favorite'), findsNothing);
-    expect(find.text('Unfavorite'), findsNothing);
+    expect(find.text('Favorite'), findsOne);
+    await tester.tap(find.text('Favorite'));
+    await tester.pumpAndSettle();
+    expect(isFavoriteEquipped(controller.save.equipment.slots[weaponToolSlotId]), isTrue);
+    expect(find.byIcon(Icons.favorite), findsOne);
+
+    await tester.longPress(find.byTooltip('Copper Hatchet').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Unfavorite'), findsOne);
+    await tester.tap(find.text('Unfavorite'));
+    await tester.pumpAndSettle();
+    expect(isFavoriteEquipped(controller.save.equipment.slots[weaponToolSlotId]), isFalse);
+    expect(find.byIcon(Icons.favorite), findsNothing);
   });
 
   testWidgets('the detail sheet reports what an item is worth', (tester) async {

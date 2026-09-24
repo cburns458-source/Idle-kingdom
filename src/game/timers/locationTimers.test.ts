@@ -129,7 +129,7 @@ describe('locationTimers', () => {
     expect(locationHasBotanyPatch('LOC-0031')).toBe(true)
     expect(BOTANY_PATCH_LOCATIONS.has('LOC-0043')).toBe(true)
     expect(locationHasBotanyPatch('LOC-0046')).toBe(true)
-    expect(locationHasBotanyPatch('LOC-0036')).toBe(false)
+    expect(locationHasBotanyPatch('LOC-0036')).toBe(true)
     expect(locationHasBotanyPatch('LOC-0008')).toBe(false)
 
     save = {
@@ -628,12 +628,12 @@ describe('locationTimers', () => {
     expect(locationHasCompostCollect('LOC-0001')).toBe(true)
     expect(locationHasCompostCollect('LOC-0046')).toBe(true)
     expect(locationHasCompostCollect('LOC-0043')).toBe(false)
-    expect(locationHasCompostCollect('LOC-0036')).toBe(false)
+    expect(locationHasCompostCollect('LOC-0036')).toBe(true)
     expect(locationHasCompostCollect('LOC-0002')).toBe(false)
     expect(compostCollectActivityAt(launch, 'LOC-0001')?.['Activity ID']).toBe('ACT-0062')
     expect(compostCollectActivityAt(launch, 'LOC-0046')?.['Activity ID']).toBe('ACT-0065')
     expect(compostCollectActivityAt(launch, 'LOC-0043')).toBeUndefined()
-    expect(compostCollectActivityAt(launch, 'LOC-0036')).toBeUndefined()
+    expect(compostCollectActivityAt(launch, 'LOC-0036')?.['Activity ID']).toBe('ACT-0066')
     expect(launch.Items.some((item) => item['Item ID'] === COMPOST_ITEM_ID)).toBe(true)
   })
 

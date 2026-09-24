@@ -30,7 +30,7 @@ describe('Temple', () => {
       (row) => row['Contextual Name'],
     )
     expect(names).toEqual(['Train with the monks', 'Pick weeds', 'Collect compost'])
-    expect(locationHasBotanyPatch('LOC-0036')).toBe(false)
+    expect(locationHasBotanyPatch('LOC-0036')).toBe(true)
     expect(launch.Activities.some((row) => row['Activity ID'] === 'ACT-0036')).toBe(false)
   })
 

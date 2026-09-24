@@ -62,7 +62,7 @@ void main() {
     );
     expect(locationHasBotanyPatch(theSlopesId), isTrue);
     expect(locationHasBotanyPatch(mountainsGatewayId), isFalse);
-    expect(locationHasBotanyPatch('LOC-0036'), isFalse);
+    expect(locationHasBotanyPatch('LOC-0036'), isTrue);
   });
 
   test('The Peak, Badlands, and Giant Camp use the written pools', () {
