@@ -537,6 +537,28 @@ void main() {
     expect(find.text('Forest Gate'), findsNothing);
   });
 
+  testWidgets('Enter Mountains keeps highland nodes on a phone column', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: mountainsGatewayId),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 840));
+
+    expect(find.text('Enter Mountains'), findsOne);
+    await tester.tap(find.text('Enter Mountains'));
+    await tester.pump();
+
+    expect(controller.save.currentLocationId, theSlopesId);
+    expect(find.byType(WorldMapView), findsOne);
+    final map = tester.getRect(find.byType(WorldMapView));
+    for (final name in <String>['Temple', 'The Slopes', 'The Peak', 'Badlands', 'Giant Camp']) {
+      final label = find.descendant(of: find.byType(WorldMapView), matching: find.text(name));
+      expect(label, findsWidgets, reason: name);
+      expect(map.overlaps(tester.getRect(label.first)), isTrue, reason: name);
+    }
+  });
+
   testWidgets('Enter Sunken Approach opens The Shallows', (tester) async {
     final controller = buildController(
       database,
