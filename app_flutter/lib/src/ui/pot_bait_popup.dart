@@ -74,21 +74,23 @@ class _PotBaitGridPopupState extends State<_PotBaitGridPopup> {
                 const MutedText('No matching bait for the catches here.')
               else
                 Flexible(
-                  child: GridView.extent(
-                    maxCrossAxisExtent: 78,
-                    mainAxisSpacing: 5,
-                    crossAxisSpacing: 5,
-                    childAspectRatio: 1,
-                    shrinkWrap: true,
-                    children: [
-                      for (final option in widget.options)
-                        _BaitTile(
-                          option: option,
-                          item: widget.controller.indexes.itemsById[option.itemId],
-                          selectedCount: _pickedOf(option.itemId),
-                          onTap: option.owned > 0 ? () => _tap(option) : null,
-                        ),
-                    ],
+                  child: FloatingItemWell(
+                    child: GridView.extent(
+                      maxCrossAxisExtent: 78,
+                      mainAxisSpacing: 5,
+                      crossAxisSpacing: 5,
+                      childAspectRatio: 1,
+                      shrinkWrap: true,
+                      children: [
+                        for (final option in widget.options)
+                          _BaitTile(
+                            option: option,
+                            item: widget.controller.indexes.itemsById[option.itemId],
+                            selectedCount: _pickedOf(option.itemId),
+                            onTap: option.owned > 0 ? () => _tap(option) : null,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               const SizedBox(height: 10),
@@ -165,7 +167,7 @@ class _BaitTile extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w400,
-                  color: Palette.panelInk,
+                  color: Palette.parchmentText,
                 ),
               ),
             ),

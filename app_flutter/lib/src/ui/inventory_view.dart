@@ -697,40 +697,42 @@ class _InventoryViewState extends State<InventoryView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          child: GridView.builder(
-            key: const Key('inventory-bag'),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: inventoryBagTileExtent,
-              mainAxisSpacing: inventoryBagTileSpacing,
-              crossAxisSpacing: inventoryBagTileSpacing,
+          child: FloatingItemWell(
+            child: GridView.builder(
+              key: const Key('inventory-bag'),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: inventoryBagTileExtent,
+                mainAxisSpacing: inventoryBagTileSpacing,
+                crossAxisSpacing: inventoryBagTileSpacing,
+              ),
+              itemCount: indexes.length,
+              itemBuilder: (context, visible) {
+                final index = indexes[visible];
+                final stack = save.inventory[index];
+                final item = controller.indexes.itemsById[stack.itemId];
+                final equippable = _isEquippable(stack.itemId);
+                return _ItemTile(
+                  item: item,
+                  quantity: stack.quantity,
+                  enchanted: stack.enchantmentId != null,
+                  favorite: isFavoriteStack(stack),
+                  selected: selling?.containsKey(index) ?? false,
+                  selecting: selling != null,
+                  iconSize: inventoryBagIconSize,
+                  onTap: () {
+                    if (selling != null) {
+                      _toggleSelection(index);
+                    } else if (equippable) {
+                      _equipAt(index);
+                    } else {
+                      _showDetail(stack: stack, inventoryIndex: index);
+                    }
+                  },
+                  onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
+                  onToggleFavorite: () => _toggleFavorite(index),
+                );
+              },
             ),
-            itemCount: indexes.length,
-            itemBuilder: (context, visible) {
-              final index = indexes[visible];
-              final stack = save.inventory[index];
-              final item = controller.indexes.itemsById[stack.itemId];
-              final equippable = _isEquippable(stack.itemId);
-              return _ItemTile(
-                item: item,
-                quantity: stack.quantity,
-                enchanted: stack.enchantmentId != null,
-                favorite: isFavoriteStack(stack),
-                selected: selling?.containsKey(index) ?? false,
-                selecting: selling != null,
-                iconSize: inventoryBagIconSize,
-                onTap: () {
-                  if (selling != null) {
-                    _toggleSelection(index);
-                  } else if (equippable) {
-                    _equipAt(index);
-                  } else {
-                    _showDetail(stack: stack, inventoryIndex: index);
-                  }
-                },
-                onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
-                onToggleFavorite: () => _toggleFavorite(index),
-              );
-            },
           ),
         ),
         if (selling != null) ...[
@@ -1159,10 +1161,10 @@ class _ItemTile extends StatelessWidget {
             bottom: 0,
             child: Text(
               '${quantity.round()}',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w400,
-                color: framedWell ? Palette.parchmentText : Palette.panelInk,
+                color: Palette.parchmentText,
               ),
             ),
           ),
@@ -1174,13 +1176,7 @@ class _ItemTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (enchanted)
-                  Text(
-                    '★',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: framedWell ? Palette.softGreen : Palette.softGreenShade,
-                    ),
-                  ),
+                  const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
                 if (onToggleFavorite != null && !selecting)
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -1192,11 +1188,7 @@ class _ItemTile extends StatelessWidget {
                         child: Icon(
                           favorite ? Icons.favorite : Icons.favorite_border,
                           size: 14,
-                          color: favorite
-                              ? Palette.gold
-                              : framedWell
-                              ? const Color(0x80F4E7C8)
-                              : const Color(0x806B5338),
+                          color: favorite ? Palette.gold : const Color(0x80F4E7C8),
                         ),
                       ),
                     ),
@@ -1246,7 +1238,7 @@ class _ItemTile extends StatelessWidget {
       onLongPress: onLongPress,
       onSecondaryTap: onLongPress,
       child: DefaultTextStyle.merge(
-        style: const TextStyle(color: Palette.panelInk),
+        style: const TextStyle(color: Palette.parchmentText),
         child: marks,
       ),
     );

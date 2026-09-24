@@ -144,22 +144,24 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
               ),
               const SizedBox(height: 10),
               Flexible(
-                child: GridView.extent(
-                  maxCrossAxisExtent: 78,
-                  mainAxisSpacing: 5,
-                  crossAxisSpacing: 5,
-                  childAspectRatio: 1,
-                  shrinkWrap: true,
-                  children: [
-                    for (final option in widget.options)
-                      _PlantTile(
-                        option: option,
-                        item: widget.controller.indexes.itemsById[option.itemId],
-                        selected: _pickedOf(option.itemId) > 0,
-                        selectedCount: _pickedOf(option.itemId),
-                        onTap: option.canPlant ? () => _tap(option) : null,
-                      ),
-                  ],
+                child: FloatingItemWell(
+                  child: GridView.extent(
+                    maxCrossAxisExtent: 78,
+                    mainAxisSpacing: 5,
+                    crossAxisSpacing: 5,
+                    childAspectRatio: 1,
+                    shrinkWrap: true,
+                    children: [
+                      for (final option in widget.options)
+                        _PlantTile(
+                          option: option,
+                          item: widget.controller.indexes.itemsById[option.itemId],
+                          selected: _pickedOf(option.itemId) > 0,
+                          selectedCount: _pickedOf(option.itemId),
+                          onTap: option.canPlant ? () => _tap(option) : null,
+                        ),
+                    ],
+                  ),
                 ),
               ),
               if (canPlant) ...[
@@ -262,7 +264,7 @@ class _PlantTile extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
-                  color: Palette.panelInk,
+                  color: Palette.parchmentText,
                 ),
               ),
             ),

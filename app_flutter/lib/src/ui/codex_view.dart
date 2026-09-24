@@ -319,8 +319,7 @@ class _CodexViewState extends State<CodexView> {
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: GamePanel(
-        framed: true,
+      child: FloatingItemWell(
         padding: const EdgeInsets.all(8),
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -353,8 +352,7 @@ class _CodexViewState extends State<CodexView> {
     final chrome = UiChrome.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: GamePanel(
-        framed: true,
+      child: FloatingItemWell(
         padding: const EdgeInsets.all(8),
         child: ListView.separated(
           key: const Key('codex-action-list'),
@@ -373,7 +371,7 @@ class _CodexViewState extends State<CodexView> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: chrome.panelInk,
+                    color: chrome.embossFace,
                   ),
                 ),
               );
@@ -390,8 +388,8 @@ class _CodexViewState extends State<CodexView> {
               ),
               title: entry.displayName,
               detail: [?level, if (places.isNotEmpty) places].join(' · '),
-              ink: chrome.panelInk,
-              muted: chrome.panelMuted,
+              ink: Palette.parchmentText,
+              muted: chrome.embossFace,
               onTap: () => _openAction(entry.actionId),
             );
           },
@@ -408,8 +406,7 @@ class _CodexViewState extends State<CodexView> {
     final chrome = UiChrome.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: GamePanel(
-        framed: true,
+      child: FloatingItemWell(
         padding: const EdgeInsets.all(8),
         child: ListView.separated(
           itemCount: rows.length,
@@ -425,8 +422,8 @@ class _CodexViewState extends State<CodexView> {
               leading: GameImage(enemyAssetPath(entry.enemyId), width: 36, height: 36),
               title: entry.displayName,
               detail: [?level, if (places.isNotEmpty) places].join(' · '),
-              ink: chrome.panelInk,
-              muted: chrome.panelMuted,
+              ink: Palette.parchmentText,
+              muted: chrome.embossFace,
               onTap: () => _openEnemy(entry.enemyId),
             );
           },
