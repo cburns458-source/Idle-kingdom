@@ -307,16 +307,20 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
                         ),
                       ),
                       if (own != null && _pin == _OwnPin.top)
-                        Align(
-                          alignment: Alignment.topCenter,
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
                           child: KeyedSubtree(
                             key: const ValueKey('own-pin-top'),
                             child: _row(context, own, pinned: true),
                           ),
                         ),
                       if (own != null && _pin == _OwnPin.bottom)
-                        Align(
-                          alignment: Alignment.bottomCenter,
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
                           child: KeyedSubtree(
                             key: const ValueKey('own-pin-bottom'),
                             child: _row(context, own, pinned: true),
@@ -347,10 +351,12 @@ class _LeaderboardTabState extends State<_LeaderboardTab> {
               userId: row.entryId,
             ),
       trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(row.valueLabel, style: const TextStyle(fontWeight: FontWeight.w400)),
               if (row.secondaryLabel != null) MutedText(row.secondaryLabel!),
