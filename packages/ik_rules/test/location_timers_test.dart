@@ -10,6 +10,30 @@ void main() {
     db = assertGameDatabaseShape(contentDatabaseJson());
   });
 
+  test('drops the retired Mountains gateway botany patch and keeps Slopes and Temple', () {
+    final migrated = migrateSaveJson(<String, Object?>{
+      'saveVersion': 54,
+      'discoveredTimerSpotIds': <Object?>['botany:LOC-0006', 'botany:LOC-0046', 'botany:LOC-0036'],
+      'locationTimers': <Object?>[
+        <String, Object?>{'locationId': 'LOC-0006', 'kind': 'botany'},
+        <String, Object?>{'locationId': 'LOC-0046', 'kind': 'botany'},
+        <String, Object?>{'locationId': 'LOC-0036', 'kind': 'botany'},
+      ],
+      'lootTrackers': <String, Object?>{
+        'timer:botany:LOC-0006': <String, Object?>{'key': 'timer:botany:LOC-0006'},
+        'timer:botany:LOC-0046': <String, Object?>{'key': 'timer:botany:LOC-0046'},
+      },
+    }, 0);
+    expect(migrated['saveVersion'], saveVersion);
+    expect(migrated['discoveredTimerSpotIds'], ['botany:LOC-0046', 'botany:LOC-0036']);
+    expect((migrated['locationTimers'] as List).map((row) => (row as Map)['locationId']), [
+      'LOC-0046',
+      'LOC-0036',
+    ]);
+    expect((migrated['lootTrackers'] as Map).containsKey('timer:botany:LOC-0006'), isFalse);
+    expect((migrated['lootTrackers'] as Map).containsKey('timer:botany:LOC-0046'), isTrue);
+  });
+
   test('timerSpotKey and parseTimerSpotKey round-trip', () {
     expect(timerSpotKey('botany', 'LOC-0001'), 'botany:LOC-0001');
     expect(timerSpotKey('fishing_pot', 'LOC-0003'), 'fishing_pot:LOC-0003');

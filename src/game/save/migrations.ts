@@ -872,6 +872,33 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 54,
     }),
   },
+  {
+    fromVersion: 54,
+    toVersion: 55,
+    migrate: (save) => {
+      const retiredSpot = 'botany:LOC-0006'
+      const retiredTracker = `timer:${retiredSpot}`
+      const discoveredTimerSpotIds = (
+        Array.isArray(save.discoveredTimerSpotIds) ? save.discoveredTimerSpotIds : []
+      ).filter((id): id is string => typeof id === 'string' && id !== retiredSpot)
+      const locationTimers = (
+        Array.isArray(save.locationTimers) ? save.locationTimers : []
+      ).filter((timer) => {
+        if (!timer || typeof timer !== 'object') return true
+        const row = timer as { kind?: string; locationId?: string }
+        return !(row.kind === 'botany' && row.locationId === 'LOC-0006')
+      })
+      const lootTrackers = { ...(save.lootTrackers ?? {}) }
+      delete lootTrackers[retiredTracker]
+      return {
+        ...save,
+        discoveredTimerSpotIds,
+        locationTimers,
+        lootTrackers,
+        saveVersion: 55,
+      }
+    },
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

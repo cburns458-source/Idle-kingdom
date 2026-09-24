@@ -38,6 +38,28 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
+  testWidgets('Timers hides the retired Mountains gateway patch and keeps Slopes and Temple', (
+    tester,
+  ) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        discoveredTimerSpotIds: const <String>[
+          'botany:LOC-0006',
+          'botany:LOC-0046',
+          'botany:LOC-0036',
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 900));
+
+    await openChinScreen(tester, 'Timers');
+    expect(find.text('Mountains'), findsNothing);
+    expect(find.text('The Slopes'), findsOne);
+    expect(find.text('Temple'), findsOne);
+  });
+
   testWidgets('Timers Travel arrives instantly and opens the location stage', (tester) async {
     final controller = buildController(database, seed: _readyMeadowBotany(database));
     addTearDown(controller.dispose);
