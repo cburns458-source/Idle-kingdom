@@ -90,8 +90,8 @@ void main() {
     final player = tester.getRect(find.bySemanticsLabel('Adventurer'));
     final backdrop = tester.getRect(find.byType(TempleLayeredBackdrop));
     final layout = TempleStageLayout(backdrop.size);
-    expect(action.bottom, closeTo(layout.actionFoot.dy + backdrop.top, 8));
-    expect(action.center.dx, closeTo(layout.actionFoot.dx + backdrop.left, 16));
+    expect(action.bottom, closeTo(layout.actionStand.dy + backdrop.top, 8));
+    expect(action.center.dx, closeTo(layout.actionStand.dx + backdrop.left, 16));
     expect(player.center.dx, lessThan(action.center.dx));
 
     final presets = tester.getRect(find.byType(StageLoadoutStrip));
@@ -119,5 +119,7 @@ void main() {
     expect(templeActionFootDesign.dy, closeTo(404.5625, 0.01));
     expect(templePlayerFootDesign.dy, greaterThan(398.875));
     expect(templeActionFootDesign.dy, greaterThan(398.375));
+    expect(templeActionGroundNudge, greaterThan(10));
+    expect(templeActionGroundNudge, lessThan(30));
   });
 }

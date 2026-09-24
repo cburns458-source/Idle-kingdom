@@ -234,7 +234,6 @@ class LocationIdlePlayer extends StatelessWidget {
           builder: (context, constraints) {
             final layout = TempleStageLayout(Size(constraints.maxWidth, constraints.maxHeight));
             final playerFoot = layout.playerFoot;
-            final actionFoot = layout.actionFoot;
             return _StageHopHost(
               active: save.currentActivityId != null,
               actionKey: save.currentActivityId,
@@ -262,7 +261,7 @@ class LocationIdlePlayer extends StatelessWidget {
                   ),
                   if (save.currentActivityId != null)
                     _templeFootedPortrait(
-                      foot: actionFoot,
+                      foot: layout.actionStand,
                       height: _actionArtHeight,
                       child: _groundedSceneArt(controller),
                     ),
