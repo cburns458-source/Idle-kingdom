@@ -435,7 +435,7 @@ CombatVictoryResult applyCombatVictory(
     currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
   );
 
-  final xpAmount = jsNumber(enemy.raw['Combat XP'] ?? action.raw['XP Reward'] ?? 0);
+  final xpAmount = enemyCombatXp(enemy);
   // Prefer fishing-mode bosses and Fishing-tagged fight actions (Mother Squid /
   // Squidling fallthrough). Ordinary fights split XP across Might / Vitality.
   final fishingMode =

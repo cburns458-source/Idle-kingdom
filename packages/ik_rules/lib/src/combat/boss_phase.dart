@@ -8,6 +8,7 @@ import '../skills/skill_actions.dart' show fishingSkillId;
 import '../save/generated/save_models.dart';
 import 'boss.dart';
 import 'engine.dart';
+import 'stats.dart';
 
 class SquidlingVictoryResult {
   const SquidlingVictoryResult({
@@ -57,7 +58,7 @@ SquidlingVictoryResult applySquidlingVictory(
   EnemyRow squidling,
   String roundEndIso,
 ) {
-  final xpAmount = squidling.combatXp ?? 0;
+  final xpAmount = enemyCombatXp(squidling);
   var next = applyXp(save, db, fishingSkillId, xpAmount).save;
   final kills = (next.statistics.values['monsters_killed'] ?? 0) + 1;
   next = next.copyWith(

@@ -21,6 +21,7 @@ void main() {
     expect(enemyVitalityLevel(cow), 1);
     expect(enemyCombatLevel(cow), 2);
     expect(enemyScaledMaxHp(cow), 100);
+    expect(enemyCombatXp(cow), 200);
     expect(enemyEncounterMaxHp(db, save, cow), 100);
     expect(enemyEncounterDamageRange(db, save, cow).toJson(), {'min': 10, 'max': 20});
 
@@ -28,6 +29,7 @@ void main() {
     expect(enemyVitalityLevel(scout), 10);
     expect(enemyCombatLevel(scout), 15);
     expect(enemyScaledMaxHp(scout), 462);
+    expect(enemyCombatXp(scout), 924);
     expect(enemyScaledDamageRange(scout).toJson(), {'min': 33, 'max': 66});
     expect(enemyEncounterMaxHp(db, save, scout), 462);
     expect(enemyEncounterDamageRange(db, save, scout).toJson(), {'min': 33, 'max': 66});
@@ -35,18 +37,18 @@ void main() {
 
   test('new enemies have no location, drops, or pool entries', () {
     const added = <(String, String, num, num, num, num, num)>[
-      ('ENM-0025', 'Giant Rat', 3, 150, 12, 26, 200),
-      ('ENM-0026', 'Bandit', 6, 260, 16, 40, 350),
-      ('ENM-0027', 'Cave Bat', 14, 580, 37, 73, 870),
-      ('ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1200),
-      ('ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 1600),
-      ('ENM-0030', 'Harpy', 48, 3860, 152, 268, 9000),
-      ('ENM-0031', 'Giant', 51, 4440, 164, 288, 10800),
-      ('ENM-0032', 'Gargoyle', 58, 5940, 192, 338, 16600),
-      ('ENM-0033', 'Wyvern', 67, 7920, 236, 404, 26000),
-      ('ENM-0034', 'Cyclops', 70, 9000, 260, 440, 31250),
-      ('ENM-0035', 'Demon', 82, 15000, 475, 745, 64500),
-      ('ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 82000),
+      ('ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300),
+      ('ENM-0026', 'Bandit', 6, 260, 16, 40, 520),
+      ('ENM-0027', 'Cave Bat', 14, 580, 37, 73, 1322),
+      ('ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1770),
+      ('ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 2268),
+      ('ENM-0030', 'Harpy', 48, 3860, 152, 268, 11424),
+      ('ENM-0031', 'Giant', 51, 4440, 164, 288, 13408),
+      ('ENM-0032', 'Gargoyle', 58, 5940, 192, 338, 18770),
+      ('ENM-0033', 'Wyvern', 67, 7920, 236, 404, 26452),
+      ('ENM-0034', 'Cyclops', 70, 9000, 260, 440, 30600),
+      ('ENM-0035', 'Demon', 82, 15000, 475, 745, 54598),
+      ('ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 66066),
     ];
     final addedIds = {for (final row in added) row.$1};
     for (final row in added) {
@@ -59,6 +61,7 @@ void main() {
       expect(enemy.minDamage, row.$5);
       expect(enemy.maxDamage, row.$6);
       expect(enemy.combatXp, row.$7);
+      expect(enemyCombatXp(enemy), row.$7);
       expect(enemy.locationId, isNull);
       expect(enemy.dropChance, 0);
       expect(enemy.rewardTableId, isNull);

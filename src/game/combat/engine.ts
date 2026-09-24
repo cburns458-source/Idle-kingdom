@@ -29,6 +29,7 @@ import { currentHpAfterMaxChange } from '../equipment/vitals'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import {
   applyMitigation,
+  enemyCombatXp,
   fishingCombatDamageRange,
   MIGHT_SKILL_ID,
   normalizeAttackStyle,
@@ -388,7 +389,7 @@ export function applyCombatVictory(
     currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
   }
 
-  const xpAmount = Number(enemy['Combat XP'] ?? action['XP Reward'] ?? 0)
+  const xpAmount = enemyCombatXp(enemy)
   // Prefer fishing-mode bosses and Fishing-tagged fight actions (Mother Squid /
   // Squidling fallthrough). Ordinary fights split XP across Might / Vitality.
   const fishingMode =
