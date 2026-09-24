@@ -12,7 +12,9 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'support/harness.dart';
 
 int _visibleOwnRows(WidgetTester tester, String name) {
-  final list = tester.getRect(find.byType(ListView));
+  final list = tester.getRect(
+    find.descendant(of: find.byType(SocialView), matching: find.byType(SingleChildScrollView)),
+  );
   var visible = 0;
   for (final element
       in find
@@ -271,6 +273,12 @@ void main() {
 
     expect(find.byKey(const ValueKey('own-pin-bottom')), findsOne);
     expect(find.byKey(const ValueKey('own-pin-top')), findsNothing);
+    final pin = tester.getRect(find.byKey(const ValueKey('own-pin-bottom')));
+    final list = tester.getRect(
+      find.descendant(of: find.byType(SocialView), matching: find.byType(SingleChildScrollView)),
+    );
+    expect(pin.height, lessThan(list.height * 0.45));
+    expect(pin.top, greaterThan(list.center.dy));
   });
 
   testWidgets('the own row pins at the top when it is off-screen above', (tester) async {
@@ -310,8 +318,13 @@ void main() {
     expect(find.byKey(const ValueKey('own-pin-bottom')), findsNothing);
     expect(_visibleOwnRows(tester, 'Vari'), 1);
     final pin = tester.getRect(find.byKey(const ValueKey('own-pin-top')));
-    final list = tester.getRect(find.byType(ListView));
+    final list = tester.getRect(
+      find.descendant(of: find.byType(SocialView), matching: find.byType(SingleChildScrollView)),
+    );
     expect(pin.top, greaterThanOrEqualTo(list.top - 1));
+    // Pin must stay a compact row — a stretched overlay was covering the board.
+    expect(pin.height, lessThan(list.height * 0.45));
+    expect(pin.bottom, lessThan(list.center.dy));
   });
 
   testWidgets('a visible own row is not pinned above the list', (tester) async {

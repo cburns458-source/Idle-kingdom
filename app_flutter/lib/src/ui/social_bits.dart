@@ -165,6 +165,7 @@ class SocialRow extends StatelessWidget {
           if (leading case final leading?) ...[leading, const SizedBox(width: 10)],
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
