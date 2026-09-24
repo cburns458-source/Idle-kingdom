@@ -94,11 +94,15 @@ void main() {
     expect(action.center.dx, closeTo(layout.actionFoot.dx + backdrop.left, 16));
     expect(player.center.dx, lessThan(action.center.dx));
 
-    final name = tester.getRect(find.text('Gather augur weed'));
     final presets = tester.getRect(find.byType(StageLoadoutStrip));
-    expect(name.top, greaterThan(player.bottom - 4));
-    expect(name.top, greaterThan(action.bottom - 4));
+    final name = tester.getRect(find.byKey(const ValueKey('stage-scene-name:Gather augur weed')));
+    final timer = tester.getRect(find.textContaining('0s /'));
+    expect(name.top, greaterThan(backdrop.center.dy));
     expect(name.bottom, lessThanOrEqualTo(presets.top + 8));
+    expect(timer.top, greaterThan(player.bottom - 8));
+    expect(timer.top, greaterThan(action.bottom - 8));
+    expect(timer.bottom, lessThanOrEqualTo(presets.top + 8));
+    expect(presets.top - timer.bottom, lessThan(40));
   });
 
   test('Temple layer paths sit next to the existing plate', () {

@@ -346,13 +346,10 @@ class _LocationViewState extends State<LocationView> {
                               Positioned(
                                 left: 13,
                                 right: 13,
+                                top: 0,
                                 bottom: 0,
                                 child: IgnorePointer(
-                                  child: UnconstrainedBox(
-                                    constrainedAxis: Axis.horizontal,
-                                    alignment: Alignment.bottomCenter,
-                                    child: ActivityPanel(controller: controller),
-                                  ),
+                                  child: ActivityPanel(controller: controller),
                                 ),
                               ),
                           ],
