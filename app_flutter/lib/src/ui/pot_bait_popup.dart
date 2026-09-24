@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'floating_slot.dart';
 import 'game_popup.dart';
 import 'item_icon.dart';
 
@@ -144,41 +145,31 @@ class _BaitTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final slot = UiChrome.of(context).slot;
     final enabled = onTap != null;
     final selected = selectedCount > 0;
-    final fill = selected
-        ? Color.lerp(slot, Palette.gold, 0.18)!
-        : enabled
-        ? slot
-        : Color.lerp(slot, const Color(0xFF000000), 0.25)!;
-    return Tooltip(
-      message: '${option.displayName} · ${option.owned.round()} owned',
-      child: Opacity(
-        opacity: enabled ? 1 : 0.55,
-        child: PixelInkPlate(
-          onTap: onTap,
-          step: PixelChrome.stepTight,
-          fillColor: fill,
-          material: PixelPlateMaterial.grain,
-          selected: selected,
-          shadow: false,
-          padding: const EdgeInsets.all(2),
-          child: Stack(
-            children: [
-              Center(child: ItemIcon(item: item, size: 28)),
-              if (selectedCount > 0)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Text(
-                    '$selectedCount',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
-                  ),
+    return FloatingItemSlot(
+      tooltip: '${option.displayName} · ${option.owned.round()} owned',
+      selected: selected,
+      enabled: enabled,
+      padding: const EdgeInsets.all(2),
+      onTap: onTap,
+      child: Stack(
+        children: [
+          Center(child: ItemIcon(item: item, size: 28)),
+          if (selectedCount > 0)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Text(
+                '$selectedCount',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: Palette.panelInk,
                 ),
-            ],
-          ),
-        ),
+              ),
+            ),
+        ],
       ),
     );
   }

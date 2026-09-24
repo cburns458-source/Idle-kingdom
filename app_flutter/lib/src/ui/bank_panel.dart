@@ -3,6 +3,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'floating_slot.dart';
 import 'format.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
@@ -252,23 +253,15 @@ class _BankPanelState extends State<BankPanel> {
   Widget _tileFor({required Key key, required InventoryStack stack, required VoidCallback onTap}) {
     final item = controller.indexes.itemsById[stack.itemId];
     final name = item?.displayName ?? stack.itemId;
-    return Tooltip(
-      message: name,
-      child: PixelInkPlate(
-        key: key,
-        onTap: onTap,
-        step: PixelChrome.stepTight,
-        fillColor: stack.favorite == true
-            ? Color.lerp(UiChrome.of(context).slot, Palette.gold, 0.18)!
-            : UiChrome.of(context).slot,
-        material: PixelPlateMaterial.grain,
-        strokeWidth: stack.favorite == true ? 2.5 : 2,
-        selected: stack.favorite == true,
-        shadow: false,
-        padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
-        child: DefaultTextStyle.merge(
-          style: const TextStyle(color: Palette.parchmentText),
-          child: Column(
+    final favorite = stack.favorite == true;
+    return FloatingItemSlot(
+      key: key,
+      tooltip: name,
+      padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
+      onTap: onTap,
+      child: Stack(
+        children: [
+          Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ItemIcon(item: item, size: 36),
@@ -277,11 +270,17 @@ class _BankPanelState extends State<BankPanel> {
                 '×${formatThousands(stack.quantity)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10.5, color: Palette.muted, height: 1.1),
+                style: const TextStyle(fontSize: 10.5, color: Palette.panelMuted, height: 1.1),
               ),
             ],
           ),
-        ),
+          if (favorite)
+            const Positioned(
+              right: 0,
+              top: 0,
+              child: Icon(Icons.favorite, size: 14, color: Palette.gold),
+            ),
+        ],
       ),
     );
   }

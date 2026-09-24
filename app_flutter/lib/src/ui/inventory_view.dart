@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'floating_slot.dart';
 import 'format.dart';
 import 'equipment_presets_bar.dart';
 import 'game_popup.dart';
@@ -907,6 +908,7 @@ class _InventoryViewState extends State<InventoryView> {
             favorite: false,
             selected: false,
             selecting: false,
+            framedWell: true,
             iconSize: iconSize,
             onTap: () => _unequip(slotId),
             onLongPress: () => _showDetail(equipped: stack, slotId: slotId),
@@ -1112,8 +1114,10 @@ class _Stat extends StatelessWidget {
   }
 }
 
-/// One bag or slot tile: art, count, and the marks for enchanted and favorite.
+/// One bag tile: art, count, and the marks for enchanted and favorite.
 /// The name lives on a tooltip so the icon can fill the cell.
+///
+/// Paper-doll equipment wells stay bordered ([framedWell]); bag cells float.
 class _ItemTile extends StatelessWidget {
   const _ItemTile({
     required this.item,
@@ -1126,6 +1130,7 @@ class _ItemTile extends StatelessWidget {
     required this.onLongPress,
     required this.onToggleFavorite,
     this.iconSize = inventoryBagIconSize,
+    this.framedWell = false,
   });
 
   final ItemRow? item;
@@ -1135,6 +1140,7 @@ class _ItemTile extends StatelessWidget {
   final bool selected;
   final bool selecting;
   final double iconSize;
+  final bool framedWell;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final VoidCallback? onToggleFavorite;
@@ -1142,82 +1148,105 @@ class _ItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = item?.displayName ?? '?';
-    final slot = UiChrome.of(context).slot;
-    final fill = selected
-        ? Color.lerp(slot, Palette.gold, 0.18)!
-        : enchanted
-        ? const Color(0xFF2F3A24)
-        : slot;
-    return Tooltip(
-      message: name,
-      onTriggered: onLongPress,
-      child: PixelInkPlate(
-        onTap: onTap,
-        step: PixelChrome.stepTight,
-        fillColor: fill,
-        material: PixelPlateMaterial.grain,
-        strokeWidth: selected ? 2.5 : 2,
-        selected: selected || enchanted,
-        shadow: false,
-        padding: const EdgeInsets.all(2),
-        child: GestureDetector(
-          onLongPress: onLongPress,
-          onSecondaryTap: onLongPress,
-          behavior: HitTestBehavior.deferToChild,
-          child: DefaultTextStyle.merge(
-            style: const TextStyle(color: Palette.parchmentText),
-            child: Stack(
+    final marks = Stack(
+      children: [
+        Center(
+          child: ItemIcon(item: item, size: iconSize),
+        ),
+        if (!enchanted && quantity > 1)
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Text(
+              '${quantity.round()}',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                color: framedWell ? Palette.parchmentText : Palette.panelInk,
+              ),
+            ),
+          ),
+        if (enchanted || (onToggleFavorite != null && !selecting))
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Center(
-                  child: ItemIcon(item: item, size: iconSize),
-                ),
-                if (!enchanted && quantity > 1)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Text(
-                      '${quantity.round()}',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
+                if (enchanted)
+                  Text(
+                    '★',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: framedWell ? Palette.softGreen : Palette.softGreenShade,
                     ),
                   ),
-                if (selected)
-                  const Positioned(
-                    left: 0,
-                    top: 0,
-                    child: Icon(Icons.check, size: 14, color: Palette.gold),
-                  ),
-                if (enchanted || (onToggleFavorite != null && !selecting))
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (enchanted)
-                          const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
-                        if (onToggleFavorite != null && !selecting)
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: onToggleFavorite,
-                            child: Tooltip(
-                              message: favorite ? 'Unfavorite' : 'Favorite',
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(
-                                  favorite ? Icons.favorite : Icons.favorite_border,
-                                  size: 14,
-                                  color: favorite ? Palette.gold : const Color(0x80F4E7C8),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                if (onToggleFavorite != null && !selecting)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onToggleFavorite,
+                    child: Tooltip(
+                      message: favorite ? 'Unfavorite' : 'Favorite',
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          favorite ? Icons.favorite : Icons.favorite_border,
+                          size: 14,
+                          color: favorite
+                              ? Palette.gold
+                              : framedWell
+                              ? const Color(0x80F4E7C8)
+                              : const Color(0x806B5338),
+                        ),
+                      ),
                     ),
                   ),
               ],
             ),
           ),
+      ],
+    );
+
+    if (framedWell) {
+      final slot = UiChrome.of(context).slot;
+      final fill = selected
+          ? Color.lerp(slot, Palette.gold, 0.18)!
+          : enchanted
+          ? const Color(0xFF2F3A24)
+          : slot;
+      return Tooltip(
+        message: name,
+        onTriggered: onLongPress,
+        child: PixelInkPlate(
+          onTap: onTap,
+          step: PixelChrome.stepTight,
+          fillColor: fill,
+          material: PixelPlateMaterial.grain,
+          strokeWidth: selected ? 2.5 : 2,
+          selected: selected || enchanted,
+          shadow: false,
+          padding: const EdgeInsets.all(2),
+          child: GestureDetector(
+            onLongPress: onLongPress,
+            onSecondaryTap: onLongPress,
+            behavior: HitTestBehavior.deferToChild,
+            child: DefaultTextStyle.merge(
+              style: const TextStyle(color: Palette.parchmentText),
+              child: marks,
+            ),
+          ),
         ),
+      );
+    }
+
+    return FloatingItemSlot(
+      tooltip: name,
+      selected: selected,
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(color: Palette.panelInk),
+        child: marks,
       ),
     );
   }

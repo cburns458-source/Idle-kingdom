@@ -5,6 +5,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'floating_slot.dart';
 import 'format.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
@@ -316,31 +317,31 @@ class _CodexViewState extends State<CodexView> {
     if (rows.isEmpty) {
       return const Center(child: MutedText('Nothing in the Codex matches.'));
     }
-    return GridView.builder(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 84,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-      ),
-      itemCount: rows.length,
-      itemBuilder: (context, index) {
-        final entry = rows[index];
-        final item = widget.controller.indexes.itemsById[entry.itemId];
-        return Tooltip(
-          message: entry.displayName,
-          child: PixelInkPlate(
-            key: Key('codex-item-${entry.itemId}'),
-            onTap: () => _openItem(entry.itemId),
-            step: PixelChrome.stepTight,
-            fillColor: UiChrome.of(context).slot,
-            material: PixelPlateMaterial.grain,
-            shadow: false,
-            padding: const EdgeInsets.all(4),
-            child: Center(child: ItemIcon(item: item, size: 36)),
+      child: GamePanel(
+        framed: true,
+        padding: const EdgeInsets.all(8),
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 84,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
           ),
-        );
-      },
+          itemCount: rows.length,
+          itemBuilder: (context, index) {
+            final entry = rows[index];
+            final item = widget.controller.indexes.itemsById[entry.itemId];
+            return FloatingItemSlot(
+              key: Key('codex-item-${entry.itemId}'),
+              tooltip: entry.displayName,
+              padding: const EdgeInsets.all(4),
+              onTap: () => _openItem(entry.itemId),
+              child: Center(child: ItemIcon(item: item, size: 36)),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -350,42 +351,52 @@ class _CodexViewState extends State<CodexView> {
       return const Center(child: MutedText('Nothing in the Codex matches.'));
     }
     final chrome = UiChrome.of(context);
-    return ListView.separated(
-      key: const Key('codex-action-list'),
+    return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      itemCount: items.length,
-      separatorBuilder: (context, index) {
-        if (items[index] is String) return const SizedBox(height: 4);
-        return const SizedBox(height: 8);
-      },
-      itemBuilder: (context, index) {
-        final item = items[index];
-        if (item is String) {
-          return Padding(
-            padding: EdgeInsets.fromLTRB(4, index == 0 ? 0 : 8, 4, 2),
-            child: Text(
-              item,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: chrome.embossFace),
-            ),
-          );
-        }
-        final entry = item as CodexActionEntry;
-        final level = entry.level == null ? null : 'Level ${formatThousands(entry.level!)}';
-        final places = entry.locations.map((row) => row.displayName).join(', ');
-        return _LinkRow(
-          key: Key('codex-action-${entry.actionId}'),
-          leading: GameImage(
-            actionAssetPath(entry.actionId, db: widget.controller.db),
-            width: 36,
-            height: 36,
-          ),
-          title: entry.displayName,
-          detail: [?level, if (places.isNotEmpty) places].join(' · '),
-          ink: Palette.parchmentText,
-          muted: chrome.embossFace,
-          onTap: () => _openAction(entry.actionId),
-        );
-      },
+      child: GamePanel(
+        framed: true,
+        padding: const EdgeInsets.all(8),
+        child: ListView.separated(
+          key: const Key('codex-action-list'),
+          itemCount: items.length,
+          separatorBuilder: (context, index) {
+            if (items[index] is String) return const SizedBox(height: 4);
+            return floatingRowGap;
+          },
+          itemBuilder: (context, index) {
+            final item = items[index];
+            if (item is String) {
+              return Padding(
+                padding: EdgeInsets.fromLTRB(4, index == 0 ? 0 : 8, 4, 2),
+                child: Text(
+                  item,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: chrome.panelInk,
+                  ),
+                ),
+              );
+            }
+            final entry = item as CodexActionEntry;
+            final level = entry.level == null ? null : 'Level ${formatThousands(entry.level!)}';
+            final places = entry.locations.map((row) => row.displayName).join(', ');
+            return _LinkRow(
+              key: Key('codex-action-${entry.actionId}'),
+              leading: GameImage(
+                actionAssetPath(entry.actionId, db: widget.controller.db),
+                width: 36,
+                height: 36,
+              ),
+              title: entry.displayName,
+              detail: [?level, if (places.isNotEmpty) places].join(' · '),
+              ink: chrome.panelInk,
+              muted: chrome.panelMuted,
+              onTap: () => _openAction(entry.actionId),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -395,26 +406,32 @@ class _CodexViewState extends State<CodexView> {
       return const Center(child: MutedText('Nothing in the Bestiary matches.'));
     }
     final chrome = UiChrome.of(context);
-    return ListView.separated(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      itemCount: rows.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final entry = rows[index];
-        final level = entry.combatLevel == null
-            ? null
-            : 'Level ${formatThousands(entry.combatLevel!)}';
-        final places = entry.locations.map((row) => row.displayName).join(', ');
-        return _LinkRow(
-          key: Key('codex-enemy-${entry.enemyId}'),
-          leading: GameImage(enemyAssetPath(entry.enemyId), width: 36, height: 36),
-          title: entry.displayName,
-          detail: [?level, if (places.isNotEmpty) places].join(' · '),
-          ink: Palette.parchmentText,
-          muted: chrome.embossFace,
-          onTap: () => _openEnemy(entry.enemyId),
-        );
-      },
+      child: GamePanel(
+        framed: true,
+        padding: const EdgeInsets.all(8),
+        child: ListView.separated(
+          itemCount: rows.length,
+          separatorBuilder: (context, index) => floatingRowGap,
+          itemBuilder: (context, index) {
+            final entry = rows[index];
+            final level = entry.combatLevel == null
+                ? null
+                : 'Level ${formatThousands(entry.combatLevel!)}';
+            final places = entry.locations.map((row) => row.displayName).join(', ');
+            return _LinkRow(
+              key: Key('codex-enemy-${entry.enemyId}'),
+              leading: GameImage(enemyAssetPath(entry.enemyId), width: 36, height: 36),
+              title: entry.displayName,
+              detail: [?level, if (places.isNotEmpty) places].join(' · '),
+              ink: chrome.panelInk,
+              muted: chrome.panelMuted,
+              onTap: () => _openEnemy(entry.enemyId),
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -829,14 +846,9 @@ class _ItemChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chrome = UiChrome.of(context);
-    return PixelInkPlate(
+    return FloatingItemSlot(
       key: Key('codex-link-$itemId'),
       onTap: onTap,
-      step: PixelChrome.stepTight,
-      fillColor: chrome.slot,
-      material: PixelPlateMaterial.grain,
-      shadow: false,
       padding: const EdgeInsets.fromLTRB(8, 6, 10, 6),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -844,7 +856,7 @@ class _ItemChip extends StatelessWidget {
           ItemIcon(item: item, size: 22),
           const SizedBox(width: 6),
           Flexible(
-            child: Text(label, style: TextStyle(fontSize: 12.5, color: Palette.parchmentText)),
+            child: Text(label, style: const TextStyle(fontSize: 12.5, color: Palette.panelInk)),
           ),
         ],
       ),
@@ -907,11 +919,8 @@ class _LinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PixelInkPlate(
+    return FloatingItemSlot(
       onTap: onTap,
-      step: PixelChrome.stepTight,
-      fillColor: UiChrome.of(context).slot,
-      shadow: false,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
