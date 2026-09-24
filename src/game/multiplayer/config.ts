@@ -10,13 +10,16 @@ export function isRemoteMultiplayerConfigured(): boolean {
   return supabaseConfig() != null
 }
 
-/** Chat cooldown seconds by channel kind (server-enforced when remote). */
+/** Chat has no per-channel wait. Kept at zero so TS/Dart parity stays aligned. */
 export const CHAT_COOLDOWN_SECONDS = {
-  global: 30,
-  local: 10,
-  guild: 5,
-  dm: 2,
+  global: 0,
+  local: 0,
+  guild: 0,
+  dm: 0,
 } as const
+
+/** Bazaar board posts still wait this many seconds between listings. */
+export const BAZAAR_POST_COOLDOWN_SECONDS = 10
 
 /** Heartbeat window: a presence row newer than this is Online. */
 export const PRESENCE_TTL_SECONDS = 120

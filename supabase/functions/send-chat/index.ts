@@ -1,12 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const MAX_BODY = 240
-const COOLDOWN_SECONDS: Record<string, number> = {
-  global: 30,
-  local: 10,
-  guild: 5,
-  dm: 2,
-}
 const SLURS = /\b(nigger|faggot)\b/i
 
 type SendBody = {
@@ -119,21 +113,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  const cooldown = COOLDOWN_SECONDS[kind] ?? 10
-  const { data: last } = await admin
-    .from('chat_cooldowns')
-    .select('last_sent_at')
-    .eq('user_id', user.id)
-    .eq('channel_key', channelKey)
-    .maybeSingle()
-  if (last?.last_sent_at) {
-    const elapsedMs = Date.now() - Date.parse(String(last.last_sent_at))
-    const waitMs = cooldown * 1000 - elapsedMs
-    if (waitMs > 0) {
-      return json({ error: `Wait ${Math.ceil(waitMs / 1000)}s before chatting again.` }, 400)
-    }
-  }
-
   const { data: inserted, error: insertError } = await admin
     .from('chat_messages')
     .insert({
@@ -150,12 +129,6 @@ Deno.serve(async (req) => {
   if (insertError || !inserted) {
     return json({ error: insertError?.message ?? 'The chat message was not accepted.' }, 400)
   }
-
-  await admin.from('chat_cooldowns').upsert({
-    user_id: user.id,
-    channel_key: channelKey,
-    last_sent_at: inserted.created_at,
-  })
 
   return json(inserted, 200)
 })

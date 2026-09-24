@@ -1,12 +1,15 @@
-/// Chat cooldown seconds per channel kind, enforced server-side when remote.
+/// Chat has no per-channel wait. Kept at zero so TS/Dart parity stays aligned.
 class ChatCooldownSeconds {
   const ChatCooldownSeconds._();
 
-  static const num global = 30;
-  static const num local = 10;
-  static const num guild = 5;
-  static const num dm = 2;
+  static const num global = 0;
+  static const num local = 0;
+  static const num guild = 0;
+  static const num dm = 0;
 }
+
+/// Bazaar board posts still wait this many seconds between listings.
+const num bazaarPostCooldownSeconds = 10;
 
 /// Heartbeat window: a presence row newer than this is Online.
 const num presenceTtlSeconds = 120;

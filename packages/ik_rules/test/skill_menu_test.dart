@@ -210,11 +210,20 @@ void main() {
     expect(pot.any((row) => row.displayName == 'Raw Perch'), isFalse);
   });
 
-  test('arcana lists Essence at level 1 on its own tab', () {
+  test('arcana does not list Essence or Harness essence', () {
     final arcana = skillMenuView(db, arcanaSkillId);
-    expect(arcana.tabs.map((tab) => tab.label), ['Essence', 'Spells', 'Equipment', 'Enchants']);
-    final essence = arcana.tabs.firstWhere((tab) => tab.id == 'essence').sections.first.entries;
-    expect(essence.any((row) => row.displayName == 'Essence' && row.level == 1), isTrue);
+    expect(arcana.tabs.map((tab) => tab.label), ['Spells', 'Equipment', 'Enchants']);
+    expect(arcana.tabs.any((tab) => tab.id == 'essence'), isFalse);
+    expect(
+      arcana.tabs.any(
+        (tab) => tab.sections.any(
+          (section) => section.entries.any(
+            (row) => row.displayName == 'Essence' || row.displayName == 'Harness essence',
+          ),
+        ),
+      ),
+      isFalse,
+    );
     expect(
       actionsForSkill(db, miningSkillId).any((row) => row.displayName.contains('essence')),
       isFalse,

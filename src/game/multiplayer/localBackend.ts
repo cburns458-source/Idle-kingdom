@@ -11,7 +11,7 @@ import {
 } from '../save/types'
 import { pendingAccountUsername, isPendingAccountUsername, remoteUsername } from './remote'
 import { totalLevel } from '../skills/totals'
-import { CHAT_COOLDOWN_SECONDS, PRESENCE_AWAY_TTL_SECONDS } from './config'
+import { BAZAAR_POST_COOLDOWN_SECONDS, PRESENCE_AWAY_TTL_SECONDS } from './config'
 import { containsSlur, CHAT_DISABLED_NOTICE } from './moderation'
 import { buildLeaderboardSnapshot, rankLeaderboardEntries } from './snapshots'
 import type { GameDatabase } from '../data/types'
@@ -606,14 +606,6 @@ export class LocalMultiplayerBackend {
     const trimmed = body.trim().slice(0, 240)
     if (!trimmed) return { ok: false, reason: 'Message is empty.' }
     const key = chatChannelKey(channel)
-    const cooldown =
-      channel.kind === 'global'
-        ? CHAT_COOLDOWN_SECONDS.global
-        : channel.kind === 'local'
-          ? CHAT_COOLDOWN_SECONDS.local
-          : channel.kind === 'guild'
-            ? CHAT_COOLDOWN_SECONDS.guild
-            : CHAT_COOLDOWN_SECONDS.dm
     const db = this.db()
     const account = db.users.find((row) => row.userId === session.userId)
     if (account?.chatBanned) {
@@ -627,11 +619,6 @@ export class LocalMultiplayerBackend {
       return { ok: false, reason: CHAT_DISABLED_NOTICE }
     }
     const stampKey = `${session.userId}:${key}`
-    const last = db.lastChatAt[stampKey]
-    if (last && this.now() - Date.parse(last) < cooldown * 1000) {
-      const wait = Math.ceil((cooldown * 1000 - (this.now() - Date.parse(last))) / 1000)
-      return { ok: false, reason: `Wait ${wait}s before chatting again.` }
-    }
     if (channel.kind === 'guild' && !this.canSpeakInGuild(db, channel.guildId, session.userId)) {
       return { ok: false, reason: 'Join the guild to use guild chat.' }
     }
@@ -1501,9 +1488,9 @@ export class LocalMultiplayerBackend {
     const db = this.db()
     const cooldownKey = `${session.userId}:bazaar`
     const last = db.lastChatAt[cooldownKey]
-    if (last && this.now() - Date.parse(last) < CHAT_COOLDOWN_SECONDS.local * 1000) {
+    if (last && this.now() - Date.parse(last) < BAZAAR_POST_COOLDOWN_SECONDS * 1000) {
       const wait = Math.ceil(
-        (CHAT_COOLDOWN_SECONDS.local * 1000 - (this.now() - Date.parse(last))) / 1000,
+        (BAZAAR_POST_COOLDOWN_SECONDS * 1000 - (this.now() - Date.parse(last))) / 1000,
       )
       return { ok: false, reason: `Wait ${wait}s before posting again.` }
     }

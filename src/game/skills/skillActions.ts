@@ -257,9 +257,6 @@ export function skillMenuPlacementForOutput(
     return { tabId: 'other', tabLabel: 'Other', sectionTitle: null }
   }
   if (skillId === ARCANA_SKILL_ID) {
-    if (outputId === ESSENCE_ITEM_ID || displayName === 'Essence') {
-      return { tabId: 'essence', tabLabel: 'Essence', sectionTitle: null }
-    }
     if (isSpellName(displayName)) return { tabId: 'spells', tabLabel: 'Spells', sectionTitle: null }
     if (isArcanaWeaponName(displayName, outputId)) {
       return { tabId: 'equipment', tabLabel: 'Equipment', sectionTitle: null }
@@ -552,11 +549,22 @@ function artisanryTabs(db: GameDatabase): SkillMenuTab[] {
   ]
 }
 
+function isArcanaEssenceMenuItem(item: SkillMenuListItem): boolean {
+  return (
+    item.id === ESSENCE_ITEM_ID ||
+    item.displayName === 'Essence' ||
+    item.displayName === 'Harness essence'
+  )
+}
+
 function arcanaTabs(db: GameDatabase): SkillMenuTab[] {
-  const spells: SkillMenuListItem[] = [...actionsForSkill(db, ARCANA_SKILL_ID)]
+  const spells: SkillMenuListItem[] = actionsForSkill(db, ARCANA_SKILL_ID).filter(
+    (item) => !isArcanaEssenceMenuItem(item),
+  )
   const weapons: SkillMenuListItem[] = []
   const enchantments: SkillMenuListItem[] = []
   for (const project of projectsForSkill(db, ARCANA_SKILL_ID)) {
+    if (isArcanaEssenceMenuItem(project)) continue
     const outputId = projectOutputId(db, project.id)
     if (isSpellName(project.displayName)) spells.push(project)
     else if (isArcanaWeaponName(project.displayName, outputId)) weapons.push(project)
@@ -564,17 +572,10 @@ function arcanaTabs(db: GameDatabase): SkillMenuTab[] {
     else enchantments.push(project)
   }
   return [
-    listTab('essence', 'Essence', arcanaEssenceEntries(db)),
     listTab('spells', 'Spells', dedupeByName(spells)),
     listTab('equipment', 'Equipment', dedupeByName(weapons)),
     listTab('enchants', 'Enchants', dedupeByName(enchantments)),
   ]
-}
-
-function arcanaEssenceEntries(db: GameDatabase): SkillMenuListItem[] {
-  const item = db.Items.find((row) => row['Item ID'] === ESSENCE_ITEM_ID)
-  if (!item) return []
-  return [{ id: item['Item ID'], displayName: item['Display Name'], level: 1 }]
 }
 
 function combatGearItems(db: GameDatabase): SkillMenuListItem[] {

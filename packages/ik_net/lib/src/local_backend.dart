@@ -649,12 +649,6 @@ class LocalMultiplayerBackend {
     final privacyBlock = _chatPrivacyRefusal(session.userId, channel);
     if (privacyBlock != null) return ChatSendResult.failed(privacyBlock);
     final key = chatChannelKey(channel);
-    final cooldown = switch (channel) {
-      GlobalChatChannel() => ChatCooldownSeconds.global,
-      LocalChatChannel() => ChatCooldownSeconds.local,
-      GuildChatChannel() => ChatCooldownSeconds.guild,
-      DirectChatChannel() => ChatCooldownSeconds.dm,
-    };
     final db = _db();
     final accountIndex = db.users.indexWhere((row) => row.userId == session.userId);
     if (accountIndex >= 0 && db.users[accountIndex].chatBanned) {
@@ -668,11 +662,6 @@ class LocalMultiplayerBackend {
       return const ChatSendResult.failed(chatDisabledNotice);
     }
     final stampKey = '${session.userId}:$key';
-    final last = db.lastChatAt[stampKey];
-    if (isNotBlank(last) && _now() - jsDateParse(last) < cooldown * 1000) {
-      final wait = ((cooldown * 1000 - (_now() - jsDateParse(last))) / 1000).ceil();
-      return ChatSendResult.failed('Wait ${wait}s before chatting again.');
-    }
     if (channel is GuildChatChannel && !_canSpeakInGuild(db, channel.guildId, session.userId)) {
       return const ChatSendResult.failed('Join the guild to use guild chat.');
     }
@@ -1689,8 +1678,8 @@ class LocalMultiplayerBackend {
     final db = _db();
     final cooldownKey = '${session.userId}:bazaar';
     final last = db.lastChatAt[cooldownKey];
-    if (isNotBlank(last) && _now() - jsDateParse(last) < ChatCooldownSeconds.local * 1000) {
-      final wait = ((ChatCooldownSeconds.local * 1000 - (_now() - jsDateParse(last))) / 1000)
+    if (isNotBlank(last) && _now() - jsDateParse(last) < bazaarPostCooldownSeconds * 1000) {
+      final wait = ((bazaarPostCooldownSeconds * 1000 - (_now() - jsDateParse(last))) / 1000)
           .ceil();
       return BazaarPostResult.failed('Wait ${wait}s before posting again.');
     }

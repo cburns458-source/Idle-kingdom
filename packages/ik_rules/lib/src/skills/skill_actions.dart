@@ -318,9 +318,6 @@ SkillMenuPlacement skillMenuPlacementForOutput(
     return const SkillMenuPlacement(tabId: 'other', tabLabel: 'Other');
   }
   if (skillId == arcanaSkillId) {
-    if (outputId == _essenceItemId || displayName == 'Essence') {
-      return const SkillMenuPlacement(tabId: 'essence', tabLabel: 'Essence');
-    }
     if (_isSpellName(displayName)) {
       return const SkillMenuPlacement(tabId: 'spells', tabLabel: 'Spells');
     }
@@ -636,11 +633,20 @@ List<SkillMenuTab> _artisanryTabs(GameDatabase db) {
   ];
 }
 
+bool _isArcanaEssenceMenuItem(SkillMenuListItem item) {
+  return item.id == _essenceItemId ||
+      item.displayName == 'Essence' ||
+      item.displayName == 'Harness essence';
+}
+
 List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
-  final spells = <SkillMenuListItem>[...actionsForSkill(db, arcanaSkillId)];
+  final spells = <SkillMenuListItem>[
+    ...actionsForSkill(db, arcanaSkillId).where((item) => !_isArcanaEssenceMenuItem(item)),
+  ];
   final weapons = <SkillMenuListItem>[];
   final enchantments = <SkillMenuListItem>[];
   for (final project in projectsForSkill(db, arcanaSkillId)) {
+    if (_isArcanaEssenceMenuItem(project)) continue;
     final outputId = _projectOutputId(db, project.id);
     if (_isSpellName(project.displayName)) {
       spells.add(project);
@@ -653,18 +659,9 @@ List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
     }
   }
   return <SkillMenuTab>[
-    _listTab('essence', 'Essence', _arcanaEssenceEntries(db)),
     _listTab('spells', 'Spells', _dedupeByName(spells)),
     _listTab('equipment', 'Equipment', _dedupeByName(weapons)),
     _listTab('enchants', 'Enchants', _dedupeByName(enchantments)),
-  ];
-}
-
-List<SkillMenuListItem> _arcanaEssenceEntries(GameDatabase db) {
-  final item = db.items.firstWhereOrNull((row) => row.raw['Item ID'] == _essenceItemId);
-  if (item == null) return const <SkillMenuListItem>[];
-  return <SkillMenuListItem>[
-    SkillMenuListItem(id: _essenceItemId, displayName: item.displayName, level: 1),
   ];
 }
 
