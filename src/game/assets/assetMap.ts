@@ -73,6 +73,18 @@ export function locationAssetPath(locationId: string): string {
   return withAssetVersion(LOCATION_ASSET_PATHS[locationId] ?? '/assets/locations/loc_town.webp')
 }
 
+export function templeSkyAssetPath(): string {
+  return withAssetVersion('/assets/locations/loc_temple_sky.webp')
+}
+
+export function templeTerrainAssetPath(): string {
+  return withAssetVersion('/assets/locations/loc_temple_terrain.webp')
+}
+
+export function templeForegroundAssetPath(): string {
+  return withAssetVersion('/assets/locations/loc_temple_foreground.webp')
+}
+
 export function uiMapAssetPath(): string {
   return withAssetVersion('/assets/icons/ui/ui_map.webp')
 }

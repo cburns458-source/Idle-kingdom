@@ -27,6 +27,7 @@ import 'tanner_panel.dart';
 import 'botany_plant_popup.dart';
 import 'pot_bait_popup.dart';
 import 'tracker_view.dart';
+import 'temple_stage.dart';
 
 /// Whatever the player has open on top of the location, if anything.
 sealed class LocationPanel {
@@ -296,242 +297,297 @@ class _LocationViewState extends State<LocationView> {
         ),
         child: ClipPath(
           clipper: const PixelSteppedClipper(step: 3),
-          child: LayoutBuilder(
-            builder: (context, card) {
-              final bandTop = _bandExpanded ? 8.0 : card.maxHeight - _collapsedBand - 8;
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  RepaintBoundary(child: _locationPlate(locationId)),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x6B140D08), Color(0x2E140D08), Color(0xB8140D08)],
-                        stops: [0, 0.28, 1],
+          child: RepaintBoundary(
+            key: const Key('location-card'),
+            child: LayoutBuilder(
+              builder: (context, card) {
+                final temple = usesTempleLayeredBackground(locationId);
+                final collapsedBand = _collapsedBand + (temple ? 52.0 : 0);
+                final bandTop = _bandExpanded
+                    ? 8.0
+                    : card.maxHeight - collapsedBand - (temple ? 0 : 8);
+                final stageBottom = card.maxHeight - bandTop;
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (temple)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: stageBottom,
+                        child: const TempleLayeredBackdrop(),
+                      )
+                    else
+                      RepaintBoundary(child: _locationPlate(locationId)),
+                    if (!temple)
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0x6B140D08), Color(0x2E140D08), Color(0xB8140D08)],
+                            stops: [0, 0.28, 1],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(13, 12, 13, 0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    if (temple && !liftArena)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: stageBottom,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          clipBehavior: Clip.none,
                           children: [
-                            Expanded(
-                              child: _LocationHead(controller: controller, location: location),
-                            ),
-                            const SizedBox(width: 11),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (widget.onOpenSubMap != null)
-                                  if (backToSubMapLabel(controller.db, location)
-                                      case final backLabel?) ...[
-                                    OverlayChipButton(
-                                      tooltip: backLabel,
-                                      onPressed: () =>
-                                          widget.onOpenSubMap!(getLocationMapId(location)),
-                                      child: const Icon(
-                                        Icons.arrow_back,
-                                        size: 18,
-                                        color: Palette.softGreenShade,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 7),
-                                  ],
-                                Builder(
-                                  builder: (context) {
-                                    return ListenableBuilder(
-                                      listenable: widget.multiplayer,
-                                      builder: (context, _) {
-                                        return OverlayChipButton(
-                                          tooltip: 'Nearby adventurers',
-                                          onPressed: () => showNearbyPopup(
-                                            context,
-                                            controller: controller,
-                                            multiplayer: widget.multiplayer,
-                                            origin: popupOrigin(context),
-                                          ),
-                                          dark: true,
-                                          highlightColor: widget.multiplayer.peers.isEmpty
-                                              ? null
-                                              : widget.multiplayer.nearbyHasAllies
-                                              ? Palette.softGreen
-                                              : Palette.gold,
-                                          child: GameImage(
-                                            uiNearbyAssetPath(),
-                                            width: 32,
-                                            height: 32,
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                                const SizedBox(width: 7),
-                                QuestHintPulse(
-                                  enabled: questHintsWorldMapButton(controller.db, controller.save),
-                                  child: OverlayChipButton(
-                                    tooltip: 'Open world map',
-                                    onPressed: widget.onOpenMap,
-                                    plain: true,
-                                    child: GameImage(uiMapAssetPath(), width: 32, height: 32),
+                            LocationIdlePlayer(controller: controller),
+                            if (running)
+                              Positioned(
+                                left: 13,
+                                right: 13,
+                                top: 64,
+                                child: IgnorePointer(
+                                  child: UnconstrainedBox(
+                                    constrainedAxis: Axis.horizontal,
+                                    alignment: Alignment.topCenter,
+                                    child: ActivityPanel(controller: controller),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
                           ],
                         ),
                       ),
-                      if (isSubMapGateway(location) &&
-                          (widget.onEnterGateway != null || widget.onOpenSubMap != null) &&
-                          subMapIdForGateway(controller.db, locationId) != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: GameButton(
-                              label: enterSubMapLabel(controller.db, location) ?? 'Enter',
-                              compact: true,
-                              onPressed: () {
-                                if (widget.onEnterGateway != null) {
-                                  widget.onEnterGateway!(locationId);
-                                  return;
-                                }
-                                widget.onOpenSubMap!(
-                                  subMapIdForGateway(controller.db, locationId)!,
-                                );
-                              },
-                            ),
+                          padding: const EdgeInsets.fromLTRB(13, 12, 13, 0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _LocationHead(controller: controller, location: location),
+                              ),
+                              const SizedBox(width: 11),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (widget.onOpenSubMap != null)
+                                    if (backToSubMapLabel(controller.db, location)
+                                        case final backLabel?) ...[
+                                      OverlayChipButton(
+                                        tooltip: backLabel,
+                                        onPressed: () =>
+                                            widget.onOpenSubMap!(getLocationMapId(location)),
+                                        child: const Icon(
+                                          Icons.arrow_back,
+                                          size: 18,
+                                          color: Palette.softGreenShade,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 7),
+                                    ],
+                                  Builder(
+                                    builder: (context) {
+                                      return ListenableBuilder(
+                                        listenable: widget.multiplayer,
+                                        builder: (context, _) {
+                                          return OverlayChipButton(
+                                            tooltip: 'Nearby adventurers',
+                                            onPressed: () => showNearbyPopup(
+                                              context,
+                                              controller: controller,
+                                              multiplayer: widget.multiplayer,
+                                              origin: popupOrigin(context),
+                                            ),
+                                            dark: true,
+                                            highlightColor: widget.multiplayer.peers.isEmpty
+                                                ? null
+                                                : widget.multiplayer.nearbyHasAllies
+                                                ? Palette.softGreen
+                                                : Palette.gold,
+                                            child: GameImage(
+                                              uiNearbyAssetPath(),
+                                              width: 32,
+                                              height: 32,
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 7),
+                                  QuestHintPulse(
+                                    enabled: questHintsWorldMapButton(
+                                      controller.db,
+                                      controller.save,
+                                    ),
+                                    child: OverlayChipButton(
+                                      tooltip: 'Open world map',
+                                      onPressed: widget.onOpenMap,
+                                      plain: true,
+                                      child: GameImage(uiMapAssetPath(), width: 32, height: 32),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                      if (controller.showRecoveringStage && stage == null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
-                          child: _RecoveringPanel(controller: controller),
-                        ),
-                      Expanded(
-                        child: RepaintBoundary(
-                          child: Stack(
-                            children: [
-                              if (!liftArena)
-                                Positioned(
-                                  top: 0,
-                                  left: 13,
-                                  right: 13,
-                                  bottom: _collapsedBand + 8,
-                                  child: _groundedStage(
-                                    // Separate bottom layers so starting a gather
-                                    // does not resize a shared stack and jump the art.
-                                    Stack(
-                                      fit: StackFit.expand,
-                                      clipBehavior: Clip.none,
-                                      children: [
-                                        Align(
-                                          alignment: Alignment.bottomCenter,
-                                          child: OverflowBox(
-                                            maxHeight: double.infinity,
-                                            alignment: Alignment.bottomCenter,
-                                            child: LocationIdlePlayer(controller: controller),
-                                          ),
-                                        ),
-                                        if (running)
+                        if (isSubMapGateway(location) &&
+                            (widget.onEnterGateway != null || widget.onOpenSubMap != null) &&
+                            subMapIdForGateway(controller.db, locationId) != null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: GameButton(
+                                label: enterSubMapLabel(controller.db, location) ?? 'Enter',
+                                compact: true,
+                                onPressed: () {
+                                  if (widget.onEnterGateway != null) {
+                                    widget.onEnterGateway!(locationId);
+                                    return;
+                                  }
+                                  widget.onOpenSubMap!(
+                                    subMapIdForGateway(controller.db, locationId)!,
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        if (controller.showRecoveringStage && stage == null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(13, 8, 13, 0),
+                            child: _RecoveringPanel(controller: controller),
+                          ),
+                        Expanded(
+                          child: RepaintBoundary(
+                            child: Stack(
+                              children: [
+                                if (!liftArena && !temple)
+                                  Positioned(
+                                    top: 0,
+                                    left: 13,
+                                    right: 13,
+                                    bottom: _collapsedBand + 8,
+                                    child: _groundedStage(
+                                      // Separate bottom layers so starting a gather
+                                      // does not resize a shared stack and jump the art.
+                                      Stack(
+                                        fit: StackFit.expand,
+                                        clipBehavior: Clip.none,
+                                        children: [
                                           Align(
                                             alignment: Alignment.bottomCenter,
                                             child: OverflowBox(
                                               maxHeight: double.infinity,
                                               alignment: Alignment.bottomCenter,
-                                              child: IgnorePointer(
-                                                child: ActivityPanel(controller: controller),
-                                              ),
+                                              child: LocationIdlePlayer(controller: controller),
                                             ),
                                           ),
-                                      ],
+                                          if (running)
+                                            Align(
+                                              alignment: Alignment.bottomCenter,
+                                              child: OverflowBox(
+                                                maxHeight: double.infinity,
+                                                alignment: Alignment.bottomCenter,
+                                                child: IgnorePointer(
+                                                  child: ActivityPanel(controller: controller),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              if (stage != null && !running && !liftArena)
-                                Positioned(
-                                  top: _overlayGap,
-                                  left: 13,
-                                  right: 13,
-                                  bottom: _collapsedBand + 8 + _overlayGap,
-                                  child: openPanel is ArenaOpen
-                                      ? stage
-                                      : _fittedPanel(stage, fill: _panelFillsSlot(openPanel)),
-                                ),
-                              if (overlayPanel != null && !liftArena)
-                                Positioned(
-                                  top: _overlayGap,
-                                  left: 13,
-                                  right: 13,
-                                  bottom: _collapsedBand + 8 + _overlayGap,
-                                  child: openPanel is ArenaOpen
-                                      ? overlayPanel
-                                      : _fittedPanel(
-                                          overlayPanel,
-                                          fill: _panelFillsSlot(openPanel),
-                                        ),
-                                ),
-                              if (liftArena && (overlayPanel ?? stage) != null)
-                                Positioned(
-                                  left: 10,
-                                  right: 10,
-                                  bottom: 8 + keyboard + _overlayGap,
-                                  child: SizedBox(
-                                    height: (card.maxHeight - keyboard - 16 - _overlayGap).clamp(
-                                      180,
-                                      card.maxHeight * 0.62,
+                                if (stage != null && !running && !liftArena)
+                                  Positioned(
+                                    top: _overlayGap,
+                                    left: 13,
+                                    right: 13,
+                                    bottom: _collapsedBand + 8 + _overlayGap,
+                                    child: openPanel is ArenaOpen
+                                        ? stage
+                                        : _fittedPanel(stage, fill: _panelFillsSlot(openPanel)),
+                                  ),
+                                if (overlayPanel != null && !liftArena)
+                                  Positioned(
+                                    top: _overlayGap,
+                                    left: 13,
+                                    right: 13,
+                                    bottom: _collapsedBand + 8 + _overlayGap,
+                                    child: openPanel is ArenaOpen
+                                        ? overlayPanel
+                                        : _fittedPanel(
+                                            overlayPanel,
+                                            fill: _panelFillsSlot(openPanel),
+                                          ),
+                                  ),
+                                if (liftArena && (overlayPanel ?? stage) != null)
+                                  Positioned(
+                                    left: 10,
+                                    right: 10,
+                                    bottom: 8 + keyboard + _overlayGap,
+                                    child: SizedBox(
+                                      height: (card.maxHeight - keyboard - 16 - _overlayGap).clamp(
+                                        180,
+                                        card.maxHeight * 0.62,
+                                      ),
+                                      child: overlayPanel ?? stage,
                                     ),
-                                    child: overlayPanel ?? stage,
                                   ),
-                                ),
-                              if (controller.recentRewards.isNotEmpty)
+                                if (controller.recentRewards.isNotEmpty)
+                                  Positioned(
+                                    top: 6,
+                                    left: 13,
+                                    right: 13,
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: RewardStrip(controller: controller),
+                                    ),
+                                  ),
                                 Positioned(
-                                  top: 6,
-                                  left: 13,
-                                  right: 13,
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: RewardStrip(controller: controller),
-                                  ),
+                                  top: 24,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(child: CritterOverlay(controller: controller)),
                                 ),
-                              Positioned(
-                                top: 24,
-                                left: 0,
-                                right: 0,
-                                child: Center(child: CritterOverlay(controller: controller)),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    left: 10,
-                    right: 10,
-                    bottom: 8,
-                    top: bandTop,
-                    child: _FloatingOptionBand(
-                      expanded: _bandExpanded,
-                      onToggle: () => setState(() => _bandExpanded = !_bandExpanded),
-                      tabs: _optionSections(locationId).map((section) => section.label).toList(),
-                      selectedTab: _selectedBandTab(locationId),
-                      onSelectTab: (tab) => setState(() => _bandTab = tab),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: _selectedBandChildren(locationId),
+                      ],
+                    ),
+                    Positioned(
+                      left: temple ? 0 : 10,
+                      right: temple ? 0 : 10,
+                      bottom: temple ? 0 : 8,
+                      top: bandTop,
+                      child: _FloatingOptionBand(
+                        expanded: _bandExpanded,
+                        opaque: temple,
+                        leading: temple
+                            ? Padding(
+                                padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                                child: StageLoadoutStrip(controller: controller),
+                              )
+                            : null,
+                        onToggle: () => setState(() => _bandExpanded = !_bandExpanded),
+                        tabs: _optionSections(locationId).map((section) => section.label).toList(),
+                        selectedTab: _selectedBandTab(locationId),
+                        onSelectTab: (tab) => setState(() => _bandTab = tab),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: _selectedBandChildren(locationId),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -1040,9 +1096,13 @@ class _FloatingOptionBand extends StatelessWidget {
     required this.selectedTab,
     required this.onSelectTab,
     required this.child,
+    this.opaque = false,
+    this.leading,
   });
 
   final bool expanded;
+  final bool opaque;
+  final Widget? leading;
   final VoidCallback onToggle;
   final List<String> tabs;
   final String? selectedTab;
@@ -1052,17 +1112,20 @@ class _FloatingOptionBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.zero /* pixel step 3 */,
-        border: Border.all(color: const Color(0x479A7B32)),
-      ),
+      decoration: opaque
+          ? chromeBoardFill(context)
+          : BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.zero /* pixel step 3 */,
+              border: Border.all(color: const Color(0x479A7B32)),
+            ),
       child: Stack(
         children: [
           Positioned.fill(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                ?leading,
                 if (tabs.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(6, 4, 40, 0),

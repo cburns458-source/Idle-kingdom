@@ -17,6 +17,7 @@ import 'game_image.dart';
 import 'item_icon.dart';
 import 'out_of_sight.dart';
 import 'playable_frame.dart';
+import 'temple_stage.dart';
 
 /// Portrait slot stays 152 so the stage does not jump between activities.
 /// The player sprite is drawn smaller inside that slot; gathering scenes and
@@ -151,6 +152,9 @@ class LocationIdlePlayer extends StatelessWidget {
   Widget _buildIdle(BuildContext context) {
     if (controller.showRecoveringStage) return const SizedBox.shrink();
     final save = controller.save;
+    if (usesTempleLayeredBackground(save.currentLocationId)) {
+      return _buildTempleIdle(context, save);
+    }
     final maxHp = playerMaxHp(controller.db, save);
     final hp = save.currentHp;
     return MediaQuery(
@@ -209,7 +213,7 @@ class LocationIdlePlayer extends StatelessWidget {
                 const SizedBox(height: 7),
                 const SizedBox(height: _stageFooterHeight),
                 const SizedBox(height: _stageLoadoutStripGap),
-                _StageLoadoutStrip(controller: controller),
+                StageLoadoutStrip(controller: controller),
               ],
             ),
           ),
@@ -217,6 +221,73 @@ class LocationIdlePlayer extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildTempleIdle(BuildContext context, PlayerSave save) {
+    return MediaQuery(
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
+      child: Semantics(
+        container: true,
+        explicitChildNodes: true,
+        label: 'Adventurer stand',
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final layout = TempleStageLayout(Size(constraints.maxWidth, constraints.maxHeight));
+            final playerFoot = layout.playerFoot;
+            final actionFoot = layout.actionFoot;
+            return _StageHopHost(
+              active: save.currentActivityId != null,
+              actionKey: save.currentActivityId,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  _templeFootedPortrait(
+                    foot: playerFoot,
+                    height: _playerArtHeight,
+                    child: IgnorePointer(
+                      child: _playerWithPet(
+                        save: save,
+                        player: _Portrait(
+                          assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                          bytes: controller.localPlayerPng,
+                          semanticsLabel: 'Adventurer',
+                          alignment: Alignment.bottomCenter,
+                          height: _playerArtHeight,
+                          slotHeight: _playerArtHeight,
+                          filterQuality: FilterQuality.high,
+                          hop: save.currentActivityId != null ? _StageHopKind.player : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (save.currentActivityId != null)
+                    _templeFootedPortrait(
+                      foot: actionFoot,
+                      height: _actionArtHeight,
+                      child: _groundedSceneArt(controller),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+Widget _templeFootedPortrait({
+  required Offset foot,
+  required double height,
+  required Widget child,
+}) {
+  return Positioned(
+    left: foot.dx - templePortraitWidth / 2,
+    top: foot.dy - height,
+    width: templePortraitWidth,
+    height: height,
+    child: child,
+  );
 }
 
 /// Player art with an optional equipped pet sprite near the bottom-left.
@@ -253,21 +324,24 @@ String _combatEnemyDisplayName(GameDatabase db, PlayerSave save, EnemyRow? enemy
 /// Right-slot art pinned with the adventurer: enemy, gather target, or station.
 Widget _groundedSceneArt(GameController controller) {
   final save = controller.save;
+  final temple = usesTempleLayeredBackground(save.currentLocationId);
+  final slotHeight = temple ? _actionArtHeight : _portraitSlotHeight;
+  final stand = temple ? Alignment.bottomCenter : Alignment.bottomLeft;
   if (save.currentActivityId == null) {
-    return const SizedBox(height: _portraitSlotHeight);
+    return SizedBox(height: slotHeight);
   }
   if (controller.defeatedFlash) {
-    return const SizedBox(height: _portraitSlotHeight);
+    return SizedBox(height: slotHeight);
   }
   if (save.combatEnemyId != null || controller.combatBlowHold) {
     final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
-    if (enemyId == null) return const SizedBox(height: _portraitSlotHeight);
+    if (enemyId == null) return SizedBox(height: slotHeight);
     return _Portrait(
       assetPath: enemyAssetPath(enemyId, db: controller.db),
       semanticsLabel: 'Enemy',
       height: _enemyArtHeight,
-      slotHeight: _portraitSlotHeight,
-      alignment: Alignment.centerLeft,
+      slotHeight: slotHeight,
+      alignment: temple ? Alignment.bottomCenter : Alignment.centerLeft,
       hop: _StageHopKind.enemy,
     );
   }
@@ -278,21 +352,21 @@ Widget _groundedSceneArt(GameController controller) {
       assetPath: workstationAssetPath(recipe?.facilityId, db: controller.db),
       semanticsLabel: recipe?.displayName ?? 'Workstation',
       height: _actionArtHeight,
-      slotHeight: _portraitSlotHeight,
-      alignment: Alignment.bottomLeft,
+      slotHeight: slotHeight,
+      alignment: stand,
       gaplessPlayback: true,
     );
   }
   final action = save.currentActionId == null
       ? null
       : controller.indexes.actionsById[save.currentActionId!];
-  if (action == null) return const SizedBox(height: _portraitSlotHeight);
+  if (action == null) return SizedBox(height: slotHeight);
   return _Portrait(
     assetPath: actionAssetPath(action.actionId, db: controller.db),
     semanticsLabel: action.displayName,
     height: _actionArtHeight,
-    slotHeight: _portraitSlotHeight,
-    alignment: Alignment.bottomLeft,
+    slotHeight: slotHeight,
+    alignment: stand,
     gaplessPlayback: true,
     hop: _StageHopKind.actionRecoil,
   );
@@ -894,7 +968,7 @@ class _CombatStage extends StatelessWidget {
 
     final shell = _StageShell(
       semanticsLabel: 'Combat',
-      reserveLoadoutStrip: true,
+      reserveLoadoutStrip: !usesTempleLayeredBackground(save.currentLocationId),
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -1153,7 +1227,7 @@ class _GatheringStage extends StatelessWidget {
 
     return _StageShell(
       semanticsLabel: 'Gathering',
-      reserveLoadoutStrip: true,
+      reserveLoadoutStrip: !usesTempleLayeredBackground(save.currentLocationId),
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -1217,7 +1291,7 @@ class _ProductionStage extends StatelessWidget {
 
     return _StageShell(
       semanticsLabel: 'Production',
-      reserveLoadoutStrip: true,
+      reserveLoadoutStrip: !usesTempleLayeredBackground(save.currentLocationId),
       scene: _TwoPortraits(
         player: const SizedBox(height: _portraitSlotHeight),
         scene: _Portrait(
@@ -1450,8 +1524,9 @@ Offset _floaterOffset(int seq, int salt) {
 }
 
 /// Presets, food, and potion under the portraits for any primary activity.
-class _StageLoadoutStrip extends StatelessWidget {
-  const _StageLoadoutStrip({required this.controller});
+/// Presets, food, and potion. On Temple this sits on the solid lower panel.
+class StageLoadoutStrip extends StatelessWidget {
+  const StageLoadoutStrip({super.key, required this.controller});
 
   final GameController controller;
 
