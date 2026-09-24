@@ -245,12 +245,12 @@ describe('primary activity engine', () => {
     const save = createNewSave(launch)
     const roots = launch.Actions.find((action) => action['Action ID'] === 'ACN-0105')!
     expect(roots['Proficiency Level']).toBe(10)
-    expect(gatheringDurationMs(launch, save, roots)).toBe(24_000)
-    expect(gatheringXpReward(launch, save, roots)).toBe(100)
+    expect(gatheringDurationMs(launch, save, roots)).toBe(44_000)
+    expect(gatheringXpReward(launch, save, roots)).toBe(183)
 
     const completed = completeGatheringAction(launch, save, roots, () => 0)
-    expect(completed.result.xpGained).toBe(100)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
+    expect(completed.result.xpGained).toBe(183)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(183)
   })
 
   it('halves Harness essence Arcana XP below Arcana proficiency', () => {

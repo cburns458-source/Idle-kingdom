@@ -67,8 +67,8 @@ void main() {
     expect(crawfish.raw['XP Reward'], 240);
     expect(crawfish.raw['Base Duration Seconds'], 12);
     final pheasant = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0017');
-    expect(pheasant.raw['XP Reward'], 350);
-    expect(pheasant.raw['Base Duration Seconds'], 14);
+    expect(pheasant.raw['XP Reward'], 825);
+    expect(pheasant.raw['Base Duration Seconds'], 33);
   });
 
   test('enemy gold is a tenth, with animals that never paid staying at zero', () {

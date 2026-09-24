@@ -109,12 +109,12 @@ describe('Temple', () => {
 
     const augur = launch.Actions.find((row) => row['Action ID'] === 'ACN-0109')
     expect(augur?.['Display Name']).toBe('Gather augur weed')
-    expect(augur?.['Base Duration Seconds']).toBe(17)
-    expect(augur?.['XP Reward']).toBe(2361)
+    expect(augur?.['Base Duration Seconds']).toBe(65)
+    expect(augur?.['XP Reward']).toBe(9027)
 
     const moon = launch.Actions.find((row) => row['Action ID'] === 'ACN-0110')
-    expect(moon?.['Base Duration Seconds']).toBe(20)
-    expect(moon?.['XP Reward']).toBe(2778)
+    expect(moon?.['Base Duration Seconds']).toBe(87)
+    expect(moon?.['XP Reward']).toBe(12084)
 
     expect(launch.Actions.some((row) => row['Action ID'] === 'ACN-0174')).toBe(false)
 
