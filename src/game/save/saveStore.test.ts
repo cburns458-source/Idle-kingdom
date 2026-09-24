@@ -110,4 +110,67 @@ describe('local save', () => {
     })
     expect(loaded?.settings.autoEat).toBe(true)
   })
+
+  it('drops the retired Mountains gateway botany patch and keeps Slopes and Temple', () => {
+    const storage = createMemoryStorage()
+    const { source } = prepareDatabase(rawDatabase)
+    const created = createNewSave(source)
+    const legacy = {
+      ...created,
+      saveVersion: 54,
+      discoveredTimerSpotIds: ['botany:LOC-0006', 'botany:LOC-0046', 'botany:LOC-0036'],
+      locationTimers: [
+        {
+          locationId: 'LOC-0006',
+          kind: 'botany',
+          inputItemId: 'ITEM-0324',
+          outputItemId: 'ITEM-0025',
+          outputQuantity: 1,
+          skillId: 'SKL-0014',
+          xpReward: 10,
+          startedAt: created.createdAt,
+          durationMs: 1000,
+        },
+        {
+          locationId: 'LOC-0046',
+          kind: 'botany',
+          inputItemId: 'ITEM-0324',
+          outputItemId: 'ITEM-0025',
+          outputQuantity: 1,
+          skillId: 'SKL-0014',
+          xpReward: 10,
+          startedAt: created.createdAt,
+          durationMs: 1000,
+        },
+      ],
+      lootTrackers: {
+        'timer:botany:LOC-0006': {
+          key: 'timer:botany:LOC-0006',
+          kind: 'timer',
+          sourceId: 'botany:LOC-0006',
+          startedAtMs: 0,
+          completions: 1,
+          gold: 0,
+          items: {},
+        },
+        'timer:botany:LOC-0046': {
+          key: 'timer:botany:LOC-0046',
+          kind: 'timer',
+          sourceId: 'botany:LOC-0046',
+          startedAtMs: 0,
+          completions: 1,
+          gold: 0,
+          items: {},
+        },
+      },
+    }
+    storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy))
+
+    const loaded = readSave(storage)
+    expect(loaded?.saveVersion).toBe(SAVE_VERSION)
+    expect(loaded?.discoveredTimerSpotIds).toEqual(['botany:LOC-0046', 'botany:LOC-0036'])
+    expect(loaded?.locationTimers.map((timer) => timer.locationId)).toEqual(['LOC-0046'])
+    expect(loaded?.lootTrackers['timer:botany:LOC-0006']).toBeUndefined()
+    expect(loaded?.lootTrackers['timer:botany:LOC-0046']).toBeDefined()
+  })
 })

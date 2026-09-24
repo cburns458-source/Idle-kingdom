@@ -854,6 +854,29 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     },
   ),
   SaveMigration(fromVersion: 53, toVersion: 54, migrate: (save, _) => _bumped(save, 54)),
+  SaveMigration(
+    fromVersion: 54,
+    toVersion: 55,
+    migrate: (save, _) {
+      const retiredSpot = 'botany:LOC-0006';
+      const retiredTracker = 'timer:$retiredSpot';
+      final next = _bumped(save, 55);
+      next['discoveredTimerSpotIds'] = <Object?>[
+        for (final entry in (save['discoveredTimerSpotIds'] as List? ?? const <Object?>[]))
+          if (entry is String && entry != retiredSpot) entry,
+      ];
+      next['locationTimers'] = <Object?>[
+        for (final row in (save['locationTimers'] as List? ?? const <Object?>[]))
+          if (row is! Map || row['kind'] != 'botany' || row['locationId'] != 'LOC-0006') row,
+      ];
+      final loot = save['lootTrackers'] is Map
+          ? Map<String, Object?>.from(save['lootTrackers'] as Map)
+          : <String, Object?>{};
+      loot.remove(retiredTracker);
+      next['lootTrackers'] = loot;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

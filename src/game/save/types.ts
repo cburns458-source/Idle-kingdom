@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 54
+export const SAVE_VERSION = 55
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
