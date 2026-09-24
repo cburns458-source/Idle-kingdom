@@ -95,8 +95,15 @@ void main() {
     expect(player.center.dx, lessThan(action.center.dx));
 
     final presets = tester.getRect(find.byType(StageLoadoutStrip));
-    final name = tester.getRect(find.byKey(const ValueKey('stage-scene-name:Gather augur weed')));
-    final timer = tester.getRect(find.textContaining('0s /'));
+    final actionId = controller.save.currentActionId;
+    expect(actionId, isNotNull);
+    expect(actionId, anyOf('ACN-0109', 'ACN-0110'));
+    final actionName = controller.indexes.actionsById[actionId!]?.displayName;
+    expect(actionName, isNotNull);
+    final name = tester.getRect(
+      find.byKey(ValueKey('stage-scene-name:$actionName'), skipOffstage: false),
+    );
+    final timer = tester.getRect(find.textContaining('0s /', skipOffstage: false));
     expect(name.bottom, lessThanOrEqualTo(presets.top + 8));
     expect(timer.bottom, lessThanOrEqualTo(presets.top + 8));
     expect(presets.top - timer.bottom, lessThan(40));
