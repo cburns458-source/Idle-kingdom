@@ -60,6 +60,13 @@ void main() {
     expect(layout.scale, closeTo(backdrop.width / templeViewWidth, 0.001));
     expect(player.bottom, closeTo(layout.playerFoot.dy + backdrop.top, 8));
     expect(player.center.dx, closeTo(layout.playerFoot.dx + backdrop.left, 16));
+
+    final eat = tester.getRect(find.byKey(const Key('stage-eat-now')));
+    final expand = tester.getRect(find.byTooltip('Expand list'));
+    final activities = tester.getRect(find.widgetWithText(GameButton, 'Activities'));
+    expect(expand.top, greaterThan(eat.bottom - 4));
+    expect((expand.center.dy - activities.center.dy).abs(), lessThan(16));
+    expect(expand.left, greaterThan(activities.right - 8));
   });
 
   testWidgets('Temple gathering plants action art on the right shadow', (tester) async {
@@ -86,11 +93,22 @@ void main() {
     expect(action.bottom, closeTo(layout.actionFoot.dy + backdrop.top, 8));
     expect(action.center.dx, closeTo(layout.actionFoot.dx + backdrop.left, 16));
     expect(player.center.dx, lessThan(action.center.dx));
+
+    final name = tester.getRect(find.text('Gather augur weed'));
+    final presets = tester.getRect(find.byType(StageLoadoutStrip));
+    expect(name.top, greaterThan(player.bottom - 4));
+    expect(name.top, greaterThan(action.bottom - 4));
+    expect(name.bottom, lessThanOrEqualTo(presets.top + 8));
   });
 
   test('Temple layer paths sit next to the existing plate', () {
     expect(templeSkyAssetPath(), 'content/assets/locations/loc_temple_sky.webp');
     expect(usesTempleLayeredBackground('LOC-0036'), isTrue);
     expect(usesTempleLayeredBackground('LOC-0001'), isFalse);
+    // Lower-middle of each ellipse, a few art pixels below the oval center.
+    expect(templePlayerFootDesign.dy, closeTo(404.8125, 0.01));
+    expect(templeActionFootDesign.dy, closeTo(404.5625, 0.01));
+    expect(templePlayerFootDesign.dy, greaterThan(398.875));
+    expect(templeActionFootDesign.dy, greaterThan(398.375));
   });
 }
