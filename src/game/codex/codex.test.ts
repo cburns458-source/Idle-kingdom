@@ -28,7 +28,7 @@ describe('codex index', () => {
     expect(new Set(codex.enemies.map((row) => row.enemyId))).toEqual(
       new Set(launch.Enemies.map((row) => row['Enemy ID'])),
     )
-    expect(codex.item('ITEM-0209')?.displayName).toBe('Ancient Alloy')
+    expect(codex.item('ITEM-0209')?.displayName).toBe('Chromium Bar')
     expect(codex.item('ITEM-0276')?.displayName).toBe('Ancient Alloy Sword')
     expect(codex.item('ITEM-0325')).toBeUndefined()
     expect(codex.item('ITEM-0346')).toBeUndefined()
