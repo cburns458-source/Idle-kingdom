@@ -34,7 +34,7 @@ describe('Castle Crypt', () => {
       'Contextual Name': 'Fend off the old spirits',
       'Location ID': 'LOC-0037',
       'Pool ID': 'POOL-0031',
-      'Danger Warning Combat Level': 34,
+      'Danger Warning Combat Level': 42,
     })
 
     const pool = launch.PoolEntries.filter((row) => row['Pool ID'] === 'POOL-0031')

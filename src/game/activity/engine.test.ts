@@ -314,7 +314,7 @@ describe('primary activity engine', () => {
     const meadow = eligiblePoolEntries(launch, 'POOL-0011').map((pair) => pair.action['Action ID'])
     const woods = eligiblePoolEntries(launch, 'POOL-0009').map((pair) => pair.action['Action ID'])
     expect(meadow.sort()).toEqual(['ACN-0013', 'ACN-0016'])
-    expect(woods.sort()).toEqual(['ACN-0008', 'ACN-0014', 'ACN-0017'])
+    expect(woods.sort()).toEqual(['ACN-0008', 'ACN-0014', 'ACN-0017', 'ACN-0204'])
   })
 
   it('refuses to stop or replace activities during death pause', () => {

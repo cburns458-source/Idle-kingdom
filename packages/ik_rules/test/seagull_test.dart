@@ -38,11 +38,10 @@ void main() {
     expect(action.raw['Target ID'], 'ENM-0021');
   });
 
-  test('a seagull turns up one roll in five while reasoning with the pirates', () {
+  test('reasoning with the pirates is pirate-only — no seagull rolls', () {
     final weights = _weights(db, 'POOL-0018');
-    expect(weights['ACN-0173'], 20);
-    expect(weights['ACN-0091'], 80);
-    expect(weights.values.reduce((a, b) => a + b), 100);
+    expect(weights, {'ACN-0091': 80});
+    expect(weights.containsKey('ACN-0173'), isFalse);
   });
 
   test('deep-pool fishing can roll the baby giant squid', () {
@@ -61,21 +60,12 @@ void main() {
     expect(weights.values.reduce((a, b) => a + b), 100);
   });
 
-  test('reasoning with the pirates can still hand out the seagull fight', () {
-    final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0022');
-    final poolId = activity.raw['Pool ID']! as String;
-    expect(_weights(db, poolId).containsKey('ACN-0173'), isTrue);
-  });
-
-  test('rolling the seagull at the pirates starts a real fight against it', () {
+  test('reasoning with the pirates always starts the pirate fight', () {
     final save = createNewSave(db, 0).copyWith(currentLocationId: 'LOC-0004');
-
-    // The seagull is the last entry of the pool, so the highest roll picks it.
     final started = requestActivityStart(db, save, 'ACT-0022', 0, () => 0.99);
     expect(started.ok, isTrue);
-    expect(started.save!.currentActionId, 'ACN-0173');
-    expect(started.save!.combatEnemyId, 'ENM-0021');
-    expect(started.save!.combatEnemyHp, 110);
+    expect(started.save!.currentActionId, 'ACN-0091');
+    expect(started.save!.combatEnemyId, 'ENM-0005');
   });
 
   test('dock fishing rolls tuna or shark, never a seagull', () {

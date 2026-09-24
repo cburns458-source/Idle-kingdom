@@ -18,7 +18,7 @@ const rawDatabase = JSON.parse(
 )
 
 describe('hostile travel forcing', () => {
-  it('forces Fight the Goblins when Combat Level is below 10', () => {
+  it('forces Fight the Goblins when Combat Level is below the scout (15)', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     expect(forcedHostileActivity(launch, save, 'LOC-0003')?.['Activity ID']).toBe('ACT-0002')
@@ -31,14 +31,14 @@ describe('hostile travel forcing', () => {
     expect(hostileForceMessage(launch, arrived)).toMatch(/forced into Fight the Goblins/i)
   })
 
-  it('does not force Goblin Camp combat at Combat Level 10+', () => {
+  it('does not force Goblin Camp combat at Combat Level 15+', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = {
       ...save,
       skills: save.skills.map((skill) =>
         skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0016'
-          ? { ...skill, level: 7, xp: 50_000 }
+          ? { ...skill, level: 10, xp: 50_000 }
           : skill,
       ),
     }
@@ -63,10 +63,10 @@ describe('hostile travel forcing', () => {
 
   it('builds the travel confirm copy from the danger warning level', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    expect(locationDangerWarningLevel(launch, 'LOC-0003')).toBe(10)
+    expect(locationDangerWarningLevel(launch, 'LOC-0003')).toBe(15)
     expect(locationDangerWarningLevel(launch, 'LOC-0009')).toBeNull()
-    expect(hostileTravelWarningMessage(10)).toBe(
-      'Are you sure you want to travel here? You may be attacked. Combat level warning: 10',
+    expect(hostileTravelWarningMessage(15)).toBe(
+      'Are you sure you want to travel here? You may be attacked. Combat level warning: 15',
     )
   })
 

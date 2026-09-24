@@ -65,9 +65,9 @@ void main() {
   });
 
   test('The Peak, Badlands, and Giant Camp use the written pools', () {
-    expect(_weights(db, 'POOL-0050'), {'ACN-0200': 70, 'ACN-0201': 30});
+    expect(_weights(db, 'POOL-0050'), {'ACN-0219': 70, 'ACN-0220': 30});
     expect(_weights(db, 'POOL-0051'), {'ACN-0021': 50, 'ACN-0020': 50});
-    expect(_weights(db, 'POOL-0052'), {'ACN-0202': 60, 'ACN-0203': 40});
+    expect(_weights(db, 'POOL-0052'), {'ACN-0221': 60, 'ACN-0222': 40});
 
     final peak = db.activities.firstWhere((row) => row.activityId == 'ACT-0068');
     expect(peak.raw['Location ID'], thePeakId);

@@ -530,7 +530,7 @@ void main() {
 
     expect(
       find.text(
-        'Are you sure you want to travel here? You may be attacked. Combat level warning: 10',
+        'Are you sure you want to travel here? You may be attacked. Combat level warning: 15',
       ),
       findsOne,
     );

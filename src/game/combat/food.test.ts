@@ -82,9 +82,13 @@ describe('cooked beef and tablet recipes', () => {
     }
     expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0012')?.['XP Reward']).toBe(3266)
     expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['XP Reward']).toBe(10666)
-    const leftover = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0044')!
-    expect(leftover.Status).toBe('Needs Data')
-    expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0127')?.Status).toBe('Needs Data')
+    const marlin = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0044')!
+    expect(marlin.Status).toBe('Planned')
+    expect(marlin['Display Name']).toBe('Cooked Marlin')
+    expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0127')?.Status).toBe('Planned')
+    expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0127')?.['Display Name']).toBe(
+      'Cooked marlin',
+    )
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0104')?.['Proficiency Level']).toBe(70)
     expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['Proficiency Level']).toBe(80)
   })

@@ -81,9 +81,9 @@ describe('Mountains sub-map', () => {
 
   it('writes Peak, Badlands, and Giant Camp pools', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    expect(weights(launch, 'POOL-0050')).toEqual({ 'ACN-0200': 70, 'ACN-0201': 30 })
+    expect(weights(launch, 'POOL-0050')).toEqual({ 'ACN-0219': 70, 'ACN-0220': 30 })
     expect(weights(launch, 'POOL-0051')).toEqual({ 'ACN-0021': 50, 'ACN-0020': 50 })
-    expect(weights(launch, 'POOL-0052')).toEqual({ 'ACN-0202': 60, 'ACN-0203': 40 })
+    expect(weights(launch, 'POOL-0052')).toEqual({ 'ACN-0221': 60, 'ACN-0222': 40 })
 
     const peak = launch.Activities.find((row) => row['Activity ID'] === 'ACT-0068')!
     expect(peak['Location ID']).toBe(THE_PEAK_ID)

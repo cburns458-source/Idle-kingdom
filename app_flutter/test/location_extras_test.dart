@@ -57,8 +57,8 @@ void main() {
   ) async {
     await pumpLocation(tester, 'LOC-0003');
     expect(find.text('Goblin Camp'), findsWidgets);
-    expect(find.text('Danger warning: approximately Combat Level 10.'), findsOne);
-    expect(find.text('Combat warning ~ Level 10'), findsOne);
+    expect(find.text('Danger warning: approximately Combat Level 15.'), findsOne);
+    expect(find.text('Combat warning ~ Level 15'), findsOne);
   });
 
   testWidgets('hostile docks, quarters, and crypt still name their danger', (tester) async {
