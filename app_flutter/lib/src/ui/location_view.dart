@@ -1125,7 +1125,7 @@ class _FloatingOptionBand extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (leading != null) leading!,
+                ?leading,
                 if (tabs.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(6, 4, 40, 0),
