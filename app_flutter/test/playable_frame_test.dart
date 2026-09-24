@@ -36,7 +36,8 @@ void main() {
   test('both rails need 456 leftover after the 9:16 column', () {
     expect(playableFrameSideChatMinLeftover, 456);
     expect(playableFrameHasSideChat(const Size(1024, 768)), isTrue);
-    expect(playableFrameHasSideChat(const Size(1000, 900)), isFalse);
+    // 1000×1000: column is 562.5, leftover 437.5 < 456.
+    expect(playableFrameHasSideChat(const Size(1000, 1000)), isFalse);
   });
 
   test('an empty box is returned unchanged', () {
