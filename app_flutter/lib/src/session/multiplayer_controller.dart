@@ -192,6 +192,7 @@ class MultiplayerController extends ChangeNotifier {
   List<BountyClaimRecord> _bountyClaims = const <BountyClaimRecord>[];
   List<BazaarPost> _bazaarPosts = const <BazaarPost>[];
   MarketSnapshot _market = MarketSnapshot.empty;
+  bool _marketReady = false;
   ChatTab _chatTab = ChatTab.global;
   String? _selectedDmPeerId;
   final List<String> _openDmPeerIds = <String>[];
@@ -518,6 +519,7 @@ class MultiplayerController extends ChangeNotifier {
     _bountyClaims = const <BountyClaimRecord>[];
     _bazaarPosts = const <BazaarPost>[];
     _market = MarketSnapshot.empty;
+    _marketReady = false;
     _unreadDms = 0;
     _unread.clear();
     _localUnread.clear();
@@ -696,6 +698,7 @@ class MultiplayerController extends ChangeNotifier {
     await _refreshUnread(save);
     await _loadSocialLists();
     notifyListeners();
+    unawaited(refreshMarket());
   }
 
   /// Starts the timers that keep presence alive and the counts current.
@@ -1453,6 +1456,9 @@ class MultiplayerController extends ChangeNotifier {
 
   MarketSnapshot get market => _market;
 
+  /// True after the first signed-in market read finishes.
+  bool get marketReady => _marketReady;
+
   /// Reads the player's offers, their trades, their box, and the guide prices.
   ///
   /// No item is named, because the screen shows the player their own six slots
@@ -1460,10 +1466,12 @@ class MultiplayerController extends ChangeNotifier {
   Future<void> refreshMarket() async {
     if (!isSignedIn) {
       _market = MarketSnapshot.empty;
+      _marketReady = false;
       notifyListeners();
       return;
     }
     _market = await service.bazaarMarket();
+    _marketReady = true;
     final problem = service.takeReadProblem();
     if (problem != null) _notice = problem;
     notifyListeners();

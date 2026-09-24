@@ -23,14 +23,18 @@ void main() {
     db = _db();
   });
 
-  test('Temple is a main-map Launch node with monk training and a blessing', () {
+  test('Temple is a Mountains sub-map Launch node with monk training and a blessing', () {
     final location = db.locations.firstWhere((row) => row.locationId == 'LOC-0036');
     expect(location.raw['Display Name'], 'Temple');
-    expect(location.raw['Map ID'], mainMapId);
-    expect(layoutForMap(mainMapId).containsKey('LOC-0036'), isTrue);
-    expect(layoutForMap(mainMapId, db).containsKey('LOC-0036'), isTrue);
-    expect(layoutForMap(mainMapId, db)['LOC-0036']!.x, layoutForMap(mainMapId)['LOC-0036']!.x);
-    expect(canTravelTo(db, 'LOC-0002', 'LOC-0036', mainMapId), isTrue);
+    expect(location.raw['Map ID'], mountainsMapId);
+    expect(layoutForMap(mountainsMapId).containsKey('LOC-0036'), isTrue);
+    expect(layoutForMap(mountainsMapId, db).containsKey('LOC-0036'), isTrue);
+    expect(
+      layoutForMap(mountainsMapId, db)['LOC-0036']!.x,
+      layoutForMap(mountainsMapId)['LOC-0036']!.x,
+    );
+    expect(canTravelTo(db, theSlopesId, 'LOC-0036', mountainsMapId), isTrue);
+    expect(canTravelTo(db, 'LOC-0002', 'LOC-0036', mainMapId), isFalse);
     expect(locationHasBlessing(location), isTrue);
 
     final activities = db.activities.where((row) => row.raw['Location ID'] == 'LOC-0036');

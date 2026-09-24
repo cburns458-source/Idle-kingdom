@@ -100,24 +100,25 @@ describe('might / vitality combat stats', () => {
     expect(enemyEncounterDamageRange(launch, save, scout)).toEqual({ min: 33, max: 66 })
   })
 
-  it('keeps the new roster out of locations and drop pools', () => {
+  it('keeps placeholder stats; mountain roosts have locations', () => {
     const { launch, source } = prepareDatabase(rawDatabase)
     const added = [
-      ['ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300],
-      ['ENM-0026', 'Bandit', 6, 260, 16, 40, 520],
-      ['ENM-0027', 'Cave Bat', 14, 580, 37, 73, 1322],
-      ['ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1770],
-      ['ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 2268],
-      ['ENM-0030', 'Harpy', 48, 3860, 152, 268, 11424],
-      ['ENM-0031', 'Giant', 51, 4440, 164, 288, 13408],
-      ['ENM-0032', 'Gargoyle', 58, 5940, 192, 338, 18770],
-      ['ENM-0033', 'Wyvern', 67, 7920, 236, 404, 26452],
-      ['ENM-0034', 'Cyclops', 70, 9000, 260, 440, 30600],
-      ['ENM-0035', 'Demon', 82, 15000, 475, 745, 54598],
-      ['ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 66066],
+      ['ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300, null],
+      ['ENM-0026', 'Bandit', 6, 260, 16, 40, 520, null],
+      ['ENM-0027', 'Cave Bat', 14, 580, 37, 73, 1322, null],
+      ['ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1770, null],
+      ['ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 2268, null],
+      ['ENM-0030', 'Harpy', 48, 3860, 152, 268, 11424, 'LOC-0047'],
+      ['ENM-0031', 'Giant', 51, 4440, 164, 288, 13408, 'LOC-0049'],
+      ['ENM-0032', 'Gargoyle', 58, 5940, 192, 338, 18770, null],
+      ['ENM-0033', 'Wyvern', 67, 7920, 236, 404, 26452, 'LOC-0047'],
+      ['ENM-0034', 'Cyclops', 70, 9000, 260, 440, 30600, 'LOC-0049'],
+      ['ENM-0035', 'Demon', 82, 15000, 475, 745, 54598, null],
+      ['ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 66066, null],
     ] as const
     const addedIds = new Set<string>(added.map(([id]) => id))
-    for (const [id, name, level, hp, min, max, xp] of added) {
+    const assignedIds = new Set(['ENM-0030', 'ENM-0031', 'ENM-0033', 'ENM-0034'])
+    for (const [id, name, level, hp, min, max, xp, locationId] of added) {
       const enemy = launch.Enemies.find((row) => row['Enemy ID'] === id)
       expect(enemy, id).toBeDefined()
       expect(enemy!['Display Name']).toBe(name)
@@ -129,17 +130,24 @@ describe('might / vitality combat stats', () => {
       expect(enemy!['Max Damage']).toBe(max)
       expect(enemy!['Combat XP']).toBe(xp)
       expect(enemyCombatXp(enemy!)).toBe(xp)
-      expect(enemy!['Location ID']).toBeNull()
+      expect(enemy!['Location ID']).toBe(locationId)
       expect(enemy!['Drop Chance']).toBe(0)
       expect(enemy!['Reward Table ID']).toBeNull()
       expect(enemy!['Minimum Gold']).toBe(0)
       expect(enemy!['Maximum Gold']).toBe(0)
     }
-    expect(source.Actions.some((row) => addedIds.has(String(row['Target ID'] ?? '')))).toBe(false)
+    expect(
+      source.Actions.some(
+        (row) =>
+          addedIds.has(String(row['Target ID'] ?? '')) &&
+          !assignedIds.has(String(row['Target ID'] ?? '')),
+      ),
+    ).toBe(false)
     expect(
       source.PoolEntries.some((row) => {
         const action = source.Actions.find((entry) => entry['Action ID'] === row['Action ID'])
-        return action ? addedIds.has(String(action['Target ID'] ?? '')) : false
+        const target = String(action?.['Target ID'] ?? '')
+        return addedIds.has(target) && !assignedIds.has(target)
       }),
     ).toBe(false)
   })

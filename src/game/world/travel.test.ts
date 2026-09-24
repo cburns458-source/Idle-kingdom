@@ -77,7 +77,8 @@ describe('travel rules', () => {
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0039')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0041')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0018')).toBe(false)
-    expect(nodes.some((location) => location['Location ID'] === 'LOC-0036')).toBe(true)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0036')).toBe(false)
+    expect(nodes.some((location) => location['Location ID'] === 'LOC-0006')).toBe(true)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0019')).toBe(false)
     expect(nodes.some((location) => location['Location ID'] === 'LOC-0020')).toBe(false)
   })
@@ -90,10 +91,11 @@ describe('travel rules', () => {
     expect(canTravelTo(launch, 'LOC-0002', 'LOC-0018', MAIN_MAP_ID)).toBe(false)
   })
 
-  it('allows travel to the Temple from the overworld', () => {
+  it('keeps the Temple off the overworld after the Mountains sub-map', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0036', MAIN_MAP_ID)).toBe(true)
-    expect(canTravelTo(launch, 'LOC-0013', 'LOC-0036', MAIN_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0036', MAIN_MAP_ID)).toBe(false)
+    expect(canTravelTo(launch, 'LOC-0013', 'LOC-0036', MAIN_MAP_ID)).toBe(false)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0006', MAIN_MAP_ID)).toBe(true)
   })
 
   it('keeps west and east region maps empty after removing horizon gateways', () => {

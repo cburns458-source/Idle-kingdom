@@ -10501,6 +10501,16 @@
       "Release Phase": "Launch",
       "Description": "Underwater ruins beyond Sunken Approach: The Shallows landing and The Depths.",
       "Asset Key": "maps/map_the_depths.webp"
+    },
+    {
+      "Map ID": "MAP-0010",
+      "Internal Key": "mountains",
+      "Display Name": "Mountains",
+      "Map Type": "Highland sub-map",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Highland beyond the Mountains gate: The Slopes landing, Temple, The Peak, Badlands, and Giant Camp.",
+      "Asset Key": "locations/loc_mountains.webp"
     }
   ],
   "Locations": [
@@ -10599,18 +10609,18 @@
       "Internal Key": "mountains",
       "Display Name": "Mountains",
       "Map ID": "MAP-0001",
-      "Location Type": "Region",
+      "Location Type": "Sub-map Gateway",
       "Parent Location ID": null,
       "Node ID": "NODE-0006",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Mountain slopes with Mining, Rock Trolls, and access to the caves.",
+      "Description": "A high pass into the mountain range: slopes, temple, peak, badlands, and giant camp.",
       "Danger / Hostility": null,
       "Background Asset Key": "locations/loc_mountains.webp",
       "Map Node Name": null,
-      "Hidden On Map IDs": null,
-      "Notes": null,
-      "Landing Location ID": null
+      "Hidden On Map IDs": "MAP-0010",
+      "Notes": "Sub-map gateway for MAP-0010.",
+      "Landing Location ID": "LOC-0046"
     },
     {
       "Location ID": "LOC-0007",
@@ -11102,9 +11112,9 @@
       "Location ID": "LOC-0036",
       "Internal Key": "temple",
       "Display Name": "Temple",
-      "Map ID": "MAP-0001",
-      "Location Type": "Region",
-      "Parent Location ID": null,
+      "Map ID": "MAP-0010",
+      "Location Type": "Sub-location",
+      "Parent Location ID": "LOC-0006",
       "Node ID": "NODE-0036",
       "Status": "Planned",
       "Release Phase": "Launch",
@@ -11113,7 +11123,7 @@
       "Background Asset Key": "locations/loc_temple.webp",
       "Map Node Name": null,
       "Hidden On Map IDs": null,
-      "Notes": "Main-map node. Monk training requires empty Weapon or Tool and Off-hand. Blessing is a location action, not an activity.",
+      "Notes": "Mountains sub-map, bottom left. Monk training requires empty Weapon or Tool and Off-hand. Blessing is a location action, not an activity.",
       "Landing Location ID": null
     },
     {
@@ -11276,6 +11286,78 @@
       "Map Node Name": "Kelp Forest",
       "Hidden On Map IDs": null,
       "Notes": "Depths submap, left-middle. Open with The Shallows.",
+      "Landing Location ID": null
+    },
+    {
+      "Location ID": "LOC-0046",
+      "Internal Key": "the_slopes",
+      "Display Name": "The Slopes",
+      "Map ID": "MAP-0010",
+      "Location Type": "Sub-location",
+      "Parent Location ID": "LOC-0006",
+      "Node ID": "NODE-0046",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Windswept mountain slopes with mining, hunting, and Rock Troll encounters.",
+      "Danger / Hostility": null,
+      "Background Asset Key": "locations/loc_mountains.webp",
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
+      "Notes": "Landing for Mountains. Inherits the old mountain node.",
+      "Landing Location ID": null
+    },
+    {
+      "Location ID": "LOC-0047",
+      "Internal Key": "the_peak",
+      "Display Name": "The Peak",
+      "Map ID": "MAP-0010",
+      "Location Type": "Combat Area",
+      "Parent Location ID": "LOC-0006",
+      "Node ID": "NODE-0047",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A high roost above the range, where winged hunters circle.",
+      "Danger / Hostility": "Harpy and wyvern roosts.",
+      "Background Asset Key": "locations/loc_mountains.webp",
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
+      "Notes": "Mountains sub-map, top middle. Hostile.",
+      "Landing Location ID": null
+    },
+    {
+      "Location ID": "LOC-0048",
+      "Internal Key": "badlands",
+      "Display Name": "Badlands",
+      "Map ID": "MAP-0010",
+      "Location Type": "Resource Area",
+      "Parent Location ID": "LOC-0006",
+      "Node ID": "NODE-0048",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Broken highland stone where coal and tin sit near the surface.",
+      "Danger / Hostility": null,
+      "Background Asset Key": "locations/loc_mountains.webp",
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
+      "Notes": "Mountains sub-map, middle right.",
+      "Landing Location ID": null
+    },
+    {
+      "Location ID": "LOC-0049",
+      "Internal Key": "giant_camp",
+      "Display Name": "Giant Camp",
+      "Map ID": "MAP-0010",
+      "Location Type": "Combat Area",
+      "Parent Location ID": "LOC-0006",
+      "Node ID": "NODE-0049",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A crude highland camp held by giants and cyclopes.",
+      "Danger / Hostility": "Giants and cyclopes hold the camp.",
+      "Background Asset Key": "locations/loc_mountains.webp",
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
+      "Notes": "Mountains sub-map, middle middle. Hostile.",
       "Landing Location ID": null
     }
   ],
@@ -11945,7 +12027,7 @@
       "Activity ID": "ACT-0006",
       "Internal Key": "prospect_mountain_side",
       "Contextual Name": "Prospect the mountain side",
-      "Location ID": "LOC-0006",
+      "Location ID": "LOC-0046",
       "Description": "Mine the slopes and face Rock Troll encounters.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0006",
@@ -12218,7 +12300,7 @@
       "Activity ID": "ACT-0027",
       "Internal Key": "hunt_the_slopes",
       "Contextual Name": "Hunt the slopes",
-      "Location ID": "LOC-0006",
+      "Location ID": "LOC-0046",
       "Description": "Hunt mountain goats and great stags on the slopes.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0022",
@@ -12699,7 +12781,7 @@
       "Activity ID": "ACT-0065",
       "Internal Key": "collect_compost_mountains",
       "Contextual Name": "Collect compost",
-      "Location ID": "LOC-0006",
+      "Location ID": "LOC-0046",
       "Description": "Scoop compost from the mountain patch.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0049",
@@ -12733,6 +12815,45 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Patches-tab compost gather. Hidden from the Activities tab."
+    },
+    {
+      "Activity ID": "ACT-0068",
+      "Internal Key": "challenge_the_peak",
+      "Contextual Name": "Challenge the peak",
+      "Location ID": "LOC-0047",
+      "Description": "Face harpies and wyverns on the high roost.",
+      "Danger Warning Combat Level": 72,
+      "Pool ID": "POOL-0050",
+      "Pool Internal Key": "the_peak_combat",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Hostile peak combat."
+    },
+    {
+      "Activity ID": "ACT-0069",
+      "Internal Key": "prospect_the_badlands",
+      "Contextual Name": "Prospect the badlands",
+      "Location ID": "LOC-0048",
+      "Description": "Mine coal and tin in the broken highland stone.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0051",
+      "Pool Internal Key": "badlands_mining",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Activity ID": "ACT-0070",
+      "Internal Key": "raid_giant_camp",
+      "Contextual Name": "Raid the giant camp",
+      "Location ID": "LOC-0049",
+      "Description": "Fight giants and cyclopes in the highland camp.",
+      "Danger Warning Combat Level": 77,
+      "Pool ID": "POOL-0052",
+      "Pool Internal Key": "giant_camp_combat",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Hostile giant-camp combat."
     }
   ],
   "PoolEntries": [
@@ -13503,6 +13624,54 @@
       "Weight": 5,
       "Status": "Planned",
       "Notes": "Hunt wild boar alongside combat boar."
+    },
+    {
+      "Pool Entry ID": "PEN-0105",
+      "Pool ID": "POOL-0050",
+      "Action ID": "ACN-0219",
+      "Weight": 70,
+      "Status": "Confirmed",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0106",
+      "Pool ID": "POOL-0050",
+      "Action ID": "ACN-0220",
+      "Weight": 30,
+      "Status": "Confirmed",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0107",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0021",
+      "Weight": 50,
+      "Status": "Confirmed",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0108",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0020",
+      "Weight": 50,
+      "Status": "Confirmed",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0109",
+      "Pool ID": "POOL-0052",
+      "Action ID": "ACN-0221",
+      "Weight": 60,
+      "Status": "Confirmed",
+      "Notes": null
+    },
+    {
+      "Pool Entry ID": "PEN-0110",
+      "Pool ID": "POOL-0052",
+      "Action ID": "ACN-0222",
+      "Weight": 40,
+      "Status": "Confirmed",
+      "Notes": null
     }
   ],
   "Actions": [
@@ -16653,6 +16822,86 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Production is hard-gated by Proficiency Level."
+    },
+    {
+      "Action ID": "ACN-0219",
+      "Internal Key": "fight_harpy",
+      "Display Name": "Fight harpy",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0030",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 11424,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Placeholder combat. Enemy record owns HP, damage, and gold."
+    },
+    {
+      "Action ID": "ACN-0220",
+      "Internal Key": "fight_wyvern",
+      "Display Name": "Fight wyvern",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0033",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 26452,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Placeholder combat. Enemy record owns HP, damage, and gold."
+    },
+    {
+      "Action ID": "ACN-0221",
+      "Internal Key": "fight_giant",
+      "Display Name": "Fight giant",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0031",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 13408,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Placeholder combat. Enemy record owns HP, damage, and gold."
+    },
+    {
+      "Action ID": "ACN-0222",
+      "Internal Key": "fight_cyclops",
+      "Display Name": "Fight cyclops",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0034",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 30600,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Placeholder combat. Enemy record owns HP, damage, and gold."
     }
   ],
   "Requirements": [
@@ -18738,7 +18987,7 @@
       "Enemy ID": "ENM-0007",
       "Internal Key": "rock_troll",
       "Display Name": "Rock Troll",
-      "Location ID": "LOC-0006",
+      "Location ID": "LOC-0046",
       "Might Level": 55,
       "Vitality Level": 55,
       "Combat Level": 83,
@@ -18927,7 +19176,7 @@
       "Enemy ID": "ENM-0018",
       "Internal Key": "elder_rock_troll",
       "Display Name": "Elder Rock Troll",
-      "Location ID": "LOC-0006",
+      "Location ID": "LOC-0046",
       "Might Level": 90,
       "Vitality Level": 90,
       "Combat Level": 135,
@@ -19179,7 +19428,7 @@
       "Enemy ID": "ENM-0030",
       "Internal Key": "harpy",
       "Display Name": "Harpy",
-      "Location ID": null,
+      "Location ID": "LOC-0047",
       "Might Level": 48,
       "Vitality Level": 48,
       "Combat Level": 72,
@@ -19194,13 +19443,13 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_seagull.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Peak combat."
     },
     {
       "Enemy ID": "ENM-0031",
       "Internal Key": "giant",
       "Display Name": "Giant",
-      "Location ID": null,
+      "Location ID": "LOC-0049",
       "Might Level": 51,
       "Vitality Level": 51,
       "Combat Level": 77,
@@ -19215,7 +19464,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_rock_troll.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Giant Camp combat."
     },
     {
       "Enemy ID": "ENM-0032",
@@ -19242,7 +19491,7 @@
       "Enemy ID": "ENM-0033",
       "Internal Key": "wyvern",
       "Display Name": "Wyvern",
-      "Location ID": null,
+      "Location ID": "LOC-0047",
       "Might Level": 67,
       "Vitality Level": 67,
       "Combat Level": 101,
@@ -19257,13 +19506,13 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_dragon.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Peak combat."
     },
     {
       "Enemy ID": "ENM-0034",
       "Internal Key": "cyclops",
       "Display Name": "Cyclops",
-      "Location ID": null,
+      "Location ID": "LOC-0049",
       "Might Level": 70,
       "Vitality Level": 70,
       "Combat Level": 105,
@@ -19278,7 +19527,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_elder_rock_troll.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Giant Camp combat."
     },
     {
       "Enemy ID": "ENM-0035",
@@ -28358,7 +28607,7 @@
       "NPC ID": "NPC-0003",
       "Internal Key": "master_dwarf",
       "Display Name": "Master Dwarf",
-      "Location ID": "LOC-0006",
+      "Location ID": "LOC-0046",
       "Role": "Master Craftsperson",
       "Status": "Planned",
       "Release Phase": "Launch",
@@ -31235,10 +31484,10 @@
     },
     {
       "Map Node ID": "MN-0003",
-      "Map ID": "MAP-0001",
+      "Map ID": "MAP-0010",
       "Location ID": "LOC-0036",
-      "X": 45,
-      "Y": 25,
+      "X": 18,
+      "Y": 78,
       "Status": "Confirmed",
       "Release Phase": "Launch"
     },
@@ -31653,6 +31902,51 @@
       "Location ID": "LOC-0035",
       "X": 50,
       "Y": 30,
+      "Status": "Confirmed",
+      "Release Phase": "Launch"
+    },
+    {
+      "Map Node ID": "MN-0050",
+      "Map ID": "MAP-0010",
+      "Location ID": "LOC-0006",
+      "X": 88,
+      "Y": 88,
+      "Status": "Confirmed",
+      "Release Phase": "Launch"
+    },
+    {
+      "Map Node ID": "MN-0051",
+      "Map ID": "MAP-0010",
+      "Location ID": "LOC-0046",
+      "X": 82,
+      "Y": 78,
+      "Status": "Confirmed",
+      "Release Phase": "Launch"
+    },
+    {
+      "Map Node ID": "MN-0052",
+      "Map ID": "MAP-0010",
+      "Location ID": "LOC-0047",
+      "X": 50,
+      "Y": 18,
+      "Status": "Confirmed",
+      "Release Phase": "Launch"
+    },
+    {
+      "Map Node ID": "MN-0053",
+      "Map ID": "MAP-0010",
+      "Location ID": "LOC-0048",
+      "X": 82,
+      "Y": 48,
+      "Status": "Confirmed",
+      "Release Phase": "Launch"
+    },
+    {
+      "Map Node ID": "MN-0054",
+      "Map ID": "MAP-0010",
+      "Location ID": "LOC-0049",
+      "X": 50,
+      "Y": 48,
       "Status": "Confirmed",
       "Release Phase": "Launch"
     }

@@ -736,6 +736,7 @@ void main() {
     await tester.tap(find.widgetWithText(GameButton, 'People'));
     await tester.pump();
     expect(find.text('Tanner'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Shop'), findsOne);
   });
 
   testWidgets('the option band shows one tab per group at the kitchen', (tester) async {

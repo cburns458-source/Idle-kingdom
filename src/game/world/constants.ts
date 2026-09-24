@@ -10,6 +10,7 @@ export const TOWN_MAP_ID = 'MAP-0006'
 export const CITADEL_MAP_ID = 'MAP-0007'
 export const FOREST_MAP_ID = 'MAP-0008'
 export const DEPTHS_MAP_ID = 'MAP-0009'
+export const MOUNTAINS_MAP_ID = 'MAP-0010'
 
 export const CAVE_ENTRANCE_ID = 'LOC-0010'
 export const CAVE_MINING_STORE_ID = 'LOC-0012'
@@ -46,6 +47,13 @@ export const STARLIGHT_GLADE_ID = 'LOC-0044'
 export const SUNKEN_APPROACH_ID = 'LOC-0041'
 export const THE_DEPTHS_ID = 'LOC-0042'
 export const THE_SHALLOWS_ID = 'LOC-0043'
+
+/** Mountains range (MAP-0010). */
+export const MOUNTAINS_GATEWAY_ID = 'LOC-0006'
+export const THE_SLOPES_ID = 'LOC-0046'
+export const THE_PEAK_ID = 'LOC-0047'
+export const BADLANDS_ID = 'LOC-0048'
+export const GIANT_CAMP_ID = 'LOC-0049'
 
 export function isFutureHorizonLocation(locationId: string): boolean {
   return locationId === WEST_HORIZON_ID || locationId === EAST_HORIZON_ID

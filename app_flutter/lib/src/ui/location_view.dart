@@ -23,6 +23,7 @@ import 'production_panel.dart';
 import 'project_panel.dart';
 import 'reward_strip.dart';
 import 'shop_panel.dart';
+import 'tanner_panel.dart';
 import 'botany_plant_popup.dart';
 import 'pot_bait_popup.dart';
 import 'tracker_view.dart';
@@ -55,6 +56,13 @@ class GuildHallOpen extends LocationPanel {
 
 class NpcOpen extends LocationPanel {
   const NpcOpen(this.npc);
+
+  final NpcRow npc;
+}
+
+/// The hide-to-leather counter a tanner keeps.
+class TannerOpen extends LocationPanel {
+  const TannerOpen(this.npc);
 
   final NpcRow npc;
 }
@@ -552,7 +560,8 @@ class _LocationViewState extends State<LocationView> {
     return panel is ShopOpen ||
         panel is BankOpen ||
         panel is GuildHallOpen ||
-        panel is CitadelHubOpen;
+        panel is CitadelHubOpen ||
+        panel is TannerOpen;
   }
 
   /// Pins a location overlay to the stage slot above the activity band.
@@ -598,7 +607,10 @@ class _LocationViewState extends State<LocationView> {
           npc: npc,
           onClose: _closePanel,
           onOpenShop: (shopId) => _openPanel(ShopOpen(shopId), nest: true),
+          onOpenTanner: () => _openPanel(TannerOpen(npc), nest: true),
         );
+      case TannerOpen(npc: final npc):
+        return TannerPanel(controller: controller, npc: npc, onClose: _closePanel);
       case CitadelHubOpen(tab: final tab):
         return CitadelHubPanel(
           tab: tab,
@@ -907,8 +919,8 @@ class _LocationViewState extends State<LocationView> {
             subtitle: npc.role?.toLowerCase() == 'quest giver' || npc.role == npc.displayName
                 ? null
                 : npc.role,
-            actionLabel: 'Talk',
-            onPressed: () => _openPanel(NpcOpen(npc)),
+            actionLabel: isTannerNpc(npc) ? 'Shop' : 'Talk',
+            onPressed: () => _openPanel(isTannerNpc(npc) ? TannerOpen(npc) : NpcOpen(npc)),
           ),
         ),
     ];

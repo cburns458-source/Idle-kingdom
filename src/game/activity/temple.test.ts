@@ -7,7 +7,7 @@ import { createNewSave } from '../save/saveStore'
 import { playerMaxHp } from '../combat/stats'
 import { forcedHostileActivity, locationIsHostileFor } from '../world/hostility'
 import { canTravelTo } from '../world/travel'
-import { MAIN_MAP_ID } from '../world/constants'
+import { MAIN_MAP_ID, MOUNTAINS_MAP_ID, THE_SLOPES_ID } from '../world/constants'
 import { locationHasBlessing, requestBlessing } from '../world/blessing'
 import { requestActivityStart } from './transition'
 
@@ -16,11 +16,13 @@ const rawDatabase = JSON.parse(
 )
 
 describe('Temple', () => {
-  it('is a reachable main-map node with monk training and a blessing', () => {
+  it('is a reachable Mountains node with monk training and a blessing', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const location = launch.Locations.find((row) => row['Location ID'] === 'LOC-0036')
     expect(location?.['Display Name']).toBe('Temple')
-    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0036', MAIN_MAP_ID)).toBe(true)
+    expect(location?.['Map ID']).toBe(MOUNTAINS_MAP_ID)
+    expect(canTravelTo(launch, THE_SLOPES_ID, 'LOC-0036', MOUNTAINS_MAP_ID)).toBe(true)
+    expect(canTravelTo(launch, 'LOC-0002', 'LOC-0036', MAIN_MAP_ID)).toBe(false)
     expect(locationHasBlessing(location)).toBe(true)
 
     const names = launch.Activities.filter((row) => row['Location ID'] === 'LOC-0036').map(
