@@ -30,7 +30,7 @@ void main() {
       codex.enemies.map((row) => row.enemyId).toSet(),
       db.enemies.map((row) => row.enemyId).toSet(),
     );
-    expect(codex.item('ITEM-0209')?.displayName, 'Ancient Alloy');
+    expect(codex.item('ITEM-0209')?.displayName, 'Chromium Bar');
     expect(codex.item('ITEM-0276')?.displayName, 'Ancient Alloy Sword');
     expect(codex.item('ITEM-0325'), isNull);
     expect(codex.item('ITEM-0346'), isNull);

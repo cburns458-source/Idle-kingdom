@@ -31,14 +31,16 @@ const PINNED_NOW_MS = Date.parse('2026-01-01T00:00:00.000Z')
 
 type SaveKind = 'base' | 'leveled' | 'queued-production' | 'gathering' | 'death-paused' | 'full-bag'
 
-/** Combat 10, which clears every Goblin Camp danger warning. */
+/** Combat Level 15 (Might+Vitality 10), which clears the Goblin Camp danger warning. */
 function leveledSave(): PlayerSave {
   const base = baseSave(contentDatabase())
   return {
     ...base,
     characterName: 'Veteran',
     skills: base.skills.map((skill) =>
-      skill.skillId === 'SKL-0001' ? { ...skill, level: 10, xp: 50_000 } : skill,
+      skill.skillId === 'SKL-0001' || skill.skillId === 'SKL-0016'
+        ? { ...skill, level: 10, xp: 50_000 }
+        : skill,
     ),
   }
 }

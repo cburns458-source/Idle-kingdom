@@ -62,6 +62,23 @@ export const ACTION_ASSET_PATHS: Record<string, string> = {
   'ACN-0191': '/assets/actions/acn_pick_deposit_box.webp',
   'ACN-0192': '/assets/actions/acn_steal_general_store.webp',
   'ACN-0199': '/assets/actions/acn_gather_wild_roots.webp',
+  'ACN-0200': '/assets/actions/acn_cut_oak.webp',
+  'ACN-0201': '/assets/actions/acn_cut_maple.webp',
+  'ACN-0202': '/assets/actions/acn_cut_mahogany.webp',
+  'ACN-0203': '/assets/actions/acn_cut_ancient.webp',
+  'ACN-0204': '/assets/actions/acn_hunt_elk.webp',
+  'ACN-0205': '/assets/actions/acn_hunt_rabbit.webp',
+  'ACN-0206': '/assets/actions/acn_hunt_pheasant.webp',
+  'ACN-0207': '/assets/actions/acn_hunt_pheasant.webp',
+  'ACN-0208': '/assets/actions/acn_hunt_pheasant.webp',
+  'ACN-0209': '/assets/actions/acn_hunt_great_stag.webp',
+  'ACN-0210': '/assets/actions/acn_hunt_great_stag.webp',
+  'ACN-0211': '/assets/actions/acn_gather_mosstole.webp',
+  'ACN-0212': '/assets/actions/acn_mine_titanium.webp',
+  'ACN-0213': '/assets/actions/acn_mine_titanium.webp',
+  'ACN-0215': '/assets/actions/acn_catch_tuna.webp',
+  'ACN-0216': '/assets/actions/acn_catch_shark.webp',
+  'ACN-0217': '/assets/actions/acn_catch_baby_giant_squid.webp',
 }
 
 const FALLBACK_ACTION_ASSET = '/assets/actions/acn_harvest_potato.webp'
