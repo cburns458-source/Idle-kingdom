@@ -77,6 +77,26 @@ void main() {
     expect(Palette.skillXp, isNot(Palette.gold));
   });
 
+  testWidgets('Arcana opens on Spells and has no Essence tab', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpSkillShell(tester, controller);
+
+    await openSkillTile(tester, 'Arcana');
+
+    final popup = find.byKey(const Key('game-popup'));
+    expect(find.descendant(of: popup, matching: find.text('Essence')), findsNothing);
+    expect(find.descendant(of: popup, matching: find.text('Spells')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Equipment')), findsOne);
+    expect(find.descendant(of: popup, matching: find.text('Enchants')), findsOne);
+    expect(find.textContaining('Harness essence'), findsNothing);
+    expect(find.textContaining('1. Essence'), findsNothing);
+    final tabs = tester.widget<Row>(
+      find.ancestor(of: find.text('Spells'), matching: find.byType(Row)).first,
+    );
+    expect(tabs.children.whereType<Expanded>(), hasLength(3));
+  });
+
   testWidgets('a skill tile opens a numbered proficiency list', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
