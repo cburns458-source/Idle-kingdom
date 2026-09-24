@@ -79,6 +79,11 @@ export function enemyScaledMaxHp(enemy: EnemyRow): number {
   )
 }
 
+/** Kill XP = true (Vitality-scaled) HP × 2. */
+export function enemyCombatXp(enemy: EnemyRow): number {
+  return enemyScaledMaxHp(enemy) * 2
+}
+
 /** Encounter damage from table base × Might bonus. Boss player-base overrides sit elsewhere. */
 export function enemyScaledDamageRange(enemy: EnemyRow): { min: number; max: number } {
   const multiplier = skillLevelBonusMultiplier(enemyMightLevel(enemy))

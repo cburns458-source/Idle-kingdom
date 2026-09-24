@@ -6,6 +6,7 @@ import type { PlayerSave } from '../save/types'
 import { recordEnemyKill } from '../achievements/progress'
 import { bossProfile, isBossAddFight, type BossProfile } from './boss'
 import { getEnemy } from './engine'
+import { enemyCombatXp } from './stats'
 
 export interface SquidlingVictoryResult {
   save: PlayerSave
@@ -48,7 +49,7 @@ export function applySquidlingVictory(
   squidling: EnemyRow,
   roundEndIso: string,
 ): SquidlingVictoryResult {
-  const xpAmount = Number(squidling['Combat XP'] ?? 0)
+  const xpAmount = enemyCombatXp(squidling)
   let next = applyXp(save, db, FISHING_SKILL_ID, xpAmount).save
   const kills = Number(next.statistics.values.monsters_killed ?? 0) + 1
   next = {

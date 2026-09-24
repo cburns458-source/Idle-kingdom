@@ -8,6 +8,7 @@ import {
   combatLevelFromSkills,
   combatLevelOf,
   enemyCombatLevel,
+  enemyCombatXp,
   enemyMightLevel,
   enemyScaledDamageRange,
   enemyScaledMaxHp,
@@ -85,6 +86,7 @@ describe('might / vitality combat stats', () => {
     expect(enemyVitalityLevel(cow)).toBe(1)
     expect(enemyCombatLevel(cow)).toBe(2)
     expect(enemyScaledMaxHp(cow)).toBe(100)
+    expect(enemyCombatXp(cow)).toBe(200)
     expect(enemyEncounterMaxHp(launch, save, cow)).toBe(100)
     expect(enemyEncounterDamageRange(launch, save, cow)).toEqual({ min: 10, max: 20 })
 
@@ -92,6 +94,7 @@ describe('might / vitality combat stats', () => {
     expect(enemyVitalityLevel(scout)).toBe(10)
     expect(enemyCombatLevel(scout)).toBe(15)
     expect(enemyScaledMaxHp(scout)).toBe(462)
+    expect(enemyCombatXp(scout)).toBe(924)
     expect(enemyScaledDamageRange(scout)).toEqual({ min: 33, max: 66 })
     expect(enemyEncounterMaxHp(launch, save, scout)).toBe(462)
     expect(enemyEncounterDamageRange(launch, save, scout)).toEqual({ min: 33, max: 66 })
@@ -100,18 +103,18 @@ describe('might / vitality combat stats', () => {
   it('keeps the new roster out of locations and drop pools', () => {
     const { launch, source } = prepareDatabase(rawDatabase)
     const added = [
-      ['ENM-0025', 'Giant Rat', 3, 150, 12, 26, 200],
-      ['ENM-0026', 'Bandit', 6, 260, 16, 40, 350],
-      ['ENM-0027', 'Cave Bat', 14, 580, 37, 73, 870],
-      ['ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1200],
-      ['ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 1600],
-      ['ENM-0030', 'Harpy', 48, 3860, 152, 268, 9000],
-      ['ENM-0031', 'Giant', 51, 4440, 164, 288, 10800],
-      ['ENM-0032', 'Gargoyle', 58, 5940, 192, 338, 16600],
-      ['ENM-0033', 'Wyvern', 67, 7920, 236, 404, 26000],
-      ['ENM-0034', 'Cyclops', 70, 9000, 260, 440, 31250],
-      ['ENM-0035', 'Demon', 82, 15000, 475, 745, 64500],
-      ['ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 82000],
+      ['ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300],
+      ['ENM-0026', 'Bandit', 6, 260, 16, 40, 520],
+      ['ENM-0027', 'Cave Bat', 14, 580, 37, 73, 1322],
+      ['ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1770],
+      ['ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 2268],
+      ['ENM-0030', 'Harpy', 48, 3860, 152, 268, 11424],
+      ['ENM-0031', 'Giant', 51, 4440, 164, 288, 13408],
+      ['ENM-0032', 'Gargoyle', 58, 5940, 192, 338, 18770],
+      ['ENM-0033', 'Wyvern', 67, 7920, 236, 404, 26452],
+      ['ENM-0034', 'Cyclops', 70, 9000, 260, 440, 30600],
+      ['ENM-0035', 'Demon', 82, 15000, 475, 745, 54598],
+      ['ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 66066],
     ] as const
     const addedIds = new Set<string>(added.map(([id]) => id))
     for (const [id, name, level, hp, min, max, xp] of added) {
@@ -125,6 +128,7 @@ describe('might / vitality combat stats', () => {
       expect(enemy!['Min Damage']).toBe(min)
       expect(enemy!['Max Damage']).toBe(max)
       expect(enemy!['Combat XP']).toBe(xp)
+      expect(enemyCombatXp(enemy!)).toBe(xp)
       expect(enemy!['Location ID']).toBeNull()
       expect(enemy!['Drop Chance']).toBe(0)
       expect(enemy!['Reward Table ID']).toBeNull()
