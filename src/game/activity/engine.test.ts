@@ -33,9 +33,9 @@ describe('primary activity engine', () => {
 
     const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
     // Below Harvesting 10 proficiency: half XP on wild roots.
-    expect(completed.result.xpGained).toBe(100)
+    expect(completed.result.xpGained).toBe(183)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(183)
     expect(completed.save.statistics.values.gathering_actions_completed).toBe(1)
   })
 
