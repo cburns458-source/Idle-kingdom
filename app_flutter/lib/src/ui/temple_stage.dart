@@ -37,6 +37,11 @@ const Color templeSkyFill = Color(0xFF14163B);
 /// Portrait box whose bottom-center sits on a shadow ellipse.
 const double templePortraitWidth = 152;
 
+/// 256×256 gathering sheets keep ~43px of empty canvas under the plant; player
+/// sprites only have ~11px. Drop the right-side box by this many logical pixels
+/// so the drawn bottom sits on the same ellipse line as the adventurer.
+const double templeActionGroundNudge = 152 * 43 / 256 - 137 * 11 / 256;
+
 class TempleStageLayout {
   const TempleStageLayout(this.stageSize);
 
@@ -55,6 +60,9 @@ class TempleStageLayout {
   Offset get playerFoot => toStage(templePlayerFootDesign);
 
   Offset get actionFoot => toStage(templeActionFootDesign);
+
+  /// Widget-bottom for right-side art after the empty-canvas drop.
+  Offset get actionStand => Offset(actionFoot.dx, actionFoot.dy + templeActionGroundNudge);
 }
 
 /// Sky, terrain, and foliage stacked at the same size, clipped to the 320 view.
