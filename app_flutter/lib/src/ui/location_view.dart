@@ -348,9 +348,7 @@ class _LocationViewState extends State<LocationView> {
                                 right: 13,
                                 top: 0,
                                 bottom: 0,
-                                child: IgnorePointer(
-                                  child: ActivityPanel(controller: controller),
-                                ),
+                                child: IgnorePointer(child: ActivityPanel(controller: controller)),
                               ),
                           ],
                         ),
