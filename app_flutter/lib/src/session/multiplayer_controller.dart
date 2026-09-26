@@ -206,6 +206,10 @@ class MultiplayerController extends ChangeNotifier {
   String _chatLocationId = '';
   String? _notice;
   bool _busy = false;
+  bool _refreshing = false;
+  PlayerSave? _queuedRefreshSave;
+  Future<void>? _refreshHold;
+  PlayerSave? _deferredPresenceSave;
   bool _suppressUploads = false;
   PlayerSave? _pendingAccountSave;
   Timer? _accountSaveTimer;
@@ -525,6 +529,8 @@ class MultiplayerController extends ChangeNotifier {
     _localUnread.clear();
     _publishedNameColors.clear();
     _chatOpen = false;
+    _queuedRefreshSave = null;
+    _deferredPresenceSave = null;
   }
 
   // --- Account saves --------------------------------------------------------
@@ -646,11 +652,45 @@ class MultiplayerController extends ChangeNotifier {
   ///
   /// A read that fails reports itself and repaints with whatever did arrive. A
   /// screen with nothing on it and nothing to say looks like a broken game.
+  ///
+  /// Signup, the account panel, and presence publish all want this at once.
+  /// Overlapping passes share one browser connection pool and drop as
+  /// `Failed to fetch`; one pass at a time, then a deferred presence tick.
   Future<void> refresh(PlayerSave save) async {
+    if (_refreshing) {
+      _queuedRefreshSave = save;
+      await _refreshHold;
+      return;
+    }
+    final hold = Completer<void>();
+    _refreshing = true;
+    _refreshHold = hold.future;
+    try {
+      var current = save;
+      while (true) {
+        await _refreshAndReport(current);
+        final queued = _queuedRefreshSave;
+        if (queued == null) break;
+        _queuedRefreshSave = null;
+        current = queued;
+      }
+    } finally {
+      _refreshing = false;
+      hold.complete();
+      _refreshHold = null;
+      final deferred = _deferredPresenceSave;
+      _deferredPresenceSave = null;
+      if (deferred != null && isSignedIn) {
+        unawaited(publishPresence(deferred));
+      }
+    }
+  }
+
+  Future<void> _refreshAndReport(PlayerSave save) async {
     try {
       await _refresh(save);
       final problem = service.takeReadProblem();
-      if (problem != null && !isUnreachableRemoteError(problem)) {
+      if (problem != null) {
         _notice = problem;
         notifyListeners();
       }
@@ -741,7 +781,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> _poll(PlayerSave save) async {
-    if (!isSignedIn) return;
+    if (!isSignedIn || _refreshing) return;
     if (await _wasKicked()) return;
     await _refreshUnread(save);
     if (_chatTab == ChatTab.dm) {
@@ -772,6 +812,10 @@ class MultiplayerController extends ChangeNotifier {
   /// Says where the player is, so others can see them and they can see others.
   Future<void> publishPresence(PlayerSave save) async {
     if (!isSignedIn) return;
+    if (_refreshing) {
+      _deferredPresenceSave = save;
+      return;
+    }
     await service.publishPresence(presenceFromSave(save));
     _peers = await service.peersAtLocation(save.currentLocationId);
     await _loadSocialLists();
@@ -1473,7 +1517,7 @@ class MultiplayerController extends ChangeNotifier {
     _market = await service.bazaarMarket();
     _marketReady = true;
     final problem = service.takeReadProblem();
-    if (problem != null && !isUnreachableRemoteError(problem)) _notice = problem;
+    if (problem != null) _notice = problem;
     notifyListeners();
   }
 

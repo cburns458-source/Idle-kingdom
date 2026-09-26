@@ -171,7 +171,7 @@ void main() {
     expect(net.busy, isFalse, reason: 'a thrown action still lets go of the buttons');
   });
 
-  testWidgets('a dropped fetch is not a parchment alert', (tester) async {
+  testWidgets('a dropped fetch is retried and the screen stays quiet', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
@@ -184,6 +184,22 @@ void main() {
     await net.refresh(controller.save);
 
     expect(net.notice, isNull);
+  });
+
+  testWidgets('a fetch that stays dead still says so', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+
+    transport.failNextRepeats = remoteUnreachableAttempts;
+    transport.failNextWith =
+        'ClientException: Failed to fetch, uri=https://example.supabase.co/rest/v1/profiles';
+    await net.refresh(controller.save);
+
+    expect(net.notice, remoteUnreachable);
   });
 
   testWidgets('a social screen that cannot read says so', (tester) async {
