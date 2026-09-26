@@ -610,7 +610,7 @@ Bow rules:
 - A qualifying Hunting Action may require a bow.
 - A Combat Action may use the equipped bow without an equipment swap.
 - Bow Damage Range should be slightly below a metal melee weapon of comparable progression because bows are more versatile.
-- Qualifying bow-based Hunting Actions grant Combat XP equal to 10% of the Hunting XP.
+- Qualifying bow-based Hunting Actions grant stance-routed Might/Vitality XP equal to 10% of the Hunting XP (same stance split as kill XP).
 - Bows are created through Artisanry.
 
 8.5 WOODCUTTING

@@ -96,9 +96,24 @@ void main() {
         expect(
           checkParity(fixture, {
             'byAction': byAction,
-            'hunting': bowHuntingCombatXpBonus(db, save, 'SKL-0005', 400)?.toJson(),
-            'nonHunting': bowHuntingCombatXpBonus(db, save, 'SKL-0001', 400)?.toJson(),
-            'zeroXp': bowHuntingCombatXpBonus(db, save, 'SKL-0005', 0)?.toJson(),
+            'hunting': bowHuntingCombatXpBonus(
+              db,
+              save,
+              'SKL-0005',
+              400,
+            ).map((grant) => grant.toJson()).toList(),
+            'nonHunting': bowHuntingCombatXpBonus(
+              db,
+              save,
+              'SKL-0001',
+              400,
+            ).map((grant) => grant.toJson()).toList(),
+            'zeroXp': bowHuntingCombatXpBonus(
+              db,
+              save,
+              'SKL-0005',
+              0,
+            ).map((grant) => grant.toJson()).toList(),
           }),
           isNull,
         );

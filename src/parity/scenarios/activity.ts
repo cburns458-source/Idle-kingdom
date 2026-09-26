@@ -150,7 +150,7 @@ export const activityScenarios: ParityScenario[] = [
           actionId: action['Action ID'],
           bonus: bonusSkillXpForAction(action),
         })).filter((row) => row.bonus != null),
-        // A bow in the Weapon/Tool slot turns Hunting XP into Combat XP too.
+        // A bow in the Weapon/Tool slot turns Hunting XP into stance combat XP too.
         hunting: bowHuntingCombatXpBonus(db, save, { 'Relevant Skill ID': 'SKL-0005' }, 400),
         nonHunting: bowHuntingCombatXpBonus(db, save, { 'Relevant Skill ID': 'SKL-0001' }, 400),
         zeroXp: bowHuntingCombatXpBonus(db, save, { 'Relevant Skill ID': 'SKL-0005' }, 0),

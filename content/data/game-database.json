@@ -58,7 +58,7 @@
       "Key": "bow_hunting_combat_xp_percent",
       "Value": 10,
       "Unit": "%",
-      "Notes": "Qualifying bow-based Hunting Actions (equipped Weapon/Tool has the bow_combat_xp capability) grant Might XP equal to this percent of the Hunting XP awarded."
+      "Notes": "Qualifying bow-based Hunting Actions (equipped Weapon/Tool has the bow_combat_xp capability) grant stance-routed Might/Vitality XP equal to this percent of the Hunting XP awarded."
     },
     {
       "Key": "starting_max_hp",
@@ -112,19 +112,19 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Deprecated \u2014 equipped spells are always active. Kept for older clients; unused by current runtime."
+      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
     },
     {
       "Key": "copy.merchant_tip",
       "Value": "Last I heard, Quill was nearby.",
       "Unit": null,
-      "Notes": "Unused fallback. The general-store merchant names Quill\u2019s stop in code."
+      "Notes": "Unused fallback. The general-store merchant names Quill’s stop in code."
     },
     {
       "Key": "copy.merchant_tip_spent",
       "Value": "Last I heard, Quill was nearby.",
       "Unit": null,
-      "Notes": "Unused fallback. The general-store merchant names Quill\u2019s stop in code."
+      "Notes": "Unused fallback. The general-store merchant names Quill’s stop in code."
     },
     {
       "Key": "copy.quill_known",
@@ -134,9 +134,9 @@
     },
     {
       "Key": "copy.quill_teach",
-      "Value": "A bow's only half the work \u2014 you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
+      "Value": "A bow's only half the work — you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
       "Unit": null,
-      "Notes": "Quill\u2019s hunting lesson, spoken the first time the player asks."
+      "Notes": "Quill’s hunting lesson, spoken the first time the player asks."
     },
     {
       "Key": "copy.default_merchant_line",
@@ -5652,7 +5652,7 @@
       "Functional / Source Tags": "alchemy_potion_output_boost",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "While crafting potions, output rolls 2\u20133 instead of 1\u20133. No extra experience. Not yet obtainable.",
+      "Description": "While crafting potions, output rolls 2–3 instead of 1–3. No extra experience. Not yet obtainable.",
       "Icon Asset Key": "alchemist_goggles",
       "Notes": "Output-only specialist. Stub content; no acquisition path yet.",
       "Base Sell Value": 220,
@@ -8395,7 +8395,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "artisanry_output; special_effect; +15% relative Drop Chance",
       "Status": "Planned",
-      "Notes": "Special-effect jewelry \u2014 not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
+      "Notes": "Special-effect jewelry — not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -9691,7 +9691,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0177",
@@ -9709,7 +9709,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0007; item_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016). Stacks additively with other Abundance spells."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016). Stacks additively with other Abundance spells."
     },
     {
       "Equipment ID": "EQP-0178",
@@ -9943,7 +9943,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0009; extra_food_per_round:1; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0191",
@@ -10033,7 +10033,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "alchemy_potion_output_boost",
       "Status": "Planned",
-      "Notes": "Potion crafts roll 2\u20133 output. No XP change. Not obtainable yet."
+      "Notes": "Potion crafts roll 2–3 output. No XP change. Not obtainable yet."
     },
     {
       "Equipment ID": "EQP-0197",
@@ -10394,11 +10394,11 @@
       "Internal Key": "critical_strike_chance",
       "Display Name": "Critical Strike Chance",
       "Valid Target": "Eligible weapon or jewelry",
-      "Effect": "+10% Critical Strike Chance (1.5\u00d7 damage on crit)",
+      "Effect": "+10% Critical Strike Chance (1.5× damage on crit)",
       "Required Materials": "Enchanting Tablet; Rabbit's Foot; Boar Tusk",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5\u00d7 rolled damage."
+      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5× rolled damage."
     },
     {
       "Enchantment ID": "ENCH-0009",
@@ -11046,7 +11046,7 @@
       "Node ID": "NODE-0032",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight \u2014 arrival is peaceful.",
+      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight — arrival is peaceful.",
       "Danger / Hostility": null,
       "Background Asset Key": "locations/loc_citadel_combat.webp",
       "Map Node Name": null,
@@ -11492,7 +11492,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Town square to Rose\u2019s Apothecary"
+      "Notes": "Town square to Rose’s Apothecary"
     },
     {
       "Connection ID": "TRV-0012",
@@ -11708,7 +11708,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Shallows \u2194 Kelp Forest"
+      "Notes": "Shallows ↔ Kelp Forest"
     }
   ],
   "Facilities": [
@@ -11918,7 +11918,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Bronze and iron swords, helmets, chestplates, and platelegs.",
-      "Notes": "Shop only. Buys back at the normal 1\u00d7 general-store rate."
+      "Notes": "Shop only. Buys back at the normal 1× general-store rate."
     },
     {
       "Facility ID": "FAC-0018",
@@ -12379,7 +12379,7 @@
       "Internal Key": "train_citadel_grounds",
       "Contextual Name": "Challenge the guards",
       "Location ID": "LOC-0032",
-      "Description": "Face Castle Guard training encounters. Optional \u2014 the grounds stay peaceful until you start this.",
+      "Description": "Face Castle Guard training encounters. Optional — the grounds stay peaceful until you start this.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0024",
       "Pool Internal Key": "citadel_guards",
@@ -12483,7 +12483,7 @@
       "Internal Key": "enter_the_catacombs",
       "Contextual Name": "Enter the catacombs",
       "Location ID": "LOC-0037",
-      "Description": "The deeper catacombs are sealed for now.",
+      "Description": "Dungeons coming soon…",
       "Danger Warning Combat Level": null,
       "Pool ID": null,
       "Pool Internal Key": null,
@@ -13295,7 +13295,7 @@
       "Action ID": "ACN-0048",
       "Weight": 60,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts \u2014 poplar, 60%."
+      "Notes": "Citadel Gathering Outskirts — poplar, 60%."
     },
     {
       "Pool Entry ID": "PEN-0062",
@@ -13303,7 +13303,7 @@
       "Action ID": "ACN-0009",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Combat Training Grounds \u2014 castle guard only."
+      "Notes": "Citadel Combat Training Grounds — castle guard only."
     },
     {
       "Pool Entry ID": "PEN-0063",
@@ -13311,7 +13311,7 @@
       "Action ID": "ACN-0171",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "QST-0003 Pressure the Guards \u2014 nervous guard only."
+      "Notes": "QST-0003 Pressure the Guards — nervous guard only."
     },
     {
       "Pool Entry ID": "PEN-0064",
@@ -13319,7 +13319,7 @@
       "Action ID": "ACN-0172",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Temple \u2014 Monk only."
+      "Notes": "Temple — Monk only."
     },
     {
       "Pool Entry ID": "PEN-0067",
@@ -13359,7 +13359,7 @@
       "Action ID": "ACN-0109",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Augur weed \u2014 90% of temple pick weeds."
+      "Notes": "Augur weed — 90% of temple pick weeds."
     },
     {
       "Pool Entry ID": "PEN-0072",
@@ -13367,7 +13367,7 @@
       "Action ID": "ACN-0110",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Moonblossom \u2014 10% of temple pick weeds."
+      "Notes": "Moonblossom — 10% of temple pick weeds."
     },
     {
       "Pool Entry ID": "PEN-0073",
@@ -13375,7 +13375,7 @@
       "Action ID": "ACN-0049",
       "Weight": 70,
       "Status": "Planned",
-      "Notes": "Cut maple tree \u2014 70% of hardwood chopping."
+      "Notes": "Cut maple tree — 70% of hardwood chopping."
     },
     {
       "Pool Entry ID": "PEN-0074",
@@ -13383,7 +13383,7 @@
       "Action ID": "ACN-0050",
       "Weight": 30,
       "Status": "Planned",
-      "Notes": "Cut mahogany tree \u2014 30% of hardwood chopping."
+      "Notes": "Cut mahogany tree — 30% of hardwood chopping."
     },
     {
       "Pool Entry ID": "PEN-0075",
@@ -13391,7 +13391,7 @@
       "Action ID": "ACN-0176",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Fight ghost \u2014 90% of fending off the old spirits."
+      "Notes": "Fight ghost — 90% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0076",
@@ -13399,7 +13399,7 @@
       "Action ID": "ACN-0006",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Fight skeleton \u2014 10% of fending off the old spirits."
+      "Notes": "Fight skeleton — 10% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0077",
@@ -13407,7 +13407,7 @@
       "Action ID": "ACN-0047",
       "Weight": 40,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts \u2014 oak, 40%."
+      "Notes": "Citadel Gathering Outskirts — oak, 40%."
     },
     {
       "Pool Entry ID": "PEN-0078",
@@ -13511,7 +13511,7 @@
       "Action ID": "ACN-0017",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts \u2014 pheasant only."
+      "Notes": "Gathering Outskirts — pheasant only."
     },
     {
       "Pool Entry ID": "PEN-0091",
@@ -13519,7 +13519,7 @@
       "Action ID": "ACN-0105",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts \u2014 wild roots only."
+      "Notes": "Gathering Outskirts — wild roots only."
     },
     {
       "Pool Entry ID": "PEN-0092",
@@ -18151,7 +18151,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks \u2014 empty Weapon or Tool."
+      "Notes": "Train with the monks — empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0105",
@@ -18164,7 +18164,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks \u2014 empty Shield or Off-hand."
+      "Notes": "Train with the monks — empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0106",
@@ -18203,7 +18203,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds \u2014 empty Weapon or Tool."
+      "Notes": "Pick weeds — empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0109",
@@ -18216,7 +18216,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds \u2014 empty Shield or Off-hand."
+      "Notes": "Pick weeds — empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0110",
@@ -20896,7 +20896,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
+      "Reward Table Name": "Secondary Gems — Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -20911,7 +20911,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -20926,7 +20926,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -20941,7 +20941,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -20956,7 +20956,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -20971,7 +20971,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -28767,7 +28767,7 @@
       "Role": "Wizard",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A traveling wizard who can rewrite the shape of a person \u2014 for a price, and not too often.",
+      "Description": "A traveling wizard who can rewrite the shape of a person — for a price, and not too often.",
       "Notes": "RequiresTotalLevel:500",
       "Sprite Asset Key": "npc/npc_wizard_shopkeeper.png"
     },
@@ -28817,7 +28817,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -28918,7 +28918,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -29014,7 +29014,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Harness essence remains the primary efficient source.",
-      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
+      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -29106,7 +29106,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Citadel market hall stocking everyday tools and supplies.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -29207,7 +29207,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A compact stall with food, potions, and starter tools for travelers.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value.",
+      "Notes": "Player buy price = 2× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0058",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -29302,7 +29302,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells outfits, specialist hats, leather armor, oven mitts, and a scythe.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, leather armor, Oven Mitts, and the Scythe are wearable gear.",
+      "Notes": "Player buy price = 2× Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, leather armor, Oven Mitts, and the Scythe are wearable gear.",
       "Entry 1 Item ID": "ITEM-0296",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -29403,7 +29403,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells bronze, iron, tungsten, and titanium swords, helmets, chestplates, and platelegs.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buyback uses the normal 1\u00d7 general-store rate. No boots or gloves. Titanium costs more than tungsten.",
+      "Notes": "Player buy price = 2× Base Sell Value. Buyback uses the normal 1× general-store rate. No boots or gloves. Titanium costs more than tungsten.",
       "Entry 1 Item ID": "ITEM-0224",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -29510,7 +29510,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells common ores and buys finished smithing work.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys smithing project outputs at 1\u00d7. Does not buy ore.",
+      "Notes": "Player buy price = 2× Base Sell Value. Buys smithing project outputs at 1×. Does not buy ore.",
       "Entry 1 Item ID": "ITEM-0003",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -29734,7 +29734,7 @@
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
       "Summary": "A kitchen worker wants out of the kitchens.",
-      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street \u2014 I keep thinking about the alchemy shop I've always wanted.",
+      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street — I keep thinking about the alchemy shop I've always wanted.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5, ITEM-0028 x5, ITEM-0042 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -29746,7 +29746,7 @@
       "Reward XP Amount": 11000,
       "Reward Item ID": "ITEM-0165",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose\u2019s Apothecary"
+      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
     },
     {
       "Quest ID": "QST-0003",
@@ -29754,7 +29754,7 @@
       "Display Name": "Lowly Beggar",
       "NPC ID": "NPC-0011",
       "Summary": "A beggar was asking for help in the town.",
-      "Pitch": "Please, traveler\u2026 someone took my coin purse in the night, I have nothing left.",
+      "Pitch": "Please, traveler… someone took my coin purse in the night, I have nothing left.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Talk: NPC-0012; OptionalTalk: NPC-0007; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 25000",
@@ -29866,15 +29866,15 @@
       "Reward XP Amount": 100000,
       "Reward Item ID": "ITEM-0313",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "Mining XP, Abandoned Mineshaft, Excavator\u2019s Pickaxe"
+      "Possible Rewards": "Mining XP, Abandoned Mineshaft, Excavator’s Pickaxe"
     },
     {
       "Quest ID": "QST-0009",
       "Internal Key": "a_change_of_skin",
       "Display Name": "A Change of Skin",
       "NPC ID": "NPC-0016",
-      "Summary": "Vesper in the castle hall can rewrite the blood you wear \u2014 once a week, for a price.",
-      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you \u2014 the weave needs time to settle.",
+      "Summary": "Vesper in the castle hall can rewrite the blood you wear — once a week, for a price.",
+      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you — the weave needs time to settle.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Miniquest; HideFromQuestLog; Repeatable:7d; RequiresTotalLevel:500",
@@ -29914,7 +29914,7 @@
       "Display Name": "First Planting",
       "NPC ID": "NPC-0014",
       "Summary": "Fennel unlocks the farm patch and asks you to plant a potato seed.",
-      "Pitch": "You've got a seed. Come to the farm and I'll show you the plot \u2014 Botany starts with putting something in the ground.",
+      "Pitch": "You've got a seed. Come to the farm and I'll show you the plot — Botany starts with putting something in the ground.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "HideFromQuestLog; RequiresAnySeed; AutoStartOnSeed; AutoCompleteOnPlant",
@@ -29934,7 +29934,7 @@
       "Dialogue ID": "QDL-0001",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0007",
-      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool\u2026",
+      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool…",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -29943,7 +29943,7 @@
       "Dialogue ID": "QDL-0002",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free \u2014 or you can try your luck another way.",
+      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free — or you can try your luck another way.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -29961,7 +29961,7 @@
       "Dialogue ID": "QDL-0004",
       "Quest ID": "QST-0004",
       "NPC ID": "NPC-0006",
-      "Line": "New around here? Browse all you like \u2014 no obligation to buy.",
+      "Line": "New around here? Browse all you like — no obligation to buy.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -29979,7 +29979,7 @@
       "Dialogue ID": "QDL-0007",
       "Quest ID": "QST-0001",
       "NPC ID": "NPC-0001",
-      "Line": "The feast is days away and my kitchens are in shambles. Ten baked potatoes, golden and crisp \u2014 and ten cooked perch beside them. Bring those to me and I shall not forget it.",
+      "Line": "The feast is days away and my kitchens are in shambles. Ten baked potatoes, golden and crisp — and ten cooked perch beside them. Bring those to me and I shall not forget it.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -29988,7 +29988,7 @@
       "Dialogue ID": "QDL-0008",
       "Quest ID": "QST-0002",
       "NPC ID": "NPC-0005",
-      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails \u2014 five of each \u2014 and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
+      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails — five of each — and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -29997,7 +29997,7 @@
       "Dialogue ID": "QDL-0009",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0011",
-      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen \u2014 a shopkeeper, a passerby. Please, I have nothing else.",
+      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen — a shopkeeper, a passerby. Please, I have nothing else.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -30006,7 +30006,7 @@
       "Dialogue ID": "QDL-0010",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "So someone talked. A purse? Maybe I saw something. Of course, my memory gets expensive\u2026 or you could try taking it.",
+      "Line": "So someone talked. A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresTalk: NPC-0007"
@@ -30015,7 +30015,7 @@
       "Dialogue ID": "QDL-0011",
       "Quest ID": "QST-0005",
       "NPC ID": "NPC-0009",
-      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain \u2014 go introduce yourself.",
+      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain — go introduce yourself.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -30105,7 +30105,7 @@
       "Dialogue ID": "QDL-0021",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them \u2014 this farm's patch included. Take this potato seed. Press it into the earth here, and Botany will know your name.",
+      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them — this farm's patch included. Take this potato seed. Press it into the earth here, and Botany will know your name.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "First Planting talk. GiveOnTalk potato seed."
@@ -30114,7 +30114,7 @@
       "Dialogue ID": "QDL-0022",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "The patch is yours now. One seed is enough for a first lesson; two or three will share the bed, even mixed. A sapling wants the plot to itself. When you are ready, plant that potato seed \u2014 or any other, if this one goes missing.",
+      "Line": "The patch is yours now. One seed is enough for a first lesson; two or three will share the bed, even mixed. A sapling wants the plot to itself. When you are ready, plant that potato seed — or any other, if this one goes missing.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0024"
@@ -30132,7 +30132,7 @@
       "Dialogue ID": "QDL-0024",
       "Quest ID": "QST-0001",
       "NPC ID": "NPC-0001",
-      "Line": "The kitchens will sing again \u2014 and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
+      "Line": "The kitchens will sing again — and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "When: completed; unlocks Courtyard Botany plot."
@@ -30704,7 +30704,7 @@
       "Race ID": "RACE-0005",
       "Internal Key": "goblin",
       "Display Name": "Goblin",
-      "Description": "Small and green \u2014 welcome among the camps of their kin.",
+      "Description": "Small and green — welcome among the camps of their kin.",
       "Sort Order": 5,
       "Portrait Asset Key": null,
       "Hostility Immunity Location IDs": "LOC-0003",
