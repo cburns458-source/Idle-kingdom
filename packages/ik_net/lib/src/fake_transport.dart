@@ -93,6 +93,21 @@ class FakeTransport implements RemoteTransport {
   /// Every select's column list, so a test can see a retry drop missing ones.
   List<String> get selectedColumns => _project.selectedColumns;
 
+  int _inFlight = 0;
+
+  /// Peak overlapping calls on this client. Sequential reads stay at 1.
+  int maxInFlight = 0;
+
+  Future<T> _track<T>(Future<T> Function() run) async {
+    _inFlight += 1;
+    if (_inFlight > maxInFlight) maxInFlight = _inFlight;
+    try {
+      return await run();
+    } finally {
+      _inFlight -= 1;
+    }
+  }
+
   /// Set to answer the send-chat function with something unusable.
   RemoteRow? chatFunctionReply;
 
@@ -267,33 +282,39 @@ class FakeTransport implements RemoteTransport {
     String? orderBy,
     bool ascending = true,
     int? limit,
-  }) async {
-    calls.add('select:$table');
-    selectedColumns.add(columns);
-    final reason = _takeFailure('select:$table');
-    if (reason != null) return RemoteQueryResult.failed(reason);
-    final missingTable = _missingTableRefusal(table);
-    if (missingTable != null) return RemoteQueryResult.failed(missingTable);
-    final missing = _missingColumnRefusal(table, columns);
-    if (missing != null) return RemoteQueryResult.failed(missing);
+  }) {
+    return _track(() async {
+      calls.add('select:$table');
+      selectedColumns.add(columns);
+      final reason = _takeFailure('select:$table');
+      if (reason != null) return RemoteQueryResult.failed(reason);
+      final missingTable = _missingTableRefusal(table);
+      if (missingTable != null) return RemoteQueryResult.failed(missingTable);
+      final missing = _missingColumnRefusal(table, columns);
+      if (missing != null) return RemoteQueryResult.failed(missing);
 
-    final storedTable = table == RemoteTables.leaderboardEntries ? RemoteTables.leaderboard : table;
-    var rows = (tables[storedTable] ?? const <RemoteRow>[])
-        .where((row) => equals.entries.every((filter) => row[filter.key] == filter.value))
-        .where((row) => like.entries.every((filter) => _matchesLike(row[filter.key], filter.value)))
-        .map((row) => <String, Object?>{...row})
-        .toList();
+      final storedTable = table == RemoteTables.leaderboardEntries
+          ? RemoteTables.leaderboard
+          : table;
+      var rows = (tables[storedTable] ?? const <RemoteRow>[])
+          .where((row) => equals.entries.every((filter) => row[filter.key] == filter.value))
+          .where(
+            (row) => like.entries.every((filter) => _matchesLike(row[filter.key], filter.value)),
+          )
+          .map((row) => <String, Object?>{...row})
+          .toList();
 
-    if (columns.contains('profiles')) {
-      for (final row in rows) {
-        row['profiles'] = _profileJoin(row['user_id']);
+      if (columns.contains('profiles')) {
+        for (final row in rows) {
+          row['profiles'] = _profileJoin(row['user_id']);
+        }
       }
-    }
-    if (orderBy != null) {
-      rows.sort((a, b) => _compare(a[orderBy], b[orderBy]) * (ascending ? 1 : -1));
-    }
-    if (limit != null && rows.length > limit) rows = rows.sublist(0, limit);
-    return RemoteQueryResult.ok(rows);
+      if (orderBy != null) {
+        rows.sort((a, b) => _compare(a[orderBy], b[orderBy]) * (ascending ? 1 : -1));
+      }
+      if (limit != null && rows.length > limit) rows = rows.sublist(0, limit);
+      return RemoteQueryResult.ok(rows);
+    });
   }
 
   /// The profile a leaderboard read joins in, with its guild name folded in.
@@ -351,33 +372,35 @@ class FakeTransport implements RemoteTransport {
   }
 
   @override
-  Future<String?> upsert(String table, List<RemoteRow> rows, {String? onConflict}) async {
-    calls.add('upsert:$table');
-    final reason = _takeFailure('upsert:$table');
-    if (reason != null) return reason;
-    final missingTable = _missingTableRefusal(table);
-    if (missingTable != null) return missingTable;
-    for (final row in rows) {
-      final missing = _missingColumnRefusal(table, row.keys.join(','));
-      if (missing != null) return missing;
-    }
-
-    if (table == RemoteTables.saves) {
-      final blocked = _playSessionRefusal(rows);
-      if (blocked != null) return blocked;
-    }
-
-    final key = onConflict?.split(',').map((part) => part.trim()).toList() ?? _keys[table]!;
-    final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
-    for (final row in rows) {
-      final at = stored.indexWhere((existing) => key.every((k) => existing[k] == row[k]));
-      if (at >= 0) {
-        stored[at] = <String, Object?>{...stored[at], ...row};
-      } else {
-        stored.add(<String, Object?>{...row});
+  Future<String?> upsert(String table, List<RemoteRow> rows, {String? onConflict}) {
+    return _track(() async {
+      calls.add('upsert:$table');
+      final reason = _takeFailure('upsert:$table');
+      if (reason != null) return reason;
+      final missingTable = _missingTableRefusal(table);
+      if (missingTable != null) return missingTable;
+      for (final row in rows) {
+        final missing = _missingColumnRefusal(table, row.keys.join(','));
+        if (missing != null) return missing;
       }
-    }
-    return null;
+
+      if (table == RemoteTables.saves) {
+        final blocked = _playSessionRefusal(rows);
+        if (blocked != null) return blocked;
+      }
+
+      final key = onConflict?.split(',').map((part) => part.trim()).toList() ?? _keys[table]!;
+      final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
+      for (final row in rows) {
+        final at = stored.indexWhere((existing) => key.every((k) => existing[k] == row[k]));
+        if (at >= 0) {
+          stored[at] = <String, Object?>{...stored[at], ...row};
+        } else {
+          stored.add(<String, Object?>{...row});
+        }
+      }
+      return null;
+    });
   }
 
   @override
@@ -466,36 +489,38 @@ class FakeTransport implements RemoteTransport {
   static const String duplicateKeyRefusal = 'duplicate key value violates unique constraint';
 
   @override
-  Future<RemoteInvokeResult> invoke(String function, RemoteRow body) async {
-    calls.add('invoke:$function');
-    final reason = _takeFailure('invoke:$function');
-    if (reason != null) return RemoteInvokeResult.failed(reason);
-    if (function == remoteBazaarMarketFunction) {
-      final caller = _current;
-      if (caller == null) return const RemoteInvokeResult.failed('Not signed in.');
-      return exchange.call(
-        userId: caller.userId,
-        username: caller.username ?? 'Adventurer',
-        body: body,
-      );
-    }
-    if (function != remoteSendChatFunction) {
-      return RemoteInvokeResult.failed('No such function: $function');
-    }
-    if (chatFunctionReply != null) return RemoteInvokeResult.ok(chatFunctionReply);
+  Future<RemoteInvokeResult> invoke(String function, RemoteRow body) {
+    return _track(() async {
+      calls.add('invoke:$function');
+      final reason = _takeFailure('invoke:$function');
+      if (reason != null) return RemoteInvokeResult.failed(reason);
+      if (function == remoteBazaarMarketFunction) {
+        final caller = _current;
+        if (caller == null) return const RemoteInvokeResult.failed('Not signed in.');
+        return exchange.call(
+          userId: caller.userId,
+          username: caller.username ?? 'Adventurer',
+          body: body,
+        );
+      }
+      if (function != remoteSendChatFunction) {
+        return RemoteInvokeResult.failed('No such function: $function');
+      }
+      if (chatFunctionReply != null) return RemoteInvokeResult.ok(chatFunctionReply);
 
-    final sender = _current;
-    if (sender == null) return const RemoteInvokeResult.failed('Not signed in.');
-    final row = <String, Object?>{
-      'id': _nextId('msg'),
-      'channel_key': body['channelKey'],
-      'user_id': sender.userId,
-      'username': sender.username ?? 'Adventurer',
-      'body': body['body'],
-      'created_at': stamp(),
-    };
-    tables[RemoteTables.chat]!.add(row);
-    return RemoteInvokeResult.ok(<String, Object?>{...row});
+      final sender = _current;
+      if (sender == null) return const RemoteInvokeResult.failed('Not signed in.');
+      final row = <String, Object?>{
+        'id': _nextId('msg'),
+        'channel_key': body['channelKey'],
+        'user_id': sender.userId,
+        'username': sender.username ?? 'Adventurer',
+        'body': body['body'],
+        'created_at': stamp(),
+      };
+      tables[RemoteTables.chat]!.add(row);
+      return RemoteInvokeResult.ok(<String, Object?>{...row});
+    });
   }
 
   @override

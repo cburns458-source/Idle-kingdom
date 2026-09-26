@@ -207,7 +207,7 @@ class MultiplayerController extends ChangeNotifier {
   String? _notice;
   bool _busy = false;
   bool _refreshing = false;
-  PlayerSave? _queuedRefreshSave;
+  bool _socialRefreshCompleted = false;
   Future<void>? _refreshHold;
   PlayerSave? _deferredPresenceSave;
   bool _suppressUploads = false;
@@ -331,6 +331,12 @@ class MultiplayerController extends ChangeNotifier {
   /// True while a call is in flight, so buttons can stop taking presses.
   bool get busy => _busy;
 
+  /// True while a social refresh owns the wire.
+  bool get isRefreshing => _refreshing;
+
+  /// True after this session has already completed one social refresh.
+  bool get hasCompletedSocialRefresh => _socialRefreshCompleted;
+
   /// Set when a signed-in resume could not load the account save.
   String? get accountLoadProblem => _cloudLoadProblem;
 
@@ -394,8 +400,9 @@ class MultiplayerController extends ChangeNotifier {
         final claimed = await service.claimAccountUsername(leftoverName);
         if (!claimed.ok) claimReason = claimed.reason;
       }
-      await refresh(playable ?? localHint);
+      await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
+      await refreshMarket();
       if (claimReason != null) return claimReason;
       final accountName = service.session?.username;
       if (accountName != null && !isPendingAccountUsername(accountName)) {
@@ -437,8 +444,9 @@ class MultiplayerController extends ChangeNotifier {
       if (playable == null && _cloudLoadProblem != null) {
         _notice = _cloudLoadProblem;
       }
-      await refresh(playable ?? localHint);
+      await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
+      await refreshMarket();
       return 'Welcome back, ${result.session!.username}.';
     });
   }
@@ -483,8 +491,9 @@ class MultiplayerController extends ChangeNotifier {
         if (playable == null && _cloudLoadProblem != null) {
           _notice = _cloudLoadProblem;
         }
-        await refresh(playable ?? localHint);
+        await refresh(playable ?? localHint, includeMarket: false);
         if (playable != null) await publishRanking(playable);
+        await refreshMarket();
         return null;
       }
       await service.claimPlaySession();
@@ -492,8 +501,9 @@ class MultiplayerController extends ChangeNotifier {
       if (playable == null && _cloudLoadProblem != null) {
         _notice = _cloudLoadProblem;
       }
-      await refresh(playable ?? localHint);
+      await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
+      await refreshMarket();
       return null;
     });
   }
@@ -529,7 +539,7 @@ class MultiplayerController extends ChangeNotifier {
     _localUnread.clear();
     _publishedNameColors.clear();
     _chatOpen = false;
-    _queuedRefreshSave = null;
+    _socialRefreshCompleted = false;
     _deferredPresenceSave = null;
   }
 
@@ -653,12 +663,10 @@ class MultiplayerController extends ChangeNotifier {
   /// A read that fails reports itself and repaints with whatever did arrive. A
   /// screen with nothing on it and nothing to say looks like a broken game.
   ///
-  /// Signup, the account panel, and presence publish all want this at once.
-  /// Overlapping passes share one browser connection pool and drop as
-  /// `Failed to fetch`; one pass at a time, then a deferred presence tick.
-  Future<void> refresh(PlayerSave save) async {
+  /// One pass at a time. A second caller waits for this one instead of
+  /// starting another wave on the same host.
+  Future<void> refresh(PlayerSave save, {bool includeMarket = true}) async {
     if (_refreshing) {
-      _queuedRefreshSave = save;
       await _refreshHold;
       return;
     }
@@ -666,14 +674,9 @@ class MultiplayerController extends ChangeNotifier {
     _refreshing = true;
     _refreshHold = hold.future;
     try {
-      var current = save;
-      while (true) {
-        await _refreshAndReport(current);
-        final queued = _queuedRefreshSave;
-        if (queued == null) break;
-        _queuedRefreshSave = null;
-        current = queued;
-      }
+      await _refreshAndReport(save);
+      if (includeMarket && isSignedIn) await refreshMarket();
+      _socialRefreshCompleted = isSignedIn || canBrowseSocial;
     } finally {
       _refreshing = false;
       hold.complete();
@@ -681,7 +684,7 @@ class MultiplayerController extends ChangeNotifier {
       final deferred = _deferredPresenceSave;
       _deferredPresenceSave = null;
       if (deferred != null && isSignedIn) {
-        unawaited(publishPresence(deferred));
+        await publishPresence(deferred);
       }
     }
   }
@@ -738,7 +741,6 @@ class MultiplayerController extends ChangeNotifier {
     await _refreshUnread(save);
     await _loadSocialLists();
     notifyListeners();
-    unawaited(refreshMarket());
   }
 
   /// Starts the timers that keep presence alive and the counts current.
@@ -810,6 +812,8 @@ class MultiplayerController extends ChangeNotifier {
   // --- Presence -------------------------------------------------------------
 
   /// Says where the player is, so others can see them and they can see others.
+  ///
+  /// Does not reload friends or the own-profile row. Those belong on [refresh].
   Future<void> publishPresence(PlayerSave save) async {
     if (!isSignedIn) return;
     if (_refreshing) {
@@ -818,7 +822,6 @@ class MultiplayerController extends ChangeNotifier {
     }
     await service.publishPresence(presenceFromSave(save));
     _peers = await service.peersAtLocation(save.currentLocationId);
-    await _loadSocialLists();
     notifyListeners();
   }
 
