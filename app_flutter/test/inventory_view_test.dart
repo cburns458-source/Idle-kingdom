@@ -725,6 +725,7 @@ void main() {
     expect(find.byKey(const Key('inventory-attributes')), findsOne);
     expect(find.byKey(const Key('inventory-stance')), findsOne);
     expect(find.byKey(const Key('inventory-eat')), findsOne);
+    expect(find.byKey(const Key('inventory-mounts')), findsOne);
     expect(find.textContaining('Eat at'), findsNothing);
 
     final helmet = tester.getRect(find.byKey(const Key('equipment-slot-SLOT-0003')));
@@ -734,6 +735,7 @@ void main() {
     final attributes = tester.getRect(find.byKey(const Key('inventory-attributes')));
     final stance = tester.getRect(find.byKey(const Key('inventory-stance')));
     final eat = tester.getRect(find.byKey(const Key('inventory-eat')));
+    final mounts = tester.getRect(find.byKey(const Key('inventory-mounts')));
     expect(preset.right, lessThan(helmet.left));
     expect(saveChip.right, lessThan(helmet.left));
     expect(settings.right, lessThan(helmet.left));
@@ -742,8 +744,11 @@ void main() {
     expect(attributes.left, greaterThan(helmet.right));
     expect(stance.left, greaterThan(helmet.right));
     expect(eat.left, greaterThan(helmet.right));
+    expect(mounts.left, greaterThan(helmet.right));
     expect(stance.top, greaterThan(attributes.bottom - 1));
     expect(eat.top, greaterThan(stance.bottom - 1));
+    expect(mounts.top, greaterThan(eat.bottom - 1));
+    expect(mounts.height, greaterThan(eat.height));
     expect(
       tester
           .getSize(
@@ -755,6 +760,15 @@ void main() {
           .height,
       32,
     );
+  });
+
+  testWidgets('mounts button under Eat opens a coming soon popup', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.tap(find.byKey(const Key('inventory-mounts')));
+    await tester.pumpAndSettle();
+    expect(find.text('Mounts coming soon…'), findsOne);
   });
 
   testWidgets('the Eat button opens the threshold picker and Auto-eat', (tester) async {

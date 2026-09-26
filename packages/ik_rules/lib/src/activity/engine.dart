@@ -397,8 +397,9 @@ GatheringCompletion completeGatheringAction(
     if (bonus != null && bonus.xp > 0) {
       applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp));
     }
-    final bowBonus = bowHuntingCombatXpBonus(db, save, skillId, xpAmount);
-    if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
+    for (final bowBonus in bowHuntingCombatXpBonus(db, save, skillId, xpAmount)) {
+      applyBonusXp(bowBonus.skillId, bowBonus.xp);
+    }
 
     next = addLifetimeStat(next, gatheringActionsStat);
     next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
@@ -534,8 +535,9 @@ GatheringCompletion completeGatheringAction(
     if (bonus != null && bonus.xp > 0) {
       applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp));
     }
-    final bowBonus = bowHuntingCombatXpBonus(db, save, skillId, xpAmount);
-    if (bowBonus != null) applyBonusXp(bowBonus.skillId, bowBonus.xp);
+    for (final bowBonus in bowHuntingCombatXpBonus(db, save, skillId, xpAmount)) {
+      applyBonusXp(bowBonus.skillId, bowBonus.xp);
+    }
   }
 
   next = addLifetimeStat(next, gatheringActionsStat);
