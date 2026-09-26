@@ -26,6 +26,7 @@ export 'src/remote_guild_backend.dart';
 export 'src/remote_guilds.dart';
 export 'src/remote_service.dart';
 export 'src/remote_transport.dart';
+export 'src/retrying_transport.dart';
 export 'src/results.dart';
 export 'src/service.dart';
 export 'src/session_store.dart';

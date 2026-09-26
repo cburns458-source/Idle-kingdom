@@ -174,7 +174,11 @@ MultiplayerController buildRemoteMultiplayer(
 }) {
   final testClock = clock ?? TestClock();
   final storage = MemorySaveStorage();
-  final service = RemoteMultiplayerService(transport: transport, storage: storage);
+  final service = RemoteMultiplayerService(
+    transport: transport,
+    storage: storage,
+    retryDelay: (_) async {},
+  );
   service.local.ensureDemoWorld(database.launch);
   final net = MultiplayerController(
     database: database,

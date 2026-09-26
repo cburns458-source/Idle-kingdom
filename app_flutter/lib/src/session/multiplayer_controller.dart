@@ -204,8 +204,17 @@ class MultiplayerController extends ChangeNotifier {
   bool _chatOpen = false;
   bool _citadelHub = false;
   String _chatLocationId = '';
+
+  /// After signup, unread polling skips the private inbox until Private is
+  /// opened or a DM is sent. A new account has no threads, and that hosted
+  /// read is what surfaces a dropped fetch as a parchment alert.
+  bool _deferDirectMessageInbox = false;
   String? _notice;
   bool _busy = false;
+  bool _refreshing = false;
+  bool _socialRefreshCompleted = false;
+  Future<void>? _refreshHold;
+  PlayerSave? _deferredPresenceSave;
   bool _suppressUploads = false;
   PlayerSave? _pendingAccountSave;
   Timer? _accountSaveTimer;
@@ -327,6 +336,12 @@ class MultiplayerController extends ChangeNotifier {
   /// True while a call is in flight, so buttons can stop taking presses.
   bool get busy => _busy;
 
+  /// True while a social refresh owns the wire.
+  bool get isRefreshing => _refreshing;
+
+  /// True after this session has already completed one social refresh.
+  bool get hasCompletedSocialRefresh => _socialRefreshCompleted;
+
   /// Set when a signed-in resume could not load the account save.
   String? get accountLoadProblem => _cloudLoadProblem;
 
@@ -390,8 +405,12 @@ class MultiplayerController extends ChangeNotifier {
         final claimed = await service.claimAccountUsername(leftoverName);
         if (!claimed.ok) claimReason = claimed.reason;
       }
-      await refresh(playable ?? localHint);
+      // A new account has no private threads. Unread polling waits until
+      // Private so signup does not add that inbox read to the first wave.
+      _deferDirectMessageInbox = true;
+      await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
+      await refreshMarket();
       if (claimReason != null) return claimReason;
       final accountName = service.session?.username;
       if (accountName != null && !isPendingAccountUsername(accountName)) {
@@ -433,8 +452,9 @@ class MultiplayerController extends ChangeNotifier {
       if (playable == null && _cloudLoadProblem != null) {
         _notice = _cloudLoadProblem;
       }
-      await refresh(playable ?? localHint);
+      await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
+      await refreshMarket();
       return 'Welcome back, ${result.session!.username}.';
     });
   }
@@ -479,8 +499,9 @@ class MultiplayerController extends ChangeNotifier {
         if (playable == null && _cloudLoadProblem != null) {
           _notice = _cloudLoadProblem;
         }
-        await refresh(playable ?? localHint);
+        await refresh(playable ?? localHint, includeMarket: false);
         if (playable != null) await publishRanking(playable);
+        await refreshMarket();
         return null;
       }
       await service.claimPlaySession();
@@ -488,8 +509,9 @@ class MultiplayerController extends ChangeNotifier {
       if (playable == null && _cloudLoadProblem != null) {
         _notice = _cloudLoadProblem;
       }
-      await refresh(playable ?? localHint);
+      await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
+      await refreshMarket();
       return null;
     });
   }
@@ -525,6 +547,9 @@ class MultiplayerController extends ChangeNotifier {
     _localUnread.clear();
     _publishedNameColors.clear();
     _chatOpen = false;
+    _socialRefreshCompleted = false;
+    _deferredPresenceSave = null;
+    _deferDirectMessageInbox = false;
   }
 
   // --- Account saves --------------------------------------------------------
@@ -646,7 +671,34 @@ class MultiplayerController extends ChangeNotifier {
   ///
   /// A read that fails reports itself and repaints with whatever did arrive. A
   /// screen with nothing on it and nothing to say looks like a broken game.
-  Future<void> refresh(PlayerSave save) async {
+  ///
+  /// One pass at a time. A second caller waits for this one instead of
+  /// starting another wave on the same host.
+  Future<void> refresh(PlayerSave save, {bool includeMarket = true}) async {
+    if (_refreshing) {
+      await _refreshHold;
+      return;
+    }
+    final hold = Completer<void>();
+    _refreshing = true;
+    _refreshHold = hold.future;
+    try {
+      await _refreshAndReport(save);
+      if (includeMarket && isSignedIn) await refreshMarket();
+      _socialRefreshCompleted = isSignedIn || canBrowseSocial;
+    } finally {
+      _refreshing = false;
+      hold.complete();
+      _refreshHold = null;
+      final deferred = _deferredPresenceSave;
+      _deferredPresenceSave = null;
+      if (deferred != null && isSignedIn) {
+        await publishPresence(deferred);
+      }
+    }
+  }
+
+  Future<void> _refreshAndReport(PlayerSave save) async {
     try {
       await _refresh(save);
       final problem = service.takeReadProblem();
@@ -698,7 +750,6 @@ class MultiplayerController extends ChangeNotifier {
     await _refreshUnread(save);
     await _loadSocialLists();
     notifyListeners();
-    unawaited(refreshMarket());
   }
 
   /// Starts the timers that keep presence alive and the counts current.
@@ -741,7 +792,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> _poll(PlayerSave save) async {
-    if (!isSignedIn) return;
+    if (!isSignedIn || _refreshing) return;
     if (await _wasKicked()) return;
     await _refreshUnread(save);
     if (_chatTab == ChatTab.dm) {
@@ -770,11 +821,16 @@ class MultiplayerController extends ChangeNotifier {
   // --- Presence -------------------------------------------------------------
 
   /// Says where the player is, so others can see them and they can see others.
+  ///
+  /// Does not reload friends or the own-profile row. Those belong on [refresh].
   Future<void> publishPresence(PlayerSave save) async {
     if (!isSignedIn) return;
+    if (_refreshing) {
+      _deferredPresenceSave = save;
+      return;
+    }
     await service.publishPresence(presenceFromSave(save));
     _peers = await service.peersAtLocation(save.currentLocationId);
-    await _loadSocialLists();
     notifyListeners();
   }
 
@@ -980,6 +1036,7 @@ class MultiplayerController extends ChangeNotifier {
       return 0;
     }
     if (tab == ChatTab.dm) {
+      if (_deferDirectMessageInbox) return 0;
       return service.countUnreadDirectMessages(_dmCursor());
     }
     final channel = chatChannelForTab(
@@ -1113,6 +1170,7 @@ class MultiplayerController extends ChangeNotifier {
       return;
     }
     if (tab == ChatTab.dm) {
+      _deferDirectMessageInbox = false;
       _messages = await service.listDirectMessages();
       _ingestDmPeers(_messages);
       if (_selectedDmPeerId == null && _openDmPeerIds.isNotEmpty) {
@@ -1254,6 +1312,7 @@ class MultiplayerController extends ChangeNotifier {
       if (me == null) return 'Sign in to chat.';
       final result = await service.sendChat(ChatChannel.dm(dmPairKey(me, userId)), body);
       if (!result.ok) return result.reason;
+      _deferDirectMessageInbox = false;
       _chatTab = ChatTab.dm;
       selectDmPeer(userId, username: username ?? _dmPeerNames[userId] ?? 'Adventurer');
       _messages = await service.listDirectMessages();
