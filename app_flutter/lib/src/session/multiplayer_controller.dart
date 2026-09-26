@@ -204,6 +204,11 @@ class MultiplayerController extends ChangeNotifier {
   bool _chatOpen = false;
   bool _citadelHub = false;
   String _chatLocationId = '';
+
+  /// After signup, unread polling skips the private inbox until Private is
+  /// opened or a DM is sent. A new account has no threads, and that hosted
+  /// read is what surfaces a dropped fetch as a parchment alert.
+  bool _deferDirectMessageInbox = false;
   String? _notice;
   bool _busy = false;
   bool _refreshing = false;
@@ -400,6 +405,9 @@ class MultiplayerController extends ChangeNotifier {
         final claimed = await service.claimAccountUsername(leftoverName);
         if (!claimed.ok) claimReason = claimed.reason;
       }
+      // A new account has no private threads. Unread polling waits until
+      // Private so signup does not add that inbox read to the first wave.
+      _deferDirectMessageInbox = true;
       await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
       await refreshMarket();
@@ -541,6 +549,7 @@ class MultiplayerController extends ChangeNotifier {
     _chatOpen = false;
     _socialRefreshCompleted = false;
     _deferredPresenceSave = null;
+    _deferDirectMessageInbox = false;
   }
 
   // --- Account saves --------------------------------------------------------
@@ -1027,6 +1036,7 @@ class MultiplayerController extends ChangeNotifier {
       return 0;
     }
     if (tab == ChatTab.dm) {
+      if (_deferDirectMessageInbox) return 0;
       return service.countUnreadDirectMessages(_dmCursor());
     }
     final channel = chatChannelForTab(
@@ -1160,6 +1170,7 @@ class MultiplayerController extends ChangeNotifier {
       return;
     }
     if (tab == ChatTab.dm) {
+      _deferDirectMessageInbox = false;
       _messages = await service.listDirectMessages();
       _ingestDmPeers(_messages);
       if (_selectedDmPeerId == null && _openDmPeerIds.isNotEmpty) {
@@ -1301,6 +1312,7 @@ class MultiplayerController extends ChangeNotifier {
       if (me == null) return 'Sign in to chat.';
       final result = await service.sendChat(ChatChannel.dm(dmPairKey(me, userId)), body);
       if (!result.ok) return result.reason;
+      _deferDirectMessageInbox = false;
       _chatTab = ChatTab.dm;
       selectDmPeer(userId, username: username ?? _dmPeerNames[userId] ?? 'Adventurer');
       _messages = await service.listDirectMessages();

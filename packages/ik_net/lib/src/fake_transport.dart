@@ -108,6 +108,9 @@ class FakeTransport implements RemoteTransport {
     }
   }
 
+  /// Every select `like` filter, as `table.column=pattern`.
+  List<String> get selectedLikes => _project.selectedLikes;
+
   /// Set to answer the send-chat function with something unusable.
   RemoteRow? chatFunctionReply;
 
@@ -286,6 +289,9 @@ class FakeTransport implements RemoteTransport {
     return _track(() async {
       calls.add('select:$table');
       selectedColumns.add(columns);
+      for (final entry in like.entries) {
+        selectedLikes.add('$table.${entry.key}=${entry.value}');
+      }
       final reason = _takeFailure('select:$table');
       if (reason != null) return RemoteQueryResult.failed(reason);
       final missingTable = _missingTableRefusal(table);
@@ -565,6 +571,7 @@ class _FakeProject {
   final Set<String> missingColumns = <String>{};
   final Set<String> missingTables = <String>{};
   final List<String> selectedColumns = <String>[];
+  final List<String> selectedLikes = <String>[];
 
   FakeExchange? exchange;
   int stamps = 0;
