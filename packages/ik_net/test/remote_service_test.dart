@@ -315,6 +315,17 @@ void main() {
     expect(pulled.reason, 'Connection closed.');
   });
 
+  test('a dropped browser fetch is not remembered as a read problem', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    final service = await _signedIn(transport, storage);
+
+    transport.failNextWith =
+        'ClientException: Failed to fetch, uri=https://example.supabase.co/rest/v1/profiles';
+    expect(await service.profile(service.session!.userId), isNull);
+    expect(service.takeReadProblem(), isNull);
+  });
+
   test('a refused read explains a wrong project URL the way sign-in does', () async {
     final transport = FakeTransport();
     final storage = MemorySaveStorage();

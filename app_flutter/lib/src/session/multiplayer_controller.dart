@@ -650,7 +650,7 @@ class MultiplayerController extends ChangeNotifier {
     try {
       await _refresh(save);
       final problem = service.takeReadProblem();
-      if (problem != null) {
+      if (problem != null && !isUnreachableRemoteError(problem)) {
         _notice = problem;
         notifyListeners();
       }
@@ -1473,7 +1473,7 @@ class MultiplayerController extends ChangeNotifier {
     _market = await service.bazaarMarket();
     _marketReady = true;
     final problem = service.takeReadProblem();
-    if (problem != null) _notice = problem;
+    if (problem != null && !isUnreachableRemoteError(problem)) _notice = problem;
     notifyListeners();
   }
 

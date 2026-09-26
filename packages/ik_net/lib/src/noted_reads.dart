@@ -35,7 +35,10 @@ class NotedReads implements RemoteTransport {
   /// For a read that is not a query: the Bazaar is read through a function call,
   /// because its tables are shut to clients, and a refused call should reach the
   /// player the same way a refused select does rather than as an empty screen.
-  void note(String reason) => _problem ??= friendlyRemoteError(reason);
+  void note(String reason) {
+    if (isUnreachableRemoteError(reason)) return;
+    _problem ??= friendlyRemoteError(reason);
+  }
 
   /// Drops the held refusal when it matches [test], so a recovered read is not
   /// reported. Leaves a different earlier failure in place.
@@ -64,7 +67,9 @@ class NotedReads implements RemoteTransport {
       limit: limit,
     );
     final reason = result.reason;
-    if (reason != null) _problem ??= friendlyRemoteError(reason);
+    if (reason != null && !isUnreachableRemoteError(reason)) {
+      _problem ??= friendlyRemoteError(reason);
+    }
     return result;
   }
 
