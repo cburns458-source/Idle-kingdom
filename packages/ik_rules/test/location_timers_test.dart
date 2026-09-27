@@ -536,4 +536,37 @@ void main() {
     expect(collected.loot.any((row) => row.itemId == potatoSeedItemId), isTrue);
     expect(collected.xpGained, 1000);
   });
+
+  test('default collect RNG can return seeds (not stuck at 0.5)', () {
+    // Flutter calls collectLocationTimer without [random]. A constant 0.5 default
+    // makes `rng() < botanySeedReturnChance` never true, so seeds never drop.
+    expect(botanySeedReturnChance, 0.5);
+    var seedReturns = 0;
+    for (var trial = 0; trial < 40; trial += 1) {
+      final save = createNewSave(db, 0).copyWith(
+        currentLocationId: 'LOC-0031',
+        skills: const [SkillProgress(skillId: 'SKL-0014', level: 80, xp: 0)],
+        inventory: const [InventoryStack(itemId: potatoSeedItemId, quantity: 3)],
+      );
+      final planted = plantBotanySelection(db, save, const [
+        potatoSeedItemId,
+        potatoSeedItemId,
+        potatoSeedItemId,
+      ], nowMs: 0);
+      expect(planted.ok, isTrue);
+      final collected = collectLocationTimer(
+        db,
+        planted.save!,
+        'LOC-0031',
+        'botany',
+        nowMs: 10800 * 1000,
+      );
+      expect(collected.ok, isTrue);
+      seedReturns += collected.loot
+          .where((row) => row.itemId == potatoSeedItemId)
+          .fold<num>(0, (sum, row) => sum + row.quantity)
+          .round();
+    }
+    expect(seedReturns, greaterThan(0));
+  });
 }

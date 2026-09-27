@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
@@ -38,6 +40,9 @@ const num compostSeedCost = 1;
 const num compostSaplingCost = 5;
 const String botanyAllDiedTitle = 'Oh no everything died!';
 
+/// Per lived plant: chance to return a seed/sapling (mutations take a share of this).
+const double botanySeedReturnChance = 0.5;
+
 /// Parent pairs that can return a different seed when both are in the planted pool.
 class BotanySeedMutation {
   const BotanySeedMutation({required this.parents, required this.product});
@@ -59,8 +64,8 @@ const List<BotanySeedMutation> botanySeedMutations = [
   ),
 ];
 
-/// After the 50% seed-return succeeds, a parent in an active combo is 50% itself
-/// and the other 50% is split among those products. Pool-based, not order-based.
+/// After [botanySeedReturnChance] succeeds, a parent in an active combo is 50%
+/// itself and the other 50% is split among those products. Pool-based, not order-based.
 String rollReturnedBotanySeed(
   List<String> plantedSeedIds,
   String returningSeedId,
@@ -937,7 +942,9 @@ LocationTimerCollectResult collectLocationTimer(
   required num nowMs,
   num Function()? random,
 }) {
-  final rng = random ?? () => 0.5;
+  // Must be a real RNG. A constant 0.5 makes `rng() < botanySeedReturnChance` never
+  // succeed, so patch collects would never return seeds (Flutter omits [random]).
+  final rng = random ?? math.Random().nextDouble;
   final now = nowMs;
   final timer = timerAtLocationKind(save, locationId, kind);
   if (timer == null) {
@@ -985,7 +992,7 @@ LocationTimerCollectResult collectLocationTimer(
       harvestXp += spec?.xp ?? 0;
     }
     for (final seedItemId in successfulIds) {
-      if (rng() < 0.5) {
+      if (rng() < botanySeedReturnChance) {
         final returnedId = rollReturnedBotanySeed(successfulIds, seedItemId, rng);
         returned[returnedId] = (returned[returnedId] ?? 0) + 1;
       }
