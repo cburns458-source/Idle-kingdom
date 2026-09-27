@@ -16,12 +16,6 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
-  bool assetNamed(Widget widget, String needle) {
-    if (widget is! Image) return false;
-    final image = widget.image;
-    return image is AssetImage && image.assetName.contains(needle);
-  }
-
   Finder dockRow(String title) {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }

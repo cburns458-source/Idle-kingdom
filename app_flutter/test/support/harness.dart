@@ -285,3 +285,17 @@ Future<void> pumpPanel(
     ),
   );
 }
+
+/// The asset path an [Image] is showing, including when [GameImage] wraps it
+/// in [ResizeImage] so iOS does not decode 2000px icons at full size.
+String? assetImageName(ImageProvider provider) {
+  if (provider is ResizeImage) return assetImageName(provider.imageProvider);
+  if (provider is AssetImage) return provider.assetName;
+  return null;
+}
+
+/// True when [widget] is an [Image] whose asset path contains [needle].
+bool assetNamed(Widget widget, String needle) {
+  if (widget is! Image) return false;
+  return assetImageName(widget.image)?.contains(needle) ?? false;
+}
