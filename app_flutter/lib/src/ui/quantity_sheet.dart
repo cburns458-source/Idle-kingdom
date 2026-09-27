@@ -24,6 +24,10 @@ Future<int?> askQuantity(
   int min = 1,
   int? max,
 
+  /// When false, [max] still caps typed values but the Max button is hidden
+  /// (sell offer price: no Max, buy offer price: Max = gold).
+  bool showMax = true,
+
   /// Shop offer pads. When set, the keypad can take the item off the offer.
   /// A confirmed remove returns [quantityRemoveSentinel].
   String? removeLabel,
@@ -39,6 +43,7 @@ Future<int?> askQuantity(
       initialValue: initialValue,
       min: min,
       max: max,
+      showMax: showMax,
       removeLabel: removeLabel,
     ),
   );
@@ -53,6 +58,7 @@ class _QuantitySheet extends StatefulWidget {
     required this.initialValue,
     required this.min,
     required this.max,
+    required this.showMax,
     this.removeLabel,
   });
 
@@ -63,6 +69,7 @@ class _QuantitySheet extends StatefulWidget {
   final int initialValue;
   final int min;
   final int? max;
+  final bool showMax;
   final String? removeLabel;
 
   @override
@@ -143,19 +150,21 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                GameButton(
-                  label: 'Max',
-                  tone: GameButtonTone.secondary,
-                  compact: true,
-                  onPressed: ceiling == null || ceiling < widget.min
-                      ? null
-                      : () => setState(() {
-                          _error = null;
-                          _edited = true;
-                          _text = '$ceiling';
-                        }),
-                ),
+                if (widget.showMax) ...[
+                  const SizedBox(width: 8),
+                  GameButton(
+                    label: 'Max',
+                    tone: GameButtonTone.secondary,
+                    compact: true,
+                    onPressed: ceiling == null || ceiling < widget.min
+                        ? null
+                        : () => setState(() {
+                            _error = null;
+                            _edited = true;
+                            _text = '$ceiling';
+                          }),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 8),
