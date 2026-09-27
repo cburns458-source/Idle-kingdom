@@ -184,6 +184,88 @@ void main() {
     expectBundled(playerAssetPath(null), 'a player without an appearance');
     expectBundled(avatarFrameAssetPath(), 'the HUD portrait frame');
   });
+
+  test('HUD, bag, and paper-doll icons stay small enough to decode on iOS', () {
+    // Opening inventory draws 16 slot glyphs plus bag items on top of the
+    // location scene. A 2000×2000 WebP is ~16MB uncompressed; sixteen of
+    // those black-screen Safari. Keep icon rasters at HUD/bag size.
+    const maxSide = 256;
+    final icons = Directory('content/assets/icons')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.webp'));
+    expect(icons, isNotEmpty);
+    for (final file in icons) {
+      final size = webpDimensions(file.readAsBytesSync());
+      expect(size, isNotNull, reason: '${file.path} is not a readable WebP');
+      expect(
+        size!.width,
+        lessThanOrEqualTo(maxSide),
+        reason: '${file.path} is ${size.width}×${size.height}; icons must stay ≤$maxSide',
+      );
+      expect(
+        size.height,
+        lessThanOrEqualTo(maxSide),
+        reason: '${file.path} is ${size.width}×${size.height}; icons must stay ≤$maxSide',
+      );
+    }
+  });
+}
+
+/// Width and height from a WebP bitstream, or null when the header is not one.
+({int width, int height})? webpDimensions(List<int> bytes) {
+  if (bytes.length < 16) return null;
+  if (bytes[0] != 0x52 || bytes[1] != 0x49 || bytes[2] != 0x46 || bytes[3] != 0x46) {
+    return null;
+  }
+  if (bytes[8] != 0x57 || bytes[9] != 0x45 || bytes[10] != 0x42 || bytes[11] != 0x50) {
+    return null;
+  }
+  var offset = 12;
+  int? width;
+  int? height;
+  while (offset + 8 <= bytes.length) {
+    final tag = String.fromCharCodes(bytes.sublist(offset, offset + 4));
+    final chunkSize =
+        bytes[offset + 4] |
+        (bytes[offset + 5] << 8) |
+        (bytes[offset + 6] << 16) |
+        (bytes[offset + 7] << 24);
+    final payloadStart = offset + 8;
+    final payloadEnd = payloadStart + chunkSize;
+    if (payloadEnd > bytes.length) break;
+    if (tag == 'VP8X' && chunkSize >= 10) {
+      width =
+          1 +
+          (bytes[payloadStart + 4] |
+              (bytes[payloadStart + 5] << 8) |
+              (bytes[payloadStart + 6] << 16));
+      height =
+          1 +
+          (bytes[payloadStart + 7] |
+              (bytes[payloadStart + 8] << 8) |
+              (bytes[payloadStart + 9] << 16));
+    } else if (tag == 'VP8L' && chunkSize >= 5 && width == null) {
+      final bits =
+          bytes[payloadStart + 1] |
+          (bytes[payloadStart + 2] << 8) |
+          (bytes[payloadStart + 3] << 16) |
+          (bytes[payloadStart + 4] << 24);
+      width = (bits & 0x3fff) + 1;
+      height = ((bits >> 14) & 0x3fff) + 1;
+    } else if (tag == 'VP8 ' && width == null) {
+      for (var i = payloadStart; i + 6 < payloadEnd; i += 1) {
+        if (bytes[i] == 0x9d && bytes[i + 1] == 0x01 && bytes[i + 2] == 0x2a) {
+          width = bytes[i + 3] | ((bytes[i + 4] & 0x3f) << 8);
+          height = bytes[i + 5] | ((bytes[i + 6] & 0x3f) << 8);
+          break;
+        }
+      }
+    }
+    offset = payloadEnd + (chunkSize & 1);
+  }
+  if (width == null || height == null) return null;
+  return (width: width, height: height);
 }
 
 /// The asset entries `pubspec.yaml` declares, in the order they are listed.

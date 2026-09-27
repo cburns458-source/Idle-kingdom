@@ -807,6 +807,24 @@ void main() {
     expect(find.byKey(const Key('inventory-eat')), findsOne);
   });
 
+  testWidgets('paper doll slot glyphs decode at the painted size', (tester) async {
+    final controller = buildController(database, seed: unequippedCharacter());
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+
+    final helmet = tester.widget<Image>(
+      find.descendant(
+        of: find.byKey(const Key('equipment-slot-SLOT-0003')),
+        matching: find.byType(Image),
+      ),
+    );
+    expect(helmet.cacheWidth, isNotNull);
+    expect(helmet.cacheHeight, isNotNull);
+    expect(helmet.cacheWidth, lessThanOrEqualTo(256));
+    expect(helmet.cacheHeight, lessThanOrEqualTo(256));
+  });
+
   testWidgets('the bag fits six to eight items on a row', (tester) async {
     final seed = unequippedCharacter().copyWith(
       inventory: [for (var i = 0; i < 16; i += 1) InventoryStack(itemId: 'ITEM-0002', quantity: 1)],
