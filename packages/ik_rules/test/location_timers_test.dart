@@ -13,31 +13,53 @@ void main() {
   test('drops the retired Mountains gateway botany patch and keeps Slopes and Temple', () {
     final migrated = migrateSaveJson(<String, Object?>{
       'saveVersion': 54,
-      'discoveredTimerSpotIds': <Object?>['botany:LOC-0006', 'botany:LOC-0046', 'botany:LOC-0036'],
+      'discoveredTimerSpotIds': <Object?>[
+        'botany:LOC-0006',
+        'botany:LOC-0046',
+        'botany:LOC-0036',
+      ],
       'locationTimers': <Object?>[
         <String, Object?>{'locationId': 'LOC-0006', 'kind': 'botany'},
         <String, Object?>{'locationId': 'LOC-0046', 'kind': 'botany'},
         <String, Object?>{'locationId': 'LOC-0036', 'kind': 'botany'},
       ],
       'lootTrackers': <String, Object?>{
-        'timer:botany:LOC-0006': <String, Object?>{'key': 'timer:botany:LOC-0006'},
-        'timer:botany:LOC-0046': <String, Object?>{'key': 'timer:botany:LOC-0046'},
+        'timer:botany:LOC-0006': <String, Object?>{
+          'key': 'timer:botany:LOC-0006',
+        },
+        'timer:botany:LOC-0046': <String, Object?>{
+          'key': 'timer:botany:LOC-0046',
+        },
       },
     }, 0);
     expect(migrated['saveVersion'], saveVersion);
-    expect(migrated['discoveredTimerSpotIds'], ['botany:LOC-0046', 'botany:LOC-0036']);
-    expect((migrated['locationTimers'] as List).map((row) => (row as Map)['locationId']), [
-      'LOC-0046',
-      'LOC-0036',
+    expect(migrated['discoveredTimerSpotIds'], [
+      'botany:LOC-0046',
+      'botany:LOC-0036',
     ]);
-    expect((migrated['lootTrackers'] as Map).containsKey('timer:botany:LOC-0006'), isFalse);
-    expect((migrated['lootTrackers'] as Map).containsKey('timer:botany:LOC-0046'), isTrue);
+    expect(
+      (migrated['locationTimers'] as List).map(
+        (row) => (row as Map)['locationId'],
+      ),
+      ['LOC-0046', 'LOC-0036'],
+    );
+    expect(
+      (migrated['lootTrackers'] as Map).containsKey('timer:botany:LOC-0006'),
+      isFalse,
+    );
+    expect(
+      (migrated['lootTrackers'] as Map).containsKey('timer:botany:LOC-0046'),
+      isTrue,
+    );
   });
 
   test('timerSpotKey and parseTimerSpotKey round-trip', () {
     expect(timerSpotKey('botany', 'LOC-0001'), 'botany:LOC-0001');
     expect(timerSpotKey('fishing_pot', 'LOC-0003'), 'fishing_pot:LOC-0003');
-    expect(parseTimerSpotKey('botany:LOC-0001'), (kind: 'botany', locationId: 'LOC-0001'));
+    expect(parseTimerSpotKey('botany:LOC-0001'), (
+      kind: 'botany',
+      locationId: 'LOC-0001',
+    ));
     expect(parseTimerSpotKey('fishing_pot:LOC-0003'), (
       kind: 'fishing_pot',
       locationId: 'LOC-0003',
@@ -58,29 +80,48 @@ void main() {
     expect(save.discoveredTimerSpotIds, isEmpty);
 
     save = save.copyWith(
-      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+      quests: const [
+        QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1),
+      ],
     );
     save = discoverTimerSpotsForLocation(save, 'LOC-0001');
     expect(save.discoveredTimerSpotIds, ['botany:LOC-0001']);
-    expect(identical(discoverTimerSpotsForLocation(save, 'LOC-0001'), save), isTrue);
+    expect(
+      identical(discoverTimerSpotsForLocation(save, 'LOC-0001'), save),
+      isTrue,
+    );
 
     save = discoverTimerSpotsForLocation(save, 'LOC-0009');
     expect(save.discoveredTimerSpotIds, contains('botany:LOC-0009'));
-    expect(save.discoveredTimerSpotIds, isNot(contains('hunting_trap:LOC-0009')));
+    expect(
+      save.discoveredTimerSpotIds,
+      isNot(contains('hunting_trap:LOC-0009')),
+    );
 
     save = discoverTimerSpotsForLocation(save, 'LOC-0003');
     expect(save.discoveredTimerSpotIds, contains('fishing_pot:LOC-0003'));
 
-    expect(identical(discoverTimerSpotsForLocation(save, 'LOC-9999'), save), isTrue);
+    expect(
+      identical(discoverTimerSpotsForLocation(save, 'LOC-9999'), save),
+      isTrue,
+    );
   });
 
   test('plant and place discover their spots', () {
     var save = createNewSave(db, 0).copyWith(
       currentLocationId: 'LOC-0001',
       inventory: const [InventoryStack(itemId: 'ITEM-0324', quantity: 3)],
-      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+      quests: const [
+        QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1),
+      ],
     );
-    final planted = plantBotanySeed(db, save, 'ITEM-0324', nowMs: 0, plantQuantity: 3);
+    final planted = plantBotanySeed(
+      db,
+      save,
+      'ITEM-0324',
+      nowMs: 0,
+      plantQuantity: 3,
+    );
     expect(planted.ok, isTrue);
     expect(planted.save!.discoveredTimerSpotIds, contains('botany:LOC-0001'));
 
@@ -91,7 +132,10 @@ void main() {
     );
     final placed = placeTrap(db, save, fishingPotItemId, nowMs: 0);
     expect(placed.ok, isTrue);
-    expect(placed.save!.discoveredTimerSpotIds, contains('fishing_pot:LOC-0003'));
+    expect(
+      placed.save!.discoveredTimerSpotIds,
+      contains('fishing_pot:LOC-0003'),
+    );
   });
 
   test('fishing pots roll 3-6 fish per bait slot and return the pot', () {
@@ -108,7 +152,10 @@ void main() {
     );
     expect(placed.ok, isTrue);
     save = placed.save!;
-    expect(timerAtLocationKind(save, 'LOC-0003', 'fishing_pot')?.baitItemIds, isNull);
+    expect(
+      timerAtLocationKind(save, 'LOC-0003', 'fishing_pot')?.baitItemIds,
+      isNull,
+    );
     final collected = collectLocationTimer(
       db,
       save,
@@ -118,8 +165,14 @@ void main() {
       random: () => 0,
     );
     expect(collected.ok, isTrue);
-    expect(collected.loot.map((row) => row.itemId), ['ITEM-0352', fishingPotItemId]);
-    expect(collected.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity, 9);
+    expect(collected.loot.map((row) => row.itemId), [
+      'ITEM-0352',
+      fishingPotItemId,
+    ]);
+    expect(
+      collected.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity,
+      9,
+    );
     expect(collected.xpGained, 4050);
     expect(collected.bonusXp, [(skillId: 'SKL-0005', xp: 4050)]);
     expect(
@@ -143,11 +196,10 @@ void main() {
         InventoryStack(itemId: 'ITEM-0191', quantity: 3),
       ],
     );
-    expect(potBaitOptionsForLocation(db, camp, 'LOC-0003').map((row) => row.itemId), [
-      'ITEM-0047',
-      'ITEM-0049',
-      'ITEM-0051',
-    ]);
+    expect(
+      potBaitOptionsForLocation(db, camp, 'LOC-0003').map((row) => row.itemId),
+      ['ITEM-0047', 'ITEM-0049', 'ITEM-0051'],
+    );
     expect(
       placeTrap(
         db,
@@ -159,7 +211,13 @@ void main() {
       isFalse,
     );
     expect(
-      placeTrap(db, camp, fishingPotItemId, nowMs: 0, baitItemIds: const ['ITEM-0047']).ok,
+      placeTrap(
+        db,
+        camp,
+        fishingPotItemId,
+        nowMs: 0,
+        baitItemIds: const ['ITEM-0047'],
+      ).ok,
       isFalse,
     );
 
@@ -171,12 +229,14 @@ void main() {
       baitItemIds: const ['ITEM-0047', 'ITEM-0047', 'ITEM-0047'],
     );
     expect(baited.ok, isTrue);
-    expect(baited.save!.inventory.any((stack) => stack.itemId == 'ITEM-0047'), isFalse);
-    expect(timerAtLocationKind(baited.save!, 'LOC-0003', 'fishing_pot')?.baitItemIds, [
-      'ITEM-0047',
-      'ITEM-0047',
-      'ITEM-0047',
-    ]);
+    expect(
+      baited.save!.inventory.any((stack) => stack.itemId == 'ITEM-0047'),
+      isFalse,
+    );
+    expect(
+      timerAtLocationKind(baited.save!, 'LOC-0003', 'fishing_pot')?.baitItemIds,
+      ['ITEM-0047', 'ITEM-0047', 'ITEM-0047'],
+    );
     final haul = collectLocationTimer(
       db,
       baited.save!,
@@ -186,7 +246,10 @@ void main() {
       random: () => 0,
     );
     expect(haul.ok, isTrue);
-    expect(haul.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity, 9);
+    expect(
+      haul.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity,
+      9,
+    );
     expect(haul.xpGained, 4050);
     expect(haul.bonusXp, [(skillId: 'SKL-0005', xp: 4050)]);
 
@@ -198,11 +261,10 @@ void main() {
         InventoryStack(itemId: 'ITEM-0191', quantity: 3),
       ],
     );
-    expect(potBaitOptionsForLocation(db, docks, 'LOC-0004').map((row) => row.itemId), [
-      'ITEM-0048',
-      'ITEM-0050',
-      'ITEM-0191',
-    ]);
+    expect(
+      potBaitOptionsForLocation(db, docks, 'LOC-0004').map((row) => row.itemId),
+      ['ITEM-0048', 'ITEM-0050', 'ITEM-0191'],
+    );
     final lobsterPot = placeTrap(
       db,
       docks,
@@ -220,7 +282,10 @@ void main() {
       random: () => 0,
     );
     expect(lobster.ok, isTrue);
-    expect(lobster.loot.firstWhere((row) => row.itemId == 'ITEM-0357').quantity, 9);
+    expect(
+      lobster.loot.firstWhere((row) => row.itemId == 'ITEM-0357').quantity,
+      9,
+    );
     expect(lobster.xpGained, 17550);
     expect(lobster.bonusXp, [(skillId: 'SKL-0005', xp: 17550)]);
   });
@@ -313,7 +378,10 @@ void main() {
       ],
     );
     expect(farmBotanyUnlocked(save), isTrue);
-    expect(canPlantBotanySeed(db, save, 'ITEM-0324', plantQuantity: 2).ok, isTrue);
+    expect(
+      canPlantBotanySeed(db, save, 'ITEM-0324', plantQuantity: 2).ok,
+      isTrue,
+    );
   });
 
   test('plants mixed seed types on one patch', () {
@@ -325,7 +393,10 @@ void main() {
         InventoryStack(itemId: 'ITEM-0339', quantity: 2),
       ],
     );
-    final planted = plantBotanySelection(db, save, const ['ITEM-0324', 'ITEM-0339'], nowMs: 0);
+    final planted = plantBotanySelection(db, save, const [
+      'ITEM-0324',
+      'ITEM-0339',
+    ], nowMs: 0);
     expect(planted.ok, isTrue);
     final timer = timerAtLocationKind(planted.save!, 'LOC-0031', 'botany');
     expect(timer?.plantedItemIds, ['ITEM-0324', 'ITEM-0339']);
@@ -341,7 +412,9 @@ void main() {
       outputQuantity: 1,
       skillId: botanySkillId,
       xpReward: 10,
-      startedAt: DateTime.fromMillisecondsSinceEpoch(0).toUtc().toIso8601String(),
+      startedAt: DateTime.fromMillisecondsSinceEpoch(0)
+          .toUtc()
+          .toIso8601String(),
       durationMs: 10_000,
     );
     final ready = LocationTimer(
@@ -351,64 +424,114 @@ void main() {
       outputQuantity: 1,
       skillId: 'SKL-0007',
       xpReward: 10,
-      startedAt: DateTime.fromMillisecondsSinceEpoch(0).toUtc().toIso8601String(),
+      startedAt: DateTime.fromMillisecondsSinceEpoch(0)
+          .toUtc()
+          .toIso8601String(),
       durationMs: 1,
     );
-    final save = createNewSave(db, 0).copyWith(locationTimers: [running, ready]);
+    final save = createNewSave(
+      db,
+      0,
+    ).copyWith(locationTimers: [running, ready]);
     expect(readyLocationTimerCount(save, 5_000), 1);
     expect(readyLocationTimerCount(save, 10_000), 2);
   });
 
   test('splits returned seeds by planted pool, not plant order', () {
     const planted = [potatoSeedItemId, carrotSeedItemId, grapeSeedItemId];
-    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.0), potatoSeedItemId);
-    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.49), potatoSeedItemId);
-    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.5), turnipSeedItemId);
-    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.74), turnipSeedItemId);
-    expect(rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.75), elderBerrySeedItemId);
-    expect(rollReturnedBotanySeed(planted, grapeSeedItemId, () => 0.5), elderBerrySeedItemId);
-    expect(rollReturnedBotanySeed(planted, carrotSeedItemId, () => 0.5), turnipSeedItemId);
+    expect(
+      rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.0),
+      potatoSeedItemId,
+    );
+    expect(
+      rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.49),
+      potatoSeedItemId,
+    );
+    expect(
+      rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.5),
+      turnipSeedItemId,
+    );
+    expect(
+      rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.74),
+      turnipSeedItemId,
+    );
+    expect(
+      rollReturnedBotanySeed(planted, potatoSeedItemId, () => 0.75),
+      elderBerrySeedItemId,
+    );
+    expect(
+      rollReturnedBotanySeed(planted, grapeSeedItemId, () => 0.5),
+      elderBerrySeedItemId,
+    );
+    expect(
+      rollReturnedBotanySeed(planted, carrotSeedItemId, () => 0.5),
+      turnipSeedItemId,
+    );
 
     const twoPotato = [potatoSeedItemId, potatoSeedItemId, carrotSeedItemId];
-    expect(rollReturnedBotanySeed(twoPotato, potatoSeedItemId, () => 0.5), turnipSeedItemId);
-    expect(rollReturnedBotanySeed(twoPotato, carrotSeedItemId, () => 0.5), turnipSeedItemId);
+    expect(
+      rollReturnedBotanySeed(twoPotato, potatoSeedItemId, () => 0.5),
+      turnipSeedItemId,
+    );
+    expect(
+      rollReturnedBotanySeed(twoPotato, carrotSeedItemId, () => 0.5),
+      turnipSeedItemId,
+    );
     expect(
       rollReturnedBotanySeed([potatoSeedItemId], potatoSeedItemId, () => 0.9),
       potatoSeedItemId,
     );
   });
 
-  test('returns mutated seeds on a mixed harvest when the return roll succeeds', () {
-    final save = createNewSave(db, 0).copyWith(
-      currentLocationId: 'LOC-0031',
-      skills: const [SkillProgress(skillId: 'SKL-0014', level: 55, xp: 0)],
-      inventory: const [
-        InventoryStack(itemId: potatoSeedItemId, quantity: 1),
-        InventoryStack(itemId: carrotSeedItemId, quantity: 1),
-        InventoryStack(itemId: grapeSeedItemId, quantity: 1),
-      ],
-    );
-    final planted = plantBotanySelection(db, save, const [
-      potatoSeedItemId,
-      carrotSeedItemId,
-      grapeSeedItemId,
-    ], nowMs: 0);
-    expect(planted.ok, isTrue);
-    final rolls = <num>[0, 0, 0, 0, 0, 0, 0, 0.6, 0, 0.6, 0, 0.6];
-    var i = 0;
-    final collected = collectLocationTimer(
-      db,
-      planted.save!,
-      'LOC-0031',
-      'botany',
-      nowMs: 10800 * 1000,
-      random: () => rolls[i++],
-    );
-    expect(collected.ok, isTrue);
-    expect(collected.loot.where((row) => row.itemId == turnipSeedItemId).first.quantity, 2);
-    expect(collected.loot.where((row) => row.itemId == elderBerrySeedItemId).first.quantity, 1);
-    expect(collected.loot.any((row) => row.itemId == potatoSeedItemId), isFalse);
-  });
+  test(
+    'returns mutated seeds on a mixed harvest when the return roll succeeds',
+    () {
+      final save = createNewSave(db, 0).copyWith(
+        currentLocationId: 'LOC-0031',
+        skills: const [SkillProgress(skillId: 'SKL-0014', level: 55, xp: 0)],
+        inventory: const [
+          InventoryStack(itemId: potatoSeedItemId, quantity: 1),
+          InventoryStack(itemId: carrotSeedItemId, quantity: 1),
+          InventoryStack(itemId: grapeSeedItemId, quantity: 1),
+        ],
+      );
+      final planted = plantBotanySelection(db, save, const [
+        potatoSeedItemId,
+        carrotSeedItemId,
+        grapeSeedItemId,
+      ], nowMs: 0);
+      expect(planted.ok, isTrue);
+      final rolls = <num>[0, 0, 0, 0, 0, 0, 0, 0.6, 0, 0.6, 0, 0.6];
+      var i = 0;
+      final collected = collectLocationTimer(
+        db,
+        planted.save!,
+        'LOC-0031',
+        'botany',
+        nowMs: 10800 * 1000,
+        random: () => rolls[i++],
+      );
+      expect(collected.ok, isTrue);
+      expect(
+        collected.loot
+            .where((row) => row.itemId == turnipSeedItemId)
+            .first
+            .quantity,
+        2,
+      );
+      expect(
+        collected.loot
+            .where((row) => row.itemId == elderBerrySeedItemId)
+            .first
+            .quantity,
+        1,
+      );
+      expect(
+        collected.loot.any((row) => row.itemId == potatoSeedItemId),
+        isFalse,
+      );
+    },
+  );
 
   test('lets moonblossom seeds plant at botany 70', () {
     expect(parseBotanySeedSpec(db, moonblossomSeedItemId)?.requiresLevel, 70);
@@ -445,7 +568,9 @@ void main() {
         InventoryStack(itemId: potatoSeedItemId, quantity: 2),
         InventoryStack(itemId: compostItemId, quantity: 3),
       ],
-      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+      quests: const [
+        QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1),
+      ],
     );
     final planted = plantBotanySelection(
       db,
@@ -456,14 +581,24 @@ void main() {
     );
     expect(planted.ok, isTrue);
     expect(
-      planted.save!.inventory.where((stack) => stack.itemId == compostItemId).first.quantity,
+      planted.save!.inventory
+          .where((stack) => stack.itemId == compostItemId)
+          .first
+          .quantity,
       2,
     );
-    expect(timerAtLocationKind(planted.save!, 'LOC-0031', 'botany')?.usedCompost, isTrue);
+    expect(
+      timerAtLocationKind(planted.save!, 'LOC-0031', 'botany')?.usedCompost,
+      isTrue,
+    );
 
     final short = plantBotanySelection(
       db,
-      save.copyWith(inventory: const [InventoryStack(itemId: potatoSeedItemId, quantity: 1)]),
+      save.copyWith(
+        inventory: const [
+          InventoryStack(itemId: potatoSeedItemId, quantity: 1),
+        ],
+      ),
       const [potatoSeedItemId],
       nowMs: 0,
       usedCompost: true,
@@ -532,8 +667,46 @@ void main() {
       random: () => rolls[i++],
     );
     expect(collected.ok, isTrue);
-    expect(collected.loot.any((row) => row.itemId == turnipSeedItemId), isFalse);
+    expect(
+      collected.loot.any((row) => row.itemId == turnipSeedItemId),
+      isFalse,
+    );
     expect(collected.loot.any((row) => row.itemId == potatoSeedItemId), isTrue);
     expect(collected.xpGained, 1000);
+  });
+
+  test('default collect RNG can return seeds (not stuck at 0.5)', () {
+    // Flutter calls collectLocationTimer without [random]. A constant 0.5 default
+    // makes `rng() < botanySeedReturnChance` never true, so seeds never drop.
+    expect(botanySeedReturnChance, 0.5);
+    var seedReturns = 0;
+    for (var trial = 0; trial < 40; trial += 1) {
+      final save = createNewSave(db, 0).copyWith(
+        currentLocationId: 'LOC-0031',
+        skills: const [SkillProgress(skillId: 'SKL-0014', level: 80, xp: 0)],
+        inventory: const [
+          InventoryStack(itemId: potatoSeedItemId, quantity: 3),
+        ],
+      );
+      final planted = plantBotanySelection(db, save, const [
+        potatoSeedItemId,
+        potatoSeedItemId,
+        potatoSeedItemId,
+      ], nowMs: 0);
+      expect(planted.ok, isTrue);
+      final collected = collectLocationTimer(
+        db,
+        planted.save!,
+        'LOC-0031',
+        'botany',
+        nowMs: 10800 * 1000,
+      );
+      expect(collected.ok, isTrue);
+      seedReturns += collected.loot
+          .where((row) => row.itemId == potatoSeedItemId)
+          .fold<num>(0, (sum, row) => sum + row.quantity)
+          .round();
+    }
+    expect(seedReturns, greaterThan(0));
   });
 }

@@ -34,6 +34,9 @@ export const COMPOST_SEED_COST = 1
 export const COMPOST_SAPLING_COST = 5
 export const BOTANY_ALL_DIED_TITLE = 'Oh no everything died!'
 
+/** Per lived plant: chance to return a seed/sapling (mutations take a share of this). */
+export const BOTANY_SEED_RETURN_CHANCE = 0.5
+
 /** Parent pairs that can return a different seed when both are in the planted pool. */
 export const BOTANY_SEED_MUTATIONS: ReadonlyArray<{ parents: readonly string[]; product: string }> =
   [
@@ -46,8 +49,8 @@ export const BOTANY_SEED_MUTATIONS: ReadonlyArray<{ parents: readonly string[]; 
     },
   ]
 
-/** After the 50% seed-return succeeds, a parent in an active combo is 50% itself
- * and the other 50% is split among those products. Pool-based, not order-based. */
+/** After [BOTANY_SEED_RETURN_CHANCE] succeeds, a parent in an active combo is 50%
+ * itself and the other 50% is split among those products. Pool-based, not order-based. */
 export function rollReturnedBotanySeed(
   plantedSeedIds: readonly string[],
   returningSeedId: string,
@@ -885,7 +888,7 @@ export function collectLocationTimer(
       harvestXp += spec?.xp ?? 0
     }
     for (const seedItemId of successfulIds) {
-      if (random() < 0.5) {
+      if (random() < BOTANY_SEED_RETURN_CHANCE) {
         const returnedId = rollReturnedBotanySeed(successfulIds, seedItemId, random)
         returned.set(returnedId, (returned.get(returnedId) ?? 0) + 1)
       }
