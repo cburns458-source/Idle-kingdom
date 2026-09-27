@@ -22,12 +22,6 @@ void main() {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }
 
-  bool assetNamed(Widget widget, String needle) {
-    if (widget is! Image) return false;
-    final image = widget.image;
-    return image is AssetImage && image.assetName.contains(needle);
-  }
-
   testWidgets('entering a location shows the adventurer idle', (tester) async {
     final controller = buildController(
       database,
