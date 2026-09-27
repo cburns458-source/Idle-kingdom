@@ -414,8 +414,9 @@ export function completeGatheringAction(
     if (bonus && bonus.xp > 0) {
       applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp))
     }
-    const bowBonus = bowHuntingCombatXpBonus(db, save, action, xpAmount)
-    if (bowBonus) applyBonusXp(bowBonus.skillId, bowBonus.xp)
+    for (const bowBonus of bowHuntingCombatXpBonus(db, save, action, xpAmount)) {
+      applyBonusXp(bowBonus.skillId, bowBonus.xp)
+    }
 
     next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
     next = applyQuestActionProgress(db, next, action['Action ID'])
@@ -535,8 +536,9 @@ export function completeGatheringAction(
     if (bonus && bonus.xp > 0) {
       applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp))
     }
-    const bowBonus = bowHuntingCombatXpBonus(db, save, action, xpAmount)
-    if (bowBonus) applyBonusXp(bowBonus.skillId, bowBonus.xp)
+    for (const bowBonus of bowHuntingCombatXpBonus(db, save, action, xpAmount)) {
+      applyBonusXp(bowBonus.skillId, bowBonus.xp)
+    }
   }
 
   next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)

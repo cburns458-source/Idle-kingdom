@@ -903,7 +903,7 @@ void main() {
     expect(find.byType(TweenAnimationBuilder<double>), findsNothing);
   });
 
-  testWidgets('gathering hops the adventurer inward and nudges action art back', (tester) async {
+  testWidgets('gathering keeps stage art at rest without a hop', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
@@ -919,7 +919,6 @@ void main() {
       ),
     );
 
-    final playerSlot = tester.getRect(find.bySemanticsLabel('Adventurer'));
     final playerRest = tester.getRect(
       find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
     );
@@ -927,14 +926,7 @@ void main() {
       find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
     );
 
-    await tester.pump(const Duration(milliseconds: 3500));
-    final playerWaiting = tester.getRect(
-      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
-    );
-    expect(playerWaiting.left, closeTo(playerRest.left, 1));
-    expect(playerWaiting.top, closeTo(playerRest.top, 1));
-
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 4000));
 
     final playerMid = tester.getRect(
       find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
@@ -942,21 +934,13 @@ void main() {
     final actionMid = tester.getRect(
       find.byWidgetPredicate((widget) => assetNamed(widget, '/actions/')),
     );
-    expect(tester.getRect(find.bySemanticsLabel('Adventurer')).top, closeTo(playerSlot.top, 1));
-    expect(playerMid.left, greaterThan(playerRest.left + 8));
-    expect(playerMid.top, lessThan(playerRest.top - 2));
-    expect(actionMid.left, greaterThan(actionRest.left + 2));
+    expect(playerMid.left, closeTo(playerRest.left, 1));
+    expect(playerMid.top, closeTo(playerRest.top, 1));
+    expect(actionMid.left, closeTo(actionRest.left, 1));
     expect(actionMid.top, closeTo(actionRest.top, 1));
-
-    await tester.pump(const Duration(milliseconds: 1000));
-    final playerResting = tester.getRect(
-      find.descendant(of: find.bySemanticsLabel('Adventurer'), matching: find.byType(Image)),
-    );
-    expect(playerResting.left, closeTo(playerRest.left, 1));
-    expect(playerResting.top, closeTo(playerRest.top, 1));
   });
 
-  testWidgets('a workstation stays still while the adventurer hops', (tester) async {
+  testWidgets('a workstation and adventurer stay still during production', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(
@@ -998,7 +982,8 @@ void main() {
     );
     expect(stationMid.left, closeTo(stationRest.left, 1));
     expect(stationMid.top, closeTo(stationRest.top, 1));
-    expect(playerMid.left, greaterThan(playerRest.left + 8));
+    expect(playerMid.left, closeTo(playerRest.left, 1));
+    expect(playerMid.top, closeTo(playerRest.top, 1));
   });
 
   testWidgets('battery saver keeps stage art at rest', (tester) async {

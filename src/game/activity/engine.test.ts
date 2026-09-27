@@ -39,12 +39,12 @@ describe('primary activity engine', () => {
     expect(completed.save.statistics.values.gathering_actions_completed).toBe(1)
   })
 
-  it('grants bonus Combat XP for a bow-based Hunting Action when a bow is equipped', () => {
+  it('grants stance-routed combat XP for a bow-based Hunting Action when a bow is equipped', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     const huntButterfly = launch.Actions.find((action) => action['Action ID'] === 'ACN-0015')!
 
-    // No bow equipped: no Combat XP bonus.
+    // No bow equipped: no combat XP bonus.
     const withoutBow = completeGatheringAction(launch, save, huntButterfly, () => 0)
     expect(withoutBow.result.xpGained).toBe(300)
     expect(withoutBow.result.bonusXp).toEqual([])
@@ -54,6 +54,7 @@ describe('primary activity engine', () => {
 
     // Equip a Regular Bow (bow_combat_xp capability) directly for the test —
     // equipping it through the normal flow requires Hunting 10.
+    // Default new-save stance is Offensive → all bonus Might.
     save = {
       ...save,
       equipment: {
@@ -67,6 +68,26 @@ describe('primary activity engine', () => {
     expect(withBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(30)
     const combatReward = withBow.result.xpRewards.find((reward) => reward.skillId === 'SKL-0001')
     expect(combatReward?.xp).toBe(30)
+
+    const defensive = completeGatheringAction(
+      launch,
+      { ...save, attackStyle: 'defensive' },
+      huntButterfly,
+      () => 0,
+    )
+    expect(defensive.result.bonusXp).toEqual([{ skillId: 'SKL-0016', xp: 30 }])
+    expect(defensive.save.skills.find((skill) => skill.skillId === 'SKL-0016')?.xp).toBe(30)
+
+    const balanced = completeGatheringAction(
+      launch,
+      { ...save, attackStyle: 'balanced' },
+      huntButterfly,
+      () => 0,
+    )
+    expect(balanced.result.bonusXp).toEqual([
+      { skillId: 'SKL-0001', xp: 15 },
+      { skillId: 'SKL-0016', xp: 15 },
+    ])
   })
 
   it('grants no bow Combat XP bonus for non-Hunting gathering, even with a bow equipped', () => {

@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../combat/stats.dart';
 import '../config.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
@@ -22,7 +23,6 @@ const Map<String, BonusXpGrant> _bonusSkillXp = <String, BonusXpGrant>{};
 BonusXpGrant? bonusSkillXpForAction(String actionId) => _bonusSkillXp[actionId];
 
 const String _huntingSkillId = 'SKL-0005';
-const String _mightSkillId = 'SKL-0001';
 const String _bowCapabilityTag = 'bow_combat_xp';
 
 bool _equippedWeaponHasCapability(GameDatabase db, PlayerSave save, String tag) {
@@ -32,22 +32,28 @@ bool _equippedWeaponHasCapability(GameDatabase db, PlayerSave save, String tag) 
   return capabilityTags(equipment?.raw['Capabilities / Effects']).contains(tag);
 }
 
-/// Might XP earned alongside Hunting XP when a bow is equipped.
+/// Stance-routed Might / Vitality XP earned alongside Hunting XP when a bow is equipped.
 ///
-/// Qualifying bow-based Hunting Actions grant Might XP equal to a percentage
+/// Qualifying bow-based Hunting Actions grant combat XP equal to a percentage
 /// (default 10%, see Config `bow_hunting_combat_xp_percent`) of the Hunting XP
 /// just awarded, whenever the equipped Weapon/Tool carries the `bow_combat_xp`
-/// capability. See docs/Game_Bible.txt section 8.4.
-BonusXpGrant? bowHuntingCombatXpBonus(
+/// capability. The total is split by [save.attackStyle] the same way kill XP is.
+/// See docs/Game_Bible.txt section 8.4.
+List<BonusXpGrant> bowHuntingCombatXpBonus(
   GameDatabase db,
   PlayerSave save,
   String relevantSkillId,
   num huntingXpAwarded,
 ) {
-  if (relevantSkillId != _huntingSkillId) return null;
-  if (huntingXpAwarded <= 0) return null;
-  if (!_equippedWeaponHasCapability(db, save, _bowCapabilityTag)) return null;
+  if (relevantSkillId != _huntingSkillId) return const <BonusXpGrant>[];
+  if (huntingXpAwarded <= 0) return const <BonusXpGrant>[];
+  if (!_equippedWeaponHasCapability(db, save, _bowCapabilityTag)) return const <BonusXpGrant>[];
   final percent = configNumber(db, 'bow_hunting_combat_xp_percent', 10);
   final xp = (huntingXpAwarded * (percent / 100)).floor();
-  return xp > 0 ? BonusXpGrant(skillId: _mightSkillId, xp: xp) : null;
+  if (xp <= 0) return const <BonusXpGrant>[];
+  final split = splitCombatVictoryXp(xp, normalizeAttackStyle(save.attackStyle));
+  return <BonusXpGrant>[
+    if (split.mightXp > 0) BonusXpGrant(skillId: mightSkillId, xp: split.mightXp),
+    if (split.vitalityXp > 0) BonusXpGrant(skillId: vitalitySkillId, xp: split.vitalityXp),
+  ];
 }
