@@ -49,6 +49,7 @@ class _AccountPanelState extends State<AccountPanel> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !net.isSignedIn) return;
+      if (net.isRefreshing || net.hasCompletedSocialRefresh) return;
       net.refresh(widget.controller.save);
     });
   }

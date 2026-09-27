@@ -40,6 +40,15 @@ void main() {
     expect(friendlyRemoteError('invalid JWT'), remoteSignInAgain);
   });
 
+  test('maps a dropped browser fetch without dumping the URL', () {
+    const raw =
+        'ClientException: Failed to fetch, uri=https://example.supabase.co/rest/v1/profiles';
+    expect(isUnreachableRemoteError(raw), isTrue);
+    expect(friendlyRemoteError(raw), remoteUnreachable);
+    expect(isUnreachableRemoteError(remoteUnreachable), isTrue);
+    expect(isUnreachableRemoteError('column profiles.name_color does not exist'), isFalse);
+  });
+
   test('friend list rows use guild name and last-online like the roster', () {
     const friend = SocialContact(
       userId: 'usr_1',

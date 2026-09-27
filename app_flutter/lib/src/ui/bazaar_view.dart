@@ -509,12 +509,19 @@ class _BazaarViewState extends State<BazaarView> {
     final buying = side == bazaarBuy;
     final guide = _guide(itemId);
     final onHand = bazaarTradableOnHand(save, itemId, controller.db).floor();
+    final gold = save.gold.floor();
     final total = _price * _quantity;
 
-    // Both numbers are capped by what the pair may be worth together rather than
-    // by either alone, so each keypad's ceiling depends on the other's value.
-    final quantityCap = buying ? (bazaarOfferValueCap / _price).floor() : onHand;
-    final priceCap = (bazaarOfferValueCap / _quantity).floor();
+    // Sell quantity is what is on hand. Buy quantity is how many the purse can
+    // cover at the named price (and never past the offer value cap).
+    final valueQtyCap = _price <= 0 ? 0 : (bazaarOfferValueCap / _price).floor();
+    final goldQtyCap = !buying || _price <= 0 ? 0 : (gold / _price).floor();
+    final quantityCap = buying ? (goldQtyCap < valueQtyCap ? goldQtyCap : valueQtyCap) : onHand;
+
+    // Sell price has no Max button; buy price Max is the player's gold (still
+    // clamped by the offer value cap so the total cannot exceed it).
+    final valuePriceCap = _quantity <= 0 ? 0 : (bazaarOfferValueCap / _quantity).floor();
+    final priceCap = buying ? (gold < valuePriceCap ? gold : valuePriceCap) : valuePriceCap;
     final short = buying && save.gold < total;
 
     const itemCount = 9;
@@ -562,7 +569,10 @@ class _BazaarViewState extends State<BazaarView> {
                       context,
                       title: _name(itemId),
                       subtitle: buying ? 'How many to buy' : 'How many to sell',
-                      details: <String>[if (!buying) 'Carrying: ${formatThousands(onHand)}'],
+                      details: <String>[
+                        if (!buying) 'Carrying: ${formatThousands(onHand)}',
+                        if (buying) 'Gold: ${formatThousands(gold)}',
+                      ],
                       confirmLabel: 'Set quantity',
                       initialValue: _quantity.clamp(1, quantityCap < 1 ? 1 : quantityCap),
                       max: quantityCap,
@@ -585,13 +595,16 @@ class _BazaarViewState extends State<BazaarView> {
                       subtitle: buying ? 'Price per item to pay' : 'Price per item to ask',
                       details: <String>[
                         'Quantity: ${formatThousands(_quantity)}',
+                        if (buying) 'Gold: ${formatThousands(gold)}',
                         if (guide case final price?)
                           'Average: ${formatThousands(price.averagePrice)} each',
                         if (!buying) bazaarTaxLine(_price),
                       ],
                       confirmLabel: 'Set price',
                       initialValue: _price.clamp(1, priceCap < 1 ? 1 : priceCap),
-                      max: priceCap,
+                      max: priceCap < 1 ? null : priceCap,
+                      // Sell offers name a price with no Max; buy Max is gold.
+                      showMax: buying,
                     );
                     if (chosen == null || !mounted) return;
                     setState(() => _price = chosen);

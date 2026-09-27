@@ -59,6 +59,9 @@ const String remoteInvalidBackendUrl =
 /// Shown when the session token cannot be refreshed. The character stays local.
 const String remoteSignInAgain = 'Sign in again.';
 
+/// Browser `fetch` died before an HTTP status. Not a skipped migration.
+const String remoteUnreachable = 'Could not reach the server. Try again.';
+
 /// True when PostgREST/Auth refused the request because the access JWT is dead.
 bool isExpiredAuthError(String? message) {
   if (message == null || message.isEmpty) return false;
@@ -68,8 +71,25 @@ bool isExpiredAuthError(String? message) {
       (lower.contains('token') && lower.contains('expired'));
 }
 
+/// True when the HTTP client never got a usable response.
+///
+/// Flutter web wraps the browser's `TypeError: Failed to fetch` as
+/// `ClientException: Failed to fetch, uri=…`. That is a dropped connection,
+/// CORS/block, or abort — not a 4xx the player can act on.
+bool isUnreachableRemoteError(String? message) {
+  if (message == null || message.isEmpty) return false;
+  if (message == remoteUnreachable) return true;
+  final lower = message.toLowerCase();
+  return lower.contains('failed to fetch') ||
+      lower.contains('clientexception') ||
+      lower.contains('xmlhttprequest error') ||
+      lower.contains('failed host lookup') ||
+      lower.contains('socketexception');
+}
+
 String friendlyRemoteError(String message) {
   if (isExpiredAuthError(message)) return remoteSignInAgain;
+  if (isUnreachableRemoteError(message)) return remoteUnreachable;
   if (message.toLowerCase().contains('invalid path specified')) {
     return remoteInvalidBackendUrl;
   }

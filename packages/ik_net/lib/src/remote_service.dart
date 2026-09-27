@@ -15,6 +15,7 @@ import 'remote.dart';
 import 'remote_guild_backend.dart';
 import 'remote_guilds.dart';
 import 'remote_transport.dart';
+import 'retrying_transport.dart';
 import 'results.dart';
 import 'service.dart';
 import 'session_store.dart';
@@ -37,7 +38,10 @@ class RemoteMultiplayerService implements MultiplayerService {
     required RemoteTransport transport,
     required SaveStorage storage,
     LocalBackendPorts? ports,
-  }) : _reads = NotedReads(transport),
+    Future<void> Function(int failedAttempt)? retryDelay,
+  }) : _reads = NotedReads(
+         RetryingTransport(transport, delay: retryDelay ?? defaultRemoteRetryDelay),
+       ),
        _sessions = SessionStore(storage),
        _local = LocalMultiplayerService(storage: storage, ports: ports) {
     _guilds = RemoteGuildBackend(

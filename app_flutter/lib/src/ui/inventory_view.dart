@@ -522,10 +522,30 @@ class _InventoryViewState extends State<InventoryView> {
                 dense: true,
                 onPressed: _openEatMenu,
               ),
+              const SizedBox(height: 8),
+              GameButton(
+                key: const Key('inventory-mounts'),
+                label: '🐴',
+                semanticLabel: 'Mounts',
+                tooltip: 'Mounts',
+                tone: GameButtonTone.secondary,
+                symbol: true,
+                onPressed: _openMountsComingSoon,
+              ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _openMountsComingSoon() {
+    return showGameAlert(
+      context: context,
+      title: 'Mounts',
+      message: 'Mounts coming soon…',
+      confirmLabel: 'OK',
+      placement: GamePopupPlacement.center,
     );
   }
 

@@ -120,6 +120,61 @@ void main() {
     expect(transport.tables[RemoteTables.leaderboard], isNotEmpty);
   });
 
+  testWidgets('creating an account does one social sync and does not overlap fetches', (
+    tester,
+  ) async {
+    final transport = FakeTransport();
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    final game = await pumpAccount(tester, net);
+
+    await submit(tester, 'Create account');
+
+    expect(net.notice, contains('Account created'));
+    expect(net.hasCompletedSocialRefresh, isTrue);
+    expect(
+      transport.maxInFlight,
+      1,
+      reason: 'Signup refresh, ranking, and market must be sequential.',
+    );
+    expect(
+      transport.selectedLikes,
+      isNot(contains('${RemoteTables.chat}.channel_key=dm:%')),
+      reason: 'A new account has no private threads; unread polling waits until Private.',
+    );
+
+    final profiles = transport.calls
+        .where((call) => call == 'select:${RemoteTables.profiles}')
+        .length;
+    await net.publishPresence(game.save);
+    expect(
+      transport.calls.where((call) => call == 'select:${RemoteTables.profiles}').length,
+      profiles,
+      reason: 'Presence publish must not reload the own-profile row.',
+    );
+
+    await net.selectChatTab(ChatTab.dm, game.save.currentLocationId);
+    expect(transport.selectedLikes, contains('${RemoteTables.chat}.channel_key=dm:%'));
+  });
+
+  testWidgets('signing back in still reads the private inbox for unread', (tester) async {
+    final transport = FakeTransport();
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    await pumpAccount(tester, net);
+
+    await submit(tester, 'Create account');
+    expect(transport.selectedLikes, isNot(contains('${RemoteTables.chat}.channel_key=dm:%')));
+
+    await tester.tap(find.text('Sign out'));
+    await tester.pump();
+    await tester.pump();
+    transport.selectedLikes.clear();
+
+    await submit(tester, 'Sign in');
+
+    expect(net.notice, contains('Welcome back'));
+    expect(transport.selectedLikes, contains('${RemoteTables.chat}.channel_key=dm:%'));
+  });
+
   testWidgets('shows what the backend said when it refused a sign-in', (tester) async {
     final transport = FakeTransport();
     final net = buildRemoteMultiplayer(database, transport: transport);

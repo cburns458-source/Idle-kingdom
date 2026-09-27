@@ -273,13 +273,97 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    // Price is capped at gold, so unaffordable means quantity × price > gold
+    // while each is still individually within the purse.
+    await setField(tester, 'Price each', '5');
     await setField(tester, 'Quantity', '10');
-    await setField(tester, 'Price each', '99');
+    await setField(tester, 'Price each', '6');
 
-    // 990 gold against 50 held: the screen says so instead of offering a button
+    // 60 gold against 50 held: the screen says so instead of offering a button
     // the server would only refuse.
     expect(find.textContaining('You have 50 gold'), findsOne);
     expect(find.widgetWithText(GameButton, 'Place buy order'), findsNothing);
+  });
+
+  testWidgets('buy price Max fills the player gold', (tester) async {
+    final buyer = await hostedPlayer(tester, gold: 250);
+    await pumpBazaar(tester, buyer.net, buyer.save);
+    await startOrder(tester, bazaarBuy);
+    await tester.enterText(find.byType(TextField), 'iron ore');
+    await tester.pump();
+    await tester.tap(find.text('Iron Ore'));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('Price each'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.widgetWithText(GameButton, 'Max'), findsOne);
+    await tester.tap(find.widgetWithText(GameButton, 'Max'));
+    await tester.pump();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(GamePopupCard),
+        matching: find.widgetWithText(GameButton, 'Set price'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    // Qty defaults to 1, so Max price = gold and the order is affordable.
+    expect(find.text('250'), findsWidgets);
+    expect(find.widgetWithText(GameButton, 'Place buy order'), findsOne);
+  });
+
+  testWidgets('sell price keypad has no Max button', (tester) async {
+    final seller = await hostedPlayer(tester, bag: <InventoryStack>[_stack(_ironOre, 40)]);
+    await pumpBazaar(tester, seller.net, seller.save);
+    await startOrder(tester, bazaarSell);
+    await tester.tap(find.text('Iron Ore'));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.text('Price each'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.widgetWithText(GameButton, 'Max'), findsNothing);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(GamePopupCard),
+        matching: find.widgetWithText(GameButton, 'Set price'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+  });
+
+  testWidgets('buy quantity Max is capped by gold at the named price', (tester) async {
+    final player = await hostedPlayer(tester, gold: 100);
+    await pumpBazaar(tester, player.net, player.save);
+    await startOrder(tester, bazaarBuy);
+    await tester.enterText(find.byType(TextField), 'iron ore');
+    await tester.pump();
+    await tester.tap(find.text('Iron Ore'));
+    await tester.pump();
+    await tester.pump();
+
+    await setField(tester, 'Price each', '25');
+    await tester.tap(find.text('Quantity'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.widgetWithText(GameButton, 'Max'), findsOne);
+    await tester.tap(find.widgetWithText(GameButton, 'Max'));
+    await tester.pump();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(GamePopupCard),
+        matching: find.widgetWithText(GameButton, 'Set quantity'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    // 100 gold / 25 each → 4.
+    expect(find.text('4'), findsWidgets);
+    expect(find.widgetWithText(GameButton, 'Place buy order'), findsOne);
   });
 
   testWidgets('a placed order takes over its slot and shows how filled it is', (tester) async {
