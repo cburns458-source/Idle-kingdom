@@ -23,7 +23,8 @@ void main() {
     final image = tester.widget<Image>(find.byType(Image));
     expect(image.width, 24);
     expect(image.height, 24);
-    expect(image.cacheWidth, 72);
-    expect(image.cacheHeight, 72);
+    final resized = image.image as ResizeImage;
+    expect(resized.width, 72);
+    expect(resized.height, 72);
   });
 }

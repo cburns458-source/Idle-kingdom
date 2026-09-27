@@ -819,10 +819,11 @@ void main() {
         matching: find.byType(Image),
       ),
     );
-    expect(helmet.cacheWidth, isNotNull);
-    expect(helmet.cacheHeight, isNotNull);
-    expect(helmet.cacheWidth, lessThanOrEqualTo(256));
-    expect(helmet.cacheHeight, lessThanOrEqualTo(256));
+    final resized = helmet.image as ResizeImage;
+    expect(resized.width, isNotNull);
+    expect(resized.height, isNotNull);
+    expect(resized.width, lessThanOrEqualTo(256));
+    expect(resized.height, lessThanOrEqualTo(256));
   });
 
   testWidgets('the bag fits six to eight items on a row', (tester) async {
