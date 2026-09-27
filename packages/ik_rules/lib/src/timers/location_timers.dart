@@ -52,14 +52,8 @@ class BotanySeedMutation {
 }
 
 const List<BotanySeedMutation> botanySeedMutations = [
-  BotanySeedMutation(
-    parents: [potatoSeedItemId, carrotSeedItemId],
-    product: turnipSeedItemId,
-  ),
-  BotanySeedMutation(
-    parents: [grapeSeedItemId, potatoSeedItemId],
-    product: elderBerrySeedItemId,
-  ),
+  BotanySeedMutation(parents: [potatoSeedItemId, carrotSeedItemId], product: turnipSeedItemId),
+  BotanySeedMutation(parents: [grapeSeedItemId, potatoSeedItemId], product: elderBerrySeedItemId),
   BotanySeedMutation(
     parents: [fernleafSeedItemId, augurWeedSeedItemId],
     product: hagrootSeedItemId,
@@ -80,8 +74,7 @@ String rollReturnedBotanySeed(
   final pool = plantedSeedIds.toSet();
   final products = <String>[
     for (final combo in botanySeedMutations)
-      if (combo.parents.contains(returningSeedId) &&
-          combo.parents.every(pool.contains))
+      if (combo.parents.contains(returningSeedId) && combo.parents.every(pool.contains))
         combo.product,
   ];
   if (products.isEmpty) return returningSeedId;
@@ -103,16 +96,11 @@ String botanyPlantDisplayName(String name) {
 }
 
 /// Live-plant chance, 0–100. Compost adds +25. Already-growing plots treat missing compost as off.
-num botanySuccessChancePercent(
-  num botanyLevel,
-  num requiredLevel, {
-  bool usedCompost = false,
-}) {
+num botanySuccessChancePercent(num botanyLevel, num requiredLevel, {bool usedCompost = false}) {
   final level = botanyLevel < 0 ? 0 : botanyLevel;
   final required = requiredLevel < 1 ? 1 : requiredLevel;
   final extra = level - required;
-  final chance =
-      25 + 0.5 * level + 0.5 * (extra < 0 ? 0 : extra) + (usedCompost ? 25 : 0);
+  final chance = 25 + 0.5 * level + 0.5 * (extra < 0 ? 0 : extra) + (usedCompost ? 25 : 0);
   return chance > 100 ? 100 : chance;
 }
 
@@ -130,8 +118,7 @@ num inventoryCompostCount(PlayerSave save) {
       .fold<num>(0, (sum, stack) => sum + stack.quantity);
 }
 
-bool isCompostCollectActivity(ActivityRow activity) =>
-    activity.poolId == compostCollectPoolId;
+bool isCompostCollectActivity(ActivityRow activity) => activity.poolId == compostCollectPoolId;
 
 ActivityRow? compostCollectActivityAt(GameDatabase db, String locationId) {
   if (!locationHasCompostCollect(locationId)) return null;
@@ -156,20 +143,16 @@ const Map<String, String> potBaitToCatch = <String, String>{
 };
 
 /// Ready botany timers stay in place when the bag cannot take the haul.
-const String timerInventoryFullHarvestReason =
-    'Come back with more room to collect your harvest.';
+const String timerInventoryFullHarvestReason = 'Come back with more room to collect your harvest.';
 
 /// Ready fishing pots stay in place when the bag cannot take the haul.
-const String timerInventoryFullCatchReason =
-    'Come back with more room to collect your catch.';
+const String timerInventoryFullCatchReason = 'Come back with more room to collect your catch.';
 
-String timerInventoryFullReasonFor(String kind) => kind == 'fishing_pot'
-    ? timerInventoryFullCatchReason
-    : timerInventoryFullHarvestReason;
+String timerInventoryFullReasonFor(String kind) =>
+    kind == 'fishing_pot' ? timerInventoryFullCatchReason : timerInventoryFullHarvestReason;
 
 bool isTimerInventoryFullReason(String reason) =>
-    reason == timerInventoryFullHarvestReason ||
-    reason == timerInventoryFullCatchReason;
+    reason == timerInventoryFullHarvestReason || reason == timerInventoryFullCatchReason;
 
 /// Deprecated alias for [fishingPotItemId].
 const String fishingTrapItemId = fishingPotItemId;
@@ -186,8 +169,7 @@ const Set<String> botanyPatchLocations = <String>{
 };
 
 bool locationHasCompostCollect(String locationId) =>
-    botanyPatchLocations.contains(locationId) &&
-    locationId != shallowsLocationId;
+    botanyPatchLocations.contains(locationId) && locationId != shallowsLocationId;
 
 const Set<String> fishingPotLocations = <String>{'LOC-0003', 'LOC-0004'};
 
@@ -231,32 +213,17 @@ BotanySeedSpec? parseBotanySeedSpec(GameDatabase db, String itemId) {
   if (item == null || !isBotanySeedItem(db, itemId)) return null;
   final notes = item.raw['Notes'];
   final text = notes is String ? notes : '';
-  final output = RegExp(
-    r'Output:([A-Z0-9-]+)',
-    caseSensitive: false,
-  ).firstMatch(text)?.group(1);
+  final output = RegExp(r'Output:([A-Z0-9-]+)', caseSensitive: false).firstMatch(text)?.group(1);
   final grow =
       num.tryParse(
-        RegExp(
-              r'GrowSeconds:(\d+)',
-              caseSensitive: false,
-            ).firstMatch(text)?.group(1) ??
-            '',
+        RegExp(r'GrowSeconds:(\d+)', caseSensitive: false).firstMatch(text)?.group(1) ?? '',
       ) ??
       0;
   final xp =
-      num.tryParse(
-        RegExp(r'Xp:(\d+)', caseSensitive: false).firstMatch(text)?.group(1) ??
-            '',
-      ) ??
-      0;
+      num.tryParse(RegExp(r'Xp:(\d+)', caseSensitive: false).firstMatch(text)?.group(1) ?? '') ?? 0;
   final requiresLevel =
       num.tryParse(
-        RegExp(
-              r'RequiresLevel:(\d+)',
-              caseSensitive: false,
-            ).firstMatch(text)?.group(1) ??
-            '',
+        RegExp(r'RequiresLevel:(\d+)', caseSensitive: false).firstMatch(text)?.group(1) ?? '',
       ) ??
       1;
   if (output == null || grow <= 0) return null;
@@ -274,9 +241,7 @@ BotanySeedSpec? parseBotanySeedSpec(GameDatabase db, String itemId) {
 }
 
 bool inventoryHasAnyBotanySeed(GameDatabase db, PlayerSave save) {
-  return save.inventory.any(
-    (stack) => stack.quantity > 0 && isBotanySeedItem(db, stack.itemId),
-  );
+  return save.inventory.any((stack) => stack.quantity > 0 && isBotanySeedItem(db, stack.itemId));
 }
 
 bool playerHasAnyBotanySeed(GameDatabase db, PlayerSave save) {
@@ -354,17 +319,11 @@ List<PlantableBotanyOption> listPlantableBotanyOptions(
 
 /// Any timer at a location (first match). Prefer [timerAtLocationKind] when kind matters.
 LocationTimer? timerAtLocation(PlayerSave save, String locationId) {
-  return save.locationTimers.firstWhereOrNull(
-    (timer) => timer.locationId == locationId,
-  );
+  return save.locationTimers.firstWhereOrNull((timer) => timer.locationId == locationId);
 }
 
 /// Timer matching both location and kind (at most one of each kind per spot).
-LocationTimer? timerAtLocationKind(
-  PlayerSave save,
-  String locationId,
-  String kind,
-) {
+LocationTimer? timerAtLocationKind(PlayerSave save, String locationId, String kind) {
   return save.locationTimers.firstWhereOrNull(
     (timer) => timer.locationId == locationId && timer.kind == kind,
   );
@@ -375,9 +334,7 @@ List<LocationTimer> _withoutLocationTimerKind(
   String locationId,
   String kind,
 ) {
-  return timers
-      .where((row) => !(row.locationId == locationId && row.kind == kind))
-      .toList();
+  return timers.where((row) => !(row.locationId == locationId && row.kind == kind)).toList();
 }
 
 /// Stable key for a timer spot in [PlayerSave.discoveredTimerSpotIds].
@@ -406,8 +363,7 @@ PlayerSave discoverTimerSpotsForLocation(PlayerSave save, String locationId) {
     changed = true;
   }
 
-  if (botanyPatchLocations.contains(locationId) &&
-      botanyPatchUnlocked(save, locationId)) {
+  if (botanyPatchLocations.contains(locationId) && botanyPatchUnlocked(save, locationId)) {
     add('botany');
   }
   if (fishingTrapLocations.contains(locationId)) add('fishing_pot');
@@ -416,8 +372,7 @@ PlayerSave discoverTimerSpotsForLocation(PlayerSave save, String locationId) {
 }
 
 num timerCompletesAtMs(LocationTimer timer) {
-  return DateTime.parse(timer.startedAt).millisecondsSinceEpoch +
-      timer.durationMs;
+  return DateTime.parse(timer.startedAt).millisecondsSinceEpoch + timer.durationMs;
 }
 
 bool timerIsReady(LocationTimer timer, num nowMs) {
@@ -426,9 +381,7 @@ bool timerIsReady(LocationTimer timer, num nowMs) {
 
 /// Ready Botany / fishing pots waiting to be collected.
 num readyLocationTimerCount(PlayerSave save, num nowMs) {
-  return save.locationTimers
-      .where((timer) => timerIsReady(timer, nowMs))
-      .length;
+  return save.locationTimers.where((timer) => timerIsReady(timer, nowMs)).length;
 }
 
 bool courtyardBotanyUnlocked(PlayerSave save) {
@@ -448,8 +401,7 @@ bool botanyPatchUnlocked(PlayerSave save, String locationId) {
   return true;
 }
 
-bool locationHasBotanyPatch(String locationId) =>
-    botanyPatchLocations.contains(locationId);
+bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(locationId);
 
 ({bool ok, num quantity, String reason}) canPlantBotanySeed(
   GameDatabase db,
@@ -470,11 +422,7 @@ bool locationHasBotanyPatch(String locationId) =>
     );
   }
   if (!botanyPatchUnlocked(save, loc)) {
-    return (
-      ok: false,
-      quantity: 0,
-      reason: 'Speak with Fennel before using this plot.',
-    );
+    return (ok: false, quantity: 0, reason: 'Speak with Fennel before using this plot.');
   }
   if (timerAtLocationKind(save, loc, 'botany') != null) {
     return (ok: false, quantity: 0, reason: 'This patch is already growing.');
@@ -487,25 +435,16 @@ bool locationHasBotanyPatch(String locationId) =>
     return (ok: false, quantity: 0, reason: 'Kelp only grows in The Shallows.');
   }
   if (!spec.shallowsOnly && loc == shallowsLocationId) {
-    return (
-      ok: false,
-      quantity: 0,
-      reason: 'The Shallows plot only accepts kelp.',
-    );
+    return (ok: false, quantity: 0, reason: 'The Shallows plot only accepts kelp.');
   }
   final botanyLevel = getSkillProgress(save, botanySkillId).level;
   if (botanyLevel < spec.requiresLevel) {
-    return (
-      ok: false,
-      quantity: 0,
-      reason: 'Requires Botany level ${spec.requiresLevel}.',
-    );
+    return (ok: false, quantity: 0, reason: 'Requires Botany level ${spec.requiresLevel}.');
   }
   final have = save.inventory
       .where((stack) => stack.itemId == seedItemId)
       .fold<num>(0, (sum, stack) => sum + stack.quantity);
-  if (have < 1)
-    return (ok: false, quantity: 0, reason: 'You do not have that seed.');
+  if (have < 1) return (ok: false, quantity: 0, reason: 'You do not have that seed.');
   final maxQty = spec.isSapling ? 1 : 3;
   // Math.max(1, Math.min(maxQty, Math.floor(plantQuantity), have))
   var quantity = plantQuantity.floor();
@@ -524,8 +463,7 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
     counts[itemId] = (counts[itemId] ?? 0) + 1;
   }
   return [
-    for (final entry in counts.entries)
-      RecipeIngredient(itemId: entry.key, quantity: entry.value),
+    for (final entry in counts.entries) RecipeIngredient(itemId: entry.key, quantity: entry.value),
   ];
 }
 
@@ -554,41 +492,20 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
       reason: 'A patch holds at most three seeds.',
     );
   }
-  final specs = [
-    for (final itemId in plantedItemIds) parseBotanySeedSpec(db, itemId),
-  ];
+  final specs = [for (final itemId in plantedItemIds) parseBotanySeedSpec(db, itemId)];
   if (specs.any((spec) => spec == null)) {
-    return (
-      ok: false,
-      plantedItemIds: const <String>[],
-      reason: 'That item cannot be planted.',
-    );
+    return (ok: false, plantedItemIds: const <String>[], reason: 'That item cannot be planted.');
   }
   final saplingCount = specs.where((spec) => spec?.isSapling == true).length;
   if (saplingCount > 0 && plantedItemIds.length != 1) {
-    return (
-      ok: false,
-      plantedItemIds: const <String>[],
-      reason: 'A patch holds one sapling.',
-    );
+    return (ok: false, plantedItemIds: const <String>[], reason: 'A patch holds one sapling.');
   }
   for (final itemId in plantedItemIds.toSet()) {
     final want = plantedItemIds.where((id) => id == itemId).length;
-    final gate = canPlantBotanySeed(
-      db,
-      save,
-      itemId,
-      locationId: loc,
-      plantQuantity: want,
-    );
-    if (!gate.ok)
-      return (ok: false, plantedItemIds: const <String>[], reason: gate.reason);
+    final gate = canPlantBotanySeed(db, save, itemId, locationId: loc, plantQuantity: want);
+    if (!gate.ok) return (ok: false, plantedItemIds: const <String>[], reason: gate.reason);
     if (gate.quantity < want) {
-      return (
-        ok: false,
-        plantedItemIds: const <String>[],
-        reason: 'You do not have that seed.',
-      );
+      return (ok: false, plantedItemIds: const <String>[], reason: 'You do not have that seed.');
     }
   }
   return (ok: true, plantedItemIds: plantedItemIds, reason: '');
@@ -605,9 +522,7 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
   final gate = canPlantBotanySelection(db, save, seedItemIds, locationId: loc);
   if (!gate.ok) return (ok: false, save: null, reason: gate.reason);
   final plantedItemIds = gate.plantedItemIds;
-  final specs = [
-    for (final itemId in plantedItemIds) parseBotanySeedSpec(db, itemId)!,
-  ];
+  final specs = [for (final itemId in plantedItemIds) parseBotanySeedSpec(db, itemId)!];
   if (usedCompost) {
     if (specs.any((spec) => spec.shallowsOnly)) {
       return (ok: false, save: null, reason: 'Compost cannot be used on kelp.');
@@ -625,25 +540,18 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
   }
   final consumed = [
     ..._countedIngredients(plantedItemIds),
-    if (usedCompost)
-      RecipeIngredient(
-        itemId: compostItemId,
-        quantity: compostCostForSpecs(specs),
-      ),
+    if (usedCompost) RecipeIngredient(itemId: compostItemId, quantity: compostCostForSpecs(specs)),
   ];
   final removed = removeIngredients(save, consumed);
   if (removed == null) {
     return (
       ok: false,
       save: null,
-      reason: usedCompost
-          ? 'You do not have enough compost.'
-          : 'You do not have that seed.',
+      reason: usedCompost ? 'You do not have enough compost.' : 'You do not have that seed.',
     );
   }
   final first = specs.first;
-  final started = DateTime.fromMillisecondsSinceEpoch(nowMs.round())
-      .toIso8601String();
+  final started = DateTime.fromMillisecondsSinceEpoch(nowMs.round()).toIso8601String();
   var grow = specs.first.growSeconds;
   var xp = 0.0;
   for (final spec in specs) {
@@ -665,20 +573,13 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
   );
   var next = discoverTimerSpotsForLocation(
     removed.copyWith(
-      locationTimers: [
-        ..._withoutLocationTimerKind(removed.locationTimers, loc, 'botany'),
-        timer,
-      ],
+      locationTimers: [..._withoutLocationTimerKind(removed.locationTimers, loc, 'botany'), timer],
     ),
     loc,
   );
   next = applyQuestPlantProgress(db, next, plantedItemIds);
   next = applyQuestAutoStartOnSeed(db, next);
-  return (
-    ok: true,
-    save: applyQuestAutoCompleteOnPlant(db, next).save,
-    reason: '',
-  );
+  return (ok: true, save: applyQuestAutoCompleteOnPlant(db, next).save, reason: '');
 }
 
 ({bool ok, PlayerSave? save, String reason}) plantBotanySeed(
@@ -715,20 +616,10 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
     final spec = parseBotanySeedSpec(db, stack.itemId);
     if (spec == null) continue;
     final qty = spec.isSapling ? 1 : (stack.quantity < 3 ? stack.quantity : 3);
-    final planted = plantBotanySeed(
-      db,
-      save,
-      stack.itemId,
-      nowMs: nowMs,
-      plantQuantity: qty,
-    );
+    final planted = plantBotanySeed(db, save, stack.itemId, nowMs: nowMs, plantQuantity: qty);
     if (planted.ok) return planted;
   }
-  return (
-    ok: false,
-    save: null,
-    reason: 'You have no plantable seeds or saplings for this patch.',
-  );
+  return (ok: false, save: null, reason: 'You have no plantable seeds or saplings for this patch.');
 }
 
 String fishingPotUtcDayKey(num nowMs) {
@@ -778,11 +669,7 @@ num msUntilNextUtcDay(num nowMs) {
       );
     }
     if (timerAtLocationKind(save, loc, 'fishing_pot') != null) {
-      return (
-        ok: false,
-        kind: null,
-        reason: 'A fishing pot is already set here.',
-      );
+      return (ok: false, kind: null, reason: 'A fishing pot is already set here.');
     }
     final lock = fishingPotLockedUntilDay(save, loc, nowMs: now);
     if (lock.locked) {
@@ -805,8 +692,7 @@ num msUntilNextUtcDay(num nowMs) {
     final have = save.inventory
         .where((stack) => stack.itemId == trapItemId)
         .fold<num>(0, (sum, stack) => sum + stack.quantity);
-    if (have < 1)
-      return (ok: false, kind: null, reason: 'You do not have a fishing pot.');
+    if (have < 1) return (ok: false, kind: null, reason: 'You do not have a fishing pot.');
     return (ok: true, kind: 'fishing_pot', reason: '');
   }
   return (ok: false, kind: null, reason: 'That is not a placeable trap.');
@@ -825,19 +711,11 @@ num msUntilNextUtcDay(num nowMs) {
   if (!gate.ok) return (ok: false, save: null, reason: gate.reason);
   final bait = _normalizePotBait(baitItemIds);
   if (bait == null) {
-    return (
-      ok: false,
-      save: null,
-      reason: 'Add three bait fish, or place the pot with no bait.',
-    );
+    return (ok: false, save: null, reason: 'Add three bait fish, or place the pot with no bait.');
   }
   final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
   if (bait.any((itemId) => !isValidPotBait(loc, fishingLevel, itemId))) {
-    return (
-      ok: false,
-      save: null,
-      reason: 'That bait does not match a pot catch here.',
-    );
+    return (ok: false, save: null, reason: 'That bait does not match a pot catch here.');
   }
   final removed = removeIngredients(save, [
     RecipeIngredient(itemId: trapItemId, quantity: 1),
@@ -847,14 +725,11 @@ num msUntilNextUtcDay(num nowMs) {
     return (
       ok: false,
       save: null,
-      reason: bait.isNotEmpty
-          ? 'You do not have that bait.'
-          : 'You do not have a fishing pot.',
+      reason: bait.isNotEmpty ? 'You do not have that bait.' : 'You do not have a fishing pot.',
     );
   }
   final kind = gate.kind!;
-  final started = DateTime.fromMillisecondsSinceEpoch(now.round())
-      .toIso8601String();
+  final started = DateTime.fromMillisecondsSinceEpoch(now.round()).toIso8601String();
   final timer = LocationTimer(
     locationId: loc,
     kind: kind,
@@ -868,10 +743,7 @@ num msUntilNextUtcDay(num nowMs) {
     baitItemIds: bait.isEmpty ? null : bait,
   );
   var next = removed.copyWith(
-    locationTimers: [
-      ..._withoutLocationTimerKind(removed.locationTimers, loc, kind),
-      timer,
-    ],
+    locationTimers: [..._withoutLocationTimerKind(removed.locationTimers, loc, kind), timer],
   );
   next = next.copyWith(
     fishingPotDayKeyByLocationId: <String, String>{
@@ -883,8 +755,7 @@ num msUntilNextUtcDay(num nowMs) {
 }
 
 /// Pot-fishing catches: Goblin Camp freshwater vs Docks saltwater.
-const Map<String, List<({String itemId, num fishingLevel, num xpEach})>>
-potFishByLocation =
+const Map<String, List<({String itemId, num fishingLevel, num xpEach})>> potFishByLocation =
     <String, List<({String itemId, num fishingLevel, num xpEach})>>{
       'LOC-0003': [
         (itemId: 'ITEM-0352', fishingLevel: 14, xpEach: 450),
@@ -915,10 +786,7 @@ String? potCatchForBait(String baitItemId) => potBaitToCatch[baitItemId];
 bool isValidPotBait(String locationId, num fishingLevel, String baitItemId) {
   final catchId = potCatchForBait(baitItemId);
   if (catchId == null) return false;
-  return potFishOptionsForLocation(
-    locationId,
-    fishingLevel,
-  ).any((row) => row.itemId == catchId);
+  return potFishOptionsForLocation(locationId, fishingLevel).any((row) => row.itemId == catchId);
 }
 
 class PotBaitOption {
@@ -935,11 +803,7 @@ class PotBaitOption {
   final num owned;
 }
 
-List<PotBaitOption> potBaitOptionsForLocation(
-  GameDatabase db,
-  PlayerSave save,
-  String locationId,
-) {
+List<PotBaitOption> potBaitOptionsForLocation(GameDatabase db, PlayerSave save, String locationId) {
   final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
   return [
     for (final entry in potBaitToCatch.entries)
@@ -947,16 +811,11 @@ List<PotBaitOption> potBaitOptionsForLocation(
         PotBaitOption(
           itemId: entry.key,
           displayName:
-              db.items
-                  .firstWhereOrNull((item) => item.itemId == entry.key)
-                  ?.displayName ??
+              db.items.firstWhereOrNull((item) => item.itemId == entry.key)?.displayName ??
               entry.key,
           catchItemId: entry.value,
           owned:
-              save.inventory
-                  .firstWhereOrNull((stack) => stack.itemId == entry.key)
-                  ?.quantity ??
-              0,
+              save.inventory.firstWhereOrNull((stack) => stack.itemId == entry.key)?.quantity ?? 0,
         ),
   ];
 }
@@ -977,8 +836,7 @@ List<RecipeIngredient> _countItemIds(List<String> itemIds) {
     counts[itemId] = (counts[itemId] ?? 0) + 1;
   }
   return [
-    for (final entry in counts.entries)
-      RecipeIngredient(itemId: entry.key, quantity: entry.value),
+    for (final entry in counts.entries) RecipeIngredient(itemId: entry.key, quantity: entry.value),
   ];
 }
 
@@ -1009,19 +867,14 @@ List<({String itemId, num quantity, num xp})> _rollFishingPotLoot(
 ) {
   final unlocked = potFishOptionsForLocation(locationId, fishingLevel);
   final byId = {for (final row in unlocked) row.itemId: row};
-  final bait =
-      _normalizePotBait(baitItemIds ?? const <String>[]) ?? const <String>[];
+  final bait = _normalizePotBait(baitItemIds ?? const <String>[]) ?? const <String>[];
   final rolls = <({String itemId, num quantity, num xp})>[];
   if (bait.isEmpty) {
     if (unlocked.isEmpty) return const [];
     for (var i = 0; i < potBaitCount; i += 1) {
       final row = unlocked[(random() * unlocked.length).floor()];
       final quantity = _rollInclusive(random, potCatchMin, potCatchMax);
-      rolls.add((
-        itemId: row.itemId,
-        quantity: quantity,
-        xp: row.xpEach * quantity,
-      ));
+      rolls.add((itemId: row.itemId, quantity: quantity, xp: row.xpEach * quantity));
     }
     return _mergeLootRows(rolls);
   }
@@ -1030,11 +883,7 @@ List<({String itemId, num quantity, num xp})> _rollFishingPotLoot(
     final row = catchId == null ? null : byId[catchId];
     if (row == null) continue;
     final quantity = _rollInclusive(random, potCatchMin, potCatchMax);
-    rolls.add((
-      itemId: row.itemId,
-      quantity: quantity,
-      xp: row.xpEach * quantity,
-    ));
+    rolls.add((itemId: row.itemId, quantity: quantity, xp: row.xpEach * quantity));
   }
   return _mergeLootRows(rolls);
 }
@@ -1053,24 +902,10 @@ bool _canFitTimerGrants(
 ) {
   var probe = save;
   for (final grant in grants) {
-    if (!canFitItemQuantity(
-      probe,
-      grant.itemId,
-      grant.quantity,
-      null,
-      false,
-      db,
-    )) {
+    if (!canFitItemQuantity(probe, grant.itemId, grant.quantity, null, false, db)) {
       return false;
     }
-    probe = addItemsToInventory(
-      probe,
-      grant.itemId,
-      grant.quantity,
-      null,
-      false,
-      db,
-    ).save;
+    probe = addItemsToInventory(probe, grant.itemId, grant.quantity, null, false, db).save;
   }
   return true;
 }
@@ -1113,17 +948,11 @@ LocationTimerCollectResult collectLocationTimer(
   final now = nowMs;
   final timer = timerAtLocationKind(save, locationId, kind);
   if (timer == null) {
-    return const LocationTimerCollectResult(
-      ok: false,
-      reason: 'No timer at this location.',
-    );
+    return const LocationTimerCollectResult(ok: false, reason: 'No timer at this location.');
   }
   if (!timerIsReady(timer, now)) {
     final remainSec = ((timerCompletesAtMs(timer) - now) / 1000).ceil();
-    return LocationTimerCollectResult(
-      ok: false,
-      reason: 'Not ready yet (${remainSec}s left).',
-    );
+    return LocationTimerCollectResult(ok: false, reason: 'Not ready yet (${remainSec}s left).');
   }
 
   final grants = <({String itemId, num quantity})>[];
@@ -1131,13 +960,10 @@ LocationTimerCollectResult collectLocationTimer(
   final skillId = timer.skillId;
 
   if (timer.kind == 'botany') {
-    final plantedIds =
-        (timer.plantedItemIds != null && timer.plantedItemIds!.isNotEmpty)
+    final plantedIds = (timer.plantedItemIds != null && timer.plantedItemIds!.isNotEmpty)
         ? timer.plantedItemIds!
         : List<String>.filled(
-            timer.outputQuantity > 0
-                ? timer.outputQuantity.round().clamp(1, 99)
-                : 1,
+            timer.outputQuantity > 0 ? timer.outputQuantity.round().clamp(1, 99) : 1,
             timer.inputItemId,
           );
     final botanyLevel = getSkillProgress(save, botanySkillId).level;
@@ -1162,17 +988,12 @@ LocationTimerCollectResult collectLocationTimer(
       );
       if (rng() * 100 >= chance) continue;
       successfulIds.add(seedItemId);
-      produce[outputId] =
-          (produce[outputId] ?? 0) + _rollInclusive(rng, 1, 5).round();
+      produce[outputId] = (produce[outputId] ?? 0) + _rollInclusive(rng, 1, 5).round();
       harvestXp += spec?.xp ?? 0;
     }
     for (final seedItemId in successfulIds) {
       if (rng() < botanySeedReturnChance) {
-        final returnedId = rollReturnedBotanySeed(
-          successfulIds,
-          seedItemId,
-          rng,
-        );
+        final returnedId = rollReturnedBotanySeed(successfulIds, seedItemId, rng);
         returned[returnedId] = (returned[returnedId] ?? 0) + 1;
       }
     }
@@ -1185,12 +1006,7 @@ LocationTimerCollectResult collectLocationTimer(
     }
   } else if (timer.kind == 'fishing_pot') {
     final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
-    final rolled = _rollFishingPotLoot(
-      timer.locationId,
-      fishingLevel,
-      timer.baitItemIds,
-      rng,
-    );
+    final rolled = _rollFishingPotLoot(timer.locationId, fishingLevel, timer.baitItemIds, rng);
     xpGained = 0;
     for (final row in rolled) {
       grants.add((itemId: row.itemId, quantity: row.quantity));
@@ -1202,29 +1018,15 @@ LocationTimerCollectResult collectLocationTimer(
   }
 
   if (!_canFitTimerGrants(db, save, grants)) {
-    return LocationTimerCollectResult(
-      ok: false,
-      reason: timerInventoryFullReasonFor(timer.kind),
-    );
+    return LocationTimerCollectResult(ok: false, reason: timerInventoryFullReasonFor(timer.kind));
   }
 
   var next = save.copyWith(
-    locationTimers: _withoutLocationTimerKind(
-      save.locationTimers,
-      locationId,
-      kind,
-    ),
+    locationTimers: _withoutLocationTimerKind(save.locationTimers, locationId, kind),
   );
   final loot = <LootGrant>[];
   for (final grant in grants) {
-    next = addItemsToInventory(
-      next,
-      grant.itemId,
-      grant.quantity,
-      null,
-      false,
-      db,
-    ).save;
+    next = addItemsToInventory(next, grant.itemId, grant.quantity, null, false, db).save;
     loot.add(
       LootGrant(
         itemId: grant.itemId,
