@@ -164,7 +164,7 @@ class _BaitTile extends StatelessWidget {
               bottom: 0,
               child: Text(
                 '$selectedCount',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w400,
                   color: UiChrome.of(context).primaryLabel,
