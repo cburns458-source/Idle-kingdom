@@ -23,7 +23,7 @@ const String _fallbackMerchantLine = 'Welcome to my shop.';
 const String _fallbackNpcDescription = 'An inhabitant of Restoria.';
 const String _fallbackQuestActivePrompt = 'What else do you need?';
 const String _fallbackQuillTeach =
-    'A bow\u2019s only half the work \u2014 you\u2019ll want a quiver too. I can show you how to make both. '
+    "A bow's only half the work. You'll want a quiver too. I can show you how to make both. "
     'Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.';
 const String _fallbackQuillKnown = 'You know how to make bows and quivers.';
 
@@ -367,7 +367,7 @@ String _completedNote(GameDatabase db, QuestRow quest, String npcId, PlayerSave 
         return '${_locationName(db, locationId)} is open$where';
       })
       .join(', ');
-  return 'Thank you \u2014 $opened.';
+  return 'Thank you. $opened.';
 }
 
 NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
@@ -606,9 +606,11 @@ NpcActionResult acceptQuestFromNpc(GameDatabase db, PlayerSave save, String ques
   if (!result.ok) return NpcActionResult.failed(result.reason!);
   final quest = getQuest(db, questId);
   final displayName = quest?['Display Name'];
+  final npcId = quest?['NPC ID'];
+  final spoken = npcId is String ? questTalkLine(db, questId, npcId, result.save!) : null;
   return NpcActionResult.ok(
     save: result.save!,
-    message: 'Accepted: ${displayName is String ? displayName : 'quest'}.',
+    message: spoken ?? 'Accepted: ${displayName is String ? displayName : 'quest'}.',
   );
 }
 

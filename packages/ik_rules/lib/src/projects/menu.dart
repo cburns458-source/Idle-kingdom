@@ -241,10 +241,10 @@ String? _lockedReason(GameDatabase db, PlayerSave save, ProjectRow project, Stri
   final knowledge = hasProjectKnowledge(db, save, skillId);
   if (!knowledge.ok) {
     if (skillId == smithingSkillId) {
-      return 'Locked — find the Master Dwarf to unlock Smithing projects. '
+      return 'Locked. Find the Master Dwarf to unlock Smithing projects. '
           'The Dwarven Mining Merchant knows where he is today.';
     }
-    return 'Locked — speak with the ${knowledge.npcName} to unlock '
+    return 'Locked. Speak with the ${knowledge.npcName} to unlock '
         '${_skillName(db, skillId)} projects.';
   }
   if (!hasQuillProjectKnowledge(save, project)) {
@@ -254,7 +254,7 @@ String? _lockedReason(GameDatabase db, PlayerSave save, ProjectRow project, Stri
   final unmet = unmetProjectSkillRequirements(db, save, project)
       .map((requirement) => '${requirement.skillName} ${jsNumberToString(requirement.level)}')
       .toList();
-  return unmet.isEmpty ? 'Locked.' : 'Locked — needs ${unmet.join(', ')}.';
+  return unmet.isEmpty ? 'Locked.' : 'Locked. Needs ${unmet.join(', ')}.';
 }
 
 String? _effectLine(GameDatabase db, ProjectRow project) {

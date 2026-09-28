@@ -8,6 +8,7 @@ import { parseNotesObjectives, parseStructuredObjectives } from './objectives'
 import {
   applyQuestStepUnlocks,
   currentStepTalkKey,
+  getCurrentStepId,
   getCurrentStepIndex,
   getQuestSteps,
   questActiveStepObjectives,
@@ -286,10 +287,15 @@ export function applyQuestActionProgress(
   let next = save
   for (const quest of asQuestRows(db)) {
     if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
-    if (!questObjectiveSources(db, quest).some((row) => row.actionTargets.some((t) => t.targetId === actionId))) {
-      continue
-    }
-    next = bumpCounter(next, quest['Quest ID'], `action:${actionId}`, amount)
+    const current = questUsesSteps(db, quest['Quest ID'])
+      ? questActiveStepObjectives(db, next, quest)
+      : parseStructuredObjectives(quest)
+    if (!current?.actionTargets.some((target) => target.targetId === actionId)) continue
+    const stepId = questUsesSteps(db, quest['Quest ID'])
+      ? getCurrentStepId(db, next, quest)
+      : null
+    const key = stepId ? `action:${actionId}:${stepId}` : `action:${actionId}`
+    next = bumpCounter(next, quest['Quest ID'], key, amount)
   }
   return applyQuestStepUnlocks(db, next)
 }

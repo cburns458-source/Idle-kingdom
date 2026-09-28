@@ -249,10 +249,10 @@ String? hostileForceMessage(GameDatabase db, HostileTravelArrivalResult result) 
   final label = contextualName is String ? contextualName : 'hostile combat';
   final warningText = jsRawString(activity?.raw, 'Danger Warning Combat Level');
   if (result.forcedActivityId != null) {
-    return 'Hostile area (Combat Level $warningText+) — forced into $label.';
+    return 'Hostile area (Combat Level $warningText+). Forced into $label.';
   }
   if (result.forceBlockedReason != null) {
-    return 'Hostile area (Combat Level $warningText+) — ${result.forceBlockedReason}';
+    return 'Hostile area (Combat Level $warningText+). ${result.forceBlockedReason}';
   }
   return null;
 }

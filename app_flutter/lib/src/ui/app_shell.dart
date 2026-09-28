@@ -769,7 +769,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   /// Combat round chatter stays off the toast while a fight is on screen.
   String? get _toastText {
     if (controller.productionInventoryFull) {
-      return 'Inventory full — free a slot to keep crafting.';
+      return 'Inventory full. Free a slot to keep crafting.';
     }
     if (controller.activityError case final error?) return error;
     if (controller.save.combatEnemyId != null) return null;
@@ -986,7 +986,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     child: Text(
-                      'Cloud unavailable — progress is not syncing.',
+                      'Cloud unavailable. Progress is not syncing.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white, fontSize: 12),
                     ),

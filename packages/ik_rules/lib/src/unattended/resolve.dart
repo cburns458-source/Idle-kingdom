@@ -172,7 +172,7 @@ UnattendedResult resolveUnattendedProgress(
       final activityId = resumed.currentActivityId!;
       if (!activityStillValid(db, resumed, activityId)) {
         current = clearActivitySave(resumed, pauseEnded);
-        messages.add('Activity stopped after defeat — requirements no longer met.');
+        messages.add('Activity stopped after defeat. Requirements no longer met.');
         break;
       }
       final resumeAt = math.max(pauseEnded, anchor);
@@ -369,7 +369,7 @@ UnattendedResult resolveUnattendedProgress(
       final activityId = current.currentActivityId!;
       if (!activityStillValid(db, next, activityId)) {
         current = clearActivitySave(next, due);
-        messages.add('Activity stopped — requirements no longer met.');
+        messages.add('Activity stopped. Requirements no longer met.');
         break;
       }
       final generated = generateNextAction(db, next, activityId, random, due);
@@ -383,7 +383,7 @@ UnattendedResult resolveUnattendedProgress(
       final activityId = current.currentActivityId!;
       if (!activityStillValid(db, current, activityId)) {
         current = clearActivitySave(current, endMs);
-        messages.add('Activity stopped — requirements no longer met.');
+        messages.add('Activity stopped. Requirements no longer met.');
         break;
       }
       final waitUntil = bossRespawnWaitUntilMs(db, current, activityId);

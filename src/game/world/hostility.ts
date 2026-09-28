@@ -249,10 +249,10 @@ export function hostileForceMessage(
   const label = activity?.['Contextual Name'] ?? 'hostile combat'
   const warning = activity?.['Danger Warning Combat Level']
   if (result.forcedActivityId) {
-    return `Hostile area (Combat Level ${warning}+) — forced into ${label}.`
+    return `Hostile area (Combat Level ${warning}+). Forced into ${label}.`
   }
   if (result.forceBlockedReason) {
-    return `Hostile area (Combat Level ${warning}+) — ${result.forceBlockedReason}`
+    return `Hostile area (Combat Level ${warning}+). ${result.forceBlockedReason}`
   }
   return null
 }

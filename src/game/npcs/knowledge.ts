@@ -18,7 +18,7 @@ export const ARTISANRY_SKILL_ID = 'SKL-0012'
 export const MERCHANT_TIP_XP = 11_000
 
 export const QUILL_LOCKED_REASON =
-  'Locked — find Quill to learn how to make bows and quivers. The General Store merchant knows where he was last seen.'
+  'Locked. Find Quill to learn how to make bows and quivers. The General Store merchant knows where he was last seen.'
 
 export const QUILL_MISSING_REASON = 'Speak with Quill to learn how to make bows and quivers.'
 
@@ -27,7 +27,7 @@ export const GETTING_STARTED_QUEST_ID = 'QST-0006'
 export const WIZARD_STUDIES_QUEST_ID = 'QST-0005'
 export const ARCHMAGE_HMPH = 'Hmph.'
 export const FENNEL_WELCOME =
-  'Welcome to the lands. I am Fennel. This farm is a good place to start — harvest, cook, and fight are all close by. Come talk to me when you want to learn the rest.'
+  'Welcome to the lands. I am Fennel. This farm is a good place to start: harvest, cook, and fight are all close by. Come talk to me when you want to learn the rest.'
 
 export function npcHideAfterQuestId(npc: NpcRow): string | null {
   const notes = typeof npc.Notes === 'string' ? npc.Notes : ''

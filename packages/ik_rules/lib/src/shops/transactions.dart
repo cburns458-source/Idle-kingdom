@@ -225,7 +225,7 @@ ShopTransactionResult confirmShopOffer(
   return ShopTransactionResult.ok(
     save: next,
     goldDelta: goldDelta,
-    message: parts.isNotEmpty ? 'Trade complete — ${parts.join(', ')}.' : 'Trade complete.',
+    message: parts.isNotEmpty ? 'Trade complete. ${parts.join(', ')}.' : 'Trade complete.',
     cosmeticsGranted: cosmeticGrants,
   );
 }

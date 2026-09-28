@@ -1342,7 +1342,7 @@ class MultiplayerController extends ChangeNotifier {
     PlayerSave save,
     void Function(num goldCost) onPaid,
   ) async {
-    if (_busy) return 'One thing at a time — the last request is still going.';
+    if (_busy) return 'One thing at a time. The last request is still going.';
     var founded = false;
     await run(() async {
       final result = await service.createGuild(input, save.gold);

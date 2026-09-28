@@ -167,7 +167,10 @@ void main() {
     await tester.tap(find.text('Start quest: Help the aspiring apothecary'));
     await tester.pump();
     expect(getQuestProgress(controller.save, 'QST-0002').status, 'active');
-    expect(controller.message, 'Accepted: Help the aspiring apothecary.');
+    expect(
+      controller.message,
+      "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails, five of each, and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
+    );
   });
 
   testWidgets('an active quest shows its progress and pays out on turn-in', (tester) async {
@@ -208,7 +211,7 @@ void main() {
     await tester.tap(find.text('Collect'));
     await tester.pumpAndSettle();
 
-    expect(find.text("Thank you — Rose's Apothecary is open on the Town Map."), findsOne);
+    expect(find.text("Thank you. Rose's Apothecary is open on the Town Map."), findsOne);
   });
 
   testWidgets('the King pitches the feast, then asks for help after accept', (tester) async {

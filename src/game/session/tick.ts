@@ -384,7 +384,7 @@ export function advanceSession(
       activityId,
       pauseEnded,
       random,
-      'Activity stopped after defeat — requirements no longer met.',
+      'Activity stopped after defeat. Requirements no longer met.',
     )
     out.emit({ kind: 'recovered' })
     return out.result()
@@ -429,7 +429,7 @@ export function advanceSession(
       })
     }
     if (finished.failed) {
-      out.emit({ kind: 'message', text: `Ruined the ${finished.outputName} — materials lost.` })
+      out.emit({ kind: 'message', text: `Ruined the ${finished.outputName}. Materials lost.` })
     }
     out.emit({ kind: 'rewards', bundle: finished.reward })
     return out.result()
@@ -473,7 +473,7 @@ export function advanceSession(
       activityId,
       due,
       random,
-      'Activity stopped — requirements are no longer met.',
+      'Activity stopped. Requirements are no longer met.',
     )
     return out.result()
   }
@@ -490,7 +490,7 @@ export function advanceSession(
     activityId,
     nowMs,
     random,
-    'Activity stopped — requirements are no longer met.',
+    'Activity stopped. Requirements are no longer met.',
   )
   return out.result()
 }

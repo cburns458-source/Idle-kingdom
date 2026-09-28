@@ -175,7 +175,7 @@ class _GuildPanelState extends State<GuildPanel> {
             if (i == 0) {
               return SocialRow(
                 title: 'Guest of [${guest.tag}] ${guest.name}',
-                subtitle: 'Chat only — not on their roster.',
+                subtitle: 'Chat only. Not on their roster.',
                 trailing: GameButton(
                   label: 'Leave guest',
                   tone: GameButtonTone.secondary,
@@ -342,7 +342,7 @@ class _GuildPanelState extends State<GuildPanel> {
             if (i == 0) {
               return SocialRow(
                 title: 'Guest of [${guestGuild.tag}] ${guestGuild.name}',
-                subtitle: 'Chat only — not on their roster.',
+                subtitle: 'Chat only. Not on their roster.',
                 trailing: GameButton(
                   label: 'Leave guest',
                   tone: GameButtonTone.secondary,
@@ -448,7 +448,7 @@ class _GuildPanelState extends State<GuildPanel> {
                 children: [
                   Text('Guests', style: TextStyle(fontWeight: FontWeight.w400)),
                   SizedBox(width: 8),
-                  Expanded(child: MutedText('Chat only — not in roster')),
+                  Expanded(child: MutedText('Chat only. Not in roster')),
                 ],
               );
             }
@@ -875,7 +875,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                               children: [
                                 Text('Guests', style: TextStyle(fontWeight: FontWeight.w400)),
                                 SizedBox(width: 8),
-                                Expanded(child: MutedText('Chat only — not in roster')),
+                                Expanded(child: MutedText('Chat only. Not in roster')),
                               ],
                             );
                           }

@@ -268,13 +268,15 @@ PlayerSave applyQuestActionProgress(
   for (final quest in asQuestRows(db)) {
     final questId = jsString(quest['Quest ID']);
     if (getQuestProgress(next, questId).status != 'active') continue;
-    if (!questObjectiveSources(
-      db,
-      quest,
-    ).any((row) => row.actionTargets.any((target) => target.targetId == actionId))) {
+    final current = questUsesSteps(db, questId)
+        ? questActiveStepObjectives(db, next, quest)
+        : parseStructuredObjectives(quest);
+    if (current == null || !current.actionTargets.any((target) => target.targetId == actionId)) {
       continue;
     }
-    next = _bumpCounter(next, questId, 'action:$actionId', amount);
+    final stepId = questUsesSteps(db, questId) ? getCurrentStepId(db, next, quest) : null;
+    final key = stepId != null ? 'action:$actionId:$stepId' : 'action:$actionId';
+    next = _bumpCounter(next, questId, key, amount);
   }
   return applyQuestStepUnlocks(db, next);
 }

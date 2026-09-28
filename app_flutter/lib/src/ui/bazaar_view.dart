@@ -545,7 +545,7 @@ class _BazaarViewState extends State<BazaarView> {
                       ),
                       MutedText(
                         guide == null
-                            ? 'No average price yet — you are naming it.'
+                            ? 'No average price yet. You are naming it.'
                             : 'Average Bazaar price '
                                   '${formatThousands(guide.averagePrice)} · '
                                   '${formatThousands(guide.volume)} traded',

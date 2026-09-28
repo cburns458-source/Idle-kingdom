@@ -358,7 +358,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       activityId!,
       pauseEnded,
       random,
-      'Activity stopped after defeat — requirements no longer met.',
+      'Activity stopped after defeat. Requirements no longer met.',
     );
     out.emit(const RecoveredEvent());
     return out.result();
@@ -401,7 +401,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       out.emit(CraftCompletedEvent(itemId: output.itemId, displayName: output.displayName));
     }
     if (finished.failed) {
-      out.emit(MessageEvent('Ruined the ${finished.outputName} — materials lost.'));
+      out.emit(MessageEvent('Ruined the ${finished.outputName}. Materials lost.'));
     }
     out.emit(RewardsEvent(finished.reward));
     return out.result();
@@ -441,7 +441,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       activityId!,
       due,
       random,
-      'Activity stopped — requirements are no longer met.',
+      'Activity stopped. Requirements are no longer met.',
     );
     return out.result();
   }
@@ -458,7 +458,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
     activityId,
     nowMs,
     random,
-    'Activity stopped — requirements are no longer met.',
+    'Activity stopped. Requirements are no longer met.',
   );
   return out.result();
 }

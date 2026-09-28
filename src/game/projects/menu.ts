@@ -187,9 +187,9 @@ function lockedReason(
   const knowledge = hasProjectKnowledge(db, save, skillId)
   if (!knowledge.ok) {
     if (skillId === SMITHING_SKILL_ID) {
-      return 'Locked — find the Master Dwarf to unlock Smithing projects. The Dwarven Mining Merchant knows where he is today.'
+      return 'Locked. Find the Master Dwarf to unlock Smithing projects. The Dwarven Mining Merchant knows where he is today.'
     }
-    return `Locked — speak with the ${knowledge.npcName} to unlock ${skillName(db, skillId)} projects.`
+    return `Locked. Speak with the ${knowledge.npcName} to unlock ${skillName(db, skillId)} projects.`
   }
   if (!hasQuillProjectKnowledge(save, project['Display Name'])) {
     return QUILL_LOCKED_REASON
@@ -198,7 +198,7 @@ function lockedReason(
   const unmet = unmetProjectSkillRequirements(db, save, project).map(
     (requirement) => `${requirement.skillName} ${requirement.level}`,
   )
-  return unmet.length > 0 ? `Locked — needs ${unmet.join(', ')}.` : 'Locked.'
+  return unmet.length > 0 ? `Locked. Needs ${unmet.join(', ')}.` : 'Locked.'
 }
 
 function effectLine(db: GameDatabase, project: ProjectRow): string | null {

@@ -83,6 +83,14 @@ function talkProgressForStep(
   return Number(counters[talkKey] ?? 0)
 }
 
+function actionProgressForStep(
+  counters: Record<string, number>,
+  actionKey: string,
+  stepId: string,
+): number {
+  return Number(counters[`${actionKey}:${stepId}`] ?? 0)
+}
+
 function stepProgressLines(
   db: GameDatabase,
   save: PlayerSave,
@@ -95,12 +103,21 @@ function stepProgressLines(
   const lines = objectiveProgressFromStructured(db, save, structured, counters).progressLines
   if (!stepId) return lines
   return lines.map((line) => {
-    if (!line.key.startsWith('talk:')) return line
-    return {
-      ...line,
-      key: `${line.key}:${stepId}`,
-      current: talkProgressForStep(db, questId, counters, line.key, stepId),
+    if (line.key.startsWith('talk:')) {
+      return {
+        ...line,
+        key: `${line.key}:${stepId}`,
+        current: talkProgressForStep(db, questId, counters, line.key, stepId),
+      }
     }
+    if (line.key.startsWith('action:')) {
+      return {
+        ...line,
+        key: `${line.key}:${stepId}`,
+        current: actionProgressForStep(counters, line.key, stepId),
+      }
+    }
+    return line
   })
 }
 
@@ -127,8 +144,9 @@ function journalProgressLines(
   save: PlayerSave,
   questId: string,
   notes: string,
+  stepId?: string,
 ): QuestProgressLine[] {
-  const lines = stepProgressLines(db, save, questId, notes)
+  const lines = stepProgressLines(db, save, questId, notes, stepId)
   const structured = parseNotesObjectives(notes)
   if (structured.optionalTalkNpcIds.length === 0) return lines
   const counters = getQuestProgress(save, questId).counters ?? {}
@@ -239,7 +257,7 @@ export function questStepJournal(
       ? stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID']).filter((line) =>
           line.key.startsWith('action:'),
         )
-      : journalProgressLines(db, save, questId, step.Notes ?? '')
+      : journalProgressLines(db, save, questId, step.Notes ?? '', step['Step ID'])
     const progress = progressSource.map((line) => ({
       key: line.key,
       label: formatQuestProgressLine(line),
@@ -393,6 +411,12 @@ export function questTouchesNpcForSave(
   return questCanTalkToNpc(db, save, quest, npcId)
 }
 
+/** Action ID from a quest progress key, including step-scoped `action:ACN-0001:QSTP-0001`. */
+export function actionIdFromProgressKey(key: string): string | null {
+  const match = key.match(/^action:([A-Z]+-\d+)/)
+  return match?.[1] ?? null
+}
+
 /** Quest action counts that belong on this activity's dock card. */
 export function questActionProgressForActivity(
   db: GameDatabase,
@@ -426,12 +450,12 @@ export function questActionProgressForActivity(
         getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)]?.Notes ?? '',
         getCurrentStepId(db, save, quest) ?? undefined,
       )) {
-        const actionId = line.key.startsWith('action:') ? line.key.slice('action:'.length) : null
+        const actionId = actionIdFromProgressKey(line.key)
         if (actionId && actionIds.has(actionId)) lines.push(line)
       }
     } else {
       for (const line of stepProgressLines(db, save, questId, quest.Notes ?? '')) {
-        const actionId = line.key.startsWith('action:') ? line.key.slice('action:'.length) : null
+        const actionId = actionIdFromProgressKey(line.key)
         if (actionId && actionIds.has(actionId)) lines.push(line)
       }
     }

@@ -5,7 +5,7 @@ import { activityVisibleForSave } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
 import { raiseSkillToMinimumLevel } from '../activity/xp'
 import { prepareDatabase } from '../data/loadDatabase'
-import { chooseCombatForQuest, npcConversation, questTalkLine, talkWithQuestNpc } from '../npcs/conversation'
+import { acceptQuestFromNpc, chooseCombatForQuest, npcConversation, questTalkLine, talkWithQuestNpc } from '../npcs/conversation'
 import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
@@ -632,9 +632,13 @@ describe('quest tours', () => {
 
     let ready = raiseSkillToMinimumLevel(arrived, launch, 'SKL-0006', 40).save
     ready = raiseSkillToMinimumLevel(ready, launch, 'SKL-0014', 35).save
-    const accepted = acceptQuest(launch, ready, 'QST-0010')
+    const accepted = acceptQuestFromNpc(launch, ready, 'QST-0010')
     expect(accepted.ok).toBe(true)
     if (!accepted.ok) return
+    expect(accepted.message).toBe(
+      'Thank you. Start with clearing some vines here to gain access to the deeper parts of the woods.',
+    )
+    expect(questTalkLine(launch, 'QST-0010', 'NPC-0017', accepted.save)).toBe(accepted.message)
     const quest = getQuest(launch, 'QST-0010')!
     expect(
       questLog(launch, accepted.save)
@@ -678,19 +682,23 @@ describe('quest tours', () => {
     expect(getQuestProgress(save, 'QST-0010').status).toBe('active')
     expect(questActionProgressForActivity(launch, save, 'ACT-0048')).toEqual([])
     expect(getCurrentStepId(launch, save, quest)).toBe('QSTP-0026')
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(false)
+    expect(questTalkLine(launch, 'QST-0010', 'NPC-0017', save)).toBe(
+      "You'll need to clear more vines to get further. Keep clearing vines until you reach the Old Ent Grove.",
+    )
 
     const talkedBack = talkWithQuestNpc(launch, save, 'NPC-0017')
     expect(talkedBack.ok).toBe(true)
     if (!talkedBack.ok) return
     save = talkedBack.save
     expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(true)
-    save = applyQuestActionProgress(launch, save, 'ACN-0231', 10)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
     expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([STARLIGHT_GLADE_ID]))
     expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(false)
 
-    save = applyQuestActionProgress(launch, save, 'ACN-0232', 10)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
     expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([MIRROR_LAKE_ID]))
-    save = applyQuestActionProgress(launch, save, 'ACN-0233', 10)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
     expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([OLD_ENT_GROVE_ID]))
     const afterVinesTalk = talkWithQuestNpc(launch, save, 'NPC-0017')
     expect(afterVinesTalk.ok).toBe(true)

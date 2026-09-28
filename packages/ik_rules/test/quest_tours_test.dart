@@ -326,8 +326,13 @@ void main() {
 
     var ready = raiseSkillToMinimumLevel(arrived, db, 'SKL-0006', 40).save;
     ready = raiseSkillToMinimumLevel(ready, db, 'SKL-0014', 35).save;
-    final accepted = acceptQuest(db, ready, 'QST-0010');
+    final accepted = acceptQuestFromNpc(db, ready, 'QST-0010');
     expect(accepted.ok, isTrue);
+    expect(
+      accepted.message,
+      'Thank you. Start with clearing some vines here to gain access to the deeper parts of the woods.',
+    );
+    expect(questTalkLine(db, 'QST-0010', 'NPC-0017', accepted.save), accepted.message);
     final save = accepted.save!;
     expect(
       questLog(
@@ -363,16 +368,21 @@ void main() {
     expect(getQuestProgress(save, 'QST-0010').status, 'active');
     expect(questActionProgressForActivity(db, save, 'ACT-0048'), isEmpty);
     expect(getCurrentStepId(db, save, quest), 'QSTP-0026');
+    expect(activityVisibleForSave(db, save, 'ACT-0077'), isFalse);
+    expect(
+      questTalkLine(db, 'QST-0010', 'NPC-0017', save),
+      "You'll need to clear more vines to get further. Keep clearing vines until you reach the Old Ent Grove.",
+    );
 
     save = talkWithQuestNpc(db, save, 'NPC-0017').save!;
     expect(activityVisibleForSave(db, save, 'ACT-0077'), isTrue);
-    save = applyQuestActionProgress(db, save, 'ACN-0231', 10);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
     expect(save.unlockedLocationIds, contains(starlightGladeId));
     expect(activityVisibleForSave(db, save, 'ACT-0077'), isFalse);
 
-    save = applyQuestActionProgress(db, save, 'ACN-0232', 10);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
     expect(save.unlockedLocationIds, contains(mirrorLakeId));
-    save = applyQuestActionProgress(db, save, 'ACN-0233', 10);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
     expect(save.unlockedLocationIds, contains(oldEntGroveId));
     save = talkWithQuestNpc(db, save, 'NPC-0017').save!;
     expect(activityVisibleForSave(db, save, 'ACT-0080'), isTrue);

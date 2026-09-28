@@ -112,7 +112,7 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
+      "Notes": "Deprecated: equipped spells are always active. Kept for older clients; unused by current runtime."
     },
     {
       "Key": "copy.merchant_tip",
@@ -134,7 +134,7 @@
     },
     {
       "Key": "copy.quill_teach",
-      "Value": "A bow's only half the work — you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
+      "Value": "A bow's only half the work. You'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
       "Unit": null,
       "Notes": "Quill’s hunting lesson, spoken the first time the player asks."
     },
@@ -5652,7 +5652,7 @@
       "Functional / Source Tags": "alchemy_potion_output_boost",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "While crafting potions, output rolls 2–3 instead of 1–3. No extra experience. Not yet obtainable.",
+      "Description": "While crafting potions, output rolls 2-3 instead of 1-3. No extra experience. Not yet obtainable.",
       "Icon Asset Key": "alchemist_goggles",
       "Notes": "Output-only specialist. Stub content; no acquisition path yet.",
       "Base Sell Value": 220,
@@ -8633,7 +8633,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "artisanry_output; special_effect; +15% relative Drop Chance",
       "Status": "Planned",
-      "Notes": "Special-effect jewelry — not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
+      "Notes": "Special-effect jewelry, not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -9929,7 +9929,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0177",
@@ -9947,7 +9947,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0007; item_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016). Stacks additively with other Abundance spells."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016). Stacks additively with other Abundance spells."
     },
     {
       "Equipment ID": "EQP-0178",
@@ -10181,7 +10181,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0009; extra_food_per_round:1; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0191",
@@ -10271,7 +10271,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "alchemy_potion_output_boost",
       "Status": "Planned",
-      "Notes": "Potion crafts roll 2–3 output. No XP change. Not obtainable yet."
+      "Notes": "Potion crafts roll 2-3 output. No XP change. Not obtainable yet."
     },
     {
       "Equipment ID": "EQP-0197",
@@ -10526,7 +10526,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0023; gold_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0211",
@@ -10544,7 +10544,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0024; damage_reduction_percent:5; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0212",
@@ -10562,7 +10562,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0025; damage_range_bonus_percent:5; lifesteal_percent:5; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0213",
@@ -10580,7 +10580,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0026; damage_range_bonus_percent:15; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0214",
@@ -10598,7 +10598,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0027; production_duration_reduction_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0215",
@@ -10616,7 +10616,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0028; gathering_duration_reduction_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013-SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0216",
@@ -11637,7 +11637,7 @@
       "Node ID": "NODE-0032",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight — arrival is peaceful.",
+      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight, arrival is peaceful.",
       "Danger / Hostility": null,
       "Background Asset Key": "locations/loc_citadel_combat.webp",
       "Map Node Name": null,
@@ -11996,7 +11996,7 @@
       "Node ID": "NODE-0052",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "The road between farm and town — bandits prey on travelers here.",
+      "Description": "The road between farm and town, bandits prey on travelers here.",
       "Danger / Hostility": "Danger warning: approximately Combat Level 9.",
       "Background Asset Key": "locations/loc_forest_path.webp",
       "Parent Location ID": null,
@@ -13143,7 +13143,7 @@
       "Internal Key": "train_citadel_grounds",
       "Contextual Name": "Challenge the guards",
       "Location ID": "LOC-0032",
-      "Description": "Face Castle Guard training encounters. Optional — the grounds stay peaceful until you start this.",
+      "Description": "Face Castle Guard training encounters. Optional: the grounds stay peaceful until you start this.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0024",
       "Pool Internal Key": "citadel_guards",
@@ -14202,7 +14202,7 @@
       "Action ID": "ACN-0048",
       "Weight": 60,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts — poplar, 60%."
+      "Notes": "Citadel Gathering Outskirts, poplar, 60%."
     },
     {
       "Pool Entry ID": "PEN-0062",
@@ -14210,7 +14210,7 @@
       "Action ID": "ACN-0009",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Combat Training Grounds — castle guard only."
+      "Notes": "Citadel Combat Training Grounds, castle guard only."
     },
     {
       "Pool Entry ID": "PEN-0063",
@@ -14218,7 +14218,7 @@
       "Action ID": "ACN-0171",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "QST-0003 Pressure the Guards — nervous guard only."
+      "Notes": "QST-0003 Pressure the Guards, nervous guard only."
     },
     {
       "Pool Entry ID": "PEN-0064",
@@ -14226,7 +14226,7 @@
       "Action ID": "ACN-0172",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Temple — Monk only."
+      "Notes": "Temple: Monk only."
     },
     {
       "Pool Entry ID": "PEN-0067",
@@ -14266,7 +14266,7 @@
       "Action ID": "ACN-0109",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Augur weed — 90% of temple pick weeds."
+      "Notes": "Augur weed, 90% of temple pick weeds."
     },
     {
       "Pool Entry ID": "PEN-0072",
@@ -14274,7 +14274,7 @@
       "Action ID": "ACN-0110",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Moonblossom — 10% of temple pick weeds."
+      "Notes": "Moonblossom, 10% of temple pick weeds."
     },
     {
       "Pool Entry ID": "PEN-0073",
@@ -14282,7 +14282,7 @@
       "Action ID": "ACN-0049",
       "Weight": 70,
       "Status": "Planned",
-      "Notes": "Cut maple tree — 70% of hardwood chopping."
+      "Notes": "Cut maple tree, 70% of hardwood chopping."
     },
     {
       "Pool Entry ID": "PEN-0074",
@@ -14290,7 +14290,7 @@
       "Action ID": "ACN-0050",
       "Weight": 30,
       "Status": "Planned",
-      "Notes": "Cut mahogany tree — 30% of hardwood chopping."
+      "Notes": "Cut mahogany tree, 30% of hardwood chopping."
     },
     {
       "Pool Entry ID": "PEN-0075",
@@ -14298,7 +14298,7 @@
       "Action ID": "ACN-0176",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Fight ghost — 90% of fending off the old spirits."
+      "Notes": "Fight ghost, 90% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0076",
@@ -14306,7 +14306,7 @@
       "Action ID": "ACN-0006",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Fight skeleton — 10% of fending off the old spirits."
+      "Notes": "Fight skeleton, 10% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0077",
@@ -14314,7 +14314,7 @@
       "Action ID": "ACN-0047",
       "Weight": 40,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts — oak, 40%."
+      "Notes": "Citadel Gathering Outskirts, oak, 40%."
     },
     {
       "Pool Entry ID": "PEN-0078",
@@ -14418,7 +14418,7 @@
       "Action ID": "ACN-0017",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts — pheasant only."
+      "Notes": "Gathering Outskirts, pheasant only."
     },
     {
       "Pool Entry ID": "PEN-0091",
@@ -14426,7 +14426,7 @@
       "Action ID": "ACN-0105",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts — wild roots only."
+      "Notes": "Gathering Outskirts, wild roots only."
     },
     {
       "Pool Entry ID": "PEN-0092",
@@ -14631,7 +14631,7 @@
     {
       "Pool Entry ID": "PEN-0117",
       "Pool ID": "POOL-0059",
-      "Action ID": "ACN-0231",
+      "Action ID": "ACN-0179",
       "Weight": 100,
       "Status": "Planned",
       "Notes": null
@@ -14639,7 +14639,7 @@
     {
       "Pool Entry ID": "PEN-0118",
       "Pool ID": "POOL-0060",
-      "Action ID": "ACN-0232",
+      "Action ID": "ACN-0179",
       "Weight": 100,
       "Status": "Planned",
       "Notes": null
@@ -14647,7 +14647,7 @@
     {
       "Pool Entry ID": "PEN-0119",
       "Pool ID": "POOL-0061",
-      "Action ID": "ACN-0233",
+      "Action ID": "ACN-0179",
       "Weight": 100,
       "Status": "Planned",
       "Notes": null
@@ -17005,7 +17005,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Forest Path woodcutting training. No item drops. VineChop. Counts for Through the Thicket.",
+      "Notes": "Shared Chop vines action. Woodcutting 40. VineChop. Used on Forest Path and each inner grove.",
       "Sprite Asset Key": "actions/acn_clear_vines.webp"
     },
     {
@@ -18065,69 +18065,6 @@
       "Release Phase": "Launch",
       "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:65; FailDamagePercent:10; BankThievery",
       "Sprite Asset Key": "actions/acn_pick_deposit_box.webp"
-    },
-    {
-      "Action ID": "ACN-0231",
-      "Internal Key": "clear_vines_small_clearing",
-      "Display Name": "Chop vines",
-      "Category": "Gathering",
-      "Relevant Skill ID": "SKL-0006",
-      "Target Type": null,
-      "Target ID": null,
-      "Proficiency Level": 40,
-      "Base Duration Seconds": 55,
-      "XP Reward": 2290,
-      "Guaranteed Gold": 0,
-      "Drop Chance": 0,
-      "Reward Table ID": null,
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Small Clearing vine chop. VineChop. Quest step only.",
-      "Sprite Asset Key": "actions/acn_clear_vines.webp"
-    },
-    {
-      "Action ID": "ACN-0232",
-      "Internal Key": "clear_vines_starlight_glade",
-      "Display Name": "Chop vines",
-      "Category": "Gathering",
-      "Relevant Skill ID": "SKL-0006",
-      "Target Type": null,
-      "Target ID": null,
-      "Proficiency Level": 40,
-      "Base Duration Seconds": 55,
-      "XP Reward": 2290,
-      "Guaranteed Gold": 0,
-      "Drop Chance": 0,
-      "Reward Table ID": null,
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Starlight Glade vine chop. VineChop. Quest step only.",
-      "Sprite Asset Key": "actions/acn_clear_vines.webp"
-    },
-    {
-      "Action ID": "ACN-0233",
-      "Internal Key": "clear_vines_mirror_lake",
-      "Display Name": "Chop vines",
-      "Category": "Gathering",
-      "Relevant Skill ID": "SKL-0006",
-      "Target Type": null,
-      "Target ID": null,
-      "Proficiency Level": 40,
-      "Base Duration Seconds": 55,
-      "XP Reward": 2290,
-      "Guaranteed Gold": 0,
-      "Drop Chance": 0,
-      "Reward Table ID": null,
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Mirror Lake vine chop. VineChop. Quest step only.",
-      "Sprite Asset Key": "actions/acn_clear_vines.webp"
     },
     {
       "Action ID": "ACN-0234",
@@ -19428,7 +19365,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks — empty Weapon or Tool."
+      "Notes": "Train with the monks, empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0105",
@@ -19441,7 +19378,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks — empty Shield or Off-hand."
+      "Notes": "Train with the monks, empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0106",
@@ -19480,7 +19417,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds — empty Weapon or Tool."
+      "Notes": "Pick weeds, empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0109",
@@ -19493,7 +19430,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds — empty Shield or Off-hand."
+      "Notes": "Pick weeds, empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0110",
@@ -20248,6 +20185,45 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Mirror Lake vines need a hatchet."
+    },
+    {
+      "Requirement ID": "REQ-0163",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0048",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Forest Path vines need a woodcutting tool."
+    },
+    {
+      "Requirement ID": "REQ-0164",
+      "Entity Type": "Action",
+      "Entity ID": "ACN-0179",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Chop vines needs a woodcutting tool."
+    },
+    {
+      "Requirement ID": "REQ-0165",
+      "Entity Type": "Action",
+      "Entity ID": "ACN-0179",
+      "Requirement Group": "LEVEL",
+      "Group Logic": "AND",
+      "Requirement Type": "Skill Level",
+      "Reference ID / Value": "SKL-0006",
+      "Operator": "Proficiency",
+      "Required Value": 40,
+      "Status": "Confirmed",
+      "Notes": "Chop vines is Woodcutting 40."
     }
   ],
   "Enemies": [
@@ -22290,7 +22266,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems — Sapphire Only",
+      "Reward Table Name": "Secondary Gems: Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -22305,7 +22281,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems: Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -22320,7 +22296,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems: Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -22335,7 +22311,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems: All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -22350,7 +22326,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems: All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -22365,7 +22341,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems: All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -31040,7 +31016,7 @@
       "Role": "Wizard",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A traveling wizard who can rewrite the shape of a person — for a price, and not too often.",
+      "Description": "A traveling wizard who can rewrite the shape of a person, for a price, and not too often.",
       "Notes": "RequiresTotalLevel:500",
       "Sprite Asset Key": "npc/npc_wizard_shopkeeper.png"
     },
@@ -32042,7 +32018,7 @@
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
       "Summary": "A kitchen worker wants out of the kitchens.",
-      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street — I keep thinking about the alchemy shop I've always wanted.",
+      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street. I keep thinking about the alchemy shop I've always wanted.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5, ITEM-0028 x5, ITEM-0042 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -32181,8 +32157,8 @@
       "Internal Key": "a_change_of_skin",
       "Display Name": "A Change of Skin",
       "NPC ID": "NPC-0016",
-      "Summary": "Vesper in the castle hall can rewrite the blood you wear — once a week, for a price.",
-      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you — the weave needs time to settle.",
+      "Summary": "Vesper in the castle hall can rewrite the blood you wear, once a week, for a price.",
+      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you, the weave needs time to settle.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Miniquest; HideFromQuestLog; Repeatable:7d; RequiresTotalLevel:500",
@@ -32251,7 +32227,7 @@
       "Dialogue ID": "QDL-0002",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free — or you can try your luck another way.",
+      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free, or you can try your luck another way.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32269,7 +32245,7 @@
       "Dialogue ID": "QDL-0004",
       "Quest ID": "QST-0004",
       "NPC ID": "NPC-0006",
-      "Line": "New around here? Browse all you like — no obligation to buy.",
+      "Line": "New around here? Browse all you like, no obligation to buy.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32296,7 +32272,7 @@
       "Dialogue ID": "QDL-0008",
       "Quest ID": "QST-0002",
       "NPC ID": "NPC-0005",
-      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails — five of each — and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
+      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails, five of each, and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32305,7 +32281,7 @@
       "Dialogue ID": "QDL-0009",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0011",
-      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen — a shopkeeper, a passerby. Please, I have nothing else.",
+      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen: a shopkeeper, a passerby. Please, I have nothing else.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32323,7 +32299,7 @@
       "Dialogue ID": "QDL-0011",
       "Quest ID": "QST-0005",
       "NPC ID": "NPC-0009",
-      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain — go introduce yourself.",
+      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain, go introduce yourself.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32413,7 +32389,7 @@
       "Dialogue ID": "QDL-0021",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them — this farm's patch included. Take this potato seed. Gather a little compost from the heap here, then come back and I'll show you how to put both in the ground.",
+      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them, this farm's patch included. Take this potato seed. Gather a little compost from the heap here, then come back and I'll show you how to put both in the ground.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0023"
@@ -32440,7 +32416,7 @@
       "Dialogue ID": "QDL-0024",
       "Quest ID": "QST-0001",
       "NPC ID": "NPC-0001",
-      "Line": "The kitchens will sing again — and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
+      "Line": "The kitchens will sing again, and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "When: completed; unlocks Courtyard Botany plot."
@@ -32449,16 +32425,25 @@
       "Dialogue ID": "QDL-0025",
       "Quest ID": "QST-0010",
       "NPC ID": "NPC-0017",
-      "Line": "The small clearing is open, but the work there is still locked. Cut ten vines at each thicket to open the next.",
+      "Line": "You'll need to clear more vines to get further. Keep clearing vines until you reach the Old Ent Grove.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0026"
     },
     {
+      "Dialogue ID": "QDL-0031",
+      "Quest ID": "QST-0010",
+      "NPC ID": "NPC-0017",
+      "Line": "Thank you. Start with clearing some vines here to gain access to the deeper parts of the woods.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "RequiresStep: QSTP-0025"
+    },
+    {
       "Dialogue ID": "QDL-0026",
       "Quest ID": "QST-0010",
       "NPC ID": "NPC-0017",
-      "Line": "We used to tend this slowly. Cut so much at once and the forest will retreat. Craft four offerings at the stone here — a poplar sapling, compost, mosstole, and essence — then place one at each inner grove.",
+      "Line": "We used to tend this slowly. Cut so much at once and the forest will retreat. Craft four offerings at the stone here: a poplar sapling, compost, mosstole, and essence. Then place one at each inner grove.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0030"
@@ -32485,7 +32470,7 @@
       "Dialogue ID": "QDL-0029",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "The patch is yours now. Plant that potato seed with the compost — the heap and the bed are both here.",
+      "Line": "The patch is yours now. Plant that potato seed with the compost, the heap and the bed are both here.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0034"
@@ -32867,7 +32852,7 @@
       "Release Phase": "Launch",
       "Reward": null,
       "Target Skill ID": null,
-      "Notes": "Harvest bleeding tooth. Action is unplaced — incomplete until placed."
+      "Notes": "Harvest bleeding tooth. Action is unplaced, incomplete until placed."
     }
   ],
   "CosmeticSlots": [
@@ -33255,7 +33240,7 @@
       "Race ID": "RACE-0005",
       "Internal Key": "goblin",
       "Display Name": "Goblin",
-      "Description": "Small and green — welcome among the camps of their kin.",
+      "Description": "Small and green, welcome among the camps of their kin.",
       "Sort Order": 5,
       "Portrait Asset Key": null,
       "Hostility Immunity Location IDs": "LOC-0003",
@@ -34036,7 +34021,7 @@
       "Quest ID": "QST-0010",
       "Step Order": 3,
       "Journal Label": "Clear ten vines in the Small Clearing",
-      "Notes": "Action: ACN-0231 x10; UnlockLocation: LOC-0044",
+      "Notes": "Action: ACN-0179 x10; UnlockLocation: LOC-0044",
       "Status": "Planned",
       "Release Phase": "Launch"
     },
@@ -34045,7 +34030,7 @@
       "Quest ID": "QST-0010",
       "Step Order": 4,
       "Journal Label": "Clear ten vines in Starlight Glade",
-      "Notes": "Action: ACN-0232 x10; UnlockLocation: LOC-0051",
+      "Notes": "Action: ACN-0179 x10; UnlockLocation: LOC-0051",
       "Status": "Planned",
       "Release Phase": "Launch"
     },
@@ -34054,7 +34039,7 @@
       "Quest ID": "QST-0010",
       "Step Order": 5,
       "Journal Label": "Clear ten vines at Mirror Lake",
-      "Notes": "Action: ACN-0233 x10; UnlockLocation: LOC-0018",
+      "Notes": "Action: ACN-0179 x10; UnlockLocation: LOC-0018",
       "Status": "Planned",
       "Release Phase": "Launch"
     },

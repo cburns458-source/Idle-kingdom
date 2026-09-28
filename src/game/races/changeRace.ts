@@ -150,7 +150,7 @@ export interface RaceChangeOffer {
 }
 
 const RACE_CHANGE_WARNING =
-  'The change lasts. Old gifts fade and new ones take their place. I can do this once a week — the weave needs time to settle.'
+  'The change lasts. Old gifts fade and new ones take their place. I can do this once a week. The weave needs time to settle.'
 
 const RACE_CHANGE_PROMPT =
   "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask."

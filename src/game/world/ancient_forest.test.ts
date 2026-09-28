@@ -82,4 +82,36 @@ describe('Ancient Forest Through the Thicket', () => {
       ),
     ).toBe(true)
   })
+
+  it('uses one Chop vines action that needs Woodcutting 40 and a woodcutting tool', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const vine = launch.Actions.find((row) => row['Action ID'] === 'ACN-0179')!
+    expect(vine['Display Name']).toBe('Chop vines')
+    expect(vine['Relevant Skill ID']).toBe('SKL-0006')
+    expect(vine['Proficiency Level']).toBe(40)
+    const chop = launch.Activities.filter((row) => row['Contextual Name'] === 'Chop vines')
+    expect(chop.map((row) => row['Activity ID']).sort()).toEqual([
+      'ACT-0048',
+      'ACT-0077',
+      'ACT-0078',
+      'ACT-0079',
+    ])
+    for (const activity of chop) {
+      expect(
+        launch.PoolEntries.filter((row) => row['Pool ID'] === activity['Pool ID']).map(
+          (row) => row['Action ID'],
+        ),
+      ).toEqual(['ACN-0179'])
+    }
+    expect(
+      launch.Requirements.find(
+        (row) => row['Entity ID'] === 'ACN-0179' && row['Requirement Type'] === 'Tool Capability',
+      )?.['Reference ID / Value'],
+    ).toBe('woodcutting_tool')
+    expect(
+      launch.Requirements.find(
+        (row) => row['Entity ID'] === 'ACN-0179' && row['Requirement Type'] === 'Skill Level',
+      )?.['Required Value'],
+    ).toBe(40)
+  })
 })

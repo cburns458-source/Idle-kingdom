@@ -85,6 +85,13 @@ List<QuestProgressLine> _scopedTalkLines(
           current: _talkProgressForStep(db, questId, counters, line.key, stepId),
           required: line.required,
         )
+      else if (line.key.startsWith('action:'))
+        QuestProgressLine(
+          key: '${line.key}:$stepId',
+          label: line.label,
+          current: counters['${line.key}:$stepId'] ?? 0,
+          required: line.required,
+        )
       else
         line,
   ];
@@ -108,9 +115,10 @@ List<QuestProgressLine> _journalProgressLines(
   GameDatabase db,
   PlayerSave save,
   String questId,
-  String notes,
-) {
-  final lines = _stepProgressLines(db, save, questId, notes);
+  String notes, [
+  String? stepId,
+]) {
+  final lines = _stepProgressLines(db, save, questId, notes, stepId);
   final structured = parseNotesObjectives(notes);
   if (structured.optionalTalkNpcIds.isEmpty) return lines;
   final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
@@ -227,8 +235,9 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
             save,
             questId,
             step.notes ?? '',
+            step.stepId,
           ).where((line) => line.key.startsWith('action:')).toList()
-        : _journalProgressLines(db, save, questId, step.notes ?? '');
+        : _journalProgressLines(db, save, questId, step.notes ?? '', step.stepId);
     final progress = progressSource
         .map(
           (line) => QuestJournalStep(
@@ -399,16 +408,21 @@ List<QuestProgressLine> questActionProgressForActivity(
       final step = steps[index];
       for (final line in _stepProgressLines(db, save, questId, step.notes ?? '', step.stepId)) {
         if (!line.key.startsWith('action:')) continue;
-        final actionId = line.key.substring('action:'.length);
-        if (actionIds.contains(actionId)) lines.add(line);
+        final actionId = _actionIdFromProgressKey(line.key);
+        if (actionId != null && actionIds.contains(actionId)) lines.add(line);
       }
     } else {
       for (final line in _stepProgressLines(db, save, questId, jsString(quest['Notes']))) {
         if (!line.key.startsWith('action:')) continue;
-        final actionId = line.key.substring('action:'.length);
-        if (actionIds.contains(actionId)) lines.add(line);
+        final actionId = _actionIdFromProgressKey(line.key);
+        if (actionId != null && actionIds.contains(actionId)) lines.add(line);
       }
     }
   }
   return lines;
+}
+
+String? _actionIdFromProgressKey(String key) {
+  final match = RegExp(r'^action:([A-Z]+-\d+)').firstMatch(key);
+  return match?.group(1);
 }
