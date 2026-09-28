@@ -145,4 +145,4 @@ describe('mixed combat activity pools', () => {
     expect(activityHasMixedCombatPool(launch, 'ACT-0017')).toBe(false)
   })
 })
-)
+
