@@ -20,6 +20,7 @@ import '../races/races.dart';
 import '../rng/mulberry32.dart';
 import '../cosmetics/cosmetics.dart';
 import '../save/generated/save_models.dart';
+import '../spells/spells.dart';
 import '../time.dart';
 import '../trackers/trackers.dart';
 import 'boss.dart';
@@ -252,6 +253,25 @@ CombatRoundResult resolveCombatRound(
   var nextEnemyHp = math.max(0, enemyHp - playerHit);
   final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
 
+  // Double Shot: 50% chance for a second main-hand bow hit (no extra enemy swing).
+  if (!lockpickCombat &&
+      !fishingMode &&
+      nextEnemyHp > 0 &&
+      equippedEnchantmentHasDoubleShot(db, save) &&
+      random() < 0.5) {
+    final playerRange = playerDamageRange(db, save);
+    var secondHit = rollDamage(playerRange.min, playerRange.max, random);
+    final critChance = equippedEnchantmentCritChancePercent(db, save);
+    if (critChance > 0 && random() * 100 < critChance) {
+      playerCrit = true;
+      secondHit = math.max(1, (secondHit * criticalStrikeDamageMultiplier()).floor());
+    }
+    if (bossInkActive) secondHit = math.max(1, (secondHit / 2).floor());
+    secondHit = applySleepIncoming(secondHit, asleep);
+    playerHit += secondHit;
+    nextEnemyHp = math.max(0, nextEnemyHp - secondHit);
+  }
+
   if (!lockpickCombat &&
       !fishingMode &&
       nextEnemyHp > 0 &&
@@ -315,6 +335,9 @@ CombatRoundResult resolveCombatRound(
     bossPendingHp = nextEnemyHp;
   }
 
+  final damageDealt = playerHit + (offhandHit ?? 0) + (staffHit ?? 0);
+  final hpAfterLifesteal = _applyLifestealHeal(db, save, save.currentHp, damageDealt);
+
   if (nextEnemyHp <= 0 && !bossAddsTriggered) {
     return CombatRoundResult(
       playerHit: playerHit,
@@ -332,7 +355,7 @@ CombatRoundResult resolveCombatRound(
       bossInkActive: bossInkActive,
       bossPendingHp: null,
       enemyHp: 0,
-      playerHp: save.currentHp,
+      playerHp: hpAfterLifesteal,
       outcome: 'victory',
     );
   }
@@ -354,7 +377,7 @@ CombatRoundResult resolveCombatRound(
       bossInkActive: bossInkActive,
       bossPendingHp: bossPendingHp,
       enemyHp: bossPendingHp ?? nextEnemyHp,
-      playerHp: save.currentHp,
+      playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
     );
   }
@@ -376,7 +399,7 @@ CombatRoundResult resolveCombatRound(
       bossInkActive: bossInkActive,
       bossPendingHp: null,
       enemyHp: nextEnemyHp,
-      playerHp: save.currentHp,
+      playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
     );
   }
@@ -386,7 +409,7 @@ CombatRoundResult resolveCombatRound(
   var enemyRaw = rollDamage(enemyRange.min, enemyRange.max, random);
   if (rampage) enemyRaw *= 2;
   final enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor);
-  final playerHp = math.max(0, save.currentHp - enemyHit);
+  final playerHp = math.max(0, hpAfterLifesteal - enemyHit);
 
   final thornsPercent = equippedEnchantmentThornsPercent(db, save);
   num thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
@@ -419,6 +442,20 @@ CombatRoundResult resolveCombatRound(
         ? 'victory'
         : 'ongoing',
   );
+}
+
+/// Heal from Lifesteal spells based on damage dealt this round, clamped to max HP.
+num _applyLifestealHeal(
+  GameDatabase db,
+  PlayerSave save,
+  num currentHp,
+  num damageDealt,
+) {
+  final percent = activeSpellLifestealPercent(db, save);
+  if (percent <= 0 || damageDealt <= 0) return currentHp;
+  final heal = (damageDealt * percent / 100).floor();
+  if (heal <= 0) return currentHp;
+  return math.min(playerMaxHp(db, save), currentHp + heal);
 }
 
 CombatVictoryResult applyCombatVictory(
@@ -476,6 +513,12 @@ CombatVictoryResult applyCombatVictory(
     final racedGold = applyRaceGoldGain(db, save, goldRoll);
     next = next.copyWith(gold: next.gold + racedGold);
     goldGained += racedGold;
+  }
+  // Hoard: chance to double all gold from this victory (after race multipliers).
+  final hoardChance = activeSpellGoldDoubleChancePercent(db, next);
+  if (hoardChance > 0 && goldGained > 0 && random() * 100 < hoardChance) {
+    next = next.copyWith(gold: next.gold + goldGained);
+    goldGained *= 2;
   }
 
   next = next.copyWith(

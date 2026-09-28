@@ -3,6 +3,7 @@ import { WEAPON_TOOL_SLOT_ID, type EquippedStack, type PlayerSave } from '../sav
 import { addItemToInventory } from '../activity/rewards'
 import { getSkillProgress } from '../activity/xp'
 import { canFitItemQuantity } from '../inventory/capacity'
+import { equippedEnchantmentActionTimeReductionBySkill } from '../projects/enchantments'
 import { firstEmptySpellSlot, isSpellEquipment, isSpellSlotId } from '../spells/spells'
 import { TEMPLE_LOCATION_ID } from '../world/blessing'
 
@@ -415,6 +416,11 @@ export function equippedActionTimeReductionBySkill(
       if (!isEquipmentSkillId(skillId)) continue
       totals[skillId] = (totals[skillId] ?? 0) + amount
     }
+  }
+  // Tool enchantments (Mining/Fishing/Woodcutting ATR) add on top of item ATR.
+  const fromEnchant = equippedEnchantmentActionTimeReductionBySkill(db, save)
+  for (const [skillId, amount] of Object.entries(fromEnchant)) {
+    totals[skillId] = (totals[skillId] ?? 0) + amount
   }
   for (const skillId of Object.keys(totals)) {
     totals[skillId] = Math.min(ACTION_TIME_REDUCTION_CAP_PERCENT, Math.max(0, totals[skillId]!))

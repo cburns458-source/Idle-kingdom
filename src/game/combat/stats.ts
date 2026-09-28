@@ -10,11 +10,18 @@ import {
 } from '../equipment/loadout'
 import { FISHING_SKILL_ID } from '../skills/skillActions'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
-import { equippedEnchantmentDamageBonus } from '../projects/enchantments'
+import {
+  equippedEnchantmentDamageBonus,
+  equippedEnchantmentDamageRangeMultiplier,
+  equippedEnchantmentMaxHpBonusPercent,
+} from '../projects/enchantments'
 import { raceMaxHpMultiplier } from '../races/races'
 import type { AttackStyle, PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
-import { activeSpellDamageRangeMultiplier } from '../spells/spells'
+import {
+  activeSpellDamageRangeMultiplier,
+  activeSpellDamageReductionPercent,
+} from '../spells/spells'
 
 /** Might — weapons and damage scaling. Formerly Combat (`SKL-0001`). */
 export const MIGHT_SKILL_ID = 'SKL-0001'
@@ -155,12 +162,13 @@ function damageRangeMultipliers(
   const levelMult = mightDamageMultiplier(save)
   const styleMult = 1 + attackStyleDamageBonusPercent(normalizeAttackStyle(save.attackStyle)) / 100
   const spellMult = activeSpellDamageRangeMultiplier(db, save, nowMs)
+  const enchantMult = equippedEnchantmentDamageRangeMultiplier(db, save)
   const potionBonus = save.activePotionEffect?.damageBonusPercent
   const potionMult =
     potionBonus && potionBonus > 0 && save.activePotionEffect?.scope === 'one_combat_encounter'
       ? 1 + potionBonus / 100
       : 1
-  return levelMult * styleMult * spellMult * potionMult
+  return levelMult * styleMult * spellMult * enchantMult * potionMult
 }
 
 function scaleDamageRange(
@@ -265,7 +273,8 @@ export function playerDamageReduction(db: GameDatabase, save: PlayerSave): numbe
     (sum, row) => sum + Number(row['Damage Reduction'] ?? 0),
     0,
   )
-  return gear + attackStyleDamageReduction(normalizeAttackStyle(save.attackStyle))
+  const spellDr = activeSpellDamageReductionPercent(db, save)
+  return gear + attackStyleDamageReduction(normalizeAttackStyle(save.attackStyle)) + spellDr
 }
 
 export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
@@ -273,7 +282,8 @@ export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
   const bonus = equippedRows(db, save).reduce((sum, row) => sum + Number(row['HP Bonus'] ?? 0), 0)
   const levelMult = vitalityHpMultiplier(save)
   const raceMult = raceMaxHpMultiplier(db, save)
-  return Math.max(1, scaleStat(base + bonus, levelMult * raceMult))
+  const enchantHpMult = 1 + equippedEnchantmentMaxHpBonusPercent(db, save) / 100
+  return Math.max(1, scaleStat(base + bonus, levelMult * raceMult * enchantHpMult))
 }
 
 export function playerBaseMaxHp(db: GameDatabase, save: PlayerSave): number {

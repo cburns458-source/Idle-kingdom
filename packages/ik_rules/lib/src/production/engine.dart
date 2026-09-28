@@ -20,6 +20,7 @@ import '../potions/effects.dart';
 import '../quests/progress.dart';
 import '../recipes/knowledge.dart';
 import '../rng/mulberry32.dart';
+import '../spells/spells.dart';
 import '../trackers/trackers.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
@@ -34,7 +35,8 @@ num productionCraftDurationMs(
 ) {
   final baseDurationMs = jsNumber(recipe.raw['Base Duration Seconds']) * 1000;
   final atr = equippedActionTimeReductionPercent(db, save, jsString(recipe.raw['Skill ID']));
-  final reduced = baseDurationMs * math.max(0.01, 1 - atr / 100);
+  final spellFactor = activeSpellProductionDurationMultiplier(db, save);
+  final reduced = baseDurationMs * math.max(0.01, 1 - atr / 100) * spellFactor;
   return applyPotionDurationMs(reduced, potionEffect);
 }
 

@@ -9,6 +9,7 @@ import '../js_compat.dart';
 import '../projects/enchantments.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
+import '../spells/spells.dart';
 import 'xp.dart';
 
 /// Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
@@ -36,14 +37,15 @@ num gatheringDurationMs(GameDatabase db, PlayerSave save, ActionRow action) {
   final multiplier = skill.level < proficiency
       ? configNumber(db, 'gathering_below_proficiency_duration_multiplier', 2)
       : 1;
-  final actionTimeReduction = equippedActionTimeReductionPercent(
-    db,
-    save,
-    jsString(action.raw['Relevant Skill ID']),
-  );
+  final skillId = jsString(action.raw['Relevant Skill ID']);
+  final actionTimeReduction = equippedActionTimeReductionPercent(db, save, skillId);
   final reductionFactor = math.max(0.01, 1 - actionTimeReduction / 100);
-  final enchantFactor = equippedEnchantmentGatheringMultiplier(db, save);
-  return math.max(0, baseSeconds * multiplier * reductionFactor * enchantFactor * 1000);
+  final enchantFactor = equippedEnchantmentGatheringMultiplier(db, save, skillId);
+  final spellFactor = activeSpellGatheringDurationMultiplier(db, save);
+  return math.max(
+    0,
+    baseSeconds * multiplier * reductionFactor * enchantFactor * spellFactor * 1000,
+  );
 }
 
 bool isBelowProficiency(PlayerSave save, ActionRow action) {

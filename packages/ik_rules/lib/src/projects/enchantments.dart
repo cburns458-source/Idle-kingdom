@@ -106,6 +106,36 @@ bool _isArmorEquipment(EquipmentRow equipment) {
   return equipment.raw['Damage Reduction'] is num;
 }
 
+bool _toolHasCapability(EquipmentRow equipment, String capability) {
+  return capabilityTags(equipment.raw['Capabilities / Effects']).contains(capability);
+}
+
+/// Bows for Double Shot and bow-only enchantment targets.
+bool isBowItem(ItemRow? item, EquipmentRow equipment) {
+  final subtype = lowerOrEmpty(item?.raw['Subtype']);
+  final key = lowerOrEmpty(item?.raw['Internal Key']);
+  final name = lowerOrEmpty(item?.raw['Display Name']);
+  if (subtype == 'bow' || key.contains('bow') || RegExp(r'\bbow\b').hasMatch(name)) {
+    return true;
+  }
+  final caps = capabilityTags(equipment.raw['Capabilities / Effects']);
+  return caps.contains('bow') || caps.contains('bow_combat_xp');
+}
+
+bool _isMiningTool(ItemRow? item, EquipmentRow equipment) {
+  if (isAxeItem(item, equipment)) return false;
+  return _toolHasCapability(equipment, 'mining_tool');
+}
+
+bool _isFishingTool(ItemRow? item, EquipmentRow equipment) {
+  return _toolHasCapability(equipment, 'fishing_tool');
+}
+
+bool _isWoodcuttingTool(ItemRow? item, EquipmentRow equipment) {
+  if (isAxeItem(item, equipment)) return false;
+  return _toolHasCapability(equipment, 'woodcutting_tool');
+}
+
 bool _equipmentMatchesEnchantment(
   GameDatabase db,
   String itemId,
@@ -121,6 +151,10 @@ bool _equipmentMatchesEnchantment(
   // either gathering or weapon-category (combat) enchantments, despite not being a tool/weapon.
   final isEnchantableAccessory = caps.contains('arcana_enchantable');
 
+  if (target.contains('bow')) return isBowItem(item, equipment);
+  if (target.contains('mining')) return _isMiningTool(item, equipment);
+  if (target.contains('fishing')) return _isFishingTool(item, equipment);
+  if (target.contains('woodcutting')) return _isWoodcuttingTool(item, equipment);
   if (target.contains('weapon') &&
       (_isWeaponEquipment(item, equipment) || isEnchantableAccessory)) {
     return true;
@@ -288,16 +322,109 @@ String _effectOf(GameDatabase db, String enchantmentId) {
 }
 
 /// Flat damage bonus from equipped enchantments with explicit numeric data.
+///
+/// Legacy only: Minor Strength was reworked from +20 flat to +5% damage range.
 num equippedEnchantmentDamageBonus(GameDatabase db, PlayerSave save) {
   num bonus = 0;
   for (final enchantmentId in _equippedEnchantmentIds(save)) {
-    if (enchantmentId == 'ENCH-0003') {
-      bonus += 20;
-    } else if (_effectOf(db, enchantmentId).contains('+20 minimum and maximum Damage')) {
+    if (_effectOf(db, enchantmentId).contains('+20 minimum and maximum Damage')) {
       bonus += 20;
     }
   }
   return bonus;
+}
+
+/// Damage-range multiplier from weapon enchantments (+N% damage range).
+num equippedEnchantmentDamageRangeMultiplier(GameDatabase db, PlayerSave save) {
+  num percent = 0;
+  for (final enchantmentId in _equippedEnchantmentIds(save)) {
+    final match = RegExp(
+      r'\+(\d+(?:\.\d+)?)%\s*damage range',
+      caseSensitive: false,
+    ).firstMatch(_effectOf(db, enchantmentId));
+    if (match != null) percent += jsNumber(match.group(1));
+  }
+  return 1 + percent / 100;
+}
+
+/// Max-HP bonus percent from armor enchantments (e.g. Vital Plating).
+num equippedEnchantmentMaxHpBonusPercent(GameDatabase db, PlayerSave save) {
+  num percent = 0;
+  for (final enchantmentId in _equippedEnchantmentIds(save)) {
+    final match = RegExp(
+      r'\+(\d+(?:\.\d+)?)%\s*maximum HP',
+      caseSensitive: false,
+    ).firstMatch(_effectOf(db, enchantmentId));
+    if (match != null) percent += jsNumber(match.group(1));
+  }
+  return percent;
+}
+
+/// True when an equipped bow carries Double Shot.
+bool equippedEnchantmentHasDoubleShot(GameDatabase db, PlayerSave save) {
+  for (final stack in save.equipment.slots.values) {
+    if (stack == null || isBlank(stack.itemId) || isBlank(stack.enchantmentId)) continue;
+    final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == stack.itemId);
+    final item = db.items.firstWhereOrNull((row) => row.raw['Item ID'] == stack.itemId);
+    if (equipment == null || !isBowItem(item, equipment)) continue;
+    if (stack.enchantmentId == 'ENCH-0018') return true;
+    final effect = _effectOf(db, stack.enchantmentId!);
+    if (RegExp(r'attack twice', caseSensitive: false).hasMatch(effect)) return true;
+  }
+  return false;
+}
+
+const String _miningSkillId = 'SKL-0002';
+const String _fishingSkillId = 'SKL-0003';
+const String _woodcuttingSkillId = 'SKL-0006';
+
+String? _skillIdFromDurationEffect(String effect) {
+  if (RegExp(r'Mining Action duration', caseSensitive: false).hasMatch(effect)) {
+    return _miningSkillId;
+  }
+  if (RegExp(r'Fishing Action duration', caseSensitive: false).hasMatch(effect)) {
+    return _fishingSkillId;
+  }
+  if (RegExp(r'Woodcutting Action duration', caseSensitive: false).hasMatch(effect)) {
+    return _woodcuttingSkillId;
+  }
+  if (RegExp(r'Gathering Action duration', caseSensitive: false).hasMatch(effect)) {
+    return '*';
+  }
+  return null;
+}
+
+String? _skillIdFromAtrEffect(String effect) {
+  if (RegExp(r'Mining action time reduction', caseSensitive: false).hasMatch(effect)) {
+    return _miningSkillId;
+  }
+  if (RegExp(r'Fishing action time reduction', caseSensitive: false).hasMatch(effect)) {
+    return _fishingSkillId;
+  }
+  if (RegExp(r'Woodcutting action time reduction', caseSensitive: false).hasMatch(effect)) {
+    return _woodcuttingSkillId;
+  }
+  return null;
+}
+
+/// Action-time reduction percent from tool enchantments, keyed by skill.
+Map<String, num> equippedEnchantmentActionTimeReductionBySkill(
+  GameDatabase db,
+  PlayerSave save,
+) {
+  final totals = <String, num>{};
+  for (final enchantmentId in _equippedEnchantmentIds(save)) {
+    final effect = _effectOf(db, enchantmentId);
+    final skillId = _skillIdFromAtrEffect(effect);
+    if (skillId == null) continue;
+    final match = RegExp(
+      r'\+(\d+(?:\.\d+)?)%\s+\w+\s+action time reduction',
+      caseSensitive: false,
+    ).firstMatch(effect);
+    if (match == null) continue;
+    totals[skillId] = (totals[skillId] ?? 0) + jsNumber(match.group(1));
+  }
+  return totals;
 }
 
 const String _critStrikeEnchantmentId = 'ENCH-0008';
@@ -340,19 +467,32 @@ num equippedEnchantmentThornsPercent(GameDatabase db, PlayerSave save) {
   return percent;
 }
 
-/// Gathering duration multiplier from equipped enchantments (e.g. -2% => 0.98).
-num equippedEnchantmentGatheringMultiplier(GameDatabase db, PlayerSave save) {
+/// Gathering duration multiplier from equipped enchantments.
+///
+/// Pass [skillId] so skill-specific minors (mining/fishing/woodcutting) only apply
+/// to matching actions. Legacy ENCH-0002 still reduces all gathering.
+num equippedEnchantmentGatheringMultiplier(
+  GameDatabase db,
+  PlayerSave save, [
+  String? skillId,
+]) {
   num multiplier = 1;
   for (final enchantmentId in _equippedEnchantmentIds(save)) {
+    final effect = _effectOf(db, enchantmentId);
     if (enchantmentId == 'ENCH-0002') {
       multiplier *= 0.98;
       continue;
     }
     final match = RegExp(
-      r'-(\d+(?:\.\d+)?)% eligible Gathering Action duration',
+      r'-(\d+(?:\.\d+)?)%\s+(.+?)\s+Action duration',
       caseSensitive: false,
-    ).firstMatch(_effectOf(db, enchantmentId));
-    if (match != null) multiplier *= 1 - jsNumber(match.group(1)) / 100;
+    ).firstMatch(effect);
+    if (match == null) continue;
+    final scope = _skillIdFromDurationEffect(effect);
+    if (scope == null) continue;
+    if (scope != '*' && skillId != null && scope != skillId) continue;
+    if (scope != '*' && skillId == null) continue;
+    multiplier *= 1 - jsNumber(match.group(1)) / 100;
   }
   return math.max(0.01, multiplier);
 }

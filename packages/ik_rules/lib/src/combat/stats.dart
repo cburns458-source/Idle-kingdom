@@ -158,13 +158,14 @@ num _damageRangeMultipliers(GameDatabase db, PlayerSave save) {
   final levelMult = mightDamageMultiplier(save);
   final styleMult = 1 + attackStyleDamageBonusPercent(normalizeAttackStyle(save.attackStyle)) / 100;
   final spellMult = activeSpellDamageRangeMultiplier(db, save);
+  final enchantMult = equippedEnchantmentDamageRangeMultiplier(db, save);
   final potion = save.activePotionEffect;
   final potionBonus = potion?.damageBonusPercent;
   final potionMult =
       potionBonus != null && potionBonus > 0 && potion?.scope == 'one_combat_encounter'
       ? 1 + potionBonus / 100
       : 1;
-  return levelMult * styleMult * spellMult * potionMult;
+  return levelMult * styleMult * spellMult * enchantMult * potionMult;
 }
 
 DamageRange _scaleDamageRange(num min, num max, num multiplier) {
@@ -252,7 +253,8 @@ num playerDamageReduction(GameDatabase db, PlayerSave save) {
     db,
     save,
   ).fold<num>(0, (sum, row) => sum + jsNumber(row.raw['Damage Reduction'] ?? 0));
-  return gear + attackStyleDamageReduction(normalizeAttackStyle(save.attackStyle));
+  final spellDr = activeSpellDamageReductionPercent(db, save);
+  return gear + attackStyleDamageReduction(normalizeAttackStyle(save.attackStyle)) + spellDr;
 }
 
 num playerMaxHp(GameDatabase db, PlayerSave save) {
@@ -263,7 +265,8 @@ num playerMaxHp(GameDatabase db, PlayerSave save) {
   ).fold<num>(0, (sum, row) => sum + jsNumber(row.raw['HP Bonus'] ?? 0));
   final levelMult = vitalityHpMultiplier(save);
   final raceMult = raceMaxHpMultiplier(db, save);
-  return math.max(1, _scaleStat(base + bonus, levelMult * raceMult));
+  final enchantHpMult = 1 + equippedEnchantmentMaxHpBonusPercent(db, save) / 100;
+  return math.max(1, _scaleStat(base + bonus, levelMult * raceMult * enchantHpMult));
 }
 
 /// Max HP from base + Vitality + race only — equipment HP bonuses are ignored.

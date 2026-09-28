@@ -140,6 +140,89 @@ export function spellItemDoubleChancePercent(db: GameDatabase, itemId: string): 
   return 0
 }
 
+function spellTagPercent(
+  db: GameDatabase,
+  itemId: string,
+  tagPrefix: string,
+  effectRegex: RegExp,
+): number {
+  const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
+  for (const tag of capabilityTags(equipment?.['Capabilities / Effects'])) {
+    if (!tag.startsWith(tagPrefix)) continue
+    const value = Number(tag.slice(tagPrefix.length))
+    if (Number.isFinite(value) && value > 0) return value
+  }
+  const enchantmentId = spellEffectEnchantmentId(db, itemId)
+  const enchantment = enchantmentId ? getEnchantment(db, enchantmentId) : undefined
+  const effect = enchantment?.Effect ?? ''
+  const match = effect.match(effectRegex)
+  if (match) return Number(match[1])
+  return 0
+}
+
+/** Chance percent to double gold from combat victory (Hoard). */
+export function spellGoldDoubleChancePercent(db: GameDatabase, itemId: string): number {
+  return spellTagPercent(
+    db,
+    itemId,
+    'gold_double_chance_percent:',
+    /\+(\d+(?:\.\d+)?)%\s*chance to double gold/i,
+  )
+}
+
+/** Damage-reduction percent from one Iron Ward-style spell. */
+export function spellDamageReductionPercent(db: GameDatabase, itemId: string): number {
+  return spellTagPercent(
+    db,
+    itemId,
+    'damage_reduction_percent:',
+    /\+(\d+(?:\.\d+)?)%\s*damage reduction/i,
+  )
+}
+
+/** End-of-round lifesteal percent of damage dealt from one spell. */
+export function spellLifestealPercent(db: GameDatabase, itemId: string): number {
+  return spellTagPercent(db, itemId, 'lifesteal_percent:', /heal (\d+(?:\.\d+)?)%\s*of damage/i)
+}
+
+/** Production craft duration reduction percent from one Haste-style spell. */
+export function spellProductionDurationReductionPercent(
+  db: GameDatabase,
+  itemId: string,
+): number {
+  return spellTagPercent(
+    db,
+    itemId,
+    'production_duration_reduction_percent:',
+    /-(\d+(?:\.\d+)?)%\s*production craft duration/i,
+  )
+}
+
+/** Gathering action duration reduction percent from one Pathfinder-style spell. */
+export function spellGatheringDurationReductionPercent(
+  db: GameDatabase,
+  itemId: string,
+): number {
+  return spellTagPercent(
+    db,
+    itemId,
+    'gathering_duration_reduction_percent:',
+    /-(\d+(?:\.\d+)?)%\s*gathering action duration/i,
+  )
+}
+
+function activeSpellStackedPercent(
+  db: GameDatabase,
+  save: PlayerSave,
+  percentFor: (itemId: string) => number,
+): number {
+  const contributions = equippedSpellStacks(save).map((stack) => ({
+    percent: percentFor(stack.itemId),
+    stacks: spellAllowsStacking(db, stack.itemId),
+  }))
+  return combineSpellPercentBonuses(contributions)
+}
+
 /**
  * Multiplier from all equipped spells. Same bonus types add when spells stack
  * (2× Strength = +20% => 1.20). `nowMs` kept for call-site compatibility.
@@ -161,11 +244,62 @@ export function activeSpellItemDoubleChancePercent(
   db: GameDatabase,
   save: PlayerSave,
 ): number {
-  const contributions = equippedSpellStacks(save).map((stack) => ({
-    percent: spellItemDoubleChancePercent(db, stack.itemId),
-    stacks: spellAllowsStacking(db, stack.itemId),
-  }))
-  return Math.min(100, combineSpellPercentBonuses(contributions))
+  return Math.min(
+    100,
+    activeSpellStackedPercent(db, save, (itemId) => spellItemDoubleChancePercent(db, itemId)),
+  )
+}
+
+/** Total chance to double gold on combat victory (capped at 100). */
+export function activeSpellGoldDoubleChancePercent(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  return Math.min(
+    100,
+    activeSpellStackedPercent(db, save, (itemId) => spellGoldDoubleChancePercent(db, itemId)),
+  )
+}
+
+/** Total damage-reduction percent from equipped spells. */
+export function activeSpellDamageReductionPercent(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  return Math.min(
+    100,
+    activeSpellStackedPercent(db, save, (itemId) => spellDamageReductionPercent(db, itemId)),
+  )
+}
+
+/** Total lifesteal percent of damage dealt from equipped spells. */
+export function activeSpellLifestealPercent(db: GameDatabase, save: PlayerSave): number {
+  return Math.min(
+    100,
+    activeSpellStackedPercent(db, save, (itemId) => spellLifestealPercent(db, itemId)),
+  )
+}
+
+/** Multiplier for production craft duration from Haste spells (e.g. 10% => 0.9). */
+export function activeSpellProductionDurationMultiplier(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  const percent = activeSpellStackedPercent(db, save, (itemId) =>
+    spellProductionDurationReductionPercent(db, itemId),
+  )
+  return Math.max(0.01, 1 - percent / 100)
+}
+
+/** Multiplier for gathering action duration from Pathfinder spells. */
+export function activeSpellGatheringDurationMultiplier(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  const percent = activeSpellStackedPercent(db, save, (itemId) =>
+    spellGatheringDurationReductionPercent(db, itemId),
+  )
+  return Math.max(0.01, 1 - percent / 100)
 }
 
 export function spellTooltipLines(
