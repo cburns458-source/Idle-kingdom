@@ -7,6 +7,7 @@ import {
 } from '../races/races'
 import type { GameDatabase, ItemRow, ShopRow } from '../data/types'
 import { currencyItemId } from '../inventory/gold'
+import { itemIsTradable } from '../inventory/tradable'
 import type { PlayerSave } from '../save/types'
 
 export { currencyItemId }
@@ -181,6 +182,7 @@ export function playerSellPrice(
   itemId: string,
 ): number | null {
   if (itemId === currencyItemId(db)) return null
+  if (!itemIsTradable(db, itemId)) return null
   const item = db.Items.find((row) => row['Item ID'] === itemId)
   const base = baseSellValue(item)
   if (base == null || base <= 0) return null

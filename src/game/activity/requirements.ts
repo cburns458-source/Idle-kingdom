@@ -7,8 +7,13 @@ import {
   questIsComplete,
 } from '../quests/progress'
 import { getQuest } from '../quests/quests'
-import { getCurrentStepId } from '../quests/steps'
+import { getCurrentStepId, getCurrentStepIndex, getQuestSteps } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
+import {
+  THROUGH_THE_THICKET_QUEST_ID,
+  leftVinesFlag,
+  THICKET_VINE_ACTIVITIES,
+} from '../world/constants'
 import { getSkillProgress } from './xp'
 
 /** Requirement types the runtime knows how to evaluate. Unknown types fail closed. */
@@ -209,12 +214,38 @@ function isQuestGateRequirement(type: string): boolean {
   )
 }
 
+function thicketVineActivityVisible(
+  db: GameDatabase,
+  save: PlayerSave,
+  activityId: string,
+): boolean | null {
+  const spec = THICKET_VINE_ACTIVITIES[activityId]
+  if (!spec) return null
+  if (questIsComplete(save, THROUGH_THE_THICKET_QUEST_ID)) return spec.persistAfterQuest
+  if (!questIsActive(save, THROUGH_THE_THICKET_QUEST_ID)) return false
+  const quest = getQuest(db, THROUGH_THE_THICKET_QUEST_ID)
+  if (!quest) return false
+  const current = getCurrentStepId(db, save, quest)
+  if (current === spec.stepId) return true
+  if (hasQuestFlag(save, THROUGH_THE_THICKET_QUEST_ID, leftVinesFlag(spec.locationId))) {
+    return false
+  }
+  const vineIndex = getQuestSteps(db, THROUGH_THE_THICKET_QUEST_ID).findIndex(
+    (step) => step['Step ID'] === spec.stepId,
+  )
+  if (vineIndex < 0) return false
+  if (getCurrentStepIndex(db, save, quest) <= vineIndex) return false
+  return save.currentLocationId === spec.locationId
+}
+
 /** Hide gated activities until their quest flag, access, or item condition is met. */
 export function activityVisibleForSave(
   db: GameDatabase,
   save: PlayerSave,
   activityId: string,
 ): boolean {
+  const vine = thicketVineActivityVisible(db, save, activityId)
+  if (vine != null) return vine
   return entityVisibleForSave(db, save, 'Activity', activityId)
 }
 

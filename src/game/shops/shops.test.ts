@@ -215,6 +215,14 @@ describe('shops', () => {
     )
   })
 
+  it('will not buy untradable quest items or cosmetics', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!
+    expect(playerSellPrice(launch, shop, 'ITEM-0405')).toBeNull()
+    expect(playerSellPrice(launch, shop, 'ITEM-0299')).toBeNull()
+    expect(playerSellPrice(launch, shop, 'ITEM-0300')).toBeNull()
+  })
+
   it('stocks grape seed at the Seed Stall and no other 50+ seeds', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0009')!

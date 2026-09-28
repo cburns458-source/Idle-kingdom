@@ -132,6 +132,14 @@ void main() {
     expect((well.decoration as BoxDecoration).image, isNotNull);
   });
 
+  test('Stone grain uses the ash panel instead of wood film', () {
+    final wood = UiChrome.wood.buttonGrainImage();
+    final stone = UiChrome.stone.buttonGrainImage();
+    expect((wood.image as AssetImage).assetName, 'assets/ui/panel-grain.png');
+    expect((stone.image as AssetImage).assetName, 'assets/ui/panel-ash.png');
+    expect((stone.image as AssetImage).assetName, isNot('assets/ui/panel-grain.png'));
+  });
+
   testWidgets('GameButton wears the active pack fill', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

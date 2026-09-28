@@ -83,7 +83,6 @@ describe('quest log', () => {
     expect(row.statusLabel).toBe('Active')
     expect(row.steps).toEqual([
       { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'current' },
-      { key: 'talk:NPC-0001:QSTP-0001', label: 'Talk to King 0 / 1', state: 'current' },
     ])
   })
 
@@ -127,7 +126,6 @@ describe('quest log', () => {
     const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0005')!
     expect(row.steps).toEqual([
       { key: 'QSTP-0010', label: 'Hear the shopkeeper out', state: 'current' },
-      { key: 'talk:NPC-0009:QSTP-0010', label: 'Talk to Wizard Shopkeeper 0 / 1', state: 'current' },
     ])
   })
 

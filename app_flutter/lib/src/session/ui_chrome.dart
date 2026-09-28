@@ -216,10 +216,16 @@ class UiChrome {
   }
 
   /// Fine grain tiled over buttons, HUD / chin, and slot wells.
+  ///
+  /// Wood keeps the warm film grain. Stone uses the ash panel so pack chrome
+  /// never leaks wood texture.
   DecorationImage buttonGrainImage({double opacity = 0.04}) {
+    final grain = AssetImage(
+      pack == UiChromePack.wood ? 'assets/ui/panel-grain.png' : panelTextureAsset,
+    );
     if (opacity == 0.04) {
       return _buttonGrain ??= DecorationImage(
-        image: const AssetImage('assets/ui/panel-grain.png'),
+        image: grain,
         repeat: ImageRepeat.repeat,
         fit: BoxFit.none,
         alignment: Alignment.topLeft,
@@ -228,7 +234,7 @@ class UiChrome {
       );
     }
     return DecorationImage(
-      image: const AssetImage('assets/ui/panel-grain.png'),
+      image: grain,
       repeat: ImageRepeat.repeat,
       fit: BoxFit.none,
       alignment: Alignment.topLeft,

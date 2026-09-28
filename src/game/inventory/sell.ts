@@ -9,12 +9,14 @@ import {
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { isFavoriteStack } from './favorites'
+import { itemIsTradable } from './tradable'
 
 /** Off-shop / field sale: half of Base Sell Value. */
 export const FIELD_SELL_MULT = 0.5
 
 export function fieldSellPrice(db: GameDatabase, itemId: string): number | null {
   if (itemId === currencyItemId(db)) return null
+  if (!itemIsTradable(db, itemId)) return null
   const item = db.Items.find((row) => row['Item ID'] === itemId)
   const base = baseSellValue(item)
   if (base == null || base <= 0) return null

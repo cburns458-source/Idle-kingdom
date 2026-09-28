@@ -434,7 +434,7 @@ describe('quest tours', () => {
     const quest = getQuest(launch, 'QST-0008')!
     const journal = questStepJournal(launch, save, quest).map((step) => step.label)
     expect(journal).toContain('Clear rubble in the Deep Mines')
-    expect(journal).toContain('Clear a rubble pile 0 / 50')
+    expect(journal).not.toContain('Clear a rubble pile 0 / 50')
 
     const card = questActionProgressForActivity(launch, save, 'ACT-0044')
     expect(card.map((line) => `${line.label} ${line.current} / ${line.required}`)).toEqual([
@@ -447,7 +447,7 @@ describe('quest tours', () => {
         formatQuestProgressLine(line),
       ),
     ).toEqual(['Clear a rubble pile 12 / 50'])
-    expect(questStepJournal(launch, save, quest).map((step) => step.label)).toContain(
+    expect(questStepJournal(launch, save, quest).map((step) => step.label)).not.toContain(
       'Clear a rubble pile 12 / 50',
     )
 
@@ -457,7 +457,7 @@ describe('quest tours', () => {
         formatQuestProgressLine(line),
       ),
     ).toEqual(['Clear a rubble pile 50 / 50'])
-    expect(questStepJournal(launch, save, quest).map((step) => step.label)).toContain(
+    expect(questStepJournal(launch, save, quest).map((step) => step.label)).not.toContain(
       'Clear a rubble pile 50 / 50',
     )
   })
@@ -644,9 +644,12 @@ describe('quest tours', () => {
       questLog(launch, accepted.save)
         .find((row) => row.questId === 'QST-0010')
         ?.steps.map((step) => step.label),
-    ).toEqual(
-      expect.arrayContaining(['Clear fifty vines on the Forest Path', 'Chop vines 0 / 50']),
-    )
+    ).toEqual(expect.arrayContaining(['Clear fifty vines on the Forest Path']))
+    expect(
+      questLog(launch, accepted.save)
+        .find((row) => row.questId === 'QST-0010')
+        ?.steps.map((step) => step.label),
+    ).not.toContain('Chop vines 0 / 50')
     expect(
       questActionProgressForActivity(launch, accepted.save, 'ACT-0048').map((line) =>
         formatQuestProgressLine(line),
@@ -700,6 +703,11 @@ describe('quest tours', () => {
     expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([MIRROR_LAKE_ID]))
     save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
     expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([OLD_ENT_GROVE_ID]))
+    expect(getCurrentStepId(launch, save, quest)).toBe('QSTP-0036')
+    expect(activityVisibleForSave(launch, save, 'ACT-0082')).toBe(true)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
+    expect(getCurrentStepId(launch, save, quest)).toBe('QSTP-0030')
+    expect(activityVisibleForSave(launch, save, 'ACT-0082')).toBe(false)
     const afterVinesTalk = talkWithQuestNpc(launch, save, 'NPC-0017')
     expect(afterVinesTalk.ok).toBe(true)
     if (!afterVinesTalk.ok) return

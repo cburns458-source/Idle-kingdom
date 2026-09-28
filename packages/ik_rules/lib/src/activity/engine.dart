@@ -136,6 +136,9 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
   if (mainHallKitchenLocked(db, save, activityId)) {
     return const ActivityStartResult.failed(mainHallKitchenLockedMessage);
   }
+  if (!activityVisibleForSave(db, save, activityId)) {
+    return const ActivityStartResult.failed('Not available yet');
+  }
   final activityReqFailures = unmetHardRequirements(
     db,
     save,

@@ -1,9 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { raiseSkillToMinimumLevel } from '../activity/xp'
 import { activityVisibleForSave } from '../activity/requirements'
 import { prepareDatabase } from '../data/loadDatabase'
 import { recipeIngredients } from '../production/recipes'
+import { talkWithQuestNpc } from '../npcs/conversation'
+import { applyQuestActionProgress } from '../quests/progress'
+import { acceptQuest } from '../quests/quests'
 import { createNewSave } from '../save/saveStore'
 import {
   FOREST_MAP_ID,
@@ -13,6 +17,7 @@ import {
   SMALL_CLEARING_ID,
   STARLIGHT_GLADE_ID,
 } from './constants'
+import { applyTravelArrival } from './travel'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -71,6 +76,11 @@ describe('Ancient Forest Through the Thicket', () => {
     expect(activityVisibleForSave(launch, completed, 'ACT-0078')).toBe(false)
     expect(activityVisibleForSave(launch, completed, 'ACT-0079')).toBe(false)
     expect(activityVisibleForSave(launch, completed, 'ACT-0080')).toBe(false)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0082')).toBe(false)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0049')).toBe(true)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0050')).toBe(true)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0016')).toBe(true)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0040')).toBe(true)
     expect(
       launch.Activities.filter((row) => row['Location ID'] === STARLIGHT_GLADE_ID).some(
         (row) => row['Activity ID'] === 'ACT-0049',
@@ -95,6 +105,7 @@ describe('Ancient Forest Through the Thicket', () => {
       'ACT-0077',
       'ACT-0078',
       'ACT-0079',
+      'ACT-0082',
     ])
     for (const activity of chop) {
       expect(
@@ -113,5 +124,56 @@ describe('Ancient Forest Through the Thicket', () => {
         (row) => row['Entity ID'] === 'ACN-0179' && row['Requirement Type'] === 'Skill Level',
       )?.['Required Value'],
     ).toBe(40)
+  })
+
+  it('hides landing vines until the quest starts, then keeps them until the player leaves', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const fresh = { ...createNewSave(launch), currentLocationId: FOREST_PATH_ID }
+    expect(activityVisibleForSave(launch, fresh, 'ACT-0048')).toBe(false)
+    expect(activityVisibleForSave(launch, fresh, 'ACT-0049')).toBe(false)
+    expect(activityVisibleForSave(launch, fresh, 'ACT-0016')).toBe(false)
+
+    let save = raiseSkillToMinimumLevel(fresh, launch, 'SKL-0006', 40).save
+    save = raiseSkillToMinimumLevel(save, launch, 'SKL-0014', 35).save
+    const accepted = acceptQuest(launch, save, 'QST-0010')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    expect(activityVisibleForSave(launch, save, 'ACT-0048')).toBe(true)
+    expect(activityVisibleForSave(launch, save, 'ACT-0049')).toBe(false)
+
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 50)
+    expect(activityVisibleForSave(launch, save, 'ACT-0048')).toBe(true)
+    save = applyTravelArrival(launch, save, SMALL_CLEARING_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0048')).toBe(false)
+    save = applyTravelArrival(launch, save, FOREST_PATH_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0048')).toBe(false)
+  })
+
+  it('keeps a grove vine activity until the player leaves after that step', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = raiseSkillToMinimumLevel(
+      { ...createNewSave(launch), currentLocationId: FOREST_PATH_ID },
+      launch,
+      'SKL-0006',
+      40,
+    ).save
+    save = raiseSkillToMinimumLevel(save, launch, 'SKL-0014', 35).save
+    const accepted = acceptQuest(launch, save, 'QST-0010')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 50)
+    const talked = talkWithQuestNpc(launch, save, 'NPC-0017')
+    expect(talked.ok).toBe(true)
+    if (!talked.ok) return
+    save = applyTravelArrival(launch, talked.save, SMALL_CLEARING_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(true)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(true)
+    save = applyTravelArrival(launch, save, FOREST_PATH_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(false)
+    save = applyTravelArrival(launch, save, SMALL_CLEARING_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(false)
   })
 })

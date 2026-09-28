@@ -263,6 +263,7 @@ export function questStepJournal(
       label: formatQuestProgressLine(line),
       state: (line.current >= line.required ? 'done' : 'current') as QuestJournalStepState,
     }))
+    if (progress.length <= 1) return [head]
     return [head, ...progress]
   })
 }

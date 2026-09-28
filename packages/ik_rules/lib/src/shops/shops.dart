@@ -5,6 +5,7 @@ import '../activity/requirements.dart';
 import '../activity/xp.dart';
 import '../cosmetics/cosmetics.dart';
 import '../inventory/gold.dart';
+import '../inventory/tradable.dart';
 import '../js_compat.dart';
 import '../races/races.dart';
 import '../save/generated/save_models.dart';
@@ -193,6 +194,7 @@ bool isOreItem(ItemRow item) {
 /// Price the shop pays the player for one unit. Null means it will not buy it.
 num? playerSellPrice(GameDatabase db, ShopRow shop, String itemId) {
   if (itemId == currencyItemId(db)) return null;
+  if (!itemIsTradable(db, itemId)) return null;
   final item = _item(db, itemId);
   final base = baseSellValue(item);
   if (base == null || base <= 0) return null;

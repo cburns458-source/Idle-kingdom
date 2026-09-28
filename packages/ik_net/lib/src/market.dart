@@ -65,6 +65,7 @@ bool bazaarTaxApplies(num unitPrice) => unitPrice.floor() > bazaarTaxThreshold;
 /// save; this is so the screen does not offer what would only be refused.
 String? bazaarStackRefusal(InventoryStack stack, [GameDatabase? db]) {
   if (isGoldCurrencyItem(stack.itemId, db)) return bazaarGoldNotTraded;
+  if (db != null && !itemIsTradable(db, stack.itemId)) return bazaarUntradableItem;
   if (isNotBlank(stack.enchantmentId)) return bazaarEnchantedNotTraded;
   if (isFavoriteStack(stack)) return bazaarFavoriteNotTraded;
   if (stack.quantity < 1) return bazaarNothingToSell;
@@ -73,11 +74,11 @@ String? bazaarStackRefusal(InventoryStack stack, [GameDatabase? db]) {
 
 /// True when [itemId] is something the exchange will carry at all.
 ///
-/// Derived rather than declared: an item the shops price is an item the players
-/// can price. There is no tradable column in the game database, and adding one
-/// would mean every new item having to remember to set it.
+/// Default tradable unless tagged untradable, cosmetic, or gold. A priced
+/// shop item is still required so the exchange has a number to work from.
 bool bazaarItemTradable(GameDatabase db, String itemId) {
   if (isGoldCurrencyItem(itemId, db)) return false;
+  if (!itemIsTradable(db, itemId)) return false;
   final item = db.items.firstWhereOrNull((row) => row.itemId == itemId);
   final value = baseSellValue(item);
   return value != null && value > 0;

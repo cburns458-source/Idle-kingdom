@@ -247,6 +247,7 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
           ),
         )
         .toList();
+    if (progress.length <= 1) return <QuestJournalStep>[head];
     return <QuestJournalStep>[head, ...progress];
   }).toList();
 }

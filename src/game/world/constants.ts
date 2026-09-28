@@ -45,6 +45,56 @@ export const STARLIGHT_GLADE_ID = 'LOC-0044'
 export const SMALL_CLEARING_ID = 'LOC-0050'
 export const MIRROR_LAKE_ID = 'LOC-0051'
 export const THROUGH_THE_THICKET_QUEST_ID = 'QST-0010'
+export const FOREST_PATH_VINES_ACTIVITY_ID = 'ACT-0048'
+export const SMALL_CLEARING_VINES_ACTIVITY_ID = 'ACT-0077'
+export const STARLIGHT_VINES_ACTIVITY_ID = 'ACT-0078'
+export const MIRROR_LAKE_VINES_ACTIVITY_ID = 'ACT-0079'
+export const OLD_ENT_GROVE_VINES_ACTIVITY_ID = 'ACT-0082'
+export const FOREST_PATH_VINES_STEP_ID = 'QSTP-0025'
+export const SMALL_CLEARING_VINES_STEP_ID = 'QSTP-0027'
+export const STARLIGHT_VINES_STEP_ID = 'QSTP-0028'
+export const MIRROR_LAKE_VINES_STEP_ID = 'QSTP-0029'
+export const OLD_ENT_GROVE_VINES_STEP_ID = 'QSTP-0036'
+
+export interface ThicketVineActivitySpec {
+  locationId: string
+  stepId: string
+  persistAfterQuest: boolean
+}
+
+/** Chop vines nodes for Through the Thicket. Path stays after completion; the rest do not. */
+export const THICKET_VINE_ACTIVITIES: Record<string, ThicketVineActivitySpec> = {
+  [FOREST_PATH_VINES_ACTIVITY_ID]: {
+    locationId: FOREST_PATH_ID,
+    stepId: FOREST_PATH_VINES_STEP_ID,
+    persistAfterQuest: true,
+  },
+  [SMALL_CLEARING_VINES_ACTIVITY_ID]: {
+    locationId: SMALL_CLEARING_ID,
+    stepId: SMALL_CLEARING_VINES_STEP_ID,
+    persistAfterQuest: false,
+  },
+  [STARLIGHT_VINES_ACTIVITY_ID]: {
+    locationId: STARLIGHT_GLADE_ID,
+    stepId: STARLIGHT_VINES_STEP_ID,
+    persistAfterQuest: false,
+  },
+  [MIRROR_LAKE_VINES_ACTIVITY_ID]: {
+    locationId: MIRROR_LAKE_ID,
+    stepId: MIRROR_LAKE_VINES_STEP_ID,
+    persistAfterQuest: false,
+  },
+  [OLD_ENT_GROVE_VINES_ACTIVITY_ID]: {
+    locationId: OLD_ENT_GROVE_ID,
+    stepId: OLD_ENT_GROVE_VINES_STEP_ID,
+    persistAfterQuest: false,
+  },
+}
+
+export function leftVinesFlag(locationId: string): string {
+  return `leftVines:${locationId}`
+}
+
 /** Inner forest nodes granted when Through the Thicket is completed. */
 export const THICKET_COMPLETION_LOCATION_IDS = [
   SMALL_CLEARING_ID,

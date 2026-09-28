@@ -80,6 +80,10 @@ void main() {
       expect(bazaarItemTradable(db, _ironOre), isTrue);
       expect(bazaarItemTradable(db, _gold), isFalse);
       expect(bazaarItemTradable(db, 'ITEM-9999'), isFalse);
+      expect(bazaarItemTradable(db, 'ITEM-0405'), isFalse);
+      expect(bazaarItemTradable(db, 'ITEM-0299'), isFalse);
+      expect(bazaarItemTradable(db, 'ITEM-0300'), isFalse);
+      expect(bazaarStackRefusal(_stack('ITEM-0405', 1), db), bazaarUntradableItem);
     });
   });
 

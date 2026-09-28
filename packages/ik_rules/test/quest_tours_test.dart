@@ -290,7 +290,7 @@ void main() {
     final quest = db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0008');
     expect(
       questStepJournal(db, save, quest).map((step) => step.label),
-      contains('Clear a rubble pile 0 / 50'),
+      isNot(contains('Clear a rubble pile 0 / 50')),
     );
     expect(questActionProgressForActivity(db, save, 'ACT-0044').map((line) => line.caption), [
       'Clear a rubble pile 0 / 50',
@@ -302,7 +302,7 @@ void main() {
     ]);
     expect(
       questStepJournal(db, save, quest).map((step) => step.label),
-      contains('Clear a rubble pile 12 / 50'),
+      isNot(contains('Clear a rubble pile 12 / 50')),
     );
 
     save = applyQuestActionProgress(db, save, 'ACN-0177', 88);
@@ -311,7 +311,7 @@ void main() {
     ]);
     expect(
       questStepJournal(db, save, quest).map((step) => step.label),
-      contains('Clear a rubble pile 50 / 50'),
+      isNot(contains('Clear a rubble pile 50 / 50')),
     );
   });
 
@@ -339,7 +339,14 @@ void main() {
         db,
         save,
       ).singleWhere((row) => row.questId == 'QST-0010').steps.map((step) => step.label),
-      containsAll(<String>['Clear fifty vines on the Forest Path', 'Chop vines 0 / 50']),
+      contains('Clear fifty vines on the Forest Path'),
+    );
+    expect(
+      questLog(
+        db,
+        save,
+      ).singleWhere((row) => row.questId == 'QST-0010').steps.map((step) => step.label),
+      isNot(contains('Chop vines 0 / 50')),
     );
     expect(questActionProgressForActivity(db, save, 'ACT-0048').map((line) => line.caption), [
       'Chop vines 0 / 50',
@@ -384,6 +391,11 @@ void main() {
     expect(save.unlockedLocationIds, contains(mirrorLakeId));
     save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
     expect(save.unlockedLocationIds, contains(oldEntGroveId));
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0036');
+    expect(activityVisibleForSave(db, save, 'ACT-0082'), isTrue);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0030');
+    expect(activityVisibleForSave(db, save, 'ACT-0082'), isFalse);
     save = talkWithQuestNpc(db, save, 'NPC-0017').save!;
     expect(activityVisibleForSave(db, save, 'ACT-0080'), isTrue);
 

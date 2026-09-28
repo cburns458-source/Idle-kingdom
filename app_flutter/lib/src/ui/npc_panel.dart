@@ -651,7 +651,11 @@ class _QuestMenuLine extends StatelessWidget {
           Expanded(
             child: Text(
               step.label,
-              style: TextStyle(color: step.state == 'done' ? Palette.muted : Palette.parchmentText),
+              style: TextStyle(
+                color: step.state == 'done'
+                    ? UiChrome.of(context).panelMuted
+                    : UiChrome.of(context).panelInk,
+              ),
             ),
           ),
         ],

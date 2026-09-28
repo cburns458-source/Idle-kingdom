@@ -48,6 +48,60 @@ const String starlightGladeId = 'LOC-0044';
 const String smallClearingId = 'LOC-0050';
 const String mirrorLakeId = 'LOC-0051';
 const String throughTheThicketQuestId = 'QST-0010';
+const String forestPathVinesActivityId = 'ACT-0048';
+const String smallClearingVinesActivityId = 'ACT-0077';
+const String starlightVinesActivityId = 'ACT-0078';
+const String mirrorLakeVinesActivityId = 'ACT-0079';
+const String oldEntGroveVinesActivityId = 'ACT-0082';
+const String forestPathVinesStepId = 'QSTP-0025';
+const String smallClearingVinesStepId = 'QSTP-0027';
+const String starlightVinesStepId = 'QSTP-0028';
+const String mirrorLakeVinesStepId = 'QSTP-0029';
+const String oldEntGroveVinesStepId = 'QSTP-0036';
+
+class ThicketVineActivitySpec {
+  const ThicketVineActivitySpec({
+    required this.locationId,
+    required this.stepId,
+    required this.persistAfterQuest,
+  });
+
+  final String locationId;
+  final String stepId;
+  final bool persistAfterQuest;
+}
+
+/// Chop vines nodes for Through the Thicket. Path stays after completion; the rest do not.
+const Map<String, ThicketVineActivitySpec> thicketVineActivities = <String, ThicketVineActivitySpec>{
+  forestPathVinesActivityId: ThicketVineActivitySpec(
+    locationId: forestPathId,
+    stepId: forestPathVinesStepId,
+    persistAfterQuest: true,
+  ),
+  smallClearingVinesActivityId: ThicketVineActivitySpec(
+    locationId: smallClearingId,
+    stepId: smallClearingVinesStepId,
+    persistAfterQuest: false,
+  ),
+  starlightVinesActivityId: ThicketVineActivitySpec(
+    locationId: starlightGladeId,
+    stepId: starlightVinesStepId,
+    persistAfterQuest: false,
+  ),
+  mirrorLakeVinesActivityId: ThicketVineActivitySpec(
+    locationId: mirrorLakeId,
+    stepId: mirrorLakeVinesStepId,
+    persistAfterQuest: false,
+  ),
+  oldEntGroveVinesActivityId: ThicketVineActivitySpec(
+    locationId: oldEntGroveId,
+    stepId: oldEntGroveVinesStepId,
+    persistAfterQuest: false,
+  ),
+};
+
+String leftVinesFlag(String locationId) => 'leftVines:$locationId';
+
 const List<String> thicketCompletionLocationIds = <String>[
   smallClearingId,
   starlightGladeId,

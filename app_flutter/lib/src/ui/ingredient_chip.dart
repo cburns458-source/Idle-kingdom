@@ -35,7 +35,7 @@ class IngredientChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w400,
-                color: short ? Palette.danger : Palette.parchmentText,
+                color: short ? Palette.danger : UiChrome.of(context).primaryLabel,
               ),
             ),
           ],
