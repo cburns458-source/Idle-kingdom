@@ -20,6 +20,7 @@ import 'critter_overlay.dart';
 import 'format.dart';
 import 'codex_view.dart';
 import 'inventory_view.dart';
+import 'library_view.dart';
 import 'location_view.dart';
 import 'out_of_sight.dart';
 import 'log_view.dart';
@@ -50,6 +51,7 @@ enum GameScreen {
   skills,
   log,
   codex,
+  library,
   timers,
   tracker,
   leaderboards,
@@ -71,6 +73,7 @@ const Set<GameScreen> _chinScreens = {
   GameScreen.skills,
   GameScreen.log,
   GameScreen.codex,
+  GameScreen.library,
   GameScreen.timers,
   GameScreen.tracker,
   GameScreen.leaderboards,
@@ -336,6 +339,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             spokenLine: spoken,
           );
           if (!mounted) return;
+          controller.noteBookUnlocks(completion.booksGranted);
           if (completion.pendingSkillXp > 0) {
             await showSkillXpPicker(
               context,
@@ -1147,6 +1151,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
             item: notice.itemId == null ? null : controller.indexes.itemsById[notice.itemId!],
             onClose: controller.dismissCosmeticUnlock,
           ),
+        if (controller.bookUnlock case final notice?)
+          LibraryUnlockPopup(notice: notice, onClose: controller.dismissBookUnlock),
         if (controller.discoveryNotice case final notice?)
           SocialAlertOverlay(message: notice, onClose: controller.dismissDiscoveryNotice),
         if (_socialAlertEntry == null && _socialAlertMessage != null)
@@ -1232,6 +1238,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           onClose: _popPage,
           initialItemId: _codexItemId,
         );
+      case GameScreen.library:
+        return LibraryView(controller: controller, onClose: _popPage);
       case GameScreen.timers:
         return TimersView(controller: controller, onClose: _popPage, onTravel: _travelFromTimers);
       case GameScreen.tracker:

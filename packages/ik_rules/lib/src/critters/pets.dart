@@ -11,7 +11,6 @@ const Map<String, String> critterPetCosmeticIds = <String, String>{
   'CRT-0006': 'COS-0009',
   'CRT-0007': 'COS-0010',
   'CRT-0008': 'COS-0011',
-  'CRT-0009': 'COS-0012',
 };
 
 String? petCosmeticIdForCritter(String critterId) => critterPetCosmeticIds[critterId];

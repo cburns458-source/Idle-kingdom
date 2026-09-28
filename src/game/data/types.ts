@@ -365,6 +365,16 @@ export interface RaceStartingItemRow {
   Notes: string | null
 }
 
+export interface BookRow {
+  'Book ID': string
+  'Internal Key': string
+  'Display Name': string
+  Body: string
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
 export interface GameDatabase {
   Config: ConfigRow[]
   Skills: SkillRow[]
@@ -394,6 +404,7 @@ export interface GameDatabase {
   Achievements: Record<string, unknown>[]
   CosmeticSlots: CosmeticSlotRow[]
   Cosmetics: CosmeticRow[]
+  Books: BookRow[]
   AppearanceOptions: AppearanceOptionRow[]
   LocationSearches: LocationSearchRow[]
   Races: RaceRow[]
@@ -430,6 +441,7 @@ export const DATABASE_TABLES = [
   'Achievements',
   'CosmeticSlots',
   'Cosmetics',
+  'Books',
   'AppearanceOptions',
   'LocationSearches',
   'Races',

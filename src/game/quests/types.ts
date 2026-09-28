@@ -65,4 +65,5 @@ export interface StructuredQuestObjectives {
   rewardRecipeIds: string[]
   rewardProjectNpcIds: string[]
   rewardCosmeticIds: string[]
+  rewardBookIds: string[]
 }

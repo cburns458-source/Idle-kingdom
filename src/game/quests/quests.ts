@@ -5,6 +5,7 @@ import type { ActionRewardBundle, ActionXpRewardSummary, LootGrant } from '../ac
 import { applyXp, getSkillProgress } from '../activity/xp'
 import { MIGHT_SKILL_ID, VITALITY_SKILL_ID } from '../combat/stats'
 import { cosmeticById, grantCosmetic } from '../cosmetics/cosmetics'
+import { bookById, grantBook } from '../library/books'
 import type { GameDatabase, SkillRow } from '../data/types'
 import { unlockRecipeId } from '../recipes/knowledge'
 import { removeIngredients } from '../production/inventory'
@@ -212,6 +213,7 @@ export function completeQuest(
       rewards: QuestRewardLine[]
       pendingSkillXp: number
       rewardBundle: ActionRewardBundle
+      booksGranted: { bookId: string; isFirstEver: boolean }[]
     }
   | { ok: false; reason: string } {
   const quest = getQuest(db, questId)
@@ -368,6 +370,17 @@ export function completeQuest(
     }
   }
 
+  const booksGranted: { bookId: string; isFirstEver: boolean }[] = []
+  for (const bookId of parsed.rewardBookIds) {
+    const granted = grantBook(next, bookId)
+    next = granted.save
+    if (granted.granted) {
+      const book = bookById(db, bookId)
+      rewards.push({ label: book?.['Display Name'] ?? bookId })
+      booksGranted.push({ bookId, isFirstEver: granted.isFirstEver })
+    }
+  }
+
   for (const label of facilityUnlockRewardLabels(db, questId)) {
     rewards.push({ label })
   }
@@ -384,6 +397,7 @@ export function completeQuest(
     questName: quest['Display Name'],
     rewards,
     pendingSkillXp,
+    booksGranted,
     rewardBundle: {
       id: `quest-${questId}`,
       xpRewards,
@@ -392,7 +406,7 @@ export function completeQuest(
     },
     message:
       rewards.length > 0
-        ? `Thank you — ${rewards.map((reward) => reward.label).join(' and ')}.`
+        ? `Thank you. ${rewards.map((reward) => reward.label).join(' and ')}.`
         : 'Thank you.',
   }
 }
@@ -468,6 +482,7 @@ export interface QuestArrivalCompletion {
   pendingSkillXp: number
   rewardBundle: ActionRewardBundle
   message: string
+  booksGranted: { bookId: string; isFirstEver: boolean }[]
 }
 
 /** Completes visit-finish quests after arrival progress is applied. */
@@ -492,6 +507,7 @@ export function applyQuestAutoCompleteOnVisit(
         pendingSkillXp: completed.pendingSkillXp,
         rewardBundle: completed.rewardBundle,
         message: completed.message,
+        booksGranted: completed.booksGranted,
       })
     }
   }
@@ -524,6 +540,7 @@ export function applyQuestAutoCompleteOnPlant(
         pendingSkillXp: completed.pendingSkillXp,
         rewardBundle: completed.rewardBundle,
         message: completed.message,
+        booksGranted: completed.booksGranted,
       })
     }
   }
@@ -556,6 +573,7 @@ export function applyQuestAutoCompleteOnAction(
         pendingSkillXp: completed.pendingSkillXp,
         rewardBundle: completed.rewardBundle,
         message: completed.message,
+        booksGranted: completed.booksGranted,
       })
     }
   }
@@ -666,6 +684,10 @@ export function questCompletionRewardLabels(
       ? db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name']
       : undefined
     rewards.push(itemName ?? cosmeticId)
+  }
+
+  for (const bookId of parsed.rewardBookIds) {
+    rewards.push(bookById(db, bookId)?.['Display Name'] ?? bookId)
   }
 
   rewards.push(...facilityUnlockRewardLabels(db, questId))

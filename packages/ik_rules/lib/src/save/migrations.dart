@@ -887,6 +887,40 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     },
   ),
   SaveMigration(fromVersion: 55, toVersion: 56, migrate: (save, _) => _normalizeSettings(save, 56)),
+  SaveMigration(
+    fromVersion: 56,
+    toVersion: 57,
+    migrate: (save, _) {
+      const babyDragonCritterId = 'CRT-0009';
+      const babyDragonPetId = 'COS-0012';
+      final collections = arrayOrEmpty(save, 'critterCollections');
+      final hadBabyDragon = collections.any((row) {
+        final map = asObject(row);
+        if (map == null) return false;
+        return map['critterId'] == babyDragonCritterId && jsNumberOrZero(map['count']) > 0;
+      });
+      final critterCollections = collections.where((row) {
+        final map = asObject(row);
+        return map == null || map['critterId'] != babyDragonCritterId;
+      }).toList();
+      final cosmetics = objectAt(save, 'cosmetics') ?? <String, Object?>{};
+      final unlocked = List<Object?>.from(arrayOrEmpty(cosmetics, 'unlocked'));
+      if (hadBabyDragon && !unlocked.contains(babyDragonPetId)) {
+        unlocked.add(babyDragonPetId);
+      }
+      final next = copySave(save);
+      next['critterCollections'] = critterCollections;
+      next['cosmetics'] = <String, Object?>{
+        'unlocked': unlocked,
+        'equipped': objectAt(cosmetics, 'equipped') ?? <String, Object?>{},
+      };
+      next['unlockedBookIds'] = save['unlockedBookIds'] is List
+          ? List<Object?>.from(save['unlockedBookIds']! as List)
+          : <Object?>[];
+      next['saveVersion'] = 57;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

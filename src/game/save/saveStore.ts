@@ -96,6 +96,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
         [TITLE_COSMETIC_SLOT_ID]: STARTER_TITLE_COSMETIC_ID,
       },
     },
+    unlockedBookIds: [],
     appearance: {
       skinTone: DEFAULT_SKIN_TONE_ID,
       hairstyle: DEFAULT_HAIRSTYLE_ID,

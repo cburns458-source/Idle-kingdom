@@ -323,6 +323,7 @@ describe('quest tours', () => {
     expect(finished.ok).toBe(true)
     if (!finished.ok) return
     expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
+    expect(finished.save.unlockedBookIds).toContain('BOOK-0001')
     expect(finished.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(5)
     expect(npcsAtLocationForSave(launch, finished.save, 'LOC-0001').map((npc) => npc['NPC ID'])).toEqual(['NPC-0014'])
   })
@@ -782,6 +783,7 @@ describe('quest tours', () => {
     expect(planted.ok).toBe(true)
     if (!planted.ok) return
     expect(getQuestProgress(planted.save, 'QST-0011').status).toBe('completed')
+    expect(planted.save.unlockedBookIds).toContain('BOOK-0002')
 
     const again = applyQuestAutoStartOnSeed(launch, {
       ...planted.save,

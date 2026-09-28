@@ -540,6 +540,7 @@ export function applyCombatVictory(
     xpAwards,
     goldGained,
     loot: rewarded.loot,
+    cosmeticsGranted: rewarded.cosmeticsGranted,
     foodConsumed: false,
     foodHealed: 0,
     foodName: null,

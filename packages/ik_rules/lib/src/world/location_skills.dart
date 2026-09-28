@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../activity/pools.dart';
@@ -7,27 +8,33 @@ import '../production/recipes.dart';
 import '../projects/projects.dart';
 import '../save/generated/save_models.dart';
 
-/// Skill IDs that have a visible gathering, combat, or production action here.
-///
-/// Arena / PvP is not a skill-tagged activity, so it is omitted on purpose.
-List<String> skillIdsForLocation(GameDatabase db, PlayerSave save, String locationId) {
+/// Combat actions report Might so activity/map cards show the fighting skill.
+const String combatDisplaySkillId = 'SKL-0001';
+
+List<String> _sortSkillIds(GameDatabase db, Iterable<String> ids) {
+  final ordered = ids.toList();
+  ordered.sort((a, b) => _skillOrder(db, a).compareTo(_skillOrder(db, b)));
+  return ordered;
+}
+
+/// Skill IDs shown on one activity card (pool skills and/or production recipes).
+List<String> skillIdsForActivity(GameDatabase db, PlayerSave save, String activityId) {
+  final activity = db.activities.firstWhereOrNull((row) => row.activityId == activityId);
+  if (activity == null) return const <String>[];
+  if (!activityVisibleForSave(db, save, activityId)) return const <String>[];
+
   final ids = <String>{};
-
-  for (final activity in db.activities) {
-    if (activity.locationId != locationId) continue;
-    if (!activityVisibleForSave(db, save, activity.activityId)) continue;
-
-    final poolId = activity.poolId;
-    if (poolId != null && poolId.isNotEmpty) {
-      for (final candidate in eligiblePoolEntries(db, poolId)) {
-        final skillId = candidate.action.relevantSkillId;
-        if (skillId.isNotEmpty) ids.add(skillId);
-      }
+  final poolId = activity.poolId;
+  if (poolId != null && poolId.isNotEmpty) {
+    for (final candidate in eligiblePoolEntries(db, poolId)) {
+      final skillId = candidate.action.relevantSkillId;
+      if (skillId.isNotEmpty) ids.add(skillId);
     }
+  }
 
-    if (isStandardProductionActivity(db, activity)) {
-      final facilityId = facilityIdForActivity(db, activity.activityId);
-      if (facilityId == null) continue;
+  if (isStandardProductionActivity(db, activity)) {
+    final facilityId = facilityIdForActivity(db, activity.activityId);
+    if (facilityId != null) {
       for (final recipe in db.recipes) {
         if (!isCompleteRecipe(recipe)) continue;
         if (!recipeMatchesFacility(jsString(recipe.raw['Facility ID']), facilityId)) continue;
@@ -36,13 +43,27 @@ List<String> skillIdsForLocation(GameDatabase db, PlayerSave save, String locati
     }
   }
 
+  return _sortSkillIds(db, ids);
+}
+
+/// Skill IDs that have a visible gathering, combat, or production action here.
+///
+/// Arena / PvP is not a skill-tagged activity, so it is omitted on purpose.
+List<String> skillIdsForLocation(GameDatabase db, PlayerSave save, String locationId) {
+  final ids = <String>{};
+
+  for (final activity in db.activities) {
+    if (activity.locationId != locationId) continue;
+    for (final skillId in skillIdsForActivity(db, save, activity.activityId)) {
+      ids.add(skillId);
+    }
+  }
+
   for (final station in specialProductionStationsVisibleAt(db, save, locationId)) {
     if (station.skillId.isNotEmpty) ids.add(station.skillId);
   }
 
-  final ordered = ids.toList();
-  ordered.sort((a, b) => _skillOrder(db, a).compareTo(_skillOrder(db, b)));
-  return ordered;
+  return _sortSkillIds(db, ids);
 }
 
 int _skillOrder(GameDatabase db, String skillId) {

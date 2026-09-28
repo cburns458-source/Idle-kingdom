@@ -125,6 +125,7 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   rewardRecipeIds: [],
   rewardProjectNpcIds: [],
   rewardCosmeticIds: [],
+  rewardBookIds: [],
 }
 
 /** Parse step Notes or quest objective tokens (not reward metadata). */
@@ -245,6 +246,7 @@ export function parseNotesObjectives(
     rewardRecipeIds: [],
     rewardProjectNpcIds: [],
     rewardCosmeticIds: [],
+    rewardBookIds: [],
   }
 }
 
@@ -272,6 +274,7 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
   const rewardRecipeMatch = noteField(notes, String.raw`RewardRecipe:\s*([^;]+)`)
   const rewardNpcMatch = noteField(notes, String.raw`RewardProjectNpc:\s*([^;]+)`)
   const rewardCosmeticMatch = noteField(notes, String.raw`RewardCosmetic:\s*([^;]+)`)
+  const rewardBookMatch = noteField(notes, String.raw`RewardBook:\s*([^;]+)`)
 
   return {
     ...objectives,
@@ -296,6 +299,7 @@ export function parseStructuredObjectives(quest: QuestRow): StructuredQuestObjec
     rewardRecipeIds: rewardRecipeMatch ? parseIdList(rewardRecipeMatch) : [],
     rewardProjectNpcIds: rewardNpcMatch ? parseIdList(rewardNpcMatch) : [],
     rewardCosmeticIds: rewardCosmeticMatch ? parseIdList(rewardCosmeticMatch) : [],
+    rewardBookIds: rewardBookMatch ? parseIdList(rewardBookMatch) : [],
   }
 }
 

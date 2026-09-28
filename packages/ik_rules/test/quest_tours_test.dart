@@ -152,6 +152,7 @@ void main() {
     final finished = talkWithQuestNpc(db, advice.save!, 'NPC-0014');
     expect(finished.ok, isTrue);
     expect(getQuestProgress(finished.save!, 'QST-0006').status, 'completed');
+    expect(isBookUnlocked(finished.save!, 'BOOK-0001'), isTrue);
     expect(
       finished.save!.inventory.where((stack) => stack.itemId == 'ITEM-0058').single.quantity,
       5,

@@ -216,6 +216,7 @@ class GameController extends ChangeNotifier {
   UnattendedResult? _awaySummary;
   bool _returningFromAway = false;
   CosmeticUnlockNotice? _cosmeticUnlock;
+  BookUnlockNotice? _bookUnlock;
   String? _discoveryNotice;
   List<QuestArrivalCompletion> _pendingQuestCompletions = <QuestArrivalCompletion>[];
   List<TimerCollectNotice> _pendingTimerCollects = <TimerCollectNotice>[];
@@ -335,6 +336,9 @@ class GameController extends ChangeNotifier {
 
   /// A cosmetic that was just unlocked and has not been shown off yet.
   CosmeticUnlockNotice? get cosmeticUnlock => _cosmeticUnlock;
+
+  /// A book that was just unlocked and has not been shown off yet.
+  BookUnlockNotice? get bookUnlock => _bookUnlock;
 
   /// A one-shot find (Kingswoods Sling) that has not been shown off yet.
   String? get discoveryNotice => _discoveryNotice;
@@ -729,8 +733,30 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Same as [noteCosmeticUnlocks] for combat / activity reward lines.
+  void noteActionCosmeticUnlocks(List<ActionCosmeticGrant> grants) {
+    if (grants.isEmpty) return;
+    noteCosmeticUnlocks([
+      for (final grant in grants)
+        ShopCosmeticGrant(cosmeticId: grant.cosmeticId, isFirstEver: grant.isFirstEver),
+    ]);
+  }
+
   void dismissCosmeticUnlock() {
     _cosmeticUnlock = null;
+    notifyListeners();
+  }
+
+  /// Queues the Library unlock popup for the first of [grants].
+  void noteBookUnlocks(List<QuestBookGrant> grants) {
+    if (grants.isEmpty) return;
+    final grant = grants.first;
+    _bookUnlock = bookUnlockNotice(db, grant.bookId, grant.isFirstEver);
+    notifyListeners();
+  }
+
+  void dismissBookUnlock() {
+    _bookUnlock = null;
     notifyListeners();
   }
 
@@ -900,6 +926,7 @@ class GameController extends ChangeNotifier {
         showZeroDamageHit: final showZeroDamageHit,
       ):
         noteReward(bundle);
+        noteActionCosmeticUnlocks(bundle.cosmeticsGranted);
         if (damageTaken > 0 || showZeroDamageHit) {
           _damagePopup = DamagePopup(
             amount: damageTaken,

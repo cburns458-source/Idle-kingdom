@@ -10,6 +10,7 @@ import '../combat/stats.dart';
 import '../cosmetics/cosmetics.dart';
 import '../inventory/add_items.dart';
 import '../js_compat.dart';
+import '../library/books.dart';
 import '../production/inventory.dart';
 import '../production/recipes.dart';
 import '../recipes/knowledge.dart';
@@ -56,6 +57,15 @@ class QuestActionResult {
   bool get ok => reason == null;
   final PlayerSave? save;
   final String? reason;
+}
+
+class QuestBookGrant {
+  const QuestBookGrant({required this.bookId, required this.isFirstEver});
+
+  final String bookId;
+  final bool isFirstEver;
+
+  Map<String, Object?> toJson() => <String, Object?>{'bookId': bookId, 'isFirstEver': isFirstEver};
 }
 
 List<QuestRow> questsTouchingNpc(GameDatabase db, PlayerSave save, String npcId) {
@@ -185,6 +195,7 @@ class QuestCompletion {
     required this.rewards,
     this.pendingSkillXp = 0,
     this.rewardBundle,
+    this.booksGranted = const <QuestBookGrant>[],
   }) : reason = null;
 
   const QuestCompletion.failed(this.reason)
@@ -193,7 +204,8 @@ class QuestCompletion {
       questName = null,
       rewards = const <String>[],
       pendingSkillXp = 0,
-      rewardBundle = null;
+      rewardBundle = null,
+      booksGranted = const <QuestBookGrant>[];
 
   bool get ok => reason == null;
   final PlayerSave? save;
@@ -206,6 +218,7 @@ class QuestCompletion {
   /// Bribe-route XP the player still has to assign to a non-combat skill.
   final num pendingSkillXp;
   final ActionRewardBundle? rewardBundle;
+  final List<QuestBookGrant> booksGranted;
   final String? reason;
 }
 
@@ -384,6 +397,17 @@ QuestCompletion completeQuest(
     }
   }
 
+  final booksGranted = <QuestBookGrant>[];
+  for (final bookId in parsed.rewardBookIds) {
+    final granted = grantBook(next, bookId);
+    next = granted.save;
+    if (granted.granted) {
+      final book = bookById(db, bookId);
+      rewards.add(book?.displayName ?? bookId);
+      booksGranted.add(QuestBookGrant(bookId: bookId, isFirstEver: granted.isFirstEver));
+    }
+  }
+
   rewards.addAll(facilityUnlockRewardLabels(db, questId));
 
   final progressTotal = status.progressLines.fold<num>(0, (sum, line) => sum + line.required);
@@ -412,6 +436,7 @@ QuestCompletion completeQuest(
       loot: loot,
       goldGained: goldGained,
     ),
+    booksGranted: booksGranted,
     message: rewards.isNotEmpty ? 'Thank you — ${rewards.join(' and ')}.' : 'Thank you.',
   );
 }
@@ -424,6 +449,7 @@ class QuestArrivalCompletion {
     required this.pendingSkillXp,
     required this.message,
     this.rewardBundle,
+    this.booksGranted = const <QuestBookGrant>[],
   });
 
   final String questId;
@@ -432,6 +458,7 @@ class QuestArrivalCompletion {
   final num pendingSkillXp;
   final ActionRewardBundle? rewardBundle;
   final String message;
+  final List<QuestBookGrant> booksGranted;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'questId': questId,
@@ -440,6 +467,7 @@ class QuestArrivalCompletion {
     'pendingSkillXp': pendingSkillXp,
     'rewardBundle': rewardBundle?.toJson(),
     'message': message,
+    'booksGranted': booksGranted.map((grant) => grant.toJson()).toList(),
   };
 }
 
@@ -470,6 +498,7 @@ QuestVisitAutoComplete applyQuestAutoCompleteOnVisit(GameDatabase db, PlayerSave
           pendingSkillXp: completed.pendingSkillXp,
           rewardBundle: completed.rewardBundle,
           message: completed.message!,
+          booksGranted: completed.booksGranted,
         ),
       );
     }
@@ -501,6 +530,7 @@ QuestVisitAutoComplete applyQuestAutoCompleteOnPlant(GameDatabase db, PlayerSave
           pendingSkillXp: completed.pendingSkillXp,
           rewardBundle: completed.rewardBundle,
           message: completed.message!,
+          booksGranted: completed.booksGranted,
         ),
       );
     }
@@ -532,6 +562,7 @@ QuestVisitAutoComplete applyQuestAutoCompleteOnAction(GameDatabase db, PlayerSav
           pendingSkillXp: completed.pendingSkillXp,
           rewardBundle: completed.rewardBundle,
           message: completed.message!,
+          booksGranted: completed.booksGranted,
         ),
       );
     }
@@ -693,6 +724,10 @@ List<String> questCompletionRewardLabels(GameDatabase db, QuestRow quest, [Playe
         ? db.items.firstWhereOrNull((item) => item.raw['Item ID'] == itemId)?.raw['Display Name']
         : null;
     rewards.add(itemName is String ? itemName : cosmeticId);
+  }
+
+  for (final bookId in parsed.rewardBookIds) {
+    rewards.add(bookById(db, bookId)?.displayName ?? bookId);
   }
 
   rewards.addAll(facilityUnlockRewardLabels(db, questId));

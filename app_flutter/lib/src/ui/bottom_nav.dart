@@ -10,12 +10,13 @@ import 'notification_bubble.dart';
 
 const double _chinIconSize = 32;
 
-/// Codex / Bazaar / Leaderboards / Guilds — the hamburger nest and the
-/// desktop rail. Settings lives on the HUD. Log lives on the chin. The Bazaar
-/// is here rather than at a location because an offer on the book fills
+/// Codex / Library / Bazaar / Leaderboards / Guilds — the hamburger nest and
+/// the desktop rail. Settings lives on the HUD. Log lives on the chin. The
+/// Bazaar is here rather than at a location because an offer on the book fills
 /// wherever its owner happens to be standing.
 const List<(GameScreen, String)> nestMenuItems = [
   (GameScreen.codex, 'Codex'),
+  (GameScreen.library, 'Library'),
   (GameScreen.timers, 'Timers'),
   (GameScreen.bazaar, 'Bazaar'),
   (GameScreen.leaderboards, 'Leaderboards'),

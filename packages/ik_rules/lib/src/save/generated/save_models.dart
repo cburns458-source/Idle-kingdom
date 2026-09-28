@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 56;
+const int saveVersion = 57;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -960,6 +960,7 @@ class PlayerSave {
     required this.critterProgressMs,
     required this.locationSearchClaims,
     required this.cosmetics,
+    required this.unlockedBookIds,
     required this.appearance,
     required this.hasSeenWardrobeIntro,
     required this.hasSeenFennelIntro,
@@ -1068,6 +1069,7 @@ class PlayerSave {
       critterProgressMs: mapOf(json['critterProgressMs'], (Object? value) => value as num),
       locationSearchClaims: mapOf(json['locationSearchClaims'], (Object? value) => value as String),
       cosmetics: CosmeticsState.fromJson(asJsonMap(json['cosmetics'])),
+      unlockedBookIds: listOf(json['unlockedBookIds'], (Object? entry) => entry as String),
       appearance: PlayerAppearance.fromJson(asJsonMap(json['appearance'])),
       hasSeenWardrobeIntro: json['hasSeenWardrobeIntro'] as bool,
       hasSeenFennelIntro: json['hasSeenFennelIntro'] as bool,
@@ -1236,6 +1238,9 @@ class PlayerSave {
   /// Owned/equipped Wardrobe Cosmetics.
   final CosmeticsState cosmetics;
 
+  /// Book IDs unlocked into the Library (never inventory).
+  final List<String> unlockedBookIds;
+
   /// Selected character Appearance options.
   final PlayerAppearance appearance;
 
@@ -1398,6 +1403,7 @@ class PlayerSave {
       'critterProgressMs': critterProgressMs,
       'locationSearchClaims': locationSearchClaims,
       'cosmetics': cosmetics.toJson(),
+      'unlockedBookIds': unlockedBookIds,
       'appearance': appearance.toJson(),
       'hasSeenWardrobeIntro': hasSeenWardrobeIntro,
       'hasSeenFennelIntro': hasSeenFennelIntro,
@@ -1482,6 +1488,7 @@ class PlayerSave {
     Map<String, num>? critterProgressMs,
     Map<String, String>? locationSearchClaims,
     CosmeticsState? cosmetics,
+    List<String>? unlockedBookIds,
     PlayerAppearance? appearance,
     bool? hasSeenWardrobeIntro,
     bool? hasSeenFennelIntro,
@@ -1569,6 +1576,7 @@ class PlayerSave {
       critterProgressMs: critterProgressMs ?? this.critterProgressMs,
       locationSearchClaims: locationSearchClaims ?? this.locationSearchClaims,
       cosmetics: cosmetics ?? this.cosmetics,
+      unlockedBookIds: unlockedBookIds ?? this.unlockedBookIds,
       appearance: appearance ?? this.appearance,
       hasSeenWardrobeIntro: hasSeenWardrobeIntro ?? this.hasSeenWardrobeIntro,
       hasSeenFennelIntro: hasSeenFennelIntro ?? this.hasSeenFennelIntro,
