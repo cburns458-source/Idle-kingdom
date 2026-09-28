@@ -85,6 +85,11 @@ function clampEatHealthThresholdPercent(value: unknown): number {
   return Math.min(100, Math.max(1, n))
 }
 
+function normalizeStringIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((id): id is string => typeof id === 'string' && id.length > 0)
+}
+
 function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSettings {
   return {
     soundEnabled: settings?.soundEnabled ?? true,
@@ -96,7 +101,8 @@ function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSet
       settings?.eatHealthThresholdPercent ?? 100,
     ),
     eatHealthThresholdAsPercent: settings?.eatHealthThresholdAsPercent ?? false,
-    skipHostileTravelWarning: settings?.skipHostileTravelWarning ?? false,
+    skippedHostileTravelLocationIds: normalizeStringIds(settings?.skippedHostileTravelLocationIds),
+    skippedMixedCombatActivityIds: normalizeStringIds(settings?.skippedMixedCombatActivityIds),
     potionsPaused: settings?.potionsPaused ?? false,
   }
 }
@@ -898,6 +904,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         saveVersion: 55,
       }
     },
+  },
+  {
+    fromVersion: 55,
+    toVersion: 56,
+    migrate: (save) => ({
+      ...save,
+      settings: normalizeSettings(save.settings),
+      saveVersion: 56,
+    }),
   },
 ]
 

@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/floating_slot.dart';
 import 'package:idle_kingdoms/src/ui/inventory_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -859,5 +860,20 @@ void main() {
       }
     }
     expect(columns, inInclusiveRange(6, 8));
+  });
+
+  testWidgets('empty paper-doll slot lists gear in one panel', (tester) async {
+    final controller = buildController(database, seed: unequippedCharacter());
+    addTearDown(controller.dispose);
+    await pumpPanel(tester, InventoryView(controller: controller));
+
+    await tester.tap(find.byKey(const Key('equipment-slot-SLOT-0001')));
+    await tester.pumpAndSettle();
+
+    final popup = find.byKey(const Key('game-popup'));
+    expect(popup, findsOne);
+    expect(find.descendant(of: popup, matching: find.textContaining('Equip —')), findsOne);
+    expect(find.descendant(of: popup, matching: find.byType(GamePanel)), findsOne);
+    expect(find.descendant(of: popup, matching: find.byType(FloatingItemSlot)), findsWidgets);
   });
 }

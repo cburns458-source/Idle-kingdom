@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/content/asset_paths.dart';
+import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/action_stage.dart';
@@ -35,10 +36,16 @@ void main() {
     expect(find.text('Wild Roots and Fernleaf Harvesting.'), findsNothing);
   });
 
-  Future<void> pumpLocation(WidgetTester tester, String locationId) async {
+  /// Same tall location panel as [pumpLocation], but keeps the controller so a
+  /// test can start activities and read the save.
+  Future<GameController> pumpLocationController(
+    WidgetTester tester,
+    String locationId, {
+    PlayerSave? seed,
+  }) async {
     final controller = buildController(
       database,
-      seed: startedCharacter(database).copyWith(currentLocationId: locationId),
+      seed: (seed ?? startedCharacter(database)).copyWith(currentLocationId: locationId),
     );
     addTearDown(controller.dispose);
     await pumpPanel(
@@ -49,6 +56,26 @@ void main() {
         onOpenMap: () {},
       ),
       size: const Size(900, 2400),
+    );
+    return controller;
+  }
+
+  Future<void> pumpLocation(WidgetTester tester, String locationId) async {
+    await pumpLocationController(tester, locationId);
+  }
+
+  Finder activityDock(String title) {
+    return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
+  }
+
+  Future<void> tapActivityStart(WidgetTester tester, String title) async {
+    final expand = find.byTooltip('Expand list');
+    if (expand.evaluate().isNotEmpty) {
+      await tapVisible(tester, expand);
+    }
+    await tapVisible(
+      tester,
+      find.descendant(of: activityDock(title), matching: find.bySemanticsLabel('Start')),
     );
   }
 
@@ -1060,5 +1087,71 @@ void main() {
       tester.getTopLeft(find.textContaining('Offer —')).dy,
       lessThan(tester.getTopLeft(find.text('Buy')).dy),
     );
+  });
+
+  testWidgets('mixed-pool gathering warns before start and cancel keeps it stopped', (
+    tester,
+  ) async {
+    final controller = await pumpLocationController(tester, 'LOC-0008');
+    await tapActivityStart(tester, 'Gather woodland supplies');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(mixedCombatActivityWarningMessage), findsOne);
+    expect(controller.save.currentActivityId, isNull);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(controller.save.currentActivityId, isNull);
+    expect(find.byKey(const Key('game-popup')), findsNothing);
+  });
+
+  testWidgets("mixed-pool Don't ask again is per activity", (tester) async {
+    final controller = await pumpLocationController(tester, 'LOC-0008');
+    await tapActivityStart(tester, 'Gather woodland supplies');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(GameButton, "Don't ask again"));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controller.save.settings.skippedMixedCombatActivityIds, <String>['ACT-0010']);
+    expect(controller.save.currentActivityId, 'ACT-0010');
+
+    await tapVisible(tester, find.bySemanticsLabel('Stop').first);
+    await tester.pump();
+
+    await tapActivityStart(tester, 'Gather woodland supplies');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(mixedCombatActivityWarningMessage), findsNothing);
+    expect(controller.save.currentActivityId, 'ACT-0010');
+  });
+
+  testWidgets('kingswoods hunting does not warn after combat boar moved off', (tester) async {
+    await pumpLocation(tester, 'LOC-0008');
+    await tapActivityStart(tester, 'Poach in the kingswoods');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(mixedCombatActivityWarningMessage), findsNothing);
+  });
+
+  testWidgets('skipping woodland combat warning does not skip slopes mining', (tester) async {
+    final base = startedCharacter(database);
+    final controller = await pumpLocationController(
+      tester,
+      'LOC-0046',
+      seed: base.copyWith(
+        settings: base.settings.copyWith(skippedMixedCombatActivityIds: const <String>['ACT-0010']),
+      ),
+    );
+    await tapActivityStart(tester, 'Prospect the mountain side');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(mixedCombatActivityWarningMessage), findsOne);
+    expect(controller.save.currentActivityId, isNull);
   });
 }

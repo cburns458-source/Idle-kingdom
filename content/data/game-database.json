@@ -12486,7 +12486,7 @@
       "Internal Key": "poach_kingswoods",
       "Contextual Name": "Poach in the kingswoods",
       "Location ID": "LOC-0008",
-      "Description": "Hunting with a rare Wild Boar Combat encounter.",
+      "Description": "Pheasant, elk, and wild boar hunting.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0009",
       "Pool Internal Key": "kingswoods_poach",
@@ -12499,7 +12499,7 @@
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather woodland supplies",
       "Location ID": "LOC-0008",
-      "Description": "Harvest Mosstole and Wild berries.",
+      "Description": "Harvest Mosstole, wild berries, and mushrooms, with a rare Wild Boar combat encounter.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
@@ -13548,11 +13548,11 @@
     },
     {
       "Pool Entry ID": "PEN-0028",
-      "Pool ID": "POOL-0009",
+      "Pool ID": "POOL-0010",
       "Action ID": "ACN-0008",
       "Weight": 5,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Rare Wild Boar combat encounter in woodland supplies."
     },
     {
       "Pool Entry ID": "PEN-0030",

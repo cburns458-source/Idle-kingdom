@@ -192,21 +192,21 @@ class _LogViewState extends State<LogView> {
         );
       case _LogTab.milestones:
         final rows = milestoneLog(db, save);
-        return ListView.builder(
+        return ListView(
           padding: padding,
-          itemCount: rows.length,
-          itemBuilder: (context, index) {
-            final row = rows[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _LogRow(
-                title: row.name,
-                detail: row.note,
-                highlight: row.unlocked,
-                dimmed: !row.unlocked,
-              ),
-            );
-          },
+          children: [
+            _LogBoard(
+              children: [
+                for (final row in rows)
+                  _LogRow(
+                    title: row.name,
+                    detail: row.note,
+                    highlight: row.unlocked,
+                    dimmed: !row.unlocked,
+                  ),
+              ],
+            ),
+          ],
         );
       case _LogTab.quests:
         final rows = organizeQuestLog(
@@ -226,32 +226,61 @@ class _LogViewState extends State<LogView> {
         );
       case _LogTab.critters:
         final rows = critterLog(save);
-        return ListView.builder(
+        return ListView(
           padding: padding,
-          itemCount: rows.length,
-          itemBuilder: (context, index) {
-            final row = rows[index];
-            final dimmed = !row.found;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _LogRow(
-                title: row.name,
-                detail: row.description,
-                trailing: row.count > 1 ? '×${formatThousands(row.count)}' : null,
-                highlight: row.found,
-                dimmed: dimmed,
-                leading: row.found
-                    ? GameImage(critterAssetPath(row.internalKey), width: 28, height: 28)
-                    : Icon(
-                        Icons.help_outline,
-                        size: 24,
-                        color: Palette.edge.withValues(alpha: dimmed ? _LogRow.dimAlpha : 1),
-                      ),
-              ),
-            );
-          },
+          children: [
+            _LogBoard(
+              children: [
+                for (final row in rows)
+                  _LogRow(
+                    title: row.name,
+                    detail: row.description,
+                    trailing: row.count > 1 ? '×${formatThousands(row.count)}' : null,
+                    highlight: row.found,
+                    dimmed: !row.found,
+                    leading: row.found
+                        ? GameImage(critterAssetPath(row.internalKey), width: 28, height: 28)
+                        : Icon(
+                            Icons.help_outline,
+                            size: 24,
+                            color: Palette.edge.withValues(
+                              alpha: !row.found ? _LogRow.dimAlpha : 1,
+                            ),
+                          ),
+                  ),
+              ],
+            ),
+          ],
         );
     }
+  }
+}
+
+class _LogBoard extends StatelessWidget {
+  const _LogBoard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) {
+      return const GamePanel(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: MutedText('Nothing logged yet.'),
+      );
+    }
+    return GamePanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < children.length; i++)
+            Padding(
+              padding: EdgeInsets.only(bottom: i == children.length - 1 ? 0 : 8),
+              child: children[i],
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -358,8 +387,8 @@ class _LogRow extends StatelessWidget {
     final chrome = UiChrome.of(context);
     final titleColor = _inkColor(highlight ? chrome.embossFace : chrome.panelInk);
     final mutedColor = dimmed ? chrome.panelMuted.withValues(alpha: dimAlpha) : chrome.panelMuted;
-    return GamePanel(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -395,11 +424,14 @@ class _QuestJournalRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final canOpen = row.steps.isNotEmpty;
     if (!canOpen) {
-      return _LogRow(
-        title: row.name,
-        detail: row.detail,
-        trailing: row.statusLabel,
-        highlight: row.completed,
+      return GamePanel(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: _LogRow(
+          title: row.name,
+          detail: row.detail,
+          trailing: row.statusLabel,
+          highlight: row.completed,
+        ),
       );
     }
 
