@@ -314,7 +314,10 @@ void main() {
   });
 
   test('Through the Thicket is offered by the Old Forester and does not auto-start', () {
-    expect(db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0017').raw['Display Name'], 'Old Forester');
+    expect(
+      db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0017').raw['Display Name'],
+      'Old Forester',
+    );
     final arrived = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0040', 0);
     expect(getQuestProgress(arrived, 'QST-0010').status, 'inactive');
     expect(acceptQuest(db, arrived, 'QST-0010').ok, isFalse);

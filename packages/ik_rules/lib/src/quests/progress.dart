@@ -72,14 +72,7 @@ PlayerSave applyQuestProcessProgress(
 ]) {
   return applyQuestStepUnlocks(
     db,
-    _applyProgress(
-      db,
-      save,
-      'process',
-      (row) => row.processTargets,
-      recipeOrProjectId,
-      amount,
-    ),
+    _applyProgress(db, save, 'process', (row) => row.processTargets, recipeOrProjectId, amount),
   );
 }
 
@@ -279,9 +272,7 @@ QuestOfferingArrival applyQuestOfferingArrival(
     if (!current!.visitLocationIds.contains(locationId)) continue;
     if (hasQuestFlag(next, questId, 'visit:$locationId')) continue;
     if (inventoryCount(next, offeringId) < 1) continue;
-    final removed = removeIngredients(next, [
-      RecipeIngredient(itemId: offeringId, quantity: 1),
-    ]);
+    final removed = removeIngredients(next, [RecipeIngredient(itemId: offeringId, quantity: 1)]);
     if (removed == null) continue;
     next = setQuestFlag(removed, questId, 'visit:$locationId');
     message = forestOfferingPlacedMessage;

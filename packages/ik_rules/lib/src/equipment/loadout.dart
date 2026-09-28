@@ -432,9 +432,10 @@ num equippedActionTimeReductionPercent(GameDatabase db, PlayerSave save, String?
 final RegExp _vineAtrCapability = RegExp(r'vine_atr:\s*(\d+)', caseSensitive: false);
 
 bool isVineChopAction(ActionRow action) {
-  if (RegExp(r'(?:^|;)\s*VineChop\s*(?:;|$)', caseSensitive: false).hasMatch(
-        jsString(action.raw['Notes']),
-      )) {
+  if (RegExp(
+    r'(?:^|;)\s*VineChop\s*(?:;|$)',
+    caseSensitive: false,
+  ).hasMatch(jsString(action.raw['Notes']))) {
     return true;
   }
   return jsString(action.raw['Internal Key']).toLowerCase().contains('vine');

@@ -207,10 +207,7 @@ TravelArrivalSave applyTravelArrivalResult(
   num nowMs,
 ) {
   if (isDeathPaused(save, nowMs)) {
-    return TravelArrivalSave(
-      save: save,
-      questCompletions: const <QuestArrivalCompletion>[],
-    );
+    return TravelArrivalSave(save: save, questCompletions: const <QuestArrivalCompletion>[]);
   }
   final stopped = stopPrimaryActivityNow(db, save, nowMs);
   final arrived = stopped.copyWith(currentLocationId: destinationLocationId);
