@@ -616,6 +616,13 @@ class GameController extends ChangeNotifier {
     commit(save.copyWith(settings: save.settings.copyWith(eatHealthThresholdAsPercent: value)));
   }
 
+  bool get botanyUseCompost => save.settings.botanyUseCompost;
+
+  void setBotanyUseCompost(bool value) {
+    if (save.settings.botanyUseCompost == value) return;
+    commit(save.copyWith(settings: save.settings.copyWith(botanyUseCompost: value)));
+  }
+
   void setEatHealthThresholdHp(num hp, num maxHp) {
     final cap = maxHp <= 0 ? 1 : maxHp;
     final percent = clampEatHealthThresholdPercent((hp / cap) * 100);

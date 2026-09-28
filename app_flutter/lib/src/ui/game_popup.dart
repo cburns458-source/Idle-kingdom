@@ -234,51 +234,71 @@ enum DontAskAgainChoice { cancel, confirm, dontAskAgain }
 /// Choice from the hostile-location travel confirm.
 enum HostileTravelChoice { cancel, travel, dontAskAgain }
 
-/// Confirm with Cancel, a proceed button, and Don't ask again.
+/// Confirm with Cancel, a proceed button, and a Don't ask again checkbox.
+///
+/// Continue/Travel without checking still shows the warning next time. Checking
+/// the box and confirming skips future prompts for that destination/activity.
 Future<DontAskAgainChoice> showDontAskAgainConfirm({
   required BuildContext context,
   required String message,
   required String confirmLabel,
   Rect? origin,
 }) async {
+  var dontAskAgain = false;
   final result = await showGamePopup<DontAskAgainChoice>(
     context: context,
     placement: GamePopupPlacement.center,
     origin: origin,
     barrierDismissible: true,
     builder: (context) {
-      return GamePopupCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(message, style: const TextStyle(height: 1.4)),
-            const SizedBox(height: 14),
-            Row(
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          return GamePopupCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                GameButton(
-                  label: 'Cancel',
-                  tone: GameButtonTone.secondary,
-                  compact: true,
-                  onPressed: () => Navigator.of(context).pop(DontAskAgainChoice.cancel),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GameButton(
-                    label: confirmLabel,
-                    onPressed: () => Navigator.of(context).pop(DontAskAgainChoice.confirm),
+                Text(message, style: const TextStyle(height: 1.4)),
+                const SizedBox(height: 10),
+                InkWell(
+                  onTap: () => setModalState(() => dontAskAgain = !dontAskAgain),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: dontAskAgain,
+                        onChanged: (next) => setModalState(() => dontAskAgain = next ?? false),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      const Expanded(child: Text("Don't ask again")),
+                    ],
                   ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    GameButton(
+                      label: 'Cancel',
+                      tone: GameButtonTone.secondary,
+                      compact: true,
+                      onPressed: () => Navigator.of(context).pop(DontAskAgainChoice.cancel),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GameButton(
+                        label: confirmLabel,
+                        onPressed: () => Navigator.of(context).pop(
+                          dontAskAgain
+                              ? DontAskAgainChoice.dontAskAgain
+                              : DontAskAgainChoice.confirm,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            GameButton(
-              label: "Don't ask again",
-              tone: GameButtonTone.secondary,
-              onPressed: () => Navigator.of(context).pop(DontAskAgainChoice.dontAskAgain),
-            ),
-          ],
-        ),
+          );
+        },
       );
     },
   );

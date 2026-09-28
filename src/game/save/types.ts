@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 57
+export const SAVE_VERSION = 58
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -162,6 +162,11 @@ export interface PlayerSettings {
    * potion button (🚫). An already-running effect is left alone.
    */
   potionsPaused: boolean
+  /**
+   * Remembered Botany plant-popup compost toggle for the whole account.
+   * Cleared automatically when compost runs out.
+   */
+  botanyUseCompost: boolean
 }
 
 export const APPEARANCE_CATEGORIES = [

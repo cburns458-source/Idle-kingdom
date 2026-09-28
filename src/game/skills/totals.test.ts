@@ -62,6 +62,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
       skippedHostileTravelLocationIds: [],
       skippedMixedCombatActivityIds: [],
       potionsPaused: false,
+      botanyUseCompost: false,
     },
     characterName: 'Tester',
     motto: null,

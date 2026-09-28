@@ -123,6 +123,7 @@ SaveJson _normalizeSettings(SaveJson save, int version) {
     'skippedHostileTravelLocationIds': _stringIdList(settings['skippedHostileTravelLocationIds']),
     'skippedMixedCombatActivityIds': _stringIdList(settings['skippedMixedCombatActivityIds']),
     'potionsPaused': settings['potionsPaused'] ?? false,
+    'botanyUseCompost': settings['botanyUseCompost'] ?? false,
   };
   return next;
 }
@@ -921,6 +922,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(fromVersion: 57, toVersion: 58, migrate: (save, _) => _normalizeSettings(save, 58)),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

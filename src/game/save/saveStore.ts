@@ -119,6 +119,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
       skippedHostileTravelLocationIds: [],
       skippedMixedCombatActivityIds: [],
       potionsPaused: false,
+      botanyUseCompost: false,
     },
     currentLocationId: STARTING_LOCATION_ID,
     currentActivityId: null,

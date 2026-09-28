@@ -84,6 +84,20 @@ void main() {
     final settings = migrated['settings'] as Map<String, Object?>?;
     expect(settings?['skippedHostileTravelLocationIds'], isEmpty);
     expect(settings?['skippedMixedCombatActivityIds'], isEmpty);
+    expect(settings?['botanyUseCompost'], isFalse);
+  });
+
+  test('adds botanyUseCompost when migrating a v57 save', () {
+    final created = createNewSave(db, nowMs);
+    final legacy = created.toJson();
+    legacy['saveVersion'] = 57;
+    final settings = Map<String, Object?>.from(legacy['settings']! as Map)
+      ..remove('botanyUseCompost');
+    legacy['settings'] = settings;
+    final migrated = migrateSaveJson(legacy, nowMs);
+    expect(migrated['saveVersion'], saveVersion);
+    final next = migrated['settings'] as Map<String, Object?>?;
+    expect(next?['botanyUseCompost'], isFalse);
   });
 
   test('forgets the old account-wide hostile skip when leaving v55', () {

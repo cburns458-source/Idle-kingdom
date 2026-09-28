@@ -65,6 +65,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
       skippedHostileTravelLocationIds: [],
       skippedMixedCombatActivityIds: [],
       potionsPaused: false,
+      botanyUseCompost: false,
     },
     currentLocationId: 'LOC-0002',
     currentActivityId: null,

@@ -358,6 +358,10 @@ void main() {
     }
 
     Future<void> tapDepositBox(WidgetTester tester) async {
+      final bankTab = find.widgetWithText(GameButton, 'Bank');
+      if (bankTab.evaluate().isNotEmpty) {
+        await tapVisible(tester, bankTab);
+      }
       final card = find.ancestor(
         of: find.text('Pick a deposit box'),
         matching: find.byType(DockRow),
@@ -1112,7 +1116,9 @@ void main() {
     await tapActivityStart(tester, 'Gather woodland supplies');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(GameButton, "Don't ask again"));
+    await tester.tap(find.text("Don't ask again"));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Continue'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -1153,5 +1159,111 @@ void main() {
 
     expect(find.text(mixedCombatActivityWarningMessage), findsOne);
     expect(controller.save.currentActivityId, isNull);
+  });
+
+  testWidgets('Continue without checking still warns next time', (tester) async {
+    final controller = await pumpLocationController(tester, 'LOC-0008');
+    await tapActivityStart(tester, 'Gather woodland supplies');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(GameButton, 'Continue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controller.save.settings.skippedMixedCombatActivityIds, isEmpty);
+    expect(controller.save.currentActivityId, 'ACT-0010');
+
+    await tapVisible(tester, find.bySemanticsLabel('Stop').first);
+    await tester.pump();
+    await tapActivityStart(tester, 'Gather woodland supplies');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(mixedCombatActivityWarningMessage), findsOne);
+    expect(find.text("Don't ask again"), findsOne);
+  });
+
+  testWidgets('Kingsroad shows bandit fight and combat warning 9', (tester) async {
+    await pumpLocation(tester, 'LOC-0052');
+    expect(find.text('Kingsroad'), findsWidgets);
+    expect(find.text('Danger warning: approximately Combat Level 9.'), findsOne);
+    expect(find.text('Fight the bandits'), findsOne);
+    expect(find.text('Combat warning ~ Level 9'), findsOne);
+  });
+
+  testWidgets('Apothecary steal sits under Shops with the new shop row', (tester) async {
+    final base = startedCharacter(database);
+    await pumpLocationController(
+      tester,
+      'LOC-0026',
+      seed: base.copyWith(
+        currentLocationId: 'LOC-0026',
+        unlockedLocationIds: const <String>['LOC-0026'],
+        skills: [
+          ...base.skills.where((skill) => skill.skillId != 'SKL-0015'),
+          const SkillProgress(skillId: 'SKL-0015', level: 40, xp: 0),
+        ],
+      ),
+    );
+    expect(find.text('Steal from the Apothecary'), findsNothing);
+    await tapVisible(tester, find.widgetWithText(GameButton, 'Shops'));
+    expect(find.text('Steal from the Apothecary'), findsOne);
+    expect(find.text('Apothecary'), findsWidgets);
+  });
+
+  testWidgets('kitchen steal stays in Activities', (tester) async {
+    final base = startedCharacter(database);
+    await pumpLocationController(
+      tester,
+      'LOC-0023',
+      seed: base.copyWith(
+        currentLocationId: 'LOC-0023',
+        skills: [
+          ...base.skills.where((skill) => skill.skillId != 'SKL-0015'),
+          const SkillProgress(skillId: 'SKL-0015', level: 20, xp: 0),
+        ],
+      ),
+    );
+    expect(find.widgetWithText(GameButton, 'Activities'), findsOne);
+    expect(find.text('Steal from the kitchen'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Shops'), findsNothing);
+  });
+
+  testWidgets('deposit box and bank vault sit under Bank', (tester) async {
+    final save = startedCharacter(database);
+    await pumpLocationController(
+      tester,
+      'LOC-0035',
+      seed: save.copyWith(
+        currentLocationId: 'LOC-0035',
+        skills: [
+          ...save.skills.where((skill) => skill.skillId != 'SKL-0015'),
+          const SkillProgress(skillId: 'SKL-0015', level: 70, xp: 0),
+        ],
+      ),
+    );
+    // Band tab + Open bank share the label; thievery is not under Activities.
+    expect(find.widgetWithText(GameButton, 'Bank'), findsWidgets);
+    expect(find.widgetWithText(GameButton, 'Activities'), findsNothing);
+    expect(find.text('Pick a deposit box'), findsOne);
+    expect(find.text('Pick the bank vault'), findsOne);
+  });
+
+  testWidgets('barracks steal sits under People', (tester) async {
+    final save = startedCharacter(database);
+    await pumpLocationController(
+      tester,
+      'LOC-0017',
+      seed: save.copyWith(
+        currentLocationId: 'LOC-0017',
+        skills: [
+          ...save.skills.where((skill) => skill.skillId != 'SKL-0015'),
+          const SkillProgress(skillId: 'SKL-0015', level: 30, xp: 0),
+        ],
+      ),
+    );
+    expect(find.text('Steal from the barracks'), findsNothing);
+    await tapVisible(tester, find.widgetWithText(GameButton, 'People'));
+    expect(find.text('Steal from the barracks'), findsOne);
   });
 }

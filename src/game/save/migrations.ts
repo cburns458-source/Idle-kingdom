@@ -104,6 +104,7 @@ function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSet
     skippedHostileTravelLocationIds: normalizeStringIds(settings?.skippedHostileTravelLocationIds),
     skippedMixedCombatActivityIds: normalizeStringIds(settings?.skippedMixedCombatActivityIds),
     potionsPaused: settings?.potionsPaused ?? false,
+    botanyUseCompost: settings?.botanyUseCompost ?? false,
   }
 }
 
@@ -942,6 +943,15 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         saveVersion: 57,
       }
     },
+  },
+  {
+    fromVersion: 57,
+    toVersion: 58,
+    migrate: (save) => ({
+      ...save,
+      settings: normalizeSettings(save.settings),
+      saveVersion: 58,
+    }),
   },
 ]
 

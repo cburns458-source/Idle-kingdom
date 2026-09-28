@@ -43,6 +43,8 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0005': { x: 30, y: 64 },
   // Farm fields / windmill
   'LOC-0001': { x: 76, y: 65 },
+  // Kingsroad between Farm and Town
+  'LOC-0052': { x: 52, y: 58 },
   // Harbor / dock at river mouth
   'LOC-0004': { x: 54, y: 70 },
   // Sunken Approach, just southeast of the docks

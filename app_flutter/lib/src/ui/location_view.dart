@@ -686,12 +686,12 @@ class _LocationViewState extends State<LocationView> {
       ..._compostCollect(locationId),
     ]);
     add('Traps', _locationTimers(locationId, kind: 'fishing_pot'));
-    add('Shops', _shops(locationId));
-    add('People', _people(locationId));
+    add('Shops', [..._shops(locationId), ..._shopThievery(locationId)]);
+    add('People', [..._people(locationId), ..._npcThievery(locationId)]);
+    add('Bank', [..._bank(), ..._bankThievery(locationId)]);
     add('Other', [
       ..._blessing(),
       ..._stations(locationId),
-      ..._bank(),
       ..._arena(),
       ..._guildHall(),
       ..._citadelBoards(locationId),
@@ -736,7 +736,8 @@ class _LocationViewState extends State<LocationView> {
         .where(
           (activity) =>
               !isCompostCollectActivity(activity) &&
-              activityVisibleForSave(controller.db, controller.save, activity.activityId),
+              activityVisibleForSave(controller.db, controller.save, activity.activityId) &&
+              !_thieveryMovedOutOfActivities(activity),
         )
         .toList();
     if (activities.isEmpty) return const [];
@@ -752,6 +753,55 @@ class _LocationViewState extends State<LocationView> {
         ),
     ];
   }
+
+  bool _thieveryMovedOutOfActivities(ActivityRow activity) {
+    final db = controller.db;
+    final save = controller.save;
+    if (!isThieveryActivity(db, activity)) return false;
+    return isBankThieveryActivity(db, activity) ||
+        isShopThieveryActivity(db, save, activity) ||
+        isNpcThieveryActivity(db, save, activity);
+  }
+
+  List<Widget> _thieveryActivityCards(
+    String locationId,
+    bool Function(ActivityRow activity) match,
+  ) {
+    final activities = (controller.indexes.activitiesByLocationId[locationId] ?? const [])
+        .where(
+          (activity) =>
+              activityVisibleForSave(controller.db, controller.save, activity.activityId) &&
+              match(activity),
+        )
+        .toList();
+    if (activities.isEmpty) return const [];
+    return [
+      for (final activity in activities)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _ActivityCard(
+            controller: controller,
+            activity: activity,
+            onOpenWorkshop: (buttonContext) => _openWorkshop(activity, buttonContext),
+          ),
+        ),
+    ];
+  }
+
+  List<Widget> _shopThievery(String locationId) => _thieveryActivityCards(
+    locationId,
+    (activity) => isShopThieveryActivity(controller.db, controller.save, activity),
+  );
+
+  List<Widget> _npcThievery(String locationId) => _thieveryActivityCards(
+    locationId,
+    (activity) => isNpcThieveryActivity(controller.db, controller.save, activity),
+  );
+
+  List<Widget> _bankThievery(String locationId) => _thieveryActivityCards(
+    locationId,
+    (activity) => isBankThieveryActivity(controller.db, activity),
+  );
 
   /// Botany patches and fishing pots for this location.
   List<Widget> _locationTimers(String locationId, {String? kind}) {

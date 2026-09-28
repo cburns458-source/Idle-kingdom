@@ -120,6 +120,7 @@ export 'src/world/hostility.dart';
 export 'src/world/kingswoods_sling.dart';
 export 'src/world/location_search.dart';
 export 'src/world/location_skills.dart';
+export 'src/world/location_thievery.dart';
 export 'src/world/main_hall_kitchen.dart';
 export 'src/world/map_label.dart';
 export 'src/world/map_layout.dart';
