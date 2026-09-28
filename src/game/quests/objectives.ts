@@ -102,7 +102,9 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   holds: [],
   actionTargets: [],
   plantTargets: [],
+  requiresCompost: false,
   giveOnTalk: [],
+  rewardItems: [],
   requiresSkills: [],
   requiresQuestIds: [],
   unlockOnAcceptLocationIds: [],
@@ -166,6 +168,7 @@ export function parseNotesObjectives(
   const actionMatch = noteField(notes, String.raw`Action:\s*([^;]+)`)
   const plantMatch = noteField(notes, String.raw`Plant:\s*([^;]+)`)
   const giveOnTalkMatch = noteField(notes, String.raw`GiveOnTalk:\s*([^;]+)`)
+  const rewardItemMatch = noteField(notes, String.raw`RewardItem:\s*([^;]+)`)
   const goldMatch = noteField(notes, String.raw`GoldCost:\s*(\d+)`)
 
   if (delivers.length === 0 && kind === 'gather_deliver') {
@@ -223,7 +226,9 @@ export function parseNotesObjectives(
         ? parseIdQtyList(plantMatch)
         : parseIdList(plantMatch).map((targetId) => ({ targetId, quantity: 1 }))
       : [],
+    requiresCompost: /(?:^|;)\s*RequiresCompost\b/i.test(notes),
     giveOnTalk: giveOnTalkMatch ? parseIdQtyList(giveOnTalkMatch) : [],
+    rewardItems: rewardItemMatch ? parseIdQtyList(rewardItemMatch) : [],
     requiresSkills: [],
     requiresQuestIds: [],
     unlockOnAcceptLocationIds: [],

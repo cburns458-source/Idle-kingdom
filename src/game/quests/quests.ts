@@ -320,6 +320,15 @@ export function completeQuest(
     loot.push({ itemId: rewardItemId, quantity: rewardQty, displayName: itemName })
   }
 
+  for (const grant of parsed.rewardItems) {
+    if (grant.quantity <= 0) continue
+    next = addItemToInventory(next, grant.targetId, grant.quantity)
+    const itemName =
+      db.Items.find((item) => item['Item ID'] === grant.targetId)?.['Display Name'] ?? 'item'
+    rewards.push({ label: `${grant.quantity}× ${itemName}` })
+    loot.push({ itemId: grant.targetId, quantity: grant.quantity, displayName: itemName })
+  }
+
   let unlocked = next.unlockedLocationIds ?? []
   for (const locationId of parsed.unlockLocationIds) {
     const before = unlocked.length
@@ -391,6 +400,14 @@ export function completeQuest(
   next = { ...next, quests: nextQuests, unlockedLocationIds: unlocked }
   next = applyQuestAutoStartOnSeed(db, next)
 
+  const spoken = (db.QuestDialogue ?? []).find(
+    (row) =>
+      row['Quest ID'] === questId &&
+      row['NPC ID'] === npcId &&
+      /(?:^|;)\s*When:\s*completed/i.test(row.Notes ?? ''),
+  )?.Line
+  const authored = spoken && spoken.length > 0 ? spoken : null
+
   return {
     ok: true,
     save: next,
@@ -405,9 +422,10 @@ export function completeQuest(
       goldGained,
     },
     message:
-      rewards.length > 0
+      authored ??
+      (rewards.length > 0
         ? `Thank you. ${rewards.map((reward) => reward.label).join(' and ')}.`
-        : 'Thank you.',
+        : 'Thank you.'),
   }
 }
 
@@ -657,6 +675,13 @@ export function questCompletionRewardLabels(
     const itemName =
       db.Items.find((item) => item['Item ID'] === rewardItemId)?.['Display Name'] ?? 'item'
     rewards.push(`${rewardQty}× ${itemName}`)
+  }
+
+  for (const grant of parsed.rewardItems) {
+    if (grant.quantity <= 0) continue
+    const itemName =
+      db.Items.find((item) => item['Item ID'] === grant.targetId)?.['Display Name'] ?? 'item'
+    rewards.push(`${grant.quantity}× ${itemName}`)
   }
 
   for (const locationId of parsed.unlockLocationIds) {

@@ -156,6 +156,11 @@ PlayerSave applyQuestAutoStartOnSeed(GameDatabase db, PlayerSave save) {
     final questId = jsString(quest['Quest ID']);
     final progress = getQuestProgress(next, questId);
     if (progress.status != 'inactive') continue;
+    if (structured.requiresQuestIds.any(
+      (requiredQuestId) => getQuestProgress(next, requiredQuestId).status != 'completed',
+    )) {
+      continue;
+    }
     next = next.copyWith(
       quests: [
         ...next.quests.where((row) => row.questId != questId),
@@ -202,23 +207,53 @@ PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId
 }
 
 /// Marks Plant objectives after seeds go into a patch.
-PlayerSave applyQuestPlantProgress(GameDatabase db, PlayerSave save, List<String> plantedItemIds) {
+PlayerSave applyQuestPlantProgress(
+  GameDatabase db,
+  PlayerSave save,
+  List<String> plantedItemIds, {
+  bool usedCompost = false,
+}) {
   if (plantedItemIds.isEmpty) return save;
   var next = save;
   for (final itemId in plantedItemIds.toSet()) {
     for (final quest in asQuestRows(db)) {
       final questId = jsString(quest['Quest ID']);
       if (getQuestProgress(next, questId).status != 'active') continue;
-      if (!questObjectiveSources(
-        db,
-        quest,
-      ).any((row) => row.plantTargets.any((target) => target.targetId == itemId))) {
-        continue;
-      }
+      final current =
+          questActiveStepObjectives(db, next, quest) ?? parseStructuredObjectives(quest);
+      if (!current.plantTargets.any((target) => target.targetId == itemId)) continue;
+      if (current.requiresCompost && !usedCompost) continue;
       next = _bumpCounter(next, questId, 'plant:$itemId', 1);
     }
   }
   return next;
+}
+
+/// True when an unfinished plant step still needs compost for these seeds.
+bool questPlantRequiresCompost(GameDatabase db, PlayerSave save, List<String> plantedItemIds) {
+  if (plantedItemIds.isEmpty) return false;
+  for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(save, questId).status != 'active') continue;
+    if (questUsesSteps(db, questId)) {
+      final steps = getQuestSteps(db, questId);
+      final start = getCurrentStepIndex(db, save, quest);
+      for (final step in steps.skip(start)) {
+        final current = parseNotesObjectives(step.notes ?? '');
+        if (current.requiresCompost &&
+            current.plantTargets.any((target) => plantedItemIds.contains(target.targetId))) {
+          return true;
+        }
+      }
+      continue;
+    }
+    final current = parseStructuredObjectives(quest);
+    if (current.requiresCompost &&
+        current.plantTargets.any((target) => plantedItemIds.contains(target.targetId))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// Marks Action objectives after a gathering action completes.

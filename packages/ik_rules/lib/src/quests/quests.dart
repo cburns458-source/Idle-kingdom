@@ -351,6 +351,17 @@ QuestCompletion completeQuest(
     loot.add(LootGrant(itemId: rewardItemId, quantity: rewardQty, displayName: displayName));
   }
 
+  for (final grant in parsed.rewardItems) {
+    if (grant.quantity <= 0) continue;
+    next = addItemToInventory(next, grant.targetId, grant.quantity);
+    final itemName = db.items
+        .firstWhereOrNull((item) => item.raw['Item ID'] == grant.targetId)
+        ?.raw['Display Name'];
+    final displayName = itemName is String ? itemName : 'item';
+    rewards.add('${jsNumberToString(grant.quantity)}× $displayName');
+    loot.add(LootGrant(itemId: grant.targetId, quantity: grant.quantity, displayName: displayName));
+  }
+
   var unlocked = next.unlockedLocationIds;
   for (final locationId in parsed.unlockLocationIds) {
     final before = unlocked.length;
@@ -425,6 +436,18 @@ QuestCompletion completeQuest(
   );
   next = applyQuestAutoStartOnSeed(db, next);
 
+  final spokenNpcId = parsed.turnInNpcId ?? jsString(quest['NPC ID']);
+  final spoken = db.questDialogue
+      .where(
+        (row) =>
+            row.questId == questId &&
+            row.npcId == spokenNpcId &&
+            RegExp(r'(?:^|;)\s*When:\s*completed', caseSensitive: false).hasMatch(row.notes ?? ''),
+      )
+      .map((row) => row.line)
+      .where((line) => line.isNotEmpty)
+      .firstOrNull;
+
   return QuestCompletion.ok(
     save: next,
     questName: jsString(quest['Display Name']),
@@ -437,7 +460,8 @@ QuestCompletion completeQuest(
       goldGained: goldGained,
     ),
     booksGranted: booksGranted,
-    message: rewards.isNotEmpty ? 'Thank you — ${rewards.join(' and ')}.' : 'Thank you.',
+    message:
+        spoken ?? (rewards.isNotEmpty ? 'Thank you — ${rewards.join(' and ')}.' : 'Thank you.'),
   );
 }
 
@@ -694,6 +718,14 @@ List<String> questCompletionRewardLabels(GameDatabase db, QuestRow quest, [Playe
         .firstWhereOrNull((item) => item.raw['Item ID'] == rewardItemId)
         ?.raw['Display Name'];
     rewards.add('${jsNumberToString(rewardQty)}× ${itemName is String ? itemName : 'item'}');
+  }
+
+  for (final grant in parsed.rewardItems) {
+    if (grant.quantity <= 0) continue;
+    final itemName = db.items
+        .firstWhereOrNull((item) => item.raw['Item ID'] == grant.targetId)
+        ?.raw['Display Name'];
+    rewards.add('${jsNumberToString(grant.quantity)}× ${itemName is String ? itemName : 'item'}');
   }
 
   for (final locationId in parsed.unlockLocationIds) {

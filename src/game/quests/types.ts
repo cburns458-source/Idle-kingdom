@@ -39,8 +39,12 @@ export interface StructuredQuestObjectives {
   actionTargets: QuestCounterTarget[]
   /** Seeds/saplings planted to finish the step. */
   plantTargets: QuestCounterTarget[]
+  /** Plant progress only counts when compost was used. */
+  requiresCompost: boolean
   /** Items granted the first time a Talk step is heard. */
   giveOnTalk: QuestCounterTarget[]
+  /** Extra item grants from `RewardItem:` notes (Reward Item ID is a single column). */
+  rewardItems: QuestCounterTarget[]
   requiresSkills: Array<{ skillId: string; level: number }>
   requiresQuestIds: string[]
   unlockOnAcceptLocationIds: string[]

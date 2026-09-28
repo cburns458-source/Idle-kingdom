@@ -179,7 +179,14 @@ class _NpcPanelState extends State<NpcPanel> {
         .toList();
     controller.noteCosmeticUnlocks(granted);
     controller.noteBookUnlocks(result.booksGranted);
-    await showQuestRewards(context, questName: result.questName!, rewards: result.rewards);
+    final spoken = questTalkLine(controller.db, quest.questId, conversation.npcId, result.save!);
+    await showQuestRewards(
+      context,
+      questName: result.questName!,
+      rewards: result.rewards,
+      spokenLine: spoken,
+      thankYou: spoken == null,
+    );
     if (!mounted) return;
     if (result.pendingSkillXp > 0) {
       await showSkillXpPicker(context, controller: controller, amount: result.pendingSkillXp);
@@ -321,7 +328,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (activeQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: activeQuest.idlePrompt,
+        line: activeQuest.talkLine ?? activeQuest.idlePrompt,
         error: _error,
         actions: [GameButton(label: 'Done', onPressed: _close)],
       );

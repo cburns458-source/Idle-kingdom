@@ -4,10 +4,12 @@ import { removeIngredients } from '../production/inventory'
 import { inventoryCount } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 import { asQuestRows, getQuestProgress } from './quests'
-import { parseStructuredObjectives } from './objectives'
+import { parseNotesObjectives, parseStructuredObjectives } from './objectives'
 import {
   applyQuestStepUnlocks,
   currentStepTalkKey,
+  getCurrentStepIndex,
+  getQuestSteps,
   questActiveStepObjectives,
   questCanTalkToNpc,
   questObjectiveSources,
@@ -159,6 +161,13 @@ export function applyQuestAutoStartOnSeed(db: GameDatabase, save: PlayerSave): P
     const questId = quest['Quest ID']
     const progress = getQuestProgress(next, questId)
     if (progress.status !== 'inactive') continue
+    if (
+      structured.requiresQuestIds.some(
+        (requiredQuestId) => getQuestProgress(next, requiredQuestId).status !== 'completed',
+      )
+    ) {
+      continue
+    }
     next = {
       ...next,
       quests: [
@@ -214,23 +223,56 @@ export function applyQuestPlantProgress(
   db: GameDatabase,
   save: PlayerSave,
   plantedItemIds: string[],
+  usedCompost = false,
 ): PlayerSave {
   if (plantedItemIds.length === 0) return save
   let next = save
   for (const itemId of new Set(plantedItemIds)) {
     for (const quest of asQuestRows(db)) {
       if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
-      if (
-        !questObjectiveSources(db, quest).some((row) =>
-          row.plantTargets.some((target) => target.targetId === itemId),
-        )
-      ) {
-        continue
-      }
+      const current =
+        questActiveStepObjectives(db, next, quest) ?? parseStructuredObjectives(quest)
+      if (!current.plantTargets.some((target) => target.targetId === itemId)) continue
+      if (current.requiresCompost && !usedCompost) continue
       next = bumpCounter(next, quest['Quest ID'], `plant:${itemId}`, 1)
     }
   }
   return next
+}
+
+/** True when an unfinished plant step still needs compost for these seeds. */
+export function questPlantRequiresCompost(
+  db: GameDatabase,
+  save: PlayerSave,
+  plantedItemIds: string[],
+): boolean {
+  if (plantedItemIds.length === 0) return false
+  for (const quest of asQuestRows(db)) {
+    if (getQuestProgress(save, quest['Quest ID']).status !== 'active') continue
+    const questId = quest['Quest ID']
+    if (questUsesSteps(db, questId)) {
+      const steps = getQuestSteps(db, questId)
+      const start = getCurrentStepIndex(db, save, quest)
+      for (const step of steps.slice(start)) {
+        const current = parseNotesObjectives(step.Notes ?? '')
+        if (
+          current.requiresCompost &&
+          current.plantTargets.some((target) => plantedItemIds.includes(target.targetId))
+        ) {
+          return true
+        }
+      }
+      continue
+    }
+    const current = parseStructuredObjectives(quest)
+    if (
+      current.requiresCompost &&
+      current.plantTargets.some((target) => plantedItemIds.includes(target.targetId))
+    ) {
+      return true
+    }
+  }
+  return false
 }
 
 /** Marks Action objectives after a gathering/combat action completes. */

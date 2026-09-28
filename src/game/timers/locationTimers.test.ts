@@ -6,6 +6,7 @@ import { createNewSave } from '../save/saveStore'
 import {
   BOTANY_PATCH_LOCATIONS,
   botanySuccessChancePercent,
+  botanyCollectChancePercent,
   canPlaceTrap,
   canPlantBotanySeed,
   collectLocationTimer,
@@ -621,6 +622,16 @@ describe('locationTimers', () => {
     expect(botanySuccessChancePercent(10, 10)).toBe(30)
     expect(botanySuccessChancePercent(10, 10, true)).toBe(55)
     expect(botanySuccessChancePercent(200, 1, true)).toBe(100)
+  })
+
+  it('adds ten percent to farm harvests after Green Thumb', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      quests: [{ questId: 'QST-0011' as const, status: 'completed' as const, progress: 1 }],
+    }
+    expect(botanyCollectChancePercent(save, 'LOC-0001', 1, 1)).toBe(botanySuccessChancePercent(1, 1) + 10)
+    expect(botanyCollectChancePercent(save, 'LOC-0031', 1, 1)).toBe(botanySuccessChancePercent(1, 1))
   })
 
   it('offers compost collect at every botany patch except The Shallows', () => {

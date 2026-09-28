@@ -424,6 +424,17 @@ void main() {
     expect(botanySuccessChancePercent(200, 1, usedCompost: true), 100);
   });
 
+  test('adds ten percent to farm harvests after Green Thumb', () {
+    final save = createNewSave(db, 0).copyWith(
+      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+    );
+    expect(
+      botanyCollectChancePercent(save, 'LOC-0001', 1, 1),
+      botanySuccessChancePercent(1, 1) + 10,
+    );
+    expect(botanyCollectChancePercent(save, 'LOC-0031', 1, 1), botanySuccessChancePercent(1, 1));
+  });
+
   test('offers compost collect at every botany patch except The Shallows', () {
     expect(locationHasCompostCollect('LOC-0001'), isTrue);
     expect(locationHasCompostCollect('LOC-0046'), isTrue);

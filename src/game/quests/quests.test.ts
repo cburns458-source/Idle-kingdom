@@ -35,7 +35,7 @@ import {
   resetIntroFlags,
   resetQuestProgress,
 } from './quests'
-import { formatQuestProgressLine } from './objectives'
+import { formatQuestProgressLine, parseStructuredObjectives } from './objectives'
 import { getCurrentStepId, questActionProgressForActivity, questStepJournal } from './steps'
 import { questLog } from '../log/log'
 import {
@@ -49,7 +49,7 @@ import {
 import { applyHostileTravelArrival } from '../world/hostility'
 import { applyTravelArrival, applyTravelArrivalResult, canTravelTo, locationsForMapView } from '../world/travel'
 import { hideFromQuestLog } from './miniquests'
-import { canPlantBotanySeed, farmBotanyUnlocked, plantBotanySeed } from '../timers/locationTimers'
+import { canPlantBotanySeed, farmBotanyUnlocked, plantBotanySelection, botanyCollectChancePercent, botanySuccessChancePercent } from '../timers/locationTimers'
 import { questVisitHintLocationId } from './hints'
 
 const rawDatabase = JSON.parse(
@@ -293,6 +293,9 @@ describe('quest tours', () => {
 
     expect(npcConversation(launch, save, fennel).quests[0]?.canTalk).toBe(false)
     expect(npcConversation(launch, save, fennel).quests[0]?.canTurnIn).toBe(false)
+    expect(npcConversation(launch, save, fennel).quests[0]?.idlePrompt).toMatch(
+      /Take five potatoes from the field/i,
+    )
 
     save = addItemToInventory(save, 'ITEM-0025', 5)
     expect(npcConversation(launch, save, fennel).quests[0]?.canTalk).toBe(true)
@@ -567,7 +570,7 @@ describe('quest tours', () => {
     expect(arrival.save.quests.find((row) => row.questId === 'QST-0008')?.status).toBe('completed')
     expect(arrival.questCompletions).toHaveLength(1)
     expect(arrival.questCompletions[0]!.questName).toBe('Going Deeper')
-    expect(arrival.questCompletions[0]!.message).toMatch(/^Thank you/)
+    expect(arrival.questCompletions[0]!.message).toMatch(/rebuild our empire/)
     expect(questTalkLine(launch, 'QST-0008', 'NPC-0015', arrival.save)).toMatch(/rebuild our empire/)
   })
 
@@ -753,39 +756,93 @@ describe('quest tours', () => {
     )
   })
 
-  it('starts Green Thumb on a seed, unlocks the farm after Fennel, and finishes on plant', () => {
+  it('starts Green Thumb after Getting Started, hides from the log, and finishes on the compost planting talk', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const quest = getQuest(launch, 'QST-0011')!
     expect(quest['Display Name']).toBe('Green Thumb')
-    expect(hideFromQuestLog(quest)).toBe(false)
+    expect(hideFromQuestLog(quest)).toBe(true)
+    const parsed = parseStructuredObjectives(quest)
+    expect(parsed.requiresQuestIds).toEqual(['QST-0006'])
+    expect(parsed.autoCompleteOnTalk).toBe(true)
+    expect(parsed.autoCompleteOnPlant).toBe(false)
+    expect(parsed.rewardItems).toEqual([
+      { targetId: 'ITEM-0324', quantity: 3 },
+      { targetId: 'ITEM-0339', quantity: 3 },
+    ])
 
+    const fennel = launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0014')!
     let save = {
       ...createNewSave(launch),
       currentLocationId: 'LOC-0001',
       inventory: [{ itemId: 'ITEM-0324', quantity: 1 }],
     }
     save = applyQuestAutoStartOnSeed(launch, save)
+    expect(getQuestProgress(save, 'QST-0011').status).toBe('inactive')
+    expect(questLog(launch, save).some((row) => row.questId === 'QST-0011')).toBe(false)
+
+    save = {
+      ...save,
+      quests: [{ questId: 'QST-0006', status: 'completed', progress: 1 }],
+    }
+    save = applyQuestAutoStartOnSeed(launch, save)
     expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
-    expect(questLog(launch, save).some((row) => row.questId === 'QST-0011')).toBe(true)
+    expect(questLog(launch, save).some((row) => row.questId === 'QST-0011')).toBe(false)
     expect(farmBotanyUnlocked(save)).toBe(false)
     expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
+    expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.talkLine).toMatch(
+      /compost from the heap/i,
+    )
 
-    const talked = talkWithQuestNpc(launch, save, 'NPC-0014')
-    expect(talked.ok).toBe(true)
-    if (!talked.ok) return
-    save = talked.save
+    const firstTalk = talkWithQuestNpc(launch, save, 'NPC-0014')
+    expect(firstTalk.ok).toBe(true)
+    if (!firstTalk.ok) return
+    save = firstTalk.save
     expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0324')?.quantity).toBe(2)
     expect(farmBotanyUnlocked(save)).toBe(true)
     expect(hasQuestFlag(save, 'QST-0011', 'talk:NPC-0014')).toBe(true)
 
-    const planted = plantBotanySeed(launch, save, 'ITEM-0324', 0, 1)
+    save = addItemToInventory(save, 'ITEM-0377', 1)
+    save = applyQuestActionProgress(launch, save, 'ACN-0199', 1)
+    expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.talkLine).toMatch(
+      /Mix that compost/i,
+    )
+    const compostTalk = talkWithQuestNpc(launch, save, 'NPC-0014')
+    expect(compostTalk.ok).toBe(true)
+    if (!compostTalk.ok) return
+    save = compostTalk.save
+    expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
+    expect(
+      npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.idlePrompt,
+    ).toMatch(/Plant that potato seed with the compost/i)
+
+    const withoutCompost = plantBotanySelection(launch, save, ['ITEM-0324'], 0, false)
+    expect(withoutCompost.ok).toBe(false)
+    if (withoutCompost.ok) return
+    expect(withoutCompost.reason).toMatch(/compost/i)
+
+    const planted = plantBotanySelection(launch, save, ['ITEM-0324'], 0, true)
     expect(planted.ok).toBe(true)
     if (!planted.ok) return
-    expect(getQuestProgress(planted.save, 'QST-0011').status).toBe('completed')
-    expect(planted.save.unlockedBookIds).toContain('BOOK-0002')
+    save = planted.save
+    expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
+    expect(hasQuestFlag(save, 'QST-0011', 'plant:ITEM-0324')).toBe(true)
+
+    const finished = talkWithQuestNpc(launch, save, 'NPC-0014')
+    expect(finished.ok).toBe(true)
+    if (!finished.ok) return
+    expect(finished.message).toMatch(/favour you a little more/i)
+    expect(finished.message).not.toMatch(/^Thank you/)
+    expect(getQuestProgress(finished.save, 'QST-0011').status).toBe('completed')
+    expect(finished.save.unlockedBookIds).toContain('BOOK-0002')
+    expect(inventoryCount(finished.save, 'ITEM-0324')).toBe(4)
+    expect(inventoryCount(finished.save, 'ITEM-0339')).toBe(3)
+    expect(botanyCollectChancePercent(finished.save, 'LOC-0001', 1, 1)).toBe(
+      botanySuccessChancePercent(1, 1) + 10,
+    )
+    expect(botanyCollectChancePercent(finished.save, 'LOC-0031', 1, 1)).toBe(botanySuccessChancePercent(1, 1))
 
     const again = applyQuestAutoStartOnSeed(launch, {
-      ...planted.save,
+      ...finished.save,
       inventory: [{ itemId: 'ITEM-0324', quantity: 3 }],
     })
     expect(getQuestProgress(again, 'QST-0011').status).toBe('completed')
