@@ -45,6 +45,7 @@ describe('shallows and starlight content', () => {
 
     const gladeActs = launch.Activities.filter((row) => row['Location ID'] === STARLIGHT_GLADE_ID)
     expect(gladeActs.map((row) => row['Contextual Name']).sort()).toEqual([
+      'Chop vines',
       'Hunt for the great stag',
       'Pick moonblossoms',
     ])

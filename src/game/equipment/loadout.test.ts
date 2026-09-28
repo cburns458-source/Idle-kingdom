@@ -8,6 +8,7 @@ import { migrateSave } from '../save/migrations'
 import { SAVE_VERSION, type PlayerSave } from '../save/types'
 import { tryConsumeFoodAfterVictory } from '../combat/food'
 import { gatheringDurationMs } from '../activity/gathering'
+import { raiseSkillToMinimumLevel } from '../activity/xp'
 import { productionCraftDurationMs } from '../production/engine'
 import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import {
@@ -20,6 +21,7 @@ import {
   POTION_SLOT_ID,
   unequipSlot,
   WEAPON_TOOL_SLOT_ID,
+  equippedActionTimeReductionPercentForAction,
 } from './loadout'
 import { withRecalculatedVitals } from './vitals'
 
@@ -424,5 +426,39 @@ describe('equipment loadout', () => {
     if (result.ok) return
     expect(result.reason).toMatch(/inventory space/i)
     expect(save.equipment.slots[OFFHAND_SLOT_ID]?.itemId).toBe('ITEM-0145')
+  })
+
+  it('raises vine chop ATR to 24% on the machete and keeps 11% on other woodcutting', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = raiseSkillToMinimumLevel(createNewSave(launch), launch, 'SKL-0006', 40).save
+    const vines = launch.Actions.find((row) => row['Action ID'] === 'ACN-0179')!
+    const oak = launch.Actions.find((row) => row['Action ID'] === 'ACN-0047')!
+    const withHatchet = {
+      ...save,
+      equipment: {
+        ...save.equipment,
+        slots: {
+          ...save.equipment.slots,
+          [WEAPON_TOOL_SLOT_ID]: { itemId: 'ITEM-0118', quantity: 1 },
+        },
+      },
+    }
+    const withMachete = {
+      ...save,
+      equipment: {
+        ...save.equipment,
+        slots: {
+          ...save.equipment.slots,
+          [WEAPON_TOOL_SLOT_ID]: { itemId: 'ITEM-0406', quantity: 1 },
+        },
+      },
+    }
+    expect(equippedActionTimeReductionPercentForAction(launch, withHatchet, vines)).toBe(11)
+    expect(equippedActionTimeReductionPercentForAction(launch, withMachete, vines)).toBe(24)
+    expect(equippedActionTimeReductionPercentForAction(launch, withMachete, oak)).toBe(11)
+    expect(gatheringDurationMs(launch, withMachete, vines)).toBeCloseTo(55 * (1 - 24 / 100) * 1000)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0406')?.['Icon Asset Key']).toBe(
+      'machete',
+    )
   })
 })

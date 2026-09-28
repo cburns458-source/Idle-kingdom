@@ -96,6 +96,7 @@ const EMPTY_OBJECTIVES: StructuredQuestObjectives = {
   talkNpcIds: [],
   optionalTalkNpcIds: [],
   visitLocationIds: [],
+  offeringItemId: null,
   hintLocationIds: [],
   inspectIds: [],
   holds: [],
@@ -156,6 +157,8 @@ export function parseNotesObjectives(
   const talkMatch = noteField(notes, String.raw`(?:^|;)\s*Talk:\s*([^;]+)`)
   const optionalTalkMatch = noteField(notes, String.raw`(?:^|;)\s*OptionalTalk:\s*([^;]+)`)
   const visitMatch = noteField(notes, String.raw`Visit:\s*([^;]+)`)
+  const offeringMatch = noteField(notes, String.raw`Offering:\s*([^;]+)`)
+  const unlockMatch = noteField(notes, String.raw`UnlockLocation(?:s)?:\s*([^;]+)`)
   const hintMatch = noteField(notes, String.raw`Hint:\s*([^;]+)`)
   const inspectMatch = noteField(notes, String.raw`Inspect:\s*([^;]+)`)
   const holdMatch = noteField(notes, String.raw`Hold:\s*([^;]+)`)
@@ -209,6 +212,7 @@ export function parseNotesObjectives(
     talkNpcIds: talkMatch ? parseIdList(talkMatch) : [],
     optionalTalkNpcIds: optionalTalkMatch ? parseIdList(optionalTalkMatch) : [],
     visitLocationIds: visitMatch ? parseIdList(visitMatch) : [],
+    offeringItemId: singleId(offeringMatch),
     hintLocationIds: hintMatch ? parseIdList(hintMatch) : [],
     inspectIds: inspectMatch ? parseTokenList(inspectMatch) : [],
     holds: holdMatch ? parseIdQtyList(holdMatch) : [],
@@ -237,7 +241,7 @@ export function parseNotesObjectives(
     autoCompleteOnPlant: false,
     autoStartOnSeed: false,
     requiresAnySeed: false,
-    unlockLocationIds: [],
+    unlockLocationIds: unlockMatch ? parseIdList(unlockMatch) : [],
     rewardRecipeIds: [],
     rewardProjectNpcIds: [],
     rewardCosmeticIds: [],

@@ -28,6 +28,8 @@ export interface StructuredQuestObjectives {
   talkNpcIds: string[]
   optionalTalkNpcIds: string[]
   visitLocationIds: string[]
+  /** Item consumed on Visit when present; arrival is silent without it. */
+  offeringItemId: string | null
   /** Map-dot pulse targets; these stay until the step finishes. */
   hintLocationIds: string[]
   inspectIds: string[]

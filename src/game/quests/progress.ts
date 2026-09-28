@@ -1,13 +1,17 @@
 import { addItemToInventory } from '../activity/rewards'
 import type { GameDatabase, ItemRow } from '../data/types'
+import { removeIngredients } from '../production/inventory'
+import { inventoryCount } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 import { asQuestRows, getQuestProgress } from './quests'
 import { parseStructuredObjectives } from './objectives'
 import {
+  applyQuestStepUnlocks,
   currentStepTalkKey,
   questActiveStepObjectives,
   questCanTalkToNpc,
   questObjectiveSources,
+  questUsesSteps,
 } from './steps'
 
 function saveHasActiveQuest(save: PlayerSave): boolean {
@@ -68,7 +72,7 @@ export function applyQuestProcessProgress(
     }
     next = bumpCounter(next, quest['Quest ID'], `process:${recipeOrProjectId}`, amount)
   }
-  return next
+  return applyQuestStepUnlocks(db, next)
 }
 
 /** Call when a recipe ID is newly unlocked. */
@@ -202,7 +206,7 @@ export function applyQuestTalkProgress(
     next = setQuestFlag(next, questId, `talk:${npcId}`)
     next = setQuestFlag(next, questId, stepKey)
   }
-  return applyQuestAutoStartOnSeed(db, next)
+  return applyQuestStepUnlocks(db, applyQuestAutoStartOnSeed(db, next))
 }
 
 /** Marks Plant objectives after seeds go into a patch. */
@@ -245,7 +249,56 @@ export function applyQuestActionProgress(
     }
     next = bumpCounter(next, quest['Quest ID'], `action:${actionId}`, amount)
   }
-  return next
+  return applyQuestStepUnlocks(db, next)
+}
+
+/** Popup when an offering is consumed on arrival. */
+export const FOREST_OFFERING_PLACED_MESSAGE = 'You place the offering for the forest'
+
+export interface QuestOfferingArrival {
+  save: PlayerSave
+  message: string | null
+}
+
+/**
+ * Consumes `Offering:` items on Visit steps. Silent (no flag, no message) when
+ * the player arrives without the item.
+ */
+export function applyQuestOfferingArrival(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+): QuestOfferingArrival {
+  let next = save
+  let message: string | null = null
+  for (const quest of asQuestRows(db)) {
+    if (getQuestProgress(next, quest['Quest ID']).status !== 'active') continue
+    if (!questUsesSteps(db, quest['Quest ID'])) continue
+    const current = questActiveStepObjectives(db, next, quest)
+    if (!current?.offeringItemId) continue
+    if (!current.visitLocationIds.includes(locationId)) continue
+    const questId = quest['Quest ID']
+    if (hasQuestFlag(next, questId, `visit:${locationId}`)) continue
+    if (inventoryCount(next, current.offeringItemId) < 1) continue
+    const removed = removeIngredients(next, [{ itemId: current.offeringItemId, quantity: 1 }], 1)
+    if (!removed) continue
+    next = setQuestFlag(removed, questId, `visit:${locationId}`)
+    message = FOREST_OFFERING_PLACED_MESSAGE
+  }
+  return { save: applyQuestStepUnlocks(db, next), message }
+}
+
+function currentStepRequiresOfferingVisit(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: ReturnType<typeof asQuestRows>[number],
+  locationId: string,
+): boolean {
+  if (!questUsesSteps(db, quest['Quest ID'])) return false
+  const current = questActiveStepObjectives(db, save, quest)
+  return Boolean(
+    current?.offeringItemId && current.visitLocationIds.includes(locationId),
+  )
 }
 
 /** Marks Visit objectives on arrival. */
@@ -256,12 +309,13 @@ export function applyQuestVisitProgress(
 ): PlayerSave {
   let next = save
   for (const quest of asQuestRows(db)) {
+    if (currentStepRequiresOfferingVisit(db, next, quest, locationId)) continue
     if (!questObjectiveSources(db, quest).some((row) => row.visitLocationIds.includes(locationId))) {
       continue
     }
     next = setQuestFlag(next, quest['Quest ID'], `visit:${locationId}`)
   }
-  return next
+  return applyQuestStepUnlocks(db, next)
 }
 
 /** Marks Inspect objectives (bazaar, bounties, processing). */
@@ -310,9 +364,18 @@ export function applyQuestLocationProgress(
   save: PlayerSave,
   locationId: string,
 ): PlayerSave {
-  return applyQuestVisitProgress(
-    db,
-    applyQuestAutoStartOnSeed(db, applyQuestAutoStart(db, save, locationId)),
-    locationId,
-  )
+  return applyQuestLocationProgressResult(db, save, locationId).save
+}
+
+export function applyQuestLocationProgressResult(
+  db: GameDatabase,
+  save: PlayerSave,
+  locationId: string,
+): QuestOfferingArrival {
+  const started = applyQuestAutoStartOnSeed(db, applyQuestAutoStart(db, save, locationId))
+  const offering = applyQuestOfferingArrival(db, started, locationId)
+  return {
+    save: applyQuestVisitProgress(db, offering.save, locationId),
+    message: offering.message,
+  }
 }

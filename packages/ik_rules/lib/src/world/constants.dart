@@ -45,6 +45,15 @@ const String forestGatewayId = 'LOC-0039';
 const String forestPathId = 'LOC-0040';
 const String oldEntGroveId = 'LOC-0018';
 const String starlightGladeId = 'LOC-0044';
+const String smallClearingId = 'LOC-0050';
+const String mirrorLakeId = 'LOC-0051';
+const String throughTheThicketQuestId = 'QST-0010';
+const List<String> thicketCompletionLocationIds = <String>[
+  smallClearingId,
+  starlightGladeId,
+  mirrorLakeId,
+  oldEntGroveId,
+];
 
 /// The Depths underwater (MAP-0009).
 const String sunkenApproachId = 'LOC-0041';

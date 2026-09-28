@@ -18,6 +18,7 @@ import {
   type QuestRow,
 } from './quests'
 import { hasQuestFlag } from './progress'
+import { unlockLocation } from '../world/submaps'
 import type { StructuredQuestObjectives } from './types'
 
 export type QuestJournalStepState = 'done' | 'current' | 'header'
@@ -168,6 +169,37 @@ export function getCurrentStepIndex(
     if (!isStepComplete(db, save, questId, step.Notes ?? '', step['Step ID'])) return index
   }
   return steps.length
+}
+
+export function getCurrentStepId(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+): string | null {
+  const steps = getQuestSteps(db, quest['Quest ID'])
+  const index = getCurrentStepIndex(db, save, quest)
+  return steps[index]?.['Step ID'] ?? null
+}
+
+/** Unlocks locations listed on completed steps (`UnlockLocation` in step Notes). */
+export function applyQuestStepUnlocks(db: GameDatabase, save: PlayerSave): PlayerSave {
+  let unlocked = save.unlockedLocationIds ?? []
+  let changed = false
+  for (const quest of asQuestRows(db)) {
+    if (getQuestProgress(save, quest['Quest ID']).status !== 'active') continue
+    const questId = quest['Quest ID']
+    for (const step of getQuestSteps(db, questId)) {
+      if (!isStepComplete(db, save, questId, step.Notes ?? '', step['Step ID'])) continue
+      for (const locationId of parseNotesObjectives(step.Notes ?? '').unlockLocationIds) {
+        const next = unlockLocation({ unlockedLocationIds: unlocked }, locationId)
+        if (next !== unlocked) {
+          unlocked = next
+          changed = true
+        }
+      }
+    }
+  }
+  return changed ? { ...save, unlockedLocationIds: unlocked } : save
 }
 
 export function currentStepTalkKey(
@@ -385,11 +417,17 @@ export function questActionProgressForActivity(
     const questId = quest['Quest ID']
     if (getQuestProgress(save, questId).status !== 'active') continue
     if (questUsesSteps(db, questId)) {
-      for (const step of getQuestSteps(db, questId)) {
-        for (const line of stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID'])) {
-          const actionId = line.key.startsWith('action:') ? line.key.slice('action:'.length) : null
-          if (actionId && actionIds.has(actionId)) lines.push(line)
-        }
+      const current = questActiveStepObjectives(db, save, quest)
+      if (!current) continue
+      for (const line of stepProgressLines(
+        db,
+        save,
+        questId,
+        getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)]?.Notes ?? '',
+        getCurrentStepId(db, save, quest) ?? undefined,
+      )) {
+        const actionId = line.key.startsWith('action:') ? line.key.slice('action:'.length) : null
+        if (actionId && actionIds.has(actionId)) lines.push(line)
       }
     } else {
       for (const line of stepProgressLines(db, save, questId, quest.Notes ?? '')) {

@@ -90,7 +90,8 @@ function isQuestOnlyRequirement(requirement: RequirementRow): boolean {
     type === 'Quest Access' ||
     type === 'Quest Flag' ||
     type === 'Quest Active' ||
-    type === 'Quest Complete'
+    type === 'Quest Complete' ||
+    type === 'Quest Step'
   )
 }
 

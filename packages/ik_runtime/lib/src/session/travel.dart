@@ -9,6 +9,7 @@ class TravelArrival {
     required this.blockedReason,
     required this.message,
     this.questCompletions = const <QuestArrivalCompletion>[],
+    this.discoveryNotice,
   });
 
   final PlayerSave save;
@@ -25,12 +26,16 @@ class TravelArrival {
   /// Visit-complete quests that should show a reward popup.
   final List<QuestArrivalCompletion> questCompletions;
 
+  /// Offering-placed (or similar) arrival popup.
+  final String? discoveryNotice;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'save': save.toJson(),
     'forcedActivityId': forcedActivityId,
     'blockedReason': blockedReason,
     'message': message,
     'questCompletions': questCompletions.map((row) => row.toJson()).toList(),
+    'discoveryNotice': discoveryNotice,
   };
 }
 
@@ -74,6 +79,7 @@ TravelArrival _arrivalOf(GameDatabase db, HostileTravelArrivalResult result) {
     blockedReason: result.forceBlockedReason,
     message: hostileForceMessage(db, result),
     questCompletions: result.questCompletions,
+    discoveryNotice: result.discoveryNotice,
   );
 }
 

@@ -2,6 +2,8 @@ import type { GameDatabase, LocationRow, MapRow } from '../data/types'
 import {
   EAST_MAP_ID,
   MAIN_MAP_ID,
+  THICKET_COMPLETION_LOCATION_IDS,
+  THROUGH_THE_THICKET_QUEST_ID,
   WEST_MAP_ID,
   isFutureRegionMapId,
 } from './constants'
@@ -123,13 +125,26 @@ export function locationRequiresUnlock(location: LocationRow): boolean {
 }
 
 export function isLocationUnlocked(
-  save: { unlockedLocationIds?: string[] | null; currentLocationId?: string | null },
+  save: {
+    unlockedLocationIds?: string[] | null
+    currentLocationId?: string | null
+    quests?: Array<{ questId: string; status: string }>
+  },
   location: LocationRow,
 ): boolean {
   if (!locationRequiresUnlock(location)) return true
   const locationId = location['Location ID']
   if (save.currentLocationId === locationId) return true
-  return (save.unlockedLocationIds ?? []).includes(locationId)
+  if ((save.unlockedLocationIds ?? []).includes(locationId)) return true
+  if (
+    (THICKET_COMPLETION_LOCATION_IDS as readonly string[]).includes(locationId) &&
+    save.quests?.some(
+      (quest) => quest.questId === THROUGH_THE_THICKET_QUEST_ID && quest.status === 'completed',
+    )
+  ) {
+    return true
+  }
+  return false
 }
 
 export function unlockLocation(

@@ -4,6 +4,8 @@ import 'package:ik_content/ik_content.dart';
 import '../js_compat.dart';
 import '../production/recipes.dart';
 import '../quests/progress.dart';
+import '../quests/quests.dart';
+import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
 import 'xp.dart';
 
@@ -17,6 +19,7 @@ const List<String> knownRequirementTypes = <String>[
   'Quest Active',
   'Quest Complete',
   'Quest Flag',
+  'Quest Step',
   'Item Absent',
 ];
 
@@ -159,6 +162,27 @@ RequirementCheck evaluateRequirement(GameDatabase db, PlayerSave save, Requireme
     return RequirementCheck(met: met, detail: met ? 'Quest flag set' : 'Not available yet');
   }
 
+  if (type == 'Quest Step') {
+    final colon = reference.indexOf(':');
+    if (colon <= 0) {
+      return const RequirementCheck(met: false, detail: 'Quest step is incomplete.');
+    }
+    final questId = reference.substring(0, colon);
+    final stepIds = reference
+        .substring(colon + 1)
+        .split(',')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (!questIsActive(save, questId)) {
+      return const RequirementCheck(met: false, detail: 'Not available yet');
+    }
+    final quest = getQuest(db, questId);
+    final current = quest == null ? null : getCurrentStepId(db, save, quest);
+    final met = current != null && stepIds.contains(current);
+    return RequirementCheck(met: met, detail: met ? 'On this quest step' : 'Not available yet');
+  }
+
   if (type == 'Item Absent') {
     final met = inventoryCount(save, reference) <= 0;
     return RequirementCheck(met: met, detail: met ? 'Item not held' : 'Already have that item');
@@ -172,6 +196,7 @@ bool isQuestGateRequirement(String type) {
       type == 'Quest Flag' ||
       type == 'Quest Active' ||
       type == 'Quest Complete' ||
+      type == 'Quest Step' ||
       type == 'Item Absent';
 }
 

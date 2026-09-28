@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { activityVisibleForSave } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
+import { raiseSkillToMinimumLevel } from '../activity/xp'
 import { prepareDatabase } from '../data/loadDatabase'
 import { chooseCombatForQuest, npcConversation, questTalkLine, talkWithQuestNpc } from '../npcs/conversation'
 import { npcsAtLocationForSave } from '../npcs/knowledge'
@@ -10,12 +11,15 @@ import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
 import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
+import { inventoryCount } from '../production/recipes'
 import {
   applyQuestActionProgress,
   applyQuestAutoStartOnSeed,
+  applyQuestLocationProgressResult,
   applyQuestProcessProgress,
   applyQuestTalkProgress,
   applyQuestVisitProgress,
+  FOREST_OFFERING_PLACED_MESSAGE,
   hasQuestFlag,
 } from './progress'
 import {
@@ -31,10 +35,17 @@ import {
   resetIntroFlags,
   resetQuestProgress,
 } from './quests'
-import { formatQuestProgressLine, questLegacyJournalSteps } from './objectives'
-import { questActionProgressForActivity, questStepJournal } from './steps'
+import { formatQuestProgressLine } from './objectives'
+import { getCurrentStepId, questActionProgressForActivity, questStepJournal } from './steps'
 import { questLog } from '../log/log'
-import { CAVE_MAP_ID, FOREST_MAP_ID } from '../world/constants'
+import {
+  CAVE_MAP_ID,
+  FOREST_MAP_ID,
+  MIRROR_LAKE_ID,
+  OLD_ENT_GROVE_ID,
+  SMALL_CLEARING_ID,
+  STARLIGHT_GLADE_ID,
+} from '../world/constants'
 import { applyHostileTravelArrival } from '../world/hostility'
 import { applyTravelArrival, applyTravelArrivalResult, canTravelTo, locationsForMapView } from '../world/travel'
 import { hideFromQuestLog } from './miniquests'
@@ -606,46 +617,139 @@ describe('quest tours', () => {
     expect(questVisitHintLocationId(launch, citadel)).toBeNull()
   })
 
-  it('auto-starts Through the Thicket on the Forest Path and names Chop vines', () => {
+  it('does not auto-start Through the Thicket; the Old Forester offers it by hand', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const save = applyTravelArrival(launch, createNewSave(launch), 'LOC-0040')
-    expect(getQuestProgress(save, 'QST-0010').status).toBe('active')
+    expect(launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0017')?.['Display Name']).toBe(
+      'Old Forester',
+    )
+    const arrived = applyTravelArrival(launch, createNewSave(launch), 'LOC-0040')
+    expect(getQuestProgress(arrived, 'QST-0010').status).toBe('inactive')
+    expect(acceptQuest(launch, arrived, 'QST-0010').ok).toBe(false)
 
+    let ready = raiseSkillToMinimumLevel(arrived, launch, 'SKL-0006', 40).save
+    ready = raiseSkillToMinimumLevel(ready, launch, 'SKL-0014', 35).save
+    const accepted = acceptQuest(launch, ready, 'QST-0010')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
     const quest = getQuest(launch, 'QST-0010')!
-    const journal = questLegacyJournalSteps(launch, save, quest).map((step) => step.label)
-    expect(journal.join('\n')).not.toMatch(/ACN-0179/)
-    expect(journal).toContain('Chop vines 0 / 50')
     expect(
-      questLog(launch, save)
+      questLog(launch, accepted.save)
         .find((row) => row.questId === 'QST-0010')
         ?.steps.map((step) => step.label),
-    ).toContain('Chop vines 0 / 50')
+    ).toEqual(
+      expect.arrayContaining(['Clear fifty vines on the Forest Path', 'Chop vines 0 / 50']),
+    )
     expect(
-      questActionProgressForActivity(launch, save, 'ACT-0048').map((line) =>
+      questActionProgressForActivity(launch, accepted.save, 'ACT-0048').map((line) =>
         formatQuestProgressLine(line),
       ),
     ).toEqual(['Chop vines 0 / 50'])
+    expect(getCurrentStepId(launch, accepted.save, quest)).toBe('QSTP-0025')
   })
 
-  it('completes Through the Thicket on the 50th vine and unlocks the grove and glade', () => {
+  it('opens each inner grove after ten vines and finishes Through the Thicket on the last talk', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    let save = applyTravelArrival(launch, createNewSave(launch), 'LOC-0040')
+    let save = raiseSkillToMinimumLevel(
+      { ...createNewSave(launch), currentLocationId: 'LOC-0040' },
+      launch,
+      'SKL-0006',
+      40,
+    ).save
+    save = raiseSkillToMinimumLevel(save, launch, 'SKL-0014', 35).save
+    const accepted = acceptQuest(launch, save, 'QST-0010')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    const quest = getQuest(launch, 'QST-0010')!
+
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(false)
+    expect(activityVisibleForSave(launch, save, 'ACT-0080')).toBe(false)
     save = applyQuestActionProgress(launch, save, 'ACN-0179', 49)
-    expect(getQuestProgress(save, 'QST-0010').status).toBe('active')
+    expect(save.unlockedLocationIds ?? []).not.toContain(SMALL_CLEARING_ID)
     expect(applyQuestAutoCompleteOnAction(launch, save).save.quests.find((row) => row.questId === 'QST-0010')?.status).toBe(
       'active',
     )
-
     save = applyQuestActionProgress(launch, save, 'ACN-0179', 1)
-    const finished = applyQuestAutoCompleteOnAction(launch, save)
+    expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([SMALL_CLEARING_ID]))
+    expect(getQuestProgress(save, 'QST-0010').status).toBe('active')
+    expect(questActionProgressForActivity(launch, save, 'ACT-0048')).toEqual([])
+    expect(getCurrentStepId(launch, save, quest)).toBe('QSTP-0026')
+
+    const talkedBack = talkWithQuestNpc(launch, save, 'NPC-0017')
+    expect(talkedBack.ok).toBe(true)
+    if (!talkedBack.ok) return
+    save = talkedBack.save
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(true)
+    save = applyQuestActionProgress(launch, save, 'ACN-0231', 10)
+    expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([STARLIGHT_GLADE_ID]))
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(false)
+
+    save = applyQuestActionProgress(launch, save, 'ACN-0232', 10)
+    expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([MIRROR_LAKE_ID]))
+    save = applyQuestActionProgress(launch, save, 'ACN-0233', 10)
+    expect(save.unlockedLocationIds).toEqual(expect.arrayContaining([OLD_ENT_GROVE_ID]))
+    const afterVinesTalk = talkWithQuestNpc(launch, save, 'NPC-0017')
+    expect(afterVinesTalk.ok).toBe(true)
+    if (!afterVinesTalk.ok) return
+    save = afterVinesTalk.save
+    expect(activityVisibleForSave(launch, save, 'ACT-0080')).toBe(true)
+
+    save = applyQuestProcessProgress(launch, save, 'RCP-0071', 4)
+    expect(getCurrentStepId(launch, save, quest)).toBe('QSTP-0032')
+    save = addItemToInventory(save, 'ITEM-0405', 4)
+    expect(applyQuestLocationProgressResult(launch, save, SMALL_CLEARING_ID).message).toBe(
+      FOREST_OFFERING_PLACED_MESSAGE,
+    )
+    const silent = applyQuestLocationProgressResult(
+      launch,
+      { ...save, inventory: [] },
+      SMALL_CLEARING_ID,
+    )
+    expect(silent.message).toBeNull()
+    expect(hasQuestFlag(silent.save, 'QST-0010', `visit:${SMALL_CLEARING_ID}`)).toBe(false)
+
+    save = applyQuestLocationProgressResult(launch, save, SMALL_CLEARING_ID).save
+    expect(inventoryCount(save, 'ITEM-0405')).toBe(3)
+    save = applyQuestLocationProgressResult(launch, save, STARLIGHT_GLADE_ID).save
+    save = applyQuestLocationProgressResult(launch, save, MIRROR_LAKE_ID).save
+    save = applyQuestLocationProgressResult(launch, save, OLD_ENT_GROVE_ID).save
+    expect(inventoryCount(save, 'ITEM-0405')).toBe(0)
+
+    const finished = talkWithQuestNpc(launch, save, 'NPC-0017')
+    expect(finished.ok).toBe(true)
+    if (!finished.ok) return
     expect(getQuestProgress(finished.save, 'QST-0010').status).toBe('completed')
-    expect(finished.save.unlockedLocationIds).toEqual(expect.arrayContaining(['LOC-0044', 'LOC-0018']))
-    expect(questActionProgressForActivity(launch, finished.save, 'ACT-0048')).toEqual([])
+    expect(inventoryCount(finished.save, 'ITEM-0406')).toBe(1)
+    expect(activityVisibleForSave(launch, finished.save, 'ACT-0080')).toBe(false)
     expect(
       locationsForMapView(launch, FOREST_MAP_ID, finished.save).map((row) => row['Location ID']),
-    ).toEqual(expect.arrayContaining(['LOC-0044', 'LOC-0018']))
-    expect(canTravelTo(launch, 'LOC-0040', 'LOC-0044', FOREST_MAP_ID, finished.save)).toBe(true)
-    expect(canTravelTo(launch, 'LOC-0040', 'LOC-0018', FOREST_MAP_ID, finished.save)).toBe(true)
+    ).toEqual(
+      expect.arrayContaining([
+        SMALL_CLEARING_ID,
+        STARLIGHT_GLADE_ID,
+        MIRROR_LAKE_ID,
+        OLD_ENT_GROVE_ID,
+      ]),
+    )
+    expect(canTravelTo(launch, 'LOC-0040', OLD_ENT_GROVE_ID, FOREST_MAP_ID, finished.save)).toBe(true)
+
+    const completer = {
+      ...createNewSave(launch),
+      quests: [{ questId: 'QST-0010', status: 'completed' as const, progress: 0 }],
+    }
+    expect(
+      locationsForMapView(launch, FOREST_MAP_ID, completer).map((row) => row['Location ID']),
+    ).toEqual(
+      expect.arrayContaining([
+        SMALL_CLEARING_ID,
+        STARLIGHT_GLADE_ID,
+        MIRROR_LAKE_ID,
+        OLD_ENT_GROVE_ID,
+      ]),
+    )
+    expect(acceptQuest(launch, { ...completer, currentLocationId: 'LOC-0040' }, 'QST-0010').ok).toBe(
+      false,
+    )
   })
 
   it('starts First Planting on a seed, unlocks the farm after Fennel, and finishes on plant', () => {

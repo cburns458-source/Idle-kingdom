@@ -111,6 +111,7 @@ class HostileTravelArrivalResult {
     required this.forceBlockedReason,
     required this.threatenedActivityId,
     this.questCompletions = const <QuestArrivalCompletion>[],
+    this.discoveryNotice,
   });
 
   final PlayerSave save;
@@ -120,6 +121,7 @@ class HostileTravelArrivalResult {
   final String? forceBlockedReason;
   final String? threatenedActivityId;
   final List<QuestArrivalCompletion> questCompletions;
+  final String? discoveryNotice;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'save': save.toJson(),
@@ -127,6 +129,7 @@ class HostileTravelArrivalResult {
     'forceBlockedReason': forceBlockedReason,
     'threatenedActivityId': threatenedActivityId,
     'questCompletions': questCompletions.map((row) => row.toJson()).toList(),
+    'discoveryNotice': discoveryNotice,
   };
 }
 
@@ -170,6 +173,7 @@ HostileTravelArrivalResult applyHostileTravelArrival(
   final arrival = applyTravelArrivalResult(db, save, destinationLocationId, nowMs);
   var next = clearActivityTransition(arrival.save);
   final questCompletions = arrival.questCompletions;
+  final discoveryNotice = arrival.discoveryNotice;
 
   final threatened = forcedHostileActivity(db, next, destinationLocationId);
   if (threatened == null) {
@@ -181,6 +185,7 @@ HostileTravelArrivalResult applyHostileTravelArrival(
         forceBlockedReason: null,
         threatenedActivityId: null,
         questCompletions: questCompletions,
+        discoveryNotice: discoveryNotice,
       );
     }
     return HostileTravelArrivalResult(
@@ -189,6 +194,7 @@ HostileTravelArrivalResult applyHostileTravelArrival(
       forceBlockedReason: null,
       threatenedActivityId: null,
       questCompletions: questCompletions,
+      discoveryNotice: discoveryNotice,
     );
   }
 
@@ -201,6 +207,7 @@ HostileTravelArrivalResult applyHostileTravelArrival(
       forceBlockedReason: validation.reason,
       threatenedActivityId: activityId,
       questCompletions: questCompletions,
+      discoveryNotice: discoveryNotice,
     );
   }
 
@@ -213,6 +220,7 @@ HostileTravelArrivalResult applyHostileTravelArrival(
     forceBlockedReason: null,
     threatenedActivityId: activityId,
     questCompletions: questCompletions,
+    discoveryNotice: discoveryNotice,
   );
 }
 

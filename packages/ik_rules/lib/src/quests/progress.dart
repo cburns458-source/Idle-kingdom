@@ -3,6 +3,8 @@ import 'package:ik_content/ik_content.dart';
 
 import '../inventory/add_items.dart';
 import '../js_compat.dart';
+import '../production/inventory.dart';
+import '../production/recipes.dart';
 import '../save/generated/save_models.dart';
 import 'objectives.dart';
 import 'quests.dart';
@@ -68,13 +70,9 @@ PlayerSave applyQuestProcessProgress(
   String recipeOrProjectId, [
   num amount = 1,
 ]) {
-  return _applyProgress(
+  return applyQuestStepUnlocks(
     db,
-    save,
-    'process',
-    (row) => row.processTargets,
-    recipeOrProjectId,
-    amount,
+    _applyProgress(db, save, 'process', (row) => row.processTargets, recipeOrProjectId, amount),
   );
 }
 
@@ -200,7 +198,7 @@ PlayerSave applyQuestTalkProgress(GameDatabase db, PlayerSave save, String npcId
     next = setQuestFlag(next, questId, 'talk:$npcId');
     next = setQuestFlag(next, questId, stepKey);
   }
-  return applyQuestAutoStartOnSeed(db, next);
+  return applyQuestStepUnlocks(db, applyQuestAutoStartOnSeed(db, next));
 }
 
 /// Marks Plant objectives after seeds go into a patch.
@@ -243,19 +241,71 @@ PlayerSave applyQuestActionProgress(
     }
     next = _bumpCounter(next, questId, 'action:$actionId', amount);
   }
-  return next;
+  return applyQuestStepUnlocks(db, next);
+}
+
+/// Popup when an offering is consumed on arrival.
+const String forestOfferingPlacedMessage = 'You place the offering for the forest';
+
+class QuestOfferingArrival {
+  const QuestOfferingArrival({required this.save, required this.message});
+
+  final PlayerSave save;
+  final String? message;
+}
+
+/// Consumes `Offering:` items on Visit steps. Silent without the item.
+QuestOfferingArrival applyQuestOfferingArrival(
+  GameDatabase db,
+  PlayerSave save,
+  String locationId,
+) {
+  var next = save;
+  String? message;
+  for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(next, questId).status != 'active') continue;
+    if (!questUsesSteps(db, questId)) continue;
+    final current = questActiveStepObjectives(db, next, quest);
+    final offeringId = current?.offeringItemId;
+    if (offeringId == null || offeringId.isEmpty) continue;
+    if (!current!.visitLocationIds.contains(locationId)) continue;
+    if (hasQuestFlag(next, questId, 'visit:$locationId')) continue;
+    if (inventoryCount(next, offeringId) < 1) continue;
+    final removed = removeIngredients(next, [RecipeIngredient(itemId: offeringId, quantity: 1)]);
+    if (removed == null) continue;
+    next = setQuestFlag(removed, questId, 'visit:$locationId');
+    message = forestOfferingPlacedMessage;
+  }
+  return QuestOfferingArrival(save: applyQuestStepUnlocks(db, next), message: message);
+}
+
+bool _currentStepRequiresOfferingVisit(
+  GameDatabase db,
+  PlayerSave save,
+  QuestRow quest,
+  String locationId,
+) {
+  final questId = jsString(quest['Quest ID']);
+  if (!questUsesSteps(db, questId)) return false;
+  final current = questActiveStepObjectives(db, save, quest);
+  final offeringId = current?.offeringItemId;
+  return offeringId != null &&
+      offeringId.isNotEmpty &&
+      current!.visitLocationIds.contains(locationId);
 }
 
 /// Marks Visit objectives on arrival.
 PlayerSave applyQuestVisitProgress(GameDatabase db, PlayerSave save, String locationId) {
   var next = save;
   for (final quest in asQuestRows(db)) {
+    if (_currentStepRequiresOfferingVisit(db, next, quest, locationId)) continue;
     if (!questObjectiveSources(db, quest).any((row) => row.visitLocationIds.contains(locationId))) {
       continue;
     }
     next = setQuestFlag(next, jsString(quest['Quest ID']), 'visit:$locationId');
   }
-  return next;
+  return applyQuestStepUnlocks(db, next);
 }
 
 /// Marks Inspect objectives (bazaar, bounties, processing).
@@ -279,7 +329,6 @@ PlayerSave applyQuestAutoStart(GameDatabase db, PlayerSave save, String location
     final questId = jsString(quest['Quest ID']);
     final progress = getQuestProgress(next, questId);
     if (progress.status != 'inactive') continue;
-    if (progress.status == 'completed' && !isQuestRepeatable(quest)) continue;
     next = next.copyWith(
       quests: [
         ...next.quests.where((row) => row.questId != questId),
@@ -291,9 +340,18 @@ PlayerSave applyQuestAutoStart(GameDatabase db, PlayerSave save, String location
 }
 
 PlayerSave applyQuestLocationProgress(GameDatabase db, PlayerSave save, String locationId) {
-  return applyQuestVisitProgress(
-    db,
-    applyQuestAutoStartOnSeed(db, applyQuestAutoStart(db, save, locationId)),
-    locationId,
+  return applyQuestLocationProgressResult(db, save, locationId).save;
+}
+
+QuestOfferingArrival applyQuestLocationProgressResult(
+  GameDatabase db,
+  PlayerSave save,
+  String locationId,
+) {
+  final started = applyQuestAutoStartOnSeed(db, applyQuestAutoStart(db, save, locationId));
+  final offering = applyQuestOfferingArrival(db, started, locationId);
+  return QuestOfferingArrival(
+    save: applyQuestVisitProgress(db, offering.save, locationId),
+    message: offering.message,
   );
 }

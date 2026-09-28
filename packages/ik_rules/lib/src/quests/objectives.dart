@@ -33,6 +33,7 @@ class StructuredQuestObjectives {
     required this.talkNpcIds,
     required this.optionalTalkNpcIds,
     required this.visitLocationIds,
+    this.offeringItemId,
     required this.hintLocationIds,
     required this.inspectIds,
     required this.holds,
@@ -75,6 +76,7 @@ class StructuredQuestObjectives {
   final List<String> talkNpcIds;
   final List<String> optionalTalkNpcIds;
   final List<String> visitLocationIds;
+  final String? offeringItemId;
 
   /// Map-dot pulse targets; these stay until the step finishes.
   final List<String> hintLocationIds;
@@ -118,6 +120,7 @@ class StructuredQuestObjectives {
     'talkNpcIds': talkNpcIds,
     'optionalTalkNpcIds': optionalTalkNpcIds,
     'visitLocationIds': visitLocationIds,
+    'offeringItemId': offeringItemId,
     'hintLocationIds': hintLocationIds,
     'inspectIds': inspectIds,
     'holds': holds.map((line) => line.toJson()).toList(),
@@ -256,6 +259,8 @@ StructuredQuestObjectives parseNotesObjectives(
   final talkNote = _noteField(notes, r'(?:^|;)\s*Talk:\s*([^;]+)');
   final optionalTalkNote = _noteField(notes, r'(?:^|;)\s*OptionalTalk:\s*([^;]+)');
   final visitNote = _noteField(notes, r'Visit:\s*([^;]+)');
+  final offeringNote = _noteField(notes, r'Offering:\s*([^;]+)');
+  final unlockNote = _noteField(notes, r'UnlockLocation(?:s)?:\s*([^;]+)');
   final hintNote = _noteField(notes, r'Hint:\s*([^;]+)');
   final inspectNote = _noteField(notes, r'Inspect:\s*([^;]+)');
   final holdNote = _noteField(notes, r'Hold:\s*([^;]+)');
@@ -321,6 +326,7 @@ StructuredQuestObjectives parseNotesObjectives(
         ? const <String>[]
         : _parseIdList(optionalTalkNote),
     visitLocationIds: visitNote == null ? const <String>[] : _parseIdList(visitNote),
+    offeringItemId: _singleId(offeringNote),
     hintLocationIds: hintNote == null ? const <String>[] : _parseIdList(hintNote),
     inspectIds: inspectNote == null ? const <String>[] : _parseTokenList(inspectNote),
     holds: holdNote == null ? const <QuestCounterTarget>[] : _parseIdQtyList(holdNote),
@@ -356,7 +362,7 @@ StructuredQuestObjectives parseNotesObjectives(
     autoCompleteOnPlant: false,
     autoStartOnSeed: false,
     requiresAnySeed: false,
-    unlockLocationIds: const <String>[],
+    unlockLocationIds: unlockNote == null ? const <String>[] : _parseIdList(unlockNote),
     rewardRecipeIds: const <String>[],
     rewardProjectNpcIds: const <String>[],
     rewardCosmeticIds: const <String>[],

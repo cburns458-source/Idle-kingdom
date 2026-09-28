@@ -115,6 +115,7 @@ export interface HostileTravelArrivalResult {
   forceBlockedReason: string | null
   threatenedActivityId: string | null
   questCompletions?: QuestArrivalCompletion[]
+  discoveryNotice?: string | null
 }
 
 const QUEST_CHOICE_COMBAT_ACTIVITY_ID = 'ACT-0034'
@@ -169,6 +170,7 @@ export function applyHostileTravelArrival(
   const arrival = applyTravelArrivalResult(db, save, destinationLocationId, nowMs)
   let next = clearActivityTransition(arrival.save)
   const questCompletions = arrival.questCompletions
+  const discoveryNotice = arrival.discoveryNotice
 
   const threatened = forcedHostileActivity(db, next, destinationLocationId)
   if (!threatened) {
@@ -180,6 +182,7 @@ export function applyHostileTravelArrival(
         forceBlockedReason: null,
         threatenedActivityId: null,
         questCompletions,
+        discoveryNotice,
       }
     }
     return {
@@ -188,6 +191,7 @@ export function applyHostileTravelArrival(
       forceBlockedReason: null,
       threatenedActivityId: null,
       questCompletions,
+      discoveryNotice,
     }
   }
 
@@ -199,6 +203,7 @@ export function applyHostileTravelArrival(
       forceBlockedReason: validation.reason,
       threatenedActivityId: threatened['Activity ID'],
       questCompletions,
+      discoveryNotice,
     }
   }
 
@@ -212,6 +217,7 @@ export function applyHostileTravelArrival(
     forceBlockedReason: null,
     threatenedActivityId: threatened['Activity ID'],
     questCompletions,
+    discoveryNotice,
   }
 }
 

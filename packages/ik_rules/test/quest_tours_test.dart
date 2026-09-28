@@ -313,73 +313,146 @@ void main() {
     );
   });
 
-  test('Through the Thicket auto-starts on the Forest Path and names Chop vines', () {
-    final save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0040', 0);
-    expect(getQuestProgress(save, 'QST-0010').status, 'active');
+  test('Through the Thicket is offered by the Old Forester and does not auto-start', () {
+    expect(
+      db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0017').raw['Display Name'],
+      'Old Forester',
+    );
+    final arrived = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0040', 0);
+    expect(getQuestProgress(arrived, 'QST-0010').status, 'inactive');
+    expect(acceptQuest(db, arrived, 'QST-0010').ok, isFalse);
 
-    final quest = db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0010');
-    expect(questLegacyJournalSteps(db, save, quest).map((step) => step.label), [
-      'Chop vines 0 / 50',
-    ]);
+    var ready = raiseSkillToMinimumLevel(arrived, db, 'SKL-0006', 40).save;
+    ready = raiseSkillToMinimumLevel(ready, db, 'SKL-0014', 35).save;
+    final accepted = acceptQuest(db, ready, 'QST-0010');
+    expect(accepted.ok, isTrue);
+    final save = accepted.save!;
     expect(
       questLog(
         db,
         save,
       ).singleWhere((row) => row.questId == 'QST-0010').steps.map((step) => step.label),
-      contains('Chop vines 0 / 50'),
+      containsAll(<String>['Clear fifty vines on the Forest Path', 'Chop vines 0 / 50']),
     );
     expect(questActionProgressForActivity(db, save, 'ACT-0048').map((line) => line.caption), [
       'Chop vines 0 / 50',
     ]);
+    final quest = db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0010');
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0025');
   });
 
-  test('Through the Thicket finishes on the 50th vine and unlocks the grove and glade', () {
-    var save = applyTravelArrival(db, _save(db, locationId: 'LOC-0002'), 'LOC-0040', 0);
+  test('Through the Thicket opens each grove after ten vines and finishes on the last talk', () {
+    var save = raiseSkillToMinimumLevel(_save(db, locationId: 'LOC-0040'), db, 'SKL-0006', 40).save;
+    save = raiseSkillToMinimumLevel(save, db, 'SKL-0014', 35).save;
+    final accepted = acceptQuest(db, save, 'QST-0010');
+    expect(accepted.ok, isTrue);
+    save = accepted.save!;
+    final quest = db.quests.firstWhere((row) => row['Quest ID'] == 'QST-0010');
+
+    expect(activityVisibleForSave(db, save, 'ACT-0077'), isFalse);
     save = applyQuestActionProgress(db, save, 'ACN-0179', 49);
-    expect(getQuestProgress(save, 'QST-0010').status, 'active');
+    expect(save.unlockedLocationIds, isNot(contains(smallClearingId)));
     expect(
       getQuestProgress(applyQuestAutoCompleteOnAction(db, save).save, 'QST-0010').status,
       'active',
     );
-
     save = applyQuestActionProgress(db, save, 'ACN-0179', 1);
-    final finished = applyQuestAutoCompleteOnAction(db, save);
-    expect(getQuestProgress(finished.save, 'QST-0010').status, 'completed');
-    expect(finished.save.unlockedLocationIds, containsAll(<String>['LOC-0044', 'LOC-0018']));
-    expect(questActionProgressForActivity(db, finished.save, 'ACT-0048'), isEmpty);
+    expect(save.unlockedLocationIds, contains(smallClearingId));
+    expect(getQuestProgress(save, 'QST-0010').status, 'active');
+    expect(questActionProgressForActivity(db, save, 'ACT-0048'), isEmpty);
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0026');
+
+    save = talkWithQuestNpc(db, save, 'NPC-0017').save!;
+    expect(activityVisibleForSave(db, save, 'ACT-0077'), isTrue);
+    save = applyQuestActionProgress(db, save, 'ACN-0231', 10);
+    expect(save.unlockedLocationIds, contains(starlightGladeId));
+    expect(activityVisibleForSave(db, save, 'ACT-0077'), isFalse);
+
+    save = applyQuestActionProgress(db, save, 'ACN-0232', 10);
+    expect(save.unlockedLocationIds, contains(mirrorLakeId));
+    save = applyQuestActionProgress(db, save, 'ACN-0233', 10);
+    expect(save.unlockedLocationIds, contains(oldEntGroveId));
+    save = talkWithQuestNpc(db, save, 'NPC-0017').save!;
+    expect(activityVisibleForSave(db, save, 'ACT-0080'), isTrue);
+
+    save = applyQuestProcessProgress(db, save, 'RCP-0071', 4);
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0032');
+    save = addItemToInventory(save, 'ITEM-0405', 4);
+    expect(
+      applyQuestLocationProgressResult(db, save, smallClearingId).message,
+      forestOfferingPlacedMessage,
+    );
+    final silent = applyQuestLocationProgressResult(
+      db,
+      save.copyWith(inventory: const <InventoryStack>[]),
+      smallClearingId,
+    );
+    expect(silent.message, isNull);
+    expect(hasQuestFlag(silent.save, 'QST-0010', 'visit:$smallClearingId'), isFalse);
+
+    save = applyQuestLocationProgressResult(db, save, smallClearingId).save;
+    expect(inventoryCount(save, 'ITEM-0405'), 3);
+    save = applyQuestLocationProgressResult(db, save, starlightGladeId).save;
+    save = applyQuestLocationProgressResult(db, save, mirrorLakeId).save;
+    save = applyQuestLocationProgressResult(db, save, oldEntGroveId).save;
+    expect(inventoryCount(save, 'ITEM-0405'), 0);
+
+    final finished = talkWithQuestNpc(db, save, 'NPC-0017');
+    expect(finished.ok, isTrue);
+    expect(getQuestProgress(finished.save!, 'QST-0010').status, 'completed');
+    expect(inventoryCount(finished.save!, 'ITEM-0406'), 1);
+    expect(activityVisibleForSave(db, finished.save!, 'ACT-0080'), isFalse);
     expect(
       locationsForMapView(
         db,
         forestMapId,
-        finished.save.unlockedLocationIds,
+        finished.save!.unlockedLocationIds,
         const <String>[],
-        finished.save.currentLocationId,
+        finished.save!.currentLocationId,
         finished.save,
       ).map((row) => row.locationId),
-      containsAll(<String>['LOC-0044', 'LOC-0018']),
+      containsAll(<String>[smallClearingId, starlightGladeId, mirrorLakeId, oldEntGroveId]),
     );
     expect(
       canTravelTo(
         db,
         'LOC-0040',
-        'LOC-0044',
+        oldEntGroveId,
         forestMapId,
-        finished.save.unlockedLocationIds,
+        finished.save!.unlockedLocationIds,
         finished.save,
       ),
       isTrue,
+    );
+
+    final completer = createNewSave(db, 0).copyWith(
+      quests: const <QuestProgress>[
+        QuestProgress(questId: 'QST-0010', status: 'completed', progress: 0),
+      ],
     );
     expect(
-      canTravelTo(
+      locationsForMapView(
         db,
-        'LOC-0040',
-        'LOC-0018',
         forestMapId,
-        finished.save.unlockedLocationIds,
-        finished.save,
-      ),
-      isTrue,
+        completer.unlockedLocationIds,
+        const <String>[],
+        completer.currentLocationId,
+        completer,
+      ).map((row) => row.locationId),
+      containsAll(<String>[smallClearingId, starlightGladeId, mirrorLakeId, oldEntGroveId]),
     );
+    expect(
+      acceptQuest(db, completer.copyWith(currentLocationId: 'LOC-0040'), 'QST-0010').ok,
+      isFalse,
+    );
+
+    final vines = db.actions.firstWhere((row) => row.actionId == 'ACN-0179');
+    final oak = db.actions.firstWhere((row) => row.actionId == 'ACN-0047');
+    var geared = raiseSkillToMinimumLevel(createNewSave(db, 0), db, 'SKL-0006', 40).save;
+    geared = equipStackToSlot(geared, weaponToolSlotId, 'ITEM-0406', 1);
+    expect(equippedActionTimeReductionPercentForAction(db, geared, vines), 24);
+    expect(equippedActionTimeReductionPercentForAction(db, geared, oak), 11);
+    expect(gatheringDurationMs(db, geared, vines), closeTo(55 * (1 - 24 / 100) * 1000, 0.01));
   });
 
   test('wardrobe lists The Undying in the Titles slot', () {
