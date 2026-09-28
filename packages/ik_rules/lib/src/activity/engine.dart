@@ -139,15 +139,11 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
   if (!activityVisibleForSave(db, save, activityId)) {
     return const ActivityStartResult.failed('Not available yet');
   }
-  final activityReqFailures = unmetHardRequirements(
-    db,
-    save,
-    requirementsForEntity(db, 'Activity', activityId)
-        .where(
-          (requirement) => !isQuestGateRequirement(requirement.requirementType),
-        )
-        .toList(),
-  );
+  final startRequirements = [
+    for (final requirement in requirementsForEntity(db, 'Activity', activityId))
+      if (!isQuestGateRequirement(requirement.requirementType)) requirement,
+  ];
+  final activityReqFailures = unmetHardRequirements(db, save, startRequirements);
   if (activityReqFailures.isNotEmpty) {
     return ActivityStartResult.failed(activityReqFailures.first);
   }
