@@ -1131,7 +1131,16 @@ class GameController extends ChangeNotifier {
   /// Collects a ready timer, notes the reward strip, and queues a popup notice.
   bool _collectTimerAt(String locationId, String kind, {required bool announceText}) {
     final before = save;
-    final result = collectLocationTimer(db, before, locationId, kind, nowMs: session.clock());
+    // Use the session RNG so widget tests (and any seeded host) get stable
+    // botany success / seed-return rolls instead of dart:math defaults.
+    final result = collectLocationTimer(
+      db,
+      before,
+      locationId,
+      kind,
+      nowMs: session.clock(),
+      random: session.random,
+    );
     if (!result.ok) {
       if (isTimerInventoryFullReason(result.reason)) {
         _pendingTimerRoomAlerts = [..._pendingTimerRoomAlerts, result.reason];
