@@ -39,7 +39,7 @@ export const RACE_CHANGE_COSTS: Record<string, RaceChangeCost> = {
       { itemId: 'ITEM-0018', quantity: 40 },
     ],
   },
-  // Wood Elf — hunt elk 35 + mountain goat 50
+  // Wood Elf — hunt elk 35 + mountain goat 52
   'RACE-0002': {
     gold: 0,
     items: [
