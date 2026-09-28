@@ -100,7 +100,9 @@ void main() {
     expect(find.text(completion.section('critters')!.label), findsOne);
   });
 
-  testWidgets('Critter Collector waits on the last critter, then is lost again', (tester) async {
+  testWidgets('Critter collector milestone unlocks with every critter, then locks again', (
+    tester,
+  ) async {
     final every = startedCharacter(database).copyWith(
       critterCollections: <CritterCollectionEntry>[
         for (final critter in critterDefs) CritterCollectionEntry(critterId: critter.id, count: 1),
@@ -114,14 +116,13 @@ void main() {
     await pumpShell(tester, controller, size: const Size(420, 900));
 
     await openLog(tester);
-    await tester.tap(find.text('Hard'));
+    await tester.tap(find.text('Milestones'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Critter collector'), findsOne);
     final title = tester.widget<Text>(find.text('Critter collector'));
     expect(title.style?.color?.a, closeTo(1, 0.01));
+    expect(find.text('Reached'), findsWidgets);
 
-    // A critter leaves the collection, the way a new one being added would look.
     final short = controller.save.copyWith(
       critterCollections: controller.save.critterCollections.sublist(1),
     );
@@ -129,7 +130,7 @@ void main() {
     await tester.pump();
 
     expect(
-      find.textContaining('Collect one of every critter (${critterDefs.length - 1}/'),
+      find.textContaining('${critterDefs.length - 1} / ${critterDefs.length} critters'),
       findsOne,
     );
   });
