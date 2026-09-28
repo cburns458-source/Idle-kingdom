@@ -117,6 +117,8 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   void _commitTalk() {
+    final beforeBooks = controller.save.unlockedBookIds.toSet();
+    final booksWereEmpty = beforeBooks.isEmpty;
     final result = talkWithQuestNpc(controller.db, controller.save, conversation.npcId);
     if (!result.ok) {
       setState(() => _error = result.reason);
@@ -124,6 +126,11 @@ class _NpcPanelState extends State<NpcPanel> {
     }
     controller.commit(result.save!);
     controller.announce(result.message!);
+    final granted = result.save!.unlockedBookIds
+        .where((id) => !beforeBooks.contains(id))
+        .map((id) => QuestBookGrant(bookId: id, isFirstEver: booksWereEmpty))
+        .toList();
+    controller.noteBookUnlocks(granted);
     setState(() => _error = null);
   }
 
@@ -171,6 +178,7 @@ class _NpcPanelState extends State<NpcPanel> {
         .map((id) => ShopCosmeticGrant(cosmeticId: id, isFirstEver: wasEmpty))
         .toList();
     controller.noteCosmeticUnlocks(granted);
+    controller.noteBookUnlocks(result.booksGranted);
     await showQuestRewards(context, questName: result.questName!, rewards: result.rewards);
     if (!mounted) return;
     if (result.pendingSkillXp > 0) {

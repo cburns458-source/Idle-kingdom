@@ -96,13 +96,6 @@ const List<CritterDef> critterDefs = <CritterDef>[
     locationId: 'LOC-0030',
     description: 'A masked bandit of the Processing District.',
   ),
-  CritterDef(
-    id: 'CRT-0009',
-    internalKey: 'baby_dragon',
-    displayName: 'Baby Dragon',
-    locationId: '',
-    description: "A rare hatchling that sometimes follows a dragon's defeat.",
-  ),
 ];
 
 CritterDef? critterForLocation(String locationId) {

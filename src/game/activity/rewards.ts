@@ -13,6 +13,7 @@ import {
   equippedSkillRelativeDropChanceBonusPercent,
   totalRelativeDropChanceBonusPercent,
 } from '../loot/dropChance'
+import { grantCosmetic } from '../cosmetics/cosmetics'
 import { grantCritterToCollection, getCritter } from '../critters/critters'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
 import { applyRaceGoldGain, raceSkillDropChanceBonusPercent } from '../races/races'
@@ -139,14 +140,25 @@ export function addItemToInventoryExact(
   return { ok: true, save: result.save }
 }
 
+export interface ActionCosmeticGrant {
+  cosmeticId: string
+  isFirstEver: boolean
+}
+
 export function resolveActionRewards(
   db: GameDatabase,
   save: PlayerSave,
   action: ActionRow,
   random: RandomFn = Math.random,
-): { save: PlayerSave; loot: LootGrant[]; goldGained: number } {
+): {
+  save: PlayerSave
+  loot: LootGrant[]
+  goldGained: number
+  cosmeticsGranted: ActionCosmeticGrant[]
+} {
   let next = save
   const loot: LootGrant[] = []
+  const cosmeticsGranted: ActionCosmeticGrant[] = []
   let goldGained = Number(action['Guaranteed Gold'] ?? 0)
 
   const skillDropBonus = raceSkillDropChanceBonusPercent(
@@ -207,6 +219,18 @@ export function resolveActionRewards(
       } else if (getCritter(critterId)) {
         // Already known critter id but grant failed — ignore.
       }
+    } else if (picked['Reward Type'] === 'Cosmetic' && picked['Reward ID / Value']) {
+      const cosmeticId = picked['Reward ID / Value']
+      const granted = grantCosmetic(next, cosmeticId)
+      if (granted.granted) {
+        next = granted.save
+        cosmeticsGranted.push({ cosmeticId, isFirstEver: granted.isFirstEver })
+        const itemId = db.Cosmetics.find((row) => row['Cosmetic ID'] === cosmeticId)?.['Item ID']
+        const displayName = itemId
+          ? (db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name'] ?? cosmeticId)
+          : cosmeticId
+        loot.push({ itemId: cosmeticId, quantity: 1, displayName })
+      }
     }
   }
 
@@ -219,5 +243,5 @@ export function resolveActionRewards(
     next = { ...next, gold: next.gold + goldGained }
   }
 
-  return { save: next, loot, goldGained }
+  return { save: next, loot, goldGained, cosmeticsGranted }
 }

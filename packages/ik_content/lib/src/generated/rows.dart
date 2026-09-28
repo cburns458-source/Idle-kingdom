@@ -101,6 +101,24 @@ class AppearanceOptionRow extends DbRow {
   String? get notes => stringOrNull('Notes');
 }
 
+class BookRow extends DbRow {
+  const BookRow(super.raw);
+
+  String get bookId => stringValue('Book ID');
+
+  String get internalKey => stringValue('Internal Key');
+
+  String get displayName => stringValue('Display Name');
+
+  String get body => stringValue('Body');
+
+  String get status => stringValue('Status');
+
+  String get releasePhase => stringValue('Release Phase');
+
+  String? get notes => stringOrNull('Notes');
+}
+
 class ConfigRow extends DbRow {
   const ConfigRow(super.raw);
 
@@ -826,6 +844,7 @@ const List<String> databaseTables = <String>[
   'Achievements',
   'CosmeticSlots',
   'Cosmetics',
+  'Books',
   'AppearanceOptions',
   'LocationSearches',
   'Races',
@@ -917,6 +936,8 @@ class GameDatabase {
   );
 
   late final List<CosmeticRow> cosmetics = typedRows(raw, 'Cosmetics', CosmeticRow.new);
+
+  late final List<BookRow> books = typedRows(raw, 'Books', BookRow.new);
 
   late final List<AppearanceOptionRow> appearanceOptions = typedRows(
     raw,

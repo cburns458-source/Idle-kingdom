@@ -73,13 +73,6 @@ export const CRITTER_DEFS: CritterDef[] = [
     locationId: 'LOC-0030',
     description: 'A masked bandit of the Processing District.',
   },
-  {
-    id: 'CRT-0009',
-    internalKey: 'baby_dragon',
-    displayName: 'Baby Dragon',
-    locationId: '',
-    description: "A rare hatchling that sometimes follows a dragon's defeat.",
-  },
 ]
 
 export function critterForLocation(locationId: string): CritterDef | undefined {

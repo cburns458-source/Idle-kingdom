@@ -11,7 +11,6 @@ export const CRITTER_PET_COSMETIC_IDS: Record<string, string> = {
   'CRT-0006': 'COS-0009',
   'CRT-0007': 'COS-0010',
   'CRT-0008': 'COS-0011',
-  'CRT-0009': 'COS-0012',
 }
 
 export function petCosmeticIdForCritter(critterId: string): string | null {

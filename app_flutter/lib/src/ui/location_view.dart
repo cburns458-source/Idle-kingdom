@@ -1360,6 +1360,7 @@ class _ActivityCard extends StatelessWidget {
 
     final hostileLock = locationIsHostileFor(controller.db, controller.save);
     final favorited = favoriteActivityAt(controller.save) == activityId;
+    final skillIds = skillIdsForActivity(controller.db, controller.save, activityId);
     final questProgress = questActionProgressForActivity(
       controller.db,
       controller.save,
@@ -1378,6 +1379,25 @@ class _ActivityCard extends StatelessWidget {
             ),
       title: activity.contextualName ?? activityId,
       lines: [
+        if (skillIds.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final skillId in skillIds)
+                  Tooltip(
+                    message: controller.indexes.skillsById[skillId]?.displayName ?? 'Skill',
+                    child: GameImage(
+                      skillIconPath(controller.indexes.skillsById[skillId]),
+                      width: 18,
+                      height: 18,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         if (activity.dangerWarningCombatLevel case final level?)
           Text('Combat warning ~ Level $level', style: warningStyle),
         if (hostileLock && running) MutedText(hostileActivityLockReason),

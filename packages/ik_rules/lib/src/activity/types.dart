@@ -28,6 +28,7 @@ class ActionRewardBundle {
     required this.xpRewards,
     required this.loot,
     required this.goldGained,
+    this.cosmeticsGranted = const <ActionCosmeticGrant>[],
   });
 
   final String id;
@@ -35,12 +36,22 @@ class ActionRewardBundle {
   final List<LootGrant> loot;
   final num goldGained;
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    'id': id,
-    'xpRewards': xpRewards.map((reward) => reward.toJson()).toList(),
-    'loot': loot.map((grant) => grant.toJson()).toList(),
-    'goldGained': goldGained,
-  };
+  /// Wardrobe cosmetics unlocked with this reward line (e.g. Baby Dragon pet).
+  final List<ActionCosmeticGrant> cosmeticsGranted;
+
+  Map<String, Object?> toJson() {
+    final json = <String, Object?>{
+      'id': id,
+      'xpRewards': xpRewards.map((reward) => reward.toJson()).toList(),
+      'loot': loot.map((grant) => grant.toJson()).toList(),
+      'goldGained': goldGained,
+    };
+    // Omit when empty so existing session parity fixtures stay byte-stable.
+    if (cosmeticsGranted.isNotEmpty) {
+      json['cosmeticsGranted'] = cosmeticsGranted.map((grant) => grant.toJson()).toList();
+    }
+    return json;
+  }
 }
 
 class ActionCompletionResult {
@@ -54,6 +65,7 @@ class ActionCompletionResult {
     required this.goldGained,
     required this.loot,
     required this.leveledUpTo,
+    this.cosmeticsGranted = const <ActionCosmeticGrant>[],
     this.damageTaken = 0,
     this.foodHealed = 0,
     this.showZeroDamageHit = false,
@@ -73,6 +85,9 @@ class ActionCompletionResult {
   final List<ActionXpRewardSummary> xpRewards;
   final num goldGained;
   final List<LootGrant> loot;
+
+  /// Wardrobe cosmetics unlocked by this action (e.g. Baby Dragon pet).
+  final List<ActionCosmeticGrant> cosmeticsGranted;
   final num? leveledUpTo;
 
   /// HP lost on a thievery failure (for combat-style floaters).
@@ -95,6 +110,7 @@ class ActionCompletionResult {
     'xpRewards': xpRewards.map((reward) => reward.toJson()).toList(),
     'goldGained': goldGained,
     'loot': loot.map((grant) => grant.toJson()).toList(),
+    'cosmeticsGranted': cosmeticsGranted.map((grant) => grant.toJson()).toList(),
     'leveledUpTo': leveledUpTo,
     'damageTaken': damageTaken,
     'foodHealed': foodHealed,

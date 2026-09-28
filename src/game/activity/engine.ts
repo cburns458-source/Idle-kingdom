@@ -26,6 +26,7 @@ import type {
   ActivityStartResult,
 } from './types'
 import { addLifetimeStat, recordGatheredDrops, recordThieverySuccess } from '../achievements/progress'
+import { mainHallKitchenLocked, MAIN_HALL_KITCHEN_LOCKED_MESSAGE } from '../world/mainHallKitchen'
 import { applyQuestActionProgress, applyQuestAutoStartOnSeed } from '../quests/progress'
 import { applyQuestAutoCompleteOnAction } from '../quests/quests'
 import { itemHasCapability, LOCKPICK_ITEM_ID, WEAPON_TOOL_SLOT_ID, slotStack } from '../equipment/loadout'
@@ -92,6 +93,9 @@ export function validateActivityStart(
   }
   if (activityIsComingSoon(activity)) {
     return { ok: false, reason: COMING_SOON_REASON }
+  }
+  if (mainHallKitchenLocked(db, save, activityId)) {
+    return { ok: false, reason: MAIN_HALL_KITCHEN_LOCKED_MESSAGE }
   }
   const activityReqFailures = unmetHardRequirements(
     db,
@@ -506,7 +510,7 @@ export function completeGatheringAction(
 
   const pruning = isPruningToolEquipped(db, working) && PRUNABLE_SKILL_IDS.has(skillId)
   const rewarded = pruning
-    ? resolvePruningRewards(db, working, action, random)
+    ? { ...resolvePruningRewards(db, working, action, random), cosmeticsGranted: [] }
     : resolveActionRewards(db, working, action, random)
   const fullXp = gatheringXpReward(db, working, action)
   const primarySkillId = pruning ? BOTANY_SKILL_ID : skillId
@@ -579,6 +583,7 @@ export function completeGatheringAction(
       xpRewards,
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
+      cosmeticsGranted: rewarded.cosmeticsGranted,
       leveledUpTo,
       damageTaken: 0,
       foodHealed,

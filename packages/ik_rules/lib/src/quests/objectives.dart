@@ -62,6 +62,7 @@ class StructuredQuestObjectives {
     required this.rewardRecipeIds,
     required this.rewardProjectNpcIds,
     required this.rewardCosmeticIds,
+    required this.rewardBookIds,
   });
 
   /// One of the Bible §14.4 kinds, e.g. `gather_deliver` or `defeat`.
@@ -107,6 +108,7 @@ class StructuredQuestObjectives {
   final List<String> rewardRecipeIds;
   final List<String> rewardProjectNpcIds;
   final List<String> rewardCosmeticIds;
+  final List<String> rewardBookIds;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'kind': kind,
@@ -153,6 +155,7 @@ class StructuredQuestObjectives {
     'rewardRecipeIds': rewardRecipeIds,
     'rewardProjectNpcIds': rewardProjectNpcIds,
     'rewardCosmeticIds': rewardCosmeticIds,
+    'rewardBookIds': rewardBookIds,
   };
 }
 
@@ -366,6 +369,7 @@ StructuredQuestObjectives parseNotesObjectives(
     rewardRecipeIds: const <String>[],
     rewardProjectNpcIds: const <String>[],
     rewardCosmeticIds: const <String>[],
+    rewardBookIds: const <String>[],
   );
 }
 
@@ -392,6 +396,7 @@ StructuredQuestObjectives parseNotesObjectives(
 ///   RewardRecipe: RCP-x
 ///   RewardProjectNpc: NPC-x
 ///   RewardCosmetic: COS-x
+///   RewardBook: BOOK-x
 StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
   final notes = quest['Notes'] is String ? quest['Notes']! as String : '';
   final kind = normalizeObjectiveKind(quest['Objective Type']);
@@ -419,6 +424,7 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
   final rewardRecipeNote = _noteField(notes, r'RewardRecipe:\s*([^;]+)');
   final rewardNpcNote = _noteField(notes, r'RewardProjectNpc:\s*([^;]+)');
   final rewardCosmeticNote = _noteField(notes, r'RewardCosmetic:\s*([^;]+)');
+  final rewardBookNote = _noteField(notes, r'RewardBook:\s*([^;]+)');
 
   return StructuredQuestObjectives(
     kind: objectives.kind,
@@ -470,6 +476,7 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     rewardCosmeticIds: rewardCosmeticNote == null
         ? const <String>[]
         : _parseIdList(rewardCosmeticNote),
+    rewardBookIds: rewardBookNote == null ? const <String>[] : _parseIdList(rewardBookNote),
   );
 }
 

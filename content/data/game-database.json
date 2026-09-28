@@ -7084,8 +7084,8 @@
       "Base Sell Value": 0,
       "Icon Asset Key": "cosmetic_pet_baby_dragon",
       "Description": "A rare companion that hatches after a dragon falls.",
-      "Functional / Source Tags": "cosmetic; pet; critter",
-      "Notes": "Unlocked the first time Critter CRT-0009 is collected.",
+      "Functional / Source Tags": "cosmetic; pet",
+      "Notes": "Unlocked the first time a Baby Dragon pet drop is rolled from a dragon.",
       "Stackable": null
     },
     {
@@ -7120,6 +7120,23 @@
       "Icon Asset Key": "machete",
       "Notes": "Might 40 and Woodcutting 40. Vine chops use 24% action time reduction.",
       "Base Sell Value": 400,
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0407",
+      "Internal Key": "weighted_boomerang",
+      "Display Name": "Weighted Boomerang",
+      "Category": "Tool",
+      "Subtype": "Hunting tool",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": "SLOT-0001",
+      "Base Sell Value": 0,
+      "Icon Asset Key": "weighted_boomerang",
+      "Description": "A heavy hunting boomerang that cuts the wait between casts.",
+      "Functional / Source Tags": "hunting_tool; combat_usable; artisanry_output",
+      "Notes": "Hunting 70. 20% ATR. Artisanry project. Intentionally deals effectively no damage.",
       "Stackable": null
     }
   ],
@@ -10618,6 +10635,24 @@
       "Capabilities / Effects": "woodcutting_tool; combat_usable; hatchet; combat_weapon; vine_atr:24",
       "Status": "Planned",
       "Notes": "Through the Thicket reward. Vine chops use 24% ATR."
+    },
+    {
+      "Equipment ID": "EQP-0217",
+      "Item ID": "ITEM-0407",
+      "Slot ID": "SLOT-0001",
+      "Required Skill ID": "SKL-0005",
+      "Required Level": 70,
+      "Secondary Required Skill ID": null,
+      "Secondary Required Level": null,
+      "Min Damage": 0,
+      "Max Damage": 0,
+      "HP Bonus": null,
+      "Damage Reduction": null,
+      "Healing Amount": null,
+      "Action Time Reduction %": 20,
+      "Capabilities / Effects": "hunting_tool; combat_usable",
+      "Status": "Planned",
+      "Notes": "Hunting 70. 20% ATR. Intentionally deals effectively no damage."
     }
   ],
   "Statistics": [
@@ -24415,17 +24450,17 @@
     {
       "Reward Entry ID": "RWE-T01800",
       "Reward Table ID": "RWT-0180",
-      "Reward Table Name": "Baby Dragon",
+      "Reward Table Name": "Baby Dragon Pet",
       "Purpose": "Secondary output",
-      "Reward Type": "Critter",
-      "Reward ID / Value": "CRT-0009",
+      "Reward Type": "Cosmetic",
+      "Reward ID / Value": "COS-0012",
       "Weight": 100,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Confirmed",
-      "Notes": "Grants Baby Dragon to the critter collection."
+      "Notes": "One-time unlock of the Baby Dragon pet cosmetic."
     }
   ],
   "Recipes": [
@@ -30710,6 +30745,35 @@
       "Required Skill 2 Level": null,
       "Required Skill 3 ID": null,
       "Required Skill 3 Level": null
+    },
+    {
+      "Project ID": "PRJ-0178",
+      "Internal Key": "artisan_weighted_boomerang",
+      "Display Name": "Weighted Boomerang",
+      "Skill ID": "SKL-0012",
+      "Output Item / Target ID": "ITEM-0407",
+      "Output Quantity": 1,
+      "Facility ID": "FAC-0003",
+      "XP Reward": 200000,
+      "Gold Cost": 0,
+      "Instant": "Yes",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Mahogany timber, titanium bars, and leather straps. Instant at the Artisans workshop.",
+      "Input 1 Item ID": "ITEM-0218",
+      "Input 1 Quantity": 15,
+      "Input 2 Item ID": "ITEM-0079",
+      "Input 2 Quantity": 2,
+      "Input 3 Item ID": "ITEM-0084",
+      "Input 3 Quantity": 10,
+      "Input 4 Item ID": null,
+      "Input 4 Quantity": null,
+      "Input 5 Item ID": null,
+      "Input 5 Quantity": null,
+      "Required Skill 1 ID": "SKL-0012",
+      "Required Skill 1 Level": 70,
+      "Required Skill 2 ID": null,
+      "Required Skill 2 Level": null
     }
   ],
   "NPCs": [
@@ -31951,7 +32015,7 @@
       "Pitch": "Gather five potatoes from the field and bring them back.",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "AutoCompleteOnTalk",
+      "Notes": "AutoCompleteOnTalk; RewardBook: BOOK-0001",
       "Objective Type": "Gather / Deliver",
       "Objective Target ID": null,
       "Required Quantity": null,
@@ -31960,7 +32024,7 @@
       "Reward XP Amount": null,
       "Reward Item ID": null,
       "Reward Item Quantity": null,
-      "Possible Rewards": "None"
+      "Possible Rewards": "Newcomer's Guide"
     },
     {
       "Quest ID": "QST-0007",
@@ -32044,14 +32108,14 @@
     },
     {
       "Quest ID": "QST-0011",
-      "Internal Key": "first_planting",
-      "Display Name": "First Planting",
+      "Internal Key": "green_thumb",
+      "Display Name": "Green Thumb",
       "NPC ID": "NPC-0014",
       "Summary": "Fennel unlocks the farm patch and asks you to plant a potato seed.",
-      "Pitch": "You've got a seed. Come to the farm and I'll show you the plot — Botany starts with putting something in the ground.",
+      "Pitch": "You've got a seed. Come to the farm and I'll show you the plot. Botany starts with putting something in the ground.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "HideFromQuestLog; RequiresAnySeed; AutoStartOnSeed; AutoCompleteOnPlant",
+      "Notes": "RequiresAnySeed; AutoStartOnSeed; AutoCompleteOnPlant; RewardBook: BOOK-0002",
       "Objective Type": "Talk",
       "Objective Target ID": null,
       "Required Quantity": null,
@@ -32060,7 +32124,7 @@
       "Reward XP Amount": null,
       "Reward Item ID": null,
       "Reward Item Quantity": null,
-      "Possible Rewards": null
+      "Possible Rewards": "Botanist's Guide"
     }
   ],
   "QuestDialogue": [
@@ -32113,7 +32177,7 @@
       "Dialogue ID": "QDL-0007",
       "Quest ID": "QST-0001",
       "NPC ID": "NPC-0001",
-      "Line": "The feast is days away and my kitchens are in shambles. Ten baked potatoes, golden and crisp — and ten cooked perch beside them. Bring those to me and I shall not forget it.",
+      "Line": "The feast is days away and my kitchens are in shambles. Ten baked potatoes, golden and crisp, and ten cooked perch besides. Use the Main Hall kitchen to cook what you need. Bring them here when they are ready.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32811,10 +32875,10 @@
       "Cosmetic ID": "COS-0012",
       "Item ID": "ITEM-0404",
       "Cosmetic Slot ID": "CSLOT-0002",
-      "Acquisition Tags": "critter",
+      "Acquisition Tags": "dragon_drop",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Pet form of CRT-0009. Granted on first collection."
+      "Notes": "Baby Dragon pet. Granted once from dragon kill secondary."
     }
   ],
   "AppearanceOptions": [
@@ -34407,6 +34471,26 @@
       "Y": 38,
       "Status": "Confirmed",
       "Release Phase": "Launch"
+    }
+  ],
+  "Books": [
+    {
+      "Book ID": "BOOK-0001",
+      "Internal Key": "newcomers_guide",
+      "Display Name": "Newcomer's Guide",
+      "Body": "Welcome to Restoria. The land does not rush you, but it does reward those who learn its rhythm.\n\nOpen the map, choose a location, and travel there. Once you arrive, look over the activities on offer. Gathering, crafting, cooking, combat, and other work all live in these lists. Each activity draws from its own pool of rewards, so what you earn depends on where you stand and what you choose to do.\n\nMaterials gather in your bag. Bring them to a workshop, a forge, a kitchen, or a workbench and shape them into tools, food, and gear. Better equipment shortens your labors and steadies your hand in a fight.\n\nWhen you want a longer chase, open the Log. Deeds, milestones, and quests wait there to mark what you have done and what still calls. When you want the kingdom’s records of items, enemies, and recipes, open the Codex.\n\nGood luck adventurer!",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Granted by Getting Started (QST-0006)."
+    },
+    {
+      "Book ID": "BOOK-0002",
+      "Internal Key": "botanists_guide",
+      "Display Name": "Botanist's Guide",
+      "Body": "Unlock a plot, plant what you carry, and let the timer run. When the bed is ready, harvest it. Often the earth returns your planting along with a share of the crop. Compost gathered from patches can be worked in when you plant, and it improves your chance of a healthy result. Seeds may shift as they grow, and mutations appear as your Botany rises. Several seeds can share one bed, even mixed kinds, while a sapling asks for the whole plot to itself.\n\nEquip pruners when you gather from woodcutting or harvesting, and the usual drops give way to a chance at seeds instead. The experience you earn from that work becomes Botany experience.\n\nTend the timers. Harvest when the ground is ready. Plant again!",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Granted by Green Thumb (QST-0011)."
     }
   ]
 }

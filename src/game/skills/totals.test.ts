@@ -102,6 +102,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     lootTrackerPausedAtMs: null,
     xpTrackerPausedAtMs: null,
     mailbox: [],
+    unlockedBookIds: [],
   }
 }
 

@@ -81,6 +81,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
         titleCosmeticSlotId: starterTitleCosmeticId,
       },
     ),
+    unlockedBookIds: const <String>[],
     appearance: const PlayerAppearance(
       skinTone: defaultSkinToneId,
       hairstyle: defaultHairstyleId,

@@ -19,6 +19,7 @@ import '../save/generated/save_models.dart';
 import '../timers/location_timers.dart';
 import '../time.dart';
 import '../trackers/trackers.dart';
+import '../world/main_hall_kitchen.dart';
 import 'bonus_xp.dart';
 import 'gathering.dart';
 import 'held_action.dart';
@@ -131,6 +132,9 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
   }
   if (activityIsComingSoon(activity)) {
     return const ActivityStartResult.failed(comingSoonReason);
+  }
+  if (mainHallKitchenLocked(db, save, activityId)) {
+    return const ActivityStartResult.failed(mainHallKitchenLockedMessage);
   }
   final activityReqFailures = unmetHardRequirements(
     db,
@@ -583,6 +587,7 @@ GatheringCompletion completeGatheringAction(
       xpRewards: xpRewards,
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
+      cosmeticsGranted: rewarded.cosmeticsGranted,
       leveledUpTo: leveledUpTo,
       damageTaken: 0,
       foodHealed: foodHealed,

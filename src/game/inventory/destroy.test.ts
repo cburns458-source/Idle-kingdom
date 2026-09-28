@@ -102,6 +102,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     lootTrackerPausedAtMs: null,
     xpTrackerPausedAtMs: null,
     mailbox: [],
+    unlockedBookIds: [],
   }
 }
 

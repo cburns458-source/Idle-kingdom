@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../cosmetics/cosmetics.dart';
 import '../critters/critters.dart';
 import '../inventory/add_items.dart';
 import '../inventory/gold.dart';
@@ -28,12 +29,30 @@ class LootGrant {
   };
 }
 
+class ActionCosmeticGrant {
+  const ActionCosmeticGrant({required this.cosmeticId, required this.isFirstEver});
+
+  final String cosmeticId;
+  final bool isFirstEver;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'cosmeticId': cosmeticId,
+    'isFirstEver': isFirstEver,
+  };
+}
+
 class ActionRewards {
-  const ActionRewards({required this.save, required this.loot, required this.goldGained});
+  const ActionRewards({
+    required this.save,
+    required this.loot,
+    required this.goldGained,
+    this.cosmeticsGranted = const <ActionCosmeticGrant>[],
+  });
 
   final PlayerSave save;
   final List<LootGrant> loot;
   final num goldGained;
+  final List<ActionCosmeticGrant> cosmeticsGranted;
 }
 
 num _rollQuantity(RewardEntryRow entry, RandomFn random) {
@@ -70,6 +89,7 @@ ActionRewards resolveActionRewards(
 ) {
   var next = save;
   final loot = <LootGrant>[];
+  final cosmeticsGranted = <ActionCosmeticGrant>[];
   var goldGained = jsNumber(action.raw['Guaranteed Gold'] ?? 0);
   final skillDropBonus = raceSkillDropChanceBonusPercent(
     db,
@@ -133,6 +153,31 @@ ActionRewards resolveActionRewards(
           LootGrant(itemId: rewardValue, quantity: 1, displayName: granted.critter!.displayName),
         );
       }
+    } else if (rewardType == 'Cosmetic' && rewardValue is String && rewardValue.isNotEmpty) {
+      final cosmeticId = rewardValue;
+      final granted = grantCosmetic(next, cosmeticId);
+      if (granted.granted) {
+        next = granted.save;
+        cosmeticsGranted.add(
+          ActionCosmeticGrant(cosmeticId: cosmeticId, isFirstEver: granted.isFirstEver),
+        );
+        final itemId = db.cosmetics
+            .firstWhereOrNull((row) => row.raw['Cosmetic ID'] == cosmeticId)
+            ?.raw['Item ID'];
+        final displayName = itemId is String
+            ? (db.items
+                      .firstWhereOrNull((item) => item.raw['Item ID'] == itemId)
+                      ?.raw['Display Name'] ??
+                  cosmeticId)
+            : cosmeticId;
+        loot.add(
+          LootGrant(
+            itemId: cosmeticId,
+            quantity: 1,
+            displayName: displayName is String ? displayName : cosmeticId,
+          ),
+        );
+      }
     }
   }
 
@@ -145,5 +190,10 @@ ActionRewards resolveActionRewards(
     next = next.copyWith(gold: next.gold + goldGained);
   }
 
-  return ActionRewards(save: next, loot: loot, goldGained: goldGained);
+  return ActionRewards(
+    save: next,
+    loot: loot,
+    goldGained: goldGained,
+    cosmeticsGranted: cosmeticsGranted,
+  );
 }

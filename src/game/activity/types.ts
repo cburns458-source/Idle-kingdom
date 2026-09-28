@@ -30,6 +30,8 @@ export interface ActionRewardBundle {
   xpRewards: ActionXpRewardSummary[]
   loot: LootGrant[]
   goldGained: number
+  /** Wardrobe cosmetics unlocked with this reward line (e.g. Baby Dragon pet). */
+  cosmeticsGranted?: { cosmeticId: string; isFirstEver: boolean }[]
 }
 
 export interface ActionCompletionResult {
@@ -43,6 +45,8 @@ export interface ActionCompletionResult {
   xpRewards: ActionXpRewardSummary[]
   goldGained: number
   loot: LootGrant[]
+  /** Wardrobe cosmetics unlocked by this action (e.g. Baby Dragon pet). */
+  cosmeticsGranted?: { cosmeticId: string; isFirstEver: boolean }[]
   leveledUpTo: number | null
   /** HP lost on a thievery failure (for combat-style floaters). */
   damageTaken?: number

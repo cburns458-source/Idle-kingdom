@@ -914,6 +914,35 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 56,
     }),
   },
+  {
+    fromVersion: 56,
+    toVersion: 57,
+    migrate: (save) => {
+      const BABY_DRAGON_CRITTER_ID = 'CRT-0009'
+      const BABY_DRAGON_PET_ID = 'COS-0012'
+      const collections = Array.isArray(save.critterCollections) ? save.critterCollections : []
+      const hadBabyDragon = collections.some(
+        (row) => row && row.critterId === BABY_DRAGON_CRITTER_ID && Number(row.count ?? 0) > 0,
+      )
+      const critterCollections = collections.filter(
+        (row) => !row || row.critterId !== BABY_DRAGON_CRITTER_ID,
+      )
+      const unlocked = Array.isArray(save.cosmetics?.unlocked) ? [...save.cosmetics.unlocked] : []
+      if (hadBabyDragon && !unlocked.includes(BABY_DRAGON_PET_ID)) {
+        unlocked.push(BABY_DRAGON_PET_ID)
+      }
+      return {
+        ...save,
+        critterCollections,
+        cosmetics: {
+          unlocked,
+          equipped: save.cosmetics?.equipped ?? {},
+        },
+        unlockedBookIds: Array.isArray(save.unlockedBookIds) ? save.unlockedBookIds : [],
+        saveVersion: 57,
+      }
+    },
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

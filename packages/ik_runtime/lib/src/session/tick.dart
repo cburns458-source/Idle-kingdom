@@ -111,8 +111,9 @@ ActionRewardBundle _victoryRewardBundle(
   List<({String skillId, num xp})> xpAwards,
   List<LootGrant> loot,
   num goldGained,
-  num nowMs,
-) {
+  num nowMs, {
+  List<ActionCosmeticGrant> cosmeticsGranted = const <ActionCosmeticGrant>[],
+}) {
   final xpRewards = <ActionXpRewardSummary>[];
   for (final award in xpAwards) {
     if (award.xp <= 0) continue;
@@ -132,6 +133,7 @@ ActionRewardBundle _victoryRewardBundle(
     xpRewards: xpRewards,
     loot: loot,
     goldGained: goldGained,
+    cosmeticsGranted: cosmeticsGranted,
   );
 }
 
@@ -255,6 +257,7 @@ void _resolveDueCombatRound(
           victory.loot,
           victory.goldGained,
           roundEnd,
+          cosmeticsGranted: victory.cosmeticsGranted,
         ),
       ),
     );
@@ -425,6 +428,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
           xpRewards: finished.result.xpRewards,
           loot: finished.result.loot,
           goldGained: finished.result.goldGained,
+          cosmeticsGranted: finished.result.cosmeticsGranted,
         ),
         damageTaken: finished.result.damageTaken,
         foodHealed: finished.result.foodHealed,

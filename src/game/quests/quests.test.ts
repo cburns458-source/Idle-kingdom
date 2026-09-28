@@ -323,6 +323,7 @@ describe('quest tours', () => {
     expect(finished.ok).toBe(true)
     if (!finished.ok) return
     expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
+    expect(finished.save.unlockedBookIds).toContain('BOOK-0001')
     expect(finished.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(5)
     expect(npcsAtLocationForSave(launch, finished.save, 'LOC-0001').map((npc) => npc['NPC ID'])).toEqual(['NPC-0014'])
   })
@@ -752,13 +753,11 @@ describe('quest tours', () => {
     )
   })
 
-  it('starts First Planting on a seed, unlocks the farm after Fennel, and finishes on plant', () => {
+  it('starts Green Thumb on a seed, unlocks the farm after Fennel, and finishes on plant', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const quest = getQuest(launch, 'QST-0011')!
-    expect(hideFromQuestLog(quest)).toBe(true)
-    expect(questLog(launch, createNewSave(launch)).some((row) => row.questId === 'QST-0011')).toBe(
-      false,
-    )
+    expect(quest['Display Name']).toBe('Green Thumb')
+    expect(hideFromQuestLog(quest)).toBe(false)
 
     let save = {
       ...createNewSave(launch),
@@ -767,6 +766,7 @@ describe('quest tours', () => {
     }
     save = applyQuestAutoStartOnSeed(launch, save)
     expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
+    expect(questLog(launch, save).some((row) => row.questId === 'QST-0011')).toBe(true)
     expect(farmBotanyUnlocked(save)).toBe(false)
     expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
 
@@ -782,6 +782,7 @@ describe('quest tours', () => {
     expect(planted.ok).toBe(true)
     if (!planted.ok) return
     expect(getQuestProgress(planted.save, 'QST-0011').status).toBe('completed')
+    expect(planted.save.unlockedBookIds).toContain('BOOK-0002')
 
     const again = applyQuestAutoStartOnSeed(launch, {
       ...planted.save,

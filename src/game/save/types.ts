@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 56
+export const SAVE_VERSION = 57
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -350,6 +350,8 @@ export interface PlayerSave {
   locationSearchClaims: Record<string, string>
   /** Owned/equipped Wardrobe Cosmetics. */
   cosmetics: CosmeticsState
+  /** Book IDs unlocked into the Library (never inventory). */
+  unlockedBookIds: string[]
   /** Selected character Appearance options. */
   appearance: PlayerAppearance
   /** Whether the player has ever opened the Wardrobe (gates the intro hint highlight). */
