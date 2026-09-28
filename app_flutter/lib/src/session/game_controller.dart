@@ -1451,6 +1451,9 @@ class GameController extends ChangeNotifier {
         if (bundle != null) noteReward(bundle);
       }
     }
+    if (arrival.discoveryNotice != null) {
+      _discoveryNotice = arrival.discoveryNotice;
+    }
     _discoverAndCollectArrivalTimers();
     _offerArrivalFavoriteEquip(arrival);
     notifyListeners();

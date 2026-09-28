@@ -50,6 +50,8 @@ const Map<String, String> _locationArt = <String, String>{
   'LOC-0042': 'locations/loc_the_depths.webp',
   'LOC-0043': 'locations/loc_the_shallows.webp',
   'LOC-0044': 'locations/loc_starlight_glade.webp',
+  'LOC-0050': 'locations/loc_forest_path.webp',
+  'LOC-0051': 'locations/loc_starlight_glade.webp',
   'LOC-0045': 'locations/loc_the_shallows.webp',
   'LOC-0046': 'locations/loc_mountains.webp',
   'LOC-0047': 'locations/loc_mountains.webp',
@@ -232,6 +234,10 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0228': 'actions/acn_steal_general_store.webp',
   'ACN-0229': 'actions/acn_steal_general_store.webp',
   'ACN-0230': 'actions/acn_pick_deposit_box.webp',
+  'ACN-0231': 'actions/acn_clear_vines.webp',
+  'ACN-0232': 'actions/acn_clear_vines.webp',
+  'ACN-0233': 'actions/acn_clear_vines.webp',
+  'ACN-0234': 'actions/acn_delve_essence.webp',
 };
 
 /// Launch races that have bundled player sprites.

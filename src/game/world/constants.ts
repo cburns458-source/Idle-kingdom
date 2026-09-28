@@ -42,6 +42,16 @@ export const FOREST_GATEWAY_ID = 'LOC-0039'
 export const FOREST_PATH_ID = 'LOC-0040'
 export const OLD_ENT_GROVE_ID = 'LOC-0018'
 export const STARLIGHT_GLADE_ID = 'LOC-0044'
+export const SMALL_CLEARING_ID = 'LOC-0050'
+export const MIRROR_LAKE_ID = 'LOC-0051'
+export const THROUGH_THE_THICKET_QUEST_ID = 'QST-0010'
+/** Inner forest nodes granted when Through the Thicket is completed. */
+export const THICKET_COMPLETION_LOCATION_IDS = [
+  SMALL_CLEARING_ID,
+  STARLIGHT_GLADE_ID,
+  MIRROR_LAKE_ID,
+  OLD_ENT_GROVE_ID,
+] as const
 
 /** The Depths underwater (MAP-0009). */
 export const SUNKEN_APPROACH_ID = 'LOC-0041'

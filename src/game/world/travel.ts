@@ -2,7 +2,7 @@ import { isDeathPaused } from '../combat/engine'
 import { stopPrimaryActivityNow } from '../activity/transition'
 import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/types'
 import { applyQuestAutoCompleteOnVisit, type QuestArrivalCompletion } from '../quests/quests'
-import { applyQuestLocationProgress } from '../quests/progress'
+import { applyQuestLocationProgressResult } from '../quests/progress'
 import { questRevealsLocation } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { maybeGrantKingswoodsSling } from './kingswoodsSling'
@@ -177,6 +177,7 @@ export function canTravelTo(
 export interface TravelArrivalSave {
   save: PlayerSave
   questCompletions: QuestArrivalCompletion[]
+  discoveryNotice: string | null
 }
 
 /**
@@ -199,16 +200,17 @@ export function applyTravelArrivalResult(
   destinationLocationId: string,
   nowMs: number = Date.now(),
 ): TravelArrivalSave {
-  if (isDeathPaused(save, nowMs)) return { save, questCompletions: [] }
+  if (isDeathPaused(save, nowMs)) return { save, questCompletions: [], discoveryNotice: null }
   const stopped = stopPrimaryActivityNow(db, save, nowMs)
   const arrived = {
     ...stopped,
     currentLocationId: destinationLocationId,
   }
-  const progressed = applyQuestLocationProgress(db, arrived, destinationLocationId)
-  const auto = applyQuestAutoCompleteOnVisit(db, progressed)
+  const progressed = applyQuestLocationProgressResult(db, arrived, destinationLocationId)
+  const auto = applyQuestAutoCompleteOnVisit(db, progressed.save)
   return {
     save: maybeGrantKingswoodsSling(db, auto.save).save,
     questCompletions: auto.completions,
+    discoveryNotice: progressed.message,
   }
 }

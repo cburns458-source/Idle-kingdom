@@ -70,7 +70,15 @@ bool _locationOpenForSave(
   PlayerSave? save,
 ]) {
   if (isLocationUnlocked(unlockedLocationIds, location, currentLocationId)) return true;
-  return save != null && questRevealsLocation(db, save, jsString(location.raw['Location ID']));
+  final locationId = jsString(location.raw['Location ID']);
+  if (thicketCompletionLocationIds.contains(locationId) &&
+      save != null &&
+      save.quests.any(
+        (quest) => quest.questId == throughTheThicketQuestId && quest.status == 'completed',
+      )) {
+    return true;
+  }
+  return save != null && questRevealsLocation(db, save, locationId);
 }
 
 /// Destinations selectable on a map.
@@ -169,10 +177,15 @@ bool canTravelTo(
 }
 
 class TravelArrivalSave {
-  const TravelArrivalSave({required this.save, required this.questCompletions});
+  const TravelArrivalSave({
+    required this.save,
+    required this.questCompletions,
+    this.discoveryNotice,
+  });
 
   final PlayerSave save;
   final List<QuestArrivalCompletion> questCompletions;
+  final String? discoveryNotice;
 }
 
 /// Moves the player to a destination, stopping any running primary activity
@@ -194,16 +207,18 @@ TravelArrivalSave applyTravelArrivalResult(
   num nowMs,
 ) {
   if (isDeathPaused(save, nowMs)) {
-    return TravelArrivalSave(save: save, questCompletions: const <QuestArrivalCompletion>[]);
+    return TravelArrivalSave(
+      save: save,
+      questCompletions: const <QuestArrivalCompletion>[],
+    );
   }
   final stopped = stopPrimaryActivityNow(db, save, nowMs);
   final arrived = stopped.copyWith(currentLocationId: destinationLocationId);
-  final auto = applyQuestAutoCompleteOnVisit(
-    db,
-    applyQuestLocationProgress(db, arrived, destinationLocationId),
-  );
+  final progressed = applyQuestLocationProgressResult(db, arrived, destinationLocationId);
+  final auto = applyQuestAutoCompleteOnVisit(db, progressed.save);
   return TravelArrivalSave(
     save: maybeGrantKingswoodsSling(db, auto.save).save,
     questCompletions: auto.completions,
+    discoveryNotice: progressed.message,
   );
 }

@@ -6,6 +6,8 @@ import {
   questIsActiveOrComplete,
   questIsComplete,
 } from '../quests/progress'
+import { getQuest } from '../quests/quests'
+import { getCurrentStepId } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { getSkillProgress } from './xp'
 
@@ -19,6 +21,7 @@ export const KNOWN_REQUIREMENT_TYPES = [
   'Quest Active',
   'Quest Complete',
   'Quest Flag',
+  'Quest Step',
   'Item Absent',
 ] as const
 
@@ -164,6 +167,26 @@ export function evaluateRequirement(
     return { met, detail: met ? 'Quest flag set' : 'Not available yet' }
   }
 
+  if (type === 'Quest Step') {
+    const colon = reference.indexOf(':')
+    if (colon <= 0) {
+      return { met: false, detail: 'Quest step is incomplete.' }
+    }
+    const questId = reference.slice(0, colon)
+    const stepIds = reference
+      .slice(colon + 1)
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+    if (!questIsActive(save, questId)) {
+      return { met: false, detail: 'Not available yet' }
+    }
+    const quest = getQuest(db, questId)
+    const current = quest ? getCurrentStepId(db, save, quest) : null
+    const met = current != null && stepIds.includes(current)
+    return { met, detail: met ? 'On this quest step' : 'Not available yet' }
+  }
+
   if (type === 'Item Absent') {
     const met = inventoryCount(save, reference) <= 0
     return {
@@ -181,6 +204,7 @@ function isQuestGateRequirement(type: string): boolean {
     type === 'Quest Flag' ||
     type === 'Quest Active' ||
     type === 'Quest Complete' ||
+    type === 'Quest Step' ||
     type === 'Item Absent'
   )
 }

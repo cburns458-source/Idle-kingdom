@@ -28,6 +28,7 @@ export interface TravelArrival {
   message: string | null
   /** Visit-complete quests that should show a reward popup. */
   questCompletions: QuestArrivalCompletion[]
+  discoveryNotice: string | null
 }
 
 function arrivalOf(db: GameDatabase, result: HostileTravelArrivalResult): TravelArrival {
@@ -37,6 +38,7 @@ function arrivalOf(db: GameDatabase, result: HostileTravelArrivalResult): Travel
     blockedReason: result.forceBlockedReason,
     message: hostileForceMessage(db, result),
     questCompletions: result.questCompletions ?? [],
+    discoveryNotice: result.discoveryNotice ?? null,
   }
 }
 

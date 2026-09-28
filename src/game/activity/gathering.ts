@@ -1,5 +1,5 @@
 import { applyQuiverHuntingXp } from '../equipment/specialist'
-import { equippedActionTimeReductionPercent } from '../equipment/loadout'
+import { equippedActionTimeReductionPercentForAction } from '../equipment/loadout'
 import type { ActionRow, GameDatabase } from '../data/types'
 import { equippedEnchantmentGatheringMultiplier } from '../projects/enchantments'
 import type { PlayerSave } from '../save/types'
@@ -56,7 +56,7 @@ export function gatheringDurationMs(
     skill.level < proficiency
       ? configNumber(db, 'gathering_below_proficiency_duration_multiplier', 2)
       : 1
-  const atr = equippedActionTimeReductionPercent(db, save, action['Relevant Skill ID'])
+  const atr = equippedActionTimeReductionPercentForAction(db, save, action)
   const reductionFactor = Math.max(0.01, 1 - atr / 100)
   const enchantFactor = equippedEnchantmentGatheringMultiplier(
     db,

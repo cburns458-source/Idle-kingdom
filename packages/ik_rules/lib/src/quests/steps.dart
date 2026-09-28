@@ -6,6 +6,7 @@ import '../activity/xp.dart';
 import '../js_compat.dart';
 import '../production/recipes.dart';
 import '../save/generated/save_models.dart';
+import '../world/submaps.dart';
 import 'objectives.dart';
 import 'progress.dart';
 import 'quests.dart';
@@ -150,6 +151,34 @@ int getCurrentStepIndex(GameDatabase db, PlayerSave save, QuestRow quest) {
     if (!_isStepComplete(db, save, questId, step.notes ?? '', step.stepId)) return index;
   }
   return steps.length;
+}
+
+String? getCurrentStepId(GameDatabase db, PlayerSave save, QuestRow quest) {
+  final steps = getQuestSteps(db, jsString(quest['Quest ID']));
+  final index = getCurrentStepIndex(db, save, quest);
+  if (index < 0 || index >= steps.length) return null;
+  return steps[index].stepId;
+}
+
+/// Unlocks locations listed on completed steps (`UnlockLocation` in step Notes).
+PlayerSave applyQuestStepUnlocks(GameDatabase db, PlayerSave save) {
+  var unlocked = [...save.unlockedLocationIds];
+  var changed = false;
+  for (final quest in asQuestRows(db)) {
+    final questId = jsString(quest['Quest ID']);
+    if (getQuestProgress(save, questId).status != 'active') continue;
+    for (final step in getQuestSteps(db, questId)) {
+      if (!_isStepComplete(db, save, questId, step.notes ?? '', step.stepId)) continue;
+      for (final locationId in parseNotesObjectives(step.notes ?? '').unlockLocationIds) {
+        final next = unlockLocation(unlocked, locationId);
+        if (next.length != unlocked.length) {
+          unlocked = next;
+          changed = true;
+        }
+      }
+    }
+  }
+  return changed ? save.copyWith(unlockedLocationIds: unlocked) : save;
 }
 
 String currentStepTalkKey(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
@@ -364,12 +393,14 @@ List<QuestProgressLine> questActionProgressForActivity(
     final questId = jsString(quest['Quest ID']);
     if (getQuestProgress(save, questId).status != 'active') continue;
     if (questUsesSteps(db, questId)) {
-      for (final step in getQuestSteps(db, questId)) {
-        for (final line in _stepProgressLines(db, save, questId, step.notes ?? '')) {
-          if (!line.key.startsWith('action:')) continue;
-          final actionId = line.key.substring('action:'.length);
-          if (actionIds.contains(actionId)) lines.add(line);
-        }
+      final index = getCurrentStepIndex(db, save, quest);
+      final steps = getQuestSteps(db, questId);
+      if (index < 0 || index >= steps.length) continue;
+      final step = steps[index];
+      for (final line in _stepProgressLines(db, save, questId, step.notes ?? '', step.stepId)) {
+        if (!line.key.startsWith('action:')) continue;
+        final actionId = line.key.substring('action:'.length);
+        if (actionIds.contains(actionId)) lines.add(line);
       }
     } else {
       for (final line in _stepProgressLines(db, save, questId, jsString(quest['Notes']))) {

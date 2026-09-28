@@ -40,6 +40,8 @@ export const LOCATION_ASSET_PATHS: Record<string, string> = {
   'LOC-0042': '/assets/locations/loc_the_depths.webp',
   'LOC-0043': '/assets/locations/loc_the_shallows.webp',
   'LOC-0044': '/assets/locations/loc_starlight_glade.webp',
+  'LOC-0050': '/assets/locations/loc_forest_path.webp',
+  'LOC-0051': '/assets/locations/loc_starlight_glade.webp',
   'LOC-0045': '/assets/locations/loc_the_shallows.webp',
   'LOC-0046': '/assets/locations/loc_mountains.webp',
   'LOC-0047': '/assets/locations/loc_mountains.webp',

@@ -130,7 +130,8 @@ bool _isQuestOnlyRequirement(RequirementRow requirement) {
   return type == 'Quest Access' ||
       type == 'Quest Flag' ||
       type == 'Quest Active' ||
-      type == 'Quest Complete';
+      type == 'Quest Complete' ||
+      type == 'Quest Step';
 }
 
 /// True when every activity that can roll this action is quest-gated.

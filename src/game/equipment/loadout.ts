@@ -437,3 +437,48 @@ export function equippedActionTimeReductionPercent(
   if (!skillId) return 0
   return Math.max(0, equippedActionTimeReductionBySkill(db, save)[skillId] ?? 0)
 }
+
+const VINE_ATR_CAPABILITY = /vine_atr:\s*(\d+)/i
+
+export function isVineChopAction(action: { Notes?: string | null; 'Internal Key'?: string | null }): boolean {
+  if (/(?:^|;)\s*VineChop\s*(?:;|$)/i.test(action.Notes ?? '')) return true
+  return (action['Internal Key'] ?? '').toLowerCase().includes('vine')
+}
+
+function equippedVineChopOverride(
+  db: GameDatabase,
+  save: PlayerSave,
+): { override: number; listedAtr: number } | null {
+  let best: { override: number; listedAtr: number } | null = null
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.itemId) continue
+    const row = db.Equipment.find((entry) => entry['Item ID'] === stack.itemId)
+    const caps = row?.['Capabilities / Effects']
+    if (typeof caps !== 'string') continue
+    const match = caps.match(VINE_ATR_CAPABILITY)
+    if (!match) continue
+    const override = Number(match[1])
+    if (!Number.isFinite(override) || override <= 0) continue
+    const listedAtr = Number(row?.['Action Time Reduction %'] ?? 0)
+    if (!best || override > best.override) {
+      best = { override, listedAtr: Number.isFinite(listedAtr) ? listedAtr : 0 }
+    }
+  }
+  return best
+}
+
+/** Vine chops can raise ATR to a tool-specific value (machete). */
+export function equippedActionTimeReductionPercentForAction(
+  db: GameDatabase,
+  save: PlayerSave,
+  action: { Notes?: string | null; 'Internal Key'?: string | null; 'Relevant Skill ID'?: string | null },
+): number {
+  const skillAtr = equippedActionTimeReductionPercent(db, save, action['Relevant Skill ID'])
+  if (!isVineChopAction(action)) return skillAtr
+  const vine = equippedVineChopOverride(db, save)
+  if (!vine) return skillAtr
+  return Math.min(
+    ACTION_TIME_REDUCTION_CAP_PERCENT,
+    Math.max(0, skillAtr - vine.listedAtr + vine.override),
+  )
+}
