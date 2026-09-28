@@ -28,7 +28,7 @@ export function specialProductionStationLabel(skillId: string, skillName: string
 }
 
 export function isCompleteProject(project: ProjectRow): boolean {
-  if (project.Status === 'Needs Data') return false
+  if (project.Status === 'Needs Data' || project.Status === 'Retired') return false
   if (project.Instant !== 'Yes') return false
   if (typeof project['XP Reward'] !== 'number') return false
   if (typeof project['Output Quantity'] !== 'number') return false

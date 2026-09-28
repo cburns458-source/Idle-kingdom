@@ -77,18 +77,18 @@ describe('specialist hats and quiver', () => {
       ),
     }
     save = addItemToInventory(save, 'ITEM-0098', 1)
-    const gatheringEssence = Number(
-      launch.Projects.find((row) => row['Project ID'] === 'PRJ-0134')?.['Input 2 Quantity'] ?? 0,
+    const miningEssence = Number(
+      launch.Projects.find((row) => row['Project ID'] === 'PRJ-0159')?.['Input 2 Quantity'] ?? 0,
     )
-    const discounted = wizardEssenceCost(gatheringEssence, save)
+    const discounted = wizardEssenceCost(miningEssence, save)
     save = addItemToInventory(save, 'ITEM-0011', discounted)
-    save = addItemToInventory(save, 'ITEM-0031', 10)
+    save = addItemToInventory(save, 'ITEM-0006', 10)
     save = addItemToInventory(save, 'ITEM-0119', 1)
     const invIndex = save.inventory.findIndex((stack) => stack.itemId === 'ITEM-0119')
     const result = completeSpecialProject(
       launch,
       save,
-      'PRJ-0134',
+      'PRJ-0159',
       1,
       encodeEnchantTarget({ kind: 'inventory', index: invIndex }),
     )

@@ -18,8 +18,13 @@ import {
 import {
   criticalStrikeDamageMultiplier,
   equippedEnchantmentCritChancePercent,
+  equippedEnchantmentHasDoubleShot,
   equippedEnchantmentThornsPercent,
 } from '../projects/enchantments'
+import {
+  activeSpellGoldDoubleChancePercent,
+  activeSpellLifestealPercent,
+} from '../spells/spells'
 import { applyBountyDefeatProgress } from '../bounties/progress'
 import { applyQuestDefeatProgress } from '../quests/progress'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
@@ -204,6 +209,27 @@ export function resolveCombatRound(
 
   const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null
 
+  // Double Shot: 50% chance for a second main-hand bow hit (no extra enemy swing).
+  if (
+    !lockpickCombat &&
+    !fishingMode &&
+    nextEnemyHp > 0 &&
+    equippedEnchantmentHasDoubleShot(db, save) &&
+    random() < 0.5
+  ) {
+    const playerRange = playerDamageRange(db, save)
+    let secondHit = rollDamage(playerRange.min, playerRange.max, random)
+    const critChance = equippedEnchantmentCritChancePercent(db, save)
+    if (critChance > 0 && random() * 100 < critChance) {
+      playerCrit = true
+      secondHit = Math.max(1, Math.floor(secondHit * criticalStrikeDamageMultiplier()))
+    }
+    if (bossInkActive) secondHit = Math.max(1, Math.floor(secondHit / 2))
+    secondHit = applySleepIncoming(secondHit, asleep)
+    playerHit += secondHit
+    nextEnemyHp = Math.max(0, nextEnemyHp - secondHit)
+  }
+
   if (
     !lockpickCombat &&
     !fishingMode &&
@@ -271,6 +297,9 @@ export function resolveCombatRound(
     bossPendingHp = nextEnemyHp
   }
 
+  const damageDealt = playerHit + (offhandHit ?? 0) + (staffHit ?? 0)
+  const hpAfterLifesteal = applyLifestealHeal(db, save, save.currentHp, damageDealt)
+
   if (nextEnemyHp <= 0 && !bossAddsTriggered) {
     return {
       playerHit,
@@ -288,7 +317,7 @@ export function resolveCombatRound(
       bossInkActive,
       bossPendingHp: null,
       enemyHp: 0,
-      playerHp: save.currentHp,
+      playerHp: hpAfterLifesteal,
       outcome: 'victory',
     }
   }
@@ -310,7 +339,7 @@ export function resolveCombatRound(
       bossInkActive,
       bossPendingHp,
       enemyHp: bossPendingHp ?? nextEnemyHp,
-      playerHp: save.currentHp,
+      playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
     }
   }
@@ -332,7 +361,7 @@ export function resolveCombatRound(
       bossInkActive,
       bossPendingHp: null,
       enemyHp: nextEnemyHp,
-      playerHp: save.currentHp,
+      playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
     }
   }
@@ -342,7 +371,7 @@ export function resolveCombatRound(
   let enemyRaw = rollDamage(enemyRange.min, enemyRange.max, random)
   if (rampage) enemyRaw *= 2
   const enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor)
-  const playerHp = Math.max(0, save.currentHp - enemyHit)
+  const playerHp = Math.max(0, hpAfterLifesteal - enemyHit)
 
   const thornsPercent = equippedEnchantmentThornsPercent(db, save)
   let thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0
@@ -372,6 +401,20 @@ export function resolveCombatRound(
     // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.
     outcome: playerHp <= 0 ? 'defeat' : nextEnemyHp <= 0 ? 'victory' : 'ongoing',
   }
+}
+
+/** Heal from Lifesteal spells based on damage dealt this round, clamped to max HP. */
+function applyLifestealHeal(
+  db: GameDatabase,
+  save: PlayerSave,
+  currentHp: number,
+  damageDealt: number,
+): number {
+  const percent = activeSpellLifestealPercent(db, save)
+  if (percent <= 0 || damageDealt <= 0) return currentHp
+  const heal = Math.floor((damageDealt * percent) / 100)
+  if (heal <= 0) return currentHp
+  return Math.min(playerMaxHp(db, save), currentHp + heal)
 }
 
 export function applyCombatVictory(
@@ -433,6 +476,12 @@ export function applyCombatVictory(
     const racedGold = applyRaceGoldGain(db, save, goldRoll)
     next = { ...next, gold: next.gold + racedGold }
     goldGained += racedGold
+  }
+  // Hoard: chance to double all gold from this victory (after race multipliers).
+  const hoardChance = activeSpellGoldDoubleChancePercent(db, next)
+  if (hoardChance > 0 && goldGained > 0 && random() * 100 < hoardChance) {
+    next = { ...next, gold: next.gold + goldGained }
+    goldGained *= 2
   }
 
   const kills = Number(next.statistics.values.monsters_killed ?? 0) + 1

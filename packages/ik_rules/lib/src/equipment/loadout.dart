@@ -7,6 +7,7 @@ import '../activity/xp.dart';
 import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
 import '../js_compat.dart';
+import '../projects/enchantments.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
 import '../tags.dart';
@@ -410,6 +411,11 @@ Map<String, num> equippedActionTimeReductionBySkill(GameDatabase db, PlayerSave 
       final id = skillId as String;
       totals[id] = (totals[id] ?? 0) + amount;
     }
+  }
+  // Tool enchantments (Mining/Fishing/Woodcutting ATR) add on top of item ATR.
+  final fromEnchant = equippedEnchantmentActionTimeReductionBySkill(db, save);
+  for (final entry in fromEnchant.entries) {
+    totals[entry.key] = (totals[entry.key] ?? 0) + entry.value;
   }
   for (final skillId in totals.keys.toList()) {
     totals[skillId] = math.min(actionTimeReductionCapPercent, math.max(0, totals[skillId]!));

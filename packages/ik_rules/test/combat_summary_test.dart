@@ -37,7 +37,7 @@ void main() {
     expect(
       summary.activeBonuses.map((bonus) => bonus.name),
       containsAll(<String>[
-        'Minor Combat Enchantment',
+        'Minor Strength Enchantment',
         'Thorns',
         'Strength Spell ×2',
         'Abundance Spell',
@@ -64,7 +64,7 @@ void main() {
     );
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Spell'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Potion'));
-    expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '165–297');
+    expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '138–277');
 
     final offhand = playerOffhandDamageRange(db, save);
     if (offhand != null) {

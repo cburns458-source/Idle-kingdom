@@ -79,6 +79,36 @@ function isArmorEquipment(equipment: EquipmentRow): boolean {
   return typeof equipment['Damage Reduction'] === 'number'
 }
 
+function toolHasCapability(
+  equipment: EquipmentRow,
+  capability: string,
+): boolean {
+  return capabilityTags(equipment['Capabilities / Effects']).includes(capability)
+}
+
+export function isBowItem(item: ItemRow | undefined, equipment: EquipmentRow): boolean {
+  const subtype = (item?.Subtype ?? '').toLowerCase()
+  const key = (item?.['Internal Key'] ?? '').toLowerCase()
+  const name = (item?.['Display Name'] ?? '').toLowerCase()
+  if (subtype === 'bow' || key.includes('bow') || /\bbow\b/.test(name)) return true
+  const caps = capabilityTags(equipment['Capabilities / Effects'])
+  return caps.includes('bow') || caps.includes('bow_combat_xp')
+}
+
+function isMiningTool(item: ItemRow | undefined, equipment: EquipmentRow): boolean {
+  if (isAxeItem(item, equipment)) return false
+  return toolHasCapability(equipment, 'mining_tool')
+}
+
+function isFishingTool(_item: ItemRow | undefined, equipment: EquipmentRow): boolean {
+  return toolHasCapability(equipment, 'fishing_tool')
+}
+
+function isWoodcuttingTool(item: ItemRow | undefined, equipment: EquipmentRow): boolean {
+  if (isAxeItem(item, equipment)) return false
+  return toolHasCapability(equipment, 'woodcutting_tool')
+}
+
 function equipmentMatchesEnchantment(
   db: GameDatabase,
   itemId: string,
@@ -94,6 +124,10 @@ function equipmentMatchesEnchantment(
   // either gathering or weapon-category (combat) enchantments, despite not being a tool/weapon.
   const isEnchantableAccessory = caps.includes('arcana_enchantable')
 
+  if (target.includes('bow')) return isBowItem(item, equipment)
+  if (target.includes('mining')) return isMiningTool(item, equipment)
+  if (target.includes('fishing')) return isFishingTool(item, equipment)
+  if (target.includes('woodcutting')) return isWoodcuttingTool(item, equipment)
   if (target.includes('weapon') && (isWeaponEquipment(item, equipment) || isEnchantableAccessory))
     return true
   if (target.includes('jewelry') && isEnchantableAccessory) return true
@@ -256,18 +290,100 @@ export function applyEnchantmentToSlot(
   return applyEnchantmentToTarget(save, { kind: 'equipped', slotId }, enchantmentId)
 }
 
-/** Flat damage bonus from equipped enchantments with explicit numeric data. */
+/**
+ * Flat damage bonus from equipped enchantments with explicit numeric data.
+ * Legacy only: Minor Strength was reworked from +20 flat to +5% damage range.
+ */
 export function equippedEnchantmentDamageBonus(db: GameDatabase, save: PlayerSave): number {
   let bonus = 0
   for (const stack of Object.values(save.equipment.slots)) {
     if (!stack?.enchantmentId) continue
-    if (stack.enchantmentId === 'ENCH-0003') bonus += 20
-    else {
-      const row = getEnchantment(db, stack.enchantmentId)
-      if (row?.Effect?.includes('+20 minimum and maximum Damage')) bonus += 20
-    }
+    const row = getEnchantment(db, stack.enchantmentId)
+    if (row?.Effect?.includes('+20 minimum and maximum Damage')) bonus += 20
   }
   return bonus
+}
+
+/** Damage-range multiplier from weapon enchantments (+N% damage range). */
+export function equippedEnchantmentDamageRangeMultiplier(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  let percent = 0
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.enchantmentId) continue
+    const row = getEnchantment(db, stack.enchantmentId)
+    const match = row?.Effect?.match(/\+(\d+(?:\.\d+)?)%\s*damage range/i)
+    if (match) percent += Number(match[1])
+  }
+  return 1 + percent / 100
+}
+
+/** Max-HP bonus percent from armor enchantments (e.g. Vital Plating). */
+export function equippedEnchantmentMaxHpBonusPercent(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  let percent = 0
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.enchantmentId) continue
+    const row = getEnchantment(db, stack.enchantmentId)
+    const match = row?.Effect?.match(/\+(\d+(?:\.\d+)?)%\s*maximum HP/i)
+    if (match) percent += Number(match[1])
+  }
+  return percent
+}
+
+/** True when an equipped bow carries Double Shot. */
+export function equippedEnchantmentHasDoubleShot(db: GameDatabase, save: PlayerSave): boolean {
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.itemId || !stack.enchantmentId) continue
+    const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
+    const item = db.Items.find((row) => row['Item ID'] === stack.itemId)
+    if (!equipment || !isBowItem(item, equipment)) continue
+    if (stack.enchantmentId === 'ENCH-0018') return true
+    const row = getEnchantment(db, stack.enchantmentId)
+    if (row?.Effect && /attack twice/i.test(row.Effect)) return true
+  }
+  return false
+}
+
+const MINING_SKILL_ID = 'SKL-0002'
+const FISHING_SKILL_ID = 'SKL-0003'
+const WOODCUTTING_SKILL_ID = 'SKL-0006'
+
+function skillIdFromDurationEffect(effect: string): string | null {
+  if (/Mining Action duration/i.test(effect)) return MINING_SKILL_ID
+  if (/Fishing Action duration/i.test(effect)) return FISHING_SKILL_ID
+  if (/Woodcutting Action duration/i.test(effect)) return WOODCUTTING_SKILL_ID
+  if (/Gathering Action duration/i.test(effect)) return '*'
+  return null
+}
+
+function skillIdFromAtrEffect(effect: string): string | null {
+  if (/Mining action time reduction/i.test(effect)) return MINING_SKILL_ID
+  if (/Fishing action time reduction/i.test(effect)) return FISHING_SKILL_ID
+  if (/Woodcutting action time reduction/i.test(effect)) return WOODCUTTING_SKILL_ID
+  return null
+}
+
+/** Action-time reduction percent from tool enchantments, keyed by skill. */
+export function equippedEnchantmentActionTimeReductionBySkill(
+  db: GameDatabase,
+  save: PlayerSave,
+): Record<string, number> {
+  const totals: Record<string, number> = {}
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.enchantmentId) continue
+    const row = getEnchantment(db, stack.enchantmentId)
+    const effect = row?.Effect ?? ''
+    const skillId = skillIdFromAtrEffect(effect)
+    if (!skillId) continue
+    const match = effect.match(/\+(\d+(?:\.\d+)?)%\s+\w+\s+action time reduction/i)
+    if (!match) continue
+    totals[skillId] = (totals[skillId] ?? 0) + Number(match[1])
+  }
+  return totals
 }
 
 const CRIT_STRIKE_ENCHANTMENT_ID = 'ENCH-0008'
@@ -315,23 +431,32 @@ export function equippedEnchantmentThornsPercent(db: GameDatabase, save: PlayerS
   return percent
 }
 
-/** Gathering duration multiplier from equipped enchantments (e.g. -2% => 0.98). */
+/**
+ * Gathering duration multiplier from equipped enchantments.
+ * Pass `skillId` so skill-specific minors (mining/fishing/woodcutting) only apply
+ * to matching actions. Legacy ENCH-0002 still reduces all gathering.
+ */
 export function equippedEnchantmentGatheringMultiplier(
   db: GameDatabase,
   save: PlayerSave,
+  skillId: string | null | undefined = null,
 ): number {
   let multiplier = 1
   for (const stack of Object.values(save.equipment.slots)) {
     if (!stack?.enchantmentId) continue
+    const row = getEnchantment(db, stack.enchantmentId)
+    const effect = row?.Effect ?? ''
     if (stack.enchantmentId === 'ENCH-0002') {
       multiplier *= 0.98
       continue
     }
-    const row = getEnchantment(db, stack.enchantmentId)
-    const match = row?.Effect?.match(/-(\d+(?:\.\d+)?)% eligible Gathering Action duration/i)
-    if (match) {
-      multiplier *= 1 - Number(match[1]) / 100
-    }
+    const match = effect.match(/-(\d+(?:\.\d+)?)%\s+(.+?)\s+Action duration/i)
+    if (!match) continue
+    const scope = skillIdFromDurationEffect(effect)
+    if (!scope) continue
+    if (scope !== '*' && skillId && scope !== skillId) continue
+    if (scope !== '*' && !skillId) continue
+    multiplier *= 1 - Number(match[1]) / 100
   }
   return Math.max(0.01, multiplier)
 }

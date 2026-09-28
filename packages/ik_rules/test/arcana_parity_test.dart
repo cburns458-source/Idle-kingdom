@@ -51,6 +51,17 @@ void main() {
                     'effectEnchantmentId': spellEffectEnchantmentId(db, row.itemId),
                     'damageRangeBonus': spellDamageRangeBonusPercent(db, row.itemId),
                     'itemDoubleChance': spellItemDoubleChancePercent(db, row.itemId),
+                    'goldDoubleChance': spellGoldDoubleChancePercent(db, row.itemId),
+                    'damageReduction': spellDamageReductionPercent(db, row.itemId),
+                    'lifesteal': spellLifestealPercent(db, row.itemId),
+                    'productionDurationReduction': spellProductionDurationReductionPercent(
+                      db,
+                      row.itemId,
+                    ),
+                    'gatheringDurationReduction': spellGatheringDurationReductionPercent(
+                      db,
+                      row.itemId,
+                    ),
                   },
                 )
                 .toList(),
@@ -90,6 +101,11 @@ void main() {
             'firstEmpty': firstEmptySpellSlot(save),
             'damageMultiplier': activeSpellDamageRangeMultiplier(db, save),
             'doubleChance': activeSpellItemDoubleChancePercent(db, save),
+            'goldDoubleChance': activeSpellGoldDoubleChancePercent(db, save),
+            'damageReduction': activeSpellDamageReductionPercent(db, save),
+            'lifesteal': activeSpellLifestealPercent(db, save),
+            'productionDurationMultiplier': activeSpellProductionDurationMultiplier(db, save),
+            'gatheringDurationMultiplier': activeSpellGatheringDurationMultiplier(db, save),
           }),
           isNull,
         );
@@ -207,6 +223,10 @@ void main() {
         expect(
           checkParity(fixture, {
             'damageBonus': equippedEnchantmentDamageBonus(db, save),
+            'damageRangeMultiplier': equippedEnchantmentDamageRangeMultiplier(db, save),
+            'maxHpBonusPercent': equippedEnchantmentMaxHpBonusPercent(db, save),
+            'hasDoubleShot': equippedEnchantmentHasDoubleShot(db, save),
+            'atrBySkill': equippedEnchantmentActionTimeReductionBySkill(db, save),
             'critChance': equippedEnchantmentCritChancePercent(db, save),
             'thorns': equippedEnchantmentThornsPercent(db, save),
             'gatheringMultiplier': equippedEnchantmentGatheringMultiplier(db, save),

@@ -183,7 +183,7 @@ void main() {
     );
     await tester.tap(find.byType(GameDropdown<String>).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Minor Combat Enchantment').last);
+    await tester.tap(find.textContaining('Minor Strength Enchantment').last);
     await tester.pumpAndSettle();
     expect(find.text('Item to enchant'), findsOne);
 
