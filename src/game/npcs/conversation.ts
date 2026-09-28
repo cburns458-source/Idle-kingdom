@@ -90,9 +90,13 @@ function requiredTalkNpcIdsFromNotes(notes: string | null): string[] {
     .filter((id) => /^[A-Z]+-\d+$/.test(id))
 }
 
-function requiredStepIdFromNotes(notes: string | null): string | null {
-  const field = (notes ?? '').match(/(?:^|;)\s*RequiresStep:\s*(QSTP-\d+)/i)?.[1]
-  return field ? field.toUpperCase() : null
+function requiredStepIdsFromNotes(notes: string | null): string[] {
+  const field = (notes ?? '').match(/(?:^|;)\s*RequiresStep:\s*([^;]+)/i)?.[1]
+  if (!field) return []
+  return field
+    .split(',')
+    .map((part) => part.trim().toUpperCase())
+    .filter((id) => /^QSTP-\d+$/.test(id))
 }
 
 function whenCompletedFromNotes(notes: string | null): boolean {
@@ -118,8 +122,10 @@ export function questTalkLine(
     const notes = row.Notes ?? null
     if (whenCompletedFromNotes(notes)) return status === 'completed'
     if (status === 'completed') return false
-    const requiredStep = requiredStepIdFromNotes(notes)
-    if (requiredStep && requiredStep !== currentStepId) return false
+    const requiredSteps = requiredStepIdsFromNotes(notes)
+    if (requiredSteps.length > 0 && (!currentStepId || !requiredSteps.includes(currentStepId))) {
+      return false
+    }
     const required = requiredTalkNpcIdsFromNotes(notes)
     if (required.length === 0) return true
     if (!save) return false
@@ -130,7 +136,7 @@ export function questTalkLine(
     return (
       whenCompletedFromNotes(notes) ||
       requiredTalkNpcIdsFromNotes(notes).length > 0 ||
-      requiredStepIdFromNotes(notes) != null
+      requiredStepIdsFromNotes(notes).length > 0
     )
   })
   const line = (specific[0] ?? matching[0])?.Line
@@ -274,6 +280,7 @@ function questBlock(
     hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat')
   const donated = hasQuestFlag(save, questId, ACCEPT_GOLD_FLAG)
   const needsDonate = parsed.acceptGoldCost > 0 && !donated
+  const talkLine = questTalkLine(db, questId, npcId, save)
   let acceptLabel = 'Accept quest'
   if (parsed.acceptGoldCost > 0) {
     acceptLabel = `Start the quest ${quest['Display Name']}?`
@@ -304,8 +311,9 @@ function questBlock(
       !parsed.autoCompleteOnVisit,
     canTalk: status === 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talkedThisStep,
     talkLabel: 'Talk',
-    talkLine: questTalkLine(db, questId, npcId, save),
-    idlePrompt: configString(db, 'copy.quest_active_prompt', FALLBACK_QUEST_ACTIVE_PROMPT),
+    talkLine,
+    idlePrompt:
+      talkLine ?? configString(db, 'copy.quest_active_prompt', FALLBACK_QUEST_ACTIVE_PROMPT),
     canBribe:
       status === 'active' && parsed.choiceNpcId === npcId && parsed.bribeGold > 0 && !chose,
     bribeLabel: `Bribe ${parsed.bribeGold.toLocaleString()} gold`,
@@ -362,7 +370,10 @@ function greetingFor(
   }
 
   const pitched = quests.find(
-    (quest) => quest.pitchLine !== null && quest.status === 'inactive',
+    (quest) =>
+      quest.pitchLine !== null &&
+      quest.status === 'inactive' &&
+      (quest.canAccept || quest.canDonate),
   )
   if (!pitched || pitched.pitchLine === null) return null
   return {
@@ -526,6 +537,12 @@ export function talkWithQuestNpc(
   save: PlayerSave,
   npcId: string,
 ): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+  const spokenBefore = new Map(
+    questsTouchingNpc(db, save, npcId).map((quest) => [
+      quest['Quest ID'],
+      questTalkLine(db, quest['Quest ID'], npcId, save),
+    ]),
+  )
   let next = applyQuestTalkProgress(db, save, npcId)
   if (farmBotanyUnlocked(next)) {
     next = discoverTimerSpotsForLocation(next, FARM_LOCATION_ID)
@@ -537,10 +554,14 @@ export function talkWithQuestNpc(
     if (!questAllStepsComplete(db, next, quest)) continue
     const completed = completeQuest(db, next, quest['Quest ID'])
     if (completed.ok) {
+      const spoken =
+        questTalkLine(db, quest['Quest ID'], npcId, completed.save) ??
+        spokenBefore.get(quest['Quest ID']) ??
+        completed.message
       return {
         ok: true,
         save: completed.save,
-        message: `Thank you — ${quest['Display Name']}.`,
+        message: spoken,
       }
     }
   }

@@ -39,7 +39,9 @@ class StructuredQuestObjectives {
     required this.holds,
     required this.actionTargets,
     required this.plantTargets,
+    this.requiresCompost = false,
     required this.giveOnTalk,
+    this.rewardItems = const <QuestCounterTarget>[],
     required this.requiresSkills,
     required this.requiresQuestIds,
     required this.unlockOnAcceptLocationIds,
@@ -85,7 +87,9 @@ class StructuredQuestObjectives {
   final List<QuestCounterTarget> holds;
   final List<QuestCounterTarget> actionTargets;
   final List<QuestCounterTarget> plantTargets;
+  final bool requiresCompost;
   final List<QuestCounterTarget> giveOnTalk;
+  final List<QuestCounterTarget> rewardItems;
   final List<QuestCounterTarget> requiresSkills;
   final List<String> requiresQuestIds;
   final List<String> unlockOnAcceptLocationIds;
@@ -128,7 +132,9 @@ class StructuredQuestObjectives {
     'holds': holds.map((line) => line.toJson()).toList(),
     'actionTargets': actionTargets.map((line) => line.toJson()).toList(),
     'plantTargets': plantTargets.map((line) => line.toJson()).toList(),
+    'requiresCompost': requiresCompost,
     'giveOnTalk': giveOnTalk.map((line) => line.toJson()).toList(),
+    'rewardItems': rewardItems.map((line) => line.toJson()).toList(),
     'requiresSkills': requiresSkills
         .map((line) => <String, Object?>{'skillId': line.targetId, 'level': line.quantity})
         .toList(),
@@ -270,6 +276,7 @@ StructuredQuestObjectives parseNotesObjectives(
   final actionNote = _noteField(notes, r'Action:\s*([^;]+)');
   final plantNote = _noteField(notes, r'Plant:\s*([^;]+)');
   final giveOnTalkNote = _noteField(notes, r'GiveOnTalk:\s*([^;]+)');
+  final rewardItemNote = _noteField(notes, r'RewardItem:\s*([^;]+)');
   final goldNote = _noteField(notes, r'GoldCost:\s*(\d+)');
 
   if (delivers.isEmpty && kind == 'gather_deliver') {
@@ -347,6 +354,10 @@ StructuredQuestObjectives parseNotesObjectives(
     giveOnTalk: giveOnTalkNote == null
         ? const <QuestCounterTarget>[]
         : _parseIdQtyList(giveOnTalkNote),
+    requiresCompost: RegExp(r'(?:^|;)\s*RequiresCompost\b', caseSensitive: false).hasMatch(notes),
+    rewardItems: rewardItemNote == null
+        ? const <QuestCounterTarget>[]
+        : _parseIdQtyList(rewardItemNote),
     requiresSkills: const <QuestCounterTarget>[],
     requiresQuestIds: const <String>[],
     unlockOnAcceptLocationIds: const <String>[],
@@ -443,7 +454,9 @@ StructuredQuestObjectives parseStructuredObjectives(QuestRow quest) {
     holds: objectives.holds,
     actionTargets: objectives.actionTargets,
     plantTargets: objectives.plantTargets,
+    requiresCompost: objectives.requiresCompost,
     giveOnTalk: objectives.giveOnTalk,
+    rewardItems: objectives.rewardItems,
     requiresSkills: requiresSkillNote == null
         ? const <QuestCounterTarget>[]
         : _parseSkillAmountList(requiresSkillNote),

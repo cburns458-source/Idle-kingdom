@@ -22,6 +22,7 @@ const String farmLocationId = 'LOC-0001';
 const String courtyardLocationId = 'LOC-0014';
 const String grandFeastQuestId = 'QST-0001';
 const String firstPlantingQuestId = 'QST-0011';
+const num farmGreenThumbCollectBonus = 10;
 const String fennelNpcId = 'NPC-0014';
 const String potatoSeedItemId = 'ITEM-0324';
 const String carrotSeedItemId = 'ITEM-0339';
@@ -103,6 +104,22 @@ num botanySuccessChancePercent(num botanyLevel, num requiredLevel, {bool usedCom
   final extra = level - required;
   final chance = 25 + 0.5 * level + 0.5 * (extra < 0 ? 0 : extra) + (usedCompost ? 25 : 0);
   return chance > 100 ? 100 : chance;
+}
+
+num botanyCollectChancePercent(
+  PlayerSave save,
+  String locationId,
+  num botanyLevel,
+  num requiredLevel, {
+  bool usedCompost = false,
+}) {
+  final chance = botanySuccessChancePercent(botanyLevel, requiredLevel, usedCompost: usedCompost);
+  final bonus =
+      locationId == farmLocationId &&
+          getQuestProgress(save, firstPlantingQuestId).status == 'completed'
+      ? farmGreenThumbCollectBonus
+      : 0;
+  return chance + bonus > 100 ? 100 : chance + bonus;
 }
 
 num compostCostForSpecs(Iterable<BotanySeedSpec> specs) {
@@ -523,6 +540,9 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
   final gate = canPlantBotanySelection(db, save, seedItemIds, locationId: loc);
   if (!gate.ok) return (ok: false, save: null, reason: gate.reason);
   final plantedItemIds = gate.plantedItemIds;
+  if (!usedCompost && questPlantRequiresCompost(db, save, plantedItemIds)) {
+    return (ok: false, save: null, reason: 'Plant that seed with compost.');
+  }
   final specs = [for (final itemId in plantedItemIds) parseBotanySeedSpec(db, itemId)!];
   if (usedCompost) {
     if (specs.any((spec) => spec.shallowsOnly)) {
@@ -578,7 +598,7 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
     ),
     loc,
   );
-  next = applyQuestPlantProgress(db, next, plantedItemIds);
+  next = applyQuestPlantProgress(db, next, plantedItemIds, usedCompost: usedCompost);
   next = applyQuestAutoStartOnSeed(db, next);
   return (ok: true, save: applyQuestAutoCompleteOnPlant(db, next).save, reason: '');
 }
@@ -982,7 +1002,9 @@ LocationTimerCollectResult collectLocationTimer(
           reason: 'Botany timer is missing its crop.',
         );
       }
-      final chance = botanySuccessChancePercent(
+      final chance = botanyCollectChancePercent(
+        save,
+        locationId,
         botanyLevel,
         spec?.requiresLevel ?? 1,
         usedCompost: usedCompost,

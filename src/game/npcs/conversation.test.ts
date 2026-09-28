@@ -356,7 +356,7 @@ describe('npc conversation', () => {
     expect(archmage.quests[0]!.canTalk).toBe(true)
     expect(archmage.quests[0]!.talkLine).toMatch(/ten essence/)
     expect(archmage.quests[0]!.ready).toBe(false)
-    expect(archmage.quests[0]!.idlePrompt).toBe('What else do you need?')
+    expect(archmage.quests[0]!.idlePrompt).toMatch(/ten essence/)
     expect(archmage.mentor).toBeNull()
   })
 

@@ -131,6 +131,7 @@ void main() {
 
     expect(gettingStarted(save).canTalk, isFalse);
     expect(gettingStarted(save).canTurnIn, isFalse);
+    expect(gettingStarted(save).idlePrompt, contains('Take five potatoes from the field'));
 
     save = addItemToInventory(save, 'ITEM-0025', 5);
     expect(gettingStarted(save).canTalk, isTrue);
@@ -454,6 +455,81 @@ void main() {
     expect(equippedActionTimeReductionPercentForAction(db, geared, vines), 24);
     expect(equippedActionTimeReductionPercentForAction(db, geared, oak), 11);
     expect(gatheringDurationMs(db, geared, vines), closeTo(55 * (1 - 24 / 100) * 1000, 0.01));
+  });
+
+  test('Green Thumb waits for Getting Started, hides from the log, and finishes after compost planting', () {
+    final quest = getQuest(db, 'QST-0011')!;
+    expect(quest['Display Name'], 'Green Thumb');
+    expect(hideFromQuestLog(quest), isTrue);
+    final parsed = parseStructuredObjectives(quest);
+    expect(parsed.requiresQuestIds, <String>['QST-0006']);
+    expect(parsed.autoCompleteOnTalk, isTrue);
+    expect(parsed.autoCompleteOnPlant, isFalse);
+    expect(parsed.rewardItems, hasLength(2));
+    expect(parsed.rewardItems.first.targetId, 'ITEM-0324');
+    expect(parsed.rewardItems.first.quantity, 3);
+    expect(parsed.rewardItems.last.targetId, 'ITEM-0339');
+    expect(parsed.rewardItems.last.quantity, 3);
+
+    var save = _save(
+      db,
+      locationId: 'LOC-0001',
+    ).copyWith(inventory: const [InventoryStack(itemId: 'ITEM-0324', quantity: 1)]);
+    save = applyQuestAutoStartOnSeed(db, save);
+    expect(getQuestProgress(save, 'QST-0011').status, 'inactive');
+    expect(questLog(db, save).any((row) => row.questId == 'QST-0011'), isFalse);
+
+    save = save.copyWith(
+      quests: const [QuestProgress(questId: 'QST-0006', status: 'completed', progress: 1)],
+    );
+    save = applyQuestAutoStartOnSeed(db, save);
+    expect(getQuestProgress(save, 'QST-0011').status, 'active');
+    expect(questLog(db, save).any((row) => row.questId == 'QST-0011'), isFalse);
+    expect(farmBotanyUnlocked(save), isFalse);
+
+    final firstTalk = talkWithQuestNpc(db, save, 'NPC-0014');
+    expect(firstTalk.ok, isTrue);
+    save = firstTalk.save!;
+    expect(inventoryCount(save, 'ITEM-0324'), 2);
+    expect(farmBotanyUnlocked(save), isTrue);
+
+    save = addItemToInventory(save, 'ITEM-0377', 1);
+    save = applyQuestActionProgress(db, save, 'ACN-0199', 1);
+    final compostTalk = talkWithQuestNpc(db, save, 'NPC-0014');
+    expect(compostTalk.ok, isTrue);
+    save = compostTalk.save!;
+    expect(getQuestProgress(save, 'QST-0011').status, 'active');
+
+    final refused = plantBotanySelection(db, save, const ['ITEM-0324'], nowMs: 0);
+    expect(refused.ok, isFalse);
+    expect(refused.reason, contains('compost'));
+
+    final planted = plantBotanySelection(
+      db,
+      save,
+      const ['ITEM-0324'],
+      nowMs: 0,
+      usedCompost: true,
+    );
+    expect(planted.ok, isTrue);
+    save = planted.save!;
+    expect(getQuestProgress(save, 'QST-0011').status, 'active');
+
+    final finished = talkWithQuestNpc(db, save, 'NPC-0014');
+    expect(finished.ok, isTrue);
+    expect(finished.message, contains('favour you a little more'));
+    expect(getQuestProgress(finished.save!, 'QST-0011').status, 'completed');
+    expect(isBookUnlocked(finished.save!, 'BOOK-0002'), isTrue);
+    expect(inventoryCount(finished.save!, 'ITEM-0324'), 4);
+    expect(inventoryCount(finished.save!, 'ITEM-0339'), 3);
+    expect(
+      botanyCollectChancePercent(finished.save!, 'LOC-0001', 1, 1),
+      botanySuccessChancePercent(1, 1) + 10,
+    );
+    expect(
+      botanyCollectChancePercent(finished.save!, 'LOC-0031', 1, 1),
+      botanySuccessChancePercent(1, 1),
+    );
   });
 
   test('wardrobe lists The Undying in the Titles slot', () {

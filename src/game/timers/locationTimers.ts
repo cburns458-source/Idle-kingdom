@@ -5,7 +5,7 @@ import { canFitItemQuantity } from '../inventory/capacity'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import type { GameDatabase, ItemRow } from '../data/types'
 import { removeIngredients } from '../production/inventory'
-import { applyQuestAutoStartOnSeed, applyQuestPlantProgress } from '../quests/progress'
+import { applyQuestAutoStartOnSeed, applyQuestPlantProgress, questPlantRequiresCompost } from '../quests/progress'
 import { applyQuestAutoCompleteOnPlant, getQuestProgress } from '../quests/quests'
 import type { LocationTimer, PlayerSave } from '../save/types'
 
@@ -16,6 +16,7 @@ export const FARM_LOCATION_ID = 'LOC-0001'
 export const COURTYARD_LOCATION_ID = 'LOC-0014'
 export const GRAND_FEAST_QUEST_ID = 'QST-0001'
 export const FIRST_PLANTING_QUEST_ID = 'QST-0011'
+export const FARM_GREEN_THUMB_COLLECT_BONUS = 10
 export const FENNEL_NPC_ID = 'NPC-0014'
 export const POTATO_SEED_ITEM_ID = 'ITEM-0324'
 export const CARROT_SEED_ITEM_ID = 'ITEM-0339'
@@ -85,6 +86,22 @@ export function botanySuccessChancePercent(
   const required = requiredLevel < 1 ? 1 : requiredLevel
   const chance = 25 + 0.5 * level + 0.5 * Math.max(0, level - required) + (usedCompost ? 25 : 0)
   return Math.min(100, chance)
+}
+
+export function botanyCollectChancePercent(
+  save: PlayerSave,
+  locationId: string,
+  botanyLevel: number,
+  requiredLevel: number,
+  usedCompost = false,
+): number {
+  const chance = botanySuccessChancePercent(botanyLevel, requiredLevel, usedCompost)
+  const bonus =
+    locationId === FARM_LOCATION_ID &&
+    getQuestProgress(save, FIRST_PLANTING_QUEST_ID).status === 'completed'
+      ? FARM_GREEN_THUMB_COLLECT_BONUS
+      : 0
+  return Math.min(100, chance + bonus)
 }
 
 export function compostCostForSpecs(specs: ReadonlyArray<{ isSapling: boolean }>): number {
@@ -493,6 +510,9 @@ export function plantBotanySelection(
   const gate = canPlantBotanySelection(db, save, seedItemIds, locationId)
   if (!gate.ok) return { ok: false, reason: gate.reason }
   const plantedItemIds = gate.plantedItemIds
+  if (!usedCompost && questPlantRequiresCompost(db, save, plantedItemIds)) {
+    return { ok: false, reason: 'Plant that seed with compost.' }
+  }
   const specs = plantedItemIds.map((itemId) => parseBotanySeedSpec(db, itemId)!)
   if (usedCompost) {
     if (specs.some((spec) => spec.shallowsOnly)) {
@@ -541,7 +561,7 @@ export function plantBotanySelection(
     },
     locationId,
   )
-  next = applyQuestPlantProgress(db, next, plantedItemIds)
+  next = applyQuestPlantProgress(db, next, plantedItemIds, usedCompost)
   next = applyQuestAutoStartOnSeed(db, next)
   return { ok: true, save: applyQuestAutoCompleteOnPlant(db, next).save }
 }
@@ -882,7 +902,13 @@ export function collectLocationTimer(
       const spec = parseBotanySeedSpec(db, seedItemId)
       const outputItemId = spec?.outputItemId ?? timer.outputItemId
       if (!outputItemId) return { ok: false, reason: 'Botany timer is missing its crop.' }
-      const chance = botanySuccessChancePercent(botanyLevel, spec?.requiresLevel ?? 1, usedCompost)
+      const chance = botanyCollectChancePercent(
+        save,
+        locationId,
+        botanyLevel,
+        spec?.requiresLevel ?? 1,
+        usedCompost,
+      )
       if (random() * 100 >= chance) continue
       successfulIds.push(seedItemId)
       produce.set(outputItemId, (produce.get(outputItemId) ?? 0) + rollInclusive(random, 1, 5))

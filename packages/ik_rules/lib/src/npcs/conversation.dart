@@ -54,12 +54,17 @@ List<String> _requiredTalkNpcIdsFromNotes(String? notes) {
       .toList();
 }
 
-String? _requiredStepIdFromNotes(String? notes) {
+List<String> _requiredStepIdsFromNotes(String? notes) {
   final field = RegExp(
-    r'(?:^|;)\s*RequiresStep:\s*(QSTP-\d+)',
+    r'(?:^|;)\s*RequiresStep:\s*([^;]+)',
     caseSensitive: false,
   ).firstMatch(notes ?? '')?.group(1);
-  return field?.toUpperCase();
+  if (field == null) return const <String>[];
+  return field
+      .split(',')
+      .map((part) => part.trim().toUpperCase())
+      .where((id) => RegExp(r'^QSTP-\d+$').hasMatch(id))
+      .toList();
 }
 
 bool _whenCompletedFromNotes(String? notes) {
@@ -79,8 +84,11 @@ String? questTalkLine(GameDatabase db, String questId, String npcId, [PlayerSave
   final matching = rows.where((row) {
     if (_whenCompletedFromNotes(row.notes)) return status == 'completed';
     if (status == 'completed') return false;
-    final requiredStep = _requiredStepIdFromNotes(row.notes);
-    if (requiredStep != null && requiredStep != currentStepId) return false;
+    final requiredSteps = _requiredStepIdsFromNotes(row.notes);
+    if (requiredSteps.isNotEmpty &&
+        (currentStepId == null || !requiredSteps.contains(currentStepId))) {
+      return false;
+    }
     final required = _requiredTalkNpcIdsFromNotes(row.notes);
     if (required.isEmpty) return true;
     if (save == null) return false;
@@ -91,7 +99,7 @@ String? questTalkLine(GameDatabase db, String questId, String npcId, [PlayerSave
         (row) =>
             _whenCompletedFromNotes(row.notes) ||
             _requiredTalkNpcIdsFromNotes(row.notes).isNotEmpty ||
-            _requiredStepIdFromNotes(row.notes) != null,
+            _requiredStepIdsFromNotes(row.notes).isNotEmpty,
       )
       .toList();
   final line = (specific.isNotEmpty ? specific.first : matching.firstOrNull)?.line;
@@ -378,6 +386,7 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
       hasQuestFlag(save, questId, 'choice:bribe') || hasQuestFlag(save, questId, 'choice:combat');
   final donated = hasQuestFlag(save, questId, acceptGoldFlag);
   final needsDonate = parsed.acceptGoldCost > 0 && !donated;
+  final talkLine = questTalkLine(db, questId, npcId, save);
   String acceptLabel;
   if (parsed.acceptGoldCost > 0) {
     acceptLabel = 'Start the quest $name?';
@@ -410,8 +419,9 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
         !parsed.autoCompleteOnVisit,
     canTalk: status == 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talkedThisStep,
     talkLabel: 'Talk',
-    talkLine: questTalkLine(db, questId, npcId, save),
-    idlePrompt: configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
+    talkLine: talkLine,
+    idlePrompt:
+        talkLine ?? configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
     canBribe: status == 'active' && parsed.choiceNpcId == npcId && parsed.bribeGold > 0 && !chose,
     bribeLabel: 'Bribe ${jsLocaleNumber(parsed.bribeGold)} gold',
     canChooseCombat: status == 'active' && parsed.choiceNpcId == npcId && !chose,
@@ -457,7 +467,10 @@ NpcGreeting? _greetingFor(GameDatabase db, PlayerSave _, NpcRow npc, List<NpcQue
   }
 
   final pitched = quests.firstWhereOrNull(
-    (quest) => quest.pitchLine != null && quest.status == 'inactive',
+    (quest) =>
+        quest.pitchLine != null &&
+        quest.status == 'inactive' &&
+        (quest.canAccept || quest.canDonate),
   );
   final line = pitched?.pitchLine;
   if (pitched == null || line == null) return null;
@@ -609,6 +622,10 @@ NpcActionResult donateForQuestFromNpc(GameDatabase db, PlayerSave save, String q
 }
 
 NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId) {
+  final spokenBefore = <String, String?>{
+    for (final quest in questsTouchingNpc(db, save, npcId))
+      jsString(quest['Quest ID']): questTalkLine(db, jsString(quest['Quest ID']), npcId, save),
+  };
   var next = applyQuestTalkProgress(db, save, npcId);
   if (farmBotanyUnlocked(next)) {
     next = discoverTimerSpotsForLocation(next, farmLocationId);
@@ -620,11 +637,12 @@ NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId)
     if (!questAllStepsComplete(db, next, quest)) continue;
     final completed = completeQuest(db, next, jsString(quest['Quest ID']));
     if (completed.ok) {
-      final name = quest['Display Name'];
-      return NpcActionResult.ok(
-        save: completed.save!,
-        message: 'Thank you — ${name is String ? name : 'quest'}.',
-      );
+      final questId = jsString(quest['Quest ID']);
+      final spoken =
+          questTalkLine(db, questId, npcId, completed.save!) ??
+          spokenBefore[questId] ??
+          completed.message;
+      return NpcActionResult.ok(save: completed.save!, message: spoken ?? 'Thank you.');
     }
   }
   return NpcActionResult.ok(save: next, message: 'You hear them out.');
