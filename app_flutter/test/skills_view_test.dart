@@ -52,8 +52,11 @@ void main() {
 
     final skillIcons = tester
         .widgetList<GameImage>(
-          find.byWidgetPredicate(
-            (widget) => widget is GameImage && widget.path.contains('/icons/skills/'),
+          find.descendant(
+            of: find.byType(SkillsView),
+            matching: find.byWidgetPredicate(
+              (widget) => widget is GameImage && widget.path.contains('/icons/skills/'),
+            ),
           ),
         )
         .toList();
@@ -61,7 +64,12 @@ void main() {
     expect(skillIcons.first.fit, BoxFit.contain);
 
     final iconRect = tester.getRect(
-      find.byWidgetPredicate((widget) => widget is GameImage && widget.path.contains('skl_might')),
+      find.descendant(
+        of: find.byType(SkillsView),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is GameImage && widget.path.contains('skl_might'),
+        ),
+      ),
     );
     final tile = tester.getRect(
       find.ancestor(of: find.text('Might'), matching: find.byType(GamePanel)).first,

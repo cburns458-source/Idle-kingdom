@@ -94,6 +94,8 @@ export interface CombatVictoryResult {
   xpAwards: { skillId: string; xp: number }[]
   goldGained: number
   loot: LootGrant[]
+  /** Wardrobe cosmetics unlocked by this victory (e.g. Baby Dragon pet). */
+  cosmeticsGranted?: { cosmeticId: string; isFirstEver: boolean }[]
   foodConsumed: boolean
   foodHealed: number
   foodName: string | null

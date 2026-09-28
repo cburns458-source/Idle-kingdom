@@ -33,9 +33,7 @@ class LibraryView extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
               child: MutedText(
-                books.isEmpty
-                    ? 'Books you find will be kept here.'
-                    : 'Tap a book to read it.',
+                books.isEmpty ? 'Books you find will be kept here.' : 'Tap a book to read it.',
               ),
             ),
             const SizedBox(height: 8),
@@ -109,11 +107,7 @@ class LibraryView extends StatelessWidget {
 
 /// Popup when a book is first unlocked into the Library.
 class LibraryUnlockPopup extends StatelessWidget {
-  const LibraryUnlockPopup({
-    super.key,
-    required this.notice,
-    required this.onClose,
-  });
+  const LibraryUnlockPopup({super.key, required this.notice, required this.onClose});
 
   final BookUnlockNotice notice;
   final VoidCallback onClose;
