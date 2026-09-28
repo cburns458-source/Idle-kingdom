@@ -717,7 +717,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   /// Returns false when the player cancels a hostile travel warning.
   Future<bool> _confirmHostileTravel(String locationId) async {
     if (!mounted) return false;
-    if (controller.save.settings.skipHostileTravelWarning) return true;
+    if (controller.save.settings.skippedHostileTravelLocationIds.contains(locationId)) {
+      return true;
+    }
     final warning = locationDangerWarningLevel(controller.db, locationId);
     if (warning == null) return true;
     final choice = await showHostileTravelWarning(
@@ -733,7 +735,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       case HostileTravelChoice.dontAskAgain:
         controller.commit(
           controller.save.copyWith(
-            settings: controller.save.settings.copyWith(skipHostileTravelWarning: true),
+            settings: controller.save.settings.copyWith(
+              skippedHostileTravelLocationIds: withSkippedId(
+                controller.save.settings.skippedHostileTravelLocationIds,
+                locationId,
+              ),
+            ),
           ),
         );
         return true;

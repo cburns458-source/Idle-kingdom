@@ -1315,6 +1315,28 @@ Future<void> _startOrComingSoon(
     );
     if (confirmed != true || !context.mounted) return;
   }
+  if (activityHasMixedCombatPool(controller.db, activity.activityId) &&
+      !controller.save.settings.skippedMixedCombatActivityIds.contains(activity.activityId)) {
+    final choice = await showMixedCombatActivityWarning(context: context);
+    if (!context.mounted) return;
+    switch (choice) {
+      case DontAskAgainChoice.cancel:
+        return;
+      case DontAskAgainChoice.confirm:
+        break;
+      case DontAskAgainChoice.dontAskAgain:
+        controller.commit(
+          controller.save.copyWith(
+            settings: controller.save.settings.copyWith(
+              skippedMixedCombatActivityIds: withSkippedId(
+                controller.save.settings.skippedMixedCombatActivityIds,
+                activity.activityId,
+              ),
+            ),
+          ),
+        );
+    }
+  }
   controller.startActivity(activity.activityId);
 }
 

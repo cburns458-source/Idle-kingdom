@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 55;
+const int saveVersion = 56;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1665,7 +1665,8 @@ class PlayerSettings {
     required this.autoEat,
     required this.eatHealthThresholdPercent,
     required this.eatHealthThresholdAsPercent,
-    required this.skipHostileTravelWarning,
+    required this.skippedHostileTravelLocationIds,
+    required this.skippedMixedCombatActivityIds,
     required this.potionsPaused,
   });
 
@@ -1678,7 +1679,14 @@ class PlayerSettings {
       autoEat: json['autoEat'] as bool,
       eatHealthThresholdPercent: json['eatHealthThresholdPercent'] as num,
       eatHealthThresholdAsPercent: json['eatHealthThresholdAsPercent'] as bool,
-      skipHostileTravelWarning: json['skipHostileTravelWarning'] as bool,
+      skippedHostileTravelLocationIds: listOf(
+        json['skippedHostileTravelLocationIds'],
+        (Object? entry) => entry as String,
+      ),
+      skippedMixedCombatActivityIds: listOf(
+        json['skippedMixedCombatActivityIds'],
+        (Object? entry) => entry as String,
+      ),
       potionsPaused: json['potionsPaused'] as bool,
     );
   }
@@ -1706,9 +1714,13 @@ class PlayerSettings {
   /// When true, the Equipment eat-at slider is shown as a percent.
   final bool eatHealthThresholdAsPercent;
 
-  /// When true, skip the hostile-location travel confirm popup.
-  /// Set by the "Don't ask again" control on that popup.
-  final bool skipHostileTravelWarning;
+  /// Location IDs whose hostile-travel confirm has been dismissed with
+  /// "Don't ask again". One skip does not silence other destinations.
+  final List<String> skippedHostileTravelLocationIds;
+
+  /// Activity IDs whose mixed-pool combat confirm has been dismissed with
+  /// "Don't ask again". One skip does not silence other activities.
+  final List<String> skippedMixedCombatActivityIds;
 
   /// When true, equipped potions are not auto-applied. Toggled from the stage
   /// potion button (🚫). An already-running effect is left alone.
@@ -1723,7 +1735,8 @@ class PlayerSettings {
       'autoEat': autoEat,
       'eatHealthThresholdPercent': eatHealthThresholdPercent,
       'eatHealthThresholdAsPercent': eatHealthThresholdAsPercent,
-      'skipHostileTravelWarning': skipHostileTravelWarning,
+      'skippedHostileTravelLocationIds': skippedHostileTravelLocationIds,
+      'skippedMixedCombatActivityIds': skippedMixedCombatActivityIds,
       'potionsPaused': potionsPaused,
     };
   }
@@ -1736,7 +1749,8 @@ class PlayerSettings {
     bool? autoEat,
     num? eatHealthThresholdPercent,
     bool? eatHealthThresholdAsPercent,
-    bool? skipHostileTravelWarning,
+    List<String>? skippedHostileTravelLocationIds,
+    List<String>? skippedMixedCombatActivityIds,
     bool? potionsPaused,
   }) {
     return PlayerSettings(
@@ -1747,7 +1761,10 @@ class PlayerSettings {
       autoEat: autoEat ?? this.autoEat,
       eatHealthThresholdPercent: eatHealthThresholdPercent ?? this.eatHealthThresholdPercent,
       eatHealthThresholdAsPercent: eatHealthThresholdAsPercent ?? this.eatHealthThresholdAsPercent,
-      skipHostileTravelWarning: skipHostileTravelWarning ?? this.skipHostileTravelWarning,
+      skippedHostileTravelLocationIds:
+          skippedHostileTravelLocationIds ?? this.skippedHostileTravelLocationIds,
+      skippedMixedCombatActivityIds:
+          skippedMixedCombatActivityIds ?? this.skippedMixedCombatActivityIds,
       potionsPaused: potionsPaused ?? this.potionsPaused,
     );
   }

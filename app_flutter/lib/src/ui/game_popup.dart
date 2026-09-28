@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import '../session/battery_saver_pref.dart';
 import '../theme.dart';
@@ -227,16 +228,20 @@ Future<bool> showGameAlert({
   return result ?? false;
 }
 
+/// Choice from a confirm that also offers "Don't ask again".
+enum DontAskAgainChoice { cancel, confirm, dontAskAgain }
+
 /// Choice from the hostile-location travel confirm.
 enum HostileTravelChoice { cancel, travel, dontAskAgain }
 
-/// Confirm before travelling into a danger-warning location.
-Future<HostileTravelChoice> showHostileTravelWarning({
+/// Confirm with Cancel, a proceed button, and Don't ask again.
+Future<DontAskAgainChoice> showDontAskAgainConfirm({
   required BuildContext context,
   required String message,
+  required String confirmLabel,
   Rect? origin,
 }) async {
-  final result = await showGamePopup<HostileTravelChoice>(
+  final result = await showGamePopup<DontAskAgainChoice>(
     context: context,
     placement: GamePopupPlacement.center,
     origin: origin,
@@ -255,13 +260,13 @@ Future<HostileTravelChoice> showHostileTravelWarning({
                   label: 'Cancel',
                   tone: GameButtonTone.secondary,
                   compact: true,
-                  onPressed: () => Navigator.of(context).pop(HostileTravelChoice.cancel),
+                  onPressed: () => Navigator.of(context).pop(DontAskAgainChoice.cancel),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: GameButton(
-                    label: 'Travel',
-                    onPressed: () => Navigator.of(context).pop(HostileTravelChoice.travel),
+                    label: confirmLabel,
+                    onPressed: () => Navigator.of(context).pop(DontAskAgainChoice.confirm),
                   ),
                 ),
               ],
@@ -270,12 +275,44 @@ Future<HostileTravelChoice> showHostileTravelWarning({
             GameButton(
               label: "Don't ask again",
               tone: GameButtonTone.secondary,
-              onPressed: () => Navigator.of(context).pop(HostileTravelChoice.dontAskAgain),
+              onPressed: () => Navigator.of(context).pop(DontAskAgainChoice.dontAskAgain),
             ),
           ],
         ),
       );
     },
   );
-  return result ?? HostileTravelChoice.cancel;
+  return result ?? DontAskAgainChoice.cancel;
+}
+
+/// Confirm before travelling into a danger-warning location.
+Future<HostileTravelChoice> showHostileTravelWarning({
+  required BuildContext context,
+  required String message,
+  Rect? origin,
+}) async {
+  final choice = await showDontAskAgainConfirm(
+    context: context,
+    message: message,
+    confirmLabel: 'Travel',
+    origin: origin,
+  );
+  return switch (choice) {
+    DontAskAgainChoice.cancel => HostileTravelChoice.cancel,
+    DontAskAgainChoice.confirm => HostileTravelChoice.travel,
+    DontAskAgainChoice.dontAskAgain => HostileTravelChoice.dontAskAgain,
+  };
+}
+
+/// Confirm before starting an activity whose pool can roll Combat.
+Future<DontAskAgainChoice> showMixedCombatActivityWarning({
+  required BuildContext context,
+  Rect? origin,
+}) {
+  return showDontAskAgainConfirm(
+    context: context,
+    message: mixedCombatActivityWarningMessage,
+    confirmLabel: 'Continue',
+    origin: origin,
+  );
 }

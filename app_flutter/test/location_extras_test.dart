@@ -1061,4 +1061,113 @@ void main() {
       lessThan(tester.getTopLeft(find.text('Buy')).dy),
     );
   });
+
+  testWidgets('mixed-pool gathering warns before start and cancel keeps it stopped', (
+    tester,
+  ) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0008'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    final card = find.ancestor(
+      of: find.text('Gather woodland supplies'),
+      matching: find.byType(DockRow),
+    );
+    await tapVisible(tester, find.descendant(of: card, matching: find.bySemanticsLabel('Start')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(mixedCombatActivityWarningMessage), findsOne);
+    expect(controller.save.currentActivityId, isNull);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(controller.save.currentActivityId, isNull);
+    expect(find.byKey(const Key('game-popup')), findsNothing);
+  });
+
+  testWidgets("mixed-pool Don't ask again is per activity", (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0008'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    final woodland = find.ancestor(
+      of: find.text('Gather woodland supplies'),
+      matching: find.byType(DockRow),
+    );
+    await tapVisible(
+      tester,
+      find.descendant(of: woodland, matching: find.bySemanticsLabel('Start')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(GameButton, "Don't ask again"));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controller.save.settings.skippedMixedCombatActivityIds, <String>['ACT-0010']);
+    expect(controller.save.currentActivityId, 'ACT-0010');
+
+    await tapVisible(tester, find.bySemanticsLabel('Stop').first);
+    await tester.pump();
+
+    await tapVisible(
+      tester,
+      find.descendant(of: woodland, matching: find.bySemanticsLabel('Start')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(mixedCombatActivityWarningMessage), findsNothing);
+    expect(controller.save.currentActivityId, 'ACT-0010');
+  });
+
+  testWidgets('kingswoods hunting does not warn after combat boar moved off', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0008'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    final card = find.ancestor(
+      of: find.text('Poach in the kingswoods'),
+      matching: find.byType(DockRow),
+    );
+    await tapVisible(tester, find.descendant(of: card, matching: find.bySemanticsLabel('Start')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(mixedCombatActivityWarningMessage), findsNothing);
+  });
+
+  testWidgets('skipping woodland combat warning does not skip slopes mining', (tester) async {
+    final base = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: base.copyWith(
+        currentLocationId: 'LOC-0046',
+        settings: base.settings.copyWith(skippedMixedCombatActivityIds: const <String>['ACT-0010']),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    final card = find.ancestor(
+      of: find.text('Prospect the mountain side'),
+      matching: find.byType(DockRow),
+    );
+    await tapVisible(tester, find.descendant(of: card, matching: find.bySemanticsLabel('Start')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text(mixedCombatActivityWarningMessage), findsOne);
+    expect(controller.save.currentActivityId, isNull);
+  });
 }

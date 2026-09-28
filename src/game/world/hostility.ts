@@ -50,6 +50,33 @@ export function hostileTravelWarningMessage(combatLevelWarning: number): string 
   )
 }
 
+/** Activity-start confirm when a gather/mine/cut pool can also roll Combat. */
+export const MIXED_COMBAT_ACTIVITY_WARNING_MESSAGE =
+  'You may be attacked while doing this activity, are you sure you want to continue?'
+
+/** True when the pool mixes Combat with at least one non-combat action. */
+export function activityHasMixedCombatPool(db: GameDatabase, activityId: string): boolean {
+  const activity = db.Activities.find((row) => row['Activity ID'] === activityId)
+  const poolId = activity?.['Pool ID']
+  if (!poolId) return false
+  let hasCombat = false
+  let hasNonCombat = false
+  for (const entry of db.PoolEntries) {
+    if (entry['Pool ID'] !== poolId) continue
+    const action = db.Actions.find((row) => row['Action ID'] === entry['Action ID'])
+    if (!action) continue
+    if (action.Category === 'Combat') hasCombat = true
+    else hasNonCombat = true
+    if (hasCombat && hasNonCombat) return true
+  }
+  return false
+}
+
+/** Append `id` if it is not already in the skip list. */
+export function withSkippedId(ids: string[], id: string): string[] {
+  return ids.includes(id) ? ids : [...ids, id]
+}
+
 /** The player is under-level for a danger-warning activity here. */
 export function locationIsHostileFor(
   db: GameDatabase,

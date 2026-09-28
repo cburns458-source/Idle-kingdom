@@ -103,6 +103,23 @@ describe('mailbox', () => {
     const migrated = migrateSave(legacy as unknown as PlayerSave, NOW_MS)
     expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.mailbox).toEqual([])
-    expect(migrated.settings.skipHostileTravelWarning).toBe(false)
+    expect(migrated.settings.skippedHostileTravelLocationIds).toEqual([])
+    expect(migrated.settings.skippedMixedCombatActivityIds).toEqual([])
+  })
+
+  it('forgets the old account-wide hostile skip when leaving v55', () => {
+    const { source } = prepareDatabase(rawDatabase)
+    const created = createNewSave(source, NOW_MS)
+    const { skippedHostileTravelLocationIds: _locs, skippedMixedCombatActivityIds: _acts, ...oldSettings } =
+      created.settings
+    const legacy = {
+      ...created,
+      saveVersion: 55,
+      settings: { ...oldSettings, skipHostileTravelWarning: true },
+    }
+    const migrated = migrateSave(legacy as unknown as PlayerSave, NOW_MS)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
+    expect(migrated.settings.skippedHostileTravelLocationIds).toEqual([])
+    expect(migrated.settings.skippedMixedCombatActivityIds).toEqual([])
   })
 })
