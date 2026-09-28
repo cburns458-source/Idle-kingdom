@@ -3,6 +3,7 @@ import { equippedActionTimeReductionPercent } from '../equipment/loadout'
 import type { ActionRow, GameDatabase } from '../data/types'
 import { equippedEnchantmentGatheringMultiplier } from '../projects/enchantments'
 import type { PlayerSave } from '../save/types'
+import { activeSpellGatheringDurationMultiplier } from '../spells/spells'
 import type { RandomFn } from './pools'
 import { getSkillProgress } from './xp'
 
@@ -57,8 +58,16 @@ export function gatheringDurationMs(
       : 1
   const atr = equippedActionTimeReductionPercent(db, save, action['Relevant Skill ID'])
   const reductionFactor = Math.max(0.01, 1 - atr / 100)
-  const enchantFactor = equippedEnchantmentGatheringMultiplier(db, save)
-  return Math.max(0, baseSeconds * multiplier * reductionFactor * enchantFactor * 1000)
+  const enchantFactor = equippedEnchantmentGatheringMultiplier(
+    db,
+    save,
+    action['Relevant Skill ID'],
+  )
+  const spellFactor = activeSpellGatheringDurationMultiplier(db, save)
+  return Math.max(
+    0,
+    baseSeconds * multiplier * reductionFactor * enchantFactor * spellFactor * 1000,
+  )
 }
 
 export function isBelowProficiency(save: PlayerSave, action: ActionRow): boolean {

@@ -135,8 +135,12 @@ describe('skill menu entries', () => {
     expect(items.some((item) => item.displayName === 'Strength Spell')).toBe(true)
     expect(items.some((item) => item.displayName === 'Gluttony Spell')).toBe(true)
     expect(items.find((item) => item.displayName === 'Gluttony Spell')?.level).toBe(30)
-    expect(items.some((item) => item.displayName === 'Minor Gathering Enchantment')).toBe(true)
-    expect(items.find((item) => item.displayName === 'Minor Gathering Enchantment')?.level).toBe(20)
+    expect(items.some((item) => item.displayName === 'Minor Gathering Enchantment')).toBe(false)
+    expect(items.some((item) => item.displayName === 'Ancient Weapon Enchantment')).toBe(false)
+    expect(items.some((item) => item.displayName === 'Minor Mining Enchantment')).toBe(true)
+    expect(items.find((item) => item.displayName === 'Minor Mining Enchantment')?.level).toBe(20)
+    expect(items.some((item) => item.displayName === 'Hoard Spell')).toBe(true)
+    expect(items.some((item) => item.displayName === 'Pathfinder Spell')).toBe(true)
   })
 
   it('puts battle staves on an Arcana Weapons tab', () => {

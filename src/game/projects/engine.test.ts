@@ -31,7 +31,6 @@ describe('special production', () => {
     expect(stations.find((station) => station.skillId === 'SKL-0013')?.label).toBe('Mages quarters')
     const listed = projectsForFacility(launch, 'FAC-0008', 'SKL-0013')
     expect(listed.map((project) => project['Project ID']).sort()).toEqual([
-      'PRJ-0134',
       'PRJ-0135',
       'PRJ-0139',
       'PRJ-0140',
@@ -43,6 +42,25 @@ describe('special production', () => {
       'PRJ-0147',
       'PRJ-0153',
       'PRJ-0155',
+      'PRJ-0159',
+      'PRJ-0160',
+      'PRJ-0161',
+      'PRJ-0162',
+      'PRJ-0163',
+      'PRJ-0164',
+      'PRJ-0165',
+      'PRJ-0166',
+      'PRJ-0167',
+      'PRJ-0168',
+      'PRJ-0169',
+      'PRJ-0170',
+      'PRJ-0171',
+      'PRJ-0172',
+      'PRJ-0173',
+      'PRJ-0174',
+      'PRJ-0175',
+      'PRJ-0176',
+      'PRJ-0177',
     ])
     expect(listed.find((project) => project['Project ID'] === 'PRJ-0139')?.['Display Name']).toBe(
       'Strength Spell',
@@ -221,8 +239,8 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0098', 1)
     save = addItemToInventory(save, 'ITEM-0011', 200)
-    save = addItemToInventory(save, 'ITEM-0031', 10)
-    // Steel pickaxe is gathering gear eligible for minor gathering enchantment.
+    save = addItemToInventory(save, 'ITEM-0006', 10)
+    // Steel pickaxe is mining gear eligible for minor mining enchantment.
     save = addItemToInventory(save, 'ITEM-0119', 2)
     const invIndex = save.inventory.findIndex((stack) => stack.itemId === 'ITEM-0119')
     expect(invIndex).toBeGreaterThanOrEqual(0)
@@ -230,7 +248,7 @@ describe('special production', () => {
     const result = completeSpecialProject(
       launch,
       save,
-      'PRJ-0134',
+      'PRJ-0159',
       1,
       encodeEnchantTarget({ kind: 'inventory', index: invIndex }),
     )
@@ -238,7 +256,7 @@ describe('special production', () => {
     if (!result.ok) return
 
     const enchanted = result.save.inventory.filter(
-      (stack) => stack.itemId === 'ITEM-0119' && stack.enchantmentId === 'ENCH-0002',
+      (stack) => stack.itemId === 'ITEM-0119' && stack.enchantmentId === 'ENCH-0010',
     )
     const plain = result.save.inventory.filter(
       (stack) => stack.itemId === 'ITEM-0119' && !stack.enchantmentId,
@@ -247,10 +265,10 @@ describe('special production', () => {
     expect(enchanted[0]?.quantity).toBe(1)
     expect(plain[0]?.quantity).toBe(1)
 
-    const merged = addItemToInventory(result.save, 'ITEM-0119', 1, 'ENCH-0002')
+    const merged = addItemToInventory(result.save, 'ITEM-0119', 1, 'ENCH-0010')
     expect(
       merged.inventory.filter(
-        (stack) => stack.itemId === 'ITEM-0119' && stack.enchantmentId === 'ENCH-0002',
+        (stack) => stack.itemId === 'ITEM-0119' && stack.enchantmentId === 'ENCH-0010',
       ),
     ).toHaveLength(2)
   })

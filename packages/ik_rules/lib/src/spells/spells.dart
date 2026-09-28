@@ -144,31 +144,141 @@ num spellItemDoubleChancePercent(GameDatabase db, String itemId) {
   return match == null ? 0 : jsNumber(match.group(1));
 }
 
-/// Multiplier from all equipped spells. Same bonus types add when spells stack
-/// (2× Strength = +20% => 1.20).
-num activeSpellDamageRangeMultiplier(GameDatabase db, PlayerSave save) {
+num _spellTagPercent(GameDatabase db, String itemId, String tagPrefix, RegExp effectRegex) {
+  final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
+  for (final tag in capabilityTags(equipment?.raw['Capabilities / Effects'])) {
+    if (!tag.startsWith(tagPrefix)) continue;
+    final value = jsNumber(tag.substring(tagPrefix.length));
+    if (value > 0) return value;
+  }
+  final match = effectRegex.firstMatch(_enchantmentEffect(db, itemId));
+  return match == null ? 0 : jsNumber(match.group(1));
+}
+
+/// Chance percent to double gold from combat victory (Hoard).
+num spellGoldDoubleChancePercent(GameDatabase db, String itemId) {
+  return _spellTagPercent(
+    db,
+    itemId,
+    'gold_double_chance_percent:',
+    RegExp(r'\+(\d+(?:\.\d+)?)%\s*chance to double gold', caseSensitive: false),
+  );
+}
+
+/// Damage-reduction percent from one Iron Ward-style spell.
+num spellDamageReductionPercent(GameDatabase db, String itemId) {
+  return _spellTagPercent(
+    db,
+    itemId,
+    'damage_reduction_percent:',
+    RegExp(r'\+(\d+(?:\.\d+)?)%\s*damage reduction', caseSensitive: false),
+  );
+}
+
+/// End-of-round lifesteal percent of damage dealt from one spell.
+num spellLifestealPercent(GameDatabase db, String itemId) {
+  return _spellTagPercent(
+    db,
+    itemId,
+    'lifesteal_percent:',
+    RegExp(r'heal (\d+(?:\.\d+)?)%\s*of damage', caseSensitive: false),
+  );
+}
+
+/// Production craft duration reduction percent from one Haste-style spell.
+num spellProductionDurationReductionPercent(GameDatabase db, String itemId) {
+  return _spellTagPercent(
+    db,
+    itemId,
+    'production_duration_reduction_percent:',
+    RegExp(r'-(\d+(?:\.\d+)?)%\s*production craft duration', caseSensitive: false),
+  );
+}
+
+/// Gathering action duration reduction percent from one Pathfinder-style spell.
+num spellGatheringDurationReductionPercent(GameDatabase db, String itemId) {
+  return _spellTagPercent(
+    db,
+    itemId,
+    'gathering_duration_reduction_percent:',
+    RegExp(r'-(\d+(?:\.\d+)?)%\s*gathering action duration', caseSensitive: false),
+  );
+}
+
+num _activeSpellStackedPercent(
+  GameDatabase db,
+  PlayerSave save,
+  num Function(String itemId) percentFor,
+) {
   final contributions = equippedSpellStacks(save)
       .map(
         (stack) => SpellContribution(
-          percent: spellDamageRangeBonusPercent(db, stack.itemId),
+          percent: percentFor(stack.itemId),
           stacks: _spellAllowsStacking(db, stack.itemId),
         ),
       )
       .toList();
-  return 1 + combineSpellPercentBonuses(contributions) / 100;
+  return combineSpellPercentBonuses(contributions);
+}
+
+/// Multiplier from all equipped spells. Same bonus types add when spells stack
+/// (2× Strength = +20% => 1.20).
+num activeSpellDamageRangeMultiplier(GameDatabase db, PlayerSave save) {
+  return 1 +
+      _activeSpellStackedPercent(db, save, (itemId) => spellDamageRangeBonusPercent(db, itemId)) /
+          100;
 }
 
 /// Total chance to double item quantities on a successful drop (capped at 100).
 num activeSpellItemDoubleChancePercent(GameDatabase db, PlayerSave save) {
-  final contributions = equippedSpellStacks(save)
-      .map(
-        (stack) => SpellContribution(
-          percent: spellItemDoubleChancePercent(db, stack.itemId),
-          stacks: _spellAllowsStacking(db, stack.itemId),
-        ),
-      )
-      .toList();
-  return math.min(100, combineSpellPercentBonuses(contributions));
+  return math.min(
+    100,
+    _activeSpellStackedPercent(db, save, (itemId) => spellItemDoubleChancePercent(db, itemId)),
+  );
+}
+
+/// Total chance to double gold on combat victory (capped at 100).
+num activeSpellGoldDoubleChancePercent(GameDatabase db, PlayerSave save) {
+  return math.min(
+    100,
+    _activeSpellStackedPercent(db, save, (itemId) => spellGoldDoubleChancePercent(db, itemId)),
+  );
+}
+
+/// Total damage-reduction percent from equipped spells.
+num activeSpellDamageReductionPercent(GameDatabase db, PlayerSave save) {
+  return math.min(
+    100,
+    _activeSpellStackedPercent(db, save, (itemId) => spellDamageReductionPercent(db, itemId)),
+  );
+}
+
+/// Total lifesteal percent of damage dealt from equipped spells.
+num activeSpellLifestealPercent(GameDatabase db, PlayerSave save) {
+  return math.min(
+    100,
+    _activeSpellStackedPercent(db, save, (itemId) => spellLifestealPercent(db, itemId)),
+  );
+}
+
+/// Multiplier for production craft duration from Haste spells (e.g. 10% => 0.9).
+num activeSpellProductionDurationMultiplier(GameDatabase db, PlayerSave save) {
+  final percent = _activeSpellStackedPercent(
+    db,
+    save,
+    (itemId) => spellProductionDurationReductionPercent(db, itemId),
+  );
+  return math.max(0.01, 1 - percent / 100);
+}
+
+/// Multiplier for gathering action duration from Pathfinder spells.
+num activeSpellGatheringDurationMultiplier(GameDatabase db, PlayerSave save) {
+  final percent = _activeSpellStackedPercent(
+    db,
+    save,
+    (itemId) => spellGatheringDurationReductionPercent(db, itemId),
+  );
+  return math.max(0.01, 1 - percent / 100);
 }
 
 List<String> spellTooltipLines(GameDatabase db, ItemRow? item, String itemId) {

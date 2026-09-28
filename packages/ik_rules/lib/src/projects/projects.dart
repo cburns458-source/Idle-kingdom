@@ -62,7 +62,8 @@ String specialProductionStationLabel(String skillId, String skillName) {
 }
 
 bool isCompleteProject(ProjectRow project) {
-  if (project.raw['Status'] == 'Needs Data') return false;
+  final status = project.raw['Status'];
+  if (status == 'Needs Data' || status == 'Retired') return false;
   if (project.raw['Instant'] != 'Yes') return false;
   if (project.raw['XP Reward'] is! num) return false;
   if (project.raw['Output Quantity'] is! num) return false;

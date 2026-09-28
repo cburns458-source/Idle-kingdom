@@ -16,6 +16,7 @@ import {
   tryConsumePotionForScope,
 } from '../potions/effects'
 import type { ActivePotionEffect, PlayerSave } from '../save/types'
+import { activeSpellProductionDurationMultiplier } from '../spells/spells'
 
 export function productionCraftDurationMs(
   db: GameDatabase,
@@ -25,7 +26,10 @@ export function productionCraftDurationMs(
 ): number {
   const baseDurationMs = recipe['Base Duration Seconds'] * 1000
   const atr = equippedActionTimeReductionPercent(db, save, recipe['Skill ID'])
-  const reduced = baseDurationMs * Math.max(0.01, 1 - atr / 100)
+  const reduced =
+    baseDurationMs *
+    Math.max(0.01, 1 - atr / 100) *
+    activeSpellProductionDurationMultiplier(db, save)
   return applyPotionDurationMs(reduced, potionEffect)
 }
 import { removeIngredients } from './inventory'

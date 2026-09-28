@@ -235,6 +235,12 @@ List<CombatStatContribution> _damageMultiplierLines(GameDatabase db, PlayerSave 
   if (enchantBonus != 0) {
     lines.add(CombatStatContribution(label: 'Enchantments', detail: _signed(enchantBonus)));
   }
+  final enchantMult = equippedEnchantmentDamageRangeMultiplier(db, save);
+  if (enchantMult != 1) {
+    lines.add(
+      CombatStatContribution(label: 'Enchantments', detail: _percent((enchantMult - 1) * 100)),
+    );
+  }
 
   final mightLevel = getSkillProgress(save, mightSkillId).level;
   final levelMult = mightDamageMultiplier(save);
