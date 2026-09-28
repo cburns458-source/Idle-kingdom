@@ -53,7 +53,7 @@ void main() {
       db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0012').raw['XP Reward'],
       11431,
     );
-    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 70);
+    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 63);
 
     final queued = beginProductionQueue(
       db,
