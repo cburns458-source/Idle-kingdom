@@ -434,7 +434,7 @@ describe('quest tours', () => {
     const quest = getQuest(launch, 'QST-0008')!
     const journal = questStepJournal(launch, save, quest).map((step) => step.label)
     expect(journal).toContain('Clear rubble in the Deep Mines')
-    expect(journal).not.toContain('Clear a rubble pile 0 / 50')
+    expect(journal).toContain('Clear a rubble pile 0 / 50')
 
     const card = questActionProgressForActivity(launch, save, 'ACT-0044')
     expect(card.map((line) => `${line.label} ${line.current} / ${line.required}`)).toEqual([
@@ -447,7 +447,7 @@ describe('quest tours', () => {
         formatQuestProgressLine(line),
       ),
     ).toEqual(['Clear a rubble pile 12 / 50'])
-    expect(questStepJournal(launch, save, quest).map((step) => step.label)).not.toContain(
+    expect(questStepJournal(launch, save, quest).map((step) => step.label)).toContain(
       'Clear a rubble pile 12 / 50',
     )
 
@@ -457,7 +457,7 @@ describe('quest tours', () => {
         formatQuestProgressLine(line),
       ),
     ).toEqual(['Clear a rubble pile 50 / 50'])
-    expect(questStepJournal(launch, save, quest).map((step) => step.label)).not.toContain(
+    expect(questStepJournal(launch, save, quest).map((step) => step.label)).toContain(
       'Clear a rubble pile 50 / 50',
     )
   })

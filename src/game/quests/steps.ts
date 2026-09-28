@@ -263,7 +263,12 @@ export function questStepJournal(
       label: formatQuestProgressLine(line),
       state: (line.current >= line.required ? 'done' : 'current') as QuestJournalStepState,
     }))
-    if (progress.length <= 1) return [head]
+    if (
+      progress.length === 1 &&
+      progressSource[0]!.key.startsWith('action:')
+    ) {
+      return [head]
+    }
     return [head, ...progress]
   })
 }

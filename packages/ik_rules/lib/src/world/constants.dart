@@ -72,33 +72,34 @@ class ThicketVineActivitySpec {
 }
 
 /// Chop vines nodes for Through the Thicket. Path stays after completion; the rest do not.
-const Map<String, ThicketVineActivitySpec> thicketVineActivities = <String, ThicketVineActivitySpec>{
-  forestPathVinesActivityId: ThicketVineActivitySpec(
-    locationId: forestPathId,
-    stepId: forestPathVinesStepId,
-    persistAfterQuest: true,
-  ),
-  smallClearingVinesActivityId: ThicketVineActivitySpec(
-    locationId: smallClearingId,
-    stepId: smallClearingVinesStepId,
-    persistAfterQuest: false,
-  ),
-  starlightVinesActivityId: ThicketVineActivitySpec(
-    locationId: starlightGladeId,
-    stepId: starlightVinesStepId,
-    persistAfterQuest: false,
-  ),
-  mirrorLakeVinesActivityId: ThicketVineActivitySpec(
-    locationId: mirrorLakeId,
-    stepId: mirrorLakeVinesStepId,
-    persistAfterQuest: false,
-  ),
-  oldEntGroveVinesActivityId: ThicketVineActivitySpec(
-    locationId: oldEntGroveId,
-    stepId: oldEntGroveVinesStepId,
-    persistAfterQuest: false,
-  ),
-};
+const Map<String, ThicketVineActivitySpec> thicketVineActivities =
+    <String, ThicketVineActivitySpec>{
+      forestPathVinesActivityId: ThicketVineActivitySpec(
+        locationId: forestPathId,
+        stepId: forestPathVinesStepId,
+        persistAfterQuest: true,
+      ),
+      smallClearingVinesActivityId: ThicketVineActivitySpec(
+        locationId: smallClearingId,
+        stepId: smallClearingVinesStepId,
+        persistAfterQuest: false,
+      ),
+      starlightVinesActivityId: ThicketVineActivitySpec(
+        locationId: starlightGladeId,
+        stepId: starlightVinesStepId,
+        persistAfterQuest: false,
+      ),
+      mirrorLakeVinesActivityId: ThicketVineActivitySpec(
+        locationId: mirrorLakeId,
+        stepId: mirrorLakeVinesStepId,
+        persistAfterQuest: false,
+      ),
+      oldEntGroveVinesActivityId: ThicketVineActivitySpec(
+        locationId: oldEntGroveId,
+        stepId: oldEntGroveVinesStepId,
+        persistAfterQuest: false,
+      ),
+    };
 
 String leftVinesFlag(String locationId) => 'leftVines:$locationId';
 
