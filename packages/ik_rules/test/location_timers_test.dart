@@ -192,7 +192,7 @@ void main() {
 
     final docks = createNewSave(db, 0).copyWith(
       currentLocationId: 'LOC-0004',
-      skills: const [SkillProgress(skillId: 'SKL-0003', level: 75, xp: 0)],
+      skills: const [SkillProgress(skillId: 'SKL-0003', level: 84, xp: 0)],
       inventory: const [
         InventoryStack(itemId: fishingPotItemId, quantity: 1),
         InventoryStack(itemId: 'ITEM-0191', quantity: 3),
