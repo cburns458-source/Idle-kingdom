@@ -34,7 +34,7 @@ void main() {
     final messages = <String>[
       'Gathered through 312 actions while away.',
       '…and 16 more crafts.',
-      'Activity stopped — requirements no longer met.',
+      'Activity stopped. Requirements no longer met.',
     ];
     expect(consolidateAwayMessages(messages), messages);
     expect(consolidateAwayMessages(const <String>[]), isEmpty);

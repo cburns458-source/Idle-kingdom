@@ -407,4 +407,18 @@ describe('primary activity engine', () => {
       completed.result.xpGained,
     )
   })
+
+  it('requires a woodcutting tool to chop vines on the Forest Path', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = { ...createNewSave(launch), currentLocationId: 'LOC-0040' }
+    expect(validateActivityStart(launch, base, 'ACT-0048').ok).toBe(false)
+    const withHatchet = {
+      ...base,
+      equipment: {
+        ...base.equipment,
+        slots: { ...base.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0101', quantity: 1 } },
+      },
+    }
+    expect(validateActivityStart(launch, withHatchet, 'ACT-0048').ok).toBe(true)
+  })
 })

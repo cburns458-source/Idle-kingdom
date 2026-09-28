@@ -87,9 +87,6 @@ export const ACTION_ASSET_PATHS: Record<string, string> = {
   'ACN-0215': '/assets/actions/acn_catch_tuna.webp',
   'ACN-0216': '/assets/actions/acn_catch_shark.webp',
   'ACN-0217': '/assets/actions/acn_catch_baby_giant_squid.webp',
-  'ACN-0231': '/assets/actions/acn_clear_vines.webp',
-  'ACN-0232': '/assets/actions/acn_clear_vines.webp',
-  'ACN-0233': '/assets/actions/acn_clear_vines.webp',
   'ACN-0234': '/assets/actions/acn_delve_essence.webp',
 }
 

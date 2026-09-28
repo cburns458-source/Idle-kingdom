@@ -177,7 +177,7 @@ export function confirmShopOffer(
     ok: true,
     save: next,
     goldDelta,
-    message: parts.length > 0 ? `Trade complete — ${parts.join(', ')}.` : 'Trade complete.',
+    message: parts.length > 0 ? `Trade complete. ${parts.join(', ')}.` : 'Trade complete.',
     cosmeticsGranted: cosmeticGrants,
   }
 }

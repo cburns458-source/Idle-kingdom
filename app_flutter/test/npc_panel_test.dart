@@ -208,7 +208,7 @@ void main() {
     await tester.tap(find.text('Collect'));
     await tester.pumpAndSettle();
 
-    expect(find.text("Thank you — Rose's Apothecary is open on the Town Map."), findsOne);
+    expect(find.text("Thank you. Rose's Apothecary is open on the Town Map."), findsOne);
   });
 
   testWidgets('the King pitches the feast, then asks for help after accept', (tester) async {

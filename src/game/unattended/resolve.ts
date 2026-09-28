@@ -160,7 +160,7 @@ export function resolveUnattendedProgress(
       let resumed: PlayerSave = applyDeathRecovery(db, current)
       if (!activityStillValid(db, resumed, resumed.currentActivityId!)) {
         current = clearActivitySave(resumed, pauseEnded)
-        messages.push('Activity stopped after defeat — requirements no longer met.')
+        messages.push('Activity stopped after defeat. Requirements no longer met.')
         break
       }
       const generated = generateNextAction(
@@ -359,7 +359,7 @@ export function resolveUnattendedProgress(
       const activityId = current.currentActivityId
       if (!activityStillValid(db, next, activityId)) {
         current = clearActivitySave(next, due)
-        messages.push('Activity stopped — requirements no longer met.')
+        messages.push('Activity stopped. Requirements no longer met.')
         break
       }
       const generated = generateNextAction(db, next, activityId, random, due)
@@ -372,7 +372,7 @@ export function resolveUnattendedProgress(
     if (current.currentActivityId && !current.productionRecipeId) {
       if (!activityStillValid(db, current, current.currentActivityId)) {
         current = clearActivitySave(current, endMs)
-        messages.push('Activity stopped — requirements no longer met.')
+        messages.push('Activity stopped. Requirements no longer met.')
         break
       }
       const waitUntil = bossRespawnWaitUntilMs(db, current, current.currentActivityId)

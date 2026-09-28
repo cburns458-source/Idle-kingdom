@@ -208,7 +208,7 @@ void main() {
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net);
 
-    expect(find.text('Cloud unavailable — progress is not syncing.'), findsNothing);
+    expect(find.text('Cloud unavailable. Progress is not syncing.'), findsNothing);
   });
 
   testWidgets('a hosted backend that cannot be reached shows a banner', (tester) async {
@@ -218,7 +218,7 @@ void main() {
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net);
 
-    expect(find.text('Cloud unavailable — progress is not syncing.'), findsOne);
+    expect(find.text('Cloud unavailable. Progress is not syncing.'), findsOne);
   });
 
   testWidgets('a full bag while crafting shows a pause toast', (tester) async {
@@ -240,7 +240,7 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    expect(find.text('Inventory full — free a slot to keep crafting.'), findsOne);
+    expect(find.text('Inventory full. Free a slot to keep crafting.'), findsOne);
   });
 
   testWidgets('an unsigned player cannot reach the location screen', (tester) async {

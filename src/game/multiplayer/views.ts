@@ -464,7 +464,7 @@ export function emptyBoardMessage(boardKey: MultiplayerBoardKey): string {
     return 'No scores on this board yet. Keep Combat at level 1 to stand on it.'
   }
   return boardKey === 'guild_total_level'
-    ? 'No guilds yet — create or join one from the Guilds tab.'
+    ? 'No guilds yet. Create or join one from the Guilds tab.'
     : 'No scores on this board yet.'
 }
 

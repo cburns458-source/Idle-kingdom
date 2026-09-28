@@ -116,7 +116,7 @@ describe('npc conversation', () => {
     const conversation = npcConversation(launch, completed.save, npc('NPC-0005'))
     expect(conversation.quests[0]!.status).toBe('completed')
     expect(conversation.quests[0]!.completedNote).toBe(
-      "Thank you — Rose's Apothecary is open on the Town Map.",
+      "Thank you. Rose's Apothecary is open on the Town Map.",
     )
   })
 

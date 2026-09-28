@@ -235,9 +235,6 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0228': 'actions/acn_steal_general_store.webp',
   'ACN-0229': 'actions/acn_steal_general_store.webp',
   'ACN-0230': 'actions/acn_pick_deposit_box.webp',
-  'ACN-0231': 'actions/acn_clear_vines.webp',
-  'ACN-0232': 'actions/acn_clear_vines.webp',
-  'ACN-0233': 'actions/acn_clear_vines.webp',
   'ACN-0234': 'actions/acn_delve_essence.webp',
 };
 

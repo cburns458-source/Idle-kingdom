@@ -954,7 +954,7 @@ class GameController extends ChangeNotifier {
         _activityError = reason;
         _clearStageFx();
       case InventoryFullEvent():
-        _activityError = 'Inventory full — free a slot to keep crafting.';
+        _activityError = 'Inventory full. Free a slot to keep crafting.';
       case CraftCompletedEvent(itemId: final itemId, displayName: final displayName):
         _craftPopup = CraftPopup(
           itemId: itemId,

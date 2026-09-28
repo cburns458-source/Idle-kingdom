@@ -59,7 +59,7 @@ const FALLBACK_MERCHANT_LINE = 'Welcome to my shop.'
 const FALLBACK_NPC_DESCRIPTION = 'An inhabitant of Restoria.'
 const FALLBACK_QUEST_ACTIVE_PROMPT = 'What else do you need?'
 const FALLBACK_QUILL_TEACH =
-  'A bow’s only half the work — you’ll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.'
+  "A bow's only half the work. You'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it."
 const FALLBACK_QUILL_KNOWN = 'You know how to make bows and quivers.'
 
 export function merchantTipLine(db: GameDatabase): string {
@@ -259,7 +259,7 @@ function completedNote(
       return `${locationName(db, locationId)} is open${where}`
     })
     .join(', ')
-  return `Thank you — ${opened}.`
+  return `Thank you. ${opened}.`
 }
 
 function questBlock(
@@ -508,10 +508,12 @@ export function acceptQuestFromNpc(
   const result = acceptQuest(db, save, questId)
   if (!result.ok) return result
   const quest = db.Quests.find((row) => row['Quest ID'] === questId)
+  const npcId = typeof quest?.['NPC ID'] === 'string' ? quest['NPC ID'] : null
+  const spoken = npcId ? questTalkLine(db, questId, npcId, result.save) : null
   return {
     ok: true,
     save: result.save,
-    message: `Accepted: ${quest?.['Display Name'] ?? 'quest'}.`,
+    message: spoken ?? `Accepted: ${quest?.['Display Name'] ?? 'quest'}.`,
   }
 }
 
