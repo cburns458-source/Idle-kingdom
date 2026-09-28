@@ -703,7 +703,10 @@ num msUntilNextUtcDay(num nowMs) {
     final fishingLevel = getSkillProgress(save, 'SKL-0003').level;
     final unlocked = potFishOptionsForLocation(loc, fishingLevel);
     if (unlocked.isEmpty) {
-      final need = loc == 'LOC-0004' ? 35 : 14;
+      final table = potFishByLocation[loc] ?? const [];
+      final need = table.isEmpty
+          ? 1
+          : table.map((row) => row.fishingLevel).reduce((a, b) => a < b ? a : b);
       return (
         ok: false,
         kind: null,

@@ -655,7 +655,8 @@ export function canPlaceTrap(
     const fishingLevel = getSkillProgress(save, 'SKL-0003').level
     const unlocked = potFishOptionsForLocation(locationId, fishingLevel)
     if (unlocked.length === 0) {
-      const need = locationId === 'LOC-0004' ? 35 : 14
+      const levels = (POT_FISH_BY_LOCATION[locationId] ?? []).map((row) => row.fishingLevel)
+      const need = levels.length > 0 ? Math.min(...levels) : 1
       return {
         ok: false,
         reason: `You need Fishing ${need} before this pot will catch anything.`,

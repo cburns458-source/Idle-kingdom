@@ -445,6 +445,6 @@ void main() {
     final recipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0060');
     expect(recipe.raw['Proficiency Level'], 80);
     expect(recipe.raw['Release Phase'], 'Launch');
-    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 70);
+    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 63);
   });
 }

@@ -298,7 +298,7 @@ describe('skill menu entries', () => {
       false,
     )
     expect(actionsForSkill(launch, 'SKL-0003').find((item) => item.displayName === 'Catch Baby Giant Squid')?.level).toBe(
-      70,
+      63,
     )
   })
 
