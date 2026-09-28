@@ -118,6 +118,12 @@ void main() {
     await openLog(tester);
     await tester.tap(find.text('Milestones'));
     await tester.pump();
+    await tester.dragUntilVisible(
+      find.text('Critter collector'),
+      find.byType(ListView),
+      const Offset(0, -200),
+    );
+    await tester.pump();
     expect(find.text('Critter collector'), findsOne);
     final title = tester.widget<Text>(find.text('Critter collector'));
     expect(title.style?.color?.a, closeTo(1, 0.01));
@@ -127,6 +133,12 @@ void main() {
       critterCollections: controller.save.critterCollections.sublist(1),
     );
     controller.commit(syncProgressionMeta(database.launch, short, testStartMs));
+    await tester.pump();
+    await tester.dragUntilVisible(
+      find.textContaining('${critterDefs.length - 1} / ${critterDefs.length} critters'),
+      find.byType(ListView),
+      const Offset(0, -200),
+    );
     await tester.pump();
 
     expect(
