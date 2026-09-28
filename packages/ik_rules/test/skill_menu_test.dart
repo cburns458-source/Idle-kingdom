@@ -275,7 +275,7 @@ void main() {
     final cooking = actionsForSkill(db, 'SKL-0007');
     expect(cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid'), isFalse);
     expect(cooking.any((row) => row.displayName == 'Soup Stock' && row.level == 16), isTrue);
-    expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 80), isTrue);
+    expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 66), isTrue);
 
     final view = skillMenuView(db, 'SKL-0007');
     expect(view.tabs.map((tab) => tab.label), ['Fish', 'Meat', 'Stew', 'Other']);
@@ -440,10 +440,10 @@ void main() {
     expect(marlinRecipe.raw['Status'], 'Planned');
     expect(marlinRecipe.raw['Display Name'], 'Cooked Marlin');
     final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0175');
-    expect(action.proficiencyLevel, 80);
+    expect(action.proficiencyLevel, 66);
     expect(action.releasePhase, 'Launch');
     final recipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0060');
-    expect(recipe.raw['Proficiency Level'], 80);
+    expect(recipe.raw['Proficiency Level'], 66);
     expect(recipe.raw['Release Phase'], 'Launch');
     expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 63);
   });

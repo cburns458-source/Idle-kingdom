@@ -90,7 +90,7 @@ describe('cooked beef and tablet recipes', () => {
       'Cooked marlin',
     )
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0104')?.['Proficiency Level']).toBe(63)
-    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['Proficiency Level']).toBe(80)
+    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['Proficiency Level']).toBe(66)
   })
 })
 
