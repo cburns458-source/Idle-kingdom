@@ -22,7 +22,13 @@ export interface AchievementRow {
   Notes: string | null
 }
 
-export const ACHIEVEMENT_DIFFICULTIES = ['Easy', 'Medium', 'Hard'] as const
+export const ACHIEVEMENT_DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Champion'] as const
+
+/** Aggregate lifetime crafts across smithing / artisanry / arcana instant projects. */
+export const PROJECTS_COMPLETED_STAT = 'projects_completed'
+
+/** Set when a single combat round heals at least 100 HP via lifesteal. */
+export const LIFESTEAL_ROUND_GE_100_STAT = 'lifesteal_round_ge_100'
 
 export function addLifetimeStat(save: PlayerSave, key: string, amount = 1): PlayerSave {
   const current = Number(save.statistics.values[key] ?? 0)
@@ -51,6 +57,7 @@ export function recordProjectMilestones(
 ): PlayerSave {
   const project = db.Projects.find((row) => row['Project ID'] === projectId)
   let next = addLifetimeStat(save, `project_${projectId}`, crafts)
+  next = addLifetimeStat(next, PROJECTS_COMPLETED_STAT, crafts)
   const locationId = save.currentLocationId
   if (locationId) {
     next = addLifetimeStat(next, `project_${projectId}_at_${locationId}`, crafts)
@@ -88,6 +95,7 @@ export function recordFoodConsumed(save: PlayerSave, itemId: string): PlayerSave
 }
 
 export function recordGatheredDrops(
+  db: GameDatabase,
   save: PlayerSave,
   itemIds: Iterable<string>,
   locationId: string,
@@ -97,8 +105,36 @@ export function recordGatheredDrops(
   let next = save
   for (const itemId of itemIds) {
     next = addLifetimeStat(next, `gathered_${itemId}_at_${locationId}_wield_${wield}`)
+    // Any-weapon wildcard for deeds that do not care which tool was equipped.
+    next = addLifetimeStat(next, `gathered_${itemId}_at_${locationId}_wield_*`)
+    if (weaponId && itemHasCapability(db, weaponId, 'fishing_tool')) {
+      next = addLifetimeStat(next, `gathered_${itemId}_wield_tag_fishing_tool`)
+    }
   }
   return next
+}
+
+export function recordBotanyHarvest(
+  save: PlayerSave,
+  itemIds: Iterable<string>,
+  locationId: string,
+): PlayerSave {
+  let next = save
+  for (const itemId of itemIds) {
+    next = addLifetimeStat(next, `botany_harvest_${itemId}_at_${locationId}`)
+    next = addLifetimeStat(next, `botany_harvest_${itemId}_at_*`)
+  }
+  return next
+}
+
+export function recordThieverySuccess(save: PlayerSave, actionId: string): PlayerSave {
+  return addLifetimeStat(save, `thievery_success_${actionId}`)
+}
+
+export function recordLifestealRoundHeal(save: PlayerSave, healed: number): PlayerSave {
+  if (healed < 100) return save
+  if (Number(save.statistics.values[LIFESTEAL_ROUND_GE_100_STAT] ?? 0) > 0) return save
+  return addLifetimeStat(save, LIFESTEAL_ROUND_GE_100_STAT, 1)
 }
 
 export function recordItemsSoldAtLocation(
@@ -173,6 +209,23 @@ function parseGatherDrop(
   return { itemId: parsed.id, locationId: parsed.locationId, weaponId: wieldPart }
 }
 
+function parseGatherWieldTag(
+  target: string | null,
+): { itemId: string; tag: string } | null {
+  if (!target) return null
+  const [itemId, tagPart] = target.split('+wield_tag:')
+  if (!itemId || !tagPart) return null
+  return { itemId, tag: tagPart.trim() }
+}
+
+function equippedItemCount(save: PlayerSave, itemId: string): number {
+  let count = 0
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (stack?.itemId === itemId) count += 1
+  }
+  return count
+}
+
 function parseKillEnemyClass(
   target: string | null,
 ): { enemyId: string; classes: string[] } | null {
@@ -226,13 +279,11 @@ export function asStatisticRows(db: GameDatabase): StatisticRow[] {
 
 /**
  * Achievements in this category are re-checked every sync and can be lost.
- *
- * A skill milestone is a thing the player did once, so it is theirs forever. A
- * collection is a statement about the collection as it stands now, which stops
- * being true the moment the world grows a new critter.
+ * Critter collector is a Log milestone now; kept for any legacy Collection rows.
  */
 export const REVOCABLE_ACHIEVEMENT_CATEGORY = 'Collections'
 
+/** @deprecated Critter collector is a milestone, not a deed. */
 export const CRITTER_COLLECTOR_ACHIEVEMENT_ID = 'ACH-0015'
 
 function upsertAchievement(
@@ -307,6 +358,26 @@ function holdsMilestone(
         ) >= count
       )
     }
+    case 'gather_wield_tag': {
+      const parsed = parseGatherWieldTag(target)
+      return (
+        parsed != null &&
+        lifetimeCount(values, `gathered_${parsed.itemId}_wield_tag_${parsed.tag}`) >= count
+      )
+    }
+    case 'botany_harvest': {
+      const parsed = parseAtLocation(target)
+      return (
+        parsed != null &&
+        lifetimeCount(values, `botany_harvest_${parsed.id}_at_${parsed.locationId}`) >= count
+      )
+    }
+    case 'thievery_success':
+      return target != null && lifetimeCount(values, `thievery_success_${target}`) >= count
+    case 'lifesteal_round':
+      return lifetimeCount(values, LIFESTEAL_ROUND_GE_100_STAT) >= 1
+    case 'equip_count':
+      return target != null && equippedItemCount(save, target) >= count
     case 'sold_at_location': {
       const parsed = parseAtLocation(target)
       return parsed != null && lifetimeCount(values, `sold_${parsed.id}_at_${parsed.locationId}`) >= count

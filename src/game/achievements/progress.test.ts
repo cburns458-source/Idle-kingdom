@@ -61,35 +61,39 @@ describe('achievements and statistics', () => {
       'Dark nights',
       'Dragon!',
       'Ent and hatchet',
-      'Critter collector',
+      'Turnip for what',
+      'Market rate',
+      'Jaws',
+      'Vampire',
+      'Blood gem',
+      'Moonlit trophy',
+      'Tall timber',
+      'Ember harvest',
+      'Super speed',
+      'Bleeding tooth',
     ])
     expect(rows.some((row) => row['Check Type'] === 'skill_all')).toBe(false)
-    expect(rows.filter((row) => row.Difficulty === 'Easy')).toHaveLength(5)
-    expect(rows.filter((row) => row.Difficulty === 'Medium')).toHaveLength(5)
-    expect(rows.filter((row) => row.Difficulty === 'Hard')).toHaveLength(4)
+    expect(rows.some((row) => row['Display Name'] === 'Critter collector')).toBe(false)
+    expect(rows.filter((row) => row.Difficulty === 'Easy')).toHaveLength(6)
+    expect(rows.filter((row) => row.Difficulty === 'Medium')).toHaveLength(6)
+    expect(rows.filter((row) => row.Difficulty === 'Hard')).toHaveLength(6)
+    expect(rows.filter((row) => row.Difficulty === 'Champion')).toHaveLength(5)
   })
 
-  it('holds Critter Collector only while the collection is complete', () => {
+  it('treats Critter Collector as a complete-collection check, not a deed', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
 
     expect(hasEveryCritter(base)).toBe(false)
-    expect(unlocks(base, CRITTER_COLLECTOR_ACHIEVEMENT_ID, launch)).toBe(false)
+    expect(
+      asAchievementRows(launch).some((row) => row['Achievement ID'] === CRITTER_COLLECTOR_ACHIEVEMENT_ID),
+    ).toBe(false)
 
     const complete: PlayerSave = {
       ...base,
       critterCollections: CRITTER_DEFS.map((critter) => ({ critterId: critter.id, count: 1 })),
     }
     expect(hasEveryCritter(complete)).toBe(true)
-    expect(unlocks(complete, CRITTER_COLLECTOR_ACHIEVEMENT_ID, launch)).toBe(true)
-
-    const earned = syncProgressionMeta(launch, complete)
-    const widened: PlayerSave = {
-      ...earned,
-      critterCollections: earned.critterCollections.slice(1),
-    }
-    expect(unlocks(widened, CRITTER_COLLECTOR_ACHIEVEMENT_ID, launch)).toBe(false)
-    expect(unlocks(complete, CRITTER_COLLECTOR_ACHIEVEMENT_ID, launch)).toBe(true)
   })
 
   it('unlocks Wizarding 101 after one spell project', () => {
@@ -204,13 +208,13 @@ describe('achievements and statistics', () => {
   it('requires a successful salmon drop at the goblin camp with a goblin staff', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
-    const missed = recordGatheredDrops(base, [], 'LOC-0003', 'ITEM-0122')
+    const missed = recordGatheredDrops(launch, base, [], 'LOC-0003', 'ITEM-0122')
     expect(unlocks(missed, 'ACH-0032', launch)).toBe(false)
 
-    const wrongTool = recordGatheredDrops(base, ['ITEM-0049'], 'LOC-0003', 'ITEM-0116')
+    const wrongTool = recordGatheredDrops(launch, base, ['ITEM-0049'], 'LOC-0003', 'ITEM-0116')
     expect(unlocks(wrongTool, 'ACH-0032', launch)).toBe(false)
 
-    const caught = recordGatheredDrops(base, ['ITEM-0049'], 'LOC-0003', 'ITEM-0122')
+    const caught = recordGatheredDrops(launch, base, ['ITEM-0049'], 'LOC-0003', 'ITEM-0122')
     expect(unlocks(caught, 'ACH-0032', launch)).toBe(true)
   })
 

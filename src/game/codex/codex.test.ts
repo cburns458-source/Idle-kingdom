@@ -24,7 +24,7 @@ describe('codex index', () => {
     expect(catalogIds.has('ITEM-0320')).toBe(false)
     expect(codex.item('ITEM-0299')?.displayName).toBe('Stolen Coin Purse')
     expect(codex.item('ITEM-0296')?.displayName).toBe("Traveler's Tunic")
-    expect(codex.item('ITEM-0320')?.displayName).toBe('Fly Pet')
+    expect(codex.item('ITEM-0320')?.displayName).toBe('Chick Pet')
     expect(new Set(codex.enemies.map((row) => row.enemyId))).toEqual(
       new Set(launch.Enemies.map((row) => row['Enemy ID'])),
     )

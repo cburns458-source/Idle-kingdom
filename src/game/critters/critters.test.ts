@@ -31,7 +31,7 @@ describe('critters', () => {
       },
     )
     expect(result.hoursRolled).toBe(5)
-    expect(result.spawned?.displayName).toBe('Fly')
+    expect(result.spawned?.displayName).toBe('Chick')
     expect(activeSpawnAtLocation(result.save, 'LOC-0001')?.critterId).toBe('CRT-0001')
   })
 
@@ -85,7 +85,7 @@ describe('critters', () => {
     expect(second.save.cosmetics.unlocked.length).toBe(unlockedAfterFirst)
   })
 
-  it('unlocks COS-0004 on first Fly collect only', () => {
+  it('unlocks COS-0004 on first Chick collect only', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     expect(save.cosmetics.unlocked).not.toContain('COS-0004')
@@ -103,8 +103,8 @@ describe('critters', () => {
     const second = collectCritter(again.save, 'LOC-0001')
     expect(second.ok).toBe(true)
     if (!second.ok) return
-    const flyPetGrants = second.save.cosmetics.unlocked.filter((id) => id === 'COS-0004')
-    expect(flyPetGrants).toHaveLength(1)
+    const chickPetGrants = second.save.cosmetics.unlocked.filter((id) => id === 'COS-0004')
+    expect(chickPetGrants).toHaveLength(1)
   })
 
   it('force-spawns only when a habitat Critter is available and none is waiting', () => {
@@ -116,7 +116,7 @@ describe('critters', () => {
     const first = spawnCritterAtLocation(save, 'LOC-0001')
     expect(first.ok).toBe(true)
     if (!first.ok) return
-    expect(first.critter.displayName).toBe('Fly')
+    expect(first.critter.displayName).toBe('Chick')
     save = first.save
 
     const blocked = spawnCritterAtLocation(save, 'LOC-0001')

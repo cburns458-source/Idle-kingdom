@@ -27,7 +27,13 @@ const String revocableAchievementCategory = 'Collections';
 
 const String critterCollectorAchievementId = 'ACH-0015';
 
-const List<String> achievementDifficulties = <String>['Easy', 'Medium', 'Hard'];
+const List<String> achievementDifficulties = <String>['Easy', 'Medium', 'Hard', 'Champion'];
+
+/// Aggregate lifetime crafts across smithing / artisanry / arcana instant projects.
+const String projectsCompletedStat = 'projects_completed';
+
+/// Set when a single combat round heals at least 100 HP via lifesteal.
+const String lifestealRoundGe100Stat = 'lifesteal_round_ge_100';
 
 PlayerSave addLifetimeStat(PlayerSave save, String key, [num amount = 1]) {
   final current = jsNumber(save.statistics.values[key] ?? 0);
@@ -49,6 +55,7 @@ PlayerSave recordProjectMilestones(GameDatabase db, PlayerSave save, String proj
     (row) => jsString(row.raw['Project ID']) == projectId,
   );
   var next = addLifetimeStat(save, 'project_$projectId', crafts);
+  next = addLifetimeStat(next, projectsCompletedStat, crafts);
   final locationId = save.currentLocationId;
   if (locationId.isNotEmpty) {
     next = addLifetimeStat(next, 'project_${projectId}_at_$locationId', crafts);
@@ -85,6 +92,7 @@ PlayerSave recordFoodConsumed(PlayerSave save, String itemId) =>
     addLifetimeStat(save, 'consumed_$itemId');
 
 PlayerSave recordGatheredDrops(
+  GameDatabase db,
   PlayerSave save,
   Iterable<String> itemIds,
   String locationId,
@@ -94,8 +102,30 @@ PlayerSave recordGatheredDrops(
   var next = save;
   for (final itemId in itemIds) {
     next = addLifetimeStat(next, 'gathered_${itemId}_at_${locationId}_wield_$wield');
+    next = addLifetimeStat(next, 'gathered_${itemId}_at_${locationId}_wield_*');
+    if (weaponId != null && itemHasCapability(db, weaponId, 'fishing_tool')) {
+      next = addLifetimeStat(next, 'gathered_${itemId}_wield_tag_fishing_tool');
+    }
   }
   return next;
+}
+
+PlayerSave recordBotanyHarvest(PlayerSave save, Iterable<String> itemIds, String locationId) {
+  var next = save;
+  for (final itemId in itemIds) {
+    next = addLifetimeStat(next, 'botany_harvest_${itemId}_at_$locationId');
+    next = addLifetimeStat(next, 'botany_harvest_${itemId}_at_*');
+  }
+  return next;
+}
+
+PlayerSave recordThieverySuccess(PlayerSave save, String actionId) =>
+    addLifetimeStat(save, 'thievery_success_$actionId');
+
+PlayerSave recordLifestealRoundHeal(PlayerSave save, num healed) {
+  if (healed < 100) return save;
+  if (jsNumber(save.statistics.values[lifestealRoundGe100Stat] ?? 0) > 0) return save;
+  return addLifetimeStat(save, lifestealRoundGe100Stat);
 }
 
 PlayerSave recordItemsSoldAtLocation(
@@ -178,6 +208,24 @@ PlayerSave recordEnemyKill(GameDatabase db, PlayerSave save, String enemyId) {
   return (enemyId: parts[0], classes: classes);
 }
 
+({String itemId, String tag})? _parseGatherWieldTag(String? target) {
+  if (target == null || target.isEmpty) return null;
+  final parts = target.split('+wield_tag:');
+  if (parts.length != 2) return null;
+  final itemId = parts[0];
+  final tag = parts[1].trim();
+  if (itemId.isEmpty || tag.isEmpty) return null;
+  return (itemId: itemId, tag: tag);
+}
+
+num _equippedItemCount(PlayerSave save, String itemId) {
+  var count = 0;
+  for (final stack in save.equipment.slots.values) {
+    if (stack?.itemId == itemId) count += 1;
+  }
+  return count;
+}
+
 Set<String> _equippedItemIds(PlayerSave save) {
   return save.equipment.slots.values.map((stack) => stack?.itemId).whereType<String>().toSet();
 }
@@ -255,6 +303,20 @@ bool _holdsMilestone(
                 'gathered_${gathered.itemId}_at_${gathered.locationId}_wield_${gathered.weaponId}',
               ) >=
               count;
+    case 'gather_wield_tag':
+      final tagged = _parseGatherWieldTag(target is String ? target : null);
+      return tagged != null &&
+          _lifetimeCount(values, 'gathered_${tagged.itemId}_wield_tag_${tagged.tag}') >= count;
+    case 'botany_harvest':
+      final botany = _parseAtLocation(target is String ? target : null);
+      return botany != null &&
+          _lifetimeCount(values, 'botany_harvest_${botany.id}_at_${botany.locationId}') >= count;
+    case 'thievery_success':
+      return target is String && _lifetimeCount(values, 'thievery_success_$target') >= count;
+    case 'lifesteal_round':
+      return _lifetimeCount(values, lifestealRoundGe100Stat) >= 1;
+    case 'equip_count':
+      return target is String && _equippedItemCount(save, target) >= count;
     case 'sold_at_location':
       final sold = _parseAtLocation(target is String ? target : null);
       return sold != null &&

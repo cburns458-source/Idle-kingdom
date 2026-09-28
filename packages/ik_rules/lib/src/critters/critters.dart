@@ -37,13 +37,15 @@ class CritterDef {
 }
 
 /// Expandable starter set; new rows go here (or later in data) without schema churn.
+///
+/// Empty [CritterDef.locationId] means no habitat hour-roll (combat / special grant).
 const List<CritterDef> critterDefs = <CritterDef>[
   CritterDef(
     id: 'CRT-0001',
-    internalKey: 'fly',
-    displayName: 'Fly',
+    internalKey: 'chick',
+    displayName: 'Chick',
     locationId: 'LOC-0001',
-    description: 'A buzzing farmyard nuisance.',
+    description: 'A fluffy farmyard hatchling.',
   ),
   CritterDef(
     id: 'CRT-0002',
@@ -66,9 +68,45 @@ const List<CritterDef> critterDefs = <CritterDef>[
     locationId: 'LOC-0011',
     description: 'A tunnel-dweller from the deep mines.',
   ),
+  CritterDef(
+    id: 'CRT-0005',
+    internalKey: 'squirrel',
+    displayName: 'Squirrel',
+    locationId: 'LOC-0008',
+    description: 'A quick nut-hoarder of the Kingswoods.',
+  ),
+  CritterDef(
+    id: 'CRT-0006',
+    internalKey: 'crab',
+    displayName: 'Crab',
+    locationId: 'LOC-0043',
+    description: 'A sideways scavenger of the shallows.',
+  ),
+  CritterDef(
+    id: 'CRT-0007',
+    internalKey: 'pika',
+    displayName: 'Pika',
+    locationId: 'LOC-0046',
+    description: 'A tiny haymaker of the slopes.',
+  ),
+  CritterDef(
+    id: 'CRT-0008',
+    internalKey: 'raccoon',
+    displayName: 'Raccoon',
+    locationId: 'LOC-0030',
+    description: 'A masked bandit of the Processing District.',
+  ),
+  CritterDef(
+    id: 'CRT-0009',
+    internalKey: 'baby_dragon',
+    displayName: 'Baby Dragon',
+    locationId: '',
+    description: "A rare hatchling that sometimes follows a dragon's defeat.",
+  ),
 ];
 
 CritterDef? critterForLocation(String locationId) {
+  if (locationId.isEmpty) return null;
   return critterDefs.firstWhereOrNull((critter) => critter.locationId == locationId);
 }
 
@@ -189,10 +227,9 @@ class CritterCollectResult {
       : <String, Object?>{'ok': false, 'reason': reason};
 }
 
-CritterCollectResult collectCritter(PlayerSave save, String locationId) {
-  final spawn = activeSpawnAtLocation(save, locationId);
-  if (spawn == null) return const CritterCollectResult.failed('No Critter here.');
-  final critter = getCritter(spawn.critterId);
+/// Add one to the collection (and unlock the pet on first find). No active spawn required.
+CritterCollectResult grantCritterToCollection(PlayerSave save, String critterId) {
+  final critter = getCritter(critterId);
   if (critter == null) return const CritterCollectResult.failed('Unknown Critter.');
 
   final existing = save.critterCollections.firstWhereOrNull((row) => row.critterId == critter.id);
@@ -206,13 +243,7 @@ CritterCollectResult collectCritter(PlayerSave save, String locationId) {
           CritterCollectionEntry(critterId: critter.id, count: count),
         ];
 
-  var next = save.copyWith(
-    critterCollections: collections,
-    activeCritterSpawns: save.activeCritterSpawns
-        .where((row) => row.locationId != locationId)
-        .toList(),
-  );
-  // First find unlocks the matching pet cosmetic for the wardrobe Pet slot.
+  var next = save.copyWith(critterCollections: collections);
   if (count == 1) {
     final petId = petCosmeticIdForCritter(critter.id);
     if (petId != null) next = grantCosmetic(next, petId).save;
@@ -225,6 +256,24 @@ CritterCollectResult collectCritter(PlayerSave save, String locationId) {
     message: count > 1
         ? 'Collected ${critter.displayName} (×${jsNumberToString(count)}).'
         : 'Collected ${critter.displayName}!',
+  );
+}
+
+CritterCollectResult collectCritter(PlayerSave save, String locationId) {
+  final spawn = activeSpawnAtLocation(save, locationId);
+  if (spawn == null) return const CritterCollectResult.failed('No Critter here.');
+  final granted = grantCritterToCollection(save, spawn.critterId);
+  if (!granted.ok) return granted;
+
+  return CritterCollectResult.ok(
+    save: granted.save!.copyWith(
+      activeCritterSpawns: granted.save!.activeCritterSpawns
+          .where((row) => row.locationId != locationId)
+          .toList(),
+    ),
+    critter: granted.critter!,
+    count: granted.count!,
+    message: granted.message!,
   );
 }
 

@@ -175,8 +175,8 @@ void main() {
   );
 
   group('the critter overlay', () {
-    /// At the Farm, where the Fly lives, with one already waiting.
-    PlayerSave withFlyWaiting() {
+    /// At the Farm, where the Chick lives, with one already waiting.
+    PlayerSave withChickWaiting() {
       return startedCharacter(database).copyWith(
         currentLocationId: 'LOC-0001',
         activeCritterSpawns: <CritterSpawn>[
@@ -190,24 +190,24 @@ void main() {
     }
 
     testWidgets('collects what is waiting and says so', (tester) async {
-      final controller = buildController(database, seed: withFlyWaiting());
+      final controller = buildController(database, seed: withChickWaiting());
       addTearDown(controller.dispose);
       await pumpShell(tester, controller);
 
-      expect(find.bySemanticsLabel('Collect Fly'), findsOne);
+      expect(find.bySemanticsLabel('Collect Chick'), findsOne);
       await tester.tap(critterTile);
       await tester.pump();
 
       expect(collectionCount(controller.save, 'CRT-0001'), 1);
       expect(activeSpawnAtLocation(controller.save, 'LOC-0001'), isNull);
-      expect(find.text('Collected Fly!'), findsOne);
+      expect(find.text('Collected Chick!'), findsOne);
       expect(critterTile, findsNothing);
     });
 
     testWidgets('counts a repeat catch', (tester) async {
       final controller = buildController(
         database,
-        seed: withFlyWaiting().copyWith(
+        seed: withChickWaiting().copyWith(
           critterCollections: const <CritterCollectionEntry>[
             CritterCollectionEntry(critterId: 'CRT-0001', count: 2),
           ],
@@ -220,7 +220,7 @@ void main() {
       await tester.pump();
 
       expect(collectionCount(controller.save, 'CRT-0001'), 3);
-      expect(find.text('Collected Fly (×3).'), findsOne);
+      expect(find.text('Collected Chick (×3).'), findsOne);
     });
 
     testWidgets('stays away when nothing is waiting', (tester) async {

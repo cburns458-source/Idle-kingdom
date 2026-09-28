@@ -27,7 +27,7 @@ void main() {
     );
     addTearDown(controller.dispose);
 
-    expect(controller.debugSpawnCritter(), 'Fly appeared.');
+    expect(controller.debugSpawnCritter(), 'Chick appeared.');
     expect(controller.save.activeCritterSpawns, isNotEmpty);
     expect(controller.debugSpawnCritter(), 'A Critter is already waiting here.');
 
@@ -181,7 +181,7 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Spawn critter'));
     await tester.pump();
     expect(controller.save.activeCritterSpawns.single.critterId, 'CRT-0001');
-    expect(find.text('Fly appeared.'), findsOne);
+    expect(find.text('Chick appeared.'), findsOne);
 
     final beforePotatoes = potatoCount(controller.save);
     await tester.tap(find.bySemanticsLabel('Add 1'));

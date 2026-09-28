@@ -543,11 +543,15 @@ GatheringCompletion completeGatheringAction(
   next = addLifetimeStat(next, gatheringActionsStat);
   if (rewarded.loot.isNotEmpty) {
     next = recordGatheredDrops(
+      db,
       next,
       rewarded.loot.map((drop) => drop.itemId),
       save.currentLocationId,
       save.equipment.slots[weaponToolSlotId]?.itemId,
     );
+  }
+  if (isThievery) {
+    next = recordThieverySuccess(next, jsString(action.raw['Action ID']));
   }
   next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
   next = applyQuestAutoCompleteOnAction(db, next).save;

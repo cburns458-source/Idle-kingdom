@@ -23,6 +23,7 @@ import {
 import { consumeFoodAfterVictory, type FoodConsumption } from '../combat/food'
 import { bossProfile } from '../combat/boss'
 import { applySquidlingVictory, beginBossAddsEncounter, isSquidlingVictory } from '../combat/bossPhase'
+import { recordLifestealRoundHeal } from '../achievements/progress'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
 import type { ActionRow, EnemyRow, GameDatabase } from '../data/types'
 import { completeProductionCraft } from '../production/engine'
@@ -201,6 +202,9 @@ function resolveDueCombatRound(
 ): void {
   const before = out.current
   const round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random)
+  if (round.lifestealHealed > 0) {
+    out.set(recordLifestealRoundHeal(out.current, round.lifestealHealed))
+  }
   out.emit({
     kind: 'combat-round',
     enemyId: enemy['Enemy ID'],

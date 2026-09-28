@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../critters/critters.dart';
 import '../inventory/add_items.dart';
 import '../inventory/gold.dart';
 import '../js_compat.dart';
@@ -124,6 +125,14 @@ ActionRewards resolveActionRewards(
       }
     } else if (rewardType == 'Gold' || rewardType == 'Currency') {
       goldGained += _rollQuantity(picked, random);
+    } else if (rewardType == 'Critter' && rewardValue is String && rewardValue.isNotEmpty) {
+      final granted = grantCritterToCollection(next, rewardValue);
+      if (granted.ok) {
+        next = granted.save!;
+        loot.add(
+          LootGrant(itemId: rewardValue, quantity: 1, displayName: granted.critter!.displayName),
+        );
+      }
     }
   }
 

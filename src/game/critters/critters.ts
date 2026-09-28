@@ -1,5 +1,5 @@
-import type { PlayerSave } from '../save/types'
 import { grantCosmetic } from '../cosmetics/cosmetics'
+import type { PlayerSave } from '../save/types'
 import { petCosmeticIdForCritter } from './pets'
 
 export const CRITTER_HOUR_MS = 3_600_000
@@ -10,6 +10,7 @@ export interface CritterDef {
   id: string
   internalKey: string
   displayName: string
+  /** Empty string = no habitat hour-roll (combat / special grant only). */
   locationId: string
   description: string
 }
@@ -18,10 +19,10 @@ export interface CritterDef {
 export const CRITTER_DEFS: CritterDef[] = [
   {
     id: 'CRT-0001',
-    internalKey: 'fly',
-    displayName: 'Fly',
+    internalKey: 'chick',
+    displayName: 'Chick',
     locationId: 'LOC-0001',
-    description: 'A buzzing farmyard nuisance.',
+    description: 'A fluffy farmyard hatchling.',
   },
   {
     id: 'CRT-0002',
@@ -44,9 +45,45 @@ export const CRITTER_DEFS: CritterDef[] = [
     locationId: 'LOC-0011',
     description: 'A tunnel-dweller from the deep mines.',
   },
+  {
+    id: 'CRT-0005',
+    internalKey: 'squirrel',
+    displayName: 'Squirrel',
+    locationId: 'LOC-0008',
+    description: 'A quick nut-hoarder of the Kingswoods.',
+  },
+  {
+    id: 'CRT-0006',
+    internalKey: 'crab',
+    displayName: 'Crab',
+    locationId: 'LOC-0043',
+    description: 'A sideways scavenger of the shallows.',
+  },
+  {
+    id: 'CRT-0007',
+    internalKey: 'pika',
+    displayName: 'Pika',
+    locationId: 'LOC-0046',
+    description: 'A tiny haymaker of the slopes.',
+  },
+  {
+    id: 'CRT-0008',
+    internalKey: 'raccoon',
+    displayName: 'Raccoon',
+    locationId: 'LOC-0030',
+    description: 'A masked bandit of the Processing District.',
+  },
+  {
+    id: 'CRT-0009',
+    internalKey: 'baby_dragon',
+    displayName: 'Baby Dragon',
+    locationId: '',
+    description: "A rare hatchling that sometimes follows a dragon's defeat.",
+  },
 ]
 
 export function critterForLocation(locationId: string): CritterDef | undefined {
+  if (!locationId) return undefined
   return CRITTER_DEFS.find((critter) => critter.locationId === locationId)
 }
 
@@ -118,6 +155,30 @@ export function applyActivityTimeTowardCritters(
   return { save: next, spawned, hoursRolled }
 }
 
+/** Add one to the collection (and unlock the pet on first find). No active spawn required. */
+export function grantCritterToCollection(
+  save: PlayerSave,
+  critterId: string,
+): { ok: true; save: PlayerSave; critter: CritterDef; count: number } | { ok: false; reason: string } {
+  const critter = getCritter(critterId)
+  if (!critter) return { ok: false, reason: 'Unknown Critter.' }
+
+  const existing = save.critterCollections?.find((row) => row.critterId === critter.id)
+  const count = (existing?.count ?? 0) + 1
+  const collections = existing
+    ? (save.critterCollections ?? []).map((row) =>
+        row.critterId === critter.id ? { ...row, count } : row,
+      )
+    : [...(save.critterCollections ?? []), { critterId: critter.id, count }]
+
+  let next: PlayerSave = { ...save, critterCollections: collections }
+  if (count === 1) {
+    const petId = petCosmeticIdForCritter(critter.id)
+    if (petId) next = grantCosmetic(next, petId).save
+  }
+  return { ok: true, save: next, critter, count }
+}
+
 export function collectCritter(
   save: PlayerSave,
   locationId: string,
@@ -126,41 +187,26 @@ export function collectCritter(
   | { ok: false; reason: string } {
   const spawn = activeSpawnAtLocation(save, locationId)
   if (!spawn) return { ok: false, reason: 'No Critter here.' }
-  const critter = getCritter(spawn.critterId)
-  if (!critter) return { ok: false, reason: 'Unknown Critter.' }
 
-  const existing = (save.critterCollections ?? []).find((row) => row.critterId === critter.id)
-  const count = (existing?.count ?? 0) + 1
-  const collections = existing
-    ? (save.critterCollections ?? []).map((row) =>
-        row.critterId === critter.id ? { ...row, count } : row,
-      )
-    : [...(save.critterCollections ?? []), { critterId: critter.id, count }]
+  const granted = grantCritterToCollection(save, spawn.critterId)
+  if (!granted.ok) return granted
 
-  const spawns = (save.activeCritterSpawns ?? []).filter(
-    (row) => row.locationId !== locationId,
-  )
-
-  let next: PlayerSave = {
-    ...save,
-    critterCollections: collections,
-    activeCritterSpawns: spawns,
-  }
-  // First find unlocks the matching pet cosmetic for the wardrobe Pet slot.
-  if (count === 1) {
-    const petId = petCosmeticIdForCritter(critter.id)
-    if (petId) next = grantCosmetic(next, petId).save
+  const next: PlayerSave = {
+    ...granted.save,
+    activeCritterSpawns: (granted.save.activeCritterSpawns ?? []).filter(
+      (row) => row.locationId !== locationId,
+    ),
   }
 
   return {
     ok: true,
     save: next,
-    critter,
-    count,
+    critter: granted.critter,
+    count: granted.count,
     message:
-      count > 1
-        ? `Collected ${critter.displayName} (×${count}).`
-        : `Collected ${critter.displayName}!`,
+      granted.count > 1
+        ? `Collected ${granted.critter.displayName} (×${granted.count}).`
+        : `Collected ${granted.critter.displayName}!`,
   }
 }
 

@@ -61,7 +61,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, CodexView(controller: controller));
-    await tester.enterText(find.byType(TextField), 'fly pet');
+    await tester.enterText(find.byType(TextField), 'chick pet');
     await tester.pump();
     expect(find.byKey(const Key('codex-item-ITEM-0320')), findsNothing);
 
