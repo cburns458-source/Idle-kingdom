@@ -143,7 +143,9 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
     db,
     save,
     requirementsForEntity(db, 'Activity', activityId)
-        .where((requirement) => !isQuestGateRequirement(requirement.requirementType))
+        .where(
+          (requirement) => !isQuestGateRequirement(requirement.requirementType),
+        )
         .toList(),
   );
   if (activityReqFailures.isNotEmpty) {
