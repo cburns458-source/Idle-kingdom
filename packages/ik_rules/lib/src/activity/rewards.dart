@@ -130,11 +130,7 @@ ActionRewards resolveActionRewards(
       if (granted.ok) {
         next = granted.save!;
         loot.add(
-          LootGrant(
-            itemId: rewardValue,
-            quantity: 1,
-            displayName: granted.critter!.displayName,
-          ),
+          LootGrant(itemId: rewardValue, quantity: 1, displayName: granted.critter!.displayName),
         );
       }
     }
