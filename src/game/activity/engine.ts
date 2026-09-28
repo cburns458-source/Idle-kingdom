@@ -16,6 +16,7 @@ import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction
 import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
 import {
   activityVisibleForSave,
+  isQuestGateRequirement,
   requirementsForEntity,
   unmetHardRequirements,
 } from './requirements'
@@ -104,7 +105,9 @@ export function validateActivityStart(
   const activityReqFailures = unmetHardRequirements(
     db,
     save,
-    requirementsForEntity(db, 'Activity', activityId),
+    requirementsForEntity(db, 'Activity', activityId).filter(
+      (requirement) => !isQuestGateRequirement(requirement['Requirement Type']),
+    ),
   )
   if (activityReqFailures.length > 0) {
     return { ok: false, reason: activityReqFailures[0]! }

@@ -142,7 +142,9 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
   final activityReqFailures = unmetHardRequirements(
     db,
     save,
-    requirementsForEntity(db, 'Activity', activityId),
+    requirementsForEntity(db, 'Activity', activityId)
+        .where((requirement) => !isQuestGateRequirement(requirement.requirementType))
+        .toList(),
   );
   if (activityReqFailures.isNotEmpty) {
     return ActivityStartResult.failed(activityReqFailures.first);

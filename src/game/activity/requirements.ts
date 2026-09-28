@@ -203,7 +203,7 @@ export function evaluateRequirement(
   return { met: false, detail: 'Unknown requirement.' }
 }
 
-function isQuestGateRequirement(type: string): boolean {
+export function isQuestGateRequirement(type: string): boolean {
   return (
     type === 'Quest Access' ||
     type === 'Quest Flag' ||
