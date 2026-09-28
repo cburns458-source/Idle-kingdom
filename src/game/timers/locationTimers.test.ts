@@ -337,7 +337,7 @@ describe('locationTimers', () => {
       ...base,
       currentLocationId: 'LOC-0004',
       skills: base.skills.map((row) =>
-        row.skillId === 'SKL-0003' ? { ...row, level: 75, xp: 0 } : row,
+        row.skillId === 'SKL-0003' ? { ...row, level: 84, xp: 0 } : row,
       ),
       inventory: [
         { itemId: FISHING_POT_ITEM_ID, quantity: 1 },
@@ -371,7 +371,7 @@ describe('locationTimers', () => {
     expect(lobster.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 17550 }])
   })
 
-  it('blocks dock pots until Fishing 35 and goblin pots until Fishing 14', () => {
+  it('blocks dock pots until Fishing 28 and goblin pots until Fishing 14', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = {
@@ -382,7 +382,7 @@ describe('locationTimers', () => {
     const docks = canPlaceTrap(launch, save, FISHING_POT_ITEM_ID)
     expect(docks.ok).toBe(false)
     if (docks.ok) return
-    expect(docks.reason).toContain('35')
+    expect(docks.reason).toContain('28')
 
     save = {
       ...save,
