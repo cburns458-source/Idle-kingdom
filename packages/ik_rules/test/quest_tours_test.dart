@@ -339,7 +339,14 @@ void main() {
         db,
         save,
       ).singleWhere((row) => row.questId == 'QST-0010').steps.map((step) => step.label),
-      containsAll(<String>['Clear fifty vines on the Forest Path', 'Chop vines 0 / 50']),
+      contains('Clear fifty vines on the Forest Path'),
+    );
+    expect(
+      questLog(
+        db,
+        save,
+      ).singleWhere((row) => row.questId == 'QST-0010').steps.map((step) => step.label),
+      isNot(contains('Chop vines 0 / 50')),
     );
     expect(questActionProgressForActivity(db, save, 'ACT-0048').map((line) => line.caption), [
       'Chop vines 0 / 50',
@@ -384,6 +391,11 @@ void main() {
     expect(save.unlockedLocationIds, contains(mirrorLakeId));
     save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
     expect(save.unlockedLocationIds, contains(oldEntGroveId));
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0036');
+    expect(activityVisibleForSave(db, save, 'ACT-0082'), isTrue);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0030');
+    expect(activityVisibleForSave(db, save, 'ACT-0082'), isFalse);
     save = talkWithQuestNpc(db, save, 'NPC-0017').save!;
     expect(activityVisibleForSave(db, save, 'ACT-0080'), isTrue);
 
@@ -465,6 +477,49 @@ void main() {
     expect(equippedActionTimeReductionPercentForAction(db, geared, vines), 24);
     expect(equippedActionTimeReductionPercentForAction(db, geared, oak), 11);
     expect(gatheringDurationMs(db, geared, vines), closeTo(55 * (1 - 24 / 100) * 1000, 0.01));
+  });
+
+  test('grove vines stay startable after that step until the player leaves', () {
+    var save = raiseSkillToMinimumLevel(_save(db, locationId: 'LOC-0040'), db, 'SKL-0006', 40).save;
+    save = raiseSkillToMinimumLevel(save, db, 'SKL-0014', 35).save;
+    save = acceptQuest(db, save, 'QST-0010').save!;
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 50);
+    save = talkWithQuestNpc(db, save, 'NPC-0017').save!;
+    save = applyTravelArrival(db, save, smallClearingId, 0);
+    save = equipStackToSlot(save, weaponToolSlotId, 'ITEM-0101', 1);
+    expect(activityVisibleForSave(db, save, 'ACT-0077'), isTrue);
+    expect(validateActivityStart(db, save, 'ACT-0077').ok, isTrue);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
+    expect(activityVisibleForSave(db, save, 'ACT-0077'), isTrue);
+    expect(validateActivityStart(db, save, 'ACT-0077').ok, isTrue);
+    save = applyTravelArrival(db, save, forestPathId, 0);
+    expect(activityVisibleForSave(db, save, 'ACT-0077'), isFalse);
+    expect(validateActivityStart(db, save, 'ACT-0077').ok, isFalse);
+    save = applyTravelArrival(db, save, smallClearingId, 0);
+    expect(activityVisibleForSave(db, save, 'ACT-0077'), isFalse);
+    expect(validateActivityStart(db, save, 'ACT-0077').ok, isFalse);
+
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
+    save = applyTravelArrival(db, save, oldEntGroveId, 0);
+    expect(activityVisibleForSave(db, save, 'ACT-0082'), isTrue);
+    expect(validateActivityStart(db, save, 'ACT-0082').ok, isTrue);
+    save = applyQuestActionProgress(db, save, 'ACN-0179', 10);
+    expect(activityVisibleForSave(db, save, 'ACT-0082'), isTrue);
+    expect(validateActivityStart(db, save, 'ACT-0082').ok, isTrue);
+    save = applyTravelArrival(db, save, forestPathId, 0);
+    expect(activityVisibleForSave(db, save, 'ACT-0082'), isFalse);
+    expect(validateActivityStart(db, save, 'ACT-0082').ok, isFalse);
+    save = applyTravelArrival(db, save, oldEntGroveId, 0);
+    expect(activityVisibleForSave(db, save, 'ACT-0082'), isFalse);
+    expect(validateActivityStart(db, save, 'ACT-0082').ok, isFalse);
+    final finished = save.copyWith(
+      quests: const <QuestProgress>[
+        QuestProgress(questId: 'QST-0010', status: 'completed', progress: 0),
+      ],
+    );
+    expect(activityVisibleForSave(db, finished, 'ACT-0082'), isFalse);
+    expect(validateActivityStart(db, finished, 'ACT-0082').ok, isFalse);
   });
 
   test('Green Thumb waits for Getting Started, hides from the log, and finishes after compost planting', () {

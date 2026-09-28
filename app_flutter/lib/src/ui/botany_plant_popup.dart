@@ -275,10 +275,10 @@ class _PlantTile extends StatelessWidget {
               bottom: 0,
               child: Text(
                 '${option.owned.round()}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
-                  color: Palette.parchmentText,
+                  color: UiChrome.of(context).primaryLabel,
                 ),
               ),
             ),

@@ -1,9 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { validateActivityStart } from '../activity/engine'
+import { raiseSkillToMinimumLevel } from '../activity/xp'
 import { activityVisibleForSave } from '../activity/requirements'
+import type { PlayerSave } from '../save/types'
 import { prepareDatabase } from '../data/loadDatabase'
 import { recipeIngredients } from '../production/recipes'
+import { talkWithQuestNpc } from '../npcs/conversation'
+import { applyQuestActionProgress } from '../quests/progress'
+import { acceptQuest } from '../quests/quests'
 import { createNewSave } from '../save/saveStore'
 import {
   FOREST_MAP_ID,
@@ -13,10 +19,21 @@ import {
   SMALL_CLEARING_ID,
   STARLIGHT_GLADE_ID,
 } from './constants'
+import { applyTravelArrival } from './travel'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
+
+function withWoodcuttingTool(save: PlayerSave): PlayerSave {
+  return {
+    ...save,
+    equipment: {
+      ...save.equipment,
+      slots: { ...save.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0101', quantity: 1 } },
+    },
+  }
+}
 
 describe('Ancient Forest Through the Thicket', () => {
   it('adds Small Clearing and Mirror Lake on the forest map', () => {
@@ -71,6 +88,11 @@ describe('Ancient Forest Through the Thicket', () => {
     expect(activityVisibleForSave(launch, completed, 'ACT-0078')).toBe(false)
     expect(activityVisibleForSave(launch, completed, 'ACT-0079')).toBe(false)
     expect(activityVisibleForSave(launch, completed, 'ACT-0080')).toBe(false)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0082')).toBe(false)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0049')).toBe(true)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0050')).toBe(true)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0016')).toBe(true)
+    expect(activityVisibleForSave(launch, completed, 'ACT-0040')).toBe(true)
     expect(
       launch.Activities.filter((row) => row['Location ID'] === STARLIGHT_GLADE_ID).some(
         (row) => row['Activity ID'] === 'ACT-0049',
@@ -95,6 +117,7 @@ describe('Ancient Forest Through the Thicket', () => {
       'ACT-0077',
       'ACT-0078',
       'ACT-0079',
+      'ACT-0082',
     ])
     for (const activity of chop) {
       expect(
@@ -113,5 +136,107 @@ describe('Ancient Forest Through the Thicket', () => {
         (row) => row['Entity ID'] === 'ACN-0179' && row['Requirement Type'] === 'Skill Level',
       )?.['Required Value'],
     ).toBe(40)
+  })
+
+  it('hides landing vines until the quest starts, then keeps them until the player leaves', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const fresh = { ...createNewSave(launch), currentLocationId: FOREST_PATH_ID }
+    expect(activityVisibleForSave(launch, fresh, 'ACT-0048')).toBe(false)
+    expect(activityVisibleForSave(launch, fresh, 'ACT-0049')).toBe(false)
+    expect(activityVisibleForSave(launch, fresh, 'ACT-0016')).toBe(false)
+
+    let save = raiseSkillToMinimumLevel(fresh, launch, 'SKL-0006', 40).save
+    save = raiseSkillToMinimumLevel(save, launch, 'SKL-0014', 35).save
+    const accepted = acceptQuest(launch, save, 'QST-0010')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = withWoodcuttingTool(accepted.save)
+    expect(activityVisibleForSave(launch, save, 'ACT-0048')).toBe(true)
+    expect(validateActivityStart(launch, save, 'ACT-0048').ok).toBe(true)
+    expect(activityVisibleForSave(launch, save, 'ACT-0049')).toBe(false)
+
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 50)
+    expect(activityVisibleForSave(launch, save, 'ACT-0048')).toBe(true)
+    expect(validateActivityStart(launch, save, 'ACT-0048').ok).toBe(true)
+    save = applyTravelArrival(launch, save, SMALL_CLEARING_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0048')).toBe(false)
+    expect(validateActivityStart(launch, save, 'ACT-0048').ok).toBe(false)
+    save = applyTravelArrival(launch, save, FOREST_PATH_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0048')).toBe(false)
+    expect(validateActivityStart(launch, save, 'ACT-0048').ok).toBe(false)
+  })
+
+  it('keeps a grove vine activity until the player leaves after that step', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = raiseSkillToMinimumLevel(
+      { ...createNewSave(launch), currentLocationId: FOREST_PATH_ID },
+      launch,
+      'SKL-0006',
+      40,
+    ).save
+    save = raiseSkillToMinimumLevel(save, launch, 'SKL-0014', 35).save
+    const accepted = acceptQuest(launch, save, 'QST-0010')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 50)
+    const talked = talkWithQuestNpc(launch, save, 'NPC-0017')
+    expect(talked.ok).toBe(true)
+    if (!talked.ok) return
+    save = applyTravelArrival(launch, talked.save, SMALL_CLEARING_ID)
+    save = withWoodcuttingTool(save)
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(true)
+    expect(validateActivityStart(launch, save, 'ACT-0077').ok).toBe(true)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(true)
+    expect(validateActivityStart(launch, save, 'ACT-0077').ok).toBe(true)
+    save = applyTravelArrival(launch, save, FOREST_PATH_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(false)
+    expect(validateActivityStart(launch, save, 'ACT-0077').ok).toBe(false)
+    save = applyTravelArrival(launch, save, SMALL_CLEARING_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0077')).toBe(false)
+    expect(validateActivityStart(launch, save, 'ACT-0077').ok).toBe(false)
+  })
+
+  it('lets Ent Grove vines keep starting until the player leaves, then never again', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = raiseSkillToMinimumLevel(
+      { ...createNewSave(launch), currentLocationId: FOREST_PATH_ID },
+      launch,
+      'SKL-0006',
+      40,
+    ).save
+    save = raiseSkillToMinimumLevel(save, launch, 'SKL-0014', 35).save
+    const accepted = acceptQuest(launch, save, 'QST-0010')
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    save = accepted.save
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 50)
+    const firstTalk = talkWithQuestNpc(launch, save, 'NPC-0017')
+    expect(firstTalk.ok).toBe(true)
+    if (!firstTalk.ok) return
+    save = firstTalk.save
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
+    save = applyTravelArrival(launch, save, OLD_ENT_GROVE_ID)
+    save = withWoodcuttingTool(save)
+    expect(activityVisibleForSave(launch, save, 'ACT-0082')).toBe(true)
+    expect(validateActivityStart(launch, save, 'ACT-0082').ok).toBe(true)
+    save = applyQuestActionProgress(launch, save, 'ACN-0179', 10)
+    expect(activityVisibleForSave(launch, save, 'ACT-0082')).toBe(true)
+    expect(validateActivityStart(launch, save, 'ACT-0082').ok).toBe(true)
+    save = applyTravelArrival(launch, save, FOREST_PATH_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0082')).toBe(false)
+    expect(validateActivityStart(launch, save, 'ACT-0082').ok).toBe(false)
+    save = applyTravelArrival(launch, save, OLD_ENT_GROVE_ID)
+    expect(activityVisibleForSave(launch, save, 'ACT-0082')).toBe(false)
+    expect(validateActivityStart(launch, save, 'ACT-0082').ok).toBe(false)
+    const finished = {
+      ...save,
+      quests: [{ questId: 'QST-0010', status: 'completed' as const, progress: 0 }],
+    }
+    expect(activityVisibleForSave(launch, finished, 'ACT-0082')).toBe(false)
+    expect(validateActivityStart(launch, finished, 'ACT-0082').ok).toBe(false)
   })
 })

@@ -388,6 +388,7 @@ describe('primary activity engine', () => {
     const atGrove = {
       ...base,
       currentLocationId: 'LOC-0018',
+      quests: [{ questId: 'QST-0010', status: 'completed' as const, progress: 0 }],
       equipment: {
         ...base.equipment,
         slots: { ...base.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0363', quantity: 1 } },
@@ -419,6 +420,11 @@ describe('primary activity engine', () => {
         slots: { ...base.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0101', quantity: 1 } },
       },
     }
-    expect(validateActivityStart(launch, withHatchet, 'ACT-0048').ok).toBe(true)
+    expect(validateActivityStart(launch, withHatchet, 'ACT-0048').ok).toBe(false)
+    const onQuest = {
+      ...withHatchet,
+      quests: [{ questId: 'QST-0010', status: 'active' as const, progress: 0, counters: {} }],
+    }
+    expect(validateActivityStart(launch, onQuest, 'ACT-0048').ok).toBe(true)
   })
 })

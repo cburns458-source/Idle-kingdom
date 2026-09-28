@@ -28,6 +28,15 @@ describe('inventory selling', () => {
     expect(sold.save.inventory.some((stack) => stack.itemId === 'ITEM-0025')).toBe(false)
   })
 
+  it('will not field-sell untradable quest items or cosmetics', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(fieldSellPrice(launch, 'ITEM-0405')).toBeNull()
+    expect(fieldSellPrice(launch, 'ITEM-0299')).toBeNull()
+    expect(fieldSellPrice(launch, 'ITEM-0300')).toBeNull()
+    const save = { ...createNewSave(launch), currentLocationId: 'LOC-0009' }
+    expect(sellPriceAtLocation(launch, save, 'ITEM-0405')).toBeNull()
+  })
+
   it('uses shop sell price when an accessible shop will buy the item', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0024' }

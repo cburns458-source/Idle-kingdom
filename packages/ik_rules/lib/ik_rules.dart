@@ -58,6 +58,7 @@ export 'src/inventory/favorites.dart';
 export 'src/inventory/gold.dart';
 export 'src/inventory/sell.dart';
 export 'src/inventory/sort.dart';
+export 'src/inventory/tradable.dart';
 export 'src/js_compat.dart';
 export 'src/json_support.dart';
 export 'src/library/books.dart';

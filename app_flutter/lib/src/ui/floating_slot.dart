@@ -23,9 +23,9 @@ class FloatingItemWell extends StatelessWidget {
       shadow: false,
       padding: padding,
       child: DefaultTextStyle.merge(
-        style: const TextStyle(color: Palette.parchmentText),
+        style: TextStyle(color: UiChrome.of(context).primaryLabel),
         child: IconTheme.merge(
-          data: const IconThemeData(color: Palette.parchmentText),
+          data: IconThemeData(color: UiChrome.of(context).primaryLabel),
           child: child,
         ),
       ),

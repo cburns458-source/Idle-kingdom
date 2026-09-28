@@ -5343,7 +5343,7 @@
       "Subtype": "Key Item",
       "Associated Skill ID": null,
       "Equipment Slot ID": null,
-      "Functional / Source Tags": "quest",
+      "Functional / Source Tags": "quest; untradable",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A worn purse the barracks guards took from a beggar.",
@@ -7096,7 +7096,7 @@
       "Subtype": "Offering",
       "Associated Skill ID": "SKL-0014",
       "Equipment Slot ID": null,
-      "Functional / Source Tags": "quest_item",
+      "Functional / Source Tags": "quest_item; untradable",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A bundle laid at the groves to regain the forest’s trust.",
@@ -13761,6 +13761,19 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Hostile Kingsroad combat. No loot tables."
+    },
+    {
+      "Activity ID": "ACT-0082",
+      "Internal Key": "clear_vines_old_ent_grove",
+      "Contextual Name": "Chop vines",
+      "Location ID": "LOC-0018",
+      "Description": "Cut the last vines choking the Old Ent Grove.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0063",
+      "Pool Internal Key": "old_ent_grove_vines",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Last vine-clear step for Through the Thicket. Hidden after the player leaves."
     }
   ],
   "PoolEntries": [
@@ -14667,6 +14680,14 @@
       "Weight": 20,
       "Status": "Planned",
       "Notes": "Bandit Captain 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0122",
+      "Pool ID": "POOL-0063",
+      "Action ID": "ACN-0179",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": null
     }
   ],
   "Actions": [
@@ -20224,6 +20245,84 @@
       "Required Value": 40,
       "Status": "Confirmed",
       "Notes": "Chop vines is Woodcutting 40."
+    },
+    {
+      "Requirement ID": "REQ-0166",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0049",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Complete",
+      "Reference ID / Value": "QST-0010",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Starlight hunt opens after Through the Thicket."
+    },
+    {
+      "Requirement ID": "REQ-0167",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0050",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Complete",
+      "Reference ID / Value": "QST-0010",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Moonblossoms open after Through the Thicket."
+    },
+    {
+      "Requirement ID": "REQ-0168",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0016",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Complete",
+      "Reference ID / Value": "QST-0010",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Explore the ancient forest opens after Through the Thicket."
+    },
+    {
+      "Requirement ID": "REQ-0169",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0040",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Complete",
+      "Reference ID / Value": "QST-0010",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Hardwood chopping opens after Through the Thicket."
+    },
+    {
+      "Requirement ID": "REQ-0170",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0082",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Quest Step",
+      "Reference ID / Value": "QST-0010:QSTP-0036",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Old Ent Grove vines during the last vine-clear step."
+    },
+    {
+      "Requirement ID": "REQ-0171",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0082",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Old Ent Grove vines need a woodcutting tool."
     }
   ],
   "Enemies": [
@@ -34044,9 +34143,18 @@
       "Release Phase": "Launch"
     },
     {
-      "Step ID": "QSTP-0030",
+      "Step ID": "QSTP-0036",
       "Quest ID": "QST-0010",
       "Step Order": 6,
+      "Journal Label": "Clear ten vines at the Old Ent Grove",
+      "Notes": "Action: ACN-0179 x10",
+      "Status": "Planned",
+      "Release Phase": "Launch"
+    },
+    {
+      "Step ID": "QSTP-0030",
+      "Quest ID": "QST-0010",
+      "Step Order": 7,
       "Journal Label": "Return to the Old Forester",
       "Notes": "Talk: NPC-0017",
       "Status": "Planned",
@@ -34055,7 +34163,7 @@
     {
       "Step ID": "QSTP-0031",
       "Quest ID": "QST-0010",
-      "Step Order": 7,
+      "Step Order": 8,
       "Journal Label": "Craft four forest offerings",
       "Notes": "Process: RCP-0071 x4",
       "Status": "Planned",
@@ -34064,7 +34172,7 @@
     {
       "Step ID": "QSTP-0032",
       "Quest ID": "QST-0010",
-      "Step Order": 8,
+      "Step Order": 9,
       "Journal Label": "Place an offering at each inner grove",
       "Notes": "Visit: LOC-0050, LOC-0044, LOC-0051, LOC-0018; Offering: ITEM-0405",
       "Status": "Planned",
@@ -34073,7 +34181,7 @@
     {
       "Step ID": "QSTP-0033",
       "Quest ID": "QST-0010",
-      "Step Order": 9,
+      "Step Order": 10,
       "Journal Label": "Return to the Old Forester",
       "Notes": "Talk: NPC-0017",
       "Status": "Planned",

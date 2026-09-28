@@ -9,12 +9,14 @@ import '../save/generated/save_models.dart';
 import '../shops/shops.dart';
 import 'gold.dart';
 import 'favorites.dart';
+import 'tradable.dart';
 
 /// Off-shop / field sale: half of Base Sell Value.
 const num fieldSellMult = 0.5;
 
 num? fieldSellPrice(GameDatabase db, String itemId) {
   if (itemId == currencyItemId(db)) return null;
+  if (!itemIsTradable(db, itemId)) return null;
   final item = db.items.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
   final base = baseSellValue(item);
   if (base == null || base <= 0) return null;

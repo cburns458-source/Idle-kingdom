@@ -199,6 +199,27 @@ PlayerSave applyTravelArrival(
   return applyTravelArrivalResult(db, save, destinationLocationId, nowMs).save;
 }
 
+PlayerSave _markLeftThicketVines(GameDatabase db, PlayerSave save, String fromLocationId) {
+  if (!questIsActive(save, throughTheThicketQuestId) &&
+      !questIsComplete(save, throughTheThicketQuestId)) {
+    return save;
+  }
+  final spec = thicketVineActivities.values
+      .where((row) => row.locationId == fromLocationId)
+      .firstOrNull;
+  if (spec == null) return save;
+  if (hasQuestFlag(save, throughTheThicketQuestId, leftVinesFlag(fromLocationId))) return save;
+  final quest = getQuest(db, throughTheThicketQuestId);
+  if (quest == null) return save;
+  final vineIndex = getQuestSteps(
+    db,
+    throughTheThicketQuestId,
+  ).indexWhere((step) => step.stepId == spec.stepId);
+  if (vineIndex < 0) return save;
+  if (getCurrentStepIndex(db, save, quest) <= vineIndex) return save;
+  return setQuestFlag(save, throughTheThicketQuestId, leftVinesFlag(fromLocationId));
+}
+
 /// Arrival plus any visit-complete quest popups the client should show.
 TravelArrivalSave applyTravelArrivalResult(
   GameDatabase db,
@@ -209,8 +230,12 @@ TravelArrivalSave applyTravelArrivalResult(
   if (isDeathPaused(save, nowMs)) {
     return TravelArrivalSave(save: save, questCompletions: const <QuestArrivalCompletion>[]);
   }
+  final fromLocationId = save.currentLocationId;
   final stopped = stopPrimaryActivityNow(db, save, nowMs);
-  final arrived = stopped.copyWith(currentLocationId: destinationLocationId);
+  final flagged = fromLocationId != destinationLocationId
+      ? _markLeftThicketVines(db, stopped, fromLocationId)
+      : stopped;
+  final arrived = flagged.copyWith(currentLocationId: destinationLocationId);
   final progressed = applyQuestLocationProgressResult(db, arrived, destinationLocationId);
   final auto = applyQuestAutoCompleteOnVisit(db, progressed.save);
   return TravelArrivalSave(

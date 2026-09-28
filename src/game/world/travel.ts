@@ -1,12 +1,25 @@
 import { isDeathPaused } from '../combat/engine'
 import { stopPrimaryActivityNow } from '../activity/transition'
 import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/types'
-import { applyQuestAutoCompleteOnVisit, type QuestArrivalCompletion } from '../quests/quests'
-import { applyQuestLocationProgressResult } from '../quests/progress'
-import { questRevealsLocation } from '../quests/steps'
+import { applyQuestAutoCompleteOnVisit, getQuest, type QuestArrivalCompletion } from '../quests/quests'
+import {
+  applyQuestLocationProgressResult,
+  hasQuestFlag,
+  questIsActive,
+  questIsComplete,
+  setQuestFlag,
+} from '../quests/progress'
+import { getCurrentStepIndex, getQuestSteps, questRevealsLocation } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { maybeGrantKingswoodsSling } from './kingswoodsSling'
-import { MAIN_MAP_ID, THE_DEPTHS_ID, isFutureHorizonLocation } from './constants'
+import {
+  MAIN_MAP_ID,
+  THE_DEPTHS_ID,
+  THROUGH_THE_THICKET_QUEST_ID,
+  THICKET_VINE_ACTIVITIES,
+  isFutureHorizonLocation,
+  leftVinesFlag,
+} from './constants'
 import { FISHING_SKILL_ID } from '../skills/skillActions'
 import { locationHiddenOnMap } from './mapLabel'
 import {
@@ -194,6 +207,30 @@ export function applyTravelArrival(
 }
 
 /** Arrival plus any visit-complete quest popups the client should show. */
+function markLeftThicketVines(
+  db: GameDatabase,
+  save: PlayerSave,
+  fromLocationId: string,
+): PlayerSave {
+  if (
+    !questIsActive(save, THROUGH_THE_THICKET_QUEST_ID) &&
+    !questIsComplete(save, THROUGH_THE_THICKET_QUEST_ID)
+  ) {
+    return save
+  }
+  const spec = Object.values(THICKET_VINE_ACTIVITIES).find((row) => row.locationId === fromLocationId)
+  if (!spec) return save
+  if (hasQuestFlag(save, THROUGH_THE_THICKET_QUEST_ID, leftVinesFlag(fromLocationId))) return save
+  const quest = getQuest(db, THROUGH_THE_THICKET_QUEST_ID)
+  if (!quest) return save
+  const vineIndex = getQuestSteps(db, THROUGH_THE_THICKET_QUEST_ID).findIndex(
+    (step) => step['Step ID'] === spec.stepId,
+  )
+  if (vineIndex < 0) return save
+  if (getCurrentStepIndex(db, save, quest) <= vineIndex) return save
+  return setQuestFlag(save, THROUGH_THE_THICKET_QUEST_ID, leftVinesFlag(fromLocationId))
+}
+
 export function applyTravelArrivalResult(
   db: GameDatabase,
   save: PlayerSave,
@@ -201,9 +238,14 @@ export function applyTravelArrivalResult(
   nowMs: number = Date.now(),
 ): TravelArrivalSave {
   if (isDeathPaused(save, nowMs)) return { save, questCompletions: [], discoveryNotice: null }
+  const fromLocationId = save.currentLocationId
   const stopped = stopPrimaryActivityNow(db, save, nowMs)
+  const flagged =
+    fromLocationId !== destinationLocationId
+      ? markLeftThicketVines(db, stopped, fromLocationId)
+      : stopped
   const arrived = {
-    ...stopped,
+    ...flagged,
     currentLocationId: destinationLocationId,
   }
   const progressed = applyQuestLocationProgressResult(db, arrived, destinationLocationId)

@@ -15,6 +15,8 @@ import { gatheringDurationMs, gatheringXpReward, rollGatheringSuccess } from './
 import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
 import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
 import {
+  activityVisibleForSave,
+  isQuestGateRequirement,
   requirementsForEntity,
   unmetHardRequirements,
 } from './requirements'
@@ -97,10 +99,15 @@ export function validateActivityStart(
   if (mainHallKitchenLocked(db, save, activityId)) {
     return { ok: false, reason: MAIN_HALL_KITCHEN_LOCKED_MESSAGE }
   }
+  if (!activityVisibleForSave(db, save, activityId)) {
+    return { ok: false, reason: 'Not available yet' }
+  }
   const activityReqFailures = unmetHardRequirements(
     db,
     save,
-    requirementsForEntity(db, 'Activity', activityId),
+    requirementsForEntity(db, 'Activity', activityId).filter(
+      (requirement) => !isQuestGateRequirement(requirement['Requirement Type']),
+    ),
   )
   if (activityReqFailures.length > 0) {
     return { ok: false, reason: activityReqFailures[0]! }

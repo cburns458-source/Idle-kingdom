@@ -1,6 +1,13 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { prepareDatabase } from '../data/loadDatabase'
 import { destroyInventoryIndexes } from './destroy'
 import type { PlayerSave } from '../save/types'
+
+const rawDatabase = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
+)
 
 function saveWithInventory(itemIds: string[]): PlayerSave {
   return {
@@ -118,5 +125,16 @@ describe('destroyInventoryIndexes', () => {
     const save = saveWithInventory(['ITEM-A'])
     expect(destroyInventoryIndexes(save, [])).toBe(save)
     expect(destroyInventoryIndexes(save, [-1, 3]).inventory).toHaveLength(1)
+  })
+
+  it('leaves untradable quest items and cosmetics in the bag', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = saveWithInventory(['ITEM-0003', 'ITEM-0405', 'ITEM-0299', 'ITEM-0300'])
+    const next = destroyInventoryIndexes(save, [0, 1, 2, 3], launch)
+    expect(next.inventory.map((stack) => stack.itemId)).toEqual([
+      'ITEM-0405',
+      'ITEM-0299',
+      'ITEM-0300',
+    ])
   })
 })

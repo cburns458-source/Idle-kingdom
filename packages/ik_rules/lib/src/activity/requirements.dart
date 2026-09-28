@@ -7,6 +7,7 @@ import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
+import '../world/constants.dart';
 import 'xp.dart';
 
 /// Requirement types the runtime knows how to evaluate. Unknown types fail closed.
@@ -200,8 +201,31 @@ bool isQuestGateRequirement(String type) {
       type == 'Item Absent';
 }
 
+bool? _thicketVineActivityVisible(GameDatabase db, PlayerSave save, String activityId) {
+  final spec = thicketVineActivities[activityId];
+  if (spec == null) return null;
+  if (questIsComplete(save, throughTheThicketQuestId)) return spec.persistAfterQuest;
+  if (!questIsActive(save, throughTheThicketQuestId)) return false;
+  final quest = getQuest(db, throughTheThicketQuestId);
+  if (quest == null) return false;
+  final current = getCurrentStepId(db, save, quest);
+  if (current == spec.stepId) return true;
+  if (hasQuestFlag(save, throughTheThicketQuestId, leftVinesFlag(spec.locationId))) {
+    return false;
+  }
+  final vineIndex = getQuestSteps(
+    db,
+    throughTheThicketQuestId,
+  ).indexWhere((step) => step.stepId == spec.stepId);
+  if (vineIndex < 0) return false;
+  if (getCurrentStepIndex(db, save, quest) <= vineIndex) return false;
+  return save.currentLocationId == spec.locationId;
+}
+
 /// Hide gated activities until their quest flag, access, or item condition is met.
 bool activityVisibleForSave(GameDatabase db, PlayerSave save, String activityId) {
+  final vine = _thicketVineActivityVisible(db, save, activityId);
+  if (vine != null) return vine;
   return entityVisibleForSave(db, save, 'Activity', activityId);
 }
 
