@@ -633,7 +633,9 @@ void main() {
     await tester.tap(find.widgetWithText(GameButton, 'Travel'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(GameButton, "Don't ask again"));
+    await tester.tap(find.text("Don't ask again"));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Travel').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 

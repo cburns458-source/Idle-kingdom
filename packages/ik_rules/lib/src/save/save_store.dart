@@ -104,6 +104,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
       skippedHostileTravelLocationIds: <String>[],
       skippedMixedCombatActivityIds: <String>[],
       potionsPaused: false,
+      botanyUseCompost: false,
     ),
     currentLocationId: startingLocationId,
     currentActivityId: null,

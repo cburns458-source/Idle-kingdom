@@ -45,7 +45,15 @@ class _BotanyPlantGridPopup extends StatefulWidget {
 
 class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
   final List<String> _picked = <String>[];
-  bool _useCompost = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Account-wide preference auto-clears when the bag has no compost left.
+    if (widget.controller.botanyUseCompost && _compostOwned <= 0) {
+      widget.controller.setBotanyUseCompost(false);
+    }
+  }
 
   int _pickedOf(String itemId) => _picked.where((id) => id == itemId).length;
 
@@ -69,7 +77,17 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
 
   num get _compostOwned => inventoryCompostCount(widget.controller.save);
 
-  bool get _compostAllowed => _picked.isNotEmpty && !_hasKelp;
+  bool get _preferCompost => widget.controller.botanyUseCompost;
+
+  /// Compost applies only when preferred, allowed on this pick, and affordable.
+  bool get _useCompost =>
+      _preferCompost && _picked.isNotEmpty && !_hasKelp && _compostOwned >= _compostCost;
+
+  void _clearCompostPreferenceIfEmpty() {
+    if (_preferCompost && _compostOwned <= 0) {
+      widget.controller.setBotanyUseCompost(false);
+    }
+  }
 
   void _tap(PlantableBotanyOption option) {
     if (!option.canPlant) return;
@@ -84,7 +102,7 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
           _picked.add(option.itemId);
         }
       }
-      if (_hasKelp) _useCompost = false;
+      _clearCompostPreferenceIfEmpty();
     });
   }
 
@@ -99,11 +117,12 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
 
   void _plant() {
     if (_picked.isEmpty) return;
-    if (_useCompost && _hasKelp) {
+    final useCompost = _useCompost;
+    if (useCompost && _hasKelp) {
       widget.controller.report('Compost cannot be used on kelp.');
       return;
     }
-    if (_useCompost && _compostOwned < _compostCost) {
+    if (useCompost && _compostOwned < _compostCost) {
       final need = _compostCost.round();
       widget.controller.report(
         need == 1
@@ -113,7 +132,7 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
       return;
     }
     Navigator.of(context)
-        .pop(BotanyPlantChoice(seedItemIds: List<String>.from(_picked), usedCompost: _useCompost));
+        .pop(BotanyPlantChoice(seedItemIds: List<String>.from(_picked), usedCompost: useCompost));
   }
 
   @override
@@ -188,9 +207,9 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                       ),
                     ),
                     GameSwitch(
-                      value: _useCompost,
-                      onChanged: _compostAllowed
-                          ? (value) => setState(() => _useCompost = value)
+                      value: _preferCompost && !_hasKelp && _compostOwned > 0,
+                      onChanged: (_picked.isNotEmpty && !_hasKelp && _compostOwned > 0)
+                          ? (value) => setState(() => widget.controller.setBotanyUseCompost(value))
                           : null,
                     ),
                   ],
@@ -206,12 +225,7 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                   Expanded(
                     child: GameButton(
                       label: 'Clear',
-                      onPressed: _picked.isEmpty
-                          ? null
-                          : () => setState(() {
-                              _picked.clear();
-                              _useCompost = false;
-                            }),
+                      onPressed: _picked.isEmpty ? null : () => setState(_picked.clear),
                     ),
                   ),
                   const SizedBox(width: 8),

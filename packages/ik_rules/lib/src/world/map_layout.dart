@@ -37,6 +37,8 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   'LOC-0005': NodePosition(x: 30, y: 64),
   // Farm fields / windmill
   'LOC-0001': NodePosition(x: 76, y: 65),
+  // Kingsroad between Farm and Town
+  'LOC-0052': NodePosition(x: 52, y: 58),
   // Harbor / dock at river mouth
   'LOC-0004': NodePosition(x: 54, y: 70),
   // Sunken Approach, just southeast of the docks

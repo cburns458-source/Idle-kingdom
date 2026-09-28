@@ -65,9 +65,13 @@ describe('hostile travel forcing', () => {
   it('builds the travel confirm copy from the danger warning level', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(locationDangerWarningLevel(launch, 'LOC-0003')).toBe(15)
+    expect(locationDangerWarningLevel(launch, 'LOC-0052')).toBe(9)
     expect(locationDangerWarningLevel(launch, 'LOC-0009')).toBeNull()
     expect(hostileTravelWarningMessage(15)).toBe(
       'Are you sure you want to travel here? You may be attacked. Combat level warning: 15',
+    )
+    expect(hostileTravelWarningMessage(9)).toBe(
+      'Are you sure you want to travel here? You may be attacked. Combat level warning: 9',
     )
   })
 

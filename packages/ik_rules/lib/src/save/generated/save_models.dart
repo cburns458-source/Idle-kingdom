@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 57;
+const int saveVersion = 58;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1676,6 +1676,7 @@ class PlayerSettings {
     required this.skippedHostileTravelLocationIds,
     required this.skippedMixedCombatActivityIds,
     required this.potionsPaused,
+    required this.botanyUseCompost,
   });
 
   factory PlayerSettings.fromJson(Map<String, Object?> json) {
@@ -1696,6 +1697,7 @@ class PlayerSettings {
         (Object? entry) => entry as String,
       ),
       potionsPaused: json['potionsPaused'] as bool,
+      botanyUseCompost: json['botanyUseCompost'] as bool? ?? false,
     );
   }
 
@@ -1734,6 +1736,9 @@ class PlayerSettings {
   /// potion button (🚫). An already-running effect is left alone.
   final bool potionsPaused;
 
+  /// Remembered Botany plant-popup compost toggle for the whole account.
+  final bool botanyUseCompost;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'soundEnabled': soundEnabled,
@@ -1746,6 +1751,7 @@ class PlayerSettings {
       'skippedHostileTravelLocationIds': skippedHostileTravelLocationIds,
       'skippedMixedCombatActivityIds': skippedMixedCombatActivityIds,
       'potionsPaused': potionsPaused,
+      'botanyUseCompost': botanyUseCompost,
     };
   }
 
@@ -1760,6 +1766,7 @@ class PlayerSettings {
     List<String>? skippedHostileTravelLocationIds,
     List<String>? skippedMixedCombatActivityIds,
     bool? potionsPaused,
+    bool? botanyUseCompost,
   }) {
     return PlayerSettings(
       soundEnabled: soundEnabled ?? this.soundEnabled,
@@ -1774,6 +1781,7 @@ class PlayerSettings {
       skippedMixedCombatActivityIds:
           skippedMixedCombatActivityIds ?? this.skippedMixedCombatActivityIds,
       potionsPaused: potionsPaused ?? this.potionsPaused,
+      botanyUseCompost: botanyUseCompost ?? this.botanyUseCompost,
     );
   }
 }
