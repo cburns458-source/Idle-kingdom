@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/content/asset_paths.dart';
+import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/ui/critter_overlay.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/action_stage.dart';
@@ -35,10 +36,16 @@ void main() {
     expect(find.text('Wild Roots and Fernleaf Harvesting.'), findsNothing);
   });
 
-  Future<void> pumpLocation(WidgetTester tester, String locationId) async {
+  /// Same tall location panel as [pumpLocation], but keeps the controller so a
+  /// test can start activities and read the save.
+  Future<GameController> pumpLocationController(
+    WidgetTester tester,
+    String locationId, {
+    PlayerSave? seed,
+  }) async {
     final controller = buildController(
       database,
-      seed: startedCharacter(database).copyWith(currentLocationId: locationId),
+      seed: (seed ?? startedCharacter(database)).copyWith(currentLocationId: locationId),
     );
     addTearDown(controller.dispose);
     await pumpPanel(
@@ -49,6 +56,26 @@ void main() {
         onOpenMap: () {},
       ),
       size: const Size(900, 2400),
+    );
+    return controller;
+  }
+
+  Future<void> pumpLocation(WidgetTester tester, String locationId) async {
+    await pumpLocationController(tester, locationId);
+  }
+
+  Finder activityDock(String title) {
+    return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
+  }
+
+  Future<void> tapActivityStart(WidgetTester tester, String title) async {
+    final expand = find.byTooltip('Expand list');
+    if (expand.evaluate().isNotEmpty) {
+      await tapVisible(tester, expand);
+    }
+    await tapVisible(
+      tester,
+      find.descendant(of: activityDock(title), matching: find.bySemanticsLabel('Start')),
     );
   }
 
@@ -1065,18 +1092,8 @@ void main() {
   testWidgets('mixed-pool gathering warns before start and cancel keeps it stopped', (
     tester,
   ) async {
-    final controller = buildController(
-      database,
-      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0008'),
-    );
-    addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
-
-    final card = find.ancestor(
-      of: find.text('Gather woodland supplies'),
-      matching: find.byType(DockRow),
-    );
-    await tapVisible(tester, find.descendant(of: card, matching: find.bySemanticsLabel('Start')));
+    final controller = await pumpLocationController(tester, 'LOC-0008');
+    await tapActivityStart(tester, 'Gather woodland supplies');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -1091,21 +1108,8 @@ void main() {
   });
 
   testWidgets("mixed-pool Don't ask again is per activity", (tester) async {
-    final controller = buildController(
-      database,
-      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0008'),
-    );
-    addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
-
-    final woodland = find.ancestor(
-      of: find.text('Gather woodland supplies'),
-      matching: find.byType(DockRow),
-    );
-    await tapVisible(
-      tester,
-      find.descendant(of: woodland, matching: find.bySemanticsLabel('Start')),
-    );
+    final controller = await pumpLocationController(tester, 'LOC-0008');
+    await tapActivityStart(tester, 'Gather woodland supplies');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.widgetWithText(GameButton, "Don't ask again"));
@@ -1118,10 +1122,7 @@ void main() {
     await tapVisible(tester, find.bySemanticsLabel('Stop').first);
     await tester.pump();
 
-    await tapVisible(
-      tester,
-      find.descendant(of: woodland, matching: find.bySemanticsLabel('Start')),
-    );
+    await tapActivityStart(tester, 'Gather woodland supplies');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(mixedCombatActivityWarningMessage), findsNothing);
@@ -1129,18 +1130,8 @@ void main() {
   });
 
   testWidgets('kingswoods hunting does not warn after combat boar moved off', (tester) async {
-    final controller = buildController(
-      database,
-      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0008'),
-    );
-    addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
-
-    final card = find.ancestor(
-      of: find.text('Poach in the kingswoods'),
-      matching: find.byType(DockRow),
-    );
-    await tapVisible(tester, find.descendant(of: card, matching: find.bySemanticsLabel('Start')));
+    await pumpLocation(tester, 'LOC-0008');
+    await tapActivityStart(tester, 'Poach in the kingswoods');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -1149,21 +1140,14 @@ void main() {
 
   testWidgets('skipping woodland combat warning does not skip slopes mining', (tester) async {
     final base = startedCharacter(database);
-    final controller = buildController(
-      database,
+    final controller = await pumpLocationController(
+      tester,
+      'LOC-0046',
       seed: base.copyWith(
-        currentLocationId: 'LOC-0046',
         settings: base.settings.copyWith(skippedMixedCombatActivityIds: const <String>['ACT-0010']),
       ),
     );
-    addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
-
-    final card = find.ancestor(
-      of: find.text('Prospect the mountain side'),
-      matching: find.byType(DockRow),
-    );
-    await tapVisible(tester, find.descendant(of: card, matching: find.bySemanticsLabel('Start')));
+    await tapActivityStart(tester, 'Prospect the mountain side');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
