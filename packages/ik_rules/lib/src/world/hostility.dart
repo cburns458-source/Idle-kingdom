@@ -52,6 +52,37 @@ String hostileTravelWarningMessage(num combatLevelWarning) {
       'Combat level warning: $combatLevelWarning';
 }
 
+/// Activity-start confirm when a gather/mine/cut pool can also roll Combat.
+const String mixedCombatActivityWarningMessage =
+    'You may be attacked while doing this activity, are you sure you want to continue?';
+
+/// True when the pool mixes Combat with at least one non-combat action.
+bool activityHasMixedCombatPool(GameDatabase db, String activityId) {
+  final activity = db.activities.firstWhereOrNull((row) => row.activityId == activityId);
+  final poolId = activity?.poolId;
+  if (poolId == null || poolId.isEmpty) return false;
+  var hasCombat = false;
+  var hasNonCombat = false;
+  for (final entry in db.poolEntries) {
+    if (entry.poolId != poolId) continue;
+    final action = db.actions.firstWhereOrNull((row) => row.actionId == entry.actionId);
+    if (action == null) continue;
+    if (action.category == 'Combat') {
+      hasCombat = true;
+    } else {
+      hasNonCombat = true;
+    }
+    if (hasCombat && hasNonCombat) return true;
+  }
+  return false;
+}
+
+/// Append [id] if it is not already in the skip list.
+List<String> withSkippedId(List<String> ids, String id) {
+  if (ids.contains(id)) return ids;
+  return <String>[...ids, id];
+}
+
 /// The player is under-level for a danger-warning activity here.
 bool locationIsHostileFor(GameDatabase db, PlayerSave save, [String? locationId]) {
   return forcedHostileActivity(db, save, locationId ?? save.currentLocationId) != null;

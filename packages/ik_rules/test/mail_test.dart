@@ -82,6 +82,24 @@ void main() {
     expect(migrated['saveVersion'], saveVersion);
     expect(migrated['mailbox'], isEmpty);
     final settings = migrated['settings'] as Map<String, Object?>?;
-    expect(settings?['skipHostileTravelWarning'], isFalse);
+    expect(settings?['skippedHostileTravelLocationIds'], isEmpty);
+    expect(settings?['skippedMixedCombatActivityIds'], isEmpty);
+  });
+
+  test('forgets the old account-wide hostile skip when leaving v55', () {
+    final created = createNewSave(db, nowMs);
+    final legacy = created.toJson();
+    legacy['saveVersion'] = 55;
+    final settings = Map<String, Object?>.from(legacy['settings']! as Map);
+    settings.remove('skippedHostileTravelLocationIds');
+    settings.remove('skippedMixedCombatActivityIds');
+    settings['skipHostileTravelWarning'] = true;
+    legacy['settings'] = settings;
+    final migrated = migrateSaveJson(legacy, nowMs);
+    expect(migrated['saveVersion'], saveVersion);
+    final next = migrated['settings'] as Map<String, Object?>?;
+    expect(next?['skippedHostileTravelLocationIds'], isEmpty);
+    expect(next?['skippedMixedCombatActivityIds'], isEmpty);
+    expect(next?.containsKey('skipHostileTravelWarning'), isFalse);
   });
 }

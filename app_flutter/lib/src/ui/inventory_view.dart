@@ -855,47 +855,48 @@ class _InventoryViewState extends State<InventoryView> {
       context: context,
       builder: (context) {
         return GamePopupCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Equip — ${slot?.displayName ?? slotId}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 320),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: candidates.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 6),
-                  itemBuilder: (context, i) {
-                    final entry = candidates[i];
-                    final item = controller.indexes.itemsById[entry.stack.itemId];
-                    final name = item?.displayName ?? entry.stack.itemId;
-                    final qty = entry.stack.quantity;
-                    return GamePanel(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      onTap: () => Navigator.of(context).pop(entry),
-                      child: Row(
-                        children: [
-                          ItemIcon(item: item, size: 28),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              qty > 1 ? '$name ×$qty' : name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+          child: GamePanel(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Equip — ${slot?.displayName ?? slotId}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 320),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: candidates.length,
+                    separatorBuilder: (_, _) => floatingRowGap,
+                    itemBuilder: (context, i) {
+                      final entry = candidates[i];
+                      final item = controller.indexes.itemsById[entry.stack.itemId];
+                      final name = item?.displayName ?? entry.stack.itemId;
+                      final qty = entry.stack.quantity;
+                      return FloatingItemSlot(
+                        onTap: () => Navigator.of(context).pop(entry),
+                        child: Row(
+                          children: [
+                            ItemIcon(item: item, size: 28),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                qty > 1 ? '$name ×$qty' : name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

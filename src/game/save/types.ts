@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 55
+export const SAVE_VERSION = 56
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -148,10 +148,15 @@ export interface PlayerSettings {
   /** When true, the Equipment eat-at slider is shown as a percent. */
   eatHealthThresholdAsPercent: boolean
   /**
-   * When true, skip the hostile-location travel confirm popup.
-   * Set by the "Don't ask again" control on that popup.
+   * Location IDs whose hostile-travel confirm has been dismissed with
+   * "Don't ask again". One skip does not silence other destinations.
    */
-  skipHostileTravelWarning: boolean
+  skippedHostileTravelLocationIds: string[]
+  /**
+   * Activity IDs whose mixed-pool combat confirm has been dismissed with
+   * "Don't ask again". One skip does not silence other activities.
+   */
+  skippedMixedCombatActivityIds: string[]
   /**
    * When true, equipped potions are not auto-applied. Toggled from the stage
    * potion button (🚫). An already-running effect is left alone.

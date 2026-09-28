@@ -120,10 +120,19 @@ SaveJson _normalizeSettings(SaveJson save, int version) {
       settings['eatHealthThresholdPercent'] ?? 100,
     ),
     'eatHealthThresholdAsPercent': settings['eatHealthThresholdAsPercent'] ?? false,
-    'skipHostileTravelWarning': settings['skipHostileTravelWarning'] ?? false,
+    'skippedHostileTravelLocationIds': _stringIdList(settings['skippedHostileTravelLocationIds']),
+    'skippedMixedCombatActivityIds': _stringIdList(settings['skippedMixedCombatActivityIds']),
     'potionsPaused': settings['potionsPaused'] ?? false,
   };
   return next;
+}
+
+List<String> _stringIdList(Object? value) {
+  if (value is! List) return const <String>[];
+  return <String>[
+    for (final entry in value)
+      if (entry is String && entry.isNotEmpty) entry,
+  ];
 }
 
 num _clampEatHealthThresholdPercent(Object? value) {
@@ -877,6 +886,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(fromVersion: 55, toVersion: 56, migrate: (save, _) => _normalizeSettings(save, 56)),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

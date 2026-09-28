@@ -555,7 +555,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(controller.save.currentLocationId, 'LOC-0003');
-    expect(controller.save.settings.skipHostileTravelWarning, isFalse);
+    expect(controller.save.settings.skippedHostileTravelLocationIds, isEmpty);
   });
 
   testWidgets('hostile map travel skip suppresses later confirms', (tester) async {
@@ -564,7 +564,9 @@ void main() {
       database,
       seed: base.copyWith(
         currentLocationId: 'LOC-0009',
-        settings: base.settings.copyWith(skipHostileTravelWarning: true),
+        settings: base.settings.copyWith(
+          skippedHostileTravelLocationIds: const <String>['LOC-0003'],
+        ),
       ),
     );
     controller.setMapTravelAnimation(false);
@@ -581,6 +583,38 @@ void main() {
 
     expect(find.byKey(const Key('game-popup')), findsNothing);
     expect(controller.save.currentLocationId, 'LOC-0003');
+  });
+
+  testWidgets('hostile travel skip is per location', (tester) async {
+    final base = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: base.copyWith(
+        currentLocationId: 'LOC-0009',
+        settings: base.settings.copyWith(
+          skippedHostileTravelLocationIds: const <String>['LOC-0047'],
+        ),
+      ),
+    );
+    controller.setMapTravelAnimation(false);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    await tester.tap(find.byTooltip('Open world map'));
+    await tester.pump();
+    await tester.tap(find.text('Goblin Camp'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.text(
+        'Are you sure you want to travel here? You may be attacked. Combat level warning: 15',
+      ),
+      findsOne,
+    );
+    expect(controller.save.currentLocationId, 'LOC-0009');
   });
 
   testWidgets("hostile map travel Don't ask again persists the skip", (tester) async {
@@ -604,7 +638,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(controller.save.currentLocationId, 'LOC-0003');
-    expect(controller.save.settings.skipHostileTravelWarning, isTrue);
+    expect(controller.save.settings.skippedHostileTravelLocationIds, <String>['LOC-0003']);
   });
 
   testWidgets('map travel walks a sprite, then arrives', (tester) async {

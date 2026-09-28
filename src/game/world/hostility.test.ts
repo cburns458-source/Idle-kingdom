@@ -11,6 +11,7 @@ import {
   locationDangerWarningLevel,
   locationIsHostileFor,
   locationShowsDangerWarning,
+  activityHasMixedCombatPool,
 } from './hostility'
 
 const rawDatabase = JSON.parse(
@@ -126,3 +127,22 @@ describe('hostile travel forcing', () => {
     expect(arrived.save.currentActivityId).toBe('ACT-0012')
   })
 })
+
+describe('mixed combat activity pools', () => {
+  it('flags gather/mine/cut pools that can also roll Combat', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0010')).toBe(true)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0006')).toBe(true)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0016')).toBe(true)
+  })
+
+  it('does not flag pure combat, pure gather, or pool-less activities', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0001')).toBe(false)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0002')).toBe(false)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0009')).toBe(false)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0012')).toBe(false)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0017')).toBe(false)
+  })
+})
+
