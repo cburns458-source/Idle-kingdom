@@ -122,7 +122,7 @@ export function isThieveryLockpickAction(action: ActionRow): boolean {
   )
 }
 
-/** Shop-style steals, including Steal from goblins. */
+/** Shop-style steals (ThieverySteal family). */
 export function isThieveryShopAction(action: ActionRow): boolean {
   if (action['Relevant Skill ID'] !== THIEVERY_SKILL_ID) return false
   if (isThieveryLockpickAction(action)) return false

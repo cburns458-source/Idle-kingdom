@@ -243,16 +243,24 @@ describe('skill menu entries', () => {
     expect(shops.map((item) => item.displayName)).toEqual([
       'Steal from the general store',
       'Steal from the barracks',
-      'Steal from goblins',
       'Steal from the kitchen',
+      'Steal from the Grand Bazaar',
+      'Steal from the Apothecary',
       'Steal from the mining merchant',
+      "Steal from a noble's purse",
+      "Steal from the Wizard's Shop",
     ])
     expect(shops.find((item) => item.displayName === 'Steal from the mining merchant')?.level).toBe(
       64,
     )
     expect(lockpicking.map((item) => item.displayName)).toEqual([
+      'Pick the armory supply chest',
+      'Pick the Goblin Camp chest',
+      "Pick a merchant's chest",
       "Pick the king's safe",
       'Pick a deposit box',
+      'Pick a locked storeroom',
+      'Pick the bank vault',
     ])
     expect(shops.some((item) => item.displayName.includes('Pick'))).toBe(false)
     expect(lockpicking.some((item) => item.displayName.includes('Steal'))).toBe(false)

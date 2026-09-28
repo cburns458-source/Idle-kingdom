@@ -72,7 +72,9 @@ void main() {
 
     await tester.tap(find.widgetWithText(GameButton, 'Travel'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    for (var i = 0; i < 20 && controller.save.currentLocationId != 'LOC-0009'; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
 
     expect(controller.save.currentLocationId, 'LOC-0009');
     expect(find.text('Timers'), findsNothing);
@@ -103,10 +105,13 @@ void main() {
 
     await openChinScreen(tester, 'Timers');
     await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    final collect = find.text('Collect');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    for (var i = 0; i < 20 && collect.evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
 
-    expect(find.text('Collect'), findsOne);
+    expect(collect, findsOne);
     await tester.tap(find.widgetWithText(GameButton, 'Collect'));
     await tester.pump();
     expect(find.text('Plant a seed or sapling'), findsOne);
@@ -129,10 +134,15 @@ void main() {
 
     await openChinScreen(tester, 'Timers');
     await tester.tap(find.widgetWithText(GameButton, 'Travel'));
+    // Travel is async (hostile-check await + post-frame room alert). Pump until
+    // the full-bag popup is on screen rather than racing a fixed delay.
+    final roomAlert = find.text(timerInventoryFullHarvestReason);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    for (var i = 0; i < 20 && roomAlert.evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
 
-    expect(find.text(timerInventoryFullHarvestReason), findsOne);
+    expect(roomAlert, findsOne);
     expect(timerAtLocationKind(controller.save, 'LOC-0009', 'botany'), isNotNull);
     // Reward popups use a Collect button. A full bag must not take the haul.
     expect(find.text('Collect'), findsNothing);

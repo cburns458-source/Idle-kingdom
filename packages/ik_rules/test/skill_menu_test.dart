@@ -169,17 +169,25 @@ void main() {
     expect(shops.map((row) => row.displayName).toList(), [
       'Steal from the general store',
       'Steal from the barracks',
-      'Steal from goblins',
       'Steal from the kitchen',
+      'Steal from the Grand Bazaar',
+      'Steal from the Apothecary',
       'Steal from the mining merchant',
+      "Steal from a noble's purse",
+      "Steal from the Wizard's Shop",
     ]);
     expect(
       shops.any((row) => row.displayName == 'Steal from the mining merchant' && row.level == 64),
       isTrue,
     );
     expect(lockpicking.map((row) => row.displayName).toList(), [
+      'Pick the armory supply chest',
+      'Pick the Goblin Camp chest',
+      "Pick a merchant's chest",
       "Pick the king's safe",
       'Pick a deposit box',
+      'Pick a locked storeroom',
+      'Pick the bank vault',
     ]);
   });
 
