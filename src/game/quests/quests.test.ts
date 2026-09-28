@@ -35,7 +35,7 @@ import {
   resetIntroFlags,
   resetQuestProgress,
 } from './quests'
-import { formatQuestProgressLine, questLegacyJournalSteps } from './objectives'
+import { formatQuestProgressLine } from './objectives'
 import { getCurrentStepId, questActionProgressForActivity, questStepJournal } from './steps'
 import { questLog } from '../log/log'
 import {
