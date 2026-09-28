@@ -221,7 +221,7 @@ void main() {
     await tester.tap(find.text('Critters'));
     await tester.pump();
 
-    expect(find.text('Fly'), findsOne);
+    expect(find.text('Chick'), findsOne);
     expect(find.text('×4'), findsOne);
     expect(find.text('Unknown'), findsWidgets);
   });

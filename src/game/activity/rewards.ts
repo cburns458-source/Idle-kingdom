@@ -13,6 +13,7 @@ import {
   equippedSkillRelativeDropChanceBonusPercent,
   totalRelativeDropChanceBonusPercent,
 } from '../loot/dropChance'
+import { grantCritterToCollection, getCritter } from '../critters/critters'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
 import { applyRaceGoldGain, raceSkillDropChanceBonusPercent } from '../races/races'
 import { activeSpellItemDoubleChancePercent } from '../spells/spells'
@@ -192,6 +193,20 @@ export function resolveActionRewards(
       }
     } else if (picked['Reward Type'] === 'Gold' || picked['Reward Type'] === 'Currency') {
       goldGained += rollQuantity(picked, random)
+    } else if (picked['Reward Type'] === 'Critter' && picked['Reward ID / Value']) {
+      const critterId = picked['Reward ID / Value']
+      const granted = grantCritterToCollection(next, critterId)
+      if (granted.ok) {
+        next = granted.save
+        const critter = granted.critter
+        loot.push({
+          itemId: critterId,
+          quantity: 1,
+          displayName: critter.displayName,
+        })
+      } else if (getCritter(critterId)) {
+        // Already known critter id but grant failed — ignore.
+      }
     }
   }
 

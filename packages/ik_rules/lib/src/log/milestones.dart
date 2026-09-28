@@ -1,6 +1,8 @@
 import 'package:ik_content/ik_content.dart';
 
+import '../achievements/progress.dart';
 import '../activity/xp.dart';
+import '../critters/critters.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 
@@ -8,6 +10,7 @@ const String gatheringActionsStat = 'gathering_actions_completed';
 
 const List<num> _skillThresholds = <num>[25, 50, 75, 100];
 const List<num> _countThresholds = <num>[10000, 100000, 1000000];
+const List<num> _projectThresholds = <num>[100, 1000, 10000];
 
 class MilestoneLogRow {
   const MilestoneLogRow({
@@ -81,6 +84,10 @@ List<MilestoneLogRow> milestoneLog(GameDatabase db, PlayerSave save) {
   final kills = jsNumber(save.statistics.values['monsters_killed'] ?? 0);
   final gold = jsNumber(save.statistics.values['gold_earned'] ?? 0);
   final gatherings = jsNumber(save.statistics.values[gatheringActionsStat] ?? 0);
+  final projects = jsNumber(save.statistics.values[projectsCompletedStat] ?? 0);
+  final crittersHeld = critterDefs.where((critter) => collectionCount(save, critter.id) > 0).length;
+  final crittersRequired = critterDefs.length;
+  final crittersUnlocked = hasEveryCritter(save);
 
   return [
     for (final threshold in _skillThresholds)
@@ -116,5 +123,23 @@ List<MilestoneLogRow> milestoneLog(GameDatabase db, PlayerSave save) {
         current: gatherings,
         threshold: threshold,
       ),
+    for (final threshold in _projectThresholds)
+      _countRow(
+        track: 'projects',
+        nameFor: (n) => '${_formatCount(n)} projects completed',
+        current: projects,
+        threshold: threshold,
+      ),
+    MilestoneLogRow(
+      milestoneId: 'critters-collector',
+      track: 'critters',
+      name: 'Critter collector',
+      note: crittersUnlocked
+          ? 'Reached'
+          : '${_formatCount(crittersHeld)} / ${_formatCount(crittersRequired)} critters',
+      current: crittersHeld,
+      required: crittersRequired,
+      unlocked: crittersUnlocked,
+    ),
   ];
 }

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../achievements/progress.dart';
 import '../activity/engine.dart';
 import '../activity/transition.dart';
 import '../combat/boss.dart';
@@ -199,6 +200,9 @@ UnattendedResult resolveUnattendedProgress(
       }
 
       final round = resolveCombatRound(db, current, enemy, current.combatEnemyHp!, random);
+      if (round.lifestealHealed > 0) {
+        current = recordLifestealRoundHeal(current, round.lifestealHealed);
+      }
       if (round.outcome == 'victory') {
         if (isSquidlingVictory(current, enemy)) {
           final squidlingResult = applySquidlingVictory(

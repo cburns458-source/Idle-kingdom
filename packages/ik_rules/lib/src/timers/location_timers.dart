@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../achievements/progress.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
 import '../inventory/add_items.dart';
@@ -1047,6 +1048,9 @@ LocationTimerCollectResult collectLocationTimer(
   next = creditLootTracker(next, 'timer', '$kind:$locationId', loot, 0, now);
   next = creditXpAwards(next, awards, now);
   next = applyQuestAutoStartOnSeed(db, next);
+  if (timer.kind == 'botany' && loot.isNotEmpty) {
+    next = recordBotanyHarvest(next, loot.map((row) => row.itemId), locationId);
+  }
 
   return LocationTimerCollectResult(
     ok: true,

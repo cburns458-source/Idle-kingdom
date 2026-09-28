@@ -1,3 +1,6 @@
+import { hasEveryCritter } from '../achievements/progress'
+import { PROJECTS_COMPLETED_STAT } from '../achievements/progress'
+import { CRITTER_DEFS, collectionCount } from '../critters/critters'
 import { getSkillProgress } from '../activity/xp'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
@@ -6,10 +9,11 @@ export const GATHERING_ACTIONS_STAT = 'gathering_actions_completed'
 
 const SKILL_THRESHOLDS = [25, 50, 75, 100] as const
 const COUNT_THRESHOLDS = [10_000, 100_000, 1_000_000] as const
+const PROJECT_THRESHOLDS = [100, 1_000, 10_000] as const
 
 export interface MilestoneLogRow {
   milestoneId: string
-  track: 'skills' | 'kills' | 'gold' | 'gatherings'
+  track: 'skills' | 'kills' | 'gold' | 'gatherings' | 'projects' | 'critters'
   name: string
   note: string
   current: number
@@ -51,6 +55,10 @@ export function milestoneLog(db: GameDatabase, save: PlayerSave): MilestoneLogRo
   const kills = Number(save.statistics.values.monsters_killed ?? 0)
   const gold = Number(save.statistics.values.gold_earned ?? 0)
   const gatherings = Number(save.statistics.values[GATHERING_ACTIONS_STAT] ?? 0)
+  const projects = Number(save.statistics.values[PROJECTS_COMPLETED_STAT] ?? 0)
+  const crittersHeld = CRITTER_DEFS.filter((critter) => collectionCount(save, critter.id) > 0).length
+  const crittersRequired = CRITTER_DEFS.length
+  const crittersUnlocked = hasEveryCritter(save)
 
   return [
     ...SKILL_THRESHOLDS.map((threshold) => {
@@ -74,5 +82,24 @@ export function milestoneLog(db: GameDatabase, save: PlayerSave): MilestoneLogRo
     ...COUNT_THRESHOLDS.map((threshold) =>
       countRow('gatherings', (n) => `${formatCount(n)} gatherings`, gatherings, threshold),
     ),
+    ...PROJECT_THRESHOLDS.map((threshold) =>
+      countRow(
+        'projects',
+        (n) => `${formatCount(n)} projects completed`,
+        projects,
+        threshold,
+      ),
+    ),
+    {
+      milestoneId: 'critters-collector',
+      track: 'critters',
+      name: 'Critter collector',
+      note: crittersUnlocked
+        ? 'Reached'
+        : `${formatCount(crittersHeld)} / ${formatCount(crittersRequired)} critters`,
+      current: crittersHeld,
+      required: crittersRequired,
+      unlocked: crittersUnlocked,
+    },
   ]
 }

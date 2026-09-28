@@ -25,7 +25,7 @@ class CritterOverlay extends StatelessWidget {
       button: true,
       label: 'Collect ${critter.displayName}',
       // The name is written on the tile too, and a label reading
-      // "Collect Fly Fly" is worse than one that does not.
+      // "Collect Chick Chick" is worse than one that does not.
       excludeSemantics: true,
       child: InkWell(
         onTap: controller.collectCritterHere,

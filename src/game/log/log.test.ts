@@ -217,7 +217,7 @@ describe('critter log', () => {
     const save = createNewSave(launch)
     const caught = { ...save, critterCollections: [{ critterId: 'CRT-0001', count: 4 }] }
     const row = critterLog(caught).find((entry) => entry.critterId === 'CRT-0001')!
-    expect(row.name).toBe('Fly')
+    expect(row.name).toBe('Chick')
     expect(row.description).not.toBeNull()
     expect(row.count).toBe(4)
     expect(row.found).toBe(true)
@@ -225,14 +225,17 @@ describe('critter log', () => {
 })
 
 describe('milestones', () => {
-  it('tracks every-skill, kills, gold, and gathering marks', () => {
+  it('tracks every-skill, kills, gold, gathering, projects, and critter marks', () => {
     const fresh = milestoneLog(launch, createNewSave(launch))
-    expect(fresh).toHaveLength(13)
+    // 4 skill + 3*3 count tracks + 3 project + 1 critter collector
+    expect(fresh).toHaveLength(17)
     expect(fresh.every((row) => !row.unlocked)).toBe(true)
     expect(fresh.some((row) => row.name === 'Every skill 25')).toBe(true)
     expect(fresh.some((row) => row.name === '10,000 monsters slain')).toBe(true)
     expect(fresh.some((row) => row.name === '10,000 gold earned')).toBe(true)
     expect(fresh.some((row) => row.name === '10,000 gatherings')).toBe(true)
+    expect(fresh.some((row) => row.name === '100 projects completed')).toBe(true)
+    expect(fresh.some((row) => row.name === 'Critter collector')).toBe(true)
 
     const save = {
       ...createNewSave(launch),
@@ -246,6 +249,7 @@ describe('milestones', () => {
           monsters_killed: 10_000,
           gold_earned: 1_000_000,
           [GATHERING_ACTIONS_STAT]: 100_000,
+          projects_completed: 1000,
         },
       },
     }
@@ -256,8 +260,10 @@ describe('milestones', () => {
     expect(rows.find((row) => row.milestoneId === 'kills-10000')!.unlocked).toBe(true)
     expect(rows.find((row) => row.milestoneId === 'gold-1000000')!.unlocked).toBe(true)
     expect(rows.find((row) => row.milestoneId === 'gatherings-100000')!.unlocked).toBe(true)
+    expect(rows.find((row) => row.milestoneId === 'projects-100')!.unlocked).toBe(true)
+    expect(rows.find((row) => row.milestoneId === 'projects-1000')!.unlocked).toBe(true)
     expect(logCompletion(launch, save).sections.find((row) => row.section === 'milestones')!.done).toBe(
-      8,
+      10,
     )
   })
 })

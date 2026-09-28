@@ -81,6 +81,8 @@ export interface CombatRoundResult {
   enemyHp: number
   playerHp: number
   outcome: 'ongoing' | 'victory' | 'defeat'
+  /** Uncapped lifesteal heal from damage dealt this round (deed threshold uses this). */
+  lifestealHealed: number
 }
 
 export interface CombatVictoryResult {
@@ -298,6 +300,7 @@ export function resolveCombatRound(
   }
 
   const damageDealt = playerHit + (offhandHit ?? 0) + (staffHit ?? 0)
+  const lifestealHealed = lifestealHealAmount(db, save, damageDealt)
   const hpAfterLifesteal = applyLifestealHeal(db, save, save.currentHp, damageDealt)
 
   if (nextEnemyHp <= 0 && !bossAddsTriggered) {
@@ -319,6 +322,7 @@ export function resolveCombatRound(
       enemyHp: 0,
       playerHp: hpAfterLifesteal,
       outcome: 'victory',
+      lifestealHealed,
     }
   }
 
@@ -341,6 +345,7 @@ export function resolveCombatRound(
       enemyHp: bossPendingHp ?? nextEnemyHp,
       playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
+      lifestealHealed,
     }
   }
 
@@ -363,6 +368,7 @@ export function resolveCombatRound(
       enemyHp: nextEnemyHp,
       playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
+      lifestealHealed,
     }
   }
 
@@ -400,7 +406,19 @@ export function resolveCombatRound(
     playerHp,
     // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.
     outcome: playerHp <= 0 ? 'defeat' : nextEnemyHp <= 0 ? 'victory' : 'ongoing',
+    lifestealHealed,
   }
+}
+
+/** Raw lifesteal heal from damage dealt this round (before HP clamp). */
+export function lifestealHealAmount(
+  db: GameDatabase,
+  save: PlayerSave,
+  damageDealt: number,
+): number {
+  const percent = activeSpellLifestealPercent(db, save)
+  if (percent <= 0 || damageDealt <= 0) return 0
+  return Math.floor((damageDealt * percent) / 100)
 }
 
 /** Heal from Lifesteal spells based on damage dealt this round, clamped to max HP. */
@@ -410,9 +428,7 @@ function applyLifestealHeal(
   currentHp: number,
   damageDealt: number,
 ): number {
-  const percent = activeSpellLifestealPercent(db, save)
-  if (percent <= 0 || damageDealt <= 0) return currentHp
-  const heal = Math.floor((damageDealt * percent) / 100)
+  const heal = lifestealHealAmount(db, save, damageDealt)
   if (heal <= 0) return currentHp
   return Math.min(playerMaxHp(db, save), currentHp + heal)
 }

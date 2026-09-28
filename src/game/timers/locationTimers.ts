@@ -1,3 +1,4 @@
+import { recordBotanyHarvest } from '../achievements/progress'
 import { addItemsToInventory } from '../activity/rewards'
 import { applyXp, getSkillProgress } from '../activity/xp'
 import { canFitItemQuantity } from '../inventory/capacity'
@@ -938,6 +939,13 @@ export function collectLocationTimer(
   next = creditLootTracker(next, 'timer', `${kind}:${locationId}`, loot, 0, nowMs)
   next = creditXpAwards(next, awards, nowMs)
   next = applyQuestAutoStartOnSeed(db, next)
+  if (timer.kind === 'botany' && loot.length > 0) {
+    next = recordBotanyHarvest(
+      next,
+      loot.map((row) => row.itemId),
+      locationId,
+    )
+  }
 
   return { ok: true, save: next, loot, xpGained, skillId, bonusXp }
 }

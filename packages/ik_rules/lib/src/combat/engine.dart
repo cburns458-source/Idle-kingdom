@@ -47,6 +47,7 @@ class CombatRoundResult {
     required this.enemyHp,
     required this.playerHp,
     required this.outcome,
+    required this.lifestealHealed,
   });
 
   final num playerHit;
@@ -93,6 +94,9 @@ class CombatRoundResult {
   /// One of `ongoing`, `victory`, `defeat`.
   final String outcome;
 
+  /// Uncapped lifesteal heal from damage dealt this round.
+  final num lifestealHealed;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'playerHit': playerHit,
     'playerCrit': playerCrit,
@@ -111,6 +115,7 @@ class CombatRoundResult {
     'enemyHp': enemyHp,
     'playerHp': playerHp,
     'outcome': outcome,
+    'lifestealHealed': lifestealHealed,
   };
 }
 
@@ -336,6 +341,7 @@ CombatRoundResult resolveCombatRound(
   }
 
   final damageDealt = playerHit + (offhandHit ?? 0) + (staffHit ?? 0);
+  final lifestealHealed = lifestealHealAmount(db, save, damageDealt);
   final hpAfterLifesteal = _applyLifestealHeal(db, save, save.currentHp, damageDealt);
 
   if (nextEnemyHp <= 0 && !bossAddsTriggered) {
@@ -357,6 +363,7 @@ CombatRoundResult resolveCombatRound(
       enemyHp: 0,
       playerHp: hpAfterLifesteal,
       outcome: 'victory',
+      lifestealHealed: lifestealHealed,
     );
   }
 
@@ -379,6 +386,7 @@ CombatRoundResult resolveCombatRound(
       enemyHp: bossPendingHp ?? nextEnemyHp,
       playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
+      lifestealHealed: lifestealHealed,
     );
   }
 
@@ -401,6 +409,7 @@ CombatRoundResult resolveCombatRound(
       enemyHp: nextEnemyHp,
       playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
+      lifestealHealed: lifestealHealed,
     );
   }
 
@@ -441,14 +450,20 @@ CombatRoundResult resolveCombatRound(
         : nextEnemyHp <= 0
         ? 'victory'
         : 'ongoing',
+    lifestealHealed: lifestealHealed,
   );
+}
+
+/// Raw lifesteal heal from damage dealt this round (before HP clamp).
+num lifestealHealAmount(GameDatabase db, PlayerSave save, num damageDealt) {
+  final percent = activeSpellLifestealPercent(db, save);
+  if (percent <= 0 || damageDealt <= 0) return 0;
+  return (damageDealt * percent / 100).floor();
 }
 
 /// Heal from Lifesteal spells based on damage dealt this round, clamped to max HP.
 num _applyLifestealHeal(GameDatabase db, PlayerSave save, num currentHp, num damageDealt) {
-  final percent = activeSpellLifestealPercent(db, save);
-  if (percent <= 0 || damageDealt <= 0) return currentHp;
-  final heal = (damageDealt * percent / 100).floor();
+  final heal = lifestealHealAmount(db, save, damageDealt);
   if (heal <= 0) return currentHp;
   return math.min(playerMaxHp(db, save), currentHp + heal);
 }

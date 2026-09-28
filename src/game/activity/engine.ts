@@ -25,7 +25,7 @@ import type {
   ActiveActionState,
   ActivityStartResult,
 } from './types'
-import { addLifetimeStat, recordGatheredDrops } from '../achievements/progress'
+import { addLifetimeStat, recordGatheredDrops, recordThieverySuccess } from '../achievements/progress'
 import { applyQuestActionProgress, applyQuestAutoStartOnSeed } from '../quests/progress'
 import { applyQuestAutoCompleteOnAction } from '../quests/quests'
 import { itemHasCapability, LOCKPICK_ITEM_ID, WEAPON_TOOL_SLOT_ID, slotStack } from '../equipment/loadout'
@@ -544,11 +544,15 @@ export function completeGatheringAction(
   next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
   if (rewarded.loot.length > 0) {
     next = recordGatheredDrops(
+      db,
       next,
       rewarded.loot.map((drop) => drop.itemId),
       save.currentLocationId,
       save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId ?? null,
     )
+  }
+  if (isThievery) {
+    next = recordThieverySuccess(next, action['Action ID'])
   }
   next = applyQuestActionProgress(db, next, action['Action ID'])
   next = applyQuestAutoCompleteOnAction(db, next).save

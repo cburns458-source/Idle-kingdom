@@ -25,7 +25,7 @@ void main() {
     expect(catalogIds.contains('ITEM-0320'), isFalse);
     expect(codex.item('ITEM-0299')?.displayName, 'Stolen Coin Purse');
     expect(codex.item('ITEM-0296')?.displayName, "Traveler's Tunic");
-    expect(codex.item('ITEM-0320')?.displayName, 'Fly Pet');
+    expect(codex.item('ITEM-0320')?.displayName, 'Chick Pet');
     expect(
       codex.enemies.map((row) => row.enemyId).toSet(),
       db.enemies.map((row) => row.enemyId).toSet(),
