@@ -408,10 +408,7 @@ String? _skillIdFromAtrEffect(String effect) {
 }
 
 /// Action-time reduction percent from tool enchantments, keyed by skill.
-Map<String, num> equippedEnchantmentActionTimeReductionBySkill(
-  GameDatabase db,
-  PlayerSave save,
-) {
+Map<String, num> equippedEnchantmentActionTimeReductionBySkill(GameDatabase db, PlayerSave save) {
   final totals = <String, num>{};
   for (final enchantmentId in _equippedEnchantmentIds(save)) {
     final effect = _effectOf(db, enchantmentId);
@@ -471,11 +468,7 @@ num equippedEnchantmentThornsPercent(GameDatabase db, PlayerSave save) {
 ///
 /// Pass [skillId] so skill-specific minors (mining/fishing/woodcutting) only apply
 /// to matching actions. Legacy ENCH-0002 still reduces all gathering.
-num equippedEnchantmentGatheringMultiplier(
-  GameDatabase db,
-  PlayerSave save, [
-  String? skillId,
-]) {
+num equippedEnchantmentGatheringMultiplier(GameDatabase db, PlayerSave save, [String? skillId]) {
   num multiplier = 1;
   for (final enchantmentId in _equippedEnchantmentIds(save)) {
     final effect = _effectOf(db, enchantmentId);

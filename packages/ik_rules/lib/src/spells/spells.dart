@@ -144,12 +144,7 @@ num spellItemDoubleChancePercent(GameDatabase db, String itemId) {
   return match == null ? 0 : jsNumber(match.group(1));
 }
 
-num _spellTagPercent(
-  GameDatabase db,
-  String itemId,
-  String tagPrefix,
-  RegExp effectRegex,
-) {
+num _spellTagPercent(GameDatabase db, String itemId, String tagPrefix, RegExp effectRegex) {
   final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
   for (final tag in capabilityTags(equipment?.raw['Capabilities / Effects'])) {
     if (!tag.startsWith(tagPrefix)) continue;
@@ -230,11 +225,7 @@ num _activeSpellStackedPercent(
 /// (2× Strength = +20% => 1.20).
 num activeSpellDamageRangeMultiplier(GameDatabase db, PlayerSave save) {
   return 1 +
-      _activeSpellStackedPercent(
-            db,
-            save,
-            (itemId) => spellDamageRangeBonusPercent(db, itemId),
-          ) /
+      _activeSpellStackedPercent(db, save, (itemId) => spellDamageRangeBonusPercent(db, itemId)) /
           100;
 }
 

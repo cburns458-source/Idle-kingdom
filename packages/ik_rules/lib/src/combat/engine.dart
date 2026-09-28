@@ -445,12 +445,7 @@ CombatRoundResult resolveCombatRound(
 }
 
 /// Heal from Lifesteal spells based on damage dealt this round, clamped to max HP.
-num _applyLifestealHeal(
-  GameDatabase db,
-  PlayerSave save,
-  num currentHp,
-  num damageDealt,
-) {
+num _applyLifestealHeal(GameDatabase db, PlayerSave save, num currentHp, num damageDealt) {
   final percent = activeSpellLifestealPercent(db, save);
   if (percent <= 0 || damageDealt <= 0) return currentHp;
   final heal = (damageDealt * percent / 100).floor();

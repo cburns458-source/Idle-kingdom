@@ -100,7 +100,7 @@ function isMiningTool(item: ItemRow | undefined, equipment: EquipmentRow): boole
   return toolHasCapability(equipment, 'mining_tool')
 }
 
-function isFishingTool(item: ItemRow | undefined, equipment: EquipmentRow): boolean {
+function isFishingTool(_item: ItemRow | undefined, equipment: EquipmentRow): boolean {
   return toolHasCapability(equipment, 'fishing_tool')
 }
 

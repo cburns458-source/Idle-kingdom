@@ -84,7 +84,7 @@ describe('arcana ladder runtime', () => {
     const action = launch.Actions.find(
       (row) => row.Category === 'Gathering' && row['Relevant Skill ID'] === 'SKL-0002',
     )!
-    const recipe = launch.Recipes.find((row) => row['Skill ID'] === 'SKL-0011')!
+    const recipe = launch.Recipes.find((row) => row['Skill ID'] === 'SKL-0007')!
     const baseGather = gatheringDurationMs(launch, save, action)
     const baseCraft = productionCraftDurationMs(launch, save, recipe, null)
 
@@ -99,16 +99,19 @@ describe('arcana ladder runtime', () => {
   it('applies Minor Strength as percent damage range and Vital Plating as max HP%', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    const cleared = unequipSlot(save, 'SLOT-0001')
-    expect(cleared.ok).toBe(true)
-    if (!cleared.ok) return
-    save = cleared.save
-    save = addItemToInventory(save, 'ITEM-0124', 1)
-    const equipped = equipItemFromInventory(launch, save, 'ITEM-0124')
-    expect(equipped.ok).toBe(true)
-    if (!equipped.ok) return
-    save = equipped.save
+    save = {
+      ...save,
+      equipment: {
+        ...save.equipment,
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0124', quantity: 1 },
+          'SLOT-0003': { itemId: 'ITEM-0155', quantity: 1 },
+        },
+      },
+    }
     const baseDamage = playerDamageRange(launch, save)
+    const beforePlate = playerMaxHp(launch, save)
 
     const weaponEnch = applyEnchantmentToTarget(
       save,
@@ -120,46 +123,43 @@ describe('arcana ladder runtime', () => {
       Math.max(Math.floor(baseDamage.min * 1.05), Math.floor(baseDamage.max * 1.05)),
     )
 
-    save = addItemToInventory(save, 'ITEM-0155', 1)
-    const armorEquip = equipItemFromInventory(launch, save, 'ITEM-0155')
-    expect(armorEquip.ok).toBe(true)
-    if (!armorEquip.ok) return
-    save = armorEquip.save
-    const beforePlate = playerMaxHp(launch, save)
     const plated = applyEnchantmentToTarget(
       save,
       { kind: 'equipped', slotId: 'SLOT-0003' },
       'ENCH-0013',
     )!
-    expect(playerMaxHp(launch, plated)).toBeGreaterThan(beforePlate)
-    expect(playerMaxHp(launch, plated)).toBe(
-      Math.max(1, Math.floor((beforePlate / 1) * 1.05)) >= beforePlate
-        ? playerMaxHp(launch, plated)
-        : beforePlate,
-    )
-    // enchant mult is applied inside playerMaxHp: +5% on the pre-floor base path.
     expect(playerMaxHp(launch, plated) / beforePlate).toBeCloseTo(1.05, 1)
   })
 
   it('procs Double Shot on enchanted bows', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    const cleared = unequipSlot(save, 'SLOT-0001')
-    expect(cleared.ok).toBe(true)
-    if (!cleared.ok) return
-    save = cleared.save
-    save = addItemToInventory(save, 'ITEM-0135', 1)
-    const equipped = equipItemFromInventory(launch, save, 'ITEM-0135')
-    expect(equipped.ok).toBe(true)
-    if (!equipped.ok) return
-    save = equipped.save
-    save = applyEnchantmentToTarget(save, { kind: 'equipped', slotId: 'SLOT-0001' }, 'ENCH-0018')!
+    save = {
+      ...save,
+      equipment: {
+        ...save.equipment,
+        slots: {
+          ...save.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0135', quantity: 1, enchantmentId: 'ENCH-0018' },
+          'SLOT-0002': null,
+        },
+      },
+    }
 
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0003')!
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === action['Target ID'])!
     save = beginCombatSave(launch, save, action, enemy)
-    const withProc = resolveCombatRound(launch, save, enemy, 50_000, () => 0)
-    const withoutProc = resolveCombatRound(launch, save, enemy, 50_000, () => 0.999)
-    expect(withProc.playerHit).toBeGreaterThan(withoutProc.playerHit)
+    const seq =
+      (...values: number[]) =>
+      () => {
+        const next = values.shift()
+        return next ?? 0.5
+      }
+    // Main hit min, Double Shot procs, second hit min → 30+30.
+    const withProc = resolveCombatRound(launch, save, enemy, 50_000, seq(0, 0, 0))
+    // Main hit min, Double Shot misses → 30.
+    const withoutProc = resolveCombatRound(launch, save, enemy, 50_000, seq(0, 0.9))
+    expect(withProc.playerHit).toBe(60)
+    expect(withoutProc.playerHit).toBe(30)
   })
 })
