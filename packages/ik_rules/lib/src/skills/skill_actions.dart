@@ -156,7 +156,7 @@ bool isThieveryLockpickAction(ActionRow action) {
       RegExp(r'BankThievery', caseSensitive: false).hasMatch(notes);
 }
 
-/// Shop-style steals, including Steal from goblins.
+/// Shop-style steals (ThieverySteal family).
 bool isThieveryShopAction(ActionRow action) {
   if (action.raw['Relevant Skill ID'] != thieverySkillMenuId) return false;
   if (isThieveryLockpickAction(action)) return false;

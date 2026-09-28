@@ -224,6 +224,14 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0191': 'actions/acn_pick_deposit_box.webp',
   'ACN-0192': 'actions/acn_steal_general_store.webp',
   'ACN-0199': 'actions/acn_gather_wild_roots.webp',
+  'ACN-0223': 'actions/acn_pick_safe.webp',
+  'ACN-0224': 'actions/acn_pick_safe.webp',
+  'ACN-0225': 'actions/acn_steal_general_store.webp',
+  'ACN-0226': 'actions/acn_steal_general_store.webp',
+  'ACN-0227': 'actions/acn_pick_safe.webp',
+  'ACN-0228': 'actions/acn_steal_general_store.webp',
+  'ACN-0229': 'actions/acn_steal_general_store.webp',
+  'ACN-0230': 'actions/acn_pick_deposit_box.webp',
 };
 
 /// Launch races that have bundled player sprites.
