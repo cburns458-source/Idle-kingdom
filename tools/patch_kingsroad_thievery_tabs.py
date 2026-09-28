@@ -182,10 +182,11 @@ def main() -> None:
         },
     )
 
-    # Keep enemy drop chance / gold at zero (already set).
+    # Keep enemy drop chance / gold at zero; pin them to Kingsroad.
     for eid in ("ENM-0026", "ENM-0029"):
         for enemy in db["Enemies"]:
             if enemy["Enemy ID"] == eid:
+                enemy["Location ID"] = "LOC-0052"
                 enemy["Drop Chance"] = 0
                 enemy["Reward Table ID"] = None
                 enemy["Notes"] = (

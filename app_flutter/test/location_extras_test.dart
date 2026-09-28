@@ -1242,9 +1242,9 @@ void main() {
         ],
       ),
     );
-    expect(find.text('Pick a deposit box'), findsNothing);
-    expect(find.text('Pick the bank vault'), findsNothing);
-    await tapVisible(tester, find.widgetWithText(GameButton, 'Bank'));
+    // Band tab + Open bank share the label; thievery is not under Activities.
+    expect(find.widgetWithText(GameButton, 'Bank'), findsWidgets);
+    expect(find.widgetWithText(GameButton, 'Activities'), findsNothing);
     expect(find.text('Pick a deposit box'), findsOne);
     expect(find.text('Pick the bank vault'), findsOne);
   });

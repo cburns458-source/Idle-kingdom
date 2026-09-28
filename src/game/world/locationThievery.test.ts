@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { prepareDatabase } from '../data/prepareDatabase'
-import { rawDatabase } from '../data/rawDatabase'
+import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import {
   isActivityBandThievery,
@@ -8,6 +9,10 @@ import {
   isNpcThieveryActivity,
   isShopThieveryActivity,
 } from './locationThievery'
+
+const rawDatabase = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
+)
 
 describe('location thievery bands', () => {
   const { launch } = prepareDatabase(rawDatabase)

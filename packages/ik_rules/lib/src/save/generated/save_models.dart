@@ -1697,7 +1697,7 @@ class PlayerSettings {
         (Object? entry) => entry as String,
       ),
       potionsPaused: json['potionsPaused'] as bool,
-      botanyUseCompost: json['botanyUseCompost'] as bool? ?? false,
+      botanyUseCompost: json['botanyUseCompost'] as bool,
     );
   }
 
@@ -1737,6 +1737,7 @@ class PlayerSettings {
   final bool potionsPaused;
 
   /// Remembered Botany plant-popup compost toggle for the whole account.
+  /// Cleared automatically when compost runs out.
   final bool botanyUseCompost;
 
   Map<String, Object?> toJson() {
