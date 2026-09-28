@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { prepareDatabase } from '../data/prepare'
-import rawDatabase from '../../../content/data/game-database.json'
+import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { getQuest } from '../quests/quests'
 import { parseStructuredObjectives } from '../quests/objectives'
@@ -18,6 +19,10 @@ import {
   mainHallKitchenLocked,
 } from '../world/mainHallKitchen'
 import { COMBAT_DISPLAY_SKILL_ID, skillIdsForActivity } from '../world/locationSkills'
+
+const rawDatabase = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
+)
 
 describe('library books', () => {
   it('grantBook unlocks into the Library and is idempotent', () => {
@@ -66,7 +71,7 @@ describe('library books', () => {
 
   it('Main Hall kitchen stays locked until Grand Feast is started', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const save = createNewSave(launch)
+    const save = { ...createNewSave(launch), currentLocationId: 'LOC-0015' }
     expect(mainHallKitchenLocked(launch, save, MAIN_HALL_COOK_ACTIVITY_ID)).toBe(true)
     const start = validateActivityStart(launch, save, MAIN_HALL_COOK_ACTIVITY_ID)
     expect(start.ok).toBe(false)

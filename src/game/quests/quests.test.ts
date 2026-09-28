@@ -753,13 +753,11 @@ describe('quest tours', () => {
     )
   })
 
-  it('starts First Planting on a seed, unlocks the farm after Fennel, and finishes on plant', () => {
+  it('starts Green Thumb on a seed, unlocks the farm after Fennel, and finishes on plant', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const quest = getQuest(launch, 'QST-0011')!
-    expect(hideFromQuestLog(quest)).toBe(true)
-    expect(questLog(launch, createNewSave(launch)).some((row) => row.questId === 'QST-0011')).toBe(
-      false,
-    )
+    expect(quest['Display Name']).toBe('Green Thumb')
+    expect(hideFromQuestLog(quest)).toBe(false)
 
     let save = {
       ...createNewSave(launch),
@@ -768,6 +766,7 @@ describe('quest tours', () => {
     }
     save = applyQuestAutoStartOnSeed(launch, save)
     expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
+    expect(questLog(launch, save).some((row) => row.questId === 'QST-0011')).toBe(true)
     expect(farmBotanyUnlocked(save)).toBe(false)
     expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
 

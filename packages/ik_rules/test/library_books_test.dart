@@ -54,7 +54,7 @@ void main() {
   });
 
   test('Main Hall kitchen stays locked until Grand Feast is started', () {
-    final save = createNewSave(db, 1);
+    final save = createNewSave(db, 1).copyWith(currentLocationId: 'LOC-0015');
     expect(mainHallKitchenLocked(db, save, mainHallCookActivityId), isTrue);
     final start = validateActivityStart(db, save, mainHallCookActivityId);
     expect(start.ok, isFalse);

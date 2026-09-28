@@ -997,7 +997,7 @@ void main() {
     expect(find.byKey(const Key('chat-panel')), findsOne);
     expect(find.byTooltip('Close chat'), findsNothing);
     expect(find.text('Menu'), findsOne);
-    expect(find.text('Codex, Timers, and social pages.'), findsOne);
+    expect(find.text('Codex, Library, Timers, and social pages.'), findsOne);
     final frame = tester.getSize(find.byType(AppShell));
     expect(frame.height, 1080);
     final column = 1080 * 9 / 16;

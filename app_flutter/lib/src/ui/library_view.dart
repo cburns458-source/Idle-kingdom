@@ -75,18 +75,32 @@ class LibraryView extends StatelessWidget {
     await showGamePopup<void>(
       context: context,
       builder: (context) {
+        final maxHeight = MediaQuery.sizeOf(context).height * 0.55;
         return GamePopupCard(
-          title: book.displayName,
-          child: SingleChildScrollView(
-            child: Text(book.body, style: const TextStyle(height: 1.35)),
-          ),
-          actions: [
-            GameButton(
-              label: 'Close',
-              tone: GameButtonTone.secondary,
-              onPressed: () => Navigator.of(context).pop(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight.clamp(220, 420)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  book.displayName,
+                  style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Text(book.body, style: const TextStyle(height: 1.35)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                GameButton(
+                  label: 'Close',
+                  tone: GameButtonTone.secondary,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

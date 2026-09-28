@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/ui/game_popup.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -15,20 +17,13 @@ void main() {
     final granted = grantBook(startedCharacter(database), 'BOOK-0001').save;
     final controller = buildController(database, seed: granted);
     addTearDown(controller.dispose);
-    await pumpShell(tester, controller);
+    await pumpShell(tester, controller, size: const Size(420, 900));
 
-    await tester.tap(find.bySemanticsLabel('Open menu'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Library'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Library'), findsWidgets);
+    await openChinScreen(tester, 'Library');
     expect(find.text("Newcomer's Guide"), findsOne);
-    await tester.tap(find.text("Newcomer's Guide"));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.text("Newcomer's Guide"));
+    expect(find.byType(GamePopupCard), findsOne);
     expect(find.textContaining('Welcome to Restoria'), findsOne);
-    await tester.tap(find.text('Close'));
-    await tester.pumpAndSettle();
   });
 
   testWidgets('unlocking a book pops the Library notice', (tester) async {
