@@ -7100,7 +7100,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A bundle laid at the groves to regain the forest’s trust.",
-      "Icon Asset Key": "essence",
+      "Icon Asset Key": "forest_offering",
       "Notes": "Consumed when placed at Ancient Forest nodes during Through the Thicket.",
       "Base Sell Value": 0,
       "Stackable": true
@@ -7117,7 +7117,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A woodcutter’s blade. Better than a steel sword, and it clears vines faster.",
-      "Icon Asset Key": "steel_sword",
+      "Icon Asset Key": "machete",
       "Notes": "Might 40 and Woodcutting 40. Vine chops use 24% action time reduction.",
       "Base Sell Value": 400,
       "Stackable": null

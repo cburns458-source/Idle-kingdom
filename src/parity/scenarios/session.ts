@@ -281,6 +281,7 @@ function arrivalJson(arrival: TravelArrival): JsonValue {
     blockedReason: arrival.blockedReason,
     message: arrival.message,
     questCompletions: arrival.questCompletions,
+    discoveryNotice: arrival.discoveryNotice,
   } as unknown as JsonValue
 }
 

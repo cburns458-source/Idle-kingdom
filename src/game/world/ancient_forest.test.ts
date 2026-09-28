@@ -52,6 +52,12 @@ describe('Ancient Forest Through the Thicket', () => {
     const craft = launch.Activities.find((row) => row['Activity ID'] === 'ACT-0080')!
     expect(craft['Location ID']).toBe(FOREST_PATH_ID)
     expect(activityVisibleForSave(launch, createNewSave(launch), 'ACT-0080')).toBe(false)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0405')?.['Icon Asset Key']).toBe(
+      'forest_offering',
+    )
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0406')?.['Icon Asset Key']).toBe(
+      'machete',
+    )
   })
 
   it('keeps Forest Path vines as woodcutting training after the quest', () => {
