@@ -13,6 +13,61 @@ const String mailUpdate20260922CatalogId = 'mail-update-2026-09-22';
 
 const String mailUpdate20260924CatalogId = 'mail-update-2026-09-24';
 
+const String mailUpdate20260929Part1CatalogId = 'mail-update-2026-09-29-1';
+
+const String mailUpdate20260929Part2CatalogId = 'mail-update-2026-09-29-2';
+
+const String _mailUpdate20260929Part1Body = '''Update (Sep 24–29)
+
+Combat and enemies
+- Enemies use updated Might and Vitality splits; XP rebalanced
+- Large pass on combat and hunting loot tables
+- New Kingsroad between Farm and Town with bandit fights
+- Mixed gather-and-fight activities warn you may be attacked while working; skip prompts are per place or per activity, not one global toggle
+- Bow hunting bonus XP follows your combat stance; quiver hunting XP only with a bow equipped
+
+World and travel
+- Many locations got new or shuffled activities
+- Riverside Manor added with fishing, grounds, hunting, storeroom, and kitchen
+
+Ancient Forest and quests
+- Through the Thicket reworked into the Ancient Forest access quest
+- Green Thumb is a miniquest after Getting Started that teaches botany
+- Library tab with the Newcomer's Guide and Botanist's Guide, books for now are placeholders
+- Forest Offering and Stolen Coin Purse cannot be sold, listed, or destroyed''';
+
+const String _mailUpdate20260929Part2Body = '''Update (Sep 24–29)
+
+Gathering and crafting
+- Broad rebalance of gathering, fishing, hunting, botany, and crafting unlock levels
+- Production crafts succeed slightly more often now
+- Tuna is now bass
+- Cooking stews, potions, metallurgy bars, smithing, and artisanry recipes retuned
+
+Thievery
+- Expanded steal ladder plus updated loot on barracks, armory, kitchen, storeroom, noble purse, wizard shop, bank vault, and more
+
+Arcana
+- New spells including Hoard, Iron Ward, Lifesteal, Warrior Might, Haste, and Pathfinder
+- Enchantment ladder expanded and rebalanced
+
+Critters and deeds
+- New habitat critters; farm fly replaced by chick
+- Rare baby dragon pet from dragon kills
+- New Champion deeds and milestones; Critter collector is a Log milestone now
+
+Botany
+- Fixed botany collections not returning seeds
+- Planting unlock levels shifted; new willow, ironwood, and elder yew saplings in the ladder
+
+Other
+- Chat sends immediately with no cooldown between messages
+- Favorite or unfavorite from the item detail sheet; bag hearts are display only
+
+Minor UI tweaks
+
+Vari - ❤️''';
+
 const String _mailUpdate20260924Body = '''Update (Sep 23–24)
 
 Combat
@@ -116,6 +171,18 @@ const List<SystemMailCatalogEntry> systemMailCatalog = <SystemMailCatalogEntry>[
     subject: 'Update (Sep 23–24)',
     body: _mailUpdate20260924Body,
     sentAt: '2026-09-24T00:00:00.000Z',
+  ),
+  SystemMailCatalogEntry(
+    id: mailUpdate20260929Part1CatalogId,
+    subject: 'Update (Sep 24–29)',
+    body: _mailUpdate20260929Part1Body,
+    sentAt: '2026-09-29T00:00:00.000Z',
+  ),
+  SystemMailCatalogEntry(
+    id: mailUpdate20260929Part2CatalogId,
+    subject: 'Update (Sep 24–29) continued',
+    body: _mailUpdate20260929Part2Body,
+    sentAt: '2026-09-29T00:00:01.000Z',
   ),
 ];
 
