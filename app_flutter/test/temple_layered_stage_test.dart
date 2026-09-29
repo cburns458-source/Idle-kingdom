@@ -91,7 +91,7 @@ void main() {
     final presets = tester.getRect(find.byType(StageLoadoutStrip));
     final actionId = controller.save.currentActionId;
     expect(actionId, isNotNull);
-    expect(actionId, anyOf('ACN-0109', 'ACN-0110'));
+    expect(actionId, anyOf('ACN-0109', 'ACN-0105'));
     final actionName = controller.indexes.actionsById[actionId!]?.displayName;
     expect(actionName, isNotNull);
     final name = tester.getRect(
