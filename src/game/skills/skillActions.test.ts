@@ -198,7 +198,7 @@ describe('skill menu entries', () => {
     const pot = fishing.tabs.find((tab) => tab.id === 'pot_fishing')?.sections[0]?.entries ?? []
     expect(pot.some((item) => item.displayName === 'Fishing Pot')).toBe(false)
     expect(pot.some((item) => item.displayName === 'Raw Crawfish' && item.level === 14)).toBe(true)
-    expect(pot.some((item) => item.displayName === 'Raw Lobster' && item.level === 75)).toBe(true)
+    expect(pot.some((item) => item.displayName === 'Raw Lobster' && item.level === 84)).toBe(true)
     expect(pot.some((item) => item.displayName === 'Raw Perch')).toBe(false)
   })
 
@@ -298,7 +298,7 @@ describe('skill menu entries', () => {
       false,
     )
     expect(actionsForSkill(launch, 'SKL-0003').find((item) => item.displayName === 'Catch Baby Giant Squid')?.level).toBe(
-      70,
+      63,
     )
   })
 
@@ -309,10 +309,10 @@ describe('skill menu entries', () => {
     expect(skillMenuLine(mining[0]!)).toMatch(/^\d+\. /)
 
     const smithing = skillMenuDisplayEntries(launch, 'SKL-0011')
-    expect(smithing.some((item) => item.displayName === 'Tungsten items' && item.level === 60)).toBe(
+    expect(smithing.some((item) => item.displayName === 'Tungsten items' && item.level === 50)).toBe(
       true,
     )
-    expect(smithing.some((item) => item.displayName === 'Titanium items' && item.level === 70)).toBe(
+    expect(smithing.some((item) => item.displayName === 'Titanium items' && item.level === 65)).toBe(
       true,
     )
     expect(smithing.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)

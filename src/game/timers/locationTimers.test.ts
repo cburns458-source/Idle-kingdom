@@ -208,7 +208,7 @@ describe('locationTimers', () => {
       ...save,
       currentLocationId: 'LOC-0043',
       skills: save.skills.map((row) =>
-        row.skillId === 'SKL-0014' ? { ...row, level: 40, xp: 0 } : row,
+        row.skillId === 'SKL-0014' ? { ...row, level: 56, xp: 0 } : row,
       ),
       inventory: [
         { itemId: 'ITEM-0324', quantity: 1 },
@@ -337,7 +337,7 @@ describe('locationTimers', () => {
       ...base,
       currentLocationId: 'LOC-0004',
       skills: base.skills.map((row) =>
-        row.skillId === 'SKL-0003' ? { ...row, level: 75, xp: 0 } : row,
+        row.skillId === 'SKL-0003' ? { ...row, level: 84, xp: 0 } : row,
       ),
       inventory: [
         { itemId: FISHING_POT_ITEM_ID, quantity: 1 },
@@ -371,7 +371,7 @@ describe('locationTimers', () => {
     expect(lobster.bonusXp).toEqual([{ skillId: 'SKL-0005', xp: 17550 }])
   })
 
-  it('blocks dock pots until Fishing 35 and goblin pots until Fishing 14', () => {
+  it('blocks dock pots until Fishing 28 and goblin pots until Fishing 14', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = {
@@ -382,7 +382,7 @@ describe('locationTimers', () => {
     const docks = canPlaceTrap(launch, save, FISHING_POT_ITEM_ID)
     expect(docks.ok).toBe(false)
     if (docks.ok) return
-    expect(docks.reason).toContain('35')
+    expect(docks.reason).toContain('28')
 
     save = {
       ...save,
@@ -613,7 +613,7 @@ describe('locationTimers', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(parseBotanySeedSpec(launch, MOONBLOSSOM_SEED_ITEM_ID)?.requiresLevel).toBe(70)
     expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.xp).toBe(6000)
-    expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.requiresLevel).toBe(27)
+    expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.requiresLevel).toBe(18)
   })
 
   it('computes live-plant chance from level, requirement, and compost', () => {
@@ -684,7 +684,7 @@ describe('locationTimers', () => {
         ...save,
         currentLocationId: 'LOC-0043',
         skills: save.skills.map((row) =>
-          row.skillId === 'SKL-0014' ? { ...row, level: 40, xp: 0 } : row,
+          row.skillId === 'SKL-0014' ? { ...row, level: 56, xp: 0 } : row,
         ),
         inventory: [
           { itemId: 'ITEM-0350', quantity: 1 },

@@ -175,12 +175,12 @@ describe('special production', () => {
         skill.skillId === 'SKL-0012' ? { ...skill, level: 20, xp: 50_000 } : skill,
       ),
     }
-    save = addItemToInventory(save, 'ITEM-0214', 8)
-    save = addItemToInventory(save, 'ITEM-0083', 2)
+    save = addItemToInventory(save, 'ITEM-0214', 12)
+    save = addItemToInventory(save, 'ITEM-0083', 3)
     save = addItemToInventory(save, 'ITEM-0045', 6)
     save = addItemToInventory(save, 'ITEM-0095', 10)
 
-    const bow = completeSpecialProject(launch, save, 'PRJ-0030', 1)
+    const bow = completeSpecialProject(launch, save, 'PRJ-0031', 1)
     expect(bow.ok).toBe(false)
     if (!bow.ok) expect(bow.reason).toMatch(/Quill/i)
 
@@ -190,7 +190,7 @@ describe('special production', () => {
     const taught = completeSpecialProject(
       launch,
       { ...save, unlockedNpcIds: ['NPC-0002'] },
-      'PRJ-0030',
+      'PRJ-0031',
       1,
     )
     expect(taught.ok).toBe(true)

@@ -21,8 +21,8 @@ void main() {
     final view = skillMenuView(db, smithingSkillId);
     expect(view.tabs.map((tab) => tab.label), ['Basic metal']);
     final rows = skillMenuDisplayEntries(db, smithingSkillId);
-    expect(rows.any((row) => row.displayName == 'Tungsten items' && row.level == 60), isTrue);
-    expect(rows.any((row) => row.displayName == 'Titanium items' && row.level == 70), isTrue);
+    expect(rows.any((row) => row.displayName == 'Tungsten items' && row.level == 50), isTrue);
+    expect(rows.any((row) => row.displayName == 'Titanium items' && row.level == 65), isTrue);
     expect(rows.where((row) => row.displayName == 'Tungsten Sword'), isEmpty);
     expect(projectsForSkill(db, smithingSkillId).length, greaterThan(rows.length));
     expect(
@@ -214,7 +214,7 @@ void main() {
     final pot = fishing.tabs.firstWhere((tab) => tab.id == 'pot_fishing').sections.first.entries;
     expect(pot.any((row) => row.displayName == 'Fishing Pot'), isFalse);
     expect(pot.any((row) => row.displayName == 'Raw Crawfish' && row.level == 14), isTrue);
-    expect(pot.any((row) => row.displayName == 'Raw Lobster' && row.level == 75), isTrue);
+    expect(pot.any((row) => row.displayName == 'Raw Lobster' && row.level == 84), isTrue);
     expect(pot.any((row) => row.displayName == 'Raw Perch'), isFalse);
   });
 
@@ -275,7 +275,7 @@ void main() {
     final cooking = actionsForSkill(db, 'SKL-0007');
     expect(cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid'), isFalse);
     expect(cooking.any((row) => row.displayName == 'Soup Stock' && row.level == 16), isTrue);
-    expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 80), isTrue);
+    expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 66), isTrue);
 
     final view = skillMenuView(db, 'SKL-0007');
     expect(view.tabs.map((tab) => tab.label), ['Fish', 'Meat', 'Stew', 'Other']);
@@ -440,11 +440,11 @@ void main() {
     expect(marlinRecipe.raw['Status'], 'Planned');
     expect(marlinRecipe.raw['Display Name'], 'Cooked Marlin');
     final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0175');
-    expect(action.proficiencyLevel, 80);
+    expect(action.proficiencyLevel, 66);
     expect(action.releasePhase, 'Launch');
     final recipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0060');
-    expect(recipe.raw['Proficiency Level'], 80);
+    expect(recipe.raw['Proficiency Level'], 66);
     expect(recipe.raw['Release Phase'], 'Launch');
-    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 70);
+    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 63);
   });
 }

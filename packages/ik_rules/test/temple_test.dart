@@ -68,7 +68,7 @@ void main() {
 
     final moonblossom = db.actions.firstWhere((row) => row.actionId == 'ACN-0110');
     expect(moonblossom.displayName, 'Gather moonblossom');
-    expect(moonblossom.proficiencyLevel, 70);
+    expect(moonblossom.proficiencyLevel, 64);
     expect(moonblossom.xpReward, 12084);
     expect(moonblossom.baseDurationSeconds, 87);
 

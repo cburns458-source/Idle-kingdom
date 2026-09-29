@@ -32,7 +32,7 @@ describe('primary activity engine', () => {
     expect(generated?.action['Action ID']).toBe('ACN-0105')
 
     const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
-    // Below Harvesting 10 proficiency: half XP on wild roots.
+    // Below Harvesting proficiency: half XP on wild roots.
     expect(completed.result.xpGained).toBe(183)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
     expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(183)
@@ -265,7 +265,7 @@ describe('primary activity engine', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const roots = launch.Actions.find((action) => action['Action ID'] === 'ACN-0105')!
-    expect(roots['Proficiency Level']).toBe(10)
+    expect(roots['Proficiency Level']).toBe(15)
     expect(gatheringDurationMs(launch, save, roots)).toBe(44_000)
     expect(gatheringXpReward(launch, save, roots)).toBe(183)
 

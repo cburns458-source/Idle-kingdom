@@ -28,7 +28,7 @@ describe('shallows and starlight content', () => {
       'ACN-0102:60',
     ])
     const algae = launch.Actions.find((row) => row['Action ID'] === 'ACN-0180')!
-    expect(algae['Proficiency Level']).toBe(40)
+    expect(algae['Proficiency Level']).toBe(44)
     expect(algae['Target ID']).toBe('ITEM-0319')
     expect(algae['XP Reward']).toBe(917)
     expect(algae['Base Duration Seconds']).toBe(55)

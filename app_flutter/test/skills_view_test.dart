@@ -177,15 +177,15 @@ void main() {
     await openSkillTile(tester, 'Smithing');
 
     await tester.scrollUntilVisible(
-      find.textContaining('70. Titanium items'),
+      find.textContaining('65. Titanium items'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.textContaining('70. Titanium items'), findsOne);
-    expect(find.textContaining('60. Tungsten items'), findsOne);
+    expect(find.textContaining('65. Titanium items'), findsOne);
+    expect(find.textContaining('50. Tungsten items'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
     expect(find.textContaining('Titanium Sword'), findsNothing);
   });
