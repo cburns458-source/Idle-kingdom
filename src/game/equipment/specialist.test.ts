@@ -82,7 +82,7 @@ describe('specialist hats and quiver', () => {
     )
     const discounted = wizardEssenceCost(miningEssence, save)
     save = addItemToInventory(save, 'ITEM-0011', discounted)
-    save = addItemToInventory(save, 'ITEM-0006', 10)
+    save = addItemToInventory(save, 'ITEM-0005', 10)
     save = addItemToInventory(save, 'ITEM-0119', 1)
     const invIndex = save.inventory.findIndex((stack) => stack.itemId === 'ITEM-0119')
     const result = completeSpecialProject(

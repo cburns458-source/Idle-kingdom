@@ -91,6 +91,7 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0099', 1)
     save = addItemToInventory(save, 'ITEM-0040', 10)
+    save = addItemToInventory(save, 'ITEM-0032', 10)
     save = addItemToInventory(save, 'ITEM-0011', 100)
 
     const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)
@@ -124,6 +125,7 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0099', 1)
     save = addItemToInventory(save, 'ITEM-0040', 10)
+    save = addItemToInventory(save, 'ITEM-0032', 10)
     save = addItemToInventory(save, 'ITEM-0011', 100)
 
     const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)
@@ -239,7 +241,7 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0098', 1)
     save = addItemToInventory(save, 'ITEM-0011', 200)
-    save = addItemToInventory(save, 'ITEM-0006', 10)
+    save = addItemToInventory(save, 'ITEM-0005', 10)
     // Steel pickaxe is mining gear eligible for minor mining enchantment.
     save = addItemToInventory(save, 'ITEM-0119', 2)
     const invIndex = save.inventory.findIndex((stack) => stack.itemId === 'ITEM-0119')
