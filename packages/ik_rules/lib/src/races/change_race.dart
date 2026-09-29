@@ -30,7 +30,7 @@ class RaceChangeCost {
   final List<RaceChangeItemCost> items;
 }
 
-/// Mid-level (30–55) costs. No gems or ruby. Human stays tuna and maple.
+/// Mid-level (30–55) costs. No gems or ruby. Human stays bass and maple.
 const Map<String, RaceChangeCost> raceChangeCosts = <String, RaceChangeCost>{
   'RACE-0001': RaceChangeCost(
     gold: 0,

@@ -1,3 +1,5 @@
+import type { GameDatabase } from '../data/types'
+import { itemHasCapability, WEAPON_TOOL_SLOT_ID } from './loadout'
 import type { PlayerSave } from '../save/types'
 
 export const ESSENCE_ITEM_ID = 'ITEM-0011'
@@ -8,6 +10,7 @@ export const ALCHEMIST_GOGGLES_ITEM_ID = 'ITEM-0318'
 export const COOKING_SKILL_ID = 'SKL-0007'
 export const HUNTING_SKILL_ID = 'SKL-0005'
 export const ALCHEMY_SKILL_ID = 'SKL-0010'
+const BOW_CAPABILITY_TAG = 'bow_combat_xp'
 
 export const CHEF_HAT_DOUBLE_CHANCE = 1 / 100
 export const WIZARD_HAT_ESSENCE_FACTOR = 0.99
@@ -30,10 +33,22 @@ export function wizardEssenceCost(baseQuantity: number, save: PlayerSave): numbe
   return Math.ceil(baseQuantity * WIZARD_HAT_ESSENCE_FACTOR)
 }
 
-export function applyQuiverHuntingXp(amount: number, save: PlayerSave, skillId: string): number {
+function equippedBowWeapon(db: GameDatabase, save: PlayerSave): boolean {
+  const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId
+  return typeof weaponId === 'string' && itemHasCapability(db, weaponId, BOW_CAPABILITY_TAG)
+}
+
+/** +5% Hunting XP with a quiver, only while a bow is equipped in Weapon/Tool. */
+export function applyQuiverHuntingXp(
+  db: GameDatabase,
+  amount: number,
+  save: PlayerSave,
+  skillId: string,
+): number {
   if (amount <= 0) return 0
   if (skillId !== HUNTING_SKILL_ID) return amount
   if (!hasEquippedItem(save, QUIVER_ITEM_ID)) return amount
+  if (!equippedBowWeapon(db, save)) return amount
   return Math.floor(amount * QUIVER_HUNTING_XP_FACTOR)
 }
 

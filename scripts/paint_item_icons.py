@@ -592,7 +592,7 @@ def paint_fish(c: Canvas, kind: str, cooked: bool) -> None:
             '.......mmmmmmmm.........',
         ]
         c.stamp_centered(rows, {'m': body[0], 'M': body[1], 'D': body[2]})
-    elif kind == 'tuna':
+    elif kind == 'bass':
         body = ((86, 128, 168), (48, 86, 124), (28, 48, 78)) if not cooked else ((168, 112, 64), (120, 72, 36), (76, 44, 20))
         rows = [
             '...............mmmm.m...',
@@ -1410,7 +1410,7 @@ def compose_item(name: str) -> Image.Image:
     if 'squid' in n:
         paint_squid(c, 'cooked' in n)
         return c.image()
-    for kind in ('trout', 'salmon', 'tuna', 'shark'):
+    for kind in ('trout', 'salmon', 'bass', 'shark'):
         if kind in n:
             paint_fish(c, kind, 'cooked' in n)
             return c.image()

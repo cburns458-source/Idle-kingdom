@@ -146,7 +146,7 @@ export const POT_BAIT_TO_CATCH: Record<string, string> = {
   'ITEM-0047': 'ITEM-0352', // Perch → Crawfish
   'ITEM-0048': 'ITEM-0353', // Trout → Red Crab
   'ITEM-0049': 'ITEM-0354', // Salmon → Catfish
-  'ITEM-0050': 'ITEM-0355', // Tuna → Dungeness
+  'ITEM-0050': 'ITEM-0355', // Bass → Dungeness
   'ITEM-0051': 'ITEM-0356', // Shark → Eel
   'ITEM-0191': 'ITEM-0357', // Baby Giant Squid → Lobster
 }

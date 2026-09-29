@@ -112,19 +112,19 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Deprecated \u2014 equipped spells are always active. Kept for older clients; unused by current runtime."
+      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
     },
     {
       "Key": "copy.merchant_tip",
       "Value": "Last I heard, Quill was nearby.",
       "Unit": null,
-      "Notes": "Unused fallback. The general-store merchant names Quill\u2019s stop in code."
+      "Notes": "Unused fallback. The general-store merchant names Quill’s stop in code."
     },
     {
       "Key": "copy.merchant_tip_spent",
       "Value": "Last I heard, Quill was nearby.",
       "Unit": null,
-      "Notes": "Unused fallback. The general-store merchant names Quill\u2019s stop in code."
+      "Notes": "Unused fallback. The general-store merchant names Quill’s stop in code."
     },
     {
       "Key": "copy.quill_known",
@@ -134,9 +134,9 @@
     },
     {
       "Key": "copy.quill_teach",
-      "Value": "A bow's only half the work \u2014 you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
+      "Value": "A bow's only half the work — you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
       "Unit": null,
-      "Notes": "Quill\u2019s hunting lesson, spoken the first time the player asks."
+      "Notes": "Quill’s hunting lesson, spoken the first time the player asks."
     },
     {
       "Key": "copy.default_merchant_line",
@@ -286,7 +286,7 @@
       "Key": "specialist.quiver_hunting_xp_factor",
       "Value": 1.05,
       "Unit": "factor",
-      "Notes": "Hunting XP multiplier with a quiver equipped."
+      "Notes": "Hunting XP multiplier with a quiver equipped while a bow (bow_combat_xp) is in Weapon/Tool."
     },
     {
       "Key": "specialist.alchemy_potion_output_max",
@@ -375,7 +375,7 @@
       "Category": "Gathering",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Description": "Gather logs and Elder Yew.",
+      "Description": "Gather logs, branches, and bark from trees.",
       "Rules / Notes": "Requires an axe or hatchet; saplings are not part of the active design."
     },
     {
@@ -1784,8 +1784,8 @@
     },
     {
       "Item ID": "ITEM-0050",
-      "Internal Key": "raw_tuna",
-      "Display Name": "Raw Tuna",
+      "Internal Key": "raw_bass",
+      "Display Name": "Raw Bass",
       "Category": "Raw Food",
       "Subtype": "Raw ingredient",
       "Associated Skill ID": "SKL-0003",
@@ -1793,8 +1793,8 @@
       "Functional / Source Tags": "fishing_output; cooking_input",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": null,
-      "Icon Asset Key": "raw_tuna",
+      "Description": "A raw bass ready for the kitchen.",
+      "Icon Asset Key": "raw_bass",
       "Notes": null,
       "Base Sell Value": 90,
       "Stackable": null
@@ -1954,8 +1954,8 @@
     },
     {
       "Item ID": "ITEM-0062",
-      "Internal Key": "cooked_tuna",
-      "Display Name": "Cooked Tuna",
+      "Internal Key": "cooked_bass",
+      "Display Name": "Cooked Bass",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -1963,8 +1963,8 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": null,
-      "Icon Asset Key": "cooked_tuna",
+      "Description": "A cooked bass that restores health.",
+      "Icon Asset Key": "cooked_bass",
       "Notes": null,
       "Base Sell Value": 200,
       "Stackable": null
@@ -2254,7 +2254,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "titanium_bar",
-      "Notes": "Proficiency 60. Recipe: Titanium Ore + Tin Ore",
+      "Notes": "Metallurgy 70. Titanium combat gear requires Might/Vitality 70.",
       "Base Sell Value": 900,
       "Stackable": null
     },
@@ -2271,7 +2271,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "tungsten_bar",
-      "Notes": "Proficiency 70. Recipe: Copper Ore + Iron Ore + Tungsten Ore",
+      "Notes": "Metallurgy 60. Tungsten combat gear requires Might/Vitality 60.",
       "Base Sell Value": 550,
       "Stackable": null
     },
@@ -4079,18 +4079,18 @@
     },
     {
       "Item ID": "ITEM-0219",
-      "Internal Key": "elder_yew",
-      "Display Name": "Elder Yew",
+      "Internal Key": "yew_branches",
+      "Display Name": "Yew Branches",
       "Category": "Component",
-      "Subtype": "Timber",
+      "Subtype": "Wood byproduct",
       "Associated Skill ID": "SKL-0009",
       "Equipment Slot ID": null,
-      "Functional / Source Tags": "crafting_output; smithing_input; artisanry_input",
+      "Functional / Source Tags": "woodcutting_output; crafting_output; smithing_input; artisanry_input",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": null,
-      "Icon Asset Key": "elder_yew",
-      "Notes": "Woodcutting Proficiency 80. Renamed from Ancient Timber.",
+      "Description": "Tough yew branches used in ancient crafts.",
+      "Icon Asset Key": "yew_branches",
+      "Notes": "Primary elder-yew woodcutting drop; replaces former Elder Yew timber.",
       "Base Sell Value": 1800,
       "Stackable": null
     },
@@ -5652,7 +5652,7 @@
       "Functional / Source Tags": "alchemy_potion_output_boost",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "While crafting potions, output rolls 2\u20133 instead of 1\u20133. No extra experience. Not yet obtainable.",
+      "Description": "While crafting potions, output rolls 2–3 instead of 1–3. No extra experience. Not yet obtainable.",
       "Icon Asset Key": "alchemist_goggles",
       "Notes": "Output-only specialist. Stub content; no acquisition path yet.",
       "Base Sell Value": 220,
@@ -6727,7 +6727,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "willow_log",
-      "Notes": null,
+      "Notes": "Retired gather drop; willow trees drop Willow Branches.",
       "Base Sell Value": 12,
       "Stackable": null
     },
@@ -6744,7 +6744,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "cinnamon_log",
-      "Notes": null,
+      "Notes": "Retired gather drop; cinnamon trees drop Cinnamon Bark.",
       "Base Sell Value": 40,
       "Stackable": null
     },
@@ -6767,8 +6767,8 @@
     },
     {
       "Item ID": "ITEM-0386",
-      "Internal Key": "branches",
-      "Display Name": "Branches",
+      "Internal Key": "willow_branches",
+      "Display Name": "Willow Branches",
       "Category": "Resource",
       "Subtype": "Wood byproduct",
       "Associated Skill ID": "SKL-0006",
@@ -6776,16 +6776,16 @@
       "Functional / Source Tags": "woodcutting_output",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": null,
-      "Icon Asset Key": "branches",
-      "Notes": "Secondary drop from willow.",
+      "Description": "Supple willow branches cut from the tree.",
+      "Icon Asset Key": "willow_branches",
+      "Notes": "Primary willow woodcutting drop.",
       "Base Sell Value": 2,
       "Stackable": null
     },
     {
       "Item ID": "ITEM-0387",
-      "Internal Key": "bark",
-      "Display Name": "Bark",
+      "Internal Key": "cinnamon_bark",
+      "Display Name": "Cinnamon Bark",
       "Category": "Resource",
       "Subtype": "Wood byproduct",
       "Associated Skill ID": "SKL-0006",
@@ -6793,9 +6793,9 @@
       "Functional / Source Tags": "woodcutting_output",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": null,
-      "Icon Asset Key": "bark",
-      "Notes": "Secondary drop from cinnamon and ironwood.",
+      "Description": "Fragrant bark stripped from a cinnamon tree.",
+      "Icon Asset Key": "cinnamon_bark",
+      "Notes": "Primary cinnamon woodcutting drop.",
       "Base Sell Value": 8,
       "Stackable": null
     },
@@ -7099,7 +7099,7 @@
       "Functional / Source Tags": "quest_item",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A bundle laid at the groves to regain the forest\u2019s trust.",
+      "Description": "A bundle laid at the groves to regain the forest’s trust.",
       "Icon Asset Key": "forest_offering",
       "Notes": "Consumed when placed at Ancient Forest nodes during Through the Thicket.",
       "Base Sell Value": 0,
@@ -7116,7 +7116,7 @@
       "Functional / Source Tags": "combat_weapon; woodcutting_tool; combat_usable; hatchet",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A woodcutter\u2019s blade. Better than a steel sword, and it clears vines faster.",
+      "Description": "A woodcutter’s blade. Better than a steel sword, and it clears vines faster.",
       "Icon Asset Key": "machete",
       "Notes": "Might 40 and Woodcutting 40. Vine chops use 24% action time reduction.",
       "Base Sell Value": 400,
@@ -7186,7 +7186,7 @@
       "Release Phase": "Launch",
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "willow_sapling",
-      "Notes": "BotanyPlant; Output:ITEM-0383; GrowSeconds:43200; Xp:28000; RequiresLevel:41",
+      "Notes": "BotanyPlant; Output:ITEM-0386; GrowSeconds:43200; Xp:28000; RequiresLevel:41",
       "Base Sell Value": 5,
       "Stackable": null
     },
@@ -8718,7 +8718,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "artisanry_output; special_effect; +15% relative Drop Chance",
       "Status": "Planned",
-      "Notes": "Special-effect jewelry \u2014 not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
+      "Notes": "Special-effect jewelry — not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -10014,7 +10014,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0177",
@@ -10032,7 +10032,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0007; item_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016). Stacks additively with other Abundance spells."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016). Stacks additively with other Abundance spells."
     },
     {
       "Equipment ID": "EQP-0178",
@@ -10102,9 +10102,9 @@
       "Damage Reduction": null,
       "Healing Amount": null,
       "Action Time Reduction %": null,
-      "Capabilities / Effects": "hunting_xp_bonus_percent:5",
+      "Capabilities / Effects": "hunting_xp_bonus_percent:5; requires_bow",
       "Status": "Planned",
-      "Notes": "Improves hunting experience by 5% while equipped."
+      "Notes": "Improves hunting experience by 5% while equipped with a bow (weapon has bow_combat_xp)."
     },
     {
       "Equipment ID": "EQP-0182",
@@ -10266,7 +10266,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0009; extra_food_per_round:1; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0191",
@@ -10356,7 +10356,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "alchemy_potion_output_boost",
       "Status": "Planned",
-      "Notes": "Potion crafts roll 2\u20133 output. No XP change. Not obtainable yet."
+      "Notes": "Potion crafts roll 2–3 output. No XP change. Not obtainable yet."
     },
     {
       "Equipment ID": "EQP-0197",
@@ -10611,7 +10611,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0023; gold_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0211",
@@ -10629,7 +10629,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0024; damage_reduction_percent:5; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0212",
@@ -10647,7 +10647,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0025; damage_range_bonus_percent:5; lifesteal_percent:5; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0213",
@@ -10665,7 +10665,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0026; damage_range_bonus_percent:15; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0214",
@@ -10683,7 +10683,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0027; production_duration_reduction_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0215",
@@ -10701,7 +10701,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0028; gathering_duration_reduction_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0216",
@@ -10879,11 +10879,11 @@
       "Internal Key": "critical_strike_chance",
       "Display Name": "Critical Strike Chance",
       "Valid Target": "Eligible weapon or jewelry",
-      "Effect": "+10% Critical Strike Chance (1.5\u00d7 damage on crit)",
+      "Effect": "+10% Critical Strike Chance (1.5× damage on crit)",
       "Required Materials": "Enchanting Tablet; Rabbit's Foot; Boar Tusk",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5\u00d7 rolled damage."
+      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5× rolled damage."
     },
     {
       "Enchantment ID": "ENCH-0009",
@@ -11740,7 +11740,7 @@
       "Node ID": "NODE-0032",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight \u2014 arrival is peaceful.",
+      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight — arrival is peaceful.",
       "Danger / Hostility": null,
       "Background Asset Key": "locations/loc_citadel_combat.webp",
       "Map Node Name": null,
@@ -12099,7 +12099,7 @@
       "Node ID": "NODE-0052",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "The road between farm and town \u2014 bandits prey on travelers here. The river offers fishing, and abandoned merchant chests invite thievery.",
+      "Description": "The road between farm and town — bandits prey on travelers here. The river offers fishing, and abandoned merchant chests invite thievery.",
       "Danger / Hostility": "Danger warning: approximately Combat Level 9.",
       "Background Asset Key": "locations/loc_forest_path.webp",
       "Parent Location ID": null,
@@ -12256,7 +12256,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Town square to Rose\u2019s Apothecary"
+      "Notes": "Town square to Rose’s Apothecary"
     },
     {
       "Connection ID": "TRV-0012",
@@ -12472,7 +12472,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Shallows \u2194 Kelp Forest"
+      "Notes": "Shallows ↔ Kelp Forest"
     },
     {
       "Connection ID": "TRV-0030",
@@ -12790,7 +12790,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Bronze and iron swords, helmets, chestplates, and platelegs.",
-      "Notes": "Shop only. Buys back at the normal 1\u00d7 general-store rate."
+      "Notes": "Shop only. Buys back at the normal 1× general-store rate."
     },
     {
       "Facility ID": "FAC-0018",
@@ -12939,7 +12939,7 @@
       "Internal Key": "fish_river_coast",
       "Contextual Name": "Fish the river and coast",
       "Location ID": "LOC-0004",
-      "Description": "Fish the docks for man of war, shark, and marlin \u2014 seagulls sometimes dive the line.",
+      "Description": "Fish the docks for man of war, shark, and marlin — seagulls sometimes dive the line.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0004",
       "Pool Internal Key": "dock_fishing",
@@ -12965,7 +12965,7 @@
       "Internal Key": "prospect_mountain_side",
       "Contextual Name": "Prospect the mountain side",
       "Location ID": "LOC-0046",
-      "Description": "Prospect the slopes for ore \u2014 cave bats nest in the cuts.",
+      "Description": "Prospect the slopes for ore — cave bats nest in the cuts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0006",
       "Pool Internal Key": "mountain_slopes_pool",
@@ -13017,7 +13017,7 @@
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather woodland supplies",
       "Location ID": "LOC-0008",
-      "Description": "Gather woodland supplies \u2014 and watch for boars.",
+      "Description": "Gather woodland supplies — and watch for boars.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
@@ -13317,7 +13317,7 @@
       "Internal Key": "train_citadel_grounds",
       "Contextual Name": "Challenge the guards",
       "Location ID": "LOC-0032",
-      "Description": "Face Castle Guard training encounters. Optional \u2014 the grounds stay peaceful until you start this.",
+      "Description": "Face Castle Guard training encounters. Optional — the grounds stay peaceful until you start this.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0024",
       "Pool Internal Key": "citadel_guards",
@@ -13421,7 +13421,7 @@
       "Internal Key": "enter_the_catacombs",
       "Contextual Name": "Enter the catacombs",
       "Location ID": "LOC-0037",
-      "Description": "Dungeons coming soon\u2026",
+      "Description": "Dungeons coming soon…",
       "Danger Warning Combat Level": null,
       "Pool ID": null,
       "Pool Internal Key": null,
@@ -13473,7 +13473,7 @@
       "Internal Key": "fish_the_shallows",
       "Contextual Name": "Fish in the shallows",
       "Location ID": "LOC-0043",
-      "Description": "Cast into the sunlit water for salmon and tuna.",
+      "Description": "Cast into the sunlit water for salmon and bass.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0034",
       "Pool Internal Key": "shallows_fishing",
@@ -13760,7 +13760,7 @@
       "Internal Key": "challenge_the_peak",
       "Contextual Name": "Scout the peak",
       "Location ID": "LOC-0047",
-      "Description": "Gather bleeding tooth on the high roost \u2014 harpies still nest here.",
+      "Description": "Gather bleeding tooth on the high roost — harpies still nest here.",
       "Danger Warning Combat Level": 72,
       "Pool ID": "POOL-0050",
       "Pool Internal Key": "the_peak_mixed",
@@ -13773,7 +13773,7 @@
       "Internal Key": "prospect_the_badlands",
       "Contextual Name": "Prospect the badlands",
       "Location ID": "LOC-0048",
-      "Description": "Prospect the badlands for ore \u2014 rock trolls haunt the cuts.",
+      "Description": "Prospect the badlands for ore — rock trolls haunt the cuts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0051",
       "Pool Internal Key": "badlands_mining",
@@ -13916,7 +13916,7 @@
       "Internal Key": "craft_forest_offering",
       "Contextual Name": "Craft forest offerings",
       "Location ID": "LOC-0040",
-      "Description": "Craft offerings to regain the forest\u2019s trust.",
+      "Description": "Craft offerings to regain the forest’s trust.",
       "Danger Warning Combat Level": null,
       "Pool ID": null,
       "Pool Internal Key": null,
@@ -13942,13 +13942,13 @@
       "Internal Key": "fish_kingsroad",
       "Contextual Name": "Fish the Kingsroad river",
       "Location ID": "LOC-0052",
-      "Description": "Cast into the river along the Kingsroad for salmon, tuna, and shark.",
+      "Description": "Cast into the river along the Kingsroad for salmon, bass, and shark.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0063",
       "Pool Internal Key": "kingsroad_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Salmon 30% (ACN-0101), tuna 50% (ACN-0102), shark 20% (ACN-0103)."
+      "Notes": "Salmon 30% (ACN-0101), bass 50% (ACN-0102), shark 20% (ACN-0103)."
     },
     {
       "Activity ID": "ACT-0083",
@@ -14098,13 +14098,13 @@
       "Internal Key": "fish_mirror_lake",
       "Contextual Name": "Fish Mirror Lake",
       "Location ID": "LOC-0051",
-      "Description": "Fish Mirror Lake for trout and tuna.",
+      "Description": "Fish Mirror Lake for trout and bass.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0074",
       "Pool Internal Key": "mirror_lake_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Trout 30% (ACN-0100), tuna 70% (ACN-0102)."
+      "Notes": "Trout 30% (ACN-0100), bass 70% (ACN-0102)."
     },
     {
       "Activity ID": "ACT-0095",
@@ -14130,7 +14130,7 @@
       "Internal Key": "cut_badlands",
       "Contextual Name": "Cut ironwood in the badlands",
       "Location ID": "LOC-0048",
-      "Description": "Cut ironwood stands in the badlands \u2014 giants sometimes lumber through."
+      "Description": "Cut ironwood stands in the badlands — giants sometimes lumber through."
     },
     {
       "Activity ID": "ACT-0097",
@@ -14379,7 +14379,7 @@
       "Action ID": "ACN-0048",
       "Weight": 60,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts \u2014 poplar, 60%."
+      "Notes": "Citadel Gathering Outskirts — poplar, 60%."
     },
     {
       "Pool Entry ID": "PEN-0062",
@@ -14387,7 +14387,7 @@
       "Action ID": "ACN-0009",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Combat Training Grounds \u2014 castle guard only."
+      "Notes": "Citadel Combat Training Grounds — castle guard only."
     },
     {
       "Pool Entry ID": "PEN-0063",
@@ -14395,7 +14395,7 @@
       "Action ID": "ACN-0171",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "QST-0003 Pressure the Guards \u2014 nervous guard only."
+      "Notes": "QST-0003 Pressure the Guards — nervous guard only."
     },
     {
       "Pool Entry ID": "PEN-0064",
@@ -14403,7 +14403,7 @@
       "Action ID": "ACN-0172",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Temple \u2014 Monk only."
+      "Notes": "Temple — Monk only."
     },
     {
       "Pool Entry ID": "PEN-0075",
@@ -14411,7 +14411,7 @@
       "Action ID": "ACN-0176",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Fight ghost \u2014 90% of fending off the old spirits."
+      "Notes": "Fight ghost — 90% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0076",
@@ -14419,7 +14419,7 @@
       "Action ID": "ACN-0006",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Fight skeleton \u2014 10% of fending off the old spirits."
+      "Notes": "Fight skeleton — 10% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0077",
@@ -14427,7 +14427,7 @@
       "Action ID": "ACN-0047",
       "Weight": 40,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts \u2014 oak, 40%."
+      "Notes": "Citadel Gathering Outskirts — oak, 40%."
     },
     {
       "Pool Entry ID": "PEN-0078",
@@ -14475,7 +14475,7 @@
       "Action ID": "ACN-0102",
       "Weight": 60,
       "Status": "Planned",
-      "Notes": "Tuna 60%"
+      "Notes": "Bass 60%"
     },
     {
       "Pool Entry ID": "PEN-0085",
@@ -14515,7 +14515,7 @@
       "Action ID": "ACN-0017",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts \u2014 pheasant only."
+      "Notes": "Gathering Outskirts — pheasant only."
     },
     {
       "Pool Entry ID": "PEN-0091",
@@ -14523,7 +14523,7 @@
       "Action ID": "ACN-0105",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts \u2014 wild roots only."
+      "Notes": "Gathering Outskirts — wild roots only."
     },
     {
       "Pool Entry ID": "PEN-0094",
@@ -14747,7 +14747,7 @@
       "Action ID": "ACN-0102",
       "Weight": 50,
       "Status": "Planned",
-      "Notes": "Tuna 50%."
+      "Notes": "Bass 50%."
     },
     {
       "Pool Entry ID": "PEN-0127",
@@ -15099,7 +15099,7 @@
       "Action ID": "ACN-0102",
       "Weight": 70,
       "Status": "Planned",
-      "Notes": "Tuna 70%."
+      "Notes": "Bass 70%."
     },
     {
       "Pool Entry ID": "PEN-0173",
@@ -16055,11 +16055,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 37.5,
       "Reward Table ID": "RWT-0034",
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
+      "Secondary Drop Chance": 0.5,
+      "Secondary Reward Table ID": "RWT-0184",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Primary Yew Branches. Sapling secondary 0.5%.",
       "Sprite Asset Key": "actions/acn_cut_ancient.webp"
     },
     {
@@ -16249,8 +16249,8 @@
     },
     {
       "Action ID": "ACN-0102",
-      "Internal Key": "catch_tuna",
-      "Display Name": "Catch tuna",
+      "Internal Key": "catch_bass",
+      "Display Name": "Catch bass",
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0003",
       "Target Type": "Item",
@@ -16266,7 +16266,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null,
-      "Sprite Asset Key": "actions/acn_catch_tuna.webp"
+      "Sprite Asset Key": "actions/acn_catch_bass.webp"
     },
     {
       "Action ID": "ACN-0103",
@@ -16686,8 +16686,8 @@
     },
     {
       "Action ID": "ACN-0123",
-      "Internal Key": "cook_cooked_tuna",
-      "Display Name": "Cooked tuna",
+      "Internal Key": "cook_cooked_bass",
+      "Display Name": "Cooked bass",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17146,8 +17146,8 @@
     },
     {
       "Action ID": "ACN-0146",
-      "Internal Key": "craft_elder_yew",
-      "Display Name": "Elder Yew",
+      "Internal Key": "craft_yew_branches",
+      "Display Name": "Yew Branches",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0009",
       "Target Type": "Item",
@@ -18133,18 +18133,18 @@
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0006",
       "Target Type": "Item",
-      "Target ID": "ITEM-0383",
+      "Target ID": "ITEM-0386",
       "Proficiency Level": 22,
       "Base Duration Seconds": 35,
       "XP Reward": 802,
       "Guaranteed Gold": 0,
       "Drop Chance": 42.5,
       "Reward Table ID": "RWT-0157",
-      "Secondary Drop Chance": 15,
-      "Secondary Reward Table ID": "RWT-0158",
+      "Secondary Drop Chance": 0.5,
+      "Secondary Reward Table ID": "RWT-0182",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Secondary Branches drop (RWT-0158). Used in Riverside Manor grounds pool and skill menu.",
+      "Notes": "Primary Willow Branches. Sapling secondary 0.5%.",
       "Sprite Asset Key": "actions/acn_cut_oak.webp"
     },
     {
@@ -18154,18 +18154,18 @@
       "Category": "Gathering",
       "Relevant Skill ID": "SKL-0006",
       "Target Type": "Item",
-      "Target ID": "ITEM-0384",
+      "Target ID": "ITEM-0387",
       "Proficiency Level": 44,
       "Base Duration Seconds": 59,
       "XP Reward": 2154,
       "Guaranteed Gold": 0,
       "Drop Chance": 42.5,
       "Reward Table ID": "RWT-0159",
-      "Secondary Drop Chance": 15,
-      "Secondary Reward Table ID": "RWT-0160",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. Secondary Bark drop.",
+      "Notes": "Primary Cinnamon Bark only. No generic bark secondary.",
       "Sprite Asset Key": "actions/acn_cut_maple.webp"
     },
     {
@@ -18182,11 +18182,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 40,
       "Reward Table ID": "RWT-0161",
-      "Secondary Drop Chance": 15,
-      "Secondary Reward Table ID": "RWT-0160",
+      "Secondary Drop Chance": 0.5,
+      "Secondary Reward Table ID": "RWT-0183",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Secondary Bark drop. Used in Badlands woodcutting pool and skill menu.",
+      "Notes": "Primary Ironwood Log. Sapling secondary 0.5%. No bark.",
       "Sprite Asset Key": "actions/acn_cut_mahogany.webp"
     },
     {
@@ -18459,7 +18459,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Wired into The Docks fishing pool.",
-      "Sprite Asset Key": "actions/acn_catch_tuna.webp"
+      "Sprite Asset Key": "actions/acn_catch_bass.webp"
     },
     {
       "Action ID": "ACN-0216",
@@ -20182,7 +20182,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks \u2014 empty Weapon or Tool."
+      "Notes": "Train with the monks — empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0105",
@@ -20195,7 +20195,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks \u2014 empty Shield or Off-hand."
+      "Notes": "Train with the monks — empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0106",
@@ -20234,7 +20234,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds \u2014 empty Weapon or Tool."
+      "Notes": "Pick weeds — empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0109",
@@ -20247,7 +20247,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds \u2014 empty Shield or Off-hand."
+      "Notes": "Pick weeds — empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0110",
@@ -22918,7 +22918,7 @@
     {
       "Reward Entry ID": "RWE-0076",
       "Reward Table ID": "RWT-0034",
-      "Reward Table Name": "Elder Yew Main Reward",
+      "Reward Table Name": "Yew Branches Main Reward",
       "Purpose": "Primary Gathering output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0219",
@@ -22978,7 +22978,7 @@
     {
       "Reward Entry ID": "RWE-0080",
       "Reward Table ID": "RWT-0038",
-      "Reward Table Name": "Raw Tuna Main Reward",
+      "Reward Table Name": "Raw Bass Main Reward",
       "Purpose": "Primary Gathering output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0050",
@@ -23278,7 +23278,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
+      "Reward Table Name": "Secondary Gems — Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -23293,7 +23293,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -23308,7 +23308,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -23323,7 +23323,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -23338,7 +23338,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -23353,7 +23353,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems \u2014 All Gems",
+      "Reward Table Name": "Secondary Gems — All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -23578,7 +23578,7 @@
     {
       "Reward Entry ID": "RWE-0120",
       "Reward Table ID": "RWT-0075",
-      "Reward Table Name": "Cooked Tuna Output",
+      "Reward Table Name": "Cooked Bass Output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0062",
@@ -25018,10 +25018,10 @@
     {
       "Reward Entry ID": "RWE-9190",
       "Reward Table ID": "RWT-0157",
-      "Reward Table Name": "Willow Log Main Reward",
+      "Reward Table Name": "Willow Branches Main Reward",
       "Purpose": "Primary Gathering output",
       "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0383",
+      "Reward ID / Value": "ITEM-0386",
       "Weight": 100,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,
@@ -25048,10 +25048,10 @@
     {
       "Reward Entry ID": "RWE-9192",
       "Reward Table ID": "RWT-0159",
-      "Reward Table Name": "Cinnamon Log Main Reward",
+      "Reward Table Name": "Cinnamon Bark Main Reward",
       "Purpose": "Primary Gathering output",
       "Reward Type": "Item",
-      "Reward ID / Value": "ITEM-0384",
+      "Reward ID / Value": "ITEM-0387",
       "Weight": 100,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,
@@ -25539,6 +25539,51 @@
       "XP Amount": null,
       "Status": "Planned",
       "Notes": null
+    },
+    {
+      "Reward Entry ID": "RWE-9206",
+      "Reward Table ID": "RWT-0182",
+      "Reward Table Name": "Botany sapling ITEM-0410",
+      "Purpose": "Botany seed tertiary",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0410",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": "Willow sapling secondary."
+    },
+    {
+      "Reward Entry ID": "RWE-9207",
+      "Reward Table ID": "RWT-0183",
+      "Reward Table Name": "Botany sapling ITEM-0411",
+      "Purpose": "Botany seed tertiary",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0411",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": "Ironwood sapling secondary."
+    },
+    {
+      "Reward Entry ID": "RWE-9208",
+      "Reward Table ID": "RWT-0184",
+      "Reward Table Name": "Botany sapling ITEM-0412",
+      "Purpose": "Botany seed tertiary",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0412",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": "Elder yew sapling secondary."
     }
   ],
   "Recipes": [
@@ -25644,8 +25689,8 @@
     },
     {
       "Recipe ID": "RCP-0005",
-      "Internal Key": "cook_cooked_tuna",
-      "Display Name": "Cooked Tuna",
+      "Internal Key": "cook_cooked_bass",
+      "Display Name": "Cooked Bass",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0062",
       "Output Quantity": 1,
@@ -26519,8 +26564,8 @@
     },
     {
       "Recipe ID": "RCP-0052",
-      "Internal Key": "craft_elder_yew",
-      "Display Name": "Elder Yew",
+      "Internal Key": "craft_yew_branches",
+      "Display Name": "Yew Branches",
       "Skill ID": "SKL-0009",
       "Output Item ID": "ITEM-0219",
       "Output Quantity": 1,
@@ -32098,7 +32143,7 @@
       "Role": "Wizard",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A traveling wizard who can rewrite the shape of a person \u2014 for a price, and not too often.",
+      "Description": "A traveling wizard who can rewrite the shape of a person — for a price, and not too often.",
       "Notes": "RequiresTotalLevel:500",
       "Sprite Asset Key": "npc/npc_wizard_shopkeeper.png"
     },
@@ -32148,7 +32193,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32249,7 +32294,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32345,7 +32390,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Harness essence remains the primary efficient source.",
-      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
+      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32437,7 +32482,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Citadel market hall stocking everyday tools and supplies.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32538,7 +32583,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A compact stall with food, potions, and starter tools for travelers.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value.",
+      "Notes": "Player buy price = 2× Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0058",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32633,7 +32678,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells outfits, specialist hats, leather armor, oven mitts, and a scythe.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, leather armor, Oven Mitts, and the Scythe are wearable gear.",
+      "Notes": "Player buy price = 2× Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, leather armor, Oven Mitts, and the Scythe are wearable gear.",
       "Entry 1 Item ID": "ITEM-0296",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32734,7 +32779,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells bronze, iron, tungsten, and titanium swords, helmets, chestplates, and platelegs.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buyback uses the normal 1\u00d7 general-store rate. No boots or gloves. Titanium costs more than tungsten.",
+      "Notes": "Player buy price = 2× Base Sell Value. Buyback uses the normal 1× general-store rate. No boots or gloves. Titanium costs more than tungsten.",
       "Entry 1 Item ID": "ITEM-0224",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32841,7 +32886,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells common ores and buys finished smithing work.",
-      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys smithing project outputs at 1\u00d7. Does not buy ore.",
+      "Notes": "Player buy price = 2× Base Sell Value. Buys smithing project outputs at 1×. Does not buy ore.",
       "Entry 1 Item ID": "ITEM-0003",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33100,7 +33145,7 @@
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
       "Summary": "A kitchen worker wants out of the kitchens.",
-      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street \u2014 I keep thinking about the alchemy shop I've always wanted.",
+      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street — I keep thinking about the alchemy shop I've always wanted.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5, ITEM-0028 x5, ITEM-0042 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -33112,7 +33157,7 @@
       "Reward XP Amount": 11000,
       "Reward Item ID": "ITEM-0165",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose\u2019s Apothecary"
+      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
     },
     {
       "Quest ID": "QST-0003",
@@ -33120,7 +33165,7 @@
       "Display Name": "Lowly Beggar",
       "NPC ID": "NPC-0011",
       "Summary": "A beggar was asking for help in the town.",
-      "Pitch": "Please, traveler\u2026 someone took my coin purse in the night, I have nothing left.",
+      "Pitch": "Please, traveler… someone took my coin purse in the night, I have nothing left.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Talk: NPC-0012; OptionalTalk: NPC-0007; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 25000",
@@ -33232,15 +33277,15 @@
       "Reward XP Amount": 100000,
       "Reward Item ID": "ITEM-0313",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "Mining XP, Abandoned Mineshaft, Excavator\u2019s Pickaxe"
+      "Possible Rewards": "Mining XP, Abandoned Mineshaft, Excavator’s Pickaxe"
     },
     {
       "Quest ID": "QST-0009",
       "Internal Key": "a_change_of_skin",
       "Display Name": "A Change of Skin",
       "NPC ID": "NPC-0016",
-      "Summary": "Vesper in the castle hall can rewrite the blood you wear \u2014 once a week, for a price.",
-      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you \u2014 the weave needs time to settle.",
+      "Summary": "Vesper in the castle hall can rewrite the blood you wear — once a week, for a price.",
+      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you — the weave needs time to settle.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Miniquest; HideFromQuestLog; Repeatable:7d; RequiresTotalLevel:500",
@@ -33300,7 +33345,7 @@
       "Dialogue ID": "QDL-0001",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0007",
-      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool\u2026",
+      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool…",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -33309,7 +33354,7 @@
       "Dialogue ID": "QDL-0002",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free \u2014 or you can try your luck another way.",
+      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free — or you can try your luck another way.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -33327,7 +33372,7 @@
       "Dialogue ID": "QDL-0004",
       "Quest ID": "QST-0004",
       "NPC ID": "NPC-0006",
-      "Line": "New around here? Browse all you like \u2014 no obligation to buy.",
+      "Line": "New around here? Browse all you like — no obligation to buy.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -33354,7 +33399,7 @@
       "Dialogue ID": "QDL-0008",
       "Quest ID": "QST-0002",
       "NPC ID": "NPC-0005",
-      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails \u2014 five of each \u2014 and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
+      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails — five of each — and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -33363,7 +33408,7 @@
       "Dialogue ID": "QDL-0009",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0011",
-      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen \u2014 a shopkeeper, a passerby. Please, I have nothing else.",
+      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen — a shopkeeper, a passerby. Please, I have nothing else.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -33372,7 +33417,7 @@
       "Dialogue ID": "QDL-0010",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "So someone talked. A purse? Maybe I saw something. Of course, my memory gets expensive\u2026 or you could try taking it.",
+      "Line": "So someone talked. A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresTalk: NPC-0007"
@@ -33381,7 +33426,7 @@
       "Dialogue ID": "QDL-0011",
       "Quest ID": "QST-0005",
       "NPC ID": "NPC-0009",
-      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain \u2014 go introduce yourself.",
+      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain — go introduce yourself.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -33471,7 +33516,7 @@
       "Dialogue ID": "QDL-0021",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them \u2014 this farm's patch included. Take this potato seed. Gather a little compost from the heap here, then come back and I'll show you how to put both in the ground.",
+      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them — this farm's patch included. Take this potato seed. Gather a little compost from the heap here, then come back and I'll show you how to put both in the ground.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0023"
@@ -33498,7 +33543,7 @@
       "Dialogue ID": "QDL-0024",
       "Quest ID": "QST-0001",
       "NPC ID": "NPC-0001",
-      "Line": "The kitchens will sing again \u2014 and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
+      "Line": "The kitchens will sing again — and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "When: completed; unlocks Courtyard Botany plot."
@@ -33516,7 +33561,7 @@
       "Dialogue ID": "QDL-0026",
       "Quest ID": "QST-0010",
       "NPC ID": "NPC-0017",
-      "Line": "We used to tend this slowly. Cut so much at once and the forest will retreat. Craft four offerings at the stone here \u2014 a poplar sapling, compost, mosstole, and essence \u2014 then place one at each inner grove.",
+      "Line": "We used to tend this slowly. Cut so much at once and the forest will retreat. Craft four offerings at the stone here — a poplar sapling, compost, mosstole, and essence — then place one at each inner grove.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0030"
@@ -33543,7 +33588,7 @@
       "Dialogue ID": "QDL-0029",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "The patch is yours now. Plant that potato seed with the compost \u2014 the heap and the bed are both here.",
+      "Line": "The patch is yours now. Plant that potato seed with the compost — the heap and the bed are both here.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0034"
@@ -33925,7 +33970,7 @@
       "Release Phase": "Launch",
       "Reward": null,
       "Target Skill ID": null,
-      "Notes": "Harvest bleeding tooth. Action is unplaced \u2014 incomplete until placed."
+      "Notes": "Harvest bleeding tooth. Action is unplaced — incomplete until placed."
     }
   ],
   "CosmeticSlots": [
@@ -34313,7 +34358,7 @@
       "Race ID": "RACE-0005",
       "Internal Key": "goblin",
       "Display Name": "Goblin",
-      "Description": "Small and green \u2014 welcome among the camps of their kin.",
+      "Description": "Small and green — welcome among the camps of their kin.",
       "Sort Order": 5,
       "Portrait Asset Key": null,
       "Hostility Immunity Location IDs": "LOC-0003",
@@ -35701,7 +35746,7 @@
       "Book ID": "BOOK-0001",
       "Internal Key": "newcomers_guide",
       "Display Name": "Newcomer's Guide",
-      "Body": "Welcome to Restoria. The land does not rush you, but it does reward those who learn its rhythm.\n\nOpen the map, choose a location, and travel there. Once you arrive, look over the activities on offer. Gathering, crafting, cooking, combat, and other work all live in these lists. Each activity draws from its own pool of rewards, so what you earn depends on where you stand and what you choose to do.\n\nMaterials gather in your bag. Bring them to a workshop, a forge, a kitchen, or a workbench and shape them into tools, food, and gear. Better equipment shortens your labors and steadies your hand in a fight.\n\nWhen you want a longer chase, open the Log. Deeds, milestones, and quests wait there to mark what you have done and what still calls. When you want the kingdom\u2019s records of items, enemies, and recipes, open the Codex.\n\nGood luck adventurer!",
+      "Body": "Welcome to Restoria. The land does not rush you, but it does reward those who learn its rhythm.\n\nOpen the map, choose a location, and travel there. Once you arrive, look over the activities on offer. Gathering, crafting, cooking, combat, and other work all live in these lists. Each activity draws from its own pool of rewards, so what you earn depends on where you stand and what you choose to do.\n\nMaterials gather in your bag. Bring them to a workshop, a forge, a kitchen, or a workbench and shape them into tools, food, and gear. Better equipment shortens your labors and steadies your hand in a fight.\n\nWhen you want a longer chase, open the Log. Deeds, milestones, and quests wait there to mark what you have done and what still calls. When you want the kingdom’s records of items, enemies, and recipes, open the Codex.\n\nGood luck adventurer!",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Granted by Getting Started (QST-0006)."

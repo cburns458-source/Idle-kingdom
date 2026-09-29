@@ -88,5 +88,5 @@ export function gatheringXpReward(
   const afterProficiency = !isBelowProficiency(save, action)
     ? Math.floor(amount)
     : Math.floor(amount * configNumber(db, 'gathering_below_proficiency_xp_multiplier', 0.5))
-  return applyQuiverHuntingXp(afterProficiency, save, action['Relevant Skill ID'] ?? '')
+  return applyQuiverHuntingXp(db, afterProficiency, save, action['Relevant Skill ID'] ?? '')
 }
