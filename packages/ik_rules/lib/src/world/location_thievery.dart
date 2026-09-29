@@ -27,7 +27,7 @@ bool isBankThieveryActivity(GameDatabase db, ActivityRow activity) {
 
 /// Shop steals listed under the Shops tab when this location has a merchant.
 ///
-/// Kitchen steals stay in Activities (no shop row; production blocks People routing).
+/// Kitchen steals stay on Produce (no shop row; production blocks People routing).
 bool isShopThieveryActivity(GameDatabase db, PlayerSave save, ActivityRow activity) {
   if (!_thieveryActionsForActivity(db, activity).any(isThieveryShopAction)) return false;
   return db.shops.any((shop) => jsString(shop.raw['Location ID']) == activity.locationId);
@@ -35,7 +35,7 @@ bool isShopThieveryActivity(GameDatabase db, PlayerSave save, ActivityRow activi
 
 /// NPC-targeted steals when there is no shop (barracks).
 ///
-/// Kitchen / production sites keep steals in Activities even if an NPC is present.
+/// Kitchen / production sites keep steals on Produce even if an NPC is present.
 bool isNpcThieveryActivity(GameDatabase db, PlayerSave save, ActivityRow activity) {
   if (!_thieveryActionsForActivity(db, activity).any(isThieveryShopAction)) return false;
   if (isShopThieveryActivity(db, save, activity)) return false;
@@ -56,7 +56,7 @@ bool isThieveryActivity(GameDatabase db, ActivityRow activity) {
   return _thieveryActionsForActivity(db, activity).isNotEmpty;
 }
 
-/// Activities-band thievery: kitchen steals and non-bank lockpicks.
+/// Produce-band thievery: kitchen steals and non-bank lockpicks.
 bool isActivityBandThievery(GameDatabase db, PlayerSave save, ActivityRow activity) {
   final actions = _thieveryActionsForActivity(db, activity);
   if (actions.isEmpty) return false;
@@ -64,4 +64,9 @@ bool isActivityBandThievery(GameDatabase db, PlayerSave save, ActivityRow activi
   if (isShopThieveryActivity(db, save, activity)) return false;
   if (isNpcThieveryActivity(db, save, activity)) return false;
   return actions.any(isThieveryLockpickAction) || actions.any(isThieveryShopAction);
+}
+
+/// Standard production stations plus Produce-band thievery.
+bool isProduceBandActivity(GameDatabase db, PlayerSave save, ActivityRow activity) {
+  return isStandardProductionActivity(db, activity) || isActivityBandThievery(db, save, activity);
 }

@@ -63,8 +63,8 @@ void main() {
     await tester.tap(find.text('Recipe book'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Unlocks at Cooking'), findsWidgets);
-    // Cooking book is a single Production tab with Fish/Meat/Stew/Other sections.
-    expect(find.text('Other'), findsOne);
+    await tester.tap(find.widgetWithText(GameButton, 'Other'));
+    await tester.pumpAndSettle();
     await tester.dragUntilVisible(
       find.textContaining('Baked potato'),
       find.byType(ListView).last,

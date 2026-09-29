@@ -23,18 +23,8 @@ export const HARVESTING_SKILL_ID = 'SKL-0004'
 export const HUNTING_SKILL_ID = 'SKL-0005'
 export const WOODCUTTING_SKILL_ID = 'SKL-0006'
 export const COOKING_SKILL_ID = 'SKL-0007'
-export const METALLURGY_SKILL_ID = 'SKL-0008'
-export const CRAFTING_SKILL_ID = 'SKL-0009'
-export const ALCHEMY_SKILL_ID = 'SKL-0010'
 export const BOTANY_SKILL_ID = 'SKL-0014'
 export const THIEVERY_SKILL_ID = 'SKL-0015'
-
-const PRODUCTION_SKILL_IDS = new Set([
-  COOKING_SKILL_ID,
-  METALLURGY_SKILL_ID,
-  CRAFTING_SKILL_ID,
-  ALCHEMY_SKILL_ID,
-])
 
 const WOODEN_MINING_TOOLS = ['ITEM-0102']
 const WOODEN_WOODCUTTING_TOOLS = ['ITEM-0100', 'ITEM-0101']
@@ -294,9 +284,6 @@ export function skillMenuPlacementForOutput(
     return { tabId: 'shops', tabLabel: 'Shops', sectionTitle: null }
   }
   if (skillId === COOKING_SKILL_ID) return cookingPlacement(displayName)
-  if (PRODUCTION_SKILL_IDS.has(skillId)) {
-    return { tabId: 'production', tabLabel: 'Production', sectionTitle: null }
-  }
   if (skillMenuView(db, skillId).tabs.some((tab) => tab.id === 'actions')) {
     return { tabId: 'actions', tabLabel: 'Actions', sectionTitle: null }
   }
@@ -331,13 +318,6 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
   }
   if (skillId === FISHING_SKILL_ID) return fishingTabs(db)
   if (skillId === COOKING_SKILL_ID) return cookingTabs(db)
-  if (
-    skillId === METALLURGY_SKILL_ID ||
-    skillId === CRAFTING_SKILL_ID ||
-    skillId === ALCHEMY_SKILL_ID
-  ) {
-    return productionSkillTabs(db, skillId)
-  }
   if (
     skillId === MINING_SKILL_ID ||
     skillId === HARVESTING_SKILL_ID ||
@@ -374,33 +354,6 @@ function thieveryTabs(db: GameDatabase): SkillMenuTab[] {
     else if (isThieveryLockpickAction(action)) lockpicking.push(item)
   }
   return [listTab('shops', 'Shops', shops), listTab('lockpicking', 'Lockpicking', lockpicking)]
-}
-
-function isProductionCategoryAction(action: ActionRow): boolean {
-  return action.Category === 'Standard Production' || action.Category === 'Production'
-}
-
-function isSharedActivityAction(action: ActionRow): boolean {
-  return action.Category === 'Gathering' || action.Category === 'Combat'
-}
-
-/** Production recipes/projects on Production; Gathering+Combat share Actions. */
-function productionSkillTabs(db: GameDatabase, skillId: string): SkillMenuTab[] {
-  const production: SkillMenuListItem[] = []
-  const activities: SkillMenuListItem[] = []
-  for (const item of skillMenuEntries(db, skillId)) {
-    const action = db.Actions.find((row) => row['Action ID'] === item.id)
-    if (!action) {
-      production.push(item)
-      continue
-    }
-    if (isProductionCategoryAction(action)) production.push(item)
-    else if (isSharedActivityAction(action)) activities.push(item)
-  }
-  return [
-    listTab('production', 'Production', production),
-    listTab('actions', 'Actions', activities),
-  ]
 }
 
 const BOTANY_CROP_SEED_IDS = new Set([
@@ -521,13 +474,9 @@ function cookingTabId(displayName: string): 'fish' | 'meat' | 'stew' | 'other' {
 }
 
 function cookingPlacement(displayName: string): SkillMenuPlacement {
-  const sectionId = cookingTabId(displayName)
+  const tabId = cookingTabId(displayName)
   const labels = { fish: 'Fish', meat: 'Meat', stew: 'Stew', other: 'Other' } as const
-  return {
-    tabId: 'production',
-    tabLabel: 'Production',
-    sectionTitle: labels[sectionId],
-  }
+  return { tabId, tabLabel: labels[tabId], sectionTitle: null }
 }
 
 function cookingTabs(db: GameDatabase): SkillMenuTab[] {
@@ -535,13 +484,7 @@ function cookingTabs(db: GameDatabase): SkillMenuTab[] {
   const meat: SkillMenuListItem[] = []
   const stew: SkillMenuListItem[] = []
   const other: SkillMenuListItem[] = []
-  const activities: SkillMenuListItem[] = []
   for (const item of skillMenuEntries(db, COOKING_SKILL_ID)) {
-    const action = db.Actions.find((row) => row['Action ID'] === item.id)
-    if (action && isSharedActivityAction(action)) {
-      activities.push(item)
-      continue
-    }
     switch (cookingTabId(item.displayName)) {
       case 'fish':
         fish.push(item)
@@ -556,15 +499,11 @@ function cookingTabs(db: GameDatabase): SkillMenuTab[] {
         other.push(item)
     }
   }
-  const productionSections: SkillMenuSection[] = [
-    { title: 'Fish', entries: fish },
-    { title: 'Meat', entries: meat },
-    { title: 'Stew', entries: stew },
-    { title: 'Other', entries: other },
-  ].filter((section) => section.entries.length > 0)
   return [
-    { id: 'production', label: 'Production', sections: productionSections },
-    listTab('actions', 'Actions', activities),
+    listTab('fish', 'Fish', fish),
+    listTab('meat', 'Meat', meat),
+    listTab('stew', 'Stew', stew),
+    listTab('other', 'Other', other),
   ]
 }
 
