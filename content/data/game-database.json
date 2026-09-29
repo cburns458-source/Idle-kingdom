@@ -17421,7 +17421,7 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": "Production is hard-gated by Proficiency Level."
     },
     {
@@ -26656,7 +26656,7 @@
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0160",
       "Status": "Planned",
-      "Release Phase": "Expansion",
+      "Release Phase": "Launch",
       "Notes": "Potion effect is consumed per eligible Action or encounter; no real-time effect duration.",
       "Ingredient 1 Item ID": "ITEM-0208",
       "Ingredient 1 Quantity": 1,
