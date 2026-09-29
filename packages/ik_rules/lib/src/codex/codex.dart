@@ -791,7 +791,8 @@ class CodexIndex {
     final vineCanonicalId = _vineChopCanonicalActionId(actionRows);
     final vineLocations = _mergeCodexLocations([
       for (final action in actionRows)
-        if (isVineChopAction(action)) actionLocations[action.actionId] ?? const <CodexLocationRef>[],
+        if (isVineChopAction(action))
+          actionLocations[action.actionId] ?? const <CodexLocationRef>[],
     ]);
     actionRows.sort((a, b) {
       final skillA = a.relevantSkillId;
