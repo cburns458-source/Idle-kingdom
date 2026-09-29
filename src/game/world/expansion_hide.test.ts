@@ -76,12 +76,12 @@ describe('future-expansion content hidden from Launch', () => {
     }
     expect(codex.enemy('ENM-0024')?.displayName).toBe('Squidling')
 
-    const wood = actionsForSkill(launch, 'SKL-0006').map((row) => row.actionId)
+    const wood = actionsForSkill(launch, 'SKL-0006').map((row) => row.id)
     expect(wood).not.toContain('ACN-0201')
     expect(wood).not.toContain('ACN-0203')
-    const fish = actionsForSkill(launch, 'SKL-0003').map((row) => row.actionId)
+    const fish = actionsForSkill(launch, 'SKL-0003').map((row) => row.id)
     expect(fish).not.toContain('ACN-0217')
-    const cook = actionsForSkill(launch, 'SKL-0007').map((row) => row.actionId)
+    const cook = actionsForSkill(launch, 'SKL-0007').map((row) => row.id)
     expect(cook).not.toContain('ACN-0218')
     expect(cook).not.toContain('ACN-0183')
   })
@@ -89,8 +89,9 @@ describe('future-expansion content hidden from Launch', () => {
   it('nudges Citadel left and Small Clearing right', () => {
     expect(MAIN_MAP_NODE_LAYOUT['LOC-0027']).toEqual({ x: 38, y: 42 })
     expect(FOREST_MAP_NODE_LAYOUT['LOC-0050']).toEqual({ x: 62, y: 58 })
-    const citadel = source.MapNodes.find((row) => row['Map Node ID'] === 'MN-0015')!
-    const clearing = source.MapNodes.find((row) => row['Map Node ID'] === 'MN-0055')!
+    const mapNodes = (rawDatabase as { MapNodes: Array<Record<string, unknown>> }).MapNodes
+    const citadel = mapNodes.find((row) => row['Map Node ID'] === 'MN-0015')!
+    const clearing = mapNodes.find((row) => row['Map Node ID'] === 'MN-0055')!
     expect(citadel.X).toBe(38)
     expect(clearing.X).toBe(62)
   })
