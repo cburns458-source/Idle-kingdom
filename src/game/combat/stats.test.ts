@@ -122,7 +122,7 @@ describe('might / vitality combat stats', () => {
       ...launchEnemies.map(([id]) => id),
       ...expansionEnemies.map(([id]) => id),
     ])
-    const assignedIds = new Set(launchEnemies.map(([id]) => id))
+    const assignedIds = new Set<string>(launchEnemies.map(([id]) => id))
     for (const [id, name, level, hp, min, max, xp, locationId] of launchEnemies) {
       const enemy = launch.Enemies.find((row) => row['Enemy ID'] === id)
       expect(enemy, id).toBeDefined()
