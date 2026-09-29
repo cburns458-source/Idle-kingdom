@@ -176,7 +176,7 @@ export interface CodexEnemyEntry {
 }
 
 export interface CodexActionDropTable {
-  label: 'Primary' | 'Secondary' | 'Tertiary' | 'Drops' | 'Gems'
+  label: 'Primary' | 'Secondary' | 'Tertiary' | 'Gems'
   tableId: string
   dropChance: number | null
   drops: CodexItemRef[]
@@ -723,45 +723,18 @@ function catalogActionTables(
     const item = itemsById.get(drop.itemId)
     return item ? includeInCodexCatalog(item) : false
   }
-  const merged: CodexItemRef[] = []
-  const gems: CodexActionDropTable[] = []
-  let mergedTableId: string | null = null
+  const out: CodexActionDropTable[] = []
   for (const table of actionTables(action)) {
     const drops = (tableItems.get(table.id) ?? []).filter(keepDrop)
     if (drops.length === 0) continue
-    if (isOreGemTable(action, table.id)) {
-      gems.push({
-        label: 'Gems',
-        tableId: table.id,
-        dropChance: table.chance,
-        drops: withEffectiveDropRates(drops, table.chance),
-      })
-      continue
-    }
-    if (!mergedTableId) mergedTableId = table.id
-    merged.push(...withEffectiveDropRates(drops, table.chance))
-  }
-  const out: CodexActionDropTable[] = []
-  if (merged.length > 0 && mergedTableId) {
     out.push({
-      label: 'Drops',
-      tableId: mergedTableId,
-      dropChance: null,
-      drops: merged,
+      label: isOreGemTable(action, table.id) ? 'Gems' : table.label,
+      tableId: table.id,
+      dropChance: table.chance,
+      drops: withDropRates(drops),
     })
   }
-  out.push(...gems)
   return out
-}
-
-function withEffectiveDropRates(drops: CodexItemRef[], tableChance: number | null): CodexItemRef[] {
-  const totalWeight = drops.reduce((sum, drop) => sum + (drop.weight ?? 0), 0)
-  const chance = tableChance ?? 100
-  return drops.map((drop) => ({
-    ...drop,
-    dropRatePercent:
-      drop.weight != null && totalWeight > 0 ? (drop.weight / totalWeight) * chance : null,
-  }))
 }
 
 function withDropRates(drops: CodexItemRef[]): CodexItemRef[] {

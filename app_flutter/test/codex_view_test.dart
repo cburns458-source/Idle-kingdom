@@ -82,13 +82,33 @@ void main() {
 
     await pumpPanel(tester, CodexView(controller: controller, initialActionId: 'ACN-0018'));
     expect(find.text('Mine copper ore'), findsWidgets);
-    expect(find.textContaining('Gems'), findsOne);
+    expect(find.textContaining('Primary · 47.5% drop'), findsOne);
+    expect(find.textContaining('Gems · 0.5% drop'), findsOne);
+    expect(find.text('Copper Ore'), findsWidgets);
     expect(find.text('Sapphire'), findsWidgets);
+    expect(find.textContaining('Drop rate 100%'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('codex-action-drop-Gems-ITEM-0012')));
     await tester.pump();
     expect(find.text('Obtained from'), findsOne);
     expect(find.byKey(const Key('codex-obtain-action-ACN-0018')), findsOne);
+  });
+
+  testWidgets('opens a hunting action with primary and secondary drop tables', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller, initialActionId: 'ACN-0014'));
+    expect(find.textContaining('Primary · 42.5% drop'), findsOne);
+    expect(find.textContaining('Secondary · 5% drop'), findsOne);
+    expect(find.text('Venison'), findsWidgets);
+    expect(find.text('Elk Hide'), findsWidgets);
+    expect(find.text('Elk Horns'), findsWidgets);
+    expect(find.text('Animal Tendons'), findsWidgets);
+    expect(find.textContaining('Drop rate 45%'), findsOne);
+    expect(find.textContaining('Drop rate 50%'), findsOne);
+    expect(find.textContaining('Drop rate 5%'), findsWidgets);
+    expect(find.textContaining('Drop rate 100%'), findsOne);
   });
 
   testWidgets('opens a bestiary drop into the item page', (tester) async {

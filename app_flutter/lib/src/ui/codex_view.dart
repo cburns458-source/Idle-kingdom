@@ -581,7 +581,7 @@ class _ItemPage extends StatelessWidget {
   }
 
   String? _obtainDetail(CodexObtainSource source) {
-    final drop = source.dropChance == null ? null : '${formatThousands(source.dropChance!)}% drop';
+    final drop = source.dropChance == null ? null : '${_formatPercent(source.dropChance!)} drop';
     final parts = <String>[
       ?source.detail,
       if (source.locations.isNotEmpty) source.locations.map((row) => row.displayName).join(', '),
@@ -655,7 +655,7 @@ class _EnemyPage extends StatelessWidget {
           ),
         if (entry.dropChance != null)
           Text(
-            '${formatThousands(entry.dropChance!)}% drop',
+            '${_formatPercent(entry.dropChance!)} drop',
             style: TextStyle(fontSize: 13, color: ink),
           ),
         _Section(
@@ -749,7 +749,7 @@ class _ActionPage extends StatelessWidget {
           _Section(
             title: table.dropChance == null
                 ? table.label
-                : '${table.label} · ${formatThousands(table.dropChance!)}% drop',
+                : '${table.label} · ${_formatPercent(table.dropChance!)} drop',
             empty: 'No item drops.',
             ink: ink,
             muted: muted,
@@ -955,6 +955,9 @@ String _range(num? min, num? max) {
 }
 
 String _formatPercent(num value) {
-  final rounded = value == value.roundToDouble() ? value.round() : (value * 10).round() / 10;
-  return '${formatThousands(rounded)}%';
+  final tenths = (value * 10).round() / 10;
+  if (tenths == tenths.roundToDouble()) {
+    return '${formatThousands(tenths.round())}%';
+  }
+  return '$tenths%';
 }
