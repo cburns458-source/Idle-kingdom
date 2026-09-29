@@ -86,7 +86,9 @@ void main() {
     expect(camp.raw['Location ID'], giantCampId);
     expect(camp.raw['Danger Warning Combat Level'], 77);
     expect(
-      db.facilities.where((row) => row.raw['Location ID'] == giantCampId).map((row) => row.facilityId),
+      db.facilities
+          .where((row) => row.raw['Location ID'] == giantCampId)
+          .map((row) => row.facilityId),
       unorderedEquals(<String>['FAC-0023', 'FAC-0024', 'FAC-0025', 'FAC-0026']),
     );
 

@@ -162,7 +162,7 @@ void main() {
     expect(rat.combatLevel, 5);
     expect(rat.maximumHp, 150);
     expect(rat.drops, isEmpty);
-    expect(rat.locations, isEmpty);
+    expect(rat.locations.map((row) => row.displayName), contains('Deep Mines'));
   });
 
   test('lists secondary combat action loot as obtain sources that open the bestiary enemy', () {
