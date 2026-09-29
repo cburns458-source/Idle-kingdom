@@ -6620,7 +6620,7 @@
       "Subtype": "Fertilizer",
       "Associated Skill ID": "SKL-0014",
       "Equipment Slot ID": null,
-      "Functional / Source Tags": "unbankable; botany_compost",
+      "Functional / Source Tags": "botany_compost",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Patch fertilizer. Spend it when planting to give each seed a better chance to live.",
