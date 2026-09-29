@@ -45,8 +45,8 @@ void main() {
 
     final pheasant = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0017');
     expect(pheasant.raw['Reward Table ID'], 'RWT-0052');
-    expect(pheasant.raw['Secondary Reward Table ID'], 'RWT-0063');
-    expect(pheasant.raw['Tertiary Reward Table ID'], 'RWT-0119');
+    expect(pheasant.raw['Secondary Reward Table ID'], 'RWT-0119');
+    expect(pheasant.raw['Tertiary Reward Table ID'], isNull);
   });
 
   test('kingswoods rare wood is cedar and oak', () {
