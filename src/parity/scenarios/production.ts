@@ -55,6 +55,7 @@ const FACILITY_IDS = [
   'FAC-0005',
   'FAC-0010',
   'FAC-0012',
+  'FAC-0022',
   'FAC-0013',
   'FAC-0014',
   'FAC-0015',

@@ -21,6 +21,11 @@ const String castleGatewayId = 'LOC-0013';
 const String castleCourtyardId = 'LOC-0014';
 const String townGatewayId = 'LOC-0002';
 const String citadelGatewayId = 'LOC-0027';
+
+/// Main-map estate south of the Citadel.
+const String riversideManorId = 'LOC-0053';
+const String kingsroadId = 'LOC-0052';
+const String goblinCampId = 'LOC-0003';
 const String westHorizonId = 'LOC-0019';
 const String eastHorizonId = 'LOC-0020';
 
