@@ -2,6 +2,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../config.dart';
 import '../save/generated/save_models.dart';
+import 'loadout.dart';
 
 const String essenceItemId = 'ITEM-0011';
 const String chefHatItemId = 'ITEM-0165';
@@ -49,10 +50,19 @@ num wizardEssenceCost(GameDatabase db, num baseQuantity, PlayerSave save) {
   return (baseQuantity * factor).ceil();
 }
 
+const String _bowCapabilityTag = 'bow_combat_xp';
+
+bool _equippedBowWeapon(GameDatabase db, PlayerSave save) {
+  final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
+  return weaponId != null && itemHasCapability(db, weaponId, _bowCapabilityTag);
+}
+
+/// +5% Hunting XP with a quiver, only while a bow is equipped in Weapon/Tool.
 num applyQuiverHuntingXp(GameDatabase db, num amount, PlayerSave save, String skillId) {
   if (amount <= 0) return 0;
   if (skillId != huntingSkillId) return amount;
   if (!hasEquippedItem(save, specialistQuiverItemId(db))) return amount;
+  if (!_equippedBowWeapon(db, save)) return amount;
   final factor = configNumber(db, 'specialist.quiver_hunting_xp_factor', quiverHuntingXpFactor);
   return (amount * factor).floor();
 }

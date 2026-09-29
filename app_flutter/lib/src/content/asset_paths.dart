@@ -195,7 +195,7 @@ const Map<String, String> _actionArt = <String, String>{
   'ACN-0099': 'actions/acn_catch_crawfish.webp',
   'ACN-0100': 'actions/acn_catch_trout.webp',
   'ACN-0101': 'actions/acn_catch_salmon.webp',
-  'ACN-0102': 'actions/acn_catch_tuna.webp',
+  'ACN-0102': 'actions/acn_catch_bass.webp',
   'ACN-0103': 'actions/acn_catch_shark.webp',
   'ACN-0104': 'actions/acn_catch_baby_giant_squid.webp',
   'ACN-0105': 'actions/acn_gather_wild_roots.webp',

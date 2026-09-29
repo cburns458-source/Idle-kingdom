@@ -442,7 +442,7 @@ const COOKING_FISH_NAMES = [
   'perch',
   'trout',
   'salmon',
-  'tuna',
+  'bass',
   'shark',
   'squid',
   'catfish',

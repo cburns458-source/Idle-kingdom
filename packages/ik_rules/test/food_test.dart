@@ -74,7 +74,7 @@ void main() {
     expect(cancelled.inventory, isEmpty);
   });
 
-  test('Gluttony is an Arcana 30 spell that costs tuna, stew, and essence', () {
+  test('Gluttony is an Arcana 30 spell that costs bass, stew, and essence', () {
     final project = db.projects.firstWhere((row) => row.raw['Project ID'] == 'PRJ-0153');
     expect(project.displayName, 'Gluttony Spell');
     expect(project.raw['Required Skill 1 Level'], 30);

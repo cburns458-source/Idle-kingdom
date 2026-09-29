@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/codex_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -129,6 +130,32 @@ void main() {
     }
     expect(find.text('Botany'), findsWidgets);
     expect(find.text('Thievery'), findsWidgets);
+  });
+
+  testWidgets('action level and location captions use board muted ink', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    for (final chrome in [UiChrome.wood, UiChrome.stone]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: UiChromeScope(
+            chrome: chrome,
+            child: Scaffold(body: CodexView(controller: controller)),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text('Actions'));
+      await tester.pump();
+      final detail = tester.widget<Text>(find.textContaining('Level 1 ·').first);
+      expect(detail.style?.color, Palette.muted);
+      expect(detail.style?.color, isNot(chrome.embossFace));
+    }
   });
 
   testWidgets('groups gathering actions by skill and hides gem mining', (tester) async {

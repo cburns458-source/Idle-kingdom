@@ -529,7 +529,7 @@ const List<String> _cookingFishNames = <String>[
   'perch',
   'trout',
   'salmon',
-  'tuna',
+  'bass',
   'shark',
   'squid',
   'catfish',

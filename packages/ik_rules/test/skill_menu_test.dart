@@ -272,12 +272,13 @@ void main() {
   });
 
   test('cooking lists soup stock and soup, and the book keeps locked recipes', () {
-    final cooking = actionsForSkill(db, 'SKL-0007');
+    final launch = filterLaunchContent(db);
+    final cooking = actionsForSkill(launch, 'SKL-0007');
     expect(cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid'), isFalse);
     expect(cooking.any((row) => row.displayName == 'Soup Stock' && row.level == 16), isTrue);
     expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 66), isTrue);
 
-    final view = skillMenuView(db, 'SKL-0007');
+    final view = skillMenuView(launch, 'SKL-0007');
     expect(view.tabs.map((tab) => tab.label), ['Fish', 'Meat', 'Stew', 'Other']);
     expect(
       view.tabs
@@ -295,7 +296,7 @@ void main() {
           .first
           .entries
           .any((row) => row.displayName == 'Cooked swordfish'),
-      isTrue,
+      isFalse,
     );
     expect(
       view.tabs
@@ -361,28 +362,35 @@ void main() {
       isTrue,
     );
 
-    final save = createNewSave(db, 0);
-    final book = recipeBookForSkill(save, db, 'SKL-0007');
+    final save = createNewSave(launch, 0);
+    final book = recipeBookForSkill(save, launch, 'SKL-0007');
     expect(book, isNotEmpty);
     expect(book.any((entry) => entry.known), isTrue);
     expect(book.any((entry) => entry.name == 'Squid Noodle Soup' && !entry.known), isTrue);
     expect(
       listRecipeBookEntries(
         save,
-        db,
+        launch,
       ).any((entry) => entry.name == 'Squid Noodle Soup' && !entry.known),
       isTrue,
     );
     expect(
-      listRecipeBookEntries(save, db).any((entry) => entry.name == 'Cooked Baby Giant Squid'),
+      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Cooked Baby Giant Squid'),
       isFalse,
     );
     expect(
-      listRecipeBookEntries(save, db).any((entry) => entry.name == 'Squid Noodle Soup'),
+      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Cooked Swordfish'),
+      isFalse,
+    );
+    expect(
+      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Squid Noodle Soup'),
       isTrue,
     );
     expect(
-      listRecipeBookEntries(save, db).any((entry) => entry.name == 'Leather Helmet' && entry.known),
+      listRecipeBookEntries(
+        save,
+        launch,
+      ).any((entry) => entry.name == 'Leather Helmet' && entry.known),
       isTrue,
     );
   });

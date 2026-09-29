@@ -28,7 +28,7 @@ describe('codex index', () => {
     expect(new Set(codex.enemies.map((row) => row.enemyId))).toEqual(
       new Set(launch.Enemies.map((row) => row['Enemy ID'])),
     )
-    expect(codex.item('ITEM-0209')?.displayName).toBe('Chromium Bar')
+    expect(codex.item('ITEM-0209')).toBeUndefined()
     expect(codex.item('ITEM-0276')?.displayName).toBe('Ancient Alloy Sword')
     expect(codex.item('ITEM-0325')).toBeUndefined()
     expect(codex.item('ITEM-0346')).toBeUndefined()
@@ -60,6 +60,19 @@ describe('codex index', () => {
     expect(gems.dropChance).toBe(0.5)
     expect(gems.drops.map((row) => row.displayName)).toContain('Sapphire')
     expect(codex.actionsMatching('mine copper').map((row) => row.actionId)).toContain('ACN-0018')
+  })
+
+  it('merges per-location Chop vines actions into one codex row', () => {
+    const vineRows = codex.actions.filter((row) => row.displayName === 'Chop vines')
+    expect(vineRows.map((row) => row.actionId)).toEqual(['ACN-0179'])
+    expect(codex.action('ACN-0231')).toBeUndefined()
+    expect(codex.action('ACN-0232')).toBeUndefined()
+    expect(codex.action('ACN-0233')).toBeUndefined()
+    const places = vineRows[0]!.locations.map((row) => row.displayName)
+    expect(places).toEqual(
+      expect.arrayContaining(['Forest Path', 'Small Clearing', 'Starlight Glade', 'Mirror Lake']),
+    )
+    expect(new Set(places).size).toBe(places.length)
   })
 
   it('folds hunting secondary and tertiary drops into the primary pool', () => {

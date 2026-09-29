@@ -29,7 +29,7 @@ export interface RaceChangeCost {
   items: RaceChangeItemCost[]
 }
 
-/** Mid-level (30–55) costs. No gems or ruby. Human stays tuna and maple. */
+/** Mid-level (30–55) costs. No gems or ruby. Human stays bass and maple. */
 export const RACE_CHANGE_COSTS: Record<string, RaceChangeCost> = {
   // Human — fishing 40 + woodcutting 50
   'RACE-0001': {
