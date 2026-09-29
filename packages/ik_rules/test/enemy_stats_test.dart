@@ -17,41 +17,42 @@ void main() {
     final cow = getEnemy(db, 'ENM-0001')!;
     final scout = getEnemy(db, 'ENM-0003')!;
 
-    expect(enemyMightLevel(cow), 1);
-    expect(enemyVitalityLevel(cow), 1);
-    expect(enemyCombatLevel(cow), 2);
+    expect(enemyMightLevel(cow), 2);
+    expect(enemyVitalityLevel(cow), 3);
+    expect(enemyCombatLevel(cow), 4);
     expect(enemyScaledMaxHp(cow), 100);
     expect(enemyCombatXp(cow), 200);
     expect(enemyEncounterMaxHp(db, save, cow), 100);
     expect(enemyEncounterDamageRange(db, save, cow).toJson(), {'min': 10, 'max': 20});
 
-    expect(enemyMightLevel(scout), 10);
+    expect(enemyMightLevel(scout), 12);
     expect(enemyVitalityLevel(scout), 10);
-    expect(enemyCombatLevel(scout), 15);
+    expect(enemyCombatLevel(scout), 17);
     expect(enemyScaledMaxHp(scout), 462);
     expect(enemyCombatXp(scout), 924);
-    expect(enemyScaledDamageRange(scout).toJson(), {'min': 33, 'max': 66});
+    expect(enemyScaledDamageRange(scout).toJson(), {'min': 33, 'max': 67});
     expect(enemyEncounterMaxHp(db, save, scout), 462);
-    expect(enemyEncounterDamageRange(db, save, scout).toJson(), {'min': 33, 'max': 66});
+    expect(enemyEncounterDamageRange(db, save, scout).toJson(), {'min': 33, 'max': 67});
   });
 
   test('new enemies keep placeholder stats; mountain roosts have locations', () {
     final source = assertGameDatabaseShape(contentDatabaseJson());
-    const launchEnemies = <(String, String, num, num, num, num, num, String?)>[
-      ('ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300, 'LOC-0011'),
-      ('ENM-0026', 'Bandit', 6, 260, 16, 40, 520, 'LOC-0052'),
-      ('ENM-0027', 'Cave Bat', 14, 580, 37, 73, 1322, 'LOC-0046'),
-      ('ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 2268, 'LOC-0052'),
-      ('ENM-0030', 'Harpy', 48, 3860, 152, 268, 11424, 'LOC-0047'),
-      ('ENM-0031', 'Giant', 51, 4440, 164, 288, 13408, 'LOC-0049'),
-      ('ENM-0033', 'Wyvern', 67, 7920, 236, 404, 26452, 'LOC-0047'),
-      ('ENM-0034', 'Cyclops', 70, 9000, 260, 440, 30600, 'LOC-0049'),
+    // id, name, might, vitality, baseHp, minDmg, maxDmg, combatXp, locationId
+    const launchEnemies = <(String, String, num, num, num, num, num, num, String?)>[
+      ('ENM-0025', 'Giant Rat', 5, 3, 150, 12, 26, 300, 'LOC-0011'),
+      ('ENM-0026', 'Bandit', 15, 6, 260, 16, 40, 520, 'LOC-0052'),
+      ('ENM-0027', 'Cave Bat', 14, 8, 580, 37, 73, 1160, 'LOC-0046'),
+      ('ENM-0029', 'Bandit Captain', 26, 16, 930, 55, 108, 2156, 'LOC-0052'),
+      ('ENM-0030', 'Harpy', 70, 40, 3860, 152, 268, 10808, 'LOC-0047'),
+      ('ENM-0031', 'Giant', 60, 50, 4440, 164, 288, 13320, 'LOC-0049'),
+      ('ENM-0033', 'Wyvern', 85, 60, 7920, 236, 404, 25344, 'LOC-0047'),
+      ('ENM-0034', 'Cyclops', 75, 70, 9000, 260, 440, 30600, 'LOC-0049'),
     ];
-    const expansionEnemies = <(String, String, num, num, num, num, num, String?)>[
-      ('ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1770, null),
-      ('ENM-0032', 'Gargoyle', 58, 5940, 192, 338, 18770, null),
-      ('ENM-0035', 'Demon', 82, 15000, 475, 745, 54598, null),
-      ('ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 66066, null),
+    const expansionEnemies = <(String, String, num, num, num, num, num, num, String?)>[
+      ('ENM-0028', 'Mage Apprentice', 25, 12, 750, 45, 90, 1680, null),
+      ('ENM-0032', 'Gargoyle', 65, 60, 5940, 192, 338, 19008, null),
+      ('ENM-0035', 'Demon', 90, 65, 15000, 475, 745, 49500, null),
+      ('ENM-0036', 'Greater Gargoyle', 90, 75, 17760, 555, 860, 62160, null),
     ];
     final placeholderIds = {
       for (final row in launchEnemies) row.$1,
@@ -62,14 +63,14 @@ void main() {
       final enemy = getEnemy(db, row.$1)!;
       expect(enemy.displayName, row.$2);
       expect(enemyMightLevel(enemy), row.$3);
-      expect(enemyVitalityLevel(enemy), row.$3);
-      expect(enemyCombatLevel(enemy), combatLevelFromSkills(row.$3, row.$3));
-      expect(enemy.maximumHp, row.$4);
-      expect(enemy.minDamage, row.$5);
-      expect(enemy.maxDamage, row.$6);
-      expect(enemy.combatXp, row.$7);
-      expect(enemyCombatXp(enemy), row.$7);
-      expect(enemy.locationId, row.$8);
+      expect(enemyVitalityLevel(enemy), row.$4);
+      expect(enemyCombatLevel(enemy), combatLevelFromSkills(row.$3, row.$4));
+      expect(enemy.maximumHp, row.$5);
+      expect(enemy.minDamage, row.$6);
+      expect(enemy.maxDamage, row.$7);
+      expect(enemy.combatXp, row.$8);
+      expect(enemyCombatXp(enemy), row.$8);
+      expect(enemy.locationId, row.$9);
       if (row.$1 == 'ENM-0027') {
         expect(enemy.dropChance, 100);
         expect(enemy.rewardTableId, 'RWT-0186');
@@ -89,14 +90,14 @@ void main() {
       expect(enemy.raw['Release Phase'], 'Expansion');
       expect(enemy.displayName, row.$2);
       expect(enemyMightLevel(enemy), row.$3);
-      expect(enemyVitalityLevel(enemy), row.$3);
-      expect(enemyCombatLevel(enemy), combatLevelFromSkills(row.$3, row.$3));
-      expect(enemy.maximumHp, row.$4);
-      expect(enemy.minDamage, row.$5);
-      expect(enemy.maxDamage, row.$6);
-      expect(enemy.combatXp, row.$7);
-      expect(enemyCombatXp(enemy), row.$7);
-      expect(enemy.locationId, row.$8);
+      expect(enemyVitalityLevel(enemy), row.$4);
+      expect(enemyCombatLevel(enemy), combatLevelFromSkills(row.$3, row.$4));
+      expect(enemy.maximumHp, row.$5);
+      expect(enemy.minDamage, row.$6);
+      expect(enemy.maxDamage, row.$7);
+      expect(enemy.combatXp, row.$8);
+      expect(enemyCombatXp(enemy), row.$8);
+      expect(enemy.locationId, row.$9);
     }
     expect(
       source.actions.any((action) {
