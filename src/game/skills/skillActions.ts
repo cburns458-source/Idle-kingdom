@@ -590,17 +590,20 @@ function arcanaTabs(db: GameDatabase): SkillMenuTab[] {
   ]
 }
 
-function combatGearItems(db: GameDatabase): SkillMenuListItem[] {
+function combatGearItems(db: GameDatabase, skillId: string): SkillMenuListItem[] {
   return [
     ...projectItemsWhere(db, (item) => isCombatGearItem(item), new Set([SMITHING_SKILL_ID, ARTISANRY_SKILL_ID])),
     ...woodenItems(db, WOODEN_COMBAT_GEAR),
-  ]
+  ].map((item) => ({
+    ...item,
+    level: equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
+  }))
 }
 
 function combatEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
   const grouped: SkillMenuListItem[] = []
   const seen = new Set<string>()
-  for (const item of combatGearItems(db)) {
+  for (const item of combatGearItems(db, VITALITY_SKILL_ID)) {
     const material = armorMaterial(item.displayName)
     if (!material || !isGroupedArmorMaterial(material)) continue
     const key = `${item.level ?? ''}|${material}`
@@ -618,7 +621,7 @@ function combatEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
 function combatWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
   const grouped: SkillMenuListItem[] = []
   const seen = new Set<string>()
-  for (const item of combatGearItems(db)) {
+  for (const item of combatGearItems(db, MIGHT_SKILL_ID)) {
     if (armorMaterial(item.displayName)) continue
     const material = weaponMaterial(item.displayName)
     if (!material || !isWeaponMenuMaterial(material)) continue
@@ -634,9 +637,9 @@ function combatWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
   return dedupeByName(grouped)
 }
 
-function combatOtherEntries(db: GameDatabase): SkillMenuListItem[] {
+function combatOtherEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {
   return dedupeByName(
-    combatGearItems(db).filter((item) => {
+    combatGearItems(db, skillId).filter((item) => {
       const armor = armorMaterial(item.displayName)
       if (armor) return !isGroupedArmorMaterial(armor)
       const weapon = weaponMaterial(item.displayName)
@@ -647,11 +650,13 @@ function combatOtherEntries(db: GameDatabase): SkillMenuListItem[] {
 }
 
 function combatOtherWeaponEntries(db: GameDatabase): SkillMenuListItem[] {
-  return combatOtherEntries(db).filter((item) => !armorMaterial(item.displayName))
+  return combatOtherEntries(db, MIGHT_SKILL_ID).filter((item) => !armorMaterial(item.displayName))
 }
 
 function combatOtherEquipmentEntries(db: GameDatabase): SkillMenuListItem[] {
-  return combatOtherEntries(db).filter((item) => Boolean(armorMaterial(item.displayName)))
+  return combatOtherEntries(db, VITALITY_SKILL_ID).filter((item) =>
+    Boolean(armorMaterial(item.displayName)),
+  )
 }
 
 function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListItem[] {

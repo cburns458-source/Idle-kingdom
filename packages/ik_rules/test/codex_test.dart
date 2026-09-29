@@ -48,7 +48,7 @@ void main() {
     );
   });
 
-  test('lists gathering actions with gem tables kept separate from the merged drop pool', () {
+  test('lists gathering actions with primary, secondary, and gem tables', () {
     expect(codex.actions.any((row) => row.actionId == 'ACN-0018'), isTrue);
     expect(codex.actions.every((row) => row.category == 'Gathering'), isTrue);
     expect(codex.action('ACN-0001'), isNull);
@@ -58,13 +58,16 @@ void main() {
     expect(codex.action('ACN-0168'), isNull);
     final mine = codex.action('ACN-0018')!;
     expect(mine.displayName.toLowerCase(), contains('copper'));
-    expect(mine.tables.map((table) => table.label), ['Drops', 'Gems']);
-    final ore = mine.tables.firstWhere((table) => table.label == 'Drops');
+    expect(mine.tables.map((table) => table.label), ['Primary', 'Gems']);
+    final ore = mine.tables.firstWhere((table) => table.label == 'Primary');
+    expect(ore.dropChance, 47.5);
     expect(ore.drops.map((row) => row.displayName), contains('Copper Ore'));
+    expect(ore.drops.firstWhere((row) => row.displayName == 'Copper Ore').dropRatePercent, 100);
     expect(ore.drops.map((row) => row.displayName), isNot(contains('Sapphire')));
     final gems = mine.tables.firstWhere((table) => table.label == 'Gems');
     expect(gems.dropChance, 0.5);
     expect(gems.drops.map((row) => row.displayName), contains('Sapphire'));
+    expect(gems.drops.firstWhere((row) => row.displayName == 'Sapphire').dropRatePercent, 100);
     expect(codex.actionsMatching('mine copper').map((row) => row.actionId), contains('ACN-0018'));
   });
 
@@ -82,13 +85,23 @@ void main() {
     expect(places.toSet().length, places.length);
   });
 
-  test('folds hunting secondary and tertiary drops into the primary pool', () {
+  test('keeps hunting primary and secondary tables separate', () {
     final hunt = codex.action('ACN-0014')!;
-    expect(hunt.tables.map((table) => table.label), ['Drops']);
+    expect(hunt.tables.map((table) => table.label), ['Primary', 'Secondary']);
+    final primary = hunt.tables.first;
+    expect(primary.dropChance, 42.5);
     expect(
-      hunt.tables.first.drops.map((row) => row.displayName),
-      containsAll(['Venison', 'Elk Hide', 'Elk Horns', 'Animal Tendons']),
+      primary.drops.map((row) => row.displayName),
+      containsAll(['Venison', 'Elk Hide', 'Elk Horns']),
     );
+    expect(primary.drops.firstWhere((row) => row.displayName == 'Venison').dropRatePercent, 45);
+    expect(primary.drops.firstWhere((row) => row.displayName == 'Elk Hide').dropRatePercent, 50);
+    expect(primary.drops.firstWhere((row) => row.displayName == 'Elk Horns').dropRatePercent, 5);
+    expect(primary.drops.map((row) => row.displayName), isNot(contains('Animal Tendons')));
+    final secondary = hunt.tables.last;
+    expect(secondary.dropChance, 5);
+    expect(secondary.drops.map((row) => row.displayName), ['Animal Tendons']);
+    expect(secondary.drops.single.dropRatePercent, 100);
   });
 
   test('uses the same inventory groups as the bag', () {
@@ -176,6 +189,7 @@ void main() {
     expect(rat.combatLevel, 6);
     expect(rat.maximumHp, 150);
     expect(rat.drops, isEmpty);
+    expect(rat.tables, isEmpty);
     expect(rat.locations.map((row) => row.displayName), contains('Deep Mines'));
   });
 
@@ -185,6 +199,39 @@ void main() {
     expect(fight.kind, CodexObtainKind.enemy);
     expect(fight.actionId, isNull);
     expect(fight.title.toLowerCase(), contains('goblin'));
+  });
+
+  test('lists enemy primary and secondary drop tables on the bestiary', () {
+    final cow = codex.enemy('ENM-0001')!;
+    expect(cow.tables.map((table) => table.label), ['Primary']);
+    expect(cow.tables.first.dropChance, 40);
+    expect(
+      cow.tables.first.drops.map((row) => row.itemId),
+      containsAll(['ITEM-0054', 'ITEM-0378']),
+    );
+
+    final chief = codex.enemy('ENM-0004')!;
+    expect(chief.tables.map((table) => table.label), ['Primary', 'Secondary']);
+    expect(chief.tables.first.dropChance, 30);
+    expect(chief.tables.first.drops.map((row) => row.itemId), isNot(contains('ITEM-0122')));
+    final secondary = chief.tables.last;
+    expect(secondary.dropChance, 50);
+    expect(secondary.drops.map((row) => row.itemId), ['ITEM-0122']);
+    expect(secondary.drops.single.dropRatePercent, 100);
+
+    final pirate = codex.enemy('ENM-0005')!;
+    expect(pirate.tables.map((table) => table.label), ['Primary', 'Secondary']);
+    expect(pirate.tables.last.dropChance, 10);
+    expect(pirate.tables.last.drops.map((row) => row.displayName), ['Pirate Insignia']);
+    expect(pirate.tables.last.drops.single.dropRatePercent, 100);
+
+    final dragon = codex.enemy('ENM-0006')!;
+    expect(dragon.tables.map((table) => table.label), ['Primary']);
+    expect(
+      dragon.tables.expand((table) => table.drops.map((row) => row.itemId)),
+      isNot(contains('COS-0012')),
+    );
+    expect(codex.enemy('ENM-0025')!.tables, isEmpty);
   });
 
   test('lists excavator pickaxe quest reward but not chef hat quest', () {
