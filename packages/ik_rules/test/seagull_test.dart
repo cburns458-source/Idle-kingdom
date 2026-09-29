@@ -48,9 +48,9 @@ void main() {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0038');
     expect(activity.raw['Pool ID'], 'POOL-0028');
     final weights = _weights(db, 'POOL-0028');
-    expect(weights['ACN-0104'], 5);
-    expect(weights['ACN-0102'], 50);
-    expect(weights['ACN-0103'], 45);
+    expect(weights['ACN-0104'], 20);
+    expect(weights['ACN-0215'], 30);
+    expect(weights['ACN-0103'], 50);
   });
 
   test('dock fishing rolls man of war, seagull, shark, and marlin', () {

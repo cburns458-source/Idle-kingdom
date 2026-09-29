@@ -66,16 +66,29 @@ void main() {
   });
 
   test('The Peak, Badlands, and Giant Camp use the written pools', () {
-    expect(_weights(db, 'POOL-0050'), {'ACN-0219': 70, 'ACN-0220': 30});
-    expect(_weights(db, 'POOL-0051'), {'ACN-0021': 50, 'ACN-0020': 50});
+    expect(_weights(db, 'POOL-0050'), {'ACN-0211': 30, 'ACN-0219': 70});
+    expect(_weights(db, 'POOL-0051'), {
+      'ACN-0021': 50,
+      'ACN-0020': 25,
+      'ACN-0097': 10,
+      'ACN-0098': 5,
+      'ACN-0005': 10,
+    });
     expect(_weights(db, 'POOL-0052'), {'ACN-0221': 60, 'ACN-0222': 40});
+    expect(_weights(db, 'POOL-0075'), {'ACN-0208': 70, 'ACN-0112': 30});
+    expect(_weights(db, 'POOL-0076'), {'ACN-0202': 90, 'ACN-0221': 10});
 
     final peak = db.activities.firstWhere((row) => row.activityId == 'ACT-0068');
     expect(peak.raw['Location ID'], thePeakId);
+    expect(peak.raw['Contextual Name'], 'Scout the peak');
     expect(peak.raw['Danger Warning Combat Level'], 72);
     final camp = db.activities.firstWhere((row) => row.activityId == 'ACT-0070');
     expect(camp.raw['Location ID'], giantCampId);
     expect(camp.raw['Danger Warning Combat Level'], 77);
+    expect(
+      db.facilities.where((row) => row.raw['Location ID'] == giantCampId).map((row) => row.facilityId),
+      unorderedEquals(<String>['FAC-0023', 'FAC-0024', 'FAC-0025', 'FAC-0026']),
+    );
 
     final save = createNewSave(db, 0);
     expect(forcedHostileActivity(db, save, thePeakId)?.activityId, 'ACT-0068');

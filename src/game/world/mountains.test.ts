@@ -82,16 +82,31 @@ describe('Mountains sub-map', () => {
 
   it('writes Peak, Badlands, and Giant Camp pools', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    expect(weights(launch, 'POOL-0050')).toEqual({ 'ACN-0219': 70, 'ACN-0220': 30 })
-    expect(weights(launch, 'POOL-0051')).toEqual({ 'ACN-0021': 50, 'ACN-0020': 50 })
+    expect(weights(launch, 'POOL-0050')).toEqual({ 'ACN-0211': 30, 'ACN-0219': 70 })
+    expect(weights(launch, 'POOL-0051')).toEqual({
+      'ACN-0021': 50,
+      'ACN-0020': 25,
+      'ACN-0097': 10,
+      'ACN-0098': 5,
+      'ACN-0005': 10,
+    })
     expect(weights(launch, 'POOL-0052')).toEqual({ 'ACN-0221': 60, 'ACN-0222': 40 })
+    expect(weights(launch, 'POOL-0075')).toEqual({ 'ACN-0208': 70, 'ACN-0112': 30 })
+    expect(weights(launch, 'POOL-0076')).toEqual({ 'ACN-0202': 90, 'ACN-0221': 10 })
 
     const peak = launch.Activities.find((row) => row['Activity ID'] === 'ACT-0068')!
     expect(peak['Location ID']).toBe(THE_PEAK_ID)
+    expect(peak['Contextual Name']).toBe('Scout the peak')
     expect(peak['Danger Warning Combat Level']).toBe(72)
     const camp = launch.Activities.find((row) => row['Activity ID'] === 'ACT-0070')!
     expect(camp['Location ID']).toBe(GIANT_CAMP_ID)
     expect(camp['Danger Warning Combat Level']).toBe(77)
+    expect(launch.Facilities.filter((row) => row['Location ID'] === GIANT_CAMP_ID).map((row) => row['Facility ID']).sort()).toEqual([
+      'FAC-0023',
+      'FAC-0024',
+      'FAC-0025',
+      'FAC-0026',
+    ])
 
     const save = createNewSave(launch)
     expect(forcedHostileActivity(launch, save, THE_PEAK_ID)?.['Activity ID']).toBe('ACT-0068')

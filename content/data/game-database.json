@@ -12853,6 +12853,58 @@
       "Description": "Shares Town kitchen recipes via facility alias.",
       "Notes": null,
       "Sprite Asset Key": "workstations/ws_cooking_stove.webp"
+    },
+    {
+      "Facility ID": "FAC-0023",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town kitchen recipes via facility alias.",
+      "Notes": null,
+      "Sprite Asset Key": "workstations/ws_cooking_stove.webp",
+      "Internal Key": "giant_camp_kitchen",
+      "Display Name": "Giant Camp Kitchen",
+      "Location ID": "LOC-0049",
+      "Facility Type": "Production Station",
+      "Skill ID": "SKL-0007"
+    },
+    {
+      "Facility ID": "FAC-0024",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town crafting recipes via facility alias.",
+      "Notes": null,
+      "Sprite Asset Key": "workstations/ws_crafting_bench.webp",
+      "Internal Key": "giant_camp_crafting",
+      "Display Name": "Giant Camp Crafting Workshop",
+      "Location ID": "LOC-0049",
+      "Facility Type": "Production Station",
+      "Skill ID": "SKL-0009"
+    },
+    {
+      "Facility ID": "FAC-0025",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town metallurgy recipes via facility alias.",
+      "Notes": null,
+      "Sprite Asset Key": "workstations/ws_metallurgy_furnace.webp",
+      "Internal Key": "giant_camp_metallurgy",
+      "Display Name": "Giant Camp Metallurgy Furnace",
+      "Location ID": "LOC-0049",
+      "Facility Type": "Production Station",
+      "Skill ID": "SKL-0008"
+    },
+    {
+      "Facility ID": "FAC-0026",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town smithing projects via facility alias.",
+      "Notes": null,
+      "Sprite Asset Key": null,
+      "Internal Key": "giant_camp_smithing",
+      "Display Name": "Giant Camp Smithing forge",
+      "Location ID": "LOC-0049",
+      "Facility Type": "Special Production Station",
+      "Skill ID": "SKL-0011"
     }
   ],
   "Activities": [
@@ -13330,13 +13382,13 @@
       "Internal Key": "fish_deep_pools",
       "Contextual Name": "Fish the deep pools",
       "Location ID": "LOC-0022",
-      "Description": "Fishing the flooded shafts: tuna, shark, and baby giant squid.",
+      "Description": "Fish the deep pools for shark, man of war, and baby giant squid.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0028",
       "Pool Internal Key": "deep_pool_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Own pool. Tuna 50%, shark 45%, baby giant squid 5%. Docks stay tuna/shark only."
+      "Notes": "Shark 50%, man of war 30%, baby giant squid 20%."
     },
     {
       "Activity ID": "ACT-0039",
@@ -13719,28 +13771,28 @@
     {
       "Activity ID": "ACT-0068",
       "Internal Key": "challenge_the_peak",
-      "Contextual Name": "Challenge the peak",
+      "Contextual Name": "Scout the peak",
       "Location ID": "LOC-0047",
-      "Description": "Face harpies and wyverns on the high roost.",
+      "Description": "Gather bleeding tooth on the high roost \u2014 harpies still nest here.",
       "Danger Warning Combat Level": 72,
       "Pool ID": "POOL-0050",
-      "Pool Internal Key": "the_peak_combat",
+      "Pool Internal Key": "the_peak_mixed",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Hostile peak combat."
+      "Notes": "Bleeding tooth 30% (ACN-0211), harpy 70% (ACN-0219). Mixed gathering/combat."
     },
     {
       "Activity ID": "ACT-0069",
       "Internal Key": "prospect_the_badlands",
       "Contextual Name": "Prospect the badlands",
       "Location ID": "LOC-0048",
-      "Description": "Mine coal and tin in the broken highland stone.",
+      "Description": "Prospect the badlands for ore \u2014 rock trolls haunt the cuts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0051",
       "Pool Internal Key": "badlands_mining",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Coal 50%, tin 25%, silver 10%, gold 5%, rock troll 10%."
     },
     {
       "Activity ID": "ACT-0070",
@@ -14066,6 +14118,84 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Trout 30% (ACN-0100), tuna 70% (ACN-0102)."
+    },
+    {
+      "Activity ID": "ACT-0095",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0075",
+      "Pool Internal Key": "badlands_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Giant spider 70% (ACN-0208), mountain goat 30% (ACN-0112).",
+      "Internal Key": "hunt_badlands",
+      "Contextual Name": "Hunt the badlands",
+      "Location ID": "LOC-0048",
+      "Description": "Hunt giant spiders and mountain goats in the badlands."
+    },
+    {
+      "Activity ID": "ACT-0096",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0076",
+      "Pool Internal Key": "badlands_woodcutting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Ironwood 90% (ACN-0202), fight giant 10% (ACN-0221).",
+      "Internal Key": "cut_badlands",
+      "Contextual Name": "Cut ironwood in the badlands",
+      "Location ID": "LOC-0048",
+      "Description": "Cut ironwood stands in the badlands \u2014 giants sometimes lumber through."
+    },
+    {
+      "Activity ID": "ACT-0097",
+      "Danger Warning Combat Level": null,
+      "Pool ID": null,
+      "Pool Internal Key": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Shares Town kitchen recipes via FAC-0023 alias.",
+      "Internal Key": "cook_giant_camp",
+      "Contextual Name": "Cook at the kitchen",
+      "Location ID": "LOC-0049",
+      "Description": "Timed Cooking queue using selected recipe at the Giant Camp kitchen."
+    },
+    {
+      "Activity ID": "ACT-0098",
+      "Danger Warning Combat Level": null,
+      "Pool ID": null,
+      "Pool Internal Key": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Shares Town crafting recipes via FAC-0024 alias.",
+      "Internal Key": "craft_giant_camp",
+      "Contextual Name": "Craft components",
+      "Location ID": "LOC-0049",
+      "Description": "Timed Crafting queue using selected recipe at the Giant Camp workshop."
+    },
+    {
+      "Activity ID": "ACT-0099",
+      "Danger Warning Combat Level": null,
+      "Pool ID": null,
+      "Pool Internal Key": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Shares Town metallurgy recipes via FAC-0025 alias.",
+      "Internal Key": "refine_giant_camp",
+      "Contextual Name": "Refine metals",
+      "Location ID": "LOC-0049",
+      "Description": "Timed Metallurgy queue using selected recipe at the Giant Camp furnace."
+    },
+    {
+      "Activity ID": "ACT-0100",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0077",
+      "Pool Internal Key": "deep_mines_combat",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Giant rat 30%, cave bat 70%.",
+      "Internal Key": "fight_deep_mines_vermin",
+      "Contextual Name": "Fight the vermin",
+      "Location ID": "LOC-0011",
+      "Description": "Fight giant rats and cave bats in the Deep Mines."
     }
   ],
   "PoolEntries": [
@@ -14302,30 +14432,6 @@
       "Notes": "Temple \u2014 Monk only."
     },
     {
-      "Pool Entry ID": "PEN-0068",
-      "Pool ID": "POOL-0028",
-      "Action ID": "ACN-0102",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": "Tuna, 50% of deep-pool fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0069",
-      "Pool ID": "POOL-0028",
-      "Action ID": "ACN-0103",
-      "Weight": 45,
-      "Status": "Planned",
-      "Notes": "Shark, 45% of deep-pool fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0070",
-      "Pool ID": "POOL-0028",
-      "Action ID": "ACN-0104",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": "Baby giant squid, 5% of deep-pool fishing."
-    },
-    {
       "Pool Entry ID": "PEN-0075",
       "Pool ID": "POOL-0031",
       "Action ID": "ACN-0176",
@@ -14522,38 +14628,6 @@
       "Pool ID": "POOL-0049",
       "Action ID": "ACN-0199",
       "Weight": 100,
-      "Status": "Confirmed",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0105",
-      "Pool ID": "POOL-0050",
-      "Action ID": "ACN-0219",
-      "Weight": 70,
-      "Status": "Confirmed",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0106",
-      "Pool ID": "POOL-0050",
-      "Action ID": "ACN-0220",
-      "Weight": 30,
-      "Status": "Confirmed",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0107",
-      "Pool ID": "POOL-0051",
-      "Action ID": "ACN-0021",
-      "Weight": 50,
-      "Status": "Confirmed",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0108",
-      "Pool ID": "POOL-0051",
-      "Action ID": "ACN-0020",
-      "Weight": 50,
       "Status": "Confirmed",
       "Notes": null
     },
@@ -15196,6 +15270,134 @@
       "Weight": 30,
       "Status": "Planned",
       "Notes": "Fernleaf 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0189",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0021",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Coal 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0190",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0020",
+      "Weight": 25,
+      "Status": "Planned",
+      "Notes": "Tin 25%."
+    },
+    {
+      "Pool Entry ID": "PEN-0191",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0097",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Silver 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0192",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0098",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "Gold 5%."
+    },
+    {
+      "Pool Entry ID": "PEN-0193",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0005",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Rock troll 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0194",
+      "Pool ID": "POOL-0075",
+      "Action ID": "ACN-0208",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Giant spider 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0195",
+      "Pool ID": "POOL-0075",
+      "Action ID": "ACN-0112",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Mountain goat 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0196",
+      "Pool ID": "POOL-0076",
+      "Action ID": "ACN-0202",
+      "Weight": 90,
+      "Status": "Planned",
+      "Notes": "Ironwood 90%."
+    },
+    {
+      "Pool Entry ID": "PEN-0197",
+      "Pool ID": "POOL-0076",
+      "Action ID": "ACN-0221",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Giant 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0198",
+      "Pool ID": "POOL-0050",
+      "Action ID": "ACN-0211",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Bleeding tooth 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0199",
+      "Pool ID": "POOL-0050",
+      "Action ID": "ACN-0219",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Harpy 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0200",
+      "Pool ID": "POOL-0077",
+      "Action ID": "ACN-0239",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Giant rat 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0201",
+      "Pool ID": "POOL-0077",
+      "Action ID": "ACN-0238",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Cave bat 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0202",
+      "Pool ID": "POOL-0028",
+      "Action ID": "ACN-0103",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Shark 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0203",
+      "Pool ID": "POOL-0028",
+      "Action ID": "ACN-0215",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Man of war 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0204",
+      "Pool ID": "POOL-0028",
+      "Action ID": "ACN-0104",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Baby giant squid 20%."
     }
   ],
   "Actions": [
@@ -18010,7 +18212,7 @@
       "Secondary Reward Table ID": "RWT-0160",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. Secondary Bark drop.",
+      "Notes": "Secondary Bark drop. Used in Badlands woodcutting pool and skill menu.",
       "Sprite Asset Key": "actions/acn_cut_mahogany.webp"
     },
     {
@@ -18136,7 +18338,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.",
+      "Notes": "No item drops (XP only). Used in Badlands hunting pool.",
       "Sprite Asset Key": "actions/acn_hunt_pheasant.webp"
     },
     {
@@ -18749,6 +18951,27 @@
       "Release Phase": "Launch",
       "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold. Wired into The Slopes mining pool.",
       "Sprite Asset Key": "enemies/enm_seagull.webp"
+    },
+    {
+      "Action ID": "ACN-0239",
+      "Internal Key": "fight_giant_rat",
+      "Display Name": "Fight giant rat",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0025",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 300,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold. Wired into Deep Mines combat pool.",
+      "Sprite Asset Key": "enemies/enm_wild_boar.webp"
     }
   ],
   "Requirements": [
@@ -20974,6 +21197,84 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": "Mirror Lake fishing needs a fishing tool."
+    },
+    {
+      "Requirement ID": "REQ-0176",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0069",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "mining_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Badlands prospecting needs a mining tool."
+    },
+    {
+      "Requirement ID": "REQ-0177",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0095",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Badlands hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0178",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0096",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Badlands woodcutting needs a woodcutting tool."
+    },
+    {
+      "Requirement ID": "REQ-0179",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0097",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Station",
+      "Reference ID / Value": "FAC-0023",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Requirement ID": "REQ-0180",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0098",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Station",
+      "Reference ID / Value": "FAC-0024",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Requirement ID": "REQ-0181",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0099",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Station",
+      "Reference ID / Value": "FAC-0025",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": null
     }
   ],
   "Enemies": [
@@ -21443,7 +21744,7 @@
       "Enemy ID": "ENM-0025",
       "Internal Key": "giant_rat",
       "Display Name": "Giant Rat",
-      "Location ID": null,
+      "Location ID": "LOC-0011",
       "Might Level": 3,
       "Vitality Level": 3,
       "Combat Level": 5,
@@ -21458,7 +21759,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_wild_boar.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Rolls from the Deep Mines combat pool."
     },
     {
       "Enemy ID": "ENM-0026",

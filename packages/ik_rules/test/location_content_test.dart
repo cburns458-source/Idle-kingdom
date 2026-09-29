@@ -97,12 +97,12 @@ void main() {
     expect(locationShowsDangerWarning(db, 'LOC-0002'), isFalse);
   });
 
-  test('the abandoned mineshaft fishes tuna, shark, and baby giant squid', () {
+  test('the abandoned mineshaft fishes shark, man of war, and baby giant squid', () {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0038');
     expect(activity.raw['Contextual Name'], 'Fish the deep pools');
     expect(activity.raw['Location ID'], 'LOC-0022');
     expect(activity.raw['Pool ID'], 'POOL-0028');
-    expect(_weights(db, 'POOL-0028'), {'ACN-0102': 50, 'ACN-0103': 45, 'ACN-0104': 5});
+    expect(_weights(db, 'POOL-0028'), {'ACN-0103': 50, 'ACN-0215': 30, 'ACN-0104': 20});
     expect(_weights(db, 'POOL-0004'), {
       'ACN-0215': 50,
       'ACN-0173': 5,

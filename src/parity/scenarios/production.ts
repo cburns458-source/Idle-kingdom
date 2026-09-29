@@ -56,10 +56,14 @@ const FACILITY_IDS = [
   'FAC-0010',
   'FAC-0012',
   'FAC-0022',
+  'FAC-0023',
   'FAC-0013',
+  'FAC-0024',
   'FAC-0014',
+  'FAC-0025',
   'FAC-0015',
   'FAC-0016',
+  'FAC-0026',
   'FAC-9999',
 ]
 

@@ -37,7 +37,7 @@ void main() {
 
   test('new enemies keep placeholder stats; mountain roosts have locations', () {
     const added = <(String, String, num, num, num, num, num, String?)>[
-      ('ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300, null),
+      ('ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300, 'LOC-0011'),
       ('ENM-0026', 'Bandit', 6, 260, 16, 40, 520, 'LOC-0052'),
       ('ENM-0027', 'Cave Bat', 14, 580, 37, 73, 1322, 'LOC-0046'),
       ('ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1770, null),
@@ -52,6 +52,7 @@ void main() {
     ];
     final addedIds = {for (final row in added) row.$1};
     const assignedIds = {
+      'ENM-0025',
       'ENM-0026',
       'ENM-0027',
       'ENM-0029',
