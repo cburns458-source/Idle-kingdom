@@ -53,10 +53,9 @@ void main() {
     expect(weights['ACN-0103'], 45);
   });
 
-  test('dock fishing is only tuna and shark', () {
+  test('dock fishing rolls man of war, seagull, shark, and marlin', () {
     final weights = _weights(db, 'POOL-0004');
-    expect(weights, {'ACN-0102': 55, 'ACN-0103': 45});
-    expect(weights.containsKey('ACN-0173'), isFalse);
+    expect(weights, {'ACN-0215': 50, 'ACN-0173': 5, 'ACN-0103': 35, 'ACN-0216': 10});
     expect(weights.values.reduce((a, b) => a + b), 100);
   });
 
@@ -68,7 +67,7 @@ void main() {
     expect(started.save!.combatEnemyId, 'ENM-0005');
   });
 
-  test('dock fishing rolls tuna or shark, never a seagull', () {
+  test('dock fishing can roll man of war or marlin at the weight extremes', () {
     var save = raiseSkillToMinimumLevel(createNewSave(db, 0), db, mightSkillId, 60).save;
     save = raiseSkillToMinimumLevel(save, db, vitalitySkillId, 60).save;
     save = raiseSkillToMinimumLevel(save, db, 'SKL-0003', 65).save;
@@ -79,14 +78,14 @@ void main() {
       1,
     );
 
-    final tuna = requestActivityStart(db, fisher, 'ACT-0004', 0, () => 0);
-    expect(tuna.ok, isTrue);
-    expect(tuna.save!.currentActionId, 'ACN-0102');
-    expect(tuna.save!.combatEnemyId, isNull);
+    final manOfWar = requestActivityStart(db, fisher, 'ACT-0004', 0, () => 0);
+    expect(manOfWar.ok, isTrue);
+    expect(manOfWar.save!.currentActionId, 'ACN-0215');
+    expect(manOfWar.save!.combatEnemyId, isNull);
 
-    final shark = requestActivityStart(db, fisher, 'ACT-0004', 0, () => 0.99);
-    expect(shark.ok, isTrue);
-    expect(shark.save!.currentActionId, 'ACN-0103');
-    expect(shark.save!.combatEnemyId, isNull);
+    final marlin = requestActivityStart(db, fisher, 'ACT-0004', 0, () => 0.99);
+    expect(marlin.ok, isTrue);
+    expect(marlin.save!.currentActionId, 'ACN-0216');
+    expect(marlin.save!.combatEnemyId, isNull);
   });
 }

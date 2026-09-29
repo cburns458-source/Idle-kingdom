@@ -12900,13 +12900,13 @@
       "Internal Key": "fish_river_coast",
       "Contextual Name": "Fish the river and coast",
       "Location ID": "LOC-0004",
-      "Description": "Fishing along the river, coast, and dock: tuna and shark.",
+      "Description": "Fish the docks for man of war, shark, and marlin \u2014 seagulls sometimes dive the line.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0004",
-      "Pool Internal Key": "coast_fishing",
+      "Pool Internal Key": "dock_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Man of war 50%, seagull 5%, shark 35%, marlin 10%."
     },
     {
       "Activity ID": "ACT-0005",
@@ -12919,20 +12919,20 @@
       "Pool Internal Key": "copper_mine_pool",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Copper 50%, tin 30%, clay 20%."
     },
     {
       "Activity ID": "ACT-0006",
       "Internal Key": "prospect_mountain_side",
       "Contextual Name": "Prospect the mountain side",
       "Location ID": "LOC-0046",
-      "Description": "Mine the slopes and face Rock Troll encounters.",
+      "Description": "Prospect the slopes for ore \u2014 cave bats nest in the cuts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0006",
       "Pool Internal Key": "mountain_slopes_pool",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Iron 50%, coal 30%, tin 10%, cave bat 10%."
     },
     {
       "Activity ID": "ACT-0007",
@@ -12965,52 +12965,52 @@
       "Internal Key": "poach_kingswoods",
       "Contextual Name": "Poach in the kingswoods",
       "Location ID": "LOC-0008",
-      "Description": "Pheasant, elk, and wild boar hunting.",
+      "Description": "Hunt pheasant, elk, and wild boar in the kingswoods.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0009",
       "Pool Internal Key": "kingswoods_poach",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Pheasant 40%, wild boar hunt 10%, elk 40%."
     },
     {
       "Activity ID": "ACT-0010",
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather woodland supplies",
       "Location ID": "LOC-0008",
-      "Description": "Harvest Mosstole, wild berries, and mushrooms, with a rare Wild Boar combat encounter.",
+      "Description": "Gather woodland supplies \u2014 and watch for boars.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Mosstole 50%, mushrooms 30%, wild berries 10%, wild boar combat 10%."
     },
     {
       "Activity ID": "ACT-0011",
       "Internal Key": "search_small_game",
       "Contextual Name": "Search for small game",
       "Location ID": "LOC-0009",
-      "Description": "Rabbit and Duck Hunting.",
+      "Description": "Hunt weasels and rabbits in the meadow.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0011",
       "Pool Internal Key": "meadow_game",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Weasel 50% (ACN-0015), rabbit 50% (ACN-0016)."
     },
     {
       "Activity ID": "ACT-0012",
       "Internal Key": "gather_meadow_supplies",
       "Contextual Name": "Gather meadow supplies",
       "Location ID": "LOC-0009",
-      "Description": "Wild Roots and Fernleaf Harvesting.",
+      "Description": "Gather fernleaf and wild roots in the meadow.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0012",
       "Pool Internal Key": "meadow_harvest",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Fernleaf 30% (ACN-0106), wild roots 70% (ACN-0105)."
     },
     {
       "Activity ID": "ACT-0013",
@@ -13030,13 +13030,14 @@
       "Internal Key": "search_courtyard",
       "Contextual Name": "Search the courtyard grounds",
       "Location ID": "LOC-0014",
-      "Description": "Weasel Hunting and herb Harvesting with compatible requirements.",
+      "Description": "Forage fernleaf and hunt pheasant in the courtyard.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0014",
       "Pool Internal Key": "courtyard_pool",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Fernleaf 50% (ACN-0106), pheasant 50% (ACN-0017).",
+      "Contextual_Name": "Search the courtyard grounds"
     },
     {
       "Activity ID": "ACT-0015",
@@ -13056,13 +13057,13 @@
       "Internal Key": "explore_ancient_forest",
       "Contextual Name": "Explore the ancient forest",
       "Location ID": "LOC-0018",
-      "Description": "One axe-compatible pool containing Ancient Tree, Ent, Ancient Ent, and Corrupted Ent.",
+      "Description": "Fight ents in the Old Ent Grove.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0016",
       "Pool Internal Key": "ancient_forest_pool",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Ent 50%, corrupted ent 30%, ancient ent 20%."
     },
     {
       "Activity ID": "ACT-0017",
@@ -13199,13 +13200,13 @@
       "Internal Key": "hunt_the_slopes",
       "Contextual Name": "Hunt the slopes",
       "Location ID": "LOC-0046",
-      "Description": "Hunt mountain goats and great stags on the slopes.",
+      "Description": "Hunt mountain goats on the slopes.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0022",
       "Pool Internal Key": "mountain_hunting",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "100% Hunt mountain goat (ACN-0112)."
     },
     {
       "Activity ID": "ACT-0028",
@@ -13316,13 +13317,13 @@
       "Internal Key": "fish_copper_pond",
       "Contextual Name": "Fish in the nearby pond",
       "Location ID": "LOC-0005",
-      "Description": "Fish perch from the pond beside the copper mine.",
+      "Description": "Fish the nearby pond for perch and trout.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0027",
       "Pool Internal Key": "copper_pond_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Single-action pool: Catch perch (ACN-0099)."
+      "Notes": "Perch 90% (ACN-0099), trout 10% (ACN-0100)."
     },
     {
       "Activity ID": "ACT-0038",
@@ -13342,13 +13343,13 @@
       "Internal Key": "pick_weeds",
       "Contextual Name": "Pick weeds",
       "Location ID": "LOC-0036",
-      "Description": "Pull weeds from the temple garden: mostly Augur Weed, sometimes Moonblossom.",
+      "Description": "Pick weeds around the temple grounds.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0029",
       "Pool Internal Key": "temple_weeds",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Single harvesting action. Same empty-hand rules as Train with the monks."
+      "Notes": "Augur weed 80% (ACN-0109), wild roots 20% (ACN-0105)."
     },
     {
       "Activity ID": "ACT-0040",
@@ -13361,7 +13362,7 @@
       "Pool Internal Key": "ancient_forest_hardwood",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Own pool. Maple 70%, mahogany 30%. Explore the ancient forest stays unchanged."
+      "Notes": "Maple 45%, mahogany 50%, elder yew 5%. Explore combat pool is separate."
     },
     {
       "Activity ID": "ACT-0041",
@@ -13478,20 +13479,21 @@
       "Pool Internal Key": "starlight_hunt",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Elk 60% (ACN-0014), great stag 40% (ACN-0113)."
     },
     {
       "Activity ID": "ACT-0050",
       "Internal Key": "pick_moonblossoms_glade",
-      "Contextual Name": "Pick moonblossoms",
+      "Contextual Name": "Gather glade flora",
       "Location ID": "LOC-0044",
-      "Description": "Gather pale moonblossoms that open under the stars.",
+      "Description": "Gather moonblossom, starroot, and wild roots in Starlight Glade.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0038",
       "Pool Internal Key": "starlight_moonblossoms",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Moonblossom 55%, starroot 40%, wild roots 5%.",
+      "Contextual_Name": "Gather glade flora"
     },
     {
       "Activity ID": "ACT-0051",
@@ -13986,6 +13988,84 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Shares Town kitchen recipes via FAC-0022 alias."
+    },
+    {
+      "Activity ID": "ACT-0089",
+      "Internal Key": "hunt_copper_mine",
+      "Contextual Name": "Hunt ducks by the pond",
+      "Location ID": "LOC-0005",
+      "Description": "Hunt ducks around the copper mine pond.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0069",
+      "Pool Internal Key": "copper_mine_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "100% Hunt duck (ACN-0013)."
+    },
+    {
+      "Activity ID": "ACT-0090",
+      "Internal Key": "hunt_forest_path",
+      "Contextual Name": "Hunt along the forest path",
+      "Location ID": "LOC-0040",
+      "Description": "Hunt elk and foxes along the Forest Path.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0070",
+      "Pool Internal Key": "forest_path_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Elk 70% (ACN-0014), fox 30% (ACN-0205)."
+    },
+    {
+      "Activity ID": "ACT-0091",
+      "Internal Key": "gather_small_clearing",
+      "Contextual Name": "Forage the small clearing",
+      "Location ID": "LOC-0050",
+      "Description": "Gather wild berries, augur weed, and wild roots in the Small Clearing.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0071",
+      "Pool Internal Key": "small_clearing_gathering",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Wild berries 40%, augur weed 30%, wild roots 20%."
+    },
+    {
+      "Activity ID": "ACT-0092",
+      "Internal Key": "cut_small_clearing",
+      "Contextual Name": "Cut timber in the clearing",
+      "Location ID": "LOC-0050",
+      "Description": "Cut poplar, maple, and vines in the Small Clearing.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0072",
+      "Pool Internal Key": "small_clearing_woodcutting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Poplar 30%, vines 30% (ACN-0179), maple 40%."
+    },
+    {
+      "Activity ID": "ACT-0093",
+      "Internal Key": "hunt_mirror_lake",
+      "Contextual Name": "Hunt the mirror lake shores",
+      "Location ID": "LOC-0051",
+      "Description": "Hunt ducks and giant toads, and gather algae along Mirror Lake.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0073",
+      "Pool Internal Key": "mirror_lake_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Duck 20%, giant toad 50%, algae 30%."
+    },
+    {
+      "Activity ID": "ACT-0094",
+      "Internal Key": "fish_mirror_lake",
+      "Contextual Name": "Fish Mirror Lake",
+      "Location ID": "LOC-0051",
+      "Description": "Fish Mirror Lake for trout and tuna.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0074",
+      "Pool Internal Key": "mirror_lake_fishing",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Trout 30% (ACN-0100), tuna 70% (ACN-0102)."
     }
   ],
   "PoolEntries": [
@@ -14046,78 +14126,6 @@
       "Notes": null
     },
     {
-      "Pool Entry ID": "PEN-0011",
-      "Pool ID": "POOL-0004",
-      "Action ID": "ACN-0102",
-      "Weight": 55,
-      "Status": "Planned",
-      "Notes": "Tuna, 55% of dock fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0012",
-      "Pool ID": "POOL-0004",
-      "Action ID": "ACN-0103",
-      "Weight": 45,
-      "Status": "Planned",
-      "Notes": "Shark, 45% of dock fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0015",
-      "Pool ID": "POOL-0005",
-      "Action ID": "ACN-0018",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0016",
-      "Pool ID": "POOL-0005",
-      "Action ID": "ACN-0019",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0017",
-      "Pool ID": "POOL-0005",
-      "Action ID": "ACN-0020",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0019",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0021",
-      "Weight": 35,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0020",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0022",
-      "Weight": 35,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0021",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0005",
-      "Weight": 15,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0022",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0096",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
       "Pool Entry ID": "PEN-0023",
       "Pool ID": "POOL-0007",
       "Action ID": "ACN-0006",
@@ -14138,78 +14146,6 @@
       "Pool ID": "POOL-0008",
       "Action ID": "ACN-0028",
       "Weight": 100,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0026",
-      "Pool ID": "POOL-0009",
-      "Action ID": "ACN-0017",
-      "Weight": 70,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0027",
-      "Pool ID": "POOL-0009",
-      "Action ID": "ACN-0014",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0028",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0008",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": "Rare Wild Boar combat encounter in woodland supplies."
-    },
-    {
-      "Pool Entry ID": "PEN-0030",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0107",
-      "Weight": 55,
-      "Status": "Planned",
-      "Notes": "Mosstole, 55% of woodland supplies."
-    },
-    {
-      "Pool Entry ID": "PEN-0060",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0108",
-      "Weight": 45,
-      "Status": "Planned",
-      "Notes": "Wild berries, 45% of woodland supplies."
-    },
-    {
-      "Pool Entry ID": "PEN-0031",
-      "Pool ID": "POOL-0011",
-      "Action ID": "ACN-0013",
-      "Weight": 10,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0032",
-      "Pool ID": "POOL-0011",
-      "Action ID": "ACN-0016",
-      "Weight": 90,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0033",
-      "Pool ID": "POOL-0012",
-      "Action ID": "ACN-0105",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0034",
-      "Pool ID": "POOL-0012",
-      "Action ID": "ACN-0106",
-      "Weight": 50,
       "Status": "Planned",
       "Notes": null
     },
@@ -14246,58 +14182,10 @@
       "Notes": null
     },
     {
-      "Pool Entry ID": "PEN-0039",
-      "Pool ID": "POOL-0014",
-      "Action ID": "ACN-0015",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0040",
-      "Pool ID": "POOL-0014",
-      "Action ID": "ACN-0106",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
       "Pool Entry ID": "PEN-0041",
       "Pool ID": "POOL-0015",
       "Action ID": "ACN-0009",
       "Weight": 100,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0042",
-      "Pool ID": "POOL-0016",
-      "Action ID": "ACN-0051",
-      "Weight": 45,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0043",
-      "Pool ID": "POOL-0016",
-      "Action ID": "ACN-0010",
-      "Weight": 35,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0044",
-      "Pool ID": "POOL-0016",
-      "Action ID": "ACN-0011",
-      "Weight": 15,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0045",
-      "Pool ID": "POOL-0016",
-      "Action ID": "ACN-0012",
-      "Weight": 5,
       "Status": "Planned",
       "Notes": null
     },
@@ -14374,22 +14262,6 @@
       "Notes": "Oak, 30% of kingswoods rare wood."
     },
     {
-      "Pool Entry ID": "PEN-0057",
-      "Pool ID": "POOL-0022",
-      "Action ID": "ACN-0112",
-      "Weight": 80,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0058",
-      "Pool ID": "POOL-0022",
-      "Action ID": "ACN-0113",
-      "Weight": 20,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
       "Pool Entry ID": "PEN-0059",
       "Pool ID": "POOL-0017",
       "Action ID": "ACN-0162",
@@ -14430,14 +14302,6 @@
       "Notes": "Temple \u2014 Monk only."
     },
     {
-      "Pool Entry ID": "PEN-0067",
-      "Pool ID": "POOL-0027",
-      "Action ID": "ACN-0099",
-      "Weight": 100,
-      "Status": "Planned",
-      "Notes": "Pond beside the copper mine: only perch."
-    },
-    {
       "Pool Entry ID": "PEN-0068",
       "Pool ID": "POOL-0028",
       "Action ID": "ACN-0102",
@@ -14460,38 +14324,6 @@
       "Weight": 5,
       "Status": "Planned",
       "Notes": "Baby giant squid, 5% of deep-pool fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0071",
-      "Pool ID": "POOL-0029",
-      "Action ID": "ACN-0109",
-      "Weight": 90,
-      "Status": "Planned",
-      "Notes": "Augur weed \u2014 90% of temple pick weeds."
-    },
-    {
-      "Pool Entry ID": "PEN-0072",
-      "Pool ID": "POOL-0029",
-      "Action ID": "ACN-0110",
-      "Weight": 10,
-      "Status": "Planned",
-      "Notes": "Moonblossom \u2014 10% of temple pick weeds."
-    },
-    {
-      "Pool Entry ID": "PEN-0073",
-      "Pool ID": "POOL-0030",
-      "Action ID": "ACN-0049",
-      "Weight": 70,
-      "Status": "Planned",
-      "Notes": "Cut maple tree \u2014 70% of hardwood chopping."
-    },
-    {
-      "Pool Entry ID": "PEN-0074",
-      "Pool ID": "POOL-0030",
-      "Action ID": "ACN-0050",
-      "Weight": 30,
-      "Status": "Planned",
-      "Notes": "Cut mahogany tree \u2014 30% of hardwood chopping."
     },
     {
       "Pool Entry ID": "PEN-0075",
@@ -14530,14 +14362,6 @@
       "Pool ID": "POOL-0013",
       "Action ID": "ACN-0027",
       "Weight": 5,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0080",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0020",
-      "Weight": 10,
       "Status": "Planned",
       "Notes": null
     },
@@ -14606,14 +14430,6 @@
       "Notes": "Great stag 40%"
     },
     {
-      "Pool Entry ID": "PEN-0089",
-      "Pool ID": "POOL-0038",
-      "Action ID": "ACN-0110",
-      "Weight": 100,
-      "Status": "Planned",
-      "Notes": "Moonblossoms 100%"
-    },
-    {
       "Pool Entry ID": "PEN-0090",
       "Pool ID": "POOL-0039",
       "Action ID": "ACN-0017",
@@ -14628,22 +14444,6 @@
       "Weight": 100,
       "Status": "Planned",
       "Notes": "Gathering Outskirts \u2014 wild roots only."
-    },
-    {
-      "Pool Entry ID": "PEN-0092",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0184",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": "Mushrooms in Kingswoods gathering."
-    },
-    {
-      "Pool Entry ID": "PEN-0093",
-      "Pool ID": "POOL-0012",
-      "Action ID": "ACN-0184",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": "Mushrooms in Meadow gathering."
     },
     {
       "Pool Entry ID": "PEN-0094",
@@ -14724,14 +14524,6 @@
       "Weight": 100,
       "Status": "Confirmed",
       "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0104",
-      "Pool ID": "POOL-0009",
-      "Action ID": "ACN-0204",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": "Hunt wild boar alongside combat boar."
     },
     {
       "Pool Entry ID": "PEN-0105",
@@ -14988,6 +14780,422 @@
       "Weight": 100,
       "Status": "Confirmed",
       "Notes": "Locked storeroom 100%."
+    },
+    {
+      "Pool Entry ID": "PEN-0137",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0215",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Man of war 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0138",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0173",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "Seagull 5%."
+    },
+    {
+      "Pool Entry ID": "PEN-0139",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0103",
+      "Weight": 35,
+      "Status": "Planned",
+      "Notes": "Shark 35%."
+    },
+    {
+      "Pool Entry ID": "PEN-0140",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0216",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Marlin 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0141",
+      "Pool ID": "POOL-0005",
+      "Action ID": "ACN-0018",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Copper 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0142",
+      "Pool ID": "POOL-0005",
+      "Action ID": "ACN-0020",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Tin 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0143",
+      "Pool ID": "POOL-0005",
+      "Action ID": "ACN-0019",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Clay 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0144",
+      "Pool ID": "POOL-0027",
+      "Action ID": "ACN-0099",
+      "Weight": 90,
+      "Status": "Planned",
+      "Notes": "Perch 90%."
+    },
+    {
+      "Pool Entry ID": "PEN-0145",
+      "Pool ID": "POOL-0027",
+      "Action ID": "ACN-0100",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Trout 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0146",
+      "Pool ID": "POOL-0069",
+      "Action ID": "ACN-0013",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": "Duck 100%."
+    },
+    {
+      "Pool Entry ID": "PEN-0147",
+      "Pool ID": "POOL-0011",
+      "Action ID": "ACN-0015",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Weasel 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0148",
+      "Pool ID": "POOL-0011",
+      "Action ID": "ACN-0016",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Rabbit 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0151",
+      "Pool ID": "POOL-0009",
+      "Action ID": "ACN-0017",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Pheasant 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0152",
+      "Pool ID": "POOL-0009",
+      "Action ID": "ACN-0204",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Wild boar hunt 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0153",
+      "Pool ID": "POOL-0009",
+      "Action ID": "ACN-0014",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Elk 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0154",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0107",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Mosstole 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0155",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0184",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Mushrooms 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0156",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0108",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Wild berries 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0157",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0008",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Wild boar combat 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0158",
+      "Pool ID": "POOL-0014",
+      "Action ID": "ACN-0106",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Fernleaf 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0159",
+      "Pool ID": "POOL-0014",
+      "Action ID": "ACN-0017",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Pheasant 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0160",
+      "Pool ID": "POOL-0070",
+      "Action ID": "ACN-0014",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Elk 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0161",
+      "Pool ID": "POOL-0070",
+      "Action ID": "ACN-0205",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Fox 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0162",
+      "Pool ID": "POOL-0071",
+      "Action ID": "ACN-0108",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Wild berries 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0163",
+      "Pool ID": "POOL-0071",
+      "Action ID": "ACN-0109",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Augur weed 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0164",
+      "Pool ID": "POOL-0071",
+      "Action ID": "ACN-0105",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Wild roots 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0165",
+      "Pool ID": "POOL-0072",
+      "Action ID": "ACN-0048",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Poplar 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0166",
+      "Pool ID": "POOL-0072",
+      "Action ID": "ACN-0179",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Vines 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0167",
+      "Pool ID": "POOL-0072",
+      "Action ID": "ACN-0049",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Maple 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0168",
+      "Pool ID": "POOL-0073",
+      "Action ID": "ACN-0013",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Duck 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0169",
+      "Pool ID": "POOL-0073",
+      "Action ID": "ACN-0206",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Giant toad 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0170",
+      "Pool ID": "POOL-0073",
+      "Action ID": "ACN-0180",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Algae 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0171",
+      "Pool ID": "POOL-0074",
+      "Action ID": "ACN-0100",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Trout 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0172",
+      "Pool ID": "POOL-0074",
+      "Action ID": "ACN-0102",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Tuna 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0173",
+      "Pool ID": "POOL-0038",
+      "Action ID": "ACN-0110",
+      "Weight": 55,
+      "Status": "Planned",
+      "Notes": "Moonblossom 55%."
+    },
+    {
+      "Pool Entry ID": "PEN-0174",
+      "Pool ID": "POOL-0038",
+      "Action ID": "ACN-0111",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Starroot 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0175",
+      "Pool ID": "POOL-0038",
+      "Action ID": "ACN-0105",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "Wild roots 5%."
+    },
+    {
+      "Pool Entry ID": "PEN-0176",
+      "Pool ID": "POOL-0016",
+      "Action ID": "ACN-0010",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Ent 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0177",
+      "Pool ID": "POOL-0016",
+      "Action ID": "ACN-0012",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Corrupted ent 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0178",
+      "Pool ID": "POOL-0016",
+      "Action ID": "ACN-0011",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Ancient ent 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0179",
+      "Pool ID": "POOL-0030",
+      "Action ID": "ACN-0049",
+      "Weight": 45,
+      "Status": "Planned",
+      "Notes": "Maple 45%."
+    },
+    {
+      "Pool Entry ID": "PEN-0180",
+      "Pool ID": "POOL-0030",
+      "Action ID": "ACN-0050",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Mahogany 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0181",
+      "Pool ID": "POOL-0030",
+      "Action ID": "ACN-0051",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "Elder yew 5%."
+    },
+    {
+      "Pool Entry ID": "PEN-0182",
+      "Pool ID": "POOL-0006",
+      "Action ID": "ACN-0022",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Iron 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0183",
+      "Pool ID": "POOL-0006",
+      "Action ID": "ACN-0021",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Coal 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0184",
+      "Pool ID": "POOL-0006",
+      "Action ID": "ACN-0020",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Tin 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0185",
+      "Pool ID": "POOL-0006",
+      "Action ID": "ACN-0238",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Cave bat 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0186",
+      "Pool ID": "POOL-0022",
+      "Action ID": "ACN-0112",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": "Mountain goat 100%."
+    },
+    {
+      "Pool Entry ID": "PEN-0187",
+      "Pool ID": "POOL-0029",
+      "Action ID": "ACN-0109",
+      "Weight": 80,
+      "Status": "Planned",
+      "Notes": "Augur weed 80%."
+    },
+    {
+      "Pool Entry ID": "PEN-0188",
+      "Pool ID": "POOL-0029",
+      "Action ID": "ACN-0105",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Wild roots 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0150",
+      "Pool ID": "POOL-0012",
+      "Action ID": "ACN-0105",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Wild roots 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0149",
+      "Pool ID": "POOL-0012",
+      "Action ID": "ACN-0106",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Fernleaf 30%."
     }
   ],
   "Actions": [
@@ -17865,7 +18073,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "No item drops (XP only). Used in Riverside Manor hunting pool.",
+      "Notes": "No item drops (XP only). Used in Riverside Manor and Forest Path hunting pools.",
       "Sprite Asset Key": "actions/acn_hunt_rabbit.webp"
     },
     {
@@ -17886,7 +18094,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.",
+      "Notes": "No item drops (XP only). Used in Mirror Lake hunting pool.",
       "Sprite Asset Key": "actions/acn_hunt_pheasant.webp"
     },
     {
@@ -18074,7 +18282,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No location.",
+      "Notes": "Wired into The Docks fishing pool.",
       "Sprite Asset Key": "actions/acn_catch_tuna.webp"
     },
     {
@@ -18095,7 +18303,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only.",
+      "Notes": "Wired into The Docks fishing pool.",
       "Sprite Asset Key": "actions/acn_catch_shark.webp"
     },
     {
@@ -18520,6 +18728,27 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Production is hard-gated by Proficiency Level."
+    },
+    {
+      "Action ID": "ACN-0238",
+      "Internal Key": "fight_cave_bat",
+      "Display Name": "Fight cave bat",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0027",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 1322,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold. Wired into The Slopes mining pool.",
+      "Sprite Asset Key": "enemies/enm_seagull.webp"
     }
   ],
   "Requirements": [
@@ -18609,19 +18838,6 @@
       "Group Logic": "AND",
       "Requirement Type": "Tool Capability",
       "Reference ID / Value": "hunting_tool",
-      "Operator": null,
-      "Required Value": null,
-      "Status": "Planned",
-      "Notes": "Player may select this Activity only when every possible Action is compatible with the equipped requirement."
-    },
-    {
-      "Requirement ID": "REQ-0009",
-      "Entity Type": "Activity",
-      "Entity ID": "ACT-0016",
-      "Requirement Group": "A",
-      "Group Logic": "AND",
-      "Requirement Type": "Tool Capability",
-      "Reference ID / Value": "woodcutting_tool",
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
@@ -20693,6 +20909,71 @@
       "Required Value": null,
       "Status": "Planned",
       "Notes": null
+    },
+    {
+      "Requirement ID": "REQ-0171",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0089",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Copper mine duck hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0172",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0090",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Forest Path hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0173",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0092",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Small Clearing woodcutting needs a woodcutting tool."
+    },
+    {
+      "Requirement ID": "REQ-0174",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0093",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Mirror Lake hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0175",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0094",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "fishing_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Mirror Lake fishing needs a fishing tool."
     }
   ],
   "Enemies": [
@@ -21204,7 +21485,7 @@
       "Enemy ID": "ENM-0027",
       "Internal Key": "cave_bat",
       "Display Name": "Cave Bat",
-      "Location ID": null,
+      "Location ID": "LOC-0046",
       "Might Level": 14,
       "Vitality Level": 14,
       "Combat Level": 21,
@@ -21219,7 +21500,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_seagull.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Rolls from The Slopes mining pool."
     },
     {
       "Enemy ID": "ENM-0028",

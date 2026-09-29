@@ -21,15 +21,16 @@ describe('hardwood chopping', () => {
     const hardwood = launch.PoolEntries.filter((row) => row['Pool ID'] === 'POOL-0030')
     expect(hardwood).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ 'Action ID': 'ACN-0049', Weight: 70 }),
-        expect.objectContaining({ 'Action ID': 'ACN-0050', Weight: 30 }),
+        expect.objectContaining({ 'Action ID': 'ACN-0049', Weight: 45 }),
+        expect.objectContaining({ 'Action ID': 'ACN-0050', Weight: 50 }),
+        expect.objectContaining({ 'Action ID': 'ACN-0051', Weight: 5 }),
       ]),
     )
-    expect(hardwood).toHaveLength(2)
+    expect(hardwood).toHaveLength(3)
 
     const explorePool = launch.PoolEntries.filter((row) => row['Pool ID'] === 'POOL-0016')
     expect(explorePool.map((row) => row['Action ID']).sort()).toEqual(
-      ['ACN-0010', 'ACN-0011', 'ACN-0012', 'ACN-0051'].sort(),
+      ['ACN-0010', 'ACN-0011', 'ACN-0012'].sort(),
     )
 
     const tool = launch.Requirements.find((row) => row['Requirement ID'] === 'REQ-0110')

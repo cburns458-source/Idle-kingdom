@@ -103,17 +103,23 @@ void main() {
     expect(activity.raw['Location ID'], 'LOC-0022');
     expect(activity.raw['Pool ID'], 'POOL-0028');
     expect(_weights(db, 'POOL-0028'), {'ACN-0102': 50, 'ACN-0103': 45, 'ACN-0104': 5});
-    expect(_weights(db, 'POOL-0004'), {'ACN-0102': 55, 'ACN-0103': 45});
+    expect(_weights(db, 'POOL-0004'), {
+      'ACN-0215': 50,
+      'ACN-0173': 5,
+      'ACN-0103': 35,
+      'ACN-0216': 10,
+    });
   });
 
   test('kingswoods hunting keeps gather boar; woodland supplies rolls combat boar', () {
     expect(_weights(db, 'POOL-0009').keys.toSet(), {'ACN-0014', 'ACN-0017', 'ACN-0204'});
     expect(_weights(db, 'POOL-0010').keys, contains('ACN-0008'));
-    expect(_weights(db, 'POOL-0010')['ACN-0008'], 5);
+    expect(_weights(db, 'POOL-0010')['ACN-0008'], 10);
     expect(activityHasMixedCombatPool(db, 'ACT-0010'), isTrue);
     expect(activityHasMixedCombatPool(db, 'ACT-0009'), isFalse);
     expect(activityHasMixedCombatPool(db, 'ACT-0006'), isTrue);
-    expect(activityHasMixedCombatPool(db, 'ACT-0016'), isTrue);
+    expect(activityHasMixedCombatPool(db, 'ACT-0004'), isTrue);
+    expect(activityHasMixedCombatPool(db, 'ACT-0016'), isFalse);
     expect(activityHasMixedCombatPool(db, 'ACT-0001'), isFalse);
     expect(activityHasMixedCombatPool(db, 'ACT-0012'), isFalse);
   });

@@ -33,15 +33,14 @@ describe('ore pool weights', () => {
     )
   })
 
-  it('adds tin to the mountain side and keeps the trolls', () => {
+  it('prospects The Slopes for iron, coal, tin, and cave bats', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(poolWeights(launch, 'POOL-0006')).toEqual(
       expect.arrayContaining([
-        { actionId: 'ACN-0021', weight: 35 },
-        { actionId: 'ACN-0022', weight: 35 },
-        { actionId: 'ACN-0005', weight: 15 },
-        { actionId: 'ACN-0096', weight: 5 },
+        { actionId: 'ACN-0022', weight: 50 },
+        { actionId: 'ACN-0021', weight: 30 },
         { actionId: 'ACN-0020', weight: 10 },
+        { actionId: 'ACN-0238', weight: 10 },
       ]),
     )
   })
