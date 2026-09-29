@@ -161,7 +161,7 @@ void main() {
     );
     expect(skeleton.drops.map((row) => row.itemId), containsAll(['ITEM-0129', 'ITEM-0012']));
     expect(skeleton.drops.map((row) => row.itemId), isNot(contains('ITEM-0286')));
-    expect(skeleton.drops.firstWhere((row) => row.itemId == 'ITEM-0129').dropRatePercent, 60);
+    expect(skeleton.drops.firstWhere((row) => row.itemId == 'ITEM-0129').dropRatePercent, 80);
     expect(codex.enemy('ENM-0009')!.drops.map((row) => row.itemId), isNot(contains('ITEM-0286')));
     expect(codex.enemy('ENM-0006')!.drops.map((row) => row.itemId), isNot(contains('ITEM-0144')));
 

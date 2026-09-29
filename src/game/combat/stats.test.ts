@@ -138,8 +138,17 @@ describe('might / vitality combat stats', () => {
       expect(enemyCombatXp(enemy!)).toBe(xp)
       expect(enemy!['Location ID']).toBe(locationId)
       if (id === 'ENM-0027') {
-        expect(enemy!['Drop Chance']).toBe(100)
+        expect(enemy!['Drop Chance']).toBe(25)
         expect(enemy!['Reward Table ID']).toBe('RWT-0186')
+      } else if (id === 'ENM-0030') {
+        expect(enemy!['Drop Chance']).toBe(25)
+        expect(enemy!['Reward Table ID']).toBe('RWT-0188')
+      } else if (id === 'ENM-0031') {
+        expect(enemy!['Drop Chance']).toBe(20)
+        expect(enemy!['Reward Table ID']).toBe('RWT-0190')
+      } else if (id === 'ENM-0033') {
+        expect(enemy!['Drop Chance']).toBe(25)
+        expect(enemy!['Reward Table ID']).toBe('RWT-0189')
       } else if (id === 'ENM-0034') {
         expect(enemy!['Drop Chance']).toBe(10)
         expect(enemy!['Reward Table ID']).toBe('RWT-0187')
@@ -147,8 +156,16 @@ describe('might / vitality combat stats', () => {
         expect(enemy!['Drop Chance']).toBe(0)
         expect(enemy!['Reward Table ID']).toBeNull()
       }
-      expect(enemy!['Minimum Gold']).toBe(0)
-      expect(enemy!['Maximum Gold']).toBe(0)
+      if (id === 'ENM-0026') {
+        expect(enemy!['Minimum Gold']).toBe(1)
+        expect(enemy!['Maximum Gold']).toBe(2)
+      } else if (id === 'ENM-0029') {
+        expect(enemy!['Minimum Gold']).toBe(5)
+        expect(enemy!['Maximum Gold']).toBe(6)
+      } else {
+        expect(enemy!['Minimum Gold']).toBe(0)
+        expect(enemy!['Maximum Gold']).toBe(0)
+      }
     }
     for (const [id, name, might, vitality, hp, min, max, xp, locationId] of expansionEnemies) {
       expect(launch.Enemies.find((row) => row['Enemy ID'] === id)).toBeUndefined()

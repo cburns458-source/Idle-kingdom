@@ -17,7 +17,7 @@ function seqRandom(values: number[]): () => number {
 describe('hunting Animal Tendon drops', () => {
   const { launch } = prepareDatabase(rawDatabase)
 
-  it('grants tendons on duck hunt secondary roll without blocking other secondaries on rabbit', () => {
+  it('grants tendons on duck and rabbit secondary rolls', () => {
     const save = createNewSave(launch)
     const duck = launch.Actions.find((row) => row['Action ID'] === 'ACN-0013')!
     const rabbit = launch.Actions.find((row) => row['Action ID'] === 'ACN-0016')!
@@ -27,12 +27,23 @@ describe('hunting Animal Tendon drops', () => {
       expect.objectContaining({ itemId: 'ITEM-0044', quantity: 1 }),
     )
 
-    const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0, 0, 0, 0, 0]))
+    // Primary weight 0 → Raw Rabbit; secondary chance 0 → tendons.
+    const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0, 0, 0]))
     expect(rabbitDrop.loot).toContainEqual(
-      expect.objectContaining({ itemId: 'ITEM-0038', quantity: 1 }),
+      expect.objectContaining({ itemId: 'ITEM-0052', quantity: 1 }),
     )
     expect(rabbitDrop.loot).toContainEqual(
       expect.objectContaining({ itemId: 'ITEM-0044', quantity: 1 }),
+    )
+  })
+
+  it('can roll Rabbit\'s Foot from the rabbit main table', () => {
+    const save = createNewSave(launch)
+    const rabbit = launch.Actions.find((row) => row['Action ID'] === 'ACN-0016')!
+    // chance 0 (pass), weight 0.95 → Rabbit's Foot (90–100 band).
+    const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0.95, 1, 1]))
+    expect(rabbitDrop.loot).toContainEqual(
+      expect.objectContaining({ itemId: 'ITEM-0038', quantity: 1 }),
     )
   })
 

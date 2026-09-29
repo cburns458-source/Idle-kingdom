@@ -72,8 +72,17 @@ void main() {
       expect(enemyCombatXp(enemy), row.$8);
       expect(enemy.locationId, row.$9);
       if (row.$1 == 'ENM-0027') {
-        expect(enemy.dropChance, 100);
+        expect(enemy.dropChance, 25);
         expect(enemy.rewardTableId, 'RWT-0186');
+      } else if (row.$1 == 'ENM-0030') {
+        expect(enemy.dropChance, 25);
+        expect(enemy.rewardTableId, 'RWT-0188');
+      } else if (row.$1 == 'ENM-0031') {
+        expect(enemy.dropChance, 20);
+        expect(enemy.rewardTableId, 'RWT-0190');
+      } else if (row.$1 == 'ENM-0033') {
+        expect(enemy.dropChance, 25);
+        expect(enemy.rewardTableId, 'RWT-0189');
       } else if (row.$1 == 'ENM-0034') {
         expect(enemy.dropChance, 10);
         expect(enemy.rewardTableId, 'RWT-0187');
@@ -81,8 +90,16 @@ void main() {
         expect(enemy.dropChance, 0);
         expect(enemy.rewardTableId, isNull);
       }
-      expect(enemy.minimumGold, 0);
-      expect(enemy.maximumGold, 0);
+      if (row.$1 == 'ENM-0026') {
+        expect(enemy.minimumGold, 1);
+        expect(enemy.maximumGold, 2);
+      } else if (row.$1 == 'ENM-0029') {
+        expect(enemy.minimumGold, 5);
+        expect(enemy.maximumGold, 6);
+      } else {
+        expect(enemy.minimumGold, 0);
+        expect(enemy.maximumGold, 0);
+      }
     }
     for (final row in expansionEnemies) {
       expect(getEnemy(db, row.$1), isNull);
