@@ -26,6 +26,18 @@ const SAME_DAY_EVENING = Date.parse('2026-01-01T23:59:59.999Z')
 const NEXT_DAY = Date.parse('2026-01-02T00:00:00.000Z')
 
 describe('master dwarf roam', () => {
+  it('visits The Slopes, Badlands, and Deep Mines', () => {
+    const name = (id: string) =>
+      launch.Locations.find((row) => row['Location ID'] === id)?.['Display Name']
+    expect(MASTER_DWARF_ROUTE.map(name)).toEqual(['The Slopes', 'Badlands', 'Deep Mines'])
+    expect(QUILL_ROUTE.map(name)).toEqual([
+      'Meadow',
+      'Gathering Outskirts',
+      'Kingswoods',
+      'Copper mine',
+    ])
+  })
+
   it('shares one stop for the UTC day', () => {
     const morning = masterDwarfLocationId(DAY)
     expect(MASTER_DWARF_ROUTE).toContain(morning)
