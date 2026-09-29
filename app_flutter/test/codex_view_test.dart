@@ -118,7 +118,8 @@ void main() {
     await pumpPanel(tester, CodexView(controller: controller, initialEnemyId: 'ENM-0001'));
     expect(find.text('Cow'), findsWidgets);
     expect(find.text('The Farm'), findsWidgets);
-    expect(find.text('Drops'), findsOne);
+    expect(find.textContaining('Primary · 40% drop'), findsOne);
+    expect(find.text('Drops'), findsNothing);
     expect(find.textContaining('Drop rate'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('codex-drop-ITEM-0054')));
@@ -211,7 +212,10 @@ void main() {
     await tester.tap(find.byKey(const Key('codex-obtain-enemy-ENM-0004')));
     await tester.pump();
     expect(find.text('Goblin Chief'), findsWidgets);
-    expect(find.text('Drops'), findsOne);
+    expect(find.textContaining('Primary · 30% drop'), findsOne);
+    expect(find.textContaining('Secondary · 50% drop'), findsOne);
+    expect(find.text('Goblin Staff'), findsWidgets);
+    expect(find.textContaining('Drop rate 100%'), findsOne);
   });
 
   testWidgets('opens a placeholder bestiary enemy with derived combat level', (tester) async {

@@ -173,6 +173,7 @@ export interface CodexEnemyEntry {
   dropChance?: number | null
   locations: CodexLocationRef[]
   drops: CodexItemRef[]
+  tables: CodexActionDropTable[]
 }
 
 export interface CodexActionDropTable {
@@ -524,14 +525,8 @@ export class CodexIndex {
       return a['Display Name'].toLowerCase().localeCompare(b['Display Name'].toLowerCase())
     })
     for (const enemy of enemies) {
-      const tableId = enemy['Reward Table ID']
-      const drops = (tableId ? (tableItems.get(tableId) ?? []) : []).filter(
-        (drop) => drop.itemId !== GOLDEN_SPUD_ITEM_ID && this.itemsById.has(drop.itemId),
-      )
-      const catalogDrops = drops.filter((drop) => {
-        const item = this.itemsById.get(drop.itemId)
-        return item ? includeInCodexCatalog(item) : false
-      })
+      const catalogDrops = catalogTableDrops(tableItems.get(enemy['Reward Table ID'] ?? '') ?? [], this.itemsById)
+      const tables = catalogEnemyTables(enemy, this.db, tableItems, this.itemsById)
       this.enemyOrder.push(enemy['Enemy ID'])
       this.enemiesById.set(enemy['Enemy ID'], {
         enemyId: enemy['Enemy ID'],
@@ -549,6 +544,7 @@ export class CodexIndex {
         dropChance: enemy['Drop Chance'],
         locations: this.enemyLocations(enemy, actionLocations, locations),
         drops: withDropRates(catalogDrops),
+        tables,
       })
     }
 
@@ -704,6 +700,50 @@ function actionTables(
       id: action['Tertiary Reward Table ID'],
       chance: action['Tertiary Drop Chance'],
       label: 'Tertiary',
+    })
+  }
+  return out
+}
+
+function catalogTableDrops(drops: CodexItemRef[], itemsById: Map<string, CodexItemEntry>): CodexItemRef[] {
+  return drops.filter((drop) => {
+    if (drop.itemId === GOLDEN_SPUD_ITEM_ID) return false
+    const item = itemsById.get(drop.itemId)
+    return item ? includeInCodexCatalog(item) : false
+  })
+}
+
+function catalogEnemyTables(
+  enemy: EnemyRow,
+  db: GameDatabase,
+  tableItems: Map<string, CodexItemRef[]>,
+  itemsById: Map<string, CodexItemEntry>,
+): CodexActionDropTable[] {
+  const out: CodexActionDropTable[] = []
+  const primaryId = enemy['Reward Table ID']
+  if (primaryId) {
+    const drops = catalogTableDrops(tableItems.get(primaryId) ?? [], itemsById)
+    if (drops.length > 0) {
+      out.push({
+        label: 'Primary',
+        tableId: primaryId,
+        dropChance: enemy['Drop Chance'],
+        drops: withDropRates(drops),
+      })
+    }
+  }
+  const fight = db.Actions.find((action) => combatEnemyId(action) === enemy['Enemy ID'])
+  if (!fight) return out
+  for (const table of actionTables(fight)) {
+    if (table.label === 'Primary') continue
+    if (table.id === primaryId) continue
+    const drops = catalogTableDrops(tableItems.get(table.id) ?? [], itemsById)
+    if (drops.length === 0) continue
+    out.push({
+      label: table.label,
+      tableId: table.id,
+      dropChance: table.chance,
+      drops: withDropRates(drops),
     })
   }
   return out

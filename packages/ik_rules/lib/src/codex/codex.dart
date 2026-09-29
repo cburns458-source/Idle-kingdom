@@ -281,6 +281,7 @@ class CodexEnemyEntry {
     this.dropChance,
     this.locations = const <CodexLocationRef>[],
     this.drops = const <CodexItemRef>[],
+    this.tables = const <CodexActionDropTable>[],
   });
 
   final String enemyId;
@@ -300,6 +301,7 @@ class CodexEnemyEntry {
   final num? dropChance;
   final List<CodexLocationRef> locations;
   final List<CodexItemRef> drops;
+  final List<CodexActionDropTable> tables;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'enemyId': enemyId,
@@ -317,6 +319,7 @@ class CodexEnemyEntry {
     if (dropChance != null) 'dropChance': dropChance,
     'locations': [for (final row in locations) row.toJson()],
     'drops': [for (final row in drops) row.toJson()],
+    'tables': [for (final row in tables) row.toJson()],
   };
 }
 
@@ -752,18 +755,11 @@ class CodexIndex {
       return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
     });
     for (final enemy in enemyRows) {
-      final tableId = enemy.rewardTableId;
-      final drops = tableId == null
-          ? const <CodexItemRef>[]
-          : [
-              for (final drop in tableItems[tableId] ?? const <CodexItemRef>[])
-                if (drop.itemId != _goldenSpudItemId &&
-                    includeInCodexCatalog(
-                      category: _items[drop.itemId]?.category,
-                      subtype: _items[drop.itemId]?.subtype,
-                    ))
-                  drop,
-            ];
+      final catalogDrops = _catalogTableDrops(
+        tableItems[enemy.rewardTableId] ?? const <CodexItemRef>[],
+        _items,
+      );
+      final tables = _catalogEnemyTables(db, enemy, tableItems, _items);
       _enemyOrder.add(enemy.enemyId);
       _enemies[enemy.enemyId] = CodexEnemyEntry(
         enemyId: enemy.enemyId,
@@ -780,7 +776,8 @@ class CodexIndex {
         maximumGold: enemy.maximumGold,
         dropChance: enemy.dropChance,
         locations: _enemyLocations(enemy, actionLocations, locations),
-        drops: _withDropRates(drops),
+        drops: _withDropRates(catalogDrops),
+        tables: tables,
       );
     }
 
@@ -932,6 +929,58 @@ List<_TableChance> _actionTables(ActionRow action) {
 
 bool _isOreGemTable(ActionRow action, String tableId) {
   return action.relevantSkillId == _miningSkillId && _oreGemTableIds.contains(tableId);
+}
+
+List<CodexItemRef> _catalogTableDrops(List<CodexItemRef> drops, Map<String, CodexItemEntry> items) {
+  return [
+    for (final drop in drops)
+      if (drop.itemId != _goldenSpudItemId &&
+          items[drop.itemId] != null &&
+          includeInCodexCatalog(
+            category: items[drop.itemId]!.category,
+            subtype: items[drop.itemId]!.subtype,
+          ))
+        drop,
+  ];
+}
+
+List<CodexActionDropTable> _catalogEnemyTables(
+  GameDatabase db,
+  EnemyRow enemy,
+  Map<String, List<CodexItemRef>> tableItems,
+  Map<String, CodexItemEntry> items,
+) {
+  final out = <CodexActionDropTable>[];
+  final primaryId = enemy.rewardTableId;
+  if (primaryId != null && primaryId.isNotEmpty) {
+    final drops = _catalogTableDrops(tableItems[primaryId] ?? const <CodexItemRef>[], items);
+    if (drops.isNotEmpty) {
+      out.add(
+        CodexActionDropTable(
+          label: 'Primary',
+          tableId: primaryId,
+          dropChance: enemy.dropChance,
+          drops: _withDropRates(drops),
+        ),
+      );
+    }
+  }
+  final fight = db.actions.firstWhereOrNull((action) => _combatEnemyId(action) == enemy.enemyId);
+  if (fight == null) return out;
+  for (final table in _actionTables(fight)) {
+    if (table.label == 'Primary' || table.id == primaryId) continue;
+    final drops = _catalogTableDrops(tableItems[table.id] ?? const <CodexItemRef>[], items);
+    if (drops.isEmpty) continue;
+    out.add(
+      CodexActionDropTable(
+        label: table.label,
+        tableId: table.id,
+        dropChance: table.chance,
+        drops: _withDropRates(drops),
+      ),
+    );
+  }
+  return out;
 }
 
 List<CodexActionDropTable> _catalogActionTables(

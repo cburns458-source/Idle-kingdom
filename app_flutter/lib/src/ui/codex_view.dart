@@ -653,33 +653,40 @@ class _EnemyPage extends StatelessWidget {
             'Gold ${_range(entry.minimumGold, entry.maximumGold)}',
             style: TextStyle(fontSize: 13, color: ink),
           ),
-        if (entry.dropChance != null)
-          Text(
-            '${_formatPercent(entry.dropChance!)} drop',
-            style: TextStyle(fontSize: 13, color: ink),
-          ),
-        _Section(
-          title: 'Drops',
-          empty: 'No item drops.',
-          ink: ink,
-          muted: muted,
-          children: [
-            for (final drop in entry.drops)
-              _LinkRow(
-                key: Key('codex-drop-${drop.itemId}'),
-                leading: ItemIcon(item: itemsById[drop.itemId], size: 28),
-                title: drop.displayName,
-                detail: [
-                  ?_qty(drop.minQuantity, drop.maxQuantity),
-                  if (drop.dropRatePercent != null)
-                    'Drop rate ${_formatPercent(drop.dropRatePercent!)}',
-                ].join(' · '),
-                ink: ink,
-                muted: muted,
-                onTap: () => onOpenItem(drop.itemId),
-              ),
-          ],
-        ),
+        if (entry.tables.isEmpty)
+          _Section(
+            title: 'Drops',
+            empty: 'No item drops.',
+            ink: ink,
+            muted: muted,
+            children: const [],
+          )
+        else
+          for (final table in entry.tables)
+            _Section(
+              title: table.dropChance == null
+                  ? table.label
+                  : '${table.label} · ${_formatPercent(table.dropChance!)} drop',
+              empty: 'No item drops.',
+              ink: ink,
+              muted: muted,
+              children: [
+                for (final drop in table.drops)
+                  _LinkRow(
+                    key: Key('codex-drop-${drop.itemId}'),
+                    leading: ItemIcon(item: itemsById[drop.itemId], size: 28),
+                    title: drop.displayName,
+                    detail: [
+                      ?_qty(drop.minQuantity, drop.maxQuantity),
+                      if (drop.dropRatePercent != null)
+                        'Drop rate ${_formatPercent(drop.dropRatePercent!)}',
+                    ].join(' · '),
+                    ink: ink,
+                    muted: muted,
+                    onTap: () => onOpenItem(drop.itemId),
+                  ),
+              ],
+            ),
       ],
     );
   }

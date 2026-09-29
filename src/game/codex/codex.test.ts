@@ -176,6 +176,38 @@ describe('codex index', () => {
     expect(fight?.title.toLowerCase()).toContain('goblin')
   })
 
+  it('lists enemy primary and secondary drop tables on the bestiary', () => {
+    const cow = codex.enemy('ENM-0001')!
+    expect(cow.tables.map((table) => table.label)).toEqual(['Primary'])
+    expect(cow.tables[0]?.dropChance).toBe(40)
+    expect(cow.tables[0]?.drops.map((row) => row.itemId)).toEqual(
+      expect.arrayContaining(['ITEM-0054', 'ITEM-0378']),
+    )
+
+    const chief = codex.enemy('ENM-0004')!
+    expect(chief.tables.map((table) => table.label)).toEqual(['Primary', 'Secondary'])
+    const primary = chief.tables[0]!
+    expect(primary.dropChance).toBe(30)
+    expect(primary.drops.map((row) => row.itemId)).not.toContain('ITEM-0122')
+    const secondary = chief.tables[1]!
+    expect(secondary.dropChance).toBe(50)
+    expect(secondary.drops.map((row) => row.itemId)).toEqual(['ITEM-0122'])
+    expect(secondary.drops[0]?.dropRatePercent).toBe(100)
+
+    const pirate = codex.enemy('ENM-0005')!
+    expect(pirate.tables.map((table) => table.label)).toEqual(['Primary', 'Secondary'])
+    expect(pirate.tables[1]?.dropChance).toBe(10)
+    expect(pirate.tables[1]?.drops.map((row) => row.displayName)).toEqual(['Pirate Insignia'])
+    expect(pirate.tables[1]?.drops[0]?.dropRatePercent).toBe(100)
+
+    const dragon = codex.enemy('ENM-0006')!
+    expect(dragon.tables.map((table) => table.label)).toEqual(['Primary'])
+    expect(dragon.tables.flatMap((table) => table.drops.map((row) => row.itemId))).not.toContain(
+      'COS-0012',
+    )
+    expect(codex.enemy('ENM-0025')!.tables).toEqual([])
+  })
+
   it('lists excavator pickaxe quest reward but not chef hat quest', () => {
     const pick = codex.item('ITEM-0313')!
     expect(pick.obtainedFrom.some((row) => row.kind === 'quest' && row.questId === 'QST-0008')).toBe(
