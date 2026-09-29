@@ -136,8 +136,13 @@ describe('might / vitality combat stats', () => {
       expect(enemy!['Combat XP']).toBe(xp)
       expect(enemyCombatXp(enemy!)).toBe(xp)
       expect(enemy!['Location ID']).toBe(locationId)
-      expect(enemy!['Drop Chance']).toBe(0)
-      expect(enemy!['Reward Table ID']).toBeNull()
+      if (id === 'ENM-0027') {
+        expect(enemy!['Drop Chance']).toBe(100)
+        expect(enemy!['Reward Table ID']).toBe('RWT-0186')
+      } else {
+        expect(enemy!['Drop Chance']).toBe(0)
+        expect(enemy!['Reward Table ID']).toBeNull()
+      }
       expect(enemy!['Minimum Gold']).toBe(0)
       expect(enemy!['Maximum Gold']).toBe(0)
     }

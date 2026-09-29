@@ -91,6 +91,7 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0099', 1)
     save = addItemToInventory(save, 'ITEM-0040', 10)
+    save = addItemToInventory(save, 'ITEM-0032', 10)
     save = addItemToInventory(save, 'ITEM-0011', 100)
 
     const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)
@@ -124,6 +125,7 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0099', 1)
     save = addItemToInventory(save, 'ITEM-0040', 10)
+    save = addItemToInventory(save, 'ITEM-0032', 10)
     save = addItemToInventory(save, 'ITEM-0011', 100)
 
     const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)

@@ -94,6 +94,9 @@ describe('spell slots and Strength Spell', () => {
     expect(project['Required Skill 1 Level']).toBe(40)
     expect(project['Input 1 Item ID']).toBe('ITEM-0099')
     expect(project['Input 2 Item ID']).toBe('ITEM-0026')
+    expect(project['Input 3 Item ID']).toBe('ITEM-0413')
+    expect(project['Input 3 Quantity']).toBe(10)
+    expect(project['Input 4 Item ID']).toBe('ITEM-0011')
 
     let save = createNewSave(launch)
     save = addItemToInventory(save, 'ITEM-0297', 2)

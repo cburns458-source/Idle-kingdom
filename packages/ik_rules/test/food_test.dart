@@ -81,7 +81,7 @@ void main() {
     expect(project.raw['Input 2 Item ID'], 'ITEM-0062');
     expect(project.raw['Input 2 Quantity'], 20);
     expect(project.raw['Input 3 Item ID'], 'ITEM-0069');
-    expect(project.raw['Input 3 Quantity'], 20);
+    expect(project.raw['Input 3 Quantity'], 10);
     expect(project.raw['Input 4 Item ID'], 'ITEM-0011');
     expect(project.raw['Input 4 Quantity'], 100);
     expect(

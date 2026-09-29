@@ -70,8 +70,13 @@ void main() {
       expect(enemy.combatXp, row.$7);
       expect(enemyCombatXp(enemy), row.$7);
       expect(enemy.locationId, row.$8);
-      expect(enemy.dropChance, 0);
-      expect(enemy.rewardTableId, isNull);
+      if (row.$1 == 'ENM-0027') {
+        expect(enemy.dropChance, 100);
+        expect(enemy.rewardTableId, 'RWT-0186');
+      } else {
+        expect(enemy.dropChance, 0);
+        expect(enemy.rewardTableId, isNull);
+      }
       expect(enemy.minimumGold, 0);
       expect(enemy.maximumGold, 0);
     }
