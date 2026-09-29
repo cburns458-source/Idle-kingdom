@@ -78,6 +78,7 @@ void main() {
     test('carries anything a shop would price, and nothing else', () {
       final db = _database();
       expect(bazaarItemTradable(db, _ironOre), isTrue);
+      expect(bazaarItemTradable(db, 'ITEM-0377'), isTrue);
       expect(bazaarItemTradable(db, _gold), isFalse);
       expect(bazaarItemTradable(db, 'ITEM-9999'), isFalse);
     });

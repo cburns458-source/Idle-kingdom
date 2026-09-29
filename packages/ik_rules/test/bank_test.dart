@@ -90,12 +90,17 @@ void main() {
     expect(gold.reason, 'Gold cannot be deposited.');
 
     final compost = depositToBank(
-      save.copyWith(inventory: const [InventoryStack(itemId: 'ITEM-0377', quantity: 4)]),
+      createNewSave(db, 0).copyWith(
+        inventory: const [InventoryStack(itemId: 'ITEM-0377', quantity: 4)],
+        bank: const <InventoryStack>[],
+      ),
       0,
       4,
     );
-    expect(compost.ok, isFalse);
-    expect(compost.reason, 'Compost cannot be deposited.');
+    expect(compost.ok, isTrue);
+    expect(compost.save!.inventory, isEmpty);
+    expect(compost.save!.bank.single.itemId, 'ITEM-0377');
+    expect(compost.save!.bank.single.quantity, 4);
 
     final withdrawn = withdrawFromBank(save, 0, 2);
     expect(withdrawn.ok, isTrue);

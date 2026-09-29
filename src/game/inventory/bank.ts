@@ -73,13 +73,12 @@ export function stackIsUnbankableGold(
   return isGoldCurrencyItem(stack.itemId, db) && !stack.enchantmentId
 }
 
-/** Compost stays in the bag; gold currency still uses [stackIsUnbankableGold]. */
+/** Only gold currency is blocked from the chest. */
 export function stackIsUnbankable(
   stack: Pick<InventoryStack, 'itemId' | 'enchantmentId'>,
   db?: GameDatabase,
 ): boolean {
-  if (stackIsUnbankableGold(stack, db)) return true
-  return stack.itemId === 'ITEM-0377'
+  return stackIsUnbankableGold(stack, db)
 }
 
 export function bankSlotsFree(save: Pick<PlayerSave, 'bank'>): number {
@@ -140,10 +139,7 @@ function moveStack(
   if ('reason' in taken) return { ok: false, reason: taken.reason }
   const piece = taken.taken
   if (stackIsUnbankable(piece)) {
-    return {
-      ok: false,
-      reason: piece.itemId === 'ITEM-0377' ? 'Compost cannot be deposited.' : 'Gold cannot be deposited.',
-    }
+    return { ok: false, reason: 'Gold cannot be deposited.' }
   }
   const destination = toIsBank
     ? { ...save, inventory: taken.stacks, bank: bankStacks(save) }

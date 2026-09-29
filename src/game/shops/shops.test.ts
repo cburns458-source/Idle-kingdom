@@ -31,6 +31,14 @@ describe('shops', () => {
     expect(playerBuyPrice(launch, shop, 'ITEM-0102')).toBe(24)
   })
 
+  it('prices compost at 2 gold so shops and the bazaar will take it', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const compost = launch.Items.find((row) => row['Item ID'] === 'ITEM-0377')!
+    expect(compost['Base Sell Value']).toBe(2)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!
+    expect(playerSellPrice(launch, shop, 'ITEM-0377')).toBe(2)
+  })
+
   it('prices Essence at 100× base sell value in the Wizard shop', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0003')!
