@@ -413,7 +413,7 @@ void main() {
   test('lets moonblossom seeds plant at botany 70', () {
     expect(parseBotanySeedSpec(db, moonblossomSeedItemId)?.requiresLevel, 70);
     expect(parseBotanySeedSpec(db, turnipSeedItemId)?.xp, 6000);
-    expect(parseBotanySeedSpec(db, turnipSeedItemId)?.requiresLevel, 27);
+    expect(parseBotanySeedSpec(db, turnipSeedItemId)?.requiresLevel, 18);
   });
 
   test('computes live-plant chance from level, requirement, and compost', () {
@@ -486,7 +486,7 @@ void main() {
       db,
       save.copyWith(
         currentLocationId: 'LOC-0043',
-        skills: const [SkillProgress(skillId: 'SKL-0014', level: 40, xp: 0)],
+        skills: const [SkillProgress(skillId: 'SKL-0014', level: 56, xp: 0)],
         inventory: const [
           InventoryStack(itemId: 'ITEM-0350', quantity: 1),
           InventoryStack(itemId: compostItemId, quantity: 5),

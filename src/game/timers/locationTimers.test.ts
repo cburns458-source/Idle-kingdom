@@ -208,7 +208,7 @@ describe('locationTimers', () => {
       ...save,
       currentLocationId: 'LOC-0043',
       skills: save.skills.map((row) =>
-        row.skillId === 'SKL-0014' ? { ...row, level: 40, xp: 0 } : row,
+        row.skillId === 'SKL-0014' ? { ...row, level: 56, xp: 0 } : row,
       ),
       inventory: [
         { itemId: 'ITEM-0324', quantity: 1 },
@@ -613,7 +613,7 @@ describe('locationTimers', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(parseBotanySeedSpec(launch, MOONBLOSSOM_SEED_ITEM_ID)?.requiresLevel).toBe(70)
     expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.xp).toBe(6000)
-    expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.requiresLevel).toBe(27)
+    expect(parseBotanySeedSpec(launch, TURNIP_SEED_ITEM_ID)?.requiresLevel).toBe(18)
   })
 
   it('computes live-plant chance from level, requirement, and compost', () => {
@@ -684,7 +684,7 @@ describe('locationTimers', () => {
         ...save,
         currentLocationId: 'LOC-0043',
         skills: save.skills.map((row) =>
-          row.skillId === 'SKL-0014' ? { ...row, level: 40, xp: 0 } : row,
+          row.skillId === 'SKL-0014' ? { ...row, level: 56, xp: 0 } : row,
         ),
         inventory: [
           { itemId: 'ITEM-0350', quantity: 1 },
