@@ -97,13 +97,23 @@ describe('specialist hats and quiver', () => {
     expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0011')).toBeUndefined()
   })
 
-  it('adds 5% hunting XP while a quiver is equipped', () => {
+  it('adds 5% hunting XP while a quiver and bow are equipped', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const action = launch.Actions.find((row) => row['Internal Key'] === 'hunt_elk')!
-    const save = withBack(createNewSave(launch), QUIVER_ITEM_ID)
     const bare = gatheringXpReward(launch, createNewSave(launch), action)
-    const worn = gatheringXpReward(launch, save, action)
-    expect(worn).toBe(Math.floor(bare * 1.05))
+    const quiverOnly = withBack(createNewSave(launch), QUIVER_ITEM_ID)
+    expect(gatheringXpReward(launch, quiverOnly, action)).toBe(bare)
+
+    const withBow = {
+      ...quiverOnly,
+      equipment: {
+        slots: {
+          ...quiverOnly.equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0135', quantity: 1 },
+        },
+      },
+    }
+    expect(gatheringXpReward(launch, withBow, action)).toBe(Math.floor(bare * 1.05))
   })
 
   it('rolls alchemy potion output 1–3 and 2–3 with goggles without extra XP', () => {

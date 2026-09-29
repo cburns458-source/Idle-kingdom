@@ -33,7 +33,7 @@ symlink to `content/`.
 | Bows / logs / timber | One stamp each | Cedar, oak, poplar, maple, mahogany, ancient, regular/wooden |
 | Ore / bar | One stamp each | Same metal palette, plus moonstone |
 | Gems | Rough or cut diamond | Sapphire blue, emerald green, ruby red |
-| Fish | Species silhouette | Trout green, salmon pink, tuna blue-gray, shark gray; cooked = browned |
+| Fish | Species silhouette | Trout green, salmon pink, bass blue-gray, shark gray; cooked = browned |
 | Hats / uniques | Named shape | Chef's hat, wizard's hat, and so on |
 
 A copper pickaxe and a tungsten pickaxe keep the same pose; only the head

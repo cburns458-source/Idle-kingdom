@@ -180,7 +180,7 @@ GOBLIN CAMP
 - Dangerous for players below approximately Combat Level 10.
 
 THE DOCKS
-- Fishing Activity: Fish the river and coast (tuna and shark).
+- Fishing Activity: Fish the river and coast (bass and shark).
 - Combat Activity: Try to reason with the pirates (pirate encounters, with a seagull as a rarer nuisance fight).
 - The seagull fight has no loot.
 - Coastal shops or NPCs and transportation interactions may exist.
@@ -238,7 +238,7 @@ CAVES BENEATH THE MOUNTAIN
 Sub-map reached from Cave Entrance. Underground connected Location Nodes:
 - Deep Mines: Iron Ore, Coal, and rare gem Actions.
 - Dwarven Mining Store: improved pickaxes and better ore prices. Requires Mining Level 40.
-- Abandoned Mineshaft: rare-ore mining (titanium and tungsten) and Fish the deep pools (tuna, shark, and a rare Baby Giant Squid).
+- Abandoned Mineshaft: rare-ore mining (titanium and tungsten) and Fish the deep pools (bass, shark, and a rare Baby Giant Squid).
 
 CASTLE AND CASTLE GROUNDS
 Sub-map:
@@ -535,7 +535,7 @@ Current fish:
 - Raw Crawfish.
 - Raw Trout.
 - Raw Salmon.
-- Raw Tuna.
+- Raw Bass.
 - Raw Shark.
 
 8.3 HARVESTING
@@ -648,7 +648,7 @@ Current products:
 - Cooked Crawfish.
 - Cooked Trout.
 - Cooked Salmon.
-- Cooked Tuna.
+- Cooked Bass.
 - Cooked Shark.
 - Cooked Rabbit.
 - Cooked Pheasant.
