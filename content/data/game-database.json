@@ -35146,11 +35146,11 @@
       "Map Node ID": "MN-0058",
       "Map ID": "MAP-0001",
       "Location ID": "LOC-0053",
-      "X": 46,
-      "Y": 50,
+      "X": 50,
+      "Y": 47,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "South of The Citadel on the riverside approach."
+      "Notes": "Just south of The Citadel; east of Town to avoid label overlap."
     }
   ],
   "Books": [

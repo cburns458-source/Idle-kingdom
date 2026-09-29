@@ -33,7 +33,7 @@ describe('map node activity batch one', () => {
     expect(loc['Display Name']).toBe('Riverside Manor')
     expect(loc['Map ID']).toBe(MAIN_MAP_ID)
     expect(loc['Parent Location ID']).toBeFalsy()
-    expect(MAIN_MAP_NODE_LAYOUT[RIVERSIDE_MANOR_ID]).toEqual({ x: 46, y: 50 })
+    expect(MAIN_MAP_NODE_LAYOUT[RIVERSIDE_MANOR_ID]).toEqual({ x: 50, y: 47 })
 
     const acts = launch.Activities.filter((row) => row['Location ID'] === RIVERSIDE_MANOR_ID)
     expect(acts.map((row) => row['Contextual Name']).sort()).toEqual([
