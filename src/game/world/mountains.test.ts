@@ -103,7 +103,6 @@ describe('Mountains sub-map', () => {
     expect(camp['Danger Warning Combat Level']).toBe(77)
     expect(launch.Facilities.filter((row) => row['Location ID'] === GIANT_CAMP_ID).map((row) => row['Facility ID']).sort()).toEqual([
       'FAC-0023',
-      'FAC-0024',
       'FAC-0025',
       'FAC-0026',
     ])

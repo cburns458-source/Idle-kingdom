@@ -12868,19 +12868,6 @@
       "Skill ID": "SKL-0007"
     },
     {
-      "Facility ID": "FAC-0024",
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Description": "Shares Town crafting recipes via facility alias.",
-      "Notes": null,
-      "Sprite Asset Key": "workstations/ws_crafting_bench.webp",
-      "Internal Key": "giant_camp_crafting",
-      "Display Name": "Giant Camp Crafting Workshop",
-      "Location ID": "LOC-0049",
-      "Facility Type": "Production Station",
-      "Skill ID": "SKL-0009"
-    },
-    {
       "Facility ID": "FAC-0025",
       "Status": "Planned",
       "Release Phase": "Launch",
@@ -14157,19 +14144,6 @@
       "Contextual Name": "Cook at the kitchen",
       "Location ID": "LOC-0049",
       "Description": "Timed Cooking queue using selected recipe at the Giant Camp kitchen."
-    },
-    {
-      "Activity ID": "ACT-0098",
-      "Danger Warning Combat Level": null,
-      "Pool ID": null,
-      "Pool Internal Key": null,
-      "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Shares Town crafting recipes via FAC-0024 alias.",
-      "Internal Key": "craft_giant_camp",
-      "Contextual Name": "Craft components",
-      "Location ID": "LOC-0049",
-      "Description": "Timed Crafting queue using selected recipe at the Giant Camp workshop."
     },
     {
       "Activity ID": "ACT-0099",
@@ -21245,19 +21219,6 @@
       "Group Logic": "AND",
       "Requirement Type": "Station",
       "Reference ID / Value": "FAC-0023",
-      "Operator": null,
-      "Required Value": null,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Requirement ID": "REQ-0180",
-      "Entity Type": "Activity",
-      "Entity ID": "ACT-0098",
-      "Requirement Group": "A",
-      "Group Logic": "AND",
-      "Requirement Type": "Station",
-      "Reference ID / Value": "FAC-0024",
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",

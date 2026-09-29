@@ -30,10 +30,9 @@ describe('map node activity batch three', () => {
     expect(poolWeights(launch, 'POOL-0076')).toEqual(['ACN-0202:90', 'ACN-0221:10'])
   })
 
-  it('adds Giant Camp kitchen, crafting, metallurgy, and smithing stations', () => {
+  it('adds Giant Camp kitchen, metallurgy, and smithing stations', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(recipeFacilityIdForLookup('FAC-0023')).toBe('FAC-0001')
-    expect(recipeFacilityIdForLookup('FAC-0024')).toBe('FAC-0003')
     expect(recipeFacilityIdForLookup('FAC-0025')).toBe('FAC-0004')
     expect(projectFacilityIdForLookup('FAC-0026')).toBe('FAC-0005')
     const stations = specialProductionStationsAt(launch, GIANT_CAMP_ID)
@@ -42,8 +41,10 @@ describe('map node activity batch three', () => {
       (row) => row['Contextual Name'],
     )
     expect(acts).toEqual(
-      expect.arrayContaining(['Raid the giant camp', 'Cook at the kitchen', 'Craft components', 'Refine metals']),
+      expect.arrayContaining(['Raid the giant camp', 'Cook at the kitchen', 'Refine metals']),
     )
+    expect(acts).not.toContain('Craft components')
+    expect(launch.Facilities.some((row) => row['Facility ID'] === 'FAC-0024')).toBe(false)
   })
 
   it('rewrites Peak, Deep Mines combat, and abandoned-shaft fishing', () => {

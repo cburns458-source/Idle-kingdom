@@ -89,7 +89,7 @@ void main() {
       db.facilities
           .where((row) => row.raw['Location ID'] == giantCampId)
           .map((row) => row.facilityId),
-      unorderedEquals(<String>['FAC-0023', 'FAC-0024', 'FAC-0025', 'FAC-0026']),
+      unorderedEquals(<String>['FAC-0023', 'FAC-0025', 'FAC-0026']),
     );
 
     final save = createNewSave(db, 0);

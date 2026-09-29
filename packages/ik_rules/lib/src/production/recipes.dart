@@ -95,7 +95,6 @@ const Map<String, String> _sharedRecipeFacilityIds = <String, String>{
   'FAC-0022': 'FAC-0001',
   'FAC-0023': 'FAC-0001',
   'FAC-0013': 'FAC-0003',
-  'FAC-0024': 'FAC-0003',
   'FAC-0014': 'FAC-0004',
   'FAC-0025': 'FAC-0004',
   'FAC-0015': 'FAC-0006',
