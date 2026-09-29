@@ -20,7 +20,7 @@ describe('woodcutting byproduct drops', () => {
     return entry?.['Reward ID / Value']
   }
 
-  it('drops only named byproducts for willow, cinnamon, and elder yew', () => {
+  it('drops only named byproducts for willow and elder yew', () => {
     expect(primaryItem('ACN-0200')).toBe('ITEM-0386')
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0386')?.['Display Name']).toBe(
       'Willow Branches',
@@ -28,12 +28,12 @@ describe('woodcutting byproduct drops', () => {
     expect(action('ACN-0200')['Drop Chance']).toBe(42.5)
     expect(action('ACN-0200')['Secondary Reward Table ID']).toBe('RWT-0182')
 
-    expect(primaryItem('ACN-0201')).toBe('ITEM-0387')
-    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0387')?.['Display Name']).toBe(
-      'Cinnamon Bark',
-    )
-    expect(action('ACN-0201')['Drop Chance']).toBe(42.5)
-    expect(action('ACN-0201')['Secondary Reward Table ID']).toBeNull()
+    // Cinnamon woodcutting is Expansion-gated until it has a world pool.
+    expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0201')).toBeUndefined()
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0387')).toBeUndefined()
+    const cinnamon = source.Actions.find((row) => row['Action ID'] === 'ACN-0201')!
+    expect(cinnamon['Release Phase']).toBe('Expansion')
+    expect(cinnamon['Drop Chance']).toBe(42.5)
 
     expect(primaryItem('ACN-0051')).toBe('ITEM-0219')
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0219')?.['Display Name']).toBe(
