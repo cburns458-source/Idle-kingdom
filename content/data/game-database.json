@@ -7237,7 +7237,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "salmon_roe",
-      "Notes": "No gather source yet; Arcana spell ingredient.",
+      "Notes": "Placeholder art: algae. No gather source yet; Arcana spell ingredient.",
       "Base Sell Value": 40,
       "Stackable": null
     },
@@ -7254,7 +7254,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "eel_tail",
-      "Notes": "No gather source yet; Arcana spell ingredient.",
+      "Notes": "Placeholder art: raw eel. No gather source yet; Arcana spell ingredient.",
       "Base Sell Value": 80,
       "Stackable": null
     },
@@ -7271,7 +7271,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "fox_tail",
-      "Notes": "Guaranteed from Hunt fox.",
+      "Notes": "Placeholder art: moonhorn hide. Guaranteed from Hunt fox.",
       "Base Sell Value": 35,
       "Stackable": null
     },
@@ -7288,7 +7288,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "bat_wings",
-      "Notes": "Guaranteed from Cave Bat.",
+      "Notes": "Placeholder art: butterfly wing. Guaranteed from Cave Bat.",
       "Base Sell Value": 45,
       "Stackable": null
     }
