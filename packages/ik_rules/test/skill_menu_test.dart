@@ -284,31 +284,18 @@ void main() {
     expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 66), isTrue);
 
     final view = skillMenuView(launch, 'SKL-0007');
-    expect(view.tabs.map((tab) => tab.label), ['Production']);
-    final production = view.tabs.firstWhere((tab) => tab.id == 'production');
-    expect(production.sections.map((section) => section.title).toList(), [
-      'Fish',
-      'Meat',
-      'Stew',
-      'Other',
-    ]);
-    expect(
-      production.sections
-          .firstWhere((section) => section.title == 'Fish')
-          .entries
-          .any((row) => row.displayName == 'Cooked perch'),
-      isTrue,
-    );
-    List<SkillMenuListItem> section(String title) =>
-        production.sections.firstWhere((row) => row.title == title).entries;
-    expect(section('Fish').any((row) => row.displayName == 'Cooked swordfish'), isFalse);
-    expect(section('Fish').any((row) => row.displayName == 'Cooked marlin'), isTrue);
-    expect(section('Other').any((row) => row.displayName == 'Cooked swordfish'), isFalse);
-    expect(section('Other').any((row) => row.displayName == 'Cooked marlin'), isFalse);
-    expect(section('Meat').any((row) => row.displayName == 'Cooked beef'), isTrue);
-    expect(section('Stew').any((row) => row.displayName == 'Crawfish Stew'), isTrue);
-    expect(section('Stew').any((row) => row.displayName == 'Soup Stock'), isTrue);
-    expect(section('Other').any((row) => row.displayName.toLowerCase().contains('potato')), isTrue);
+    expect(view.tabs.map((tab) => tab.label), ['Fish', 'Meat', 'Stew', 'Other']);
+    List<SkillMenuListItem> tab(String id) =>
+        view.tabs.firstWhere((row) => row.id == id).sections.first.entries;
+    expect(tab('fish').any((row) => row.displayName == 'Cooked perch'), isTrue);
+    expect(tab('fish').any((row) => row.displayName == 'Cooked swordfish'), isFalse);
+    expect(tab('fish').any((row) => row.displayName == 'Cooked marlin'), isTrue);
+    expect(tab('other').any((row) => row.displayName == 'Cooked swordfish'), isFalse);
+    expect(tab('other').any((row) => row.displayName == 'Cooked marlin'), isFalse);
+    expect(tab('meat').any((row) => row.displayName == 'Cooked beef'), isTrue);
+    expect(tab('stew').any((row) => row.displayName == 'Crawfish Stew'), isTrue);
+    expect(tab('stew').any((row) => row.displayName == 'Soup Stock'), isTrue);
+    expect(tab('other').any((row) => row.displayName.toLowerCase().contains('potato')), isTrue);
 
     final save = createNewSave(launch, 0);
     final book = recipeBookForSkill(save, launch, 'SKL-0007');

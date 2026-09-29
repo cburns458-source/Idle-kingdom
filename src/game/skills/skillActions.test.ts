@@ -289,21 +289,14 @@ describe('skill menu entries', () => {
     )
   })
 
-  it('keeps cooking fish/meat/stew/other sections under Production', () => {
+  it('splits cooking into fish/meat/stew/other tabs', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const cooking = skillMenuView(launch, 'SKL-0007')
-    expect(cooking.tabs.map((tab) => tab.label)).toEqual(['Production'])
-    const production = cooking.tabs.find((tab) => tab.id === 'production')
-    expect(production?.sections.map((section) => section.title)).toEqual([
-      'Fish',
-      'Meat',
-      'Stew',
-      'Other',
-    ])
-    const fish = production?.sections.find((section) => section.title === 'Fish')?.entries ?? []
-    const meat = production?.sections.find((section) => section.title === 'Meat')?.entries ?? []
-    const stew = production?.sections.find((section) => section.title === 'Stew')?.entries ?? []
-    const other = production?.sections.find((section) => section.title === 'Other')?.entries ?? []
+    expect(cooking.tabs.map((tab) => tab.label)).toEqual(['Fish', 'Meat', 'Stew', 'Other'])
+    const fish = cooking.tabs.find((tab) => tab.id === 'fish')?.sections[0]?.entries ?? []
+    const meat = cooking.tabs.find((tab) => tab.id === 'meat')?.sections[0]?.entries ?? []
+    const stew = cooking.tabs.find((tab) => tab.id === 'stew')?.sections[0]?.entries ?? []
+    const other = cooking.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
     expect(fish.some((item) => item.displayName === 'Cooked perch')).toBe(true)
     expect(fish.some((item) => item.displayName === 'Cooked swordfish')).toBe(false)
     expect(fish.some((item) => item.displayName === 'Cooked marlin')).toBe(true)
@@ -321,17 +314,16 @@ describe('skill menu entries', () => {
     )
   })
 
-  it('puts crafting/metallurgy/alchemy recipes on Production', () => {
+  it('keeps crafting/metallurgy/alchemy on a single Actions tab', () => {
     const { launch } = prepareDatabase(rawDatabase)
     for (const skillId of ['SKL-0008', 'SKL-0009', 'SKL-0010'] as const) {
       const view = skillMenuView(launch, skillId)
-      expect(view.tabs.map((tab) => tab.label)).toEqual(['Production'])
+      expect(view.tabs.map((tab) => tab.label)).toEqual(['Actions'])
       expect(view.tabs[0]?.sections[0]?.entries.length).toBeGreaterThan(0)
     }
     const crafting = skillMenuView(launch, 'SKL-0009')
-    const production =
-      crafting.tabs.find((tab) => tab.id === 'production')?.sections[0]?.entries ?? []
-    expect(production.some((item) => item.displayName === 'Craft lockpicks')).toBe(true)
+    const actions = crafting.tabs.find((tab) => tab.id === 'actions')?.sections[0]?.entries ?? []
+    expect(actions.some((item) => item.displayName === 'Craft lockpicks')).toBe(true)
   })
 
   it('groups smithing by material and numbers every menu row', () => {

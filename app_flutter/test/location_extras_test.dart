@@ -800,7 +800,8 @@ void main() {
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
-    expect(find.widgetWithText(GameButton, 'Activities'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Activities'), findsNothing);
+    expect(find.widgetWithText(GameButton, 'Produce'), findsOne);
     expect(find.widgetWithText(GameButton, 'People'), findsOne);
     expect(find.widgetWithText(GameButton, 'Patches'), findsNothing);
     expect(find.widgetWithText(GameButton, 'Traps'), findsNothing);
@@ -1211,7 +1212,7 @@ void main() {
     expect(find.text('Apothecary'), findsWidgets);
   });
 
-  testWidgets('kitchen steal stays in Activities', (tester) async {
+  testWidgets('kitchen steal stays on Produce', (tester) async {
     final base = startedCharacter(database);
     await pumpLocationController(
       tester,
@@ -1224,8 +1225,10 @@ void main() {
         ],
       ),
     );
-    expect(find.widgetWithText(GameButton, 'Activities'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Produce'), findsOne);
+    expect(find.text('Cook at the kitchen'), findsOne);
     expect(find.text('Steal from the kitchen'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Activities'), findsNothing);
     expect(find.widgetWithText(GameButton, 'Shops'), findsNothing);
   });
 

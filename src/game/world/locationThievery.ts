@@ -28,7 +28,7 @@ export function isBankThieveryActivity(db: GameDatabase, activity: ActivityRow):
 
 /**
  * Shop steals listed under the Shops tab when this location has a merchant.
- * Kitchen steals stay in Activities (no shop row; production blocks People routing).
+ * Kitchen steals stay on Produce (no shop row; production blocks People routing).
  */
 export function isShopThieveryActivity(
   db: GameDatabase,
@@ -42,7 +42,7 @@ export function isShopThieveryActivity(
 
 /**
  * NPC-targeted steals (barracks) when there is no shop.
- * Kitchen / production sites keep steals in Activities even if an NPC is present.
+ * Kitchen / production sites keep steals on Produce even if an NPC is present.
  */
 export function isNpcThieveryActivity(
   db: GameDatabase,
@@ -68,7 +68,10 @@ function locationHasProductionWorkstation(
   )
 }
 
-/** True when an activity should stay in the Activities band (not Shops/People/Bank). */
+/**
+ * Thievery that belongs on Produce with kitchen/workstation crafts
+ * (not Shops / People / Bank).
+ */
 export function isActivityBandThievery(
   db: GameDatabase,
   save: PlayerSave,
@@ -80,6 +83,15 @@ export function isActivityBandThievery(
   if (isShopThieveryActivity(db, save, activity)) return false
   if (isNpcThieveryActivity(db, save, activity)) return false
   return actions.some(isThieveryLockpickAction) || actions.some(isThieveryShopAction)
+}
+
+/** Standard production stations plus Produce-band thievery (kitchen steal, non-bank lockpicks). */
+export function isProduceBandActivity(
+  db: GameDatabase,
+  save: PlayerSave,
+  activity: ActivityRow,
+): boolean {
+  return isStandardProductionActivity(db, activity) || isActivityBandThievery(db, save, activity)
 }
 
 export function isThieveryActivity(db: GameDatabase, activity: ActivityRow): boolean {

@@ -164,11 +164,11 @@ void main() {
     await tester.tap(find.text('Recipe book'));
     await tester.pump();
     expect(find.textContaining('Unlocks at Cooking'), findsWidgets);
-    // Cooking book is a single Production tab with Fish/Meat/Stew/Other sections.
-    expect(find.text('Fish'), findsWidgets);
-    expect(find.text('Meat'), findsWidgets);
-    expect(find.text('Stew'), findsWidgets);
-    expect(find.text('Other'), findsWidgets);
+    // Cooking book uses Fish/Meat/Stew/Other tabs (skill menu underneath still has them too).
+    expect(find.widgetWithText(GameButton, 'Fish'), findsWidgets);
+    expect(find.widgetWithText(GameButton, 'Meat'), findsWidgets);
+    expect(find.widgetWithText(GameButton, 'Stew'), findsWidgets);
+    expect(find.widgetWithText(GameButton, 'Other'), findsWidgets);
     expect(find.textContaining('Cooked perch'), findsWidgets);
   });
 

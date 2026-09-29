@@ -681,6 +681,7 @@ class _LocationViewState extends State<LocationView> {
     }
 
     add('Activities', _activities(locationId));
+    add('Produce', _produce(locationId));
     add('Patches', [
       ..._locationTimers(locationId, kind: 'botany'),
       ..._compostCollect(locationId),
@@ -737,6 +738,7 @@ class _LocationViewState extends State<LocationView> {
           (activity) =>
               !isCompostCollectActivity(activity) &&
               activityVisibleForSave(controller.db, controller.save, activity.activityId) &&
+              !isProduceBandActivity(controller.db, controller.save, activity) &&
               !_thieveryMovedOutOfActivities(activity),
         )
         .toList();
@@ -753,6 +755,11 @@ class _LocationViewState extends State<LocationView> {
         ),
     ];
   }
+
+  List<Widget> _produce(String locationId) => _thieveryActivityCards(
+    locationId,
+    (activity) => isProduceBandActivity(controller.db, controller.save, activity),
+  );
 
   bool _thieveryMovedOutOfActivities(ActivityRow activity) {
     final db = controller.db;
