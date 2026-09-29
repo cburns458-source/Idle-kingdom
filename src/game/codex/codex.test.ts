@@ -149,7 +149,7 @@ describe('codex index', () => {
     )
     expect(codex.enemy('ENM-0008')!.drops.map((row) => row.itemId)).not.toContain('ITEM-0286')
     expect(codex.enemy('ENM-0008')!.drops.find((row) => row.itemId === 'ITEM-0129')?.dropRatePercent).toBe(
-      60,
+      80,
     )
     expect(codex.enemy('ENM-0009')!.drops.map((row) => row.itemId)).not.toContain('ITEM-0286')
     expect(codex.enemy('ENM-0006')!.drops.map((row) => row.itemId)).not.toContain('ITEM-0144')
