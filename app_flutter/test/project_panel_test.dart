@@ -42,7 +42,7 @@ void main() {
           .toList(),
       inventory: const [
         InventoryStack(itemId: 'ITEM-0074', quantity: 40),
-        InventoryStack(itemId: 'ITEM-0214', quantity: 8),
+        InventoryStack(itemId: 'ITEM-0214', quantity: 20),
         InventoryStack(itemId: 'ITEM-0084', quantity: 30),
       ],
     );

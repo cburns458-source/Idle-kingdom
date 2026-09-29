@@ -137,7 +137,7 @@ describe('special production', () => {
     let save = createNewSave(launch)
     save = { ...save, unlockedNpcIds: ['NPC-0003'], currentLocationId: 'LOC-0025' }
     save = addItemToInventory(save, 'ITEM-0074', 10)
-    save = addItemToInventory(save, 'ITEM-0214', 2)
+    save = addItemToInventory(save, 'ITEM-0214', 5)
     save = addItemToInventory(save, 'ITEM-0084', 10)
 
     const known = projectsForFacility(launch, 'FAC-0005', 'SKL-0011')
@@ -148,8 +148,8 @@ describe('special production', () => {
     if (!result.ok) return
 
     expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0132')?.quantity).toBe(1)
-    expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0074')?.quantity).toBe(3)
-    expect(result.save.skills.find((skill) => skill.skillId === 'SKL-0011')?.xp).toBe(2800)
+    expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0074')?.quantity).toBe(2)
+    expect(result.save.skills.find((skill) => skill.skillId === 'SKL-0011')?.xp).toBe(2560)
     expect(result.save.currentActivityId).toBeNull()
   })
 
@@ -158,7 +158,7 @@ describe('special production', () => {
     let save = createNewSave(launch)
     save = { ...save, currentLocationId: 'LOC-0025' }
     save = addItemToInventory(save, 'ITEM-0074', 10)
-    save = addItemToInventory(save, 'ITEM-0214', 2)
+    save = addItemToInventory(save, 'ITEM-0214', 5)
     save = addItemToInventory(save, 'ITEM-0084', 10)
     const result = completeSpecialProject(launch, save, 'PRJ-0007', 1)
     expect(result.ok).toBe(false)
@@ -218,7 +218,7 @@ describe('special production', () => {
       currentLocationId: 'LOC-0001',
     }
     save = addItemToInventory(save, 'ITEM-0074', 10)
-    save = addItemToInventory(save, 'ITEM-0214', 2)
+    save = addItemToInventory(save, 'ITEM-0214', 5)
     save = addItemToInventory(save, 'ITEM-0084', 10)
     const result = completeSpecialProject(launch, save, 'PRJ-0007', 1)
     expect(result.ok).toBe(false)
