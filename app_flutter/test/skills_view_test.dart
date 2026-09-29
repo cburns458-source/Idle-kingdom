@@ -203,14 +203,24 @@ void main() {
     final popup = find.byKey(const Key('game-popup'));
     expect(find.descendant(of: popup, matching: find.text('Weapons')), findsOne);
     await tester.scrollUntilVisible(
-      find.textContaining('Tungsten weapons'),
+      find.textContaining('60. Tungsten weapons'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.textContaining('Tungsten weapons'), findsOne);
+    expect(find.textContaining('60. Tungsten weapons'), findsOne);
+    expect(find.textContaining('50. Tungsten weapons'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.textContaining('70. Titanium weapons'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('70. Titanium weapons'), findsOne);
     expect(find.textContaining('Tungsten Sword'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
     expect(find.textContaining('Wooden weapons'), findsOne);
@@ -247,14 +257,24 @@ void main() {
     await tester.pump();
     expect(find.textContaining('Leather equipment'), findsOne);
     await tester.scrollUntilVisible(
-      find.textContaining('Tungsten equipment'),
+      find.textContaining('60. Tungsten equipment'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.textContaining('Tungsten equipment'), findsOne);
+    expect(find.textContaining('60. Tungsten equipment'), findsOne);
+    expect(find.textContaining('50. Tungsten equipment'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.textContaining('70. Titanium equipment'),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('game-popup')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.textContaining('70. Titanium equipment'), findsOne);
     expect(find.textContaining('Tungsten Helmet'), findsNothing);
     expect(find.textContaining('Tungsten Shield'), findsNothing);
     expect(find.textContaining('Tungsten Sword'), findsNothing);

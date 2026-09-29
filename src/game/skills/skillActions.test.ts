@@ -83,7 +83,12 @@ describe('skill menu entries', () => {
     const weapons = might.tabs.find((tab) => tab.id === 'weapons')?.sections[0]?.entries ?? []
     const mightOther = might.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
     const vitalityOther = vitality.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
-    expect(gear.some((item) => item.displayName === 'Tungsten equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Tungsten equipment' && item.level === 60)).toBe(
+      true,
+    )
+    expect(gear.some((item) => item.displayName === 'Titanium equipment' && item.level === 70)).toBe(
+      true,
+    )
     expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Wooden equipment' && item.level === 1)).toBe(true)
@@ -95,7 +100,12 @@ describe('skill menu entries', () => {
     expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
-    expect(weapons.some((item) => item.displayName === 'Tungsten weapons')).toBe(true)
+    expect(weapons.some((item) => item.displayName === 'Tungsten weapons' && item.level === 60)).toBe(
+      true,
+    )
+    expect(weapons.some((item) => item.displayName === 'Titanium weapons' && item.level === 70)).toBe(
+      true,
+    )
     expect(weapons.some((item) => item.displayName === 'Wooden weapons' && item.level === 1)).toBe(true)
     expect(weapons.some((item) => item.displayName === 'Copper weapons' && item.level === 1)).toBe(true)
     expect(weapons.findIndex((item) => item.displayName === 'Wooden weapons')).toBeLessThan(
