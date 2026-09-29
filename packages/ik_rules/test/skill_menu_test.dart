@@ -81,7 +81,8 @@ void main() {
     expect(weapons.any((row) => row.displayName == 'Copper weapons' && row.level == 1), isTrue);
     final weaponNames = weapons.map((row) => row.displayName).toList();
     expect(weaponNames.indexOf('Wooden weapons'), lessThan(weaponNames.indexOf('Copper weapons')));
-    expect(weapons.any((row) => row.displayName == 'Tungsten weapons'), isTrue);
+    expect(weapons.any((row) => row.displayName == 'Tungsten weapons' && row.level == 60), isTrue);
+    expect(weapons.any((row) => row.displayName == 'Titanium weapons' && row.level == 70), isTrue);
     expect(weapons.any((row) => row.displayName == 'Steel weapons'), isTrue);
     expect(weapons.any((row) => row.displayName == 'Wooden Sword'), isFalse);
     expect(weapons.any((row) => row.displayName == 'Tungsten Sword'), isFalse);
@@ -92,7 +93,8 @@ void main() {
         .firstWhere((tab) => tab.id == 'gear')
         .sections
         .expand((section) => section.entries);
-    expect(gear.any((row) => row.displayName == 'Tungsten equipment'), isTrue);
+    expect(gear.any((row) => row.displayName == 'Tungsten equipment' && row.level == 60), isTrue);
+    expect(gear.any((row) => row.displayName == 'Titanium equipment' && row.level == 70), isTrue);
     expect(gear.any((row) => row.displayName == 'Reinforced Steel equipment'), isTrue);
     expect(gear.any((row) => row.displayName == 'Bull Horn equipment'), isFalse);
     expect(gear.any((row) => row.displayName == 'Wooden equipment' && row.level == 1), isTrue);

@@ -668,20 +668,27 @@ List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
   ];
 }
 
-List<SkillMenuListItem> _combatGearItems(GameDatabase db) {
-  return <SkillMenuListItem>[
-    ..._projectItemsWhere(db, (item, _) => _isCombatGearItem(item), <String>{
-      smithingSkillId,
-      artisanrySkillId,
-    }),
-    ..._woodenItems(db, _woodenCombatGear),
+List<SkillMenuListItem> _combatGearItems(GameDatabase db, String skillId) {
+  return [
+    for (final item in <SkillMenuListItem>[
+      ..._projectItemsWhere(db, (item, _) => _isCombatGearItem(item), <String>{
+        smithingSkillId,
+        artisanrySkillId,
+      }),
+      ..._woodenItems(db, _woodenCombatGear),
+    ])
+      SkillMenuListItem(
+        id: item.id,
+        displayName: item.displayName,
+        level: _equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
+      ),
   ];
 }
 
 List<SkillMenuListItem> _combatEquipmentEntries(GameDatabase db) {
   final grouped = <SkillMenuListItem>[];
   final seen = <String>{};
-  for (final item in _combatGearItems(db)) {
+  for (final item in _combatGearItems(db, vitalitySkillId)) {
     final material = _armorMaterial(item.displayName);
     if (material == null || !_isGroupedArmorMaterial(material)) continue;
     final key = '${item.level ?? ''}|$material';
@@ -694,7 +701,7 @@ List<SkillMenuListItem> _combatEquipmentEntries(GameDatabase db) {
 List<SkillMenuListItem> _combatWeaponEntries(GameDatabase db) {
   final grouped = <SkillMenuListItem>[];
   final seen = <String>{};
-  for (final item in _combatGearItems(db)) {
+  for (final item in _combatGearItems(db, mightSkillId)) {
     if (_armorMaterial(item.displayName) != null) continue;
     final material = _weaponMaterial(item.displayName);
     if (material == null || !_isWeaponMenuMaterial(material)) continue;
@@ -705,9 +712,9 @@ List<SkillMenuListItem> _combatWeaponEntries(GameDatabase db) {
   return _dedupeByName(grouped);
 }
 
-List<SkillMenuListItem> _combatOtherEntries(GameDatabase db) {
+List<SkillMenuListItem> _combatOtherEntries(GameDatabase db, String skillId) {
   return _dedupeByName([
-    for (final item in _combatGearItems(db))
+    for (final item in _combatGearItems(db, skillId))
       if (_isCombatOtherItem(item)) item,
   ]);
 }
@@ -722,14 +729,14 @@ bool _isCombatOtherItem(SkillMenuListItem item) {
 
 List<SkillMenuListItem> _combatOtherWeaponEntries(GameDatabase db) {
   return [
-    for (final item in _combatOtherEntries(db))
+    for (final item in _combatOtherEntries(db, mightSkillId))
       if (_armorMaterial(item.displayName) == null) item,
   ];
 }
 
 List<SkillMenuListItem> _combatOtherEquipmentEntries(GameDatabase db) {
   return [
-    for (final item in _combatOtherEntries(db))
+    for (final item in _combatOtherEntries(db, vitalitySkillId))
       if (_armorMaterial(item.displayName) != null) item,
   ];
 }
