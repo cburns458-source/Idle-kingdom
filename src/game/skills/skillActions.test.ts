@@ -243,6 +243,7 @@ describe('skill menu entries', () => {
     expect(shops.map((item) => item.displayName)).toEqual([
       'Steal from the general store',
       'Steal from the barracks',
+      'Pick the armory supply chest',
       'Steal from the kitchen',
       'Steal from the Grand Bazaar',
       'Steal from the Apothecary',
@@ -254,7 +255,6 @@ describe('skill menu entries', () => {
       64,
     )
     expect(lockpicking.map((item) => item.displayName)).toEqual([
-      'Pick the armory supply chest',
       'Pick the Goblin Camp chest',
       "Pick a merchant's chest",
       "Pick the king's safe",
@@ -262,8 +262,10 @@ describe('skill menu entries', () => {
       'Pick a locked storeroom',
       'Pick the bank vault',
     ])
-    expect(shops.some((item) => item.displayName.includes('Pick'))).toBe(false)
     expect(lockpicking.some((item) => item.displayName.includes('Steal'))).toBe(false)
+    const armory = launch.Actions.find((row) => row['Action ID'] === 'ACN-0223')!
+    expect(armory.Notes).toMatch(/RequiresLockpick/i)
+    expect(armory.Notes).toMatch(/ThieveryShop/i)
   })
 
   it('hides Mother Squid combat from the fishing Actions tab', () => {
@@ -277,14 +279,21 @@ describe('skill menu entries', () => {
     )
   })
 
-  it('splits cooking into fish, meat, stew, and other', () => {
+  it('keeps cooking fish/meat/stew/other sections under Production', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const cooking = skillMenuView(launch, 'SKL-0007')
-    expect(cooking.tabs.map((tab) => tab.label)).toEqual(['Fish', 'Meat', 'Stew', 'Other'])
-    const fish = cooking.tabs.find((tab) => tab.id === 'fish')?.sections[0]?.entries ?? []
-    const meat = cooking.tabs.find((tab) => tab.id === 'meat')?.sections[0]?.entries ?? []
-    const stew = cooking.tabs.find((tab) => tab.id === 'stew')?.sections[0]?.entries ?? []
-    const other = cooking.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
+    expect(cooking.tabs.map((tab) => tab.label)).toEqual(['Production'])
+    const production = cooking.tabs.find((tab) => tab.id === 'production')
+    expect(production?.sections.map((section) => section.title)).toEqual([
+      'Fish',
+      'Meat',
+      'Stew',
+      'Other',
+    ])
+    const fish = production?.sections.find((section) => section.title === 'Fish')?.entries ?? []
+    const meat = production?.sections.find((section) => section.title === 'Meat')?.entries ?? []
+    const stew = production?.sections.find((section) => section.title === 'Stew')?.entries ?? []
+    const other = production?.sections.find((section) => section.title === 'Other')?.entries ?? []
     expect(fish.some((item) => item.displayName === 'Cooked perch')).toBe(true)
     expect(fish.some((item) => item.displayName === 'Cooked swordfish')).toBe(false)
     expect(fish.some((item) => item.displayName === 'Cooked marlin')).toBe(true)
@@ -300,6 +309,19 @@ describe('skill menu entries', () => {
     expect(actionsForSkill(launch, 'SKL-0003').find((item) => item.displayName === 'Catch Baby Giant Squid')?.level).toBe(
       63,
     )
+  })
+
+  it('puts crafting/metallurgy/alchemy recipes on Production', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    for (const skillId of ['SKL-0008', 'SKL-0009', 'SKL-0010'] as const) {
+      const view = skillMenuView(launch, skillId)
+      expect(view.tabs.map((tab) => tab.label)).toEqual(['Production'])
+      expect(view.tabs[0]?.sections[0]?.entries.length).toBeGreaterThan(0)
+    }
+    const crafting = skillMenuView(launch, 'SKL-0009')
+    const production =
+      crafting.tabs.find((tab) => tab.id === 'production')?.sections[0]?.entries ?? []
+    expect(production.some((item) => item.displayName === 'Craft lockpicks')).toBe(true)
   })
 
   it('groups smithing by material and numbers every menu row', () => {

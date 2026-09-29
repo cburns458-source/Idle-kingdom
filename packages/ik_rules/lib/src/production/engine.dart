@@ -190,7 +190,7 @@ ProductionCraftResult? completeProductionCraft(
   // The materials left the bag when the queue was placed, so a botched craft
   // costs them: rolling before the output means a full bag cannot save them.
   final craftLevel = getSkillProgress(save, skillId).level;
-  if (!rollGatheringSuccess(craftLevel, random, jsNumber(recipe.raw['Proficiency Level']))) {
+  if (!rollProductionSuccess(craftLevel, random, jsNumber(recipe.raw['Proficiency Level']))) {
     final ruinedName = db.items
         .firstWhereOrNull((item) => item.raw['Item ID'] == outputItemId)
         ?.raw['Display Name'];
