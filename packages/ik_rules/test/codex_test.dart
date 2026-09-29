@@ -68,6 +68,20 @@ void main() {
     expect(codex.actionsMatching('mine copper').map((row) => row.actionId), contains('ACN-0018'));
   });
 
+  test('merges per-location Chop vines actions into one codex row', () {
+    final vineRows = codex.actions.where((row) => row.displayName == 'Chop vines').toList();
+    expect(vineRows.map((row) => row.actionId), ['ACN-0179']);
+    expect(codex.action('ACN-0231'), isNull);
+    expect(codex.action('ACN-0232'), isNull);
+    expect(codex.action('ACN-0233'), isNull);
+    final places = vineRows.first.locations.map((row) => row.displayName).toList();
+    expect(
+      places,
+      containsAll(['Forest Path', 'Small Clearing', 'Starlight Glade', 'Mirror Lake']),
+    );
+    expect(places.toSet().length, places.length);
+  });
+
   test('folds hunting secondary and tertiary drops into the primary pool', () {
     final hunt = codex.action('ACN-0014')!;
     expect(hunt.tables.map((table) => table.label), ['Drops']);
