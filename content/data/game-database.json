@@ -3917,10 +3917,10 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "metallurgy_output; smithing_input; artisanry_input",
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "chromium_bar",
-      "Notes": "Metallurgy Proficiency 80. Renamed from Ancient Alloy.",
+      "Notes": "Metallurgy Proficiency 80. Renamed from Ancient Alloy.. Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 2200,
       "Stackable": null
     },
@@ -6673,10 +6673,10 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "mining_output",
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "chromium_ore",
-      "Notes": "Mining Proficiency 80.",
+      "Notes": "Mining Proficiency 80.. Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 320,
       "Stackable": null
     },
@@ -6690,10 +6690,10 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "mining_output",
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "vanadium_ore",
-      "Notes": "Mining Proficiency 90.",
+      "Notes": "Mining Proficiency 90.. Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 400,
       "Stackable": null
     },
@@ -6707,10 +6707,10 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "metallurgy_output; smithing_input; artisanry_input",
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "vanadium_bar",
-      "Notes": "Metallurgy Proficiency 90.",
+      "Notes": "Metallurgy Proficiency 90.. Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 2800,
       "Stackable": null
     },
@@ -6741,10 +6741,10 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "woodcutting_output; artisanry_input",
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "cinnamon_log",
-      "Notes": "Retired gather drop; cinnamon trees drop Cinnamon Bark.",
+      "Notes": "Retired gather drop; cinnamon trees drop Cinnamon Bark.. Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 40,
       "Stackable": null
     },
@@ -6792,10 +6792,10 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "woodcutting_output",
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Description": "Fragrant bark stripped from a cinnamon tree.",
       "Icon Asset Key": "cinnamon_bark",
-      "Notes": "Primary cinnamon woodcutting drop.",
+      "Notes": "Primary cinnamon woodcutting drop.. Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 8,
       "Stackable": null
     },
@@ -6877,10 +6877,10 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "fishing_output; cooking_input",
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "raw_swordfish",
-      "Notes": null,
+      "Notes": "Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 280,
       "Stackable": null
     },
@@ -6894,10 +6894,10 @@
       "Equipment Slot ID": "SLOT-0011",
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "cooked_swordfish",
-      "Notes": null,
+      "Notes": "Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 400,
       "Stackable": null
     },
@@ -16981,8 +16981,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Production is hard-gated by Proficiency Level."
+      "Release Phase": "Expansion",
+      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion — hidden from Launch until wired into the world."
     },
     {
       "Action ID": "ACN-0138",
@@ -17793,8 +17793,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Legacy cook action placeholder; use Dried Kelp recipe.",
+      "Release Phase": "Expansion",
+      "Notes": "Legacy cook action placeholder; use Dried Kelp recipe.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_harvest_potato.webp"
     },
     {
@@ -18164,8 +18164,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Primary Cinnamon Bark only. No generic bark secondary.",
+      "Release Phase": "Expansion",
+      "Notes": "Primary Cinnamon Bark only. No generic bark secondary.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_cut_maple.webp"
     },
     {
@@ -18206,8 +18206,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. Heartwood was Corrupted Heartwood.",
+      "Release Phase": "Expansion",
+      "Notes": "Skill menu / codex only. Heartwood was Corrupted Heartwood.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_cut_ancient.webp"
     },
     {
@@ -18290,8 +18290,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.",
+      "Release Phase": "Expansion",
+      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_hunt_pheasant.webp"
     },
     {
@@ -18332,8 +18332,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.",
+      "Release Phase": "Expansion",
+      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_hunt_great_stag.webp"
     },
     {
@@ -18353,8 +18353,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.",
+      "Release Phase": "Expansion",
+      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_hunt_great_stag.webp"
     },
     {
@@ -18395,8 +18395,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only.",
+      "Release Phase": "Expansion",
+      "Notes": "Skill menu / codex only.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_mine_titanium.webp"
     },
     {
@@ -18416,8 +18416,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only.",
+      "Release Phase": "Expansion",
+      "Notes": "Skill menu / codex only.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_mine_titanium.webp"
     },
     {
@@ -18437,8 +18437,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Production is hard-gated by Proficiency Level."
+      "Release Phase": "Expansion",
+      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion — hidden from Launch until wired into the world."
     },
     {
       "Action ID": "ACN-0215",
@@ -18499,8 +18499,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only.",
+      "Release Phase": "Expansion",
+      "Notes": "Skill menu / codex only.. Future expansion — hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_catch_baby_giant_squid.webp"
     },
     {
@@ -18520,8 +18520,8 @@
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": "Production is hard-gated by Proficiency Level."
+      "Release Phase": "Expansion",
+      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion — hidden from Launch until wired into the world."
     },
     {
       "Action ID": "ACN-0219",
@@ -21781,9 +21781,9 @@
       "Drop Chance": 0,
       "Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Sprite Asset Key": "enemies/enm_monk.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion — hidden from Launch until wired into the world."
     },
     {
       "Enemy ID": "ENM-0029",
@@ -21865,9 +21865,9 @@
       "Drop Chance": 0,
       "Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Sprite Asset Key": "enemies/enm_rock_troll.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion — hidden from Launch until wired into the world."
     },
     {
       "Enemy ID": "ENM-0033",
@@ -21928,9 +21928,9 @@
       "Drop Chance": 0,
       "Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Sprite Asset Key": "enemies/enm_corrupted_ent.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion — hidden from Launch until wired into the world."
     },
     {
       "Enemy ID": "ENM-0036",
@@ -21949,9 +21949,9 @@
       "Drop Chance": 0,
       "Reward Table ID": null,
       "Status": "Planned",
-      "Release Phase": "Launch",
+      "Release Phase": "Expansion",
       "Sprite Asset Key": "enemies/enm_elder_rock_troll.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion — hidden from Launch until wired into the world."
     }
   ],
   "RewardEntries": [
@@ -26401,8 +26401,8 @@
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0137",
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": null,
+      "Release Phase": "Expansion",
+      "Notes": "Future expansion — hidden from Launch until wired into the world.",
       "Ingredient 1 Item ID": "ITEM-0380",
       "Ingredient 1 Quantity": 2,
       "Ingredient 2 Item ID": null,
@@ -26976,8 +26976,8 @@
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0214",
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": null,
+      "Release Phase": "Expansion",
+      "Notes": "Future expansion — hidden from Launch until wired into the world.",
       "Ingredient 1 Item ID": "ITEM-0381",
       "Ingredient 1 Quantity": 2,
       "Ingredient 2 Item ID": null,
@@ -27001,8 +27001,8 @@
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0218",
       "Status": "Planned",
-      "Release Phase": "Launch",
-      "Notes": null,
+      "Release Phase": "Expansion",
+      "Notes": "Future expansion — hidden from Launch until wired into the world.",
       "Ingredient 1 Item ID": "ITEM-0392",
       "Ingredient 1 Quantity": 1,
       "Ingredient 2 Item ID": null,
@@ -35347,7 +35347,7 @@
       "Map Node ID": "MN-0015",
       "Map ID": "MAP-0001",
       "Location ID": "LOC-0027",
-      "X": 48,
+      "X": 38,
       "Y": 42,
       "Status": "Confirmed",
       "Release Phase": "Launch"
@@ -35707,7 +35707,7 @@
       "Map Node ID": "MN-0055",
       "Map ID": "MAP-0008",
       "Location ID": "LOC-0050",
-      "X": 42,
+      "X": 62,
       "Y": 58,
       "Status": "Confirmed",
       "Release Phase": "Launch"

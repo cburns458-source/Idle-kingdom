@@ -50,7 +50,7 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Sunken Approach, just southeast of the docks
   'LOC-0041': { x: 64, y: 78 },
   // Road to the Citadel — horse and carriage at the river fork
-  'LOC-0027': { x: 48, y: 42 },
+  'LOC-0027': { x: 38, y: 42 },
   // Riverside Manor just south of the Citadel (east of Town)
   'LOC-0053': { x: 50, y: 47 },
 }
@@ -105,8 +105,8 @@ export const FOREST_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0039': { x: 50, y: 86 },
   // Forest Path landing, just inside the gate
   'LOC-0040': { x: 50, y: 68 },
-  // Small Clearing, between Path and Glade
-  'LOC-0050': { x: 42, y: 58 },
+  // Small Clearing, east of the Path ladder
+  'LOC-0050': { x: 62, y: 58 },
   // Starlight Glade, mid woodland clearing
   'LOC-0044': { x: 28, y: 48 },
   // Mirror Lake, between Glade and Grove
