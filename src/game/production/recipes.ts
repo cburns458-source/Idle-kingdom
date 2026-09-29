@@ -91,8 +91,11 @@ export { canKnowRecipe } from '../recipes/knowledge'
 const SHARED_RECIPE_FACILITY_IDS: Record<string, string> = {
   'FAC-0010': 'FAC-0001',
   'FAC-0012': 'FAC-0001',
+  'FAC-0022': 'FAC-0001',
+  'FAC-0023': 'FAC-0001',
   'FAC-0013': 'FAC-0003',
   'FAC-0014': 'FAC-0004',
+  'FAC-0025': 'FAC-0004',
   'FAC-0015': 'FAC-0006',
   'FAC-0018': 'FAC-0004',
 }
@@ -102,6 +105,7 @@ export const SHARED_PROJECT_FACILITY_IDS: Record<string, string> = {
   'FAC-0013': 'FAC-0003',
   'FAC-0016': 'FAC-0005',
   'FAC-0019': 'FAC-0005',
+  'FAC-0026': 'FAC-0005',
 }
 
 export function projectFacilityIdForLookup(facilityId: string): string {

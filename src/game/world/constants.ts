@@ -18,6 +18,10 @@ export const CASTLE_GATEWAY_ID = 'LOC-0013'
 export const CASTLE_COURTYARD_ID = 'LOC-0014'
 export const TOWN_GATEWAY_ID = 'LOC-0002'
 export const CITADEL_GATEWAY_ID = 'LOC-0027'
+/** Main-map estate south of the Citadel. */
+export const RIVERSIDE_MANOR_ID = 'LOC-0053'
+export const KINGSROAD_ID = 'LOC-0052'
+export const GOBLIN_CAMP_ID = 'LOC-0003'
 export const WEST_HORIZON_ID = 'LOC-0019'
 export const EAST_HORIZON_ID = 'LOC-0020'
 

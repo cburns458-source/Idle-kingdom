@@ -45,6 +45,8 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
   'LOC-0041': NodePosition(x: 64, y: 78),
   // Road to the Citadel — horse and carriage at the river fork
   'LOC-0027': NodePosition(x: 48, y: 42),
+  // Riverside Manor just south of the Citadel (east of Town)
+  'LOC-0053': NodePosition(x: 50, y: 47),
 };
 
 const Map<String, NodePosition> caveMapNodeLayout = <String, NodePosition>{

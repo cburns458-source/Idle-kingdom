@@ -112,19 +112,19 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
+      "Notes": "Deprecated \u2014 equipped spells are always active. Kept for older clients; unused by current runtime."
     },
     {
       "Key": "copy.merchant_tip",
       "Value": "Last I heard, Quill was nearby.",
       "Unit": null,
-      "Notes": "Unused fallback. The general-store merchant names Quill’s stop in code."
+      "Notes": "Unused fallback. The general-store merchant names Quill\u2019s stop in code."
     },
     {
       "Key": "copy.merchant_tip_spent",
       "Value": "Last I heard, Quill was nearby.",
       "Unit": null,
-      "Notes": "Unused fallback. The general-store merchant names Quill’s stop in code."
+      "Notes": "Unused fallback. The general-store merchant names Quill\u2019s stop in code."
     },
     {
       "Key": "copy.quill_known",
@@ -134,9 +134,9 @@
     },
     {
       "Key": "copy.quill_teach",
-      "Value": "A bow's only half the work — you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
+      "Value": "A bow's only half the work \u2014 you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
       "Unit": null,
-      "Notes": "Quill’s hunting lesson, spoken the first time the player asks."
+      "Notes": "Quill\u2019s hunting lesson, spoken the first time the player asks."
     },
     {
       "Key": "copy.default_merchant_line",
@@ -5652,7 +5652,7 @@
       "Functional / Source Tags": "alchemy_potion_output_boost",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "While crafting potions, output rolls 2–3 instead of 1–3. No extra experience. Not yet obtainable.",
+      "Description": "While crafting potions, output rolls 2\u20133 instead of 1\u20133. No extra experience. Not yet obtainable.",
       "Icon Asset Key": "alchemist_goggles",
       "Notes": "Output-only specialist. Stub content; no acquisition path yet.",
       "Base Sell Value": 220,
@@ -7099,7 +7099,7 @@
       "Functional / Source Tags": "quest_item",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A bundle laid at the groves to regain the forest’s trust.",
+      "Description": "A bundle laid at the groves to regain the forest\u2019s trust.",
       "Icon Asset Key": "forest_offering",
       "Notes": "Consumed when placed at Ancient Forest nodes during Through the Thicket.",
       "Base Sell Value": 0,
@@ -7116,7 +7116,7 @@
       "Functional / Source Tags": "combat_weapon; woodcutting_tool; combat_usable; hatchet",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A woodcutter’s blade. Better than a steel sword, and it clears vines faster.",
+      "Description": "A woodcutter\u2019s blade. Better than a steel sword, and it clears vines faster.",
       "Icon Asset Key": "machete",
       "Notes": "Might 40 and Woodcutting 40. Vine chops use 24% action time reduction.",
       "Base Sell Value": 400,
@@ -8718,7 +8718,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "artisanry_output; special_effect; +15% relative Drop Chance",
       "Status": "Planned",
-      "Notes": "Special-effect jewelry — not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
+      "Notes": "Special-effect jewelry \u2014 not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -10014,7 +10014,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0177",
@@ -10032,7 +10032,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0007; item_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016). Stacks additively with other Abundance spells."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016). Stacks additively with other Abundance spells."
     },
     {
       "Equipment ID": "EQP-0178",
@@ -10266,7 +10266,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0009; extra_food_per_round:1; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0191",
@@ -10356,7 +10356,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "alchemy_potion_output_boost",
       "Status": "Planned",
-      "Notes": "Potion crafts roll 2–3 output. No XP change. Not obtainable yet."
+      "Notes": "Potion crafts roll 2\u20133 output. No XP change. Not obtainable yet."
     },
     {
       "Equipment ID": "EQP-0197",
@@ -10611,7 +10611,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0023; gold_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0211",
@@ -10629,7 +10629,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0024; damage_reduction_percent:5; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0212",
@@ -10647,7 +10647,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0025; damage_range_bonus_percent:5; lifesteal_percent:5; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0213",
@@ -10665,7 +10665,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0026; damage_range_bonus_percent:15; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0214",
@@ -10683,7 +10683,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0027; production_duration_reduction_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0215",
@@ -10701,7 +10701,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0028; gathering_duration_reduction_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0216",
@@ -10879,11 +10879,11 @@
       "Internal Key": "critical_strike_chance",
       "Display Name": "Critical Strike Chance",
       "Valid Target": "Eligible weapon or jewelry",
-      "Effect": "+10% Critical Strike Chance (1.5× damage on crit)",
+      "Effect": "+10% Critical Strike Chance (1.5\u00d7 damage on crit)",
       "Required Materials": "Enchanting Tablet; Rabbit's Foot; Boar Tusk",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5× rolled damage."
+      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5\u00d7 rolled damage."
     },
     {
       "Enchantment ID": "ENCH-0009",
@@ -11254,7 +11254,7 @@
       "Node ID": "NODE-0003",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Hostile Goblin area beside the river with combat and fishing.",
+      "Description": "Hostile Goblin area beside the river with combat, fishing, and thievery.",
       "Danger / Hostility": "Danger warning: approximately Combat Level 15.",
       "Background Asset Key": "locations/loc_goblin_camp.webp",
       "Map Node Name": null,
@@ -11740,7 +11740,7 @@
       "Node ID": "NODE-0032",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight — arrival is peaceful.",
+      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight \u2014 arrival is peaceful.",
       "Danger / Hostility": null,
       "Background Asset Key": "locations/loc_citadel_combat.webp",
       "Map Node Name": null,
@@ -12099,12 +12099,30 @@
       "Node ID": "NODE-0052",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "The road between farm and town — bandits prey on travelers here.",
+      "Description": "The road between farm and town \u2014 bandits prey on travelers here. The river offers fishing, and abandoned merchant chests invite thievery.",
       "Danger / Hostility": "Danger warning: approximately Combat Level 9.",
       "Background Asset Key": "locations/loc_forest_path.webp",
       "Parent Location ID": null,
       "Landing Location ID": null,
       "Notes": null
+    },
+    {
+      "Location ID": "LOC-0053",
+      "Internal Key": "riverside_manor",
+      "Display Name": "Riverside Manor",
+      "Map ID": "MAP-0001",
+      "Location Type": "Resource Area",
+      "Parent Location ID": null,
+      "Node ID": "NODE-0053",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "A riverside estate below the Citadel with fishing, timber, hunting, a kitchen, and a locked storeroom.",
+      "Danger / Hostility": null,
+      "Background Asset Key": "locations/loc_riverside_manor.webp",
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
+      "Notes": "Main-map node south of The Citadel.",
+      "Landing Location ID": null
     }
   ],
   "TravelConnections": [
@@ -12238,7 +12256,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Town square to Rose’s Apothecary"
+      "Notes": "Town square to Rose\u2019s Apothecary"
     },
     {
       "Connection ID": "TRV-0012",
@@ -12454,7 +12472,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Shallows ↔ Kelp Forest"
+      "Notes": "Shallows \u2194 Kelp Forest"
     },
     {
       "Connection ID": "TRV-0030",
@@ -12772,7 +12790,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Bronze and iron swords, helmets, chestplates, and platelegs.",
-      "Notes": "Shop only. Buys back at the normal 1× general-store rate."
+      "Notes": "Shop only. Buys back at the normal 1\u00d7 general-store rate."
     },
     {
       "Facility ID": "FAC-0018",
@@ -12822,6 +12840,58 @@
       "Description": "A weathered stone for laying forest offerings.",
       "Notes": "Temporary station during Through the Thicket offering steps.",
       "Sprite Asset Key": "workstations/ws_cooking_stove.webp"
+    },
+    {
+      "Facility ID": "FAC-0022",
+      "Internal Key": "riverside_manor_kitchen",
+      "Display Name": "Riverside Manor Kitchen",
+      "Location ID": "LOC-0053",
+      "Facility Type": "Production Station",
+      "Skill ID": "SKL-0007",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town kitchen recipes via facility alias.",
+      "Notes": null,
+      "Sprite Asset Key": "workstations/ws_cooking_stove.webp"
+    },
+    {
+      "Facility ID": "FAC-0023",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town kitchen recipes via facility alias.",
+      "Notes": null,
+      "Sprite Asset Key": "workstations/ws_cooking_stove.webp",
+      "Internal Key": "giant_camp_kitchen",
+      "Display Name": "Giant Camp Kitchen",
+      "Location ID": "LOC-0049",
+      "Facility Type": "Production Station",
+      "Skill ID": "SKL-0007"
+    },
+    {
+      "Facility ID": "FAC-0025",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town metallurgy recipes via facility alias.",
+      "Notes": null,
+      "Sprite Asset Key": "workstations/ws_metallurgy_furnace.webp",
+      "Internal Key": "giant_camp_metallurgy",
+      "Display Name": "Giant Camp Metallurgy Furnace",
+      "Location ID": "LOC-0049",
+      "Facility Type": "Production Station",
+      "Skill ID": "SKL-0008"
+    },
+    {
+      "Facility ID": "FAC-0026",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Shares Town smithing projects via facility alias.",
+      "Notes": null,
+      "Sprite Asset Key": null,
+      "Internal Key": "giant_camp_smithing",
+      "Display Name": "Giant Camp Smithing forge",
+      "Location ID": "LOC-0049",
+      "Facility Type": "Special Production Station",
+      "Skill ID": "SKL-0011"
     }
   ],
   "Activities": [
@@ -12856,26 +12926,26 @@
       "Internal Key": "search_riverside",
       "Contextual Name": "Search the riverside",
       "Location ID": "LOC-0003",
-      "Description": "Fishing at the river: perch, trout, and salmon.",
+      "Description": "Fishing at the river: trout, salmon, and algae.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0003",
       "Pool Internal Key": "goblin_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": ""
+      "Notes": "Trout 50% (ACN-0100), salmon 40% (ACN-0101), algae 10% (ACN-0180)."
     },
     {
       "Activity ID": "ACT-0004",
       "Internal Key": "fish_river_coast",
       "Contextual Name": "Fish the river and coast",
       "Location ID": "LOC-0004",
-      "Description": "Fishing along the river, coast, and dock: tuna and shark.",
+      "Description": "Fish the docks for man of war, shark, and marlin \u2014 seagulls sometimes dive the line.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0004",
-      "Pool Internal Key": "coast_fishing",
+      "Pool Internal Key": "dock_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Man of war 50%, seagull 5%, shark 35%, marlin 10%."
     },
     {
       "Activity ID": "ACT-0005",
@@ -12888,20 +12958,20 @@
       "Pool Internal Key": "copper_mine_pool",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Copper 50%, tin 30%, clay 20%."
     },
     {
       "Activity ID": "ACT-0006",
       "Internal Key": "prospect_mountain_side",
       "Contextual Name": "Prospect the mountain side",
       "Location ID": "LOC-0046",
-      "Description": "Mine the slopes and face Rock Troll encounters.",
+      "Description": "Prospect the slopes for ore \u2014 cave bats nest in the cuts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0006",
       "Pool Internal Key": "mountain_slopes_pool",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Iron 50%, coal 30%, tin 10%, cave bat 10%."
     },
     {
       "Activity ID": "ACT-0007",
@@ -12934,52 +13004,52 @@
       "Internal Key": "poach_kingswoods",
       "Contextual Name": "Poach in the kingswoods",
       "Location ID": "LOC-0008",
-      "Description": "Pheasant, elk, and wild boar hunting.",
+      "Description": "Hunt pheasant, elk, and wild boar in the kingswoods.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0009",
       "Pool Internal Key": "kingswoods_poach",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Pheasant 40%, wild boar hunt 10%, elk 40%."
     },
     {
       "Activity ID": "ACT-0010",
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather woodland supplies",
       "Location ID": "LOC-0008",
-      "Description": "Harvest Mosstole, wild berries, and mushrooms, with a rare Wild Boar combat encounter.",
+      "Description": "Gather woodland supplies \u2014 and watch for boars.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Mosstole 50%, mushrooms 30%, wild berries 10%, wild boar combat 10%."
     },
     {
       "Activity ID": "ACT-0011",
       "Internal Key": "search_small_game",
       "Contextual Name": "Search for small game",
       "Location ID": "LOC-0009",
-      "Description": "Rabbit and Duck Hunting.",
+      "Description": "Hunt weasels and rabbits in the meadow.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0011",
       "Pool Internal Key": "meadow_game",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Weasel 50% (ACN-0015), rabbit 50% (ACN-0016)."
     },
     {
       "Activity ID": "ACT-0012",
       "Internal Key": "gather_meadow_supplies",
       "Contextual Name": "Gather meadow supplies",
       "Location ID": "LOC-0009",
-      "Description": "Wild Roots and Fernleaf Harvesting.",
+      "Description": "Gather fernleaf and wild roots in the meadow.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0012",
       "Pool Internal Key": "meadow_harvest",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Fernleaf 30% (ACN-0106), wild roots 70% (ACN-0105)."
     },
     {
       "Activity ID": "ACT-0013",
@@ -12999,13 +13069,14 @@
       "Internal Key": "search_courtyard",
       "Contextual Name": "Search the courtyard grounds",
       "Location ID": "LOC-0014",
-      "Description": "Weasel Hunting and herb Harvesting with compatible requirements.",
+      "Description": "Forage fernleaf and hunt pheasant in the courtyard.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0014",
       "Pool Internal Key": "courtyard_pool",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Fernleaf 50% (ACN-0106), pheasant 50% (ACN-0017).",
+      "Contextual_Name": "Search the courtyard grounds"
     },
     {
       "Activity ID": "ACT-0015",
@@ -13025,13 +13096,13 @@
       "Internal Key": "explore_ancient_forest",
       "Contextual Name": "Explore the ancient forest",
       "Location ID": "LOC-0018",
-      "Description": "One axe-compatible pool containing Ancient Tree, Ent, Ancient Ent, and Corrupted Ent.",
+      "Description": "Fight ents in the Old Ent Grove.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0016",
       "Pool Internal Key": "ancient_forest_pool",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Ent 50%, corrupted ent 30%, ancient ent 20%."
     },
     {
       "Activity ID": "ACT-0017",
@@ -13168,13 +13239,13 @@
       "Internal Key": "hunt_the_slopes",
       "Contextual Name": "Hunt the slopes",
       "Location ID": "LOC-0046",
-      "Description": "Hunt mountain goats and great stags on the slopes.",
+      "Description": "Hunt mountain goats on the slopes.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0022",
       "Pool Internal Key": "mountain_hunting",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "100% Hunt mountain goat (ACN-0112)."
     },
     {
       "Activity ID": "ACT-0028",
@@ -13246,7 +13317,7 @@
       "Internal Key": "train_citadel_grounds",
       "Contextual Name": "Challenge the guards",
       "Location ID": "LOC-0032",
-      "Description": "Face Castle Guard training encounters. Optional — the grounds stay peaceful until you start this.",
+      "Description": "Face Castle Guard training encounters. Optional \u2014 the grounds stay peaceful until you start this.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0024",
       "Pool Internal Key": "citadel_guards",
@@ -13285,39 +13356,39 @@
       "Internal Key": "fish_copper_pond",
       "Contextual Name": "Fish in the nearby pond",
       "Location ID": "LOC-0005",
-      "Description": "Fish perch from the pond beside the copper mine.",
+      "Description": "Fish the nearby pond for perch and trout.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0027",
       "Pool Internal Key": "copper_pond_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Single-action pool: Catch perch (ACN-0099)."
+      "Notes": "Perch 90% (ACN-0099), trout 10% (ACN-0100)."
     },
     {
       "Activity ID": "ACT-0038",
       "Internal Key": "fish_deep_pools",
       "Contextual Name": "Fish the deep pools",
       "Location ID": "LOC-0022",
-      "Description": "Fishing the flooded shafts: tuna, shark, and baby giant squid.",
+      "Description": "Fish the deep pools for shark, man of war, and baby giant squid.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0028",
       "Pool Internal Key": "deep_pool_fishing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Own pool. Tuna 50%, shark 45%, baby giant squid 5%. Docks stay tuna/shark only."
+      "Notes": "Shark 50%, man of war 30%, baby giant squid 20%."
     },
     {
       "Activity ID": "ACT-0039",
       "Internal Key": "pick_weeds",
       "Contextual Name": "Pick weeds",
       "Location ID": "LOC-0036",
-      "Description": "Pull weeds from the temple garden: mostly Augur Weed, sometimes Moonblossom.",
+      "Description": "Pick weeds around the temple grounds.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0029",
       "Pool Internal Key": "temple_weeds",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Single harvesting action. Same empty-hand rules as Train with the monks."
+      "Notes": "Augur weed 80% (ACN-0109), wild roots 20% (ACN-0105)."
     },
     {
       "Activity ID": "ACT-0040",
@@ -13330,7 +13401,7 @@
       "Pool Internal Key": "ancient_forest_hardwood",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Own pool. Maple 70%, mahogany 30%. Explore the ancient forest stays unchanged."
+      "Notes": "Maple 45%, mahogany 50%, elder yew 5%. Explore combat pool is separate."
     },
     {
       "Activity ID": "ACT-0041",
@@ -13350,7 +13421,7 @@
       "Internal Key": "enter_the_catacombs",
       "Contextual Name": "Enter the catacombs",
       "Location ID": "LOC-0037",
-      "Description": "Dungeons coming soon…",
+      "Description": "Dungeons coming soon\u2026",
       "Danger Warning Combat Level": null,
       "Pool ID": null,
       "Pool Internal Key": null,
@@ -13447,20 +13518,21 @@
       "Pool Internal Key": "starlight_hunt",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Elk 60% (ACN-0014), great stag 40% (ACN-0113)."
     },
     {
       "Activity ID": "ACT-0050",
       "Internal Key": "pick_moonblossoms_glade",
-      "Contextual Name": "Pick moonblossoms",
+      "Contextual Name": "Gather glade flora",
       "Location ID": "LOC-0044",
-      "Description": "Gather pale moonblossoms that open under the stars.",
+      "Description": "Gather moonblossom, starroot, and wild roots in Starlight Glade.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0038",
       "Pool Internal Key": "starlight_moonblossoms",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Moonblossom 55%, starroot 40%, wild roots 5%.",
+      "Contextual_Name": "Gather glade flora"
     },
     {
       "Activity ID": "ACT-0051",
@@ -13686,28 +13758,28 @@
     {
       "Activity ID": "ACT-0068",
       "Internal Key": "challenge_the_peak",
-      "Contextual Name": "Challenge the peak",
+      "Contextual Name": "Scout the peak",
       "Location ID": "LOC-0047",
-      "Description": "Face harpies and wyverns on the high roost.",
+      "Description": "Gather bleeding tooth on the high roost \u2014 harpies still nest here.",
       "Danger Warning Combat Level": 72,
       "Pool ID": "POOL-0050",
-      "Pool Internal Key": "the_peak_combat",
+      "Pool Internal Key": "the_peak_mixed",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Hostile peak combat."
+      "Notes": "Bleeding tooth 30% (ACN-0211), harpy 70% (ACN-0219). Mixed gathering/combat."
     },
     {
       "Activity ID": "ACT-0069",
       "Internal Key": "prospect_the_badlands",
       "Contextual Name": "Prospect the badlands",
       "Location ID": "LOC-0048",
-      "Description": "Mine coal and tin in the broken highland stone.",
+      "Description": "Prospect the badlands for ore \u2014 rock trolls haunt the cuts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0051",
       "Pool Internal Key": "badlands_mining",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "Coal 50%, tin 25%, silver 10%, gold 5%, rock troll 10%."
     },
     {
       "Activity ID": "ACT-0070",
@@ -13844,7 +13916,7 @@
       "Internal Key": "craft_forest_offering",
       "Contextual Name": "Craft forest offerings",
       "Location ID": "LOC-0040",
-      "Description": "Craft offerings to regain the forest’s trust.",
+      "Description": "Craft offerings to regain the forest\u2019s trust.",
       "Danger Warning Combat Level": null,
       "Pool ID": null,
       "Pool Internal Key": null,
@@ -13864,6 +13936,240 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Hostile Kingsroad combat. No loot tables."
+    },
+    {
+      "Activity ID": "ACT-0082",
+      "Internal Key": "fish_kingsroad",
+      "Contextual Name": "Fish the Kingsroad river",
+      "Location ID": "LOC-0052",
+      "Description": "Cast into the river along the Kingsroad for salmon, tuna, and shark.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0063",
+      "Pool Internal Key": "kingsroad_fishing",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Salmon 30% (ACN-0101), tuna 50% (ACN-0102), shark 20% (ACN-0103)."
+    },
+    {
+      "Activity ID": "ACT-0083",
+      "Internal Key": "pick_kingsroad_merchant_chest",
+      "Contextual Name": "Pick a merchant's chest",
+      "Location ID": "LOC-0052",
+      "Description": "Pick a locked merchant's chest left along the Kingsroad. Needs lockpicks.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0064",
+      "Pool Internal Key": "pick_kingsroad_merchant_chest",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "100% Pick a merchant's chest (ACN-0224)."
+    },
+    {
+      "Activity ID": "ACT-0084",
+      "Internal Key": "fish_riverside_manor",
+      "Contextual Name": "Fish the manor river",
+      "Location ID": "LOC-0053",
+      "Description": "Fish the river beside Riverside Manor for salmon and trout.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0065",
+      "Pool Internal Key": "riverside_manor_fishing",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Salmon 70% (ACN-0101), trout 30% (ACN-0100)."
+    },
+    {
+      "Activity ID": "ACT-0085",
+      "Internal Key": "work_riverside_manor_grounds",
+      "Contextual Name": "Work the manor grounds",
+      "Location ID": "LOC-0053",
+      "Description": "Cut willow and poplar on the estate, and gather mushrooms among the trees.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0066",
+      "Pool Internal Key": "riverside_manor_grounds",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Willow 60% (ACN-0200), poplar 20% (ACN-0048), mushrooms 20% (ACN-0184)."
+    },
+    {
+      "Activity ID": "ACT-0086",
+      "Internal Key": "hunt_riverside_manor",
+      "Contextual Name": "Hunt the riverside",
+      "Location ID": "LOC-0053",
+      "Description": "Hunt ducks and foxes along the riverside estate.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0067",
+      "Pool Internal Key": "riverside_manor_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Duck 80% (ACN-0013), fox 20% (ACN-0205). Fox is XP-only."
+    },
+    {
+      "Activity ID": "ACT-0087",
+      "Internal Key": "pick_riverside_manor_storeroom",
+      "Contextual Name": "Pick the locked storeroom",
+      "Location ID": "LOC-0053",
+      "Description": "Pick the locked storeroom at Riverside Manor. Needs lockpicks.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0068",
+      "Pool Internal Key": "pick_riverside_manor_storeroom",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "100% Pick a locked storeroom (ACN-0227)."
+    },
+    {
+      "Activity ID": "ACT-0088",
+      "Internal Key": "cook_riverside_manor_kitchen",
+      "Contextual Name": "Cook at the kitchen",
+      "Location ID": "LOC-0053",
+      "Description": "Timed Cooking queue using selected recipe at the Riverside Manor kitchen.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": null,
+      "Pool Internal Key": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Shares Town kitchen recipes via FAC-0022 alias."
+    },
+    {
+      "Activity ID": "ACT-0089",
+      "Internal Key": "hunt_copper_mine",
+      "Contextual Name": "Hunt ducks by the pond",
+      "Location ID": "LOC-0005",
+      "Description": "Hunt ducks around the copper mine pond.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0069",
+      "Pool Internal Key": "copper_mine_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "100% Hunt duck (ACN-0013)."
+    },
+    {
+      "Activity ID": "ACT-0090",
+      "Internal Key": "hunt_forest_path",
+      "Contextual Name": "Hunt along the forest path",
+      "Location ID": "LOC-0040",
+      "Description": "Hunt elk and foxes along the Forest Path.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0070",
+      "Pool Internal Key": "forest_path_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Elk 70% (ACN-0014), fox 30% (ACN-0205)."
+    },
+    {
+      "Activity ID": "ACT-0091",
+      "Internal Key": "gather_small_clearing",
+      "Contextual Name": "Forage the small clearing",
+      "Location ID": "LOC-0050",
+      "Description": "Gather wild berries, augur weed, and wild roots in the Small Clearing.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0071",
+      "Pool Internal Key": "small_clearing_gathering",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Wild berries 40%, augur weed 30%, wild roots 20%."
+    },
+    {
+      "Activity ID": "ACT-0092",
+      "Internal Key": "cut_small_clearing",
+      "Contextual Name": "Cut timber in the clearing",
+      "Location ID": "LOC-0050",
+      "Description": "Cut poplar, maple, and vines in the Small Clearing.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0072",
+      "Pool Internal Key": "small_clearing_woodcutting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Poplar 30%, vines 30% (ACN-0179), maple 40%."
+    },
+    {
+      "Activity ID": "ACT-0093",
+      "Internal Key": "hunt_mirror_lake",
+      "Contextual Name": "Hunt the mirror lake shores",
+      "Location ID": "LOC-0051",
+      "Description": "Hunt ducks and giant toads, and gather algae along Mirror Lake.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0073",
+      "Pool Internal Key": "mirror_lake_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Duck 20%, giant toad 50%, algae 30%."
+    },
+    {
+      "Activity ID": "ACT-0094",
+      "Internal Key": "fish_mirror_lake",
+      "Contextual Name": "Fish Mirror Lake",
+      "Location ID": "LOC-0051",
+      "Description": "Fish Mirror Lake for trout and tuna.",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0074",
+      "Pool Internal Key": "mirror_lake_fishing",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Trout 30% (ACN-0100), tuna 70% (ACN-0102)."
+    },
+    {
+      "Activity ID": "ACT-0095",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0075",
+      "Pool Internal Key": "badlands_hunting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Giant spider 70% (ACN-0208), mountain goat 30% (ACN-0112).",
+      "Internal Key": "hunt_badlands",
+      "Contextual Name": "Hunt the badlands",
+      "Location ID": "LOC-0048",
+      "Description": "Hunt giant spiders and mountain goats in the badlands."
+    },
+    {
+      "Activity ID": "ACT-0096",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0076",
+      "Pool Internal Key": "badlands_woodcutting",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Ironwood 90% (ACN-0202), fight giant 10% (ACN-0221).",
+      "Internal Key": "cut_badlands",
+      "Contextual Name": "Cut ironwood in the badlands",
+      "Location ID": "LOC-0048",
+      "Description": "Cut ironwood stands in the badlands \u2014 giants sometimes lumber through."
+    },
+    {
+      "Activity ID": "ACT-0097",
+      "Danger Warning Combat Level": null,
+      "Pool ID": null,
+      "Pool Internal Key": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Shares Town kitchen recipes via FAC-0023 alias.",
+      "Internal Key": "cook_giant_camp",
+      "Contextual Name": "Cook at the kitchen",
+      "Location ID": "LOC-0049",
+      "Description": "Timed Cooking queue using selected recipe at the Giant Camp kitchen."
+    },
+    {
+      "Activity ID": "ACT-0099",
+      "Danger Warning Combat Level": null,
+      "Pool ID": null,
+      "Pool Internal Key": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Shares Town metallurgy recipes via FAC-0025 alias.",
+      "Internal Key": "refine_giant_camp",
+      "Contextual Name": "Refine metals",
+      "Location ID": "LOC-0049",
+      "Description": "Timed Metallurgy queue using selected recipe at the Giant Camp furnace."
+    },
+    {
+      "Activity ID": "ACT-0100",
+      "Danger Warning Combat Level": null,
+      "Pool ID": "POOL-0077",
+      "Pool Internal Key": "deep_mines_combat",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Giant rat 30%, cave bat 70%.",
+      "Internal Key": "fight_deep_mines_vermin",
+      "Contextual Name": "Fight the vermin",
+      "Location ID": "LOC-0011",
+      "Description": "Fight giant rats and cave bats in the Deep Mines."
     }
   ],
   "PoolEntries": [
@@ -13924,102 +14230,6 @@
       "Notes": null
     },
     {
-      "Pool Entry ID": "PEN-0008",
-      "Pool ID": "POOL-0003",
-      "Action ID": "ACN-0099",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": "Perch, 50% of goblin riverside fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0009",
-      "Pool ID": "POOL-0003",
-      "Action ID": "ACN-0100",
-      "Weight": 30,
-      "Status": "Planned",
-      "Notes": "Trout, 30% of goblin riverside fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0010",
-      "Pool ID": "POOL-0003",
-      "Action ID": "ACN-0101",
-      "Weight": 20,
-      "Status": "Planned",
-      "Notes": "Salmon, 20% of goblin riverside fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0011",
-      "Pool ID": "POOL-0004",
-      "Action ID": "ACN-0102",
-      "Weight": 55,
-      "Status": "Planned",
-      "Notes": "Tuna, 55% of dock fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0012",
-      "Pool ID": "POOL-0004",
-      "Action ID": "ACN-0103",
-      "Weight": 45,
-      "Status": "Planned",
-      "Notes": "Shark, 45% of dock fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0015",
-      "Pool ID": "POOL-0005",
-      "Action ID": "ACN-0018",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0016",
-      "Pool ID": "POOL-0005",
-      "Action ID": "ACN-0019",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0017",
-      "Pool ID": "POOL-0005",
-      "Action ID": "ACN-0020",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0019",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0021",
-      "Weight": 35,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0020",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0022",
-      "Weight": 35,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0021",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0005",
-      "Weight": 15,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0022",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0096",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
       "Pool Entry ID": "PEN-0023",
       "Pool ID": "POOL-0007",
       "Action ID": "ACN-0006",
@@ -14040,78 +14250,6 @@
       "Pool ID": "POOL-0008",
       "Action ID": "ACN-0028",
       "Weight": 100,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0026",
-      "Pool ID": "POOL-0009",
-      "Action ID": "ACN-0017",
-      "Weight": 70,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0027",
-      "Pool ID": "POOL-0009",
-      "Action ID": "ACN-0014",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0028",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0008",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": "Rare Wild Boar combat encounter in woodland supplies."
-    },
-    {
-      "Pool Entry ID": "PEN-0030",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0107",
-      "Weight": 55,
-      "Status": "Planned",
-      "Notes": "Mosstole, 55% of woodland supplies."
-    },
-    {
-      "Pool Entry ID": "PEN-0060",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0108",
-      "Weight": 45,
-      "Status": "Planned",
-      "Notes": "Wild berries, 45% of woodland supplies."
-    },
-    {
-      "Pool Entry ID": "PEN-0031",
-      "Pool ID": "POOL-0011",
-      "Action ID": "ACN-0013",
-      "Weight": 10,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0032",
-      "Pool ID": "POOL-0011",
-      "Action ID": "ACN-0016",
-      "Weight": 90,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0033",
-      "Pool ID": "POOL-0012",
-      "Action ID": "ACN-0105",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0034",
-      "Pool ID": "POOL-0012",
-      "Action ID": "ACN-0106",
-      "Weight": 50,
       "Status": "Planned",
       "Notes": null
     },
@@ -14148,58 +14286,10 @@
       "Notes": null
     },
     {
-      "Pool Entry ID": "PEN-0039",
-      "Pool ID": "POOL-0014",
-      "Action ID": "ACN-0015",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0040",
-      "Pool ID": "POOL-0014",
-      "Action ID": "ACN-0106",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
       "Pool Entry ID": "PEN-0041",
       "Pool ID": "POOL-0015",
       "Action ID": "ACN-0009",
       "Weight": 100,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0042",
-      "Pool ID": "POOL-0016",
-      "Action ID": "ACN-0051",
-      "Weight": 45,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0043",
-      "Pool ID": "POOL-0016",
-      "Action ID": "ACN-0010",
-      "Weight": 35,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0044",
-      "Pool ID": "POOL-0016",
-      "Action ID": "ACN-0011",
-      "Weight": 15,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0045",
-      "Pool ID": "POOL-0016",
-      "Action ID": "ACN-0012",
-      "Weight": 5,
       "Status": "Planned",
       "Notes": null
     },
@@ -14276,22 +14366,6 @@
       "Notes": "Oak, 30% of kingswoods rare wood."
     },
     {
-      "Pool Entry ID": "PEN-0057",
-      "Pool ID": "POOL-0022",
-      "Action ID": "ACN-0112",
-      "Weight": 80,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0058",
-      "Pool ID": "POOL-0022",
-      "Action ID": "ACN-0113",
-      "Weight": 20,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
       "Pool Entry ID": "PEN-0059",
       "Pool ID": "POOL-0017",
       "Action ID": "ACN-0162",
@@ -14305,7 +14379,7 @@
       "Action ID": "ACN-0048",
       "Weight": 60,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts — poplar, 60%."
+      "Notes": "Citadel Gathering Outskirts \u2014 poplar, 60%."
     },
     {
       "Pool Entry ID": "PEN-0062",
@@ -14313,7 +14387,7 @@
       "Action ID": "ACN-0009",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Combat Training Grounds — castle guard only."
+      "Notes": "Citadel Combat Training Grounds \u2014 castle guard only."
     },
     {
       "Pool Entry ID": "PEN-0063",
@@ -14321,7 +14395,7 @@
       "Action ID": "ACN-0171",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "QST-0003 Pressure the Guards — nervous guard only."
+      "Notes": "QST-0003 Pressure the Guards \u2014 nervous guard only."
     },
     {
       "Pool Entry ID": "PEN-0064",
@@ -14329,71 +14403,7 @@
       "Action ID": "ACN-0172",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Temple — Monk only."
-    },
-    {
-      "Pool Entry ID": "PEN-0067",
-      "Pool ID": "POOL-0027",
-      "Action ID": "ACN-0099",
-      "Weight": 100,
-      "Status": "Planned",
-      "Notes": "Pond beside the copper mine: only perch."
-    },
-    {
-      "Pool Entry ID": "PEN-0068",
-      "Pool ID": "POOL-0028",
-      "Action ID": "ACN-0102",
-      "Weight": 50,
-      "Status": "Planned",
-      "Notes": "Tuna, 50% of deep-pool fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0069",
-      "Pool ID": "POOL-0028",
-      "Action ID": "ACN-0103",
-      "Weight": 45,
-      "Status": "Planned",
-      "Notes": "Shark, 45% of deep-pool fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0070",
-      "Pool ID": "POOL-0028",
-      "Action ID": "ACN-0104",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": "Baby giant squid, 5% of deep-pool fishing."
-    },
-    {
-      "Pool Entry ID": "PEN-0071",
-      "Pool ID": "POOL-0029",
-      "Action ID": "ACN-0109",
-      "Weight": 90,
-      "Status": "Planned",
-      "Notes": "Augur weed — 90% of temple pick weeds."
-    },
-    {
-      "Pool Entry ID": "PEN-0072",
-      "Pool ID": "POOL-0029",
-      "Action ID": "ACN-0110",
-      "Weight": 10,
-      "Status": "Planned",
-      "Notes": "Moonblossom — 10% of temple pick weeds."
-    },
-    {
-      "Pool Entry ID": "PEN-0073",
-      "Pool ID": "POOL-0030",
-      "Action ID": "ACN-0049",
-      "Weight": 70,
-      "Status": "Planned",
-      "Notes": "Cut maple tree — 70% of hardwood chopping."
-    },
-    {
-      "Pool Entry ID": "PEN-0074",
-      "Pool ID": "POOL-0030",
-      "Action ID": "ACN-0050",
-      "Weight": 30,
-      "Status": "Planned",
-      "Notes": "Cut mahogany tree — 30% of hardwood chopping."
+      "Notes": "Temple \u2014 Monk only."
     },
     {
       "Pool Entry ID": "PEN-0075",
@@ -14401,7 +14411,7 @@
       "Action ID": "ACN-0176",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Fight ghost — 90% of fending off the old spirits."
+      "Notes": "Fight ghost \u2014 90% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0076",
@@ -14409,7 +14419,7 @@
       "Action ID": "ACN-0006",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Fight skeleton — 10% of fending off the old spirits."
+      "Notes": "Fight skeleton \u2014 10% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0077",
@@ -14417,7 +14427,7 @@
       "Action ID": "ACN-0047",
       "Weight": 40,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts — oak, 40%."
+      "Notes": "Citadel Gathering Outskirts \u2014 oak, 40%."
     },
     {
       "Pool Entry ID": "PEN-0078",
@@ -14432,14 +14442,6 @@
       "Pool ID": "POOL-0013",
       "Action ID": "ACN-0027",
       "Weight": 5,
-      "Status": "Planned",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0080",
-      "Pool ID": "POOL-0006",
-      "Action ID": "ACN-0020",
-      "Weight": 10,
       "Status": "Planned",
       "Notes": null
     },
@@ -14508,20 +14510,12 @@
       "Notes": "Great stag 40%"
     },
     {
-      "Pool Entry ID": "PEN-0089",
-      "Pool ID": "POOL-0038",
-      "Action ID": "ACN-0110",
-      "Weight": 100,
-      "Status": "Planned",
-      "Notes": "Moonblossoms 100%"
-    },
-    {
       "Pool Entry ID": "PEN-0090",
       "Pool ID": "POOL-0039",
       "Action ID": "ACN-0017",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts — pheasant only."
+      "Notes": "Gathering Outskirts \u2014 pheasant only."
     },
     {
       "Pool Entry ID": "PEN-0091",
@@ -14529,23 +14523,7 @@
       "Action ID": "ACN-0105",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts — wild roots only."
-    },
-    {
-      "Pool Entry ID": "PEN-0092",
-      "Pool ID": "POOL-0010",
-      "Action ID": "ACN-0184",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": "Mushrooms in Kingswoods gathering."
-    },
-    {
-      "Pool Entry ID": "PEN-0093",
-      "Pool ID": "POOL-0012",
-      "Action ID": "ACN-0184",
-      "Weight": 25,
-      "Status": "Planned",
-      "Notes": "Mushrooms in Meadow gathering."
+      "Notes": "Gathering Outskirts \u2014 wild roots only."
     },
     {
       "Pool Entry ID": "PEN-0094",
@@ -14624,46 +14602,6 @@
       "Pool ID": "POOL-0049",
       "Action ID": "ACN-0199",
       "Weight": 100,
-      "Status": "Confirmed",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0104",
-      "Pool ID": "POOL-0009",
-      "Action ID": "ACN-0204",
-      "Weight": 5,
-      "Status": "Planned",
-      "Notes": "Hunt wild boar alongside combat boar."
-    },
-    {
-      "Pool Entry ID": "PEN-0105",
-      "Pool ID": "POOL-0050",
-      "Action ID": "ACN-0219",
-      "Weight": 70,
-      "Status": "Confirmed",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0106",
-      "Pool ID": "POOL-0050",
-      "Action ID": "ACN-0220",
-      "Weight": 30,
-      "Status": "Confirmed",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0107",
-      "Pool ID": "POOL-0051",
-      "Action ID": "ACN-0021",
-      "Weight": 50,
-      "Status": "Confirmed",
-      "Notes": null
-    },
-    {
-      "Pool Entry ID": "PEN-0108",
-      "Pool ID": "POOL-0051",
-      "Action ID": "ACN-0020",
-      "Weight": 50,
       "Status": "Confirmed",
       "Notes": null
     },
@@ -14770,6 +14708,670 @@
       "Weight": 20,
       "Status": "Planned",
       "Notes": "Bandit Captain 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0122",
+      "Pool ID": "POOL-0003",
+      "Action ID": "ACN-0100",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Trout 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0123",
+      "Pool ID": "POOL-0003",
+      "Action ID": "ACN-0101",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Salmon 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0124",
+      "Pool ID": "POOL-0003",
+      "Action ID": "ACN-0180",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Algae 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0125",
+      "Pool ID": "POOL-0063",
+      "Action ID": "ACN-0101",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Salmon 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0126",
+      "Pool ID": "POOL-0063",
+      "Action ID": "ACN-0102",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Tuna 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0127",
+      "Pool ID": "POOL-0063",
+      "Action ID": "ACN-0103",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Shark 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0128",
+      "Pool ID": "POOL-0064",
+      "Action ID": "ACN-0224",
+      "Weight": 100,
+      "Status": "Confirmed",
+      "Notes": "Merchant's chest 100%."
+    },
+    {
+      "Pool Entry ID": "PEN-0129",
+      "Pool ID": "POOL-0065",
+      "Action ID": "ACN-0101",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Salmon 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0130",
+      "Pool ID": "POOL-0065",
+      "Action ID": "ACN-0100",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Trout 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0131",
+      "Pool ID": "POOL-0066",
+      "Action ID": "ACN-0200",
+      "Weight": 60,
+      "Status": "Planned",
+      "Notes": "Willow 60%."
+    },
+    {
+      "Pool Entry ID": "PEN-0132",
+      "Pool ID": "POOL-0066",
+      "Action ID": "ACN-0048",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Poplar 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0133",
+      "Pool ID": "POOL-0066",
+      "Action ID": "ACN-0184",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Mushrooms 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0134",
+      "Pool ID": "POOL-0067",
+      "Action ID": "ACN-0013",
+      "Weight": 80,
+      "Status": "Planned",
+      "Notes": "Duck 80%."
+    },
+    {
+      "Pool Entry ID": "PEN-0135",
+      "Pool ID": "POOL-0067",
+      "Action ID": "ACN-0205",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Fox 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0136",
+      "Pool ID": "POOL-0068",
+      "Action ID": "ACN-0227",
+      "Weight": 100,
+      "Status": "Confirmed",
+      "Notes": "Locked storeroom 100%."
+    },
+    {
+      "Pool Entry ID": "PEN-0137",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0215",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Man of war 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0138",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0173",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "Seagull 5%."
+    },
+    {
+      "Pool Entry ID": "PEN-0139",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0103",
+      "Weight": 35,
+      "Status": "Planned",
+      "Notes": "Shark 35%."
+    },
+    {
+      "Pool Entry ID": "PEN-0140",
+      "Pool ID": "POOL-0004",
+      "Action ID": "ACN-0216",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Marlin 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0141",
+      "Pool ID": "POOL-0005",
+      "Action ID": "ACN-0018",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Copper 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0142",
+      "Pool ID": "POOL-0005",
+      "Action ID": "ACN-0020",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Tin 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0143",
+      "Pool ID": "POOL-0005",
+      "Action ID": "ACN-0019",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Clay 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0144",
+      "Pool ID": "POOL-0027",
+      "Action ID": "ACN-0099",
+      "Weight": 90,
+      "Status": "Planned",
+      "Notes": "Perch 90%."
+    },
+    {
+      "Pool Entry ID": "PEN-0145",
+      "Pool ID": "POOL-0027",
+      "Action ID": "ACN-0100",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Trout 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0146",
+      "Pool ID": "POOL-0069",
+      "Action ID": "ACN-0013",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": "Duck 100%."
+    },
+    {
+      "Pool Entry ID": "PEN-0147",
+      "Pool ID": "POOL-0011",
+      "Action ID": "ACN-0015",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Weasel 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0148",
+      "Pool ID": "POOL-0011",
+      "Action ID": "ACN-0016",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Rabbit 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0151",
+      "Pool ID": "POOL-0009",
+      "Action ID": "ACN-0017",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Pheasant 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0152",
+      "Pool ID": "POOL-0009",
+      "Action ID": "ACN-0204",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Wild boar hunt 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0153",
+      "Pool ID": "POOL-0009",
+      "Action ID": "ACN-0014",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Elk 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0154",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0107",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Mosstole 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0155",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0184",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Mushrooms 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0156",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0108",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Wild berries 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0157",
+      "Pool ID": "POOL-0010",
+      "Action ID": "ACN-0008",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Wild boar combat 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0158",
+      "Pool ID": "POOL-0014",
+      "Action ID": "ACN-0106",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Fernleaf 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0159",
+      "Pool ID": "POOL-0014",
+      "Action ID": "ACN-0017",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Pheasant 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0160",
+      "Pool ID": "POOL-0070",
+      "Action ID": "ACN-0014",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Elk 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0161",
+      "Pool ID": "POOL-0070",
+      "Action ID": "ACN-0205",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Fox 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0162",
+      "Pool ID": "POOL-0071",
+      "Action ID": "ACN-0108",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Wild berries 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0163",
+      "Pool ID": "POOL-0071",
+      "Action ID": "ACN-0109",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Augur weed 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0164",
+      "Pool ID": "POOL-0071",
+      "Action ID": "ACN-0105",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Wild roots 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0165",
+      "Pool ID": "POOL-0072",
+      "Action ID": "ACN-0048",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Poplar 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0166",
+      "Pool ID": "POOL-0072",
+      "Action ID": "ACN-0179",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Vines 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0167",
+      "Pool ID": "POOL-0072",
+      "Action ID": "ACN-0049",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Maple 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0168",
+      "Pool ID": "POOL-0073",
+      "Action ID": "ACN-0013",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Duck 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0169",
+      "Pool ID": "POOL-0073",
+      "Action ID": "ACN-0206",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Giant toad 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0170",
+      "Pool ID": "POOL-0073",
+      "Action ID": "ACN-0180",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Algae 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0171",
+      "Pool ID": "POOL-0074",
+      "Action ID": "ACN-0100",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Trout 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0172",
+      "Pool ID": "POOL-0074",
+      "Action ID": "ACN-0102",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Tuna 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0173",
+      "Pool ID": "POOL-0038",
+      "Action ID": "ACN-0110",
+      "Weight": 55,
+      "Status": "Planned",
+      "Notes": "Moonblossom 55%."
+    },
+    {
+      "Pool Entry ID": "PEN-0174",
+      "Pool ID": "POOL-0038",
+      "Action ID": "ACN-0111",
+      "Weight": 40,
+      "Status": "Planned",
+      "Notes": "Starroot 40%."
+    },
+    {
+      "Pool Entry ID": "PEN-0175",
+      "Pool ID": "POOL-0038",
+      "Action ID": "ACN-0105",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "Wild roots 5%."
+    },
+    {
+      "Pool Entry ID": "PEN-0176",
+      "Pool ID": "POOL-0016",
+      "Action ID": "ACN-0010",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Ent 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0177",
+      "Pool ID": "POOL-0016",
+      "Action ID": "ACN-0012",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Corrupted ent 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0178",
+      "Pool ID": "POOL-0016",
+      "Action ID": "ACN-0011",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Ancient ent 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0179",
+      "Pool ID": "POOL-0030",
+      "Action ID": "ACN-0049",
+      "Weight": 45,
+      "Status": "Planned",
+      "Notes": "Maple 45%."
+    },
+    {
+      "Pool Entry ID": "PEN-0180",
+      "Pool ID": "POOL-0030",
+      "Action ID": "ACN-0050",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Mahogany 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0181",
+      "Pool ID": "POOL-0030",
+      "Action ID": "ACN-0051",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "Elder yew 5%."
+    },
+    {
+      "Pool Entry ID": "PEN-0182",
+      "Pool ID": "POOL-0006",
+      "Action ID": "ACN-0022",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Iron 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0183",
+      "Pool ID": "POOL-0006",
+      "Action ID": "ACN-0021",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Coal 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0184",
+      "Pool ID": "POOL-0006",
+      "Action ID": "ACN-0020",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Tin 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0185",
+      "Pool ID": "POOL-0006",
+      "Action ID": "ACN-0238",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Cave bat 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0186",
+      "Pool ID": "POOL-0022",
+      "Action ID": "ACN-0112",
+      "Weight": 100,
+      "Status": "Planned",
+      "Notes": "Mountain goat 100%."
+    },
+    {
+      "Pool Entry ID": "PEN-0187",
+      "Pool ID": "POOL-0029",
+      "Action ID": "ACN-0109",
+      "Weight": 80,
+      "Status": "Planned",
+      "Notes": "Augur weed 80%."
+    },
+    {
+      "Pool Entry ID": "PEN-0188",
+      "Pool ID": "POOL-0029",
+      "Action ID": "ACN-0105",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Wild roots 20%."
+    },
+    {
+      "Pool Entry ID": "PEN-0150",
+      "Pool ID": "POOL-0012",
+      "Action ID": "ACN-0105",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Wild roots 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0149",
+      "Pool ID": "POOL-0012",
+      "Action ID": "ACN-0106",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Fernleaf 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0189",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0021",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Coal 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0190",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0020",
+      "Weight": 25,
+      "Status": "Planned",
+      "Notes": "Tin 25%."
+    },
+    {
+      "Pool Entry ID": "PEN-0191",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0097",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Silver 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0192",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0098",
+      "Weight": 5,
+      "Status": "Planned",
+      "Notes": "Gold 5%."
+    },
+    {
+      "Pool Entry ID": "PEN-0193",
+      "Pool ID": "POOL-0051",
+      "Action ID": "ACN-0005",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Rock troll 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0194",
+      "Pool ID": "POOL-0075",
+      "Action ID": "ACN-0208",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Giant spider 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0195",
+      "Pool ID": "POOL-0075",
+      "Action ID": "ACN-0112",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Mountain goat 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0196",
+      "Pool ID": "POOL-0076",
+      "Action ID": "ACN-0202",
+      "Weight": 90,
+      "Status": "Planned",
+      "Notes": "Ironwood 90%."
+    },
+    {
+      "Pool Entry ID": "PEN-0197",
+      "Pool ID": "POOL-0076",
+      "Action ID": "ACN-0221",
+      "Weight": 10,
+      "Status": "Planned",
+      "Notes": "Giant 10%."
+    },
+    {
+      "Pool Entry ID": "PEN-0198",
+      "Pool ID": "POOL-0050",
+      "Action ID": "ACN-0211",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Bleeding tooth 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0199",
+      "Pool ID": "POOL-0050",
+      "Action ID": "ACN-0219",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Harpy 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0200",
+      "Pool ID": "POOL-0077",
+      "Action ID": "ACN-0239",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Giant rat 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0201",
+      "Pool ID": "POOL-0077",
+      "Action ID": "ACN-0238",
+      "Weight": 70,
+      "Status": "Planned",
+      "Notes": "Cave bat 70%."
+    },
+    {
+      "Pool Entry ID": "PEN-0202",
+      "Pool ID": "POOL-0028",
+      "Action ID": "ACN-0103",
+      "Weight": 50,
+      "Status": "Planned",
+      "Notes": "Shark 50%."
+    },
+    {
+      "Pool Entry ID": "PEN-0203",
+      "Pool ID": "POOL-0028",
+      "Action ID": "ACN-0215",
+      "Weight": 30,
+      "Status": "Planned",
+      "Notes": "Man of war 30%."
+    },
+    {
+      "Pool Entry ID": "PEN-0204",
+      "Pool ID": "POOL-0028",
+      "Action ID": "ACN-0104",
+      "Weight": 20,
+      "Status": "Planned",
+      "Notes": "Baby giant squid 20%."
     }
   ],
   "Actions": [
@@ -17542,7 +18144,7 @@
       "Secondary Reward Table ID": "RWT-0158",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. Secondary Branches drop.",
+      "Notes": "Secondary Branches drop (RWT-0158). Used in Riverside Manor grounds pool and skill menu.",
       "Sprite Asset Key": "actions/acn_cut_oak.webp"
     },
     {
@@ -17584,7 +18186,7 @@
       "Secondary Reward Table ID": "RWT-0160",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. Secondary Bark drop.",
+      "Notes": "Secondary Bark drop. Used in Badlands woodcutting pool and skill menu.",
       "Sprite Asset Key": "actions/acn_cut_mahogany.webp"
     },
     {
@@ -17647,7 +18249,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.",
+      "Notes": "No item drops (XP only). Used in Riverside Manor and Forest Path hunting pools.",
       "Sprite Asset Key": "actions/acn_hunt_rabbit.webp"
     },
     {
@@ -17668,7 +18270,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.",
+      "Notes": "No item drops (XP only). Used in Mirror Lake hunting pool.",
       "Sprite Asset Key": "actions/acn_hunt_pheasant.webp"
     },
     {
@@ -17710,7 +18312,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.",
+      "Notes": "No item drops (XP only). Used in Badlands hunting pool.",
       "Sprite Asset Key": "actions/acn_hunt_pheasant.webp"
     },
     {
@@ -17856,7 +18458,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only. No location.",
+      "Notes": "Wired into The Docks fishing pool.",
       "Sprite Asset Key": "actions/acn_catch_tuna.webp"
     },
     {
@@ -17877,7 +18479,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Skill menu / codex only.",
+      "Notes": "Wired into The Docks fishing pool.",
       "Sprite Asset Key": "actions/acn_catch_shark.webp"
     },
     {
@@ -18040,7 +18642,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:40; FailDamagePercent:10",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:40; FailDamagePercent:10; Wired at Kingsroad.",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18103,7 +18705,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:55; FailDamagePercent:10",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:55; FailDamagePercent:10; Wired at Riverside Manor.",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18302,6 +18904,48 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Production is hard-gated by Proficiency Level."
+    },
+    {
+      "Action ID": "ACN-0238",
+      "Internal Key": "fight_cave_bat",
+      "Display Name": "Fight cave bat",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0027",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 1322,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold. Wired into The Slopes mining pool.",
+      "Sprite Asset Key": "enemies/enm_seagull.webp"
+    },
+    {
+      "Action ID": "ACN-0239",
+      "Internal Key": "fight_giant_rat",
+      "Display Name": "Fight giant rat",
+      "Category": "Combat",
+      "Relevant Skill ID": "SKL-0001",
+      "Target Type": "Enemy",
+      "Target ID": "ENM-0025",
+      "Proficiency Level": null,
+      "Base Duration Seconds": null,
+      "XP Reward": 300,
+      "Guaranteed Gold": null,
+      "Drop Chance": 0,
+      "Reward Table ID": null,
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Combat is resolved in four-second rounds; Enemy record owns HP, damage, and guaranteed Gold. Wired into Deep Mines combat pool.",
+      "Sprite Asset Key": "enemies/enm_wild_boar.webp"
     }
   ],
   "Requirements": [
@@ -18391,19 +19035,6 @@
       "Group Logic": "AND",
       "Requirement Type": "Tool Capability",
       "Reference ID / Value": "hunting_tool",
-      "Operator": null,
-      "Required Value": null,
-      "Status": "Planned",
-      "Notes": "Player may select this Activity only when every possible Action is compatible with the equipped requirement."
-    },
-    {
-      "Requirement ID": "REQ-0009",
-      "Entity Type": "Activity",
-      "Entity ID": "ACT-0016",
-      "Requirement Group": "A",
-      "Group Logic": "AND",
-      "Requirement Type": "Tool Capability",
-      "Reference ID / Value": "woodcutting_tool",
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
@@ -19551,7 +20182,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks — empty Weapon or Tool."
+      "Notes": "Train with the monks \u2014 empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0105",
@@ -19564,7 +20195,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks — empty Shield or Off-hand."
+      "Notes": "Train with the monks \u2014 empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0106",
@@ -19603,7 +20234,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds — empty Weapon or Tool."
+      "Notes": "Pick weeds \u2014 empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0109",
@@ -19616,7 +20247,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds — empty Shield or Off-hand."
+      "Notes": "Pick weeds \u2014 empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0110",
@@ -20410,6 +21041,201 @@
       "Required Value": 56,
       "Status": "Confirmed",
       "Notes": null
+    },
+    {
+      "Requirement ID": "REQ-0166",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0082",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "fishing_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Kingsroad river fishing needs a fishing tool."
+    },
+    {
+      "Requirement ID": "REQ-0167",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0084",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "fishing_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Riverside Manor fishing needs a fishing tool."
+    },
+    {
+      "Requirement ID": "REQ-0168",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0085",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Manor grounds cutting needs a woodcutting tool (mushrooms in the same pool need none)."
+    },
+    {
+      "Requirement ID": "REQ-0169",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0086",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Riverside Manor hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0170",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0088",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Station",
+      "Reference ID / Value": "FAC-0022",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Requirement ID": "REQ-0171",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0089",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Copper mine duck hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0172",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0090",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Forest Path hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0173",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0092",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Small Clearing woodcutting needs a woodcutting tool."
+    },
+    {
+      "Requirement ID": "REQ-0174",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0093",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Mirror Lake hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0175",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0094",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "fishing_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Mirror Lake fishing needs a fishing tool."
+    },
+    {
+      "Requirement ID": "REQ-0176",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0069",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "mining_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Badlands prospecting needs a mining tool."
+    },
+    {
+      "Requirement ID": "REQ-0177",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0095",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "hunting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Badlands hunting needs a hunting tool."
+    },
+    {
+      "Requirement ID": "REQ-0178",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0096",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Tool Capability",
+      "Reference ID / Value": "woodcutting_tool",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": "Badlands woodcutting needs a woodcutting tool."
+    },
+    {
+      "Requirement ID": "REQ-0179",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0097",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Station",
+      "Reference ID / Value": "FAC-0023",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": null
+    },
+    {
+      "Requirement ID": "REQ-0181",
+      "Entity Type": "Activity",
+      "Entity ID": "ACT-0099",
+      "Requirement Group": "A",
+      "Group Logic": "AND",
+      "Requirement Type": "Station",
+      "Reference ID / Value": "FAC-0025",
+      "Operator": null,
+      "Required Value": null,
+      "Status": "Planned",
+      "Notes": null
     }
   ],
   "Enemies": [
@@ -20879,7 +21705,7 @@
       "Enemy ID": "ENM-0025",
       "Internal Key": "giant_rat",
       "Display Name": "Giant Rat",
-      "Location ID": null,
+      "Location ID": "LOC-0011",
       "Might Level": 3,
       "Vitality Level": 3,
       "Combat Level": 5,
@@ -20894,7 +21720,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_wild_boar.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Rolls from the Deep Mines combat pool."
     },
     {
       "Enemy ID": "ENM-0026",
@@ -20921,7 +21747,7 @@
       "Enemy ID": "ENM-0027",
       "Internal Key": "cave_bat",
       "Display Name": "Cave Bat",
-      "Location ID": null,
+      "Location ID": "LOC-0046",
       "Might Level": 14,
       "Vitality Level": 14,
       "Combat Level": 21,
@@ -20936,7 +21762,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_seagull.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool."
+      "Notes": "Placeholder art. Rolls from The Slopes mining pool."
     },
     {
       "Enemy ID": "ENM-0028",
@@ -22452,7 +23278,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems — Sapphire Only",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -22467,7 +23293,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -22482,7 +23308,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -22497,7 +23323,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -22512,7 +23338,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -22527,7 +23353,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -31272,7 +32098,7 @@
       "Role": "Wizard",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A traveling wizard who can rewrite the shape of a person — for a price, and not too often.",
+      "Description": "A traveling wizard who can rewrite the shape of a person \u2014 for a price, and not too often.",
       "Notes": "RequiresTotalLevel:500",
       "Sprite Asset Key": "npc/npc_wizard_shopkeeper.png"
     },
@@ -31322,7 +32148,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -31423,7 +32249,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -31519,7 +32345,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Harness essence remains the primary efficient source.",
-      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
+      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -31611,7 +32437,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Citadel market hall stocking everyday tools and supplies.",
-      "Notes": "Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -31712,7 +32538,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A compact stall with food, potions, and starter tools for travelers.",
-      "Notes": "Player buy price = 2× Base Sell Value.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0058",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -31807,7 +32633,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells outfits, specialist hats, leather armor, oven mitts, and a scythe.",
-      "Notes": "Player buy price = 2× Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, leather armor, Oven Mitts, and the Scythe are wearable gear.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, leather armor, Oven Mitts, and the Scythe are wearable gear.",
       "Entry 1 Item ID": "ITEM-0296",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -31908,7 +32734,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells bronze, iron, tungsten, and titanium swords, helmets, chestplates, and platelegs.",
-      "Notes": "Player buy price = 2× Base Sell Value. Buyback uses the normal 1× general-store rate. No boots or gloves. Titanium costs more than tungsten.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buyback uses the normal 1\u00d7 general-store rate. No boots or gloves. Titanium costs more than tungsten.",
       "Entry 1 Item ID": "ITEM-0224",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32015,7 +32841,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells common ores and buys finished smithing work.",
-      "Notes": "Player buy price = 2× Base Sell Value. Buys smithing project outputs at 1×. Does not buy ore.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys smithing project outputs at 1\u00d7. Does not buy ore.",
       "Entry 1 Item ID": "ITEM-0003",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -32274,7 +33100,7 @@
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
       "Summary": "A kitchen worker wants out of the kitchens.",
-      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street — I keep thinking about the alchemy shop I've always wanted.",
+      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street \u2014 I keep thinking about the alchemy shop I've always wanted.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5, ITEM-0028 x5, ITEM-0042 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -32286,7 +33112,7 @@
       "Reward XP Amount": 11000,
       "Reward Item ID": "ITEM-0165",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
+      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose\u2019s Apothecary"
     },
     {
       "Quest ID": "QST-0003",
@@ -32294,7 +33120,7 @@
       "Display Name": "Lowly Beggar",
       "NPC ID": "NPC-0011",
       "Summary": "A beggar was asking for help in the town.",
-      "Pitch": "Please, traveler… someone took my coin purse in the night, I have nothing left.",
+      "Pitch": "Please, traveler\u2026 someone took my coin purse in the night, I have nothing left.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Talk: NPC-0012; OptionalTalk: NPC-0007; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 25000",
@@ -32406,15 +33232,15 @@
       "Reward XP Amount": 100000,
       "Reward Item ID": "ITEM-0313",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "Mining XP, Abandoned Mineshaft, Excavator’s Pickaxe"
+      "Possible Rewards": "Mining XP, Abandoned Mineshaft, Excavator\u2019s Pickaxe"
     },
     {
       "Quest ID": "QST-0009",
       "Internal Key": "a_change_of_skin",
       "Display Name": "A Change of Skin",
       "NPC ID": "NPC-0016",
-      "Summary": "Vesper in the castle hall can rewrite the blood you wear — once a week, for a price.",
-      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you — the weave needs time to settle.",
+      "Summary": "Vesper in the castle hall can rewrite the blood you wear \u2014 once a week, for a price.",
+      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you \u2014 the weave needs time to settle.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Miniquest; HideFromQuestLog; Repeatable:7d; RequiresTotalLevel:500",
@@ -32474,7 +33300,7 @@
       "Dialogue ID": "QDL-0001",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0007",
-      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool…",
+      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool\u2026",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32483,7 +33309,7 @@
       "Dialogue ID": "QDL-0002",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free — or you can try your luck another way.",
+      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free \u2014 or you can try your luck another way.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32501,7 +33327,7 @@
       "Dialogue ID": "QDL-0004",
       "Quest ID": "QST-0004",
       "NPC ID": "NPC-0006",
-      "Line": "New around here? Browse all you like — no obligation to buy.",
+      "Line": "New around here? Browse all you like \u2014 no obligation to buy.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32528,7 +33354,7 @@
       "Dialogue ID": "QDL-0008",
       "Quest ID": "QST-0002",
       "NPC ID": "NPC-0005",
-      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails — five of each — and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
+      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails \u2014 five of each \u2014 and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32537,7 +33363,7 @@
       "Dialogue ID": "QDL-0009",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0011",
-      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen — a shopkeeper, a passerby. Please, I have nothing else.",
+      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen \u2014 a shopkeeper, a passerby. Please, I have nothing else.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32546,7 +33372,7 @@
       "Dialogue ID": "QDL-0010",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "So someone talked. A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.",
+      "Line": "So someone talked. A purse? Maybe I saw something. Of course, my memory gets expensive\u2026 or you could try taking it.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresTalk: NPC-0007"
@@ -32555,7 +33381,7 @@
       "Dialogue ID": "QDL-0011",
       "Quest ID": "QST-0005",
       "NPC ID": "NPC-0009",
-      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain — go introduce yourself.",
+      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain \u2014 go introduce yourself.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -32645,7 +33471,7 @@
       "Dialogue ID": "QDL-0021",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them — this farm's patch included. Take this potato seed. Gather a little compost from the heap here, then come back and I'll show you how to put both in the ground.",
+      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them \u2014 this farm's patch included. Take this potato seed. Gather a little compost from the heap here, then come back and I'll show you how to put both in the ground.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0023"
@@ -32672,7 +33498,7 @@
       "Dialogue ID": "QDL-0024",
       "Quest ID": "QST-0001",
       "NPC ID": "NPC-0001",
-      "Line": "The kitchens will sing again — and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
+      "Line": "The kitchens will sing again \u2014 and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "When: completed; unlocks Courtyard Botany plot."
@@ -32690,7 +33516,7 @@
       "Dialogue ID": "QDL-0026",
       "Quest ID": "QST-0010",
       "NPC ID": "NPC-0017",
-      "Line": "We used to tend this slowly. Cut so much at once and the forest will retreat. Craft four offerings at the stone here — a poplar sapling, compost, mosstole, and essence — then place one at each inner grove.",
+      "Line": "We used to tend this slowly. Cut so much at once and the forest will retreat. Craft four offerings at the stone here \u2014 a poplar sapling, compost, mosstole, and essence \u2014 then place one at each inner grove.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0030"
@@ -32717,7 +33543,7 @@
       "Dialogue ID": "QDL-0029",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "The patch is yours now. Plant that potato seed with the compost — the heap and the bed are both here.",
+      "Line": "The patch is yours now. Plant that potato seed with the compost \u2014 the heap and the bed are both here.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0034"
@@ -33099,7 +33925,7 @@
       "Release Phase": "Launch",
       "Reward": null,
       "Target Skill ID": null,
-      "Notes": "Harvest bleeding tooth. Action is unplaced — incomplete until placed."
+      "Notes": "Harvest bleeding tooth. Action is unplaced \u2014 incomplete until placed."
     }
   ],
   "CosmeticSlots": [
@@ -33487,7 +34313,7 @@
       "Race ID": "RACE-0005",
       "Internal Key": "goblin",
       "Display Name": "Goblin",
-      "Description": "Small and green — welcome among the camps of their kin.",
+      "Description": "Small and green \u2014 welcome among the camps of their kin.",
       "Sort Order": 5,
       "Portrait Asset Key": null,
       "Hostility Immunity Location IDs": "LOC-0003",
@@ -34858,6 +35684,16 @@
       "Y": 58,
       "Status": "Planned",
       "Notes": "Between Farm and Town."
+    },
+    {
+      "Map Node ID": "MN-0058",
+      "Map ID": "MAP-0001",
+      "Location ID": "LOC-0053",
+      "X": 50,
+      "Y": 47,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Just south of The Citadel; east of Town to avoid label overlap."
     }
   ],
   "Books": [
@@ -34865,7 +35701,7 @@
       "Book ID": "BOOK-0001",
       "Internal Key": "newcomers_guide",
       "Display Name": "Newcomer's Guide",
-      "Body": "Welcome to Restoria. The land does not rush you, but it does reward those who learn its rhythm.\n\nOpen the map, choose a location, and travel there. Once you arrive, look over the activities on offer. Gathering, crafting, cooking, combat, and other work all live in these lists. Each activity draws from its own pool of rewards, so what you earn depends on where you stand and what you choose to do.\n\nMaterials gather in your bag. Bring them to a workshop, a forge, a kitchen, or a workbench and shape them into tools, food, and gear. Better equipment shortens your labors and steadies your hand in a fight.\n\nWhen you want a longer chase, open the Log. Deeds, milestones, and quests wait there to mark what you have done and what still calls. When you want the kingdom’s records of items, enemies, and recipes, open the Codex.\n\nGood luck adventurer!",
+      "Body": "Welcome to Restoria. The land does not rush you, but it does reward those who learn its rhythm.\n\nOpen the map, choose a location, and travel there. Once you arrive, look over the activities on offer. Gathering, crafting, cooking, combat, and other work all live in these lists. Each activity draws from its own pool of rewards, so what you earn depends on where you stand and what you choose to do.\n\nMaterials gather in your bag. Bring them to a workshop, a forge, a kitchen, or a workbench and shape them into tools, food, and gear. Better equipment shortens your labors and steadies your hand in a fight.\n\nWhen you want a longer chase, open the Log. Deeds, milestones, and quests wait there to mark what you have done and what still calls. When you want the kingdom\u2019s records of items, enemies, and recipes, open the Codex.\n\nGood luck adventurer!",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Granted by Getting Started (QST-0006)."

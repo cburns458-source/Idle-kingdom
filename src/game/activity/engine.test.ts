@@ -315,7 +315,6 @@ describe('primary activity engine', () => {
       'ACN-0010',
       'ACN-0011',
       'ACN-0012',
-      'ACN-0051',
     ])
   })
 
@@ -325,17 +324,16 @@ describe('primary activity engine', () => {
     expect(meadow.map((pair) => pair.action['Action ID']).sort()).toEqual([
       'ACN-0105',
       'ACN-0106',
-      'ACN-0184',
     ])
-    // Weights 50/50/25; mid roll lands on the second entry (Fernleaf).
-    expect(pickWeightedAction(meadow, () => 0.5)?.['Action ID']).toBe('ACN-0106')
+    // Weights fernleaf 30 / wild roots 70; mid roll lands on wild roots.
+    expect(pickWeightedAction(meadow, () => 0.5)?.['Action ID']).toBe('ACN-0105')
   })
 
-  it('hunts rabbit and duck in the meadows, elk and pheasant in the kingswoods', () => {
+  it('hunts weasel and rabbit in the meadows, elk and pheasant in the kingswoods', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const meadow = eligiblePoolEntries(launch, 'POOL-0011').map((pair) => pair.action['Action ID'])
     const woods = eligiblePoolEntries(launch, 'POOL-0009').map((pair) => pair.action['Action ID'])
-    expect(meadow.sort()).toEqual(['ACN-0013', 'ACN-0016'])
+    expect(meadow.sort()).toEqual(['ACN-0015', 'ACN-0016'])
     expect(woods.sort()).toEqual(['ACN-0014', 'ACN-0017', 'ACN-0204'])
   })
 

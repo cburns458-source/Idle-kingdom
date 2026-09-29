@@ -47,7 +47,7 @@ void main() {
     expect(db.activities.any((row) => row.activityId == 'ACT-0036'), isFalse);
   });
 
-  test('Pick weeds rolls augur weed or moonblossom with empty hands', () {
+  test('Pick weeds rolls augur weed or wild roots with empty hands', () {
     final activity = db.activities.firstWhere((row) => row.activityId == 'ACT-0039');
     expect(activity.raw['Contextual Name'], 'Pick weeds');
     expect(activity.poolId, 'POOL-0029');
@@ -56,7 +56,7 @@ void main() {
     expect(pool, hasLength(2));
     expect(
       pool.map((row) => '${row.raw['Action ID']}:${row.raw['Weight']}'),
-      containsAll(<String>['ACN-0109:90', 'ACN-0110:10']),
+      containsAll(<String>['ACN-0109:80', 'ACN-0105:20']),
     );
 
     final augur = db.actions.firstWhere((row) => row.actionId == 'ACN-0109');
@@ -66,11 +66,9 @@ void main() {
     expect(augur.xpReward, 9027);
     expect(augur.baseDurationSeconds, 65);
 
-    final moonblossom = db.actions.firstWhere((row) => row.actionId == 'ACN-0110');
-    expect(moonblossom.displayName, 'Gather moonblossom');
-    expect(moonblossom.proficiencyLevel, 64);
-    expect(moonblossom.xpReward, 12084);
-    expect(moonblossom.baseDurationSeconds, 87);
+    final wildRoots = db.actions.firstWhere((row) => row.actionId == 'ACN-0105');
+    expect(wildRoots.displayName, 'Gather wild roots');
+    expect(wildRoots.proficiencyLevel, 15);
 
     expect(db.actions.any((row) => row.actionId == 'ACN-0174'), isFalse);
 

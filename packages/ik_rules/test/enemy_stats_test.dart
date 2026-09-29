@@ -37,9 +37,9 @@ void main() {
 
   test('new enemies keep placeholder stats; mountain roosts have locations', () {
     const added = <(String, String, num, num, num, num, num, String?)>[
-      ('ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300, null),
+      ('ENM-0025', 'Giant Rat', 3, 150, 12, 26, 300, 'LOC-0011'),
       ('ENM-0026', 'Bandit', 6, 260, 16, 40, 520, 'LOC-0052'),
-      ('ENM-0027', 'Cave Bat', 14, 580, 37, 73, 1322, null),
+      ('ENM-0027', 'Cave Bat', 14, 580, 37, 73, 1322, 'LOC-0046'),
       ('ENM-0028', 'Mage Apprentice', 18, 750, 45, 90, 1770, null),
       ('ENM-0029', 'Bandit Captain', 22, 930, 55, 108, 2268, 'LOC-0052'),
       ('ENM-0030', 'Harpy', 48, 3860, 152, 268, 11424, 'LOC-0047'),
@@ -51,7 +51,16 @@ void main() {
       ('ENM-0036', 'Greater Gargoyle', 86, 17760, 555, 860, 66066, null),
     ];
     final addedIds = {for (final row in added) row.$1};
-    const assignedIds = {'ENM-0026', 'ENM-0029', 'ENM-0030', 'ENM-0031', 'ENM-0033', 'ENM-0034'};
+    const assignedIds = {
+      'ENM-0025',
+      'ENM-0026',
+      'ENM-0027',
+      'ENM-0029',
+      'ENM-0030',
+      'ENM-0031',
+      'ENM-0033',
+      'ENM-0034',
+    };
     for (final row in added) {
       final enemy = getEnemy(db, row.$1)!;
       expect(enemy.displayName, row.$2);

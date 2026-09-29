@@ -53,6 +53,7 @@ const Map<String, String> _locationArt = <String, String>{
   'LOC-0050': 'locations/loc_forest_path.webp',
   'LOC-0051': 'locations/loc_starlight_glade.webp',
   'LOC-0052': 'locations/loc_forest_path.webp',
+  'LOC-0053': 'locations/loc_riverside_manor.webp',
   'LOC-0045': 'locations/loc_the_shallows.webp',
   'LOC-0046': 'locations/loc_mountains.webp',
   'LOC-0047': 'locations/loc_mountains.webp',

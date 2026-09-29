@@ -51,6 +51,8 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   'LOC-0041': { x: 64, y: 78 },
   // Road to the Citadel — horse and carriage at the river fork
   'LOC-0027': { x: 48, y: 42 },
+  // Riverside Manor just south of the Citadel (east of Town)
+  'LOC-0053': { x: 50, y: 47 },
 }
 
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {

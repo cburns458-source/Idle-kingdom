@@ -28,12 +28,16 @@ describe('Ancient Forest Through the Thicket', () => {
     expect(clearing.Notes).toMatch(/requires_unlock/i)
     expect(lake['Display Name']).toBe('Mirror Lake')
     expect(lake['Map ID']).toBe(FOREST_MAP_ID)
-    expect(launch.Activities.filter((row) => row['Location ID'] === SMALL_CLEARING_ID).map((row) => row['Contextual Name'])).toEqual(
-      ['Chop vines'],
-    )
-    expect(launch.Activities.filter((row) => row['Location ID'] === MIRROR_LAKE_ID).map((row) => row['Contextual Name'])).toEqual(
-      ['Chop vines'],
-    )
+    expect(
+      launch.Activities.filter((row) => row['Location ID'] === SMALL_CLEARING_ID)
+        .map((row) => row['Contextual Name'])
+        .sort(),
+    ).toEqual(['Chop vines', 'Cut timber in the clearing', 'Forage the small clearing'])
+    expect(
+      launch.Activities.filter((row) => row['Location ID'] === MIRROR_LAKE_ID)
+        .map((row) => row['Contextual Name'])
+        .sort(),
+    ).toEqual(['Chop vines', 'Fish Mirror Lake', 'Hunt the mirror lake shores'])
     expect(clearing['Background Asset Key']).toBe('locations/loc_forest_path.webp')
     expect(lake['Background Asset Key']).toBe('locations/loc_starlight_glade.webp')
   })

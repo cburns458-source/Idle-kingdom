@@ -137,7 +137,8 @@ describe('mixed combat activity pools', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(activityHasMixedCombatPool(launch, 'ACT-0010')).toBe(true)
     expect(activityHasMixedCombatPool(launch, 'ACT-0006')).toBe(true)
-    expect(activityHasMixedCombatPool(launch, 'ACT-0016')).toBe(true)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0004')).toBe(true)
+    expect(activityHasMixedCombatPool(launch, 'ACT-0016')).toBe(false)
   })
 
   it('does not flag pure combat, pure gather, or pool-less activities', () => {

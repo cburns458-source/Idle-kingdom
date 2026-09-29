@@ -46,8 +46,8 @@ describe('shallows and starlight content', () => {
     const gladeActs = launch.Activities.filter((row) => row['Location ID'] === STARLIGHT_GLADE_ID)
     expect(gladeActs.map((row) => row['Contextual Name']).sort()).toEqual([
       'Chop vines',
+      'Gather glade flora',
       'Hunt for the great stag',
-      'Pick moonblossoms',
     ])
     const hunt = launch.PoolEntries.filter((row) => row['Pool ID'] === 'POOL-0037')
     expect(hunt.map((row) => `${row['Action ID']}:${row.Weight}`).sort()).toEqual([
@@ -55,8 +55,10 @@ describe('shallows and starlight content', () => {
       'ACN-0113:40',
     ])
     const blossoms = launch.PoolEntries.filter((row) => row['Pool ID'] === 'POOL-0038')
-    expect(blossoms).toEqual([
-      expect.objectContaining({ 'Action ID': 'ACN-0110', Weight: 100 }),
+    expect(blossoms.map((row) => `${row['Action ID']}:${row.Weight}`).sort()).toEqual([
+      'ACN-0105:5',
+      'ACN-0110:55',
+      'ACN-0111:40',
     ])
     expect(launch.Locations.find((row) => row['Location ID'] === STARLIGHT_GLADE_ID)?.['Map ID']).toBe(
       FOREST_MAP_ID,
