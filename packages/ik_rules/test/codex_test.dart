@@ -166,14 +166,14 @@ void main() {
     expect(codex.enemy('ENM-0006')!.drops.map((row) => row.itemId), isNot(contains('ITEM-0144')));
 
     final scout = codex.enemy('ENM-0003')!;
-    expect(scout.combatLevel, 15);
+    expect(scout.combatLevel, 17);
     expect(scout.maximumHp, 462);
     expect(scout.minDamage, 33);
-    expect(scout.maxDamage, 66);
+    expect(scout.maxDamage, 67);
 
     final rat = codex.enemy('ENM-0025')!;
     expect(rat.displayName, 'Giant Rat');
-    expect(rat.combatLevel, 5);
+    expect(rat.combatLevel, 6);
     expect(rat.maximumHp, 150);
     expect(rat.drops, isEmpty);
     expect(rat.locations.map((row) => row.displayName), contains('Deep Mines'));

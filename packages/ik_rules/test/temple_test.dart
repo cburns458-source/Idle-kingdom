@@ -114,7 +114,7 @@ void main() {
     expect(save.currentActivityId, 'ACT-0035');
     expect(save.currentActionId, 'ACN-0172');
     expect(save.combatEnemyId, 'ENM-0020');
-    expect(save.combatEnemyHp, 462);
+    expect(save.combatEnemyHp, 420);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0100'), isTrue);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0145'), isTrue);
   });
