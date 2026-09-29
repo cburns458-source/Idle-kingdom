@@ -389,7 +389,7 @@ class _CodexViewState extends State<CodexView> {
               title: entry.displayName,
               detail: [?level, if (places.isNotEmpty) places].join(' · '),
               ink: Palette.parchmentText,
-              muted: chrome.embossFace,
+              muted: Palette.muted,
               onTap: () => _openAction(entry.actionId),
             );
           },
@@ -403,7 +403,6 @@ class _CodexViewState extends State<CodexView> {
     if (rows.isEmpty) {
       return const Center(child: MutedText('Nothing in the Bestiary matches.'));
     }
-    final chrome = UiChrome.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: FloatingItemWell(
@@ -423,7 +422,7 @@ class _CodexViewState extends State<CodexView> {
               title: entry.displayName,
               detail: [?level, if (places.isNotEmpty) places].join(' · '),
               ink: Palette.parchmentText,
-              muted: chrome.embossFace,
+              muted: Palette.muted,
               onTap: () => _openEnemy(entry.enemyId),
             );
           },
@@ -496,10 +495,9 @@ class _ItemPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chrome = UiChrome.of(context);
     // Detail text sits on the board (like Log / Leaderboard), not a tan panel.
     final ink = Palette.parchmentText;
-    final muted = chrome.embossFace;
+    const muted = Palette.muted;
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       children: [
@@ -603,9 +601,8 @@ class _EnemyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chrome = UiChrome.of(context);
     final ink = Palette.parchmentText;
-    final muted = chrome.embossFace;
+    const muted = Palette.muted;
     final places = entry.locations.map((row) => row.displayName).join(', ');
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -703,9 +700,8 @@ class _ActionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chrome = UiChrome.of(context);
     final ink = Palette.parchmentText;
-    final muted = chrome.embossFace;
+    const muted = Palette.muted;
     final places = entry.locations.map((row) => row.displayName).join(', ');
     final level = entry.level == null ? null : 'Level ${formatThousands(entry.level!)}';
     return ListView(
