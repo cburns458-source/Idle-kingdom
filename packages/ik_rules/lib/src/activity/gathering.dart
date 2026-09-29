@@ -14,13 +14,20 @@ import 'xp.dart';
 
 /// Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
 /// Plus +1% for each level above the action's proficiency level.
-///
-/// A standard production craft rolls against this same curve, reading the
-/// recipe's proficiency level in place of the action's.
 num gatheringSuccessChancePercent(num level, [num proficiencyLevel = 1]) {
+  return _successChancePercent(level, proficiencyLevel, 40);
+}
+
+/// Standard production copy of the gathering curve with a +10% base
+/// (level 1 = 50%, 99.5% at level 100, same above-proficiency bonus).
+num productionSuccessChancePercent(num level, [num proficiencyLevel = 1]) {
+  return _successChancePercent(level, proficiencyLevel, 50);
+}
+
+num _successChancePercent(num level, num proficiencyLevel, num baseAtLevel1) {
   final lvl = math.max(1, level.floor());
   final proficiency = math.max(1, proficiencyLevel.floor());
-  final base = 40 + 0.5 * (lvl - 1);
+  final base = baseAtLevel1 + 0.5 * (lvl - 1);
   final aboveProficiency = math.max(0, lvl - proficiency);
   return math.min(100, base + aboveProficiency);
 }
@@ -28,6 +35,11 @@ num gatheringSuccessChancePercent(num level, [num proficiencyLevel = 1]) {
 /// False means the action yields no loot and no XP.
 bool rollGatheringSuccess(num level, RandomFn random, [num proficiencyLevel = 1]) {
   return random() * 100 < gatheringSuccessChancePercent(level, proficiencyLevel);
+}
+
+/// False means the craft botches: materials spent, no output/XP.
+bool rollProductionSuccess(num level, RandomFn random, [num proficiencyLevel = 1]) {
+  return random() * 100 < productionSuccessChancePercent(level, proficiencyLevel);
 }
 
 num gatheringDurationMs(GameDatabase db, PlayerSave save, ActionRow action) {

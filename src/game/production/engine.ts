@@ -2,7 +2,7 @@ import { addItemToInventory, addItemToInventoryExact } from '../activity/rewards
 import { summarizeXpReward } from '../activity/rewardSummary'
 import type { ActionRewardBundle } from '../activity/types'
 import { applyXp, getSkillProgress } from '../activity/xp'
-import { rollGatheringSuccess } from '../activity/gathering'
+import { rollProductionSuccess } from '../activity/gathering'
 import { creditXpAwards } from '../trackers/trackers'
 import type { RandomFn } from '../activity/pools'
 import { chefHatOutputQuantity, alchemyPotionOutputQuantity, productionOutputReservePerCraft, ALCHEMY_SKILL_ID } from '../equipment/specialist'
@@ -178,7 +178,7 @@ export function completeProductionCraft(
   // The materials left the bag when the queue was placed, so a botched craft
   // costs them: rolling before the output means a full bag cannot save them.
   const craftLevel = getSkillProgress(save, recipe['Skill ID']).level
-  if (!rollGatheringSuccess(craftLevel, random, recipe['Proficiency Level'])) {
+  if (!rollProductionSuccess(craftLevel, random, recipe['Proficiency Level'])) {
     const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
     return finishProductionCraft(db, save, recipe, nowMs, {
       next: save,

@@ -164,9 +164,12 @@ void main() {
     await tester.tap(find.text('Recipe book'));
     await tester.pump();
     expect(find.textContaining('Unlocks at Cooking'), findsWidgets);
-    await tester.tap(find.widgetWithText(GameButton, 'Other').last);
-    await tester.pump();
-    expect(find.textContaining('Baked potato'), findsWidgets);
+    // Cooking book is a single Production tab with Fish/Meat/Stew/Other sections.
+    expect(find.text('Fish'), findsWidgets);
+    expect(find.text('Meat'), findsWidgets);
+    expect(find.text('Stew'), findsWidgets);
+    expect(find.text('Other'), findsWidgets);
+    expect(find.textContaining('Cooked perch'), findsWidgets);
   });
 
   testWidgets('smithing lists material groups instead of every item', (tester) async {

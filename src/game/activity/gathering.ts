@@ -20,17 +20,33 @@ export function configString(db: GameDatabase, key: string, fallback: string): s
 /**
  * Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
  * Plus +1% for each level above the action's proficiency level.
- *
- * A standard production craft rolls against this same curve, reading the
- * recipe's proficiency level in place of the action's.
  */
 export function gatheringSuccessChancePercent(
   level: number,
   proficiencyLevel: number = 1,
 ): number {
+  return successChancePercent(level, proficiencyLevel, 40)
+}
+
+/**
+ * Standard production uses a copy of the gathering curve with a +10% base
+ * (level 1 = 50%, 99.5% at level 100, same above-proficiency bonus).
+ */
+export function productionSuccessChancePercent(
+  level: number,
+  proficiencyLevel: number = 1,
+): number {
+  return successChancePercent(level, proficiencyLevel, 50)
+}
+
+function successChancePercent(
+  level: number,
+  proficiencyLevel: number,
+  baseAtLevel1: number,
+): number {
   const lvl = Math.max(1, Math.floor(Number(level) || 1))
   const proficiency = Math.max(1, Math.floor(Number(proficiencyLevel) || 1))
-  const base = 40 + 0.5 * (lvl - 1)
+  const base = baseAtLevel1 + 0.5 * (lvl - 1)
   const aboveProficiency = Math.max(0, lvl - proficiency)
   return Math.min(100, base + aboveProficiency)
 }
@@ -42,6 +58,15 @@ export function rollGatheringSuccess(
   proficiencyLevel: number = 1,
 ): boolean {
   return random() * 100 < gatheringSuccessChancePercent(level, proficiencyLevel)
+}
+
+/** False means the craft botches: materials spent, no output/XP. */
+export function rollProductionSuccess(
+  level: number,
+  random: RandomFn = Math.random,
+  proficiencyLevel: number = 1,
+): boolean {
+  return random() * 100 < productionSuccessChancePercent(level, proficiencyLevel)
 }
 
 export function gatheringDurationMs(

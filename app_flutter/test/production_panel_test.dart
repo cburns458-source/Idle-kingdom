@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/production_panel.dart';
@@ -62,7 +63,13 @@ void main() {
     await tester.tap(find.text('Recipe book'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Unlocks at Cooking'), findsWidgets);
-    await tester.tap(find.widgetWithText(GameButton, 'Other'));
+    // Cooking book is a single Production tab with Fish/Meat/Stew/Other sections.
+    expect(find.text('Other'), findsOne);
+    await tester.dragUntilVisible(
+      find.textContaining('Baked potato'),
+      find.byType(ListView).last,
+      const Offset(0, -240),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('Baked potato'), findsWidgets);
   });

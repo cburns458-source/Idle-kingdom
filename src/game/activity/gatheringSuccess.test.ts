@@ -6,7 +6,9 @@ import { resolve } from 'node:path'
 import { completeGatheringAction } from './engine'
 import {
   gatheringSuccessChancePercent,
+  productionSuccessChancePercent,
   rollGatheringSuccess,
+  rollProductionSuccess,
 } from './gathering'
 import {
   ACTION_TIME_REDUCTION_CAP_PERCENT,
@@ -53,6 +55,22 @@ describe('gathering success chance', () => {
     // Level 15 / proficiency 10 → 52%
     expect(rollGatheringSuccess(15, () => 0.519, 10)).toBe(true)
     expect(rollGatheringSuccess(15, () => 0.52, 10)).toBe(false)
+  })
+})
+
+describe('production success chance', () => {
+  it('uses the gathering curve with a +10% base', () => {
+    expect(productionSuccessChancePercent(1, 1)).toBe(50)
+    expect(productionSuccessChancePercent(2, 2)).toBe(50.5)
+    expect(productionSuccessChancePercent(100, 100)).toBe(99.5)
+    expect(productionSuccessChancePercent(200, 200)).toBe(100)
+    // Level 15 base = 50 + 0.5*14 = 57; proficiency 10 → +5 = 62
+    expect(productionSuccessChancePercent(15, 10)).toBe(62)
+  })
+
+  it('rollProductionSuccess matches the percent threshold', () => {
+    expect(rollProductionSuccess(1, () => 0.499)).toBe(true)
+    expect(rollProductionSuccess(1, () => 0.5)).toBe(false)
   })
 })
 

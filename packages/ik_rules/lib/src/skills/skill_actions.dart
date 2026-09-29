@@ -17,8 +17,18 @@ const String fishingSkillId = 'SKL-0003';
 const String harvestingSkillId = 'SKL-0004';
 const String huntingSkillId = 'SKL-0005';
 const String woodcuttingSkillId = 'SKL-0006';
+const String metallurgySkillMenuId = 'SKL-0008';
+const String craftingSkillMenuId = 'SKL-0009';
+const String alchemySkillMenuId = 'SKL-0010';
 const String botanySkillMenuId = 'SKL-0014';
 const String thieverySkillMenuId = 'SKL-0015';
+
+const Set<String> _productionSkillIds = <String>{
+  cookingSkillId,
+  metallurgySkillMenuId,
+  craftingSkillMenuId,
+  alchemySkillMenuId,
+};
 
 const List<String> _woodenMiningTools = <String>['ITEM-0102'];
 const List<String> _woodenWoodcuttingTools = <String>['ITEM-0100', 'ITEM-0101'];
@@ -157,9 +167,15 @@ bool isThieveryLockpickAction(ActionRow action) {
       RegExp(r'BankThievery', caseSensitive: false).hasMatch(notes);
 }
 
-/// Shop-style steals (ThieverySteal family).
+/// Menu-only: lockpick actions that still appear under the Shops tab.
+bool isThieveryShopMenuAction(ActionRow action) {
+  return RegExp(r'ThieveryShop', caseSensitive: false).hasMatch(_thieveryActionNotes(action));
+}
+
+/// Shop-style steals (ThieverySteal family), plus ThieveryShop-routed lockpicks.
 bool isThieveryShopAction(ActionRow action) {
   if (action.raw['Relevant Skill ID'] != thieverySkillMenuId) return false;
+  if (isThieveryShopMenuAction(action)) return true;
   if (isThieveryLockpickAction(action)) return false;
   final notes = _thieveryActionNotes(action);
   return RegExp(r'ThieverySteal', caseSensitive: false).hasMatch(notes) ||
@@ -331,6 +347,9 @@ SkillMenuPlacement skillMenuPlacementForOutput(
     final action = outputId.isNotEmpty
         ? db.actions.firstWhereOrNull((row) => row.actionId == outputId)
         : db.actions.firstWhereOrNull((row) => row.displayName == displayName);
+    if (action != null && isThieveryShopAction(action)) {
+      return const SkillMenuPlacement(tabId: 'shops', tabLabel: 'Shops');
+    }
     if (action != null && isThieveryLockpickAction(action)) {
       return const SkillMenuPlacement(tabId: 'lockpicking', tabLabel: 'Lockpicking');
     }
@@ -338,6 +357,9 @@ SkillMenuPlacement skillMenuPlacementForOutput(
   }
   if (skillId == cookingSkillId) {
     return _cookingPlacement(displayName);
+  }
+  if (_productionSkillIds.contains(skillId)) {
+    return const SkillMenuPlacement(tabId: 'production', tabLabel: 'Production');
   }
   if (skillMenuView(db, skillId).tabs.any((tab) => tab.id == 'actions')) {
     return const SkillMenuPlacement(tabId: 'actions', tabLabel: 'Actions');
@@ -377,6 +399,11 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
   }
   if (skillId == cookingSkillId) {
     return _cookingTabs(db);
+  }
+  if (skillId == metallurgySkillMenuId ||
+      skillId == craftingSkillMenuId ||
+      skillId == alchemySkillMenuId) {
+    return _productionSkillTabs(db, skillId);
   }
   if (skillId == miningSkillId ||
       skillId == harvestingSkillId ||
@@ -421,15 +448,44 @@ List<SkillMenuTab> _thieveryTabs(GameDatabase db) {
   for (final item in actionsForSkill(db, thieverySkillMenuId)) {
     final action = db.actions.firstWhereOrNull((row) => row.actionId == item.id);
     if (action == null) continue;
-    if (isThieveryLockpickAction(action)) {
-      lockpicking.add(item);
-    } else if (isThieveryShopAction(action)) {
+    if (isThieveryShopAction(action)) {
       shops.add(item);
+    } else if (isThieveryLockpickAction(action)) {
+      lockpicking.add(item);
     }
   }
   return <SkillMenuTab>[
     _listTab('shops', 'Shops', shops),
     _listTab('lockpicking', 'Lockpicking', lockpicking),
+  ];
+}
+
+bool _isProductionCategoryAction(ActionRow action) {
+  return action.category == 'Standard Production' || action.category == 'Production';
+}
+
+bool _isSharedActivityAction(ActionRow action) {
+  return action.category == 'Gathering' || action.category == 'Combat';
+}
+
+List<SkillMenuTab> _productionSkillTabs(GameDatabase db, String skillId) {
+  final production = <SkillMenuListItem>[];
+  final activities = <SkillMenuListItem>[];
+  for (final item in skillMenuEntries(db, skillId)) {
+    final action = db.actions.firstWhereOrNull((row) => row.actionId == item.id);
+    if (action == null) {
+      production.add(item);
+      continue;
+    }
+    if (_isProductionCategoryAction(action)) {
+      production.add(item);
+    } else if (_isSharedActivityAction(action)) {
+      activities.add(item);
+    }
+  }
+  return <SkillMenuTab>[
+    _listTab('production', 'Production', production),
+    _listTab('actions', 'Actions', activities),
   ];
 }
 
@@ -544,12 +600,13 @@ const List<String> _cookingFishNames = <String>[
 const List<String> _cookingMeatNames = <String>['rabbit', 'pheasant', 'beef', 'venison'];
 
 SkillMenuPlacement _cookingPlacement(String displayName) {
-  return switch (_cookingTabId(displayName)) {
-    'fish' => const SkillMenuPlacement(tabId: 'fish', tabLabel: 'Fish'),
-    'meat' => const SkillMenuPlacement(tabId: 'meat', tabLabel: 'Meat'),
-    'stew' => const SkillMenuPlacement(tabId: 'stew', tabLabel: 'Stew'),
-    _ => const SkillMenuPlacement(tabId: 'other', tabLabel: 'Other'),
+  final section = switch (_cookingTabId(displayName)) {
+    'fish' => 'Fish',
+    'meat' => 'Meat',
+    'stew' => 'Stew',
+    _ => 'Other',
   };
+  return SkillMenuPlacement(tabId: 'production', tabLabel: 'Production', sectionTitle: section);
 }
 
 String _cookingTabId(String displayName) {
@@ -565,7 +622,13 @@ List<SkillMenuTab> _cookingTabs(GameDatabase db) {
   final meat = <SkillMenuListItem>[];
   final stew = <SkillMenuListItem>[];
   final other = <SkillMenuListItem>[];
+  final activities = <SkillMenuListItem>[];
   for (final item in skillMenuEntries(db, cookingSkillId)) {
+    final action = db.actions.firstWhereOrNull((row) => row.actionId == item.id);
+    if (action != null && _isSharedActivityAction(action)) {
+      activities.add(item);
+      continue;
+    }
     switch (_cookingTabId(item.displayName)) {
       case 'fish':
         fish.add(item);
@@ -577,11 +640,15 @@ List<SkillMenuTab> _cookingTabs(GameDatabase db) {
         other.add(item);
     }
   }
+  final productionSections = <SkillMenuSection>[
+    if (fish.isNotEmpty) SkillMenuSection(title: 'Fish', entries: fish),
+    if (meat.isNotEmpty) SkillMenuSection(title: 'Meat', entries: meat),
+    if (stew.isNotEmpty) SkillMenuSection(title: 'Stew', entries: stew),
+    if (other.isNotEmpty) SkillMenuSection(title: 'Other', entries: other),
+  ];
   return <SkillMenuTab>[
-    _listTab('fish', 'Fish', fish),
-    _listTab('meat', 'Meat', meat),
-    _listTab('stew', 'Stew', stew),
-    _listTab('other', 'Other', other),
+    SkillMenuTab(id: 'production', label: 'Production', sections: productionSections),
+    _listTab('actions', 'Actions', activities),
   ];
 }
 
