@@ -14,6 +14,12 @@ void main() {
   final sameDayEvening = DateTime.utc(2026, 1, 1, 23, 59, 59, 999).millisecondsSinceEpoch;
   final nextDay = DateTime.utc(2026, 1, 2).millisecondsSinceEpoch;
 
+  test('visits The Slopes, Badlands, and Deep Mines', () {
+    String name(String id) => locationDisplayName(db, id);
+    expect(masterDwarfRoute.map(name), ['The Slopes', 'Badlands', 'Deep Mines']);
+    expect(quillRoute.map(name), ['Meadow', 'Gathering Outskirts', 'Kingswoods', 'Copper mine']);
+  });
+
   test('shares one Master Dwarf stop for the UTC day', () {
     final morning = masterDwarfLocationId(day);
     expect(masterDwarfRoute, contains(morning));
