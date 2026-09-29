@@ -94,14 +94,15 @@ describe('recipe knowledge', () => {
     const artisanry = recipeBookForSkill(save, launch, 'SKL-0012')
     expect(artisanry.some((entry) => entry.name === 'Leather Helmet' && entry.known)).toBe(true)
     expect(artisanry.some((entry) => entry.name === 'Leather Gloves' && entry.known)).toBe(true)
-    expect(artisanry.some((entry) => entry.name === 'Regular Bow' && !entry.known)).toBe(true)
+    expect(artisanry.some((entry) => entry.name === 'Regular Bow')).toBe(false)
+    expect(artisanry.some((entry) => entry.name === 'Cedar Bow' && !entry.known)).toBe(true)
     expect(artisanry.some((entry) => entry.name === 'Quiver' && !entry.known)).toBe(true)
     expect(
-      artisanry.find((entry) => entry.name === 'Regular Bow')?.knowledgeSource,
+      artisanry.find((entry) => entry.name === 'Cedar Bow')?.knowledgeSource,
     ).toBe('Mentor: Quill')
 
     const taught = recipeBookForSkill({ ...save, unlockedNpcIds: ['NPC-0002'] }, launch, 'SKL-0012')
-    expect(taught.some((entry) => entry.name === 'Regular Bow' && entry.known)).toBe(true)
+    expect(taught.some((entry) => entry.name === 'Cedar Bow' && entry.known)).toBe(true)
     expect(taught.some((entry) => entry.name === 'Quiver' && entry.known)).toBe(true)
   })
 
