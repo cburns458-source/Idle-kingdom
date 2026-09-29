@@ -222,11 +222,11 @@ void main() {
   test('lists Combat XP and Might/Vitality on every other enemy', () {
     final cow = codex.enemy('ENM-0001')!;
     expect(cow.xpSkillLabel, 'Combat');
-    expect(cow.mightLevel, 1);
-    expect(cow.vitalityLevel, 1);
+    expect(cow.mightLevel, 2);
+    expect(cow.vitalityLevel, 3);
     final harpy = codex.enemy('ENM-0030')!;
     expect(harpy.xpSkillLabel, 'Combat');
-    expect(harpy.mightLevel, 48);
-    expect(harpy.vitalityLevel, 48);
+    expect(harpy.mightLevel, 70);
+    expect(harpy.vitalityLevel, 40);
   });
 }
