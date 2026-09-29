@@ -200,8 +200,8 @@ void main() {
 
     await pumpPanel(tester, CodexView(controller: controller, initialEnemyId: 'ENM-0025'));
     expect(find.text('Giant Rat'), findsWidgets);
-    expect(find.text('Level 5'), findsOne);
-    expect(find.textContaining('Might 3'), findsOne);
+    expect(find.text('Level 6'), findsOne);
+    expect(find.textContaining('Might 5'), findsOne);
     expect(find.textContaining('Vitality 3'), findsOne);
     expect(find.textContaining('Health 150'), findsOne);
     expect(find.textContaining('Damage 12–26'), findsOne);
