@@ -99,7 +99,7 @@ describe('Temple', () => {
     expect(locationIsHostileFor(launch, save, 'LOC-0036')).toBe(false)
   })
 
-  it('pick weeds rolls augur weed or moonblossom with empty hands', () => {
+  it('pick weeds rolls augur weed or wild roots with empty hands', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const activity = launch.Activities.find((row) => row['Activity ID'] === 'ACT-0039')
     expect(activity?.['Contextual Name']).toBe('Pick weeds')
@@ -108,7 +108,7 @@ describe('Temple', () => {
     const pool = launch.PoolEntries.filter((row) => row['Pool ID'] === 'POOL-0029')
     expect(pool).toHaveLength(2)
     expect(pool.map((row) => `${row['Action ID']}:${row.Weight}`)).toEqual(
-      expect.arrayContaining(['ACN-0109:90', 'ACN-0110:10']),
+      expect.arrayContaining(['ACN-0109:80', 'ACN-0105:20']),
     )
 
     const augur = launch.Actions.find((row) => row['Action ID'] === 'ACN-0109')
@@ -116,9 +116,9 @@ describe('Temple', () => {
     expect(augur?.['Base Duration Seconds']).toBe(65)
     expect(augur?.['XP Reward']).toBe(9027)
 
-    const moon = launch.Actions.find((row) => row['Action ID'] === 'ACN-0110')
-    expect(moon?.['Base Duration Seconds']).toBe(87)
-    expect(moon?.['XP Reward']).toBe(12084)
+    const wildRoots = launch.Actions.find((row) => row['Action ID'] === 'ACN-0105')
+    expect(wildRoots?.['Display Name']).toBe('Gather wild roots')
+    expect(wildRoots?.['Proficiency Level']).toBe(15)
 
     expect(launch.Actions.some((row) => row['Action ID'] === 'ACN-0174')).toBe(false)
 
