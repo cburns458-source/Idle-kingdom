@@ -50,15 +50,24 @@ describe('Castle Crypt', () => {
     const zombie = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0009')!
     expect(ghost).toMatchObject({
       'Display Name': 'Ghost',
-      'Combat Level': zombie['Combat Level'],
-      'Maximum HP': zombie['Maximum HP'],
-      'Min Damage': zombie['Min Damage'],
-      'Max Damage': zombie['Max Damage'],
-      'Combat XP': zombie['Combat XP'],
+      'Might Level': 35,
+      'Vitality Level': 25,
+      'Combat Level': 45,
+      'Maximum HP': 1560,
+      'Min Damage': 80,
+      'Max Damage': 160,
+      'Combat XP': 3900,
       'Minimum Gold': 0,
       'Maximum Gold': 0,
       'Drop Chance': 0,
       'Reward Table ID': null,
+    })
+    expect(zombie).toMatchObject({
+      'Might Level': 25,
+      'Vitality Level': 35,
+      'Combat Level': 45,
+      'Maximum HP': 1560,
+      'Combat XP': 4212,
     })
 
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0176')
@@ -66,7 +75,7 @@ describe('Castle Crypt', () => {
       'Target ID': 'ENM-0022',
       'Drop Chance': 0,
       'Reward Table ID': null,
-      'XP Reward': zombie['Combat XP'],
+      'XP Reward': 3900,
     })
   })
 
