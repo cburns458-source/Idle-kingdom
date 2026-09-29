@@ -1,4 +1,5 @@
 import { equipmentForItemId, equipmentTooltipStatLines } from '../equipment/tooltips'
+import { isVineChopAction } from '../equipment/loadout'
 import {
   enemyCombatLevel,
   enemyMightLevel,
@@ -38,6 +39,31 @@ function hideActionFromCodex(action: ActionRow): boolean {
     return true
   }
   return action.Category === 'Gathering' && action.Status === 'Needs Data'
+}
+
+/** Quest steps keep per-spot vine action IDs; the Codex shows one merged Chop vines row. */
+function isCodexVineChopAlias(action: ActionRow, canonicalId: string | null): boolean {
+  return Boolean(canonicalId) && isVineChopAction(action) && action['Action ID'] !== canonicalId
+}
+
+function vineChopCanonicalActionId(actions: ActionRow[]): string | null {
+  const vines = actions.filter((action) => isVineChopAction(action) && !hideActionFromCodex(action))
+  if (vines.length === 0) return null
+  const primary = vines.find((action) => action['Internal Key'] === 'clear_vines')
+  if (primary) return primary['Action ID']
+  return [...vines].sort((a, b) => a['Action ID'].localeCompare(b['Action ID']))[0]!['Action ID']
+}
+
+function mergeCodexLocations(
+  ...lists: Array<CodexLocationRef[] | undefined>
+): CodexLocationRef[] {
+  const out: CodexLocationRef[] = []
+  for (const list of lists) {
+    for (const loc of list ?? []) {
+      if (out.every((row) => row.locationId !== loc.locationId)) out.push(loc)
+    }
+  }
+  return out
 }
 
 function combatEnemyId(action: ActionRow): string | null {
@@ -531,6 +557,12 @@ export class CodexIndex {
       if (hideActionFromCodex(action)) return false
       return true
     })
+    const vineCanonicalId = vineChopCanonicalActionId(actions)
+    const vineLocations = mergeCodexLocations(
+      ...actions
+        .filter((action) => isVineChopAction(action))
+        .map((action) => actionLocations.get(action['Action ID'])),
+    )
     actions.sort((a, b) => {
       const skillA = a['Relevant Skill ID'] ?? ''
       const skillB = b['Relevant Skill ID'] ?? ''
@@ -540,10 +572,15 @@ export class CodexIndex {
       return a['Display Name'].toLowerCase().localeCompare(b['Display Name'].toLowerCase())
     })
     for (const action of actions) {
+      if (isCodexVineChopAlias(action, vineCanonicalId)) continue
       const tables = catalogActionTables(action, tableItems, this.itemsById)
       const targetId =
         action['Target Type'] === 'Item' && action['Target ID'] ? action['Target ID'] : null
       const targetItem = targetId ? this.itemsById.get(targetId) : undefined
+      const locations =
+        action['Action ID'] === vineCanonicalId
+          ? vineLocations
+          : (actionLocations.get(action['Action ID']) ?? [])
       this.actionOrder.push(action['Action ID'])
       this.actionsById.set(action['Action ID'], {
         actionId: action['Action ID'],
@@ -552,7 +589,7 @@ export class CodexIndex {
         skillId: action['Relevant Skill ID'],
         skillName: skills.get(action['Relevant Skill ID']) ?? null,
         level: action['Proficiency Level'],
-        locations: actionLocations.get(action['Action ID']) ?? [],
+        locations,
         target:
           targetId && targetItem && includeInCodexCatalog(targetItem)
             ? { itemId: targetId, displayName: targetItem.displayName }

@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../combat/stats.dart';
+import '../equipment/loadout.dart';
 import '../equipment/tooltips.dart';
 import '../inventory/sort.dart';
 import '../js_compat.dart';
@@ -30,6 +31,35 @@ bool _hideActionFromCodex(ActionRow action) {
     return true;
   }
   return action.category == 'Gathering' && action.status == 'Needs Data';
+}
+
+/// Quest steps keep per-spot vine action IDs; the Codex shows one merged Chop vines row.
+bool _isCodexVineChopAlias(ActionRow action, String? canonicalId) {
+  return canonicalId != null && isVineChopAction(action) && action.actionId != canonicalId;
+}
+
+String? _vineChopCanonicalActionId(List<ActionRow> actions) {
+  final vines = [
+    for (final action in actions)
+      if (isVineChopAction(action) && !_hideActionFromCodex(action)) action,
+  ];
+  if (vines.isEmpty) return null;
+  final primary = vines.firstWhereOrNull((action) => action.internalKey == 'clear_vines');
+  if (primary != null) return primary.actionId;
+  vines.sort((a, b) => a.actionId.compareTo(b.actionId));
+  return vines.first.actionId;
+}
+
+List<CodexLocationRef> _mergeCodexLocations(Iterable<List<CodexLocationRef>> lists) {
+  final out = <CodexLocationRef>[];
+  for (final list in lists) {
+    for (final loc in list) {
+      if (out.every((row) => row.locationId != loc.locationId)) {
+        out.add(loc);
+      }
+    }
+  }
+  return out;
 }
 
 String? _combatEnemyId(ActionRow action) {
@@ -758,6 +788,12 @@ class CodexIndex {
       for (final action in db.actions)
         if (action.category == 'Gathering' && !_hideActionFromCodex(action)) action,
     ];
+    final vineCanonicalId = _vineChopCanonicalActionId(actionRows);
+    final vineLocations = _mergeCodexLocations([
+      for (final action in actionRows)
+        if (isVineChopAction(action))
+          actionLocations[action.actionId] ?? const <CodexLocationRef>[],
+    ]);
     actionRows.sort((a, b) {
       final skillA = a.relevantSkillId;
       final skillB = b.relevantSkillId;
@@ -768,9 +804,13 @@ class CodexIndex {
       return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
     });
     for (final action in actionRows) {
+      if (_isCodexVineChopAlias(action, vineCanonicalId)) continue;
       final tables = _catalogActionTables(action, tableItems, _items);
       final targetId = action.targetType == 'Item' ? action.targetId : null;
       final targetItem = targetId == null ? null : _items[targetId];
+      final locations = action.actionId == vineCanonicalId
+          ? vineLocations
+          : (actionLocations[action.actionId] ?? const <CodexLocationRef>[]);
       _actionOrder.add(action.actionId);
       _actions[action.actionId] = CodexActionEntry(
         actionId: action.actionId,
@@ -779,7 +819,7 @@ class CodexIndex {
         skillId: action.relevantSkillId,
         skillName: skills[action.relevantSkillId],
         level: action.proficiencyLevel,
-        locations: actionLocations[action.actionId] ?? const <CodexLocationRef>[],
+        locations: locations,
         target:
             targetId != null &&
                 targetItem != null &&
