@@ -581,7 +581,7 @@ class _ItemPage extends StatelessWidget {
   }
 
   String? _obtainDetail(CodexObtainSource source) {
-    final drop = source.dropChance == null ? null : '${formatThousands(source.dropChance!)}% drop';
+    final drop = source.dropChance == null ? null : '${_formatPercent(source.dropChance!)} drop';
     final parts = <String>[
       ?source.detail,
       if (source.locations.isNotEmpty) source.locations.map((row) => row.displayName).join(', '),
@@ -653,33 +653,40 @@ class _EnemyPage extends StatelessWidget {
             'Gold ${_range(entry.minimumGold, entry.maximumGold)}',
             style: TextStyle(fontSize: 13, color: ink),
           ),
-        if (entry.dropChance != null)
-          Text(
-            '${formatThousands(entry.dropChance!)}% drop',
-            style: TextStyle(fontSize: 13, color: ink),
-          ),
-        _Section(
-          title: 'Drops',
-          empty: 'No item drops.',
-          ink: ink,
-          muted: muted,
-          children: [
-            for (final drop in entry.drops)
-              _LinkRow(
-                key: Key('codex-drop-${drop.itemId}'),
-                leading: ItemIcon(item: itemsById[drop.itemId], size: 28),
-                title: drop.displayName,
-                detail: [
-                  ?_qty(drop.minQuantity, drop.maxQuantity),
-                  if (drop.dropRatePercent != null)
-                    'Drop rate ${_formatPercent(drop.dropRatePercent!)}',
-                ].join(' · '),
-                ink: ink,
-                muted: muted,
-                onTap: () => onOpenItem(drop.itemId),
-              ),
-          ],
-        ),
+        if (entry.tables.isEmpty)
+          _Section(
+            title: 'Drops',
+            empty: 'No item drops.',
+            ink: ink,
+            muted: muted,
+            children: const [],
+          )
+        else
+          for (final table in entry.tables)
+            _Section(
+              title: table.dropChance == null
+                  ? table.label
+                  : '${table.label} · ${_formatPercent(table.dropChance!)} drop',
+              empty: 'No item drops.',
+              ink: ink,
+              muted: muted,
+              children: [
+                for (final drop in table.drops)
+                  _LinkRow(
+                    key: Key('codex-drop-${drop.itemId}'),
+                    leading: ItemIcon(item: itemsById[drop.itemId], size: 28),
+                    title: drop.displayName,
+                    detail: [
+                      ?_qty(drop.minQuantity, drop.maxQuantity),
+                      if (drop.dropRatePercent != null)
+                        'Drop rate ${_formatPercent(drop.dropRatePercent!)}',
+                    ].join(' · '),
+                    ink: ink,
+                    muted: muted,
+                    onTap: () => onOpenItem(drop.itemId),
+                  ),
+              ],
+            ),
       ],
     );
   }
@@ -749,7 +756,7 @@ class _ActionPage extends StatelessWidget {
           _Section(
             title: table.dropChance == null
                 ? table.label
-                : '${table.label} · ${formatThousands(table.dropChance!)}% drop',
+                : '${table.label} · ${_formatPercent(table.dropChance!)} drop',
             empty: 'No item drops.',
             ink: ink,
             muted: muted,
@@ -955,6 +962,9 @@ String _range(num? min, num? max) {
 }
 
 String _formatPercent(num value) {
-  final rounded = value == value.roundToDouble() ? value.round() : (value * 10).round() / 10;
-  return '${formatThousands(rounded)}%';
+  final tenths = (value * 10).round() / 10;
+  if (tenths == tenths.roundToDouble()) {
+    return '${formatThousands(tenths.round())}%';
+  }
+  return '$tenths%';
 }

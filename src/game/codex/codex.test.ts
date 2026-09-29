@@ -42,7 +42,7 @@ describe('codex index', () => {
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0010')?.['Base Sell Value']).toBe(180)
   })
 
-  it('lists gathering actions with gem tables kept separate from the merged drop pool', () => {
+  it('lists gathering actions with primary, secondary, and gem tables', () => {
     expect(codex.actions.some((row) => row.actionId === 'ACN-0018')).toBe(true)
     expect(codex.actions.every((row) => row.category === 'Gathering')).toBe(true)
     expect(codex.action('ACN-0001')).toBeUndefined()
@@ -52,13 +52,16 @@ describe('codex index', () => {
     expect(codex.action('ACN-0168')).toBeUndefined()
     const mine = codex.action('ACN-0018')!
     expect(mine.displayName.toLowerCase()).toContain('copper')
-    expect(mine.tables.map((table) => table.label)).toEqual(['Drops', 'Gems'])
-    const ore = mine.tables.find((table) => table.label === 'Drops')!
+    expect(mine.tables.map((table) => table.label)).toEqual(['Primary', 'Gems'])
+    const ore = mine.tables.find((table) => table.label === 'Primary')!
+    expect(ore.dropChance).toBe(47.5)
     expect(ore.drops.map((row) => row.displayName)).toContain('Copper Ore')
+    expect(ore.drops.find((row) => row.displayName === 'Copper Ore')?.dropRatePercent).toBe(100)
     expect(ore.drops.map((row) => row.displayName)).not.toContain('Sapphire')
     const gems = mine.tables.find((table) => table.label === 'Gems')!
     expect(gems.dropChance).toBe(0.5)
     expect(gems.drops.map((row) => row.displayName)).toContain('Sapphire')
+    expect(gems.drops.find((row) => row.displayName === 'Sapphire')?.dropRatePercent).toBe(100)
     expect(codex.actionsMatching('mine copper').map((row) => row.actionId)).toContain('ACN-0018')
   })
 
@@ -75,12 +78,22 @@ describe('codex index', () => {
     expect(new Set(places).size).toBe(places.length)
   })
 
-  it('folds hunting secondary and tertiary drops into the primary pool', () => {
+  it('keeps hunting primary and secondary tables separate', () => {
     const hunt = codex.action('ACN-0014')!
-    expect(hunt.tables.map((table) => table.label)).toEqual(['Drops'])
-    const names = hunt.tables[0]!.drops.map((row) => row.displayName)
-    expect(names).toEqual(expect.arrayContaining(['Venison', 'Elk Hide', 'Elk Horns', 'Animal Tendons']))
-    expect(names).not.toContain('Leather')
+    expect(hunt.tables.map((table) => table.label)).toEqual(['Primary', 'Secondary'])
+    const primary = hunt.tables[0]!
+    expect(primary.dropChance).toBe(42.5)
+    expect(primary.drops.map((row) => row.displayName)).toEqual(
+      expect.arrayContaining(['Venison', 'Elk Hide', 'Elk Horns']),
+    )
+    expect(primary.drops.find((row) => row.displayName === 'Venison')?.dropRatePercent).toBe(45)
+    expect(primary.drops.find((row) => row.displayName === 'Elk Hide')?.dropRatePercent).toBe(50)
+    expect(primary.drops.find((row) => row.displayName === 'Elk Horns')?.dropRatePercent).toBe(5)
+    expect(primary.drops.map((row) => row.displayName)).not.toContain('Animal Tendons')
+    const secondary = hunt.tables[1]!
+    expect(secondary.dropChance).toBe(5)
+    expect(secondary.drops.map((row) => row.displayName)).toEqual(['Animal Tendons'])
+    expect(secondary.drops[0]?.dropRatePercent).toBe(100)
   })
 
   it('uses the same inventory groups as the bag', () => {
@@ -161,6 +174,38 @@ describe('codex index', () => {
     expect(fight?.kind).toBe('enemy')
     expect(fight?.actionId).toBeUndefined()
     expect(fight?.title.toLowerCase()).toContain('goblin')
+  })
+
+  it('lists enemy primary and secondary drop tables on the bestiary', () => {
+    const cow = codex.enemy('ENM-0001')!
+    expect(cow.tables.map((table) => table.label)).toEqual(['Primary'])
+    expect(cow.tables[0]?.dropChance).toBe(40)
+    expect(cow.tables[0]?.drops.map((row) => row.itemId)).toEqual(
+      expect.arrayContaining(['ITEM-0054', 'ITEM-0378']),
+    )
+
+    const chief = codex.enemy('ENM-0004')!
+    expect(chief.tables.map((table) => table.label)).toEqual(['Primary', 'Secondary'])
+    const primary = chief.tables[0]!
+    expect(primary.dropChance).toBe(30)
+    expect(primary.drops.map((row) => row.itemId)).not.toContain('ITEM-0122')
+    const secondary = chief.tables[1]!
+    expect(secondary.dropChance).toBe(50)
+    expect(secondary.drops.map((row) => row.itemId)).toEqual(['ITEM-0122'])
+    expect(secondary.drops[0]?.dropRatePercent).toBe(100)
+
+    const pirate = codex.enemy('ENM-0005')!
+    expect(pirate.tables.map((table) => table.label)).toEqual(['Primary', 'Secondary'])
+    expect(pirate.tables[1]?.dropChance).toBe(10)
+    expect(pirate.tables[1]?.drops.map((row) => row.displayName)).toEqual(['Pirate Insignia'])
+    expect(pirate.tables[1]?.drops[0]?.dropRatePercent).toBe(100)
+
+    const dragon = codex.enemy('ENM-0006')!
+    expect(dragon.tables.map((table) => table.label)).toEqual(['Primary'])
+    expect(dragon.tables.flatMap((table) => table.drops.map((row) => row.itemId))).not.toContain(
+      'COS-0012',
+    )
+    expect(codex.enemy('ENM-0025')!.tables).toEqual([])
   })
 
   it('lists excavator pickaxe quest reward but not chef hat quest', () => {
