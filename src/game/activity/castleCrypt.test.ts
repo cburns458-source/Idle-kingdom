@@ -111,7 +111,7 @@ describe("Mage's Wand", () => {
       'Facility ID': 'FAC-0008',
       'Required Skill 1 ID': 'SKL-0013',
       'Required Skill 1 Level': 55,
-      'Input 1 Item ID': 'ITEM-0217',
+      'Input 1 Item ID': 'ITEM-0408',
       'Input 1 Quantity': 5,
       'Input 2 Item ID': 'ITEM-0011',
       'Input 2 Quantity': 50,
