@@ -33606,7 +33606,7 @@
       "Pitch": "You've got a seed. Come to the farm and I'll show you the plot. Botany starts with putting something in the ground.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "RequiresAnySeed; AutoStartOnSeed; AutoCompleteOnTalk; HideFromQuestLog; RequiresQuest: QST-0006; RewardBook: BOOK-0002; RewardItem: ITEM-0324 x3, ITEM-0339 x3",
+      "Notes": "Miniquest; RequiresAnySeed; AutoStartOnSeed; AutoCompleteOnTalk; HideFromQuestLog; RequiresQuest: QST-0006; RewardBook: BOOK-0002; RewardItem: ITEM-0324 x3, ITEM-0339 x3",
       "Objective Type": "Talk",
       "Objective Target ID": null,
       "Required Quantity": null,
@@ -33794,7 +33794,7 @@
       "Dialogue ID": "QDL-0021",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "You've been carrying a seed like a secret. Restoria's plots stay quiet until someone means to use them \u2014 this farm's patch included. Take this potato seed. Gather a little compost from the heap here, then come back and I'll show you how to put both in the ground.",
+      "Line": "It looks like you've found something special, let me take a look\u2026 Hmm that will grow into a mighty plant one day. Let me show you how, you can use one of my seeds to get practice. But first step to a successful harvest is to gather some compost.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0023"
@@ -33803,7 +33803,7 @@
       "Dialogue ID": "QDL-0022",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "Good. Mix that compost with the potato seed when you plant. One seed is enough for a first lesson; two or three will share the bed, even mixed. A sapling wants the plot to itself. Compost gives the plot a better chance. Plant it here, then come tell me when the dirt has it.",
+      "Line": "Smells great! Now go to the farming patch here, pick the potato seed and remember to use compost.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0024"
@@ -33812,7 +33812,7 @@
       "Dialogue ID": "QDL-0023",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "There. The dirt has your measure. Tend the timer, harvest when it's ready. Half the time the plot gives your planting back, with a handful of the crop besides. This farm patch will favour you a little more from here. I'll be here when you want another word.",
+      "Line": "Well done! Now come back in a few hours to see how your crops have done, I'll do my best to keep an eye on them.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "When: completed"
@@ -33863,19 +33863,10 @@
       "Notes": "When: completed"
     },
     {
-      "Dialogue ID": "QDL-0029",
-      "Quest ID": "QST-0011",
-      "NPC ID": "NPC-0014",
-      "Line": "The patch is yours now. Plant that potato seed with the compost \u2014 the heap and the bed are both here.",
-      "Status": "Confirmed",
-      "Release Phase": "Launch",
-      "Notes": "RequiresStep: QSTP-0034"
-    },
-    {
       "Dialogue ID": "QDL-0030",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "There. The dirt has your measure. Tend the timer, harvest when it's ready. Half the time the plot gives your planting back, with a handful of the crop besides. This farm patch will favour you a little more from here. I'll be here when you want another word.",
+      "Line": "Well done! Now come back in a few hours to see how your crops have done, I'll do my best to keep an eye on them.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0035"

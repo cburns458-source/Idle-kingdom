@@ -138,6 +138,8 @@ void main() {
     expect(gettingStarted(save).talkLine, contains('You can cook them at the kitchen'));
     save = applyQuestTalkProgress(db, save, 'NPC-0014');
     expect(save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity, 5);
+    expect(gettingStarted(save).idlePrompt, '');
+    expect(gettingStarted(save).talkLine, isNull);
 
     save = applyQuestVisitProgress(db, save, 'LOC-0023');
     save = applyQuestProcessProgress(db, save, 'RCP-0001', 5);
@@ -147,12 +149,15 @@ void main() {
 
     final advice = talkWithQuestNpc(db, save, 'NPC-0014');
     expect(advice.ok, isTrue);
+    expect(advice.message, '');
     expect(getQuestProgress(advice.save!, 'QST-0006').status, 'active');
     expect(gettingStarted(advice.save!).talkLine, contains('Good luck on your adventure'));
 
     final finished = talkWithQuestNpc(db, advice.save!, 'NPC-0014');
     expect(finished.ok, isTrue);
+    expect(finished.message, contains('Good luck on your adventure'));
     expect(getQuestProgress(finished.save!, 'QST-0006').status, 'completed');
+    expect(gettingStarted(finished.save!).completedNote, contains('Good luck on your adventure'));
     expect(isBookUnlocked(finished.save!, 'BOOK-0001'), isTrue);
     expect(
       finished.save!.inventory.where((stack) => stack.itemId == 'ITEM-0058').single.quantity,
@@ -460,6 +465,7 @@ void main() {
   test('Green Thumb waits for Getting Started, hides from the log, and finishes after compost planting', () {
     final quest = getQuest(db, 'QST-0011')!;
     expect(quest['Display Name'], 'Green Thumb');
+    expect(isMiniquest(quest), isTrue);
     expect(hideFromQuestLog(quest), isTrue);
     final parsed = parseStructuredObjectives(quest);
     expect(parsed.requiresQuestIds, <String>['QST-0006']);
@@ -485,20 +491,37 @@ void main() {
     save = applyQuestAutoStartOnSeed(db, save);
     expect(getQuestProgress(save, 'QST-0011').status, 'active');
     expect(questLog(db, save).any((row) => row.questId == 'QST-0011'), isFalse);
+    expect(miniQuestLog(db, save, 0).any((row) => row.questId == 'QST-0011'), isTrue);
     expect(farmBotanyUnlocked(save), isFalse);
+
+    final fennel = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0014');
+    NpcQuestBlock greenThumb(PlayerSave next) => npcConversation(
+      db,
+      next,
+      fennel,
+      0,
+    ).quests.singleWhere((quest) => quest.questId == 'QST-0011');
+    expect(greenThumb(save).talkLine, contains('something special'));
 
     final firstTalk = talkWithQuestNpc(db, save, 'NPC-0014');
     expect(firstTalk.ok, isTrue);
+    expect(firstTalk.message, '');
     save = firstTalk.save!;
     expect(inventoryCount(save, 'ITEM-0324'), 2);
     expect(farmBotanyUnlocked(save), isTrue);
+    expect(greenThumb(save).canTalk, isFalse);
+    expect(greenThumb(save).talkLine, isNull);
+    expect(greenThumb(save).idlePrompt, '');
 
     save = addItemToInventory(save, 'ITEM-0377', 1);
     save = applyQuestActionProgress(db, save, 'ACN-0199', 1);
+    expect(greenThumb(save).talkLine, contains('Smells great'));
     final compostTalk = talkWithQuestNpc(db, save, 'NPC-0014');
     expect(compostTalk.ok, isTrue);
+    expect(compostTalk.message, '');
     save = compostTalk.save!;
     expect(getQuestProgress(save, 'QST-0011').status, 'active');
+    expect(greenThumb(save).idlePrompt, '');
 
     final refused = plantBotanySelection(db, save, const ['ITEM-0324'], nowMs: 0);
     expect(refused.ok, isFalse);
@@ -517,7 +540,7 @@ void main() {
 
     final finished = talkWithQuestNpc(db, save, 'NPC-0014');
     expect(finished.ok, isTrue);
-    expect(finished.message, contains('favour you a little more'));
+    expect(finished.message, contains('keep an eye on them'));
     expect(getQuestProgress(finished.save!, 'QST-0011').status, 'completed');
     expect(isBookUnlocked(finished.save!, 'BOOK-0002'), isTrue);
     expect(inventoryCount(finished.save!, 'ITEM-0324'), 4);

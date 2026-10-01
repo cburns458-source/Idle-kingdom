@@ -21,7 +21,6 @@ const String _fallbackMerchantTip = 'Last I heard, Quill was nearby.';
 const String _fallbackMerchantTipSpent = 'Last I heard, Quill was nearby.';
 const String _fallbackMerchantLine = 'Welcome to my shop.';
 const String _fallbackNpcDescription = 'An inhabitant of Restoria.';
-const String _fallbackQuestActivePrompt = 'What else do you need?';
 const String _fallbackQuillTeach =
     'A bow\u2019s only half the work \u2014 you\u2019ll want a quiver too. I can show you how to make both. '
     'Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.';
@@ -71,22 +70,49 @@ bool _whenCompletedFromNotes(String? notes) {
   return RegExp(r'(?:^|;)\s*When:\s*completed', caseSensitive: false).hasMatch(notes ?? '');
 }
 
+bool _stepTalkLineReady(
+  GameDatabase db,
+  QuestRow quest,
+  String npcId,
+  PlayerSave save,
+  List<String> requiredSteps,
+) {
+  final step = getQuestSteps(db, jsString(quest['Quest ID'])).firstWhereOrNull(
+    (row) => requiredSteps.contains(row.stepId),
+  );
+  if (step == null) return true;
+  final objectives = parseNotesObjectives(step.notes ?? '');
+  final hasTalk =
+      objectives.talkNpcIds.contains(npcId) || objectives.optionalTalkNpcIds.contains(npcId);
+  if (!hasTalk) return true;
+  return questCanTalkToNpc(db, save, quest, npcId);
+}
+
 String? questTalkLine(GameDatabase db, String questId, String npcId, [PlayerSave? save]) {
   final rows = db.questDialogue.where((row) => row.questId == questId && row.npcId == npcId);
   final quest = getQuest(db, questId);
   final status = save == null ? null : getQuestProgress(save, questId).status;
+  final steps = quest == null ? const <QuestStepRow>[] : getQuestSteps(db, questId);
   String? currentStepId;
   if (save != null && quest != null) {
-    final steps = getQuestSteps(db, questId);
     final index = getCurrentStepIndex(db, save, quest);
     if (index >= 0 && index < steps.length) currentStepId = steps[index].stepId;
   }
+  final lastStepId = steps.isEmpty ? null : steps.last.stepId;
   final matching = rows.where((row) {
     if (_whenCompletedFromNotes(row.notes)) return status == 'completed';
-    if (status == 'completed') return false;
     final requiredSteps = _requiredStepIdsFromNotes(row.notes);
+    if (status == 'completed') {
+      return lastStepId != null && requiredSteps.contains(lastStepId);
+    }
     if (requiredSteps.isNotEmpty &&
         (currentStepId == null || !requiredSteps.contains(currentStepId))) {
+      return false;
+    }
+    if (requiredSteps.isNotEmpty &&
+        save != null &&
+        quest != null &&
+        !_stepTalkLineReady(db, quest, npcId, save, requiredSteps)) {
       return false;
     }
     final required = _requiredTalkNpcIdsFromNotes(row.notes);
@@ -420,8 +446,7 @@ NpcQuestBlock _questBlock(GameDatabase db, PlayerSave save, QuestRow quest, Stri
     canTalk: status == 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talkedThisStep,
     talkLabel: 'Talk',
     talkLine: talkLine,
-    idlePrompt:
-        talkLine ?? configString(db, 'copy.quest_active_prompt', _fallbackQuestActivePrompt),
+    idlePrompt: talkLine ?? '',
     canBribe: status == 'active' && parsed.choiceNpcId == npcId && parsed.bribeGold > 0 && !chose,
     bribeLabel: 'Bribe ${jsLocaleNumber(parsed.bribeGold)} gold',
     canChooseCombat: status == 'active' && parsed.choiceNpcId == npcId && !chose,
@@ -502,7 +527,7 @@ NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, nu
   save = applyQuestAutoStartOnSeed(db, save);
   final quests = <NpcQuestBlock>[];
   for (final quest in questsTouchingNpc(db, save, npcId)) {
-    if (isMiniquest(quest)) continue;
+    if (isMiniquest(quest) && !questUsesSteps(db, jsString(quest['Quest ID']))) continue;
     final isGiver = quest['NPC ID'] == npcId;
     final status = getQuestProgress(save, jsString(quest['Quest ID'])).status;
     if (!isGiver && status != 'active') continue;
@@ -645,7 +670,7 @@ NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId)
       return NpcActionResult.ok(save: completed.save!, message: spoken ?? 'Thank you.');
     }
   }
-  return NpcActionResult.ok(save: next, message: 'You hear them out.');
+  return NpcActionResult.ok(save: next, message: '');
 }
 
 NpcActionResult bribeForQuest(GameDatabase db, PlayerSave save, String questId) {

@@ -108,7 +108,7 @@ export function acceptQuest(
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const quest = getQuest(db, questId)
   if (!quest) return { ok: false, reason: 'Quest not found.' }
-  if (isMiniquest(quest)) {
+  if (isMiniquest(quest) && !questUsesSteps(db, questId)) {
     return { ok: false, reason: 'Speak with Vesper to change race.' }
   }
   const parsed = parseStructuredObjectives(quest)

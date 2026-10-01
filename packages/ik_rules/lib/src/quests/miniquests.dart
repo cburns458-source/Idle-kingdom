@@ -127,13 +127,29 @@ String? _repeatEveryLabel(Map<String, Object?> quest) {
   return null;
 }
 
+List<String> _requiredQuestIdsFromNotes(String? notes) {
+  final raw = noteFieldValue(notes, r'RequiresQuest:\s*([^;]+)');
+  if (raw == null) return const <String>[];
+  return raw
+      .split(',')
+      .map((part) => part.trim().toUpperCase())
+      .where((id) => RegExp(r'^[A-Z]+-\d+$').hasMatch(id))
+      .toList();
+}
+
+bool _priorQuestsComplete(PlayerSave save, String? notes) {
+  return _requiredQuestIdsFromNotes(notes).every(
+    (questId) => save.quests.any((row) => row.questId == questId && row.status == 'completed'),
+  );
+}
+
 List<MiniQuestLogRow> miniQuestLog(GameDatabase db, PlayerSave save, num nowMs) {
   final clock = nowMs;
   return db.quests
       .where(isMiniquest)
       .where((quest) {
         final notes = quest['Notes'] is String ? quest['Notes']! as String : null;
-        return meetsTotalLevelRequirement(save, notes);
+        return meetsTotalLevelRequirement(save, notes) && _priorQuestsComplete(save, notes);
       })
       .map((quest) {
         final questId = jsString(quest['Quest ID']);

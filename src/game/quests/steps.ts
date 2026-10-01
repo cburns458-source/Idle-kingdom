@@ -318,6 +318,27 @@ export function questAllStepsComplete(
   return getCurrentStepIndex(db, save, quest) >= steps.length
 }
 
+/** Non-talk progress on the current step (or quest Notes) is already satisfied. */
+export function nonTalkObjectivesMet(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+): boolean {
+  const questId = quest['Quest ID']
+  if (!questUsesSteps(db, questId)) {
+    const lines = stepProgressLines(db, save, questId, quest.Notes ?? '')
+    return lines
+      .filter((line) => !line.key.startsWith('talk:'))
+      .every((line) => line.current >= line.required)
+  }
+  const step = getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)]
+  if (!step) return true
+  const lines = stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID'])
+  return lines
+    .filter((line) => !line.key.startsWith('talk:'))
+    .every((line) => line.current >= line.required)
+}
+
 /** Required or optional Talk on the current step (or quest Notes). */
 export function questCanTalkToNpc(
   db: GameDatabase,
@@ -332,7 +353,10 @@ export function questCanTalkToNpc(
   const talks =
     objectives.talkNpcIds.includes(npcId) || objectives.optionalTalkNpcIds.includes(npcId)
   if (!talks) return false
-  return objectives.holds.every((hold) => inventoryCount(save, hold.targetId) >= hold.quantity)
+  if (!objectives.holds.every((hold) => inventoryCount(save, hold.targetId) >= hold.quantity)) {
+    return false
+  }
+  return nonTalkObjectivesMet(db, save, quest)
 }
 
 /** True when this NPC still has an unfinished Talk step (or Notes talk). */
