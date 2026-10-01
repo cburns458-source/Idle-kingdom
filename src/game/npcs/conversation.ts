@@ -1,5 +1,5 @@
 import type { GameDatabase, NpcRow } from '../data/types'
-import { questObjectiveProgress, parseStructuredObjectives } from '../quests/objectives'
+import { questObjectiveProgress, parseNotesObjectives, parseStructuredObjectives } from '../quests/objectives'
 import {
   applyQuestAutoStartOnSeed,
   applyQuestTalkProgress,
@@ -32,6 +32,7 @@ import {
   getQuestSteps,
   questAllStepsComplete,
   questCanTalkToNpc,
+  questUsesSteps,
 } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
 import { configString } from '../activity/gathering'
@@ -57,7 +58,6 @@ const FALLBACK_MERCHANT_TIP = 'Last I heard, Quill was nearby.'
 const FALLBACK_MERCHANT_TIP_SPENT = 'Last I heard, Quill was nearby.'
 const FALLBACK_MERCHANT_LINE = 'Welcome to my shop.'
 const FALLBACK_NPC_DESCRIPTION = 'An inhabitant of Restoria.'
-const FALLBACK_QUEST_ACTIVE_PROMPT = 'What else do you need?'
 const FALLBACK_QUILL_TEACH =
   'A bow’s only half the work — you’ll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.'
 const FALLBACK_QUILL_KNOWN = 'You know how to make bows and quivers.'
@@ -103,6 +103,24 @@ function whenCompletedFromNotes(notes: string | null): boolean {
   return /(?:^|;)\s*When:\s*completed/i.test(notes ?? '')
 }
 
+function stepTalkLineReady(
+  db: GameDatabase,
+  quest: QuestRow,
+  npcId: string,
+  save: PlayerSave,
+  requiredSteps: string[],
+): boolean {
+  const step = getQuestSteps(db, quest['Quest ID']).find((row) =>
+    requiredSteps.includes(row['Step ID']),
+  )
+  if (!step) return true
+  const objectives = parseNotesObjectives(step.Notes ?? '')
+  const hasTalk =
+    objectives.talkNpcIds.includes(npcId) || objectives.optionalTalkNpcIds.includes(npcId)
+  if (!hasTalk) return true
+  return questCanTalkToNpc(db, save, quest, npcId)
+}
+
 export function questTalkLine(
   db: GameDatabase,
   questId: string,
@@ -114,16 +132,26 @@ export function questTalkLine(
   )
   const quest = getQuest(db, questId)
   const status = save ? getQuestProgress(save, questId).status : undefined
+  const steps = quest ? getQuestSteps(db, questId) : []
   const currentStepId =
-    save && quest
-      ? getQuestSteps(db, questId)[getCurrentStepIndex(db, save, quest)]?.['Step ID']
-      : undefined
+    save && quest ? steps[getCurrentStepIndex(db, save, quest)]?.['Step ID'] : undefined
+  const lastStepId = steps[steps.length - 1]?.['Step ID']
   const matching = rows.filter((row) => {
     const notes = row.Notes ?? null
     if (whenCompletedFromNotes(notes)) return status === 'completed'
-    if (status === 'completed') return false
     const requiredSteps = requiredStepIdsFromNotes(notes)
+    if (status === 'completed') {
+      return lastStepId != null && requiredSteps.includes(lastStepId)
+    }
     if (requiredSteps.length > 0 && (!currentStepId || !requiredSteps.includes(currentStepId))) {
+      return false
+    }
+    if (
+      requiredSteps.length > 0 &&
+      save &&
+      quest &&
+      !stepTalkLineReady(db, quest, npcId, save, requiredSteps)
+    ) {
       return false
     }
     const required = requiredTalkNpcIdsFromNotes(notes)
@@ -312,8 +340,7 @@ function questBlock(
     canTalk: status === 'active' && questCanTalkToNpc(db, save, quest, npcId) && !talkedThisStep,
     talkLabel: 'Talk',
     talkLine,
-    idlePrompt:
-      talkLine ?? configString(db, 'copy.quest_active_prompt', FALLBACK_QUEST_ACTIVE_PROMPT),
+    idlePrompt: talkLine ?? '',
     canBribe:
       status === 'active' && parsed.choiceNpcId === npcId && parsed.bribeGold > 0 && !chose,
     bribeLabel: `Bribe ${parsed.bribeGold.toLocaleString()} gold`,
@@ -414,7 +441,7 @@ export function npcConversation(
   save = applyQuestAutoStartOnSeed(db, save)
   const quests = questsTouchingNpc(db, save, npcId)
     .filter((quest) => {
-      if (isMiniquest(quest)) return false
+      if (isMiniquest(quest) && !questUsesSteps(db, quest['Quest ID'])) return false
       const isGiver = quest['NPC ID'] === npcId
       const status = getQuestProgress(save, quest['Quest ID']).status
       return isGiver || status === 'active'
@@ -565,7 +592,7 @@ export function talkWithQuestNpc(
       }
     }
   }
-  return { ok: true, save: next, message: 'You hear them out.' }
+  return { ok: true, save: next, message: '' }
 }
 
 export function bribeForQuest(

@@ -122,6 +122,21 @@ function repeatEveryLabel(quest: MiniQuestSource): string | null {
   return null
 }
 
+function requiredQuestIdsFromNotes(notes: string | null | undefined): string[] {
+  const raw = noteFieldValue(notes, String.raw`RequiresQuest:\s*([^;]+)`)
+  if (!raw) return []
+  return raw
+    .split(',')
+    .map((part) => part.trim().toUpperCase())
+    .filter((id) => /^[A-Z]+-\d+$/.test(id))
+}
+
+function priorQuestsComplete(save: PlayerSave, notes: string | null | undefined): boolean {
+  return requiredQuestIdsFromNotes(notes).every((questId) =>
+    (save.quests ?? []).some((row) => row.questId === questId && row.status === 'completed'),
+  )
+}
+
 export function miniQuestLog(
   db: GameDatabase,
   save: PlayerSave,
@@ -130,6 +145,7 @@ export function miniQuestLog(
   return (db.Quests as unknown as MiniQuestSource[])
     .filter((quest) => isMiniquest(quest))
     .filter((quest) => meetsTotalLevelRequirement(save, quest.Notes))
+    .filter((quest) => priorQuestsComplete(save, quest.Notes))
     .map((quest) => {
       const questId = quest['Quest ID']
       const npcName =

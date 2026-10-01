@@ -311,6 +311,26 @@ bool questAllStepsComplete(GameDatabase db, PlayerSave save, QuestRow quest) {
   return getCurrentStepIndex(db, save, quest) >= getQuestSteps(db, questId).length;
 }
 
+/// Non-talk progress on the current step (or quest Notes) is already satisfied.
+bool nonTalkObjectivesMet(GameDatabase db, PlayerSave save, QuestRow quest) {
+  final questId = jsString(quest['Quest ID']);
+  if (!questUsesSteps(db, questId)) {
+    final notes = quest['Notes'] is String ? quest['Notes']! as String : '';
+    final lines = _stepProgressLines(db, save, questId, notes);
+    return lines
+        .where((line) => !line.key.startsWith('talk:'))
+        .every((line) => line.current >= line.required);
+  }
+  final steps = getQuestSteps(db, questId);
+  final index = getCurrentStepIndex(db, save, quest);
+  if (index < 0 || index >= steps.length) return true;
+  final step = steps[index];
+  final lines = _stepProgressLines(db, save, questId, step.notes ?? '', step.stepId);
+  return lines
+      .where((line) => !line.key.startsWith('talk:'))
+      .every((line) => line.current >= line.required);
+}
+
 /// Required or optional Talk on the current step (or quest Notes).
 bool questCanTalkToNpc(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
   final objectives = questUsesSteps(db, jsString(quest['Quest ID']))
@@ -320,7 +340,10 @@ bool questCanTalkToNpc(GameDatabase db, PlayerSave save, QuestRow quest, String 
   final talks =
       objectives.talkNpcIds.contains(npcId) || objectives.optionalTalkNpcIds.contains(npcId);
   if (!talks) return false;
-  return objectives.holds.every((hold) => inventoryCount(save, hold.targetId) >= hold.quantity);
+  if (!objectives.holds.every((hold) => inventoryCount(save, hold.targetId) >= hold.quantity)) {
+    return false;
+  }
+  return nonTalkObjectivesMet(db, save, quest);
 }
 
 /// True when this NPC still has an unfinished Talk step (or Notes talk).

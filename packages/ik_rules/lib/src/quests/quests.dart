@@ -98,7 +98,7 @@ QuestActionResult acceptQuest(
 }) {
   final quest = getQuest(db, questId);
   if (quest == null) return const QuestActionResult.failed('Quest not found.');
-  if (isMiniquest(quest)) {
+  if (isMiniquest(quest) && !questUsesSteps(db, questId)) {
     return const QuestActionResult.failed('Speak with Vesper to change race.');
   }
   final parsed = parseStructuredObjectives(quest);

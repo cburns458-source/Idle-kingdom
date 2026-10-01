@@ -125,7 +125,7 @@ class _NpcPanelState extends State<NpcPanel> {
       return;
     }
     controller.commit(result.save!);
-    controller.announce(result.message!);
+    _announceIfPresent(result.message);
     final granted = result.save!.unlockedBookIds
         .where((id) => !beforeBooks.contains(id))
         .map((id) => QuestBookGrant(bookId: id, isFirstEver: booksWereEmpty))
@@ -166,7 +166,8 @@ class _NpcPanelState extends State<NpcPanel> {
       return;
     }
     controller.commit(result.save!);
-    controller.announce(result.message!);
+    final spoken = questTalkLine(controller.db, quest.questId, conversation.npcId, result.save!);
+    if (spoken == null) _announceIfPresent(result.message);
     final bundle = result.rewardBundle;
     if (bundle != null &&
         (bundle.goldGained > 0 || bundle.xpRewards.isNotEmpty || bundle.loot.isNotEmpty)) {
@@ -179,7 +180,6 @@ class _NpcPanelState extends State<NpcPanel> {
         .toList();
     controller.noteCosmeticUnlocks(granted);
     controller.noteBookUnlocks(result.booksGranted);
-    final spoken = questTalkLine(controller.db, quest.questId, conversation.npcId, result.save!);
     await showQuestRewards(
       context,
       questName: result.questName!,
@@ -223,7 +223,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (talkQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: talkQuest.talkLine ?? talkQuest.idlePrompt,
+        line: _spokenLine(conversation, talkQuest),
         error: _error,
         actions: [GameButton(label: 'Continue', onPressed: _commitTalk)],
       );
@@ -271,7 +271,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (turnInQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: turnInQuest.talkLine ?? turnInQuest.idlePrompt,
+        line: _spokenLine(conversation, turnInQuest),
         error: _error,
         actions: [
           if (turnInQuest.canBribe)
@@ -302,7 +302,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (choiceQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: choiceQuest.talkLine ?? choiceQuest.idlePrompt,
+        line: _spokenLine(conversation, choiceQuest),
         error: _error,
         actions: [
           if (choiceQuest.canBribe)
@@ -328,7 +328,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (activeQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: activeQuest.talkLine ?? activeQuest.idlePrompt,
+        line: _spokenLine(conversation, activeQuest),
         error: _error,
         actions: [GameButton(label: 'Done', onPressed: _close)],
       );
@@ -538,6 +538,19 @@ class _NpcPanelState extends State<NpcPanel> {
     final quest = getQuest(controller.db, questId);
     if (quest == null) return const <QuestJournalStep>[];
     return questRequirementJournal(controller.db, controller.save, quest);
+  }
+
+  void _announceIfPresent(String? message) {
+    if (message != null && message.trim().isNotEmpty) {
+      controller.announce(message);
+    }
+  }
+
+  String _spokenLine(NpcConversation conversation, NpcQuestBlock quest) {
+    final talk = quest.talkLine;
+    if (talk != null && talk.trim().isNotEmpty) return talk;
+    if (quest.idlePrompt.trim().isNotEmpty) return quest.idlePrompt;
+    return conversation.description;
   }
 
   Widget _playerDialogue({
