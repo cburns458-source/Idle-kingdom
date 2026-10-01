@@ -77,9 +77,10 @@ bool _stepTalkLineReady(
   PlayerSave save,
   List<String> requiredSteps,
 ) {
-  final step = getQuestSteps(db, jsString(quest['Quest ID'])).firstWhereOrNull(
-    (row) => requiredSteps.contains(row.stepId),
-  );
+  final step = getQuestSteps(
+    db,
+    jsString(quest['Quest ID']),
+  ).firstWhereOrNull((row) => requiredSteps.contains(row.stepId));
   if (step == null) return true;
   final objectives = parseNotesObjectives(step.notes ?? '');
   final hasTalk =
