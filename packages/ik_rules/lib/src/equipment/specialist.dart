@@ -82,6 +82,21 @@ num chefHatOutputQuantity(
   return baseQuantity * 2;
 }
 
+/// True when an Alchemy recipe should roll the 1–3 potion die (not 1:1 reagents).
+bool alchemyRecipeUsesPotionDie(GameDatabase db, String outputItemId) {
+  ItemRow? item;
+  for (final row in db.items) {
+    if (row.itemId == outputItemId) {
+      item = row;
+      break;
+    }
+  }
+  if (item == null) return false;
+  if (item.category == 'Potion') return true;
+  final tags = item.functionalSourceTags ?? '';
+  return tags.split(';').map((String tag) => tag.trim()).contains('alchemy_output');
+}
+
 /// Fair die for potion crafts: 1–3 normally, 2–3 with Alchemist Goggles.
 num alchemyPotionOutputQuantity(
   GameDatabase db,
@@ -109,8 +124,13 @@ num alchemyPotionOutputQuantity(
 }
 
 /// Per-craft output used when reserving bag space for a production queue.
-num productionOutputReservePerCraft(GameDatabase db, String skillId, num baseQuantity) {
-  if (skillId == alchemySkillId) {
+num productionOutputReservePerCraft(
+  GameDatabase db,
+  String skillId,
+  num baseQuantity,
+  String outputItemId,
+) {
+  if (skillId == alchemySkillId && alchemyRecipeUsesPotionDie(db, outputItemId)) {
     return baseQuantity *
         configNumber(db, 'specialist.alchemy_potion_output_max', alchemyPotionOutputMax);
   }
