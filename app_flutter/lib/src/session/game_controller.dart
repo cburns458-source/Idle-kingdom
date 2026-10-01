@@ -322,7 +322,11 @@ class GameController extends ChangeNotifier {
     final qty = recipe.raw['Output Quantity'];
     final skillId = recipe.raw['Skill ID'];
     if (itemId is! String || qty is! num || skillId is! String) return false;
-    return !canFitItemQuantity(save, itemId, productionOutputReservePerCraft(db, skillId, qty));
+    return !canFitItemQuantity(
+      save,
+      itemId,
+      productionOutputReservePerCraft(db, skillId, qty, itemId),
+    );
   }
 
   /// The catch-up from the last boot, until the player dismisses it.

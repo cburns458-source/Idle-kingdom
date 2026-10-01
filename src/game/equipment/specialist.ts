@@ -65,6 +65,18 @@ export function chefHatOutputQuantity(
   return baseQuantity * 2
 }
 
+/** True when an Alchemy recipe should roll the 1–3 potion die (not 1:1 reagents). */
+export function alchemyRecipeUsesPotionDie(db: GameDatabase, outputItemId: string): boolean {
+  const item = db.Items.find((row) => row['Item ID'] === outputItemId)
+  if (!item) return false
+  if (item.Category === 'Potion') return true
+  const tags = String(item['Functional / Source Tags'] ?? '')
+  return tags
+    .split(';')
+    .map((tag) => tag.trim())
+    .includes('alchemy_output')
+}
+
 /** Fair die for potion crafts: 1–3 normally, 2–3 with Alchemist Goggles. */
 export function alchemyPotionOutputQuantity(
   baseQuantity: number,
@@ -85,10 +97,12 @@ export function alchemyPotionOutputQuantity(
 
 /** Per-craft output used when reserving bag space for a production queue. */
 export function productionOutputReservePerCraft(
+  db: GameDatabase,
   skillId: string,
   baseQuantity: number,
+  outputItemId: string,
 ): number {
-  if (skillId === ALCHEMY_SKILL_ID) {
+  if (skillId === ALCHEMY_SKILL_ID && alchemyRecipeUsesPotionDie(db, outputItemId)) {
     return baseQuantity * ALCHEMY_POTION_OUTPUT_MAX
   }
   return baseQuantity

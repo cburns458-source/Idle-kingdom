@@ -155,10 +155,10 @@ describe('specialist hats and quiver', () => {
   })
 
   it('reserves max potion output when queueing alchemy crafts', () => {
-    expect(productionOutputReservePerCraft('SKL-0010', 1)).toBe(3)
-    expect(productionOutputReservePerCraft('SKL-0007', 1)).toBe(1)
-
     const { launch } = prepareDatabase(rawDatabase)
+    expect(productionOutputReservePerCraft(launch, 'SKL-0010', 1, 'ITEM-0210')).toBe(3)
+    expect(productionOutputReservePerCraft(launch, 'SKL-0007', 1, 'ITEM-0068')).toBe(1)
+    expect(productionOutputReservePerCraft(launch, 'SKL-0010', 1, 'ITEM-0413')).toBe(1)
     let save = createNewSave(launch)
     save = {
       ...save,
@@ -176,5 +176,49 @@ describe('specialist hats and quiver', () => {
     }
     const queued = beginProductionQueue(launch, save, 'ACT-0020', 'RCP-0053', 2)
     expect(queued.ok).toBe(true)
+  })
+
+  it('crafts fish reagents 1:1 with no goggles multi-output', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const recipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0073')!
+    expect(recipe['Display Name']).toBe('Salmon Roe')
+    expect(recipe['Proficiency Level']).toBe(28)
+    expect(recipe['Base Duration Seconds']).toBe(30)
+    expect(recipe['XP Reward']).toBe(1200)
+    expect(recipe['Ingredient 1 Item ID']).toBe('ITEM-0049')
+    expect(recipe['Output Item ID']).toBe('ITEM-0413')
+
+    const oil = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0074')!
+    expect(oil['Display Name']).toBe('Catfish Oil')
+    expect(oil['Proficiency Level']).toBe(36)
+    expect(oil['Base Duration Seconds']).toBe(36)
+    expect(oil['XP Reward']).toBe(1600)
+
+    const tail = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0075')!
+    expect(tail['Display Name']).toBe('Eel Tail')
+    expect(tail['Proficiency Level']).toBe(60)
+    expect(tail['Base Duration Seconds']).toBe(48)
+    expect(tail['XP Reward']).toBe(2640)
+
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0010' ? { ...skill, level: 28, xp: 50_000 } : skill,
+      ),
+    }
+    save = addItemToInventory(save, 'ITEM-0049', 3)
+    const queued = beginProductionQueue(launch, save, 'ACT-0020', 'RCP-0073', 1)
+    expect(queued.ok).toBe(true)
+    if (!queued.ok) return
+
+    const plain = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0.9))
+    expect(plain?.outputQty).toBe(1)
+    expect(plain?.xpGained).toBe(1200)
+
+    const withGoggles = withHelmet(queued.save, ALCHEMIST_GOGGLES_ITEM_ID)
+    const goggled = completeProductionCraft(launch, withGoggles, Date.now(), rolls(0, 0.9))
+    expect(goggled?.outputQty).toBe(1)
+    expect(goggled?.xpGained).toBe(1200)
   })
 })

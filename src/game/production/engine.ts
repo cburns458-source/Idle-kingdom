@@ -5,7 +5,13 @@ import { applyXp, getSkillProgress } from '../activity/xp'
 import { rollProductionSuccess } from '../activity/gathering'
 import { creditXpAwards } from '../trackers/trackers'
 import type { RandomFn } from '../activity/pools'
-import { chefHatOutputQuantity, alchemyPotionOutputQuantity, productionOutputReservePerCraft, ALCHEMY_SKILL_ID } from '../equipment/specialist'
+import {
+  chefHatOutputQuantity,
+  alchemyPotionOutputQuantity,
+  alchemyRecipeUsesPotionDie,
+  productionOutputReservePerCraft,
+  ALCHEMY_SKILL_ID,
+} from '../equipment/specialist'
 import { equippedActionTimeReductionPercent } from '../equipment/loadout'
 import { canFitItemQuantity, maxAddableQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
@@ -128,7 +134,12 @@ export function beginProductionQueue(
   }
 
   const outputTotal =
-    productionOutputReservePerCraft(recipe['Skill ID'], recipe['Output Quantity']) * crafts
+    productionOutputReservePerCraft(
+      db,
+      recipe['Skill ID'],
+      recipe['Output Quantity'],
+      recipe['Output Item ID'],
+    ) * crafts
   if (!canFitItemQuantity(withMaterials, recipe['Output Item ID'], outputTotal)) {
     return {
       ok: false,
@@ -196,12 +207,14 @@ export function completeProductionCraft(
   }
 
   const baseQty = recipe['Output Quantity']
-  let outputQty =
-    recipe['Skill ID'] === ALCHEMY_SKILL_ID
-      ? alchemyPotionOutputQuantity(baseQty, save, recipe['Skill ID'], random)
-      : chefHatOutputQuantity(baseQty, save, recipe['Skill ID'], random)
+  const usesPotionDie =
+    recipe['Skill ID'] === ALCHEMY_SKILL_ID &&
+    alchemyRecipeUsesPotionDie(db, recipe['Output Item ID'])
+  let outputQty = usesPotionDie
+    ? alchemyPotionOutputQuantity(baseQty, save, recipe['Skill ID'], random)
+    : chefHatOutputQuantity(baseQty, save, recipe['Skill ID'], random)
   if (outputQty > baseQty && !canFitItemQuantity(save, recipe['Output Item ID'], outputQty)) {
-    if (recipe['Skill ID'] === ALCHEMY_SKILL_ID) {
+    if (usesPotionDie) {
       outputQty = Math.min(outputQty, maxAddableQuantity(save, recipe['Output Item ID']))
       if (outputQty <= 0) return null
     } else {
