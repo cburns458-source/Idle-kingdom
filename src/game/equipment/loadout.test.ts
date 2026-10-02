@@ -21,6 +21,7 @@ import {
   POTION_SLOT_ID,
   unequipSlot,
   WEAPON_TOOL_SLOT_ID,
+  equippedActionTimeReductionPercent,
   equippedActionTimeReductionPercentForAction,
 } from './loadout'
 import { withRecalculatedVitals } from './vitals'
@@ -132,10 +133,10 @@ describe('equipment loadout', () => {
     expect(result.reason).toMatch(/Mining level 35/i)
   })
 
-  it('applies action time reduction only to the tool\'s own skill', () => {
+  it('applies success chance bonus only to the tool\'s own skill', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe, Mining ATR 3
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe, Mining success 3
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
@@ -146,15 +147,18 @@ describe('equipment loadout', () => {
     const clayMult = 1 < Number(digClay['Proficiency Level'] ?? 1) ? 2 : 1
     const cedarBase = Number(cutCedar['Base Duration Seconds'] ?? 0)
     const cedarMult = 1 < Number(cutCedar['Proficiency Level'] ?? 1) ? 2 : 1
+    // Success-chance gear no longer shortens duration.
     expect(gatheringDurationMs(launch, equipped.save, digClay)).toBe(
-      Math.round(clayBase * clayMult * 0.97 * 1000),
+      Math.round(clayBase * clayMult * 1000),
     )
     expect(gatheringDurationMs(launch, equipped.save, cutCedar)).toBe(
       Math.round(cedarBase * cedarMult * 1000),
     )
+    expect(equippedActionTimeReductionPercent(launch, equipped.save, 'SKL-0002')).toBe(3)
+    expect(equippedActionTimeReductionPercent(launch, equipped.save, 'SKL-0006')).toBe(0)
   })
 
-  it('credits oven mitts action time to cooking and metallurgy production', () => {
+  it('credits oven mitts success chance to cooking and metallurgy without shortening crafts', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = addItemToInventory(save, 'ITEM-0316', 1)
@@ -166,9 +170,10 @@ describe('equipment loadout', () => {
     const copper = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0014')!
     const beefMs = Number(beef['Base Duration Seconds']) * 1000
     const copperMs = Number(copper['Base Duration Seconds']) * 1000
-    expect(productionCraftDurationMs(launch, equipped.save, beef, null)).toBe(beefMs * 0.95)
-    expect(productionCraftDurationMs(launch, equipped.save, copper, null)).toBe(copperMs * 0.95)
+    expect(productionCraftDurationMs(launch, equipped.save, beef, null)).toBe(beefMs)
+    expect(productionCraftDurationMs(launch, equipped.save, copper, null)).toBe(copperMs)
     expect(productionCraftDurationMs(launch, save, beef, null)).toBe(beefMs)
+    expect(equippedActionTimeReductionPercent(launch, equipped.save, 'SKL-0007')).toBe(5)
   })
 
   it('clamps current HP when max HP drops', () => {
@@ -428,7 +433,7 @@ describe('equipment loadout', () => {
     expect(save.equipment.slots[OFFHAND_SLOT_ID]?.itemId).toBe('ITEM-0145')
   })
 
-  it('raises vine chop ATR to 24% on the machete and keeps 11% on other woodcutting', () => {
+  it('raises vine chop success chance to 24% on the machete and keeps 11% on other woodcutting', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = raiseSkillToMinimumLevel(createNewSave(launch), launch, 'SKL-0006', 40).save
     const vines = launch.Actions.find((row) => row['Action ID'] === 'ACN-0179')!
@@ -456,7 +461,7 @@ describe('equipment loadout', () => {
     expect(equippedActionTimeReductionPercentForAction(launch, withHatchet, vines)).toBe(11)
     expect(equippedActionTimeReductionPercentForAction(launch, withMachete, vines)).toBe(24)
     expect(equippedActionTimeReductionPercentForAction(launch, withMachete, oak)).toBe(11)
-    expect(gatheringDurationMs(launch, withMachete, vines)).toBeCloseTo(12 * (1 - 24 / 100) * 1000)
+    expect(gatheringDurationMs(launch, withMachete, vines)).toBeCloseTo(12_000)
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0406')?.['Icon Asset Key']).toBe(
       'machete',
     )

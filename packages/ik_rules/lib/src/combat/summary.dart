@@ -181,15 +181,15 @@ List<CombatBonusLine> _activeBonuses(GameDatabase db, PlayerSave save) {
     }
   }
 
-  final atrBySkill = equippedActionTimeReductionBySkill(db, save);
-  final atrSkills = atrBySkill.entries.toList()
+  final successBySkill = equippedSuccessChanceBonusBySkill(db, save);
+  final successSkills = successBySkill.entries.toList()
     ..sort((left, right) => _skillName(db, left.key).compareTo(_skillName(db, right.key)));
-  for (final entry in atrSkills) {
+  for (final entry in successSkills) {
     bonuses.add(
       CombatBonusLine(
         kind: 'equipment',
         name: _skillName(db, entry.key),
-        effect: '-${jsNumberToString(entry.value)}% action time',
+        effect: '+${jsNumberToString(entry.value)}% success chance',
       ),
     );
   }

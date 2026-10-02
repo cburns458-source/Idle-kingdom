@@ -11,6 +11,7 @@ import { isStandardProductionActivity, recipesForActivity } from '../production/
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { EquippedStack, PlayerSave } from '../save/types'
 import { tickPotionAction, tryConsumePotionForScope } from '../potions/effects'
+import { equippedSuccessChanceBonusPercentForAction } from '../equipment/loadout'
 import { gatheringDurationMs, gatheringXpReward, rollGatheringSuccess } from './gathering'
 import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
 import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
@@ -377,7 +378,8 @@ export function completeGatheringAction(
 
   const gatheringLevel = getSkillProgress(save, skillId).level
   const proficiencyLevel = Number(action['Proficiency Level'] ?? 1)
-  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel)) {
+  const successBonus = equippedSuccessChanceBonusPercentForAction(db, save, action)
+  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel, successBonus)) {
     return {
       save: withoutHeldAction(save, save.currentActivityId),
       result: emptyResult(),

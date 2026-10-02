@@ -1,5 +1,4 @@
 import { applyQuiverHuntingXp } from '../equipment/specialist'
-import { equippedActionTimeReductionPercentForAction } from '../equipment/loadout'
 import type { ActionRow, GameDatabase } from '../data/types'
 import { equippedEnchantmentGatheringMultiplier } from '../projects/enchantments'
 import type { PlayerSave } from '../save/types'
@@ -18,29 +17,44 @@ export function configString(db: GameDatabase, key: string, fallback: string): s
 }
 
 /**
- * Base 80%. −0.75% per level below proficiency, +1% per level above.
- * Clamped to 0–100. Gathering and standard production share this curve.
+ * Gathering: base = 80 − floor(proficiency/4) (lvl 1–3 actions → 80%, lvl 40 → 70%).
+ * Then −0.75%/level below proficiency, +1%/level above. Clamped 0–100.
+ * Optional flat success-chance bonus from gear is applied by callers.
  */
 export function gatheringSuccessChancePercent(
   level: number,
   proficiencyLevel: number = 1,
+  successChanceBonusPercent: number = 0,
 ): number {
-  return successChancePercent(level, proficiencyLevel)
+  const proficiency = Math.max(1, Math.floor(Number(proficiencyLevel) || 1))
+  const base = 80 - Math.floor(proficiency / 4)
+  return successChancePercent(level, proficiency, base, successChanceBonusPercent)
 }
 
-/** Same curve as gathering (shared Launch success formula). */
+/**
+ * Production: base 70%. −0.75%/level below proficiency, +1%/level above.
+ * Clamped 0–100. Optional flat success-chance bonus from gear is applied by callers.
+ */
 export function productionSuccessChancePercent(
   level: number,
   proficiencyLevel: number = 1,
+  successChanceBonusPercent: number = 0,
 ): number {
-  return successChancePercent(level, proficiencyLevel)
+  return successChancePercent(level, proficiencyLevel, 70, successChanceBonusPercent)
 }
 
-function successChancePercent(level: number, proficiencyLevel: number): number {
+function successChancePercent(
+  level: number,
+  proficiencyLevel: number,
+  baseAtProficiency: number,
+  successChanceBonusPercent: number = 0,
+): number {
   const lvl = Math.max(1, Math.floor(Number(level) || 1))
   const proficiency = Math.max(1, Math.floor(Number(proficiencyLevel) || 1))
   const delta = lvl - proficiency
-  const chance = delta < 0 ? 80 + delta * 0.75 : 80 + delta
+  const chance =
+    (delta < 0 ? baseAtProficiency + delta * 0.75 : baseAtProficiency + delta) +
+    Math.max(0, Number(successChanceBonusPercent) || 0)
   return Math.max(0, Math.min(100, chance))
 }
 
@@ -49,8 +63,12 @@ export function rollGatheringSuccess(
   level: number,
   random: RandomFn = Math.random,
   proficiencyLevel: number = 1,
+  successChanceBonusPercent: number = 0,
 ): boolean {
-  return random() * 100 < gatheringSuccessChancePercent(level, proficiencyLevel)
+  return (
+    random() * 100 <
+    gatheringSuccessChancePercent(level, proficiencyLevel, successChanceBonusPercent)
+  )
 }
 
 /** False means the craft botches: materials spent, no output/XP. */
@@ -58,8 +76,12 @@ export function rollProductionSuccess(
   level: number,
   random: RandomFn = Math.random,
   proficiencyLevel: number = 1,
+  successChanceBonusPercent: number = 0,
 ): boolean {
-  return random() * 100 < productionSuccessChancePercent(level, proficiencyLevel)
+  return (
+    random() * 100 <
+    productionSuccessChancePercent(level, proficiencyLevel, successChanceBonusPercent)
+  )
 }
 
 export function gatheringDurationMs(
@@ -74,18 +96,13 @@ export function gatheringDurationMs(
     skill.level < proficiency
       ? configNumber(db, 'gathering_below_proficiency_duration_multiplier', 2)
       : 1
-  const atr = equippedActionTimeReductionPercentForAction(db, save, action)
-  const reductionFactor = Math.max(0.01, 1 - atr / 100)
   const enchantFactor = equippedEnchantmentGatheringMultiplier(
     db,
     save,
     action['Relevant Skill ID'],
   )
   const spellFactor = activeSpellGatheringDurationMultiplier(db, save)
-  return Math.max(
-    0,
-    baseSeconds * multiplier * reductionFactor * enchantFactor * spellFactor * 1000,
-  )
+  return Math.max(0, baseSeconds * multiplier * enchantFactor * spellFactor * 1000)
 }
 
 export function isBelowProficiency(save: PlayerSave, action: ActionRow): boolean {

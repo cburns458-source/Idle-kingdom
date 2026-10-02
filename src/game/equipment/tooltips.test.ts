@@ -45,7 +45,7 @@ describe('equipment tooltips', () => {
     expect(equipmentTooltipStatLines(undefined)).toEqual([])
   })
 
-  it('names the skill for action time reduction and lists other bonuses', () => {
+  it('names the skill for success chance and lists other bonuses', () => {
     expect(
       equipmentTooltipStatLines(
         equipment({
@@ -55,7 +55,7 @@ describe('equipment tooltips', () => {
           'Action Time Reduction %': 5,
         }),
       ),
-    ).toEqual(['Damage reduction +2', 'Healing +15', 'SKL-0002: -5% action time'])
+    ).toEqual(['Damage reduction +2', 'Healing +15', 'SKL-0002: +5% success chance'])
   })
 
   it('resolves the skill name when the database is provided', () => {
@@ -68,10 +68,10 @@ describe('equipment tooltips', () => {
         }),
         launch,
       ),
-    ).toEqual(['Mining: -5% action time'])
+    ).toEqual(['Mining: +5% success chance'])
   })
 
-  it('lists secondary skill action time and skill-gated drop chance', () => {
+  it('lists secondary skill success chance and skill-gated drop chance', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(
       equipmentTooltipStatLines(
@@ -82,7 +82,7 @@ describe('equipment tooltips', () => {
         }),
         launch,
       ),
-    ).toEqual(['Cooking, Metallurgy: -5% action time'])
+    ).toEqual(['Cooking, Metallurgy: +5% success chance'])
     expect(
       equipmentTooltipStatLines(
         equipment({
