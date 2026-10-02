@@ -125,8 +125,18 @@ class PotionConsumption {
 /// Future potions work automatically if they use the same capability tag patterns.
 PotionConsumption tryConsumePotionForScope(GameDatabase db, PlayerSave save, String scope) {
   final existing = save.activePotionEffect;
-  if (existing != null && potionActionsRemaining(existing) > 0 && existing.scope == scope) {
-    return PotionConsumption(save: save, consumed: false, effect: existing, potionName: null);
+  if (existing != null && potionActionsRemaining(existing) > 0) {
+    if (existing.scope == scope) {
+      return PotionConsumption(save: save, consumed: false, effect: existing, potionName: null);
+    }
+    // Multi-scope bottles (e.g. luck): an already-open bottle covers the other
+    // eligible scope without drinking a second dose.
+    final openEquipment = db.equipment.firstWhereOrNull(
+      (row) => row.raw['Item ID'] == existing.itemId,
+    );
+    if (parsePotionEffect(openEquipment, existing.itemId, scope) != null) {
+      return PotionConsumption(save: save, consumed: false, effect: existing, potionName: null);
+    }
   }
 
   // Pause blocks new bottles only; an already-running effect keeps ticking.

@@ -75,7 +75,7 @@ def patch_db(db: dict) -> dict:
                 "Subtype": "Creature material",
                 "Associated Skill ID": "SKL-0005",
                 "Functional / Source Tags": "hunting_output; crafting_input",
-                "Icon Asset Key": "goat_hide",
+                "Icon Asset Key": "rabbit_hide",
                 "Base Sell Value": 40,
                 "Notes": "Tanner turns into 1 leather.",
                 "Status": "Planned",

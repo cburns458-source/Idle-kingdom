@@ -131,8 +131,16 @@ export function tryConsumePotionForScope(
   potionName: string | null
 } {
   const existing = save.activePotionEffect
-  if (existing && potionActionsRemaining(existing) > 0 && existing.scope === scope) {
-    return { save, consumed: false, effect: existing, potionName: null }
+  if (existing && potionActionsRemaining(existing) > 0) {
+    if (existing.scope === scope) {
+      return { save, consumed: false, effect: existing, potionName: null }
+    }
+    // Multi-scope bottles (e.g. luck): an already-open bottle covers the other
+    // eligible scope without drinking a second dose.
+    const openEquipment = db.Equipment.find((row) => row['Item ID'] === existing.itemId)
+    if (parsePotionEffect(openEquipment, existing.itemId, scope)) {
+      return { save, consumed: false, effect: existing, potionName: null }
+    }
   }
 
   // Pause blocks new bottles only; an already-running effect keeps ticking.
