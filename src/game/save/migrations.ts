@@ -953,6 +953,26 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 58,
     }),
   },
+  {
+    fromVersion: 58,
+    toVersion: 59,
+    migrate: (save) => ({
+      ...save,
+      combatPlayerSwingApplied: Boolean(
+        (save as PlayerSave & { combatPlayerSwingApplied?: boolean }).combatPlayerSwingApplied,
+      ),
+      combatPendingRound:
+        (save as PlayerSave & { combatPendingRound?: PlayerSave['combatPendingRound'] })
+          .combatPendingRound ?? null,
+      combatEatUntil:
+        (save as PlayerSave & { combatEatUntil?: string | null }).combatEatUntil ?? null,
+      combatContinueActivityAfterEat: Boolean(
+        (save as PlayerSave & { combatContinueActivityAfterEat?: boolean })
+          .combatContinueActivityAfterEat,
+      ),
+      saveVersion: 59,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

@@ -116,7 +116,7 @@ describe('ore gem secondary drop tables', () => {
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0018')!
 
     // resolveActionRewards rolls:
-    // 1) primary drop chance (47.5%) — 0 succeeds
+    // 1) primary drop chance (71.25%) — 0 succeeds
     // 2) primary weighted pick — 0 picks the only ore entry
     // 3) secondary drop chance (0.5%) — 0 succeeds
     // 4) secondary weighted pick — 0 picks Sapphire

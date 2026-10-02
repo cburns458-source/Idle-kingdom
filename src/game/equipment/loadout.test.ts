@@ -456,7 +456,7 @@ describe('equipment loadout', () => {
     expect(equippedActionTimeReductionPercentForAction(launch, withHatchet, vines)).toBe(11)
     expect(equippedActionTimeReductionPercentForAction(launch, withMachete, vines)).toBe(24)
     expect(equippedActionTimeReductionPercentForAction(launch, withMachete, oak)).toBe(11)
-    expect(gatheringDurationMs(launch, withMachete, vines)).toBeCloseTo(55 * (1 - 24 / 100) * 1000)
+    expect(gatheringDurationMs(launch, withMachete, vines)).toBeCloseTo(12 * (1 - 24 / 100) * 1000)
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0406')?.['Icon Asset Key']).toBe(
       'machete',
     )

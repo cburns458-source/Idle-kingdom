@@ -18,7 +18,7 @@ import 'travel.dart';
 const num _minForegroundCatchUpMs = 15000;
 
 num foregroundCatchUpFloorMs(GameDatabase db) {
-  final roundMs = math.max(1000, configNumber(db, 'combat_round_duration', 4) * 1000);
+  final roundMs = math.max(1000, configNumber(db, 'combat_round_duration', 6) * 1000);
   return math.max(_minForegroundCatchUpMs, roundMs);
 }
 

@@ -63,8 +63,8 @@ void main() {
     expect(augur.displayName, 'Gather augur weed');
     expect(augur.relevantSkillId, 'SKL-0004');
     expect(augur.proficiencyLevel, 50);
-    expect(augur.xpReward, 9027);
-    expect(augur.baseDurationSeconds, 65);
+    expect(augur.xpReward, 1667);
+    expect(augur.baseDurationSeconds, 12);
 
     final wildRoots = db.actions.firstWhere((row) => row.actionId == 'ACN-0105');
     expect(wildRoots.displayName, 'Gather wild roots');

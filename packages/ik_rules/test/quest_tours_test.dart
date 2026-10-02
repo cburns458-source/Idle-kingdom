@@ -459,7 +459,7 @@ void main() {
     geared = equipStackToSlot(geared, weaponToolSlotId, 'ITEM-0406', 1);
     expect(equippedActionTimeReductionPercentForAction(db, geared, vines), 24);
     expect(equippedActionTimeReductionPercentForAction(db, geared, oak), 11);
-    expect(gatheringDurationMs(db, geared, vines), closeTo(55 * (1 - 24 / 100) * 1000, 0.01));
+    expect(gatheringDurationMs(db, geared, vines), closeTo(12 * (1 - 24 / 100) * 1000, 0.01));
   });
 
   test('Green Thumb waits for Getting Started, hides from the log, and finishes after compost planting', () {

@@ -67,7 +67,7 @@ describe('cooked beef and tablet recipes', () => {
     expect(stock['Display Name']).toBe('Soup Stock')
     expect(stock['Facility ID']).toBe('FAC-0001')
     expect(stock['Proficiency Level']).toBe(16)
-    expect(stock['Base Duration Seconds']).toBe(28)
+    expect(stock['Base Duration Seconds']).toBe(12)
     expect(stock['XP Reward']).toBe(0)
     expect(stock['Ingredient 1 Item ID']).toBe('ITEM-0365')
     expect(stock['Ingredient 1 Quantity']).toBe(1)
@@ -80,8 +80,8 @@ describe('cooked beef and tablet recipes', () => {
       expect(recipe['Ingredient 4 Item ID']).toBe('ITEM-0364')
       expect(recipe['Ingredient 4 Quantity']).toBe(1)
     }
-    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0012')?.['XP Reward']).toBe(11431)
-    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['XP Reward']).toBe(65329)
+    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0012')?.['XP Reward']).toBe(2800)
+    expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['XP Reward']).toBe(8000)
     const marlin = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0044')!
     expect(marlin.Status).toBe('Planned')
     expect(marlin['Display Name']).toBe('Cooked Marlin')

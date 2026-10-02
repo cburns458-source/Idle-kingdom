@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 58;
+const int saveVersion = 59;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -280,6 +280,173 @@ class ActivityTransition {
           : productionQuantity as num?,
       startedAt: startedAt ?? this.startedAt,
       durationMs: durationMs ?? this.durationMs,
+    );
+  }
+}
+
+/// Combat round roll stored after the player swing so the enemy swing / outcome
+/// can apply at round end without re-rolling.
+class CombatPendingRound {
+  const CombatPendingRound({
+    required this.playerHit,
+    required this.playerCrit,
+    this.offhandHit,
+    this.staffHit,
+    this.poisonHit,
+    required this.skipNextEnemyAttack,
+    this.enemyHit,
+    required this.thornsHit,
+    this.bossSleepRoundsRemaining,
+    required this.enemyAsleep,
+    required this.enemyRampage,
+    required this.bossAddsTriggered,
+    required this.bossInkActive,
+    this.bossPendingHp,
+    required this.enemyHpAfterPlayer,
+    required this.playerHpAfterPlayer,
+    required this.enemyHp,
+    required this.playerHp,
+    required this.outcome,
+    required this.lifestealHealed,
+  });
+
+  factory CombatPendingRound.fromJson(Map<String, Object?> json) {
+    return CombatPendingRound(
+      playerHit: json['playerHit'] as num,
+      playerCrit: json['playerCrit'] as bool,
+      offhandHit: json['offhandHit'] as num?,
+      staffHit: json['staffHit'] as num?,
+      poisonHit: json['poisonHit'] as num?,
+      skipNextEnemyAttack: json['skipNextEnemyAttack'] as bool,
+      enemyHit: json['enemyHit'] as num?,
+      thornsHit: json['thornsHit'] as num,
+      bossSleepRoundsRemaining: json['bossSleepRoundsRemaining'] as num?,
+      enemyAsleep: json['enemyAsleep'] as bool,
+      enemyRampage: json['enemyRampage'] as bool,
+      bossAddsTriggered: json['bossAddsTriggered'] as bool,
+      bossInkActive: json['bossInkActive'] as bool,
+      bossPendingHp: json['bossPendingHp'] as num?,
+      enemyHpAfterPlayer: json['enemyHpAfterPlayer'] as num,
+      playerHpAfterPlayer: json['playerHpAfterPlayer'] as num,
+      enemyHp: json['enemyHp'] as num,
+      playerHp: json['playerHp'] as num,
+      outcome: json['outcome'] as String,
+      lifestealHealed: json['lifestealHealed'] as num,
+    );
+  }
+
+  final num playerHit;
+
+  final bool playerCrit;
+
+  final num? offhandHit;
+
+  final num? staffHit;
+
+  final num? poisonHit;
+
+  final bool skipNextEnemyAttack;
+
+  final num? enemyHit;
+
+  final num thornsHit;
+
+  final num? bossSleepRoundsRemaining;
+
+  final bool enemyAsleep;
+
+  final bool enemyRampage;
+
+  final bool bossAddsTriggered;
+
+  final bool bossInkActive;
+
+  final num? bossPendingHp;
+
+  /// Enemy HP after the player swing, before the enemy attacks.
+  final num enemyHpAfterPlayer;
+
+  /// Player HP after lifesteal, before the enemy attacks.
+  final num playerHpAfterPlayer;
+
+  final num enemyHp;
+
+  final num playerHp;
+
+  final String outcome;
+
+  final num lifestealHealed;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'playerHit': playerHit,
+      'playerCrit': playerCrit,
+      'offhandHit': offhandHit,
+      'staffHit': staffHit,
+      'poisonHit': poisonHit,
+      'skipNextEnemyAttack': skipNextEnemyAttack,
+      'enemyHit': enemyHit,
+      'thornsHit': thornsHit,
+      'bossSleepRoundsRemaining': bossSleepRoundsRemaining,
+      'enemyAsleep': enemyAsleep,
+      'enemyRampage': enemyRampage,
+      'bossAddsTriggered': bossAddsTriggered,
+      'bossInkActive': bossInkActive,
+      'bossPendingHp': bossPendingHp,
+      'enemyHpAfterPlayer': enemyHpAfterPlayer,
+      'playerHpAfterPlayer': playerHpAfterPlayer,
+      'enemyHp': enemyHp,
+      'playerHp': playerHp,
+      'outcome': outcome,
+      'lifestealHealed': lifestealHealed,
+    };
+  }
+
+  CombatPendingRound copyWith({
+    num? playerHit,
+    bool? playerCrit,
+    Object? offhandHit = _unset,
+    Object? staffHit = _unset,
+    Object? poisonHit = _unset,
+    bool? skipNextEnemyAttack,
+    Object? enemyHit = _unset,
+    num? thornsHit,
+    Object? bossSleepRoundsRemaining = _unset,
+    bool? enemyAsleep,
+    bool? enemyRampage,
+    bool? bossAddsTriggered,
+    bool? bossInkActive,
+    Object? bossPendingHp = _unset,
+    num? enemyHpAfterPlayer,
+    num? playerHpAfterPlayer,
+    num? enemyHp,
+    num? playerHp,
+    String? outcome,
+    num? lifestealHealed,
+  }) {
+    return CombatPendingRound(
+      playerHit: playerHit ?? this.playerHit,
+      playerCrit: playerCrit ?? this.playerCrit,
+      offhandHit: offhandHit == _unset ? this.offhandHit : offhandHit as num?,
+      staffHit: staffHit == _unset ? this.staffHit : staffHit as num?,
+      poisonHit: poisonHit == _unset ? this.poisonHit : poisonHit as num?,
+      skipNextEnemyAttack: skipNextEnemyAttack ?? this.skipNextEnemyAttack,
+      enemyHit: enemyHit == _unset ? this.enemyHit : enemyHit as num?,
+      thornsHit: thornsHit ?? this.thornsHit,
+      bossSleepRoundsRemaining: bossSleepRoundsRemaining == _unset
+          ? this.bossSleepRoundsRemaining
+          : bossSleepRoundsRemaining as num?,
+      enemyAsleep: enemyAsleep ?? this.enemyAsleep,
+      enemyRampage: enemyRampage ?? this.enemyRampage,
+      bossAddsTriggered: bossAddsTriggered ?? this.bossAddsTriggered,
+      bossInkActive: bossInkActive ?? this.bossInkActive,
+      bossPendingHp: bossPendingHp == _unset ? this.bossPendingHp : bossPendingHp as num?,
+      enemyHpAfterPlayer: enemyHpAfterPlayer ?? this.enemyHpAfterPlayer,
+      playerHpAfterPlayer: playerHpAfterPlayer ?? this.playerHpAfterPlayer,
+      enemyHp: enemyHp ?? this.enemyHp,
+      playerHp: playerHp ?? this.playerHp,
+      outcome: outcome ?? this.outcome,
+      lifestealHealed: lifestealHealed ?? this.lifestealHealed,
     );
   }
 }
@@ -976,6 +1143,10 @@ class PlayerSave {
     this.combatEnemyHp,
     this.combatRoundStartedAt,
     this.combatManualEatRoundStartedAt,
+    required this.combatPlayerSwingApplied,
+    this.combatPendingRound,
+    this.combatEatUntil,
+    required this.combatContinueActivityAfterEat,
     required this.combatSkipEnemyAttack,
     this.combatBossSleepRoundsRemaining,
     this.combatBossPendingId,
@@ -1085,6 +1256,10 @@ class PlayerSave {
       combatEnemyHp: json['combatEnemyHp'] as num?,
       combatRoundStartedAt: json['combatRoundStartedAt'] as String?,
       combatManualEatRoundStartedAt: json['combatManualEatRoundStartedAt'] as String?,
+      combatPlayerSwingApplied: json['combatPlayerSwingApplied'] as bool,
+      combatPendingRound: mapOrNull(json['combatPendingRound'], CombatPendingRound.fromJson),
+      combatEatUntil: json['combatEatUntil'] as String?,
+      combatContinueActivityAfterEat: json['combatContinueActivityAfterEat'] as bool,
       combatSkipEnemyAttack: json['combatSkipEnemyAttack'] as bool,
       combatBossSleepRoundsRemaining: json['combatBossSleepRoundsRemaining'] as num?,
       combatBossPendingId: json['combatBossPendingId'] as String?,
@@ -1277,6 +1452,22 @@ class PlayerSave {
   /// their one manual eat this combat round (auto-eat off only).
   final String? combatManualEatRoundStartedAt;
 
+  /// True after the player's swing has resolved for the current combat round
+  /// (at combat_player_attack_at). Reset when a new round begins.
+  final bool combatPlayerSwingApplied;
+
+  /// Full round roll captured when the player swings, applied for the enemy
+  /// swing / outcome at round end. Null before the player swing.
+  final CombatPendingRound? combatPendingRound;
+
+  /// When set, auto-eat / inter-round delay is in progress until this ISO time.
+  /// Used between ongoing rounds and between actions after a kill.
+  final String? combatEatUntil;
+
+  /// When true, finishing [combatEatUntil] should pick the next activity action
+  /// (post-victory). When false, finishing eat starts the next combat round.
+  final bool combatContinueActivityAfterEat;
+
   /// Staff of Binding: when true, the enemy skips their next attack.
   /// Cleared after that skipped swing, or when combat ends.
   final bool combatSkipEnemyAttack;
@@ -1419,6 +1610,10 @@ class PlayerSave {
       'combatEnemyHp': combatEnemyHp,
       'combatRoundStartedAt': combatRoundStartedAt,
       'combatManualEatRoundStartedAt': combatManualEatRoundStartedAt,
+      'combatPlayerSwingApplied': combatPlayerSwingApplied,
+      'combatPendingRound': combatPendingRound?.toJson(),
+      'combatEatUntil': combatEatUntil,
+      'combatContinueActivityAfterEat': combatContinueActivityAfterEat,
       'combatSkipEnemyAttack': combatSkipEnemyAttack,
       'combatBossSleepRoundsRemaining': combatBossSleepRoundsRemaining,
       'combatBossPendingId': combatBossPendingId,
@@ -1504,6 +1699,10 @@ class PlayerSave {
     Object? combatEnemyHp = _unset,
     Object? combatRoundStartedAt = _unset,
     Object? combatManualEatRoundStartedAt = _unset,
+    bool? combatPlayerSwingApplied,
+    Object? combatPendingRound = _unset,
+    Object? combatEatUntil = _unset,
+    bool? combatContinueActivityAfterEat,
     bool? combatSkipEnemyAttack,
     Object? combatBossSleepRoundsRemaining = _unset,
     Object? combatBossPendingId = _unset,
@@ -1606,6 +1805,13 @@ class PlayerSave {
       combatManualEatRoundStartedAt: combatManualEatRoundStartedAt == _unset
           ? this.combatManualEatRoundStartedAt
           : combatManualEatRoundStartedAt as String?,
+      combatPlayerSwingApplied: combatPlayerSwingApplied ?? this.combatPlayerSwingApplied,
+      combatPendingRound: combatPendingRound == _unset
+          ? this.combatPendingRound
+          : combatPendingRound as CombatPendingRound?,
+      combatEatUntil: combatEatUntil == _unset ? this.combatEatUntil : combatEatUntil as String?,
+      combatContinueActivityAfterEat:
+          combatContinueActivityAfterEat ?? this.combatContinueActivityAfterEat,
       combatSkipEnemyAttack: combatSkipEnemyAttack ?? this.combatSkipEnemyAttack,
       combatBossSleepRoundsRemaining: combatBossSleepRoundsRemaining == _unset
           ? this.combatBossSleepRoundsRemaining

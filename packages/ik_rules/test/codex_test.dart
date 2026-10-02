@@ -60,7 +60,7 @@ void main() {
     expect(mine.displayName.toLowerCase(), contains('copper'));
     expect(mine.tables.map((table) => table.label), ['Primary', 'Gems']);
     final ore = mine.tables.firstWhere((table) => table.label == 'Primary');
-    expect(ore.dropChance, 47.5);
+    expect(ore.dropChance, 71.25);
     expect(ore.drops.map((row) => row.displayName), contains('Copper Ore'));
     expect(ore.drops.firstWhere((row) => row.displayName == 'Copper Ore').dropRatePercent, 100);
     expect(ore.drops.map((row) => row.displayName), isNot(contains('Sapphire')));
@@ -89,7 +89,7 @@ void main() {
     final hunt = codex.action('ACN-0014')!;
     expect(hunt.tables.map((table) => table.label), ['Primary', 'Secondary']);
     final primary = hunt.tables.first;
-    expect(primary.dropChance, 42.5);
+    expect(primary.dropChance, 63.75);
     expect(
       primary.drops.map((row) => row.displayName),
       containsAll(['Venison', 'Elk Hide', 'Elk Horns']),

@@ -78,6 +78,10 @@ export interface CombatRoundResult {
   bossInkActive: boolean
   /** HP to restore on the boss when adds finish. Set when bossAddsTriggered. */
   bossPendingHp: number | null
+  /** Enemy HP after the player's swing, before the enemy attacks. */
+  enemyHpAfterPlayer: number
+  /** Player HP after lifesteal, before the enemy attacks. */
+  playerHpAfterPlayer: number
   enemyHp: number
   playerHp: number
   outcome: 'ongoing' | 'victory' | 'defeat'
@@ -126,6 +130,10 @@ export function beginCombatSave(
     combatEnemyId: enemy['Enemy ID'],
     combatEnemyHp: enemyEncounterMaxHp(db, potion.save, enemy),
     combatRoundStartedAt: nowIso,
+    combatPlayerSwingApplied: false,
+    combatPendingRound: null,
+    combatEatUntil: null,
+    combatContinueActivityAfterEat: false,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart ?? null,
     combatBossPendingId: null,
@@ -145,6 +153,10 @@ export function clearCombatSave(save: PlayerSave): PlayerSave {
     combatEnemyHp: null,
     combatRoundStartedAt: null,
     combatManualEatRoundStartedAt: null,
+    combatPlayerSwingApplied: false,
+    combatPendingRound: null,
+    combatEatUntil: null,
+    combatContinueActivityAfterEat: false,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
     combatBossPendingId: null,
@@ -304,6 +316,8 @@ export function resolveCombatRound(
   const damageDealt = playerHit + (offhandHit ?? 0) + (staffHit ?? 0)
   const lifestealHealed = lifestealHealAmount(db, save, damageDealt)
   const hpAfterLifesteal = applyLifestealHeal(db, save, save.currentHp, damageDealt)
+  const enemyHpAfterPlayer = nextEnemyHp
+  const playerHpAfterPlayer = hpAfterLifesteal
 
   if (nextEnemyHp <= 0 && !bossAddsTriggered) {
     return {
@@ -321,6 +335,8 @@ export function resolveCombatRound(
       bossAddsTriggered: false,
       bossInkActive,
       bossPendingHp: null,
+      enemyHpAfterPlayer,
+      playerHpAfterPlayer,
       enemyHp: 0,
       playerHp: hpAfterLifesteal,
       outcome: 'victory',
@@ -344,6 +360,8 @@ export function resolveCombatRound(
       bossAddsTriggered: true,
       bossInkActive,
       bossPendingHp,
+      enemyHpAfterPlayer,
+      playerHpAfterPlayer,
       enemyHp: bossPendingHp ?? nextEnemyHp,
       playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
@@ -367,6 +385,8 @@ export function resolveCombatRound(
       bossAddsTriggered: false,
       bossInkActive,
       bossPendingHp: null,
+      enemyHpAfterPlayer,
+      playerHpAfterPlayer,
       enemyHp: nextEnemyHp,
       playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
@@ -404,6 +424,8 @@ export function resolveCombatRound(
     bossAddsTriggered: false,
     bossInkActive,
     bossPendingHp: null,
+    enemyHpAfterPlayer,
+    playerHpAfterPlayer,
     enemyHp: nextEnemyHp,
     playerHp,
     // Simultaneous kills favor defeat: the enemy's own hit must land before Thorns reflects it.

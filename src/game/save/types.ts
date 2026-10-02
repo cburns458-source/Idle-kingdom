@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 58
+export const SAVE_VERSION = 59
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -287,6 +287,35 @@ export interface LocationTimer {
   usedCompost?: boolean
 }
 
+/**
+ * Combat round roll stored after the player swing so the enemy swing / outcome
+ * can apply at round end without re-rolling.
+ */
+export interface CombatPendingRound {
+  playerHit: number
+  playerCrit: boolean
+  offhandHit: number | null
+  staffHit: number | null
+  poisonHit: number | null
+  skipNextEnemyAttack: boolean
+  enemyHit: number | null
+  thornsHit: number
+  bossSleepRoundsRemaining: number | null
+  enemyAsleep: boolean
+  enemyRampage: boolean
+  bossAddsTriggered: boolean
+  bossInkActive: boolean
+  bossPendingHp: number | null
+  /** Enemy HP after the player swing, before the enemy attacks. */
+  enemyHpAfterPlayer: number
+  /** Player HP after lifesteal, before the enemy attacks. */
+  playerHpAfterPlayer: number
+  enemyHp: number
+  playerHp: number
+  outcome: 'ongoing' | 'victory' | 'defeat'
+  lifestealHealed: number
+}
+
 export interface PlayerSave {
   saveVersion: number
   createdAt: string
@@ -380,6 +409,26 @@ export interface PlayerSave {
    * their one manual eat this combat round (auto-eat off only).
    */
   combatManualEatRoundStartedAt: string | null
+  /**
+   * True after the player's swing has resolved for the current combat round
+   * (at combat_player_attack_at). Reset when a new round begins.
+   */
+  combatPlayerSwingApplied: boolean
+  /**
+   * Full round roll captured when the player swings, applied for the enemy
+   * swing / outcome at round end. Null before the player swing.
+   */
+  combatPendingRound: CombatPendingRound | null
+  /**
+   * When set, auto-eat / inter-round delay is in progress until this ISO time.
+   * Used between ongoing rounds and between actions after a kill.
+   */
+  combatEatUntil: string | null
+  /**
+   * When true, finishing [combatEatUntil] should pick the next activity action
+   * (post-victory). When false, finishing eat starts the next combat round.
+   */
+  combatContinueActivityAfterEat: boolean
   /**
    * Staff of Binding: when true, the enemy skips their next attack.
    * Cleared after that skipped swing, or when combat ends.
