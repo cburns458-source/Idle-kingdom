@@ -7,6 +7,7 @@ import { createNewSave } from '../save/saveStore'
 import { completeSpecialProject } from './engine'
 import { encodeEnchantTarget } from './enchantments'
 import { projectsForFacility, specialProductionStationsAt } from './projects'
+import { readyProjectMenuList } from './menu'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -21,6 +22,55 @@ describe('special production', () => {
       'Artisans workshop',
       'Smithing forge',
     ])
+  })
+
+  it("lists and crafts Falconer's Gloves at the Artisans workshop", () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const project = launch.Projects.find((row) => row['Project ID'] === 'PRJ-0049')
+    expect(project).toBeDefined()
+    expect(project?.Status).toBe('Confirmed')
+    expect(project?.['Release Phase']).toBe('Launch')
+    expect(project?.['Facility ID']).toBe('FAC-0003')
+    expect(project?.['Skill ID']).toBe('SKL-0012')
+    expect(project?.['Input 3 Item ID']).toBe('ITEM-0095')
+    expect(project?.['Input 3 Item ID']).not.toBe('ITEM-0290')
+    expect(launch.Items.find((item) => item['Item ID'] === 'ITEM-0167')?.Status).toBe('Confirmed')
+    expect(launch.Items.find((item) => item['Item ID'] === 'ITEM-0167')?.['Release Phase']).toBe(
+      'Launch',
+    )
+    expect(
+      launch.Items.find((item) => item['Item ID'] === 'ITEM-0095')?.['Release Phase'],
+    ).toBe('Launch')
+    expect(project?.['Input 1 Item ID']).toBe('ITEM-0197')
+    expect(project?.['Input 2 Item ID']).toBe('ITEM-0039')
+
+    const listed = projectsForFacility(launch, 'FAC-0003', 'SKL-0012')
+    expect(listed.some((row) => row['Project ID'] === 'PRJ-0049')).toBe(true)
+
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      gold: 100_000,
+      currentLocationId: 'LOC-0025',
+      skills: save.skills.map((skill) =>
+        skill.skillId === 'SKL-0012' ? { ...skill, level: 60, xp: 5_000_000 } : skill,
+      ),
+    }
+    save = addItemToInventory(save, 'ITEM-0197', 5)
+    save = addItemToInventory(save, 'ITEM-0039', 30)
+    save = addItemToInventory(save, 'ITEM-0095', 5)
+
+    expect(
+      readyProjectMenuList(launch, save, 'FAC-0003', 'SKL-0012').some(
+        (row) => row.projectId === 'PRJ-0049',
+      ),
+    ).toBe(true)
+
+    const result = completeSpecialProject(launch, save, 'PRJ-0049', 1)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.outputLabel).toBe("Falconer's Gloves")
+    expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0167')?.quantity).toBe(1)
   })
 
   it('lists Arcana at the Wizard Tower including locked Launch projects', () => {
