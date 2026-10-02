@@ -101,7 +101,7 @@ describe('session tick', () => {
     expect(enemySwing.save.combatEatUntil).toBeTruthy()
   })
 
-  it('auto-eats between ongoing combat rounds, not on a kill', () => {
+  it('auto-eats between ongoing combat rounds and after a kill', () => {
     const armed = newSave({
       currentLocationId: 'LOC-0003',
       currentHp: 500,
