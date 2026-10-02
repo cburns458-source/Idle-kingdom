@@ -197,12 +197,7 @@ void _beginInterRoundEat(
 }
 
 /// Player swing at combat_player_attack_at: roll the round and apply player-side HP.
-void _applyDuePlayerCombatSwing(
-  GameDatabase db,
-  _TickOutput out,
-  EnemyRow enemy,
-  RandomFn random,
-) {
+void _applyDuePlayerCombatSwing(GameDatabase db, _TickOutput out, EnemyRow enemy, RandomFn random) {
   final before = out.current;
   final round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random);
   if (round.lifestealHealed > 0) {
@@ -383,9 +378,7 @@ void _applyDueEnemyCombatPhase(
           combatBossAddsTriggered: addsStarted.combatBossAddsTriggered,
         ),
       );
-      out.emit(
-        MessageEvent('$enemyName releases squidlings! Defeat them to continue.'),
-      );
+      out.emit(MessageEvent('$enemyName releases squidlings! Defeat them to continue.'));
       return;
     }
   }
@@ -450,12 +443,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
     final eatUntil = jsDateParse(out.current.combatEatUntil);
     if (eatUntil > nowMs) return out.result();
     final continueActivityAfterEat = out.current.combatContinueActivityAfterEat;
-    out.set(
-      out.current.copyWith(
-        combatEatUntil: null,
-        combatContinueActivityAfterEat: false,
-      ),
-    );
+    out.set(out.current.copyWith(combatEatUntil: null, combatContinueActivityAfterEat: false));
     if (continueActivityAfterEat) {
       _continueActivity(
         db,

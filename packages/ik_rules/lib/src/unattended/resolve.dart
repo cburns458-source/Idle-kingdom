@@ -263,10 +263,7 @@ UnattendedResult resolveUnattendedProgress(
 
       if (isNotBlank(current.combatEatUntil)) {
         final continueActivityAfterEat = current.combatContinueActivityAfterEat;
-        current = current.copyWith(
-          combatEatUntil: null,
-          combatContinueActivityAfterEat: false,
-        );
+        current = current.copyWith(combatEatUntil: null, combatContinueActivityAfterEat: false);
         if (continueActivityAfterEat) {
           final activityId = current.currentActivityId!;
           if (!activityStillValid(db, current, activityId)) {
