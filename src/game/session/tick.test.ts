@@ -73,7 +73,7 @@ describe('session tick', () => {
     expect(result.events.map((event) => event.kind)).toEqual(['rewards', 'activity-stopped'])
   })
 
-  it('resolves one combat round at a time and reports the blow-by-blow', () => {
+  it('resolves combat with player swing at 5s and enemy swing at 6s', () => {
     const armed = newSave({
       currentLocationId: 'LOC-0003',
       currentHp: 100_000,
@@ -84,18 +84,24 @@ describe('session tick', () => {
     const fighting = generated!.save
     expect(fighting.combatEnemyId).toBeTruthy()
 
-    const roundMs = 4_000
-    const early = advanceSession(db, fighting, START_MS + roundMs - 1, firstOfPool)
+    const early = advanceSession(db, fighting, START_MS + 4_999, firstOfPool)
     expect(early.changed).toBe(false)
 
-    const resolved = advanceSession(db, fighting, START_MS + roundMs, firstOfPool)
-    const round = resolved.events.find((event) => event.kind === 'combat-round')
-    expect(round).toBeTruthy()
-    if (round?.kind === 'combat-round') expect(round.bossInkActive).toBe(false)
-    expect(resolved.save.combatEnemyHp!).toBeLessThan(fighting.combatEnemyHp!)
+    const playerSwing = advanceSession(db, fighting, START_MS + 5_000, firstOfPool)
+    expect(playerSwing.save.combatPlayerSwingApplied).toBe(true)
+    expect(playerSwing.save.combatEnemyHp!).toBeLessThan(fighting.combatEnemyHp!)
+    const playerRound = playerSwing.events.find((event) => event.kind === 'combat-round')
+    expect(playerRound).toBeTruthy()
+    if (playerRound?.kind === 'combat-round') {
+      expect(playerRound.enemyHit).toBeNull()
+      expect(playerRound.bossInkActive).toBe(false)
+    }
+
+    const enemySwing = advanceSession(db, playerSwing.save, START_MS + 6_000, firstOfPool)
+    expect(enemySwing.save.combatEatUntil).toBeTruthy()
   })
 
-  it('auto-eats at the end of an ongoing combat round, not on a kill', () => {
+  it('auto-eats between ongoing combat rounds, not on a kill', () => {
     const armed = newSave({
       currentLocationId: 'LOC-0003',
       currentHp: 500,
@@ -114,27 +120,47 @@ describe('session tick', () => {
     expect(fighting.combatEnemyId).toBeTruthy()
     expect(fighting.equipment.slots['SLOT-0011']?.quantity).toBe(3)
 
-    const resolved = advanceSession(db, fighting, START_MS + 4_000, firstOfPool)
-    const round = resolved.events.find((event) => event.kind === 'combat-round')
-    expect(round && round.kind === 'combat-round' && round.outcome).toBe('ongoing')
-    expect(resolved.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
-    expect(resolved.events.map((event) => event.kind)).toContain('food-healed')
+    const afterPlayer = advanceSession(db, fighting, START_MS + 5_000, firstOfPool)
+    expect(afterPlayer.save.equipment.slots['SLOT-0011']?.quantity).toBe(3)
 
+    const afterEnemy = advanceSession(db, afterPlayer.save, START_MS + 6_000, firstOfPool)
+    const round = afterEnemy.events.find(
+      (event) => event.kind === 'combat-round' && event.outcome === 'ongoing',
+    )
+    expect(round).toBeTruthy()
+    expect(afterEnemy.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
+    expect(afterEnemy.events.map((event) => event.kind)).toContain('food-healed')
+    expect(afterEnemy.save.combatEatUntil).toBeTruthy()
+
+    const eatUntil = Date.parse(afterEnemy.save.combatEatUntil!)
+    const afterEat = advanceSession(db, afterEnemy.save, eatUntil, firstOfPool)
+    expect(afterEat.save.combatRoundStartedAt).toBeTruthy()
+    expect(afterEat.save.combatEatUntil).toBeNull()
+
+    const killSetup = {
+      ...afterEat.save,
+      combatEnemyHp: 1,
+      currentHp: 400,
+      combatPlayerSwingApplied: false,
+      combatPendingRound: null,
+      combatRoundStartedAt: afterEat.save.combatRoundStartedAt,
+    }
+    const afterKillPlayer = advanceSession(db, killSetup, Date.parse(killSetup.combatRoundStartedAt!) + 5_000, () => 0)
+    expect(afterKillPlayer.save.combatEnemyHp).toBe(0)
     const kill = advanceSession(
       db,
-      {
-        ...resolved.save,
-        combatEnemyHp: 1,
-        currentHp: 400,
-        combatRoundStartedAt: resolved.save.combatRoundStartedAt,
-      },
-      Date.parse(resolved.save.combatRoundStartedAt!) + 4_000,
+      afterKillPlayer.save,
+      Date.parse(killSetup.combatRoundStartedAt!) + 6_000,
       () => 0,
     )
-    const killRound = kill.events.find((event) => event.kind === 'combat-round')
-    expect(killRound && killRound.kind === 'combat-round' && killRound.outcome).toBe('victory')
-    expect(kill.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
-    expect(kill.events.map((event) => event.kind)).not.toContain('food-healed')
+    const killRound = kill.events.find(
+      (event) => event.kind === 'combat-round' && event.outcome === 'victory',
+    )
+    expect(killRound).toBeTruthy()
+    // Kill still schedules the between-action eat, which consumes food.
+    expect(kill.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
+    expect(kill.events.map((event) => event.kind)).toContain('enemy-defeated')
+    expect(kill.events.map((event) => event.kind)).toContain('food-healed')
   })
 
   it('holds everything until a death pause elapses, then recovers', () => {
