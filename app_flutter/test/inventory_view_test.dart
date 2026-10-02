@@ -139,7 +139,7 @@ void main() {
     await tester.longPress(find.byTooltip('Copper Hatchet'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Woodcutting: -3% action time'), findsOne);
+    expect(find.text('Woodcutting: +3% success chance'), findsOne);
     expect(find.text('Equip'), findsOne);
     await tester.tap(find.text('Equip'));
     await tester.pumpAndSettle();
@@ -147,7 +147,7 @@ void main() {
 
     await tester.longPress(find.byTooltip('Copper Hatchet').first);
     await tester.pumpAndSettle();
-    expect(find.text('Woodcutting: -3% action time'), findsOne);
+    expect(find.text('Woodcutting: +3% success chance'), findsOne);
     expect(find.text('Equip'), findsNothing);
     expect(find.text('Favorite'), findsOne);
     await tester.tap(find.text('Favorite'));
@@ -362,7 +362,7 @@ void main() {
     expect(find.textContaining('Strength Potion'), findsOne);
   });
 
-  testWidgets('equipment page lists action time reduction on the tool skill', (tester) async {
+  testWidgets('equipment page lists success chance on the tool skill', (tester) async {
     final base = startedCharacter(database);
     final controller = buildController(
       database,
@@ -372,14 +372,14 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller));
 
-    expect(find.textContaining('action time'), findsNothing);
+    expect(find.textContaining('success chance'), findsNothing);
     await tester.tap(find.widgetWithText(GameButton, 'Attributes'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Show bonuses'));
     await tester.pump();
 
     expect(find.textContaining('Woodcutting'), findsWidgets);
-    expect(find.textContaining('-3% action time'), findsOne);
+    expect(find.textContaining('+3% success chance'), findsOne);
   });
 
   List<String> visibleBagOrder(WidgetTester tester, List<String> names) {

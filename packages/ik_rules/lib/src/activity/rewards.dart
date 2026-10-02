@@ -187,7 +187,15 @@ ActionRewards resolveActionRewards(
 
   goldGained = applyRaceGoldGain(db, save, goldGained);
   if (goldGained > 0) {
-    next = next.copyWith(gold: next.gold + goldGained);
+    next = next.copyWith(
+      gold: next.gold + goldGained,
+      statistics: PlayerStatistics(
+        values: {
+          ...next.statistics.values,
+          'gold_earned': jsNumber(next.statistics.values['gold_earned'] ?? 0) + goldGained,
+        },
+      ),
+    );
   }
 
   return ActionRewards(

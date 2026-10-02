@@ -96,8 +96,13 @@ export function totalRelativeDropChanceBonusPercent(
   save: PlayerSave,
 ): number {
   let total = equippedRelativeDropChanceBonusPercent(db, save)
-  if (save.activePotionEffect?.scope === 'one_action') {
-    total += save.activePotionEffect.relativeDropChanceBonusPercent ?? 0
+  const potion = save.activePotionEffect
+  if (
+    potion &&
+    (potion.scope === 'one_action' || potion.scope === 'one_combat_encounter') &&
+    (potion.relativeDropChanceBonusPercent ?? 0) !== 0
+  ) {
+    total += potion.relativeDropChanceBonusPercent ?? 0
   }
   return total
 }

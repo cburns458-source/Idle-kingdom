@@ -362,7 +362,8 @@ GatheringCompletion completeGatheringAction(
 
   final gatheringLevel = getSkillProgress(save, skillId).level;
   final proficiencyLevel = jsNumber(action.raw['Proficiency Level'] ?? 1);
-  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel)) {
+  final successBonus = equippedSuccessChanceBonusPercentForAction(db, save, action);
+  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel, successBonus)) {
     return GatheringCompletion(
       save: withoutHeldAction(save, save.currentActivityId),
       result: emptyResult(),

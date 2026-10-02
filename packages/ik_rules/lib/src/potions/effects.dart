@@ -15,13 +15,23 @@ const List<String> _scopeTags = <String>[
 ];
 
 /// Parses data-defined potion capability tags into a structured effect.
-ActivePotionEffect? parsePotionEffect(EquipmentRow? equipment, String itemId) {
+ActivePotionEffect? parsePotionEffect(
+  EquipmentRow? equipment,
+  String itemId, [
+  String? preferredScope,
+]) {
   if (equipment == null) return null;
   final tags = capabilityTags(equipment.raw['Capabilities / Effects']);
   if (!tags.contains('potion_slot')) return null;
 
-  final scope = _scopeTags.firstWhereOrNull(tags.contains);
-  if (scope == null) return null;
+  final scopes = _scopeTags.where(tags.contains).toList();
+  if (scopes.isEmpty) return null;
+  if (preferredScope != null && !scopes.contains(preferredScope)) return null;
+  final scope = preferredScope != null && scopes.contains(preferredScope)
+      ? preferredScope
+      : scopes.contains('one_action')
+      ? 'one_action'
+      : scopes.first;
 
   num? damageBonusPercent;
   num? enemyMaxHpDamagePercent;
@@ -135,8 +145,8 @@ PotionConsumption tryConsumePotionForScope(GameDatabase db, PlayerSave save, Str
   }
 
   final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == potion.itemId);
-  final effect = parsePotionEffect(equipment, potion.itemId);
-  if (effect == null || effect.scope != scope) {
+  final effect = parsePotionEffect(equipment, potion.itemId, scope);
+  if (effect == null) {
     return PotionConsumption(save: save, consumed: false, effect: null, potionName: null);
   }
 

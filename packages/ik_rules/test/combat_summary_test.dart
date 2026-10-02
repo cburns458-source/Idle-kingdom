@@ -88,7 +88,7 @@ void main() {
     expect(summary.reductionBreakdown.last.detail, '1');
   });
 
-  test('lists action time reduction on the tool\'s own skill', () {
+  test('lists success chance on the tool\'s own skill', () {
     final db = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
     final save = equipStackToSlot(createNewSave(db, 0), weaponToolSlotId, 'ITEM-0110', 1);
     final summary = playerCombatStatSummary(db, save);
@@ -104,7 +104,7 @@ void main() {
     );
   });
 
-  test('sums action time reduction when two pieces share a skill', () {
+  test('sums success chance when two pieces share a skill', () {
     final db = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
     var save = equipStackToSlot(createNewSave(db, 0), weaponToolSlotId, 'ITEM-0110', 1);
     save = equipStackToSlot(save, 'SLOT-0009', 'ITEM-0110', 1);
