@@ -66,6 +66,47 @@ PlayerSave _beginInterRoundEatSave(
   );
 }
 
+/// Same wording as the live tick's combat-round message event.
+String _combatRoundMessage(EnemyRow enemy, CombatPendingRound round) {
+  final inkLabel = round.bossInkActive ? ' Ink clouds your strike!' : '';
+  final hitLabel = round.playerCrit
+      ? 'crit for ${jsNumberToString(round.playerHit)}'
+      : 'hit ${jsNumberToString(round.playerHit)}';
+  final offhand = round.offhandHit;
+  final offhandLabel = offhand != null && offhand > 0
+      ? ' Off-hand hits ${jsNumberToString(offhand)}.'
+      : '';
+  final sparks = round.staffHit;
+  final sparksLabel = sparks != null && sparks > 0
+      ? ' Sparks hit ${jsNumberToString(sparks)}.'
+      : '';
+  final poisonLabel = round.poisonHit != null
+      ? ' Poison hits ${jsNumberToString(round.poisonHit!)}.'
+      : '';
+  final name = jsString(enemy.raw['Display Name']);
+  if (round.enemyHit == null) {
+    return round.enemyAsleep
+        ? 'You $hitLabel.$offhandLabel$sparksLabel$poisonLabel$inkLabel $name sleeps.'
+        : 'You $hitLabel.$offhandLabel$sparksLabel$poisonLabel$inkLabel $name is bound and cannot attack.';
+  }
+  final swing = round.enemyRampage
+      ? '$name rampages for ${jsString(round.enemyHit)}'
+      : '$name hits ${jsString(round.enemyHit)}';
+  return round.thornsHit > 0
+      ? 'You $hitLabel.$offhandLabel$sparksLabel$poisonLabel$inkLabel $swing. '
+            'Thorns reflects ${jsNumberToString(round.thornsHit)}.'
+      : 'You $hitLabel.$offhandLabel$sparksLabel$poisonLabel$inkLabel $swing.';
+}
+
+String _combatVictoryMessage(EnemyRow enemy, CombatPendingRound round) {
+  final enemyName = jsString(enemy.raw['Display Name']);
+  if (round.thornsHit > 0) {
+    return 'Thorns reflects ${jsNumberToString(round.thornsHit)} and defeats $enemyName!';
+  }
+  if (round.playerCrit) return 'Critical hit! Defeated $enemyName';
+  return 'Defeated $enemyName';
+}
+
 class UnattendedResult {
   const UnattendedResult({
     required this.save,
@@ -344,6 +385,7 @@ UnattendedResult resolveUnattendedProgress(
         );
         next = critter.save;
         pushCritterSpawn(critter.spawned);
+        messages.add(_combatVictoryMessage(enemy, pending));
         current = _beginInterRoundEatSave(db, next, roundEnd, true);
         lastResolvedMs = combatDue;
         continue;
@@ -363,7 +405,7 @@ UnattendedResult resolveUnattendedProgress(
         pushCritterSpawn(critter.spawned);
         current = defeated;
         lastResolvedMs = combatDue;
-        messages.add('Defeated by ${jsString(enemy.raw['Display Name'])} while away.');
+        messages.add('Defeated by ${jsString(enemy.raw['Display Name'])}. Recovering…');
         continue;
       }
 
@@ -386,7 +428,21 @@ UnattendedResult resolveUnattendedProgress(
             pending.bossPendingHp!,
             isoFromMs(roundEnd),
           );
-          messages.add('${jsString(enemy.raw['Display Name'])} releases squidlings while away.');
+          messages.add(
+            '${jsString(enemy.raw['Display Name'])} releases squidlings! Defeat them to continue.',
+          );
+          final critter = applyActivityTimeTowardCritters(
+            continued,
+            continued.currentLocationId,
+            roundMs,
+            roundEnd,
+            random,
+          );
+          continued = critter.save;
+          pushCritterSpawn(critter.spawned);
+          current = _beginInterRoundEatSave(db, continued, roundEnd, false);
+          lastResolvedMs = combatDue;
+          continue;
         }
       }
 
@@ -399,6 +455,7 @@ UnattendedResult resolveUnattendedProgress(
       );
       continued = critter.save;
       pushCritterSpawn(critter.spawned);
+      messages.add(_combatRoundMessage(enemy, pending));
       current = _beginInterRoundEatSave(db, continued, roundEnd, false);
       lastResolvedMs = combatDue;
       continue;
