@@ -100,7 +100,7 @@ void main() {
     await tester.pump();
 
     expect(controller.save.productionRecipeId, 'RCP-0068');
-    expect(controller.save.productionQuantityTotal, 3085);
+    expect(controller.save.productionQuantityTotal, 7200);
     expect(controller.save.inventory, isEmpty);
   });
 

@@ -258,11 +258,13 @@ void _applyDueEnemyCombatPhase(
     CombatRoundEvent(
       enemyId: enemyId,
       enemyName: enemyName,
-      playerHit: 0,
-      playerCrit: false,
-      offhandHit: null,
-      staffHit: null,
-      poisonHit: null,
+      // Carry player-side hits from the pending roll so end-of-round / catch-up
+      // floaters still show the swing that already applied at player-attack time.
+      playerHit: round.playerHit,
+      playerCrit: round.playerCrit,
+      offhandHit: round.offhandHit,
+      staffHit: round.staffHit,
+      poisonHit: round.poisonHit,
       enemyHit: round.enemyHit,
       thornsHit: round.thornsHit,
       outcome: round.outcome,

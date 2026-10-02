@@ -280,11 +280,13 @@ function applyDueEnemyCombatPhase(
     kind: 'combat-round',
     enemyId: enemy['Enemy ID'],
     enemyName: enemy['Display Name'],
-    playerHit: 0,
-    playerCrit: false,
-    offhandHit: null,
-    staffHit: null,
-    poisonHit: null,
+    // Carry player-side hits from the pending roll so end-of-round / catch-up
+    // floaters still show the swing that already applied at player-attack time.
+    playerHit: round.playerHit,
+    playerCrit: round.playerCrit,
+    offhandHit: round.offhandHit,
+    staffHit: round.staffHit,
+    poisonHit: round.poisonHit,
     enemyHit: round.enemyHit,
     thornsHit: round.thornsHit,
     outcome: round.outcome,
