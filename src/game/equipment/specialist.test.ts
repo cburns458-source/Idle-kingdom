@@ -184,7 +184,7 @@ describe('specialist hats and quiver', () => {
     expect(recipe['Display Name']).toBe('Salmon Roe')
     expect(recipe['Proficiency Level']).toBe(28)
     expect(recipe['Base Duration Seconds']).toBe(12)
-    expect(recipe['XP Reward']).toBe(1200)
+    expect(recipe['XP Reward']).toBe(480)
     expect(recipe['Ingredient 1 Item ID']).toBe('ITEM-0049')
     expect(recipe['Output Item ID']).toBe('ITEM-0413')
 
@@ -192,13 +192,13 @@ describe('specialist hats and quiver', () => {
     expect(oil['Display Name']).toBe('Catfish Oil')
     expect(oil['Proficiency Level']).toBe(36)
     expect(oil['Base Duration Seconds']).toBe(12)
-    expect(oil['XP Reward']).toBe(1600)
+    expect(oil['XP Reward']).toBe(534)
 
     const tail = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0075')!
     expect(tail['Display Name']).toBe('Eel Tail')
     expect(tail['Proficiency Level']).toBe(60)
     expect(tail['Base Duration Seconds']).toBe(12)
-    expect(tail['XP Reward']).toBe(2640)
+    expect(tail['XP Reward']).toBe(660)
 
     let save = createNewSave(launch)
     save = {
@@ -214,11 +214,11 @@ describe('specialist hats and quiver', () => {
 
     const plain = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0.9))
     expect(plain?.outputQty).toBe(1)
-    expect(plain?.xpGained).toBe(1200)
+    expect(plain?.xpGained).toBe(480)
 
     const withGoggles = withHelmet(queued.save, ALCHEMIST_GOGGLES_ITEM_ID)
     const goggled = completeProductionCraft(launch, withGoggles, Date.now(), rolls(0, 0.9))
     expect(goggled?.outputQty).toBe(1)
-    expect(goggled?.xpGained).toBe(1200)
+    expect(goggled?.xpGained).toBe(480)
   })
 })

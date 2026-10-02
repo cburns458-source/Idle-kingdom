@@ -89,7 +89,7 @@ void main() {
     final hunt = codex.action('ACN-0014')!;
     expect(hunt.tables.map((table) => table.label), ['Primary', 'Secondary']);
     final primary = hunt.tables.first;
-    expect(primary.dropChance, 42.5);
+    expect(primary.dropChance, 63.75);
     expect(
       primary.drops.map((row) => row.displayName),
       containsAll(['Venison', 'Elk Hide', 'Elk Horns']),

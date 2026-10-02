@@ -60,8 +60,14 @@ void main() {
   test('mining 4 to 5 lists each action as a proficient gerund phrase', () {
     final save = atLevel('SKL-0002', 5);
     final unlocks = skillUnlocksBetween(db, save, 'SKL-0002', 4, 5);
-    expect(unlocks.proficientActivities, contains('mining tin ore'));
+    expect(unlocks.proficientActivities, contains('digging clay'));
     expect(unlocks.proficientActivities, isNot(contains('Work the copper mine')));
-    expect(unlocks.proficientActivities, isNot(contains('Mine tin ore')));
+    expect(unlocks.proficientActivities, isNot(contains('Dig clay')));
+  });
+
+  test('mining 9 to 10 lists mining tin ore', () {
+    final save = atLevel('SKL-0002', 10);
+    final unlocks = skillUnlocksBetween(db, save, 'SKL-0002', 9, 10);
+    expect(unlocks.proficientActivities, contains('mining tin ore'));
   });
 }

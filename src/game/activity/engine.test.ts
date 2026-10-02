@@ -33,9 +33,9 @@ describe('primary activity engine', () => {
 
     const completed = completeGatheringAction(launch, generated!.save, generated!.action, () => 0)
     // Below Harvesting proficiency: half XP on wild roots.
-    expect(completed.result.xpGained).toBe(183)
+    expect(completed.result.xpGained).toBe(100)
     expect(completed.save.inventory.some((stack) => stack.itemId === 'ITEM-0030')).toBe(true)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(183)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
     expect(completed.save.statistics.values.gathering_actions_completed).toBe(1)
   })
 
@@ -266,12 +266,12 @@ describe('primary activity engine', () => {
     const save = createNewSave(launch)
     const roots = launch.Actions.find((action) => action['Action ID'] === 'ACN-0105')!
     expect(roots['Proficiency Level']).toBe(15)
-    expect(gatheringDurationMs(launch, save, roots)).toBe(44_000)
-    expect(gatheringXpReward(launch, save, roots)).toBe(183)
+    expect(gatheringDurationMs(launch, save, roots)).toBe(24_000)
+    expect(gatheringXpReward(launch, save, roots)).toBe(100)
 
     const completed = completeGatheringAction(launch, save, roots, () => 0)
-    expect(completed.result.xpGained).toBe(183)
-    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(183)
+    expect(completed.result.xpGained).toBe(100)
+    expect(completed.save.skills.find((skill) => skill.skillId === 'SKL-0004')?.xp).toBe(100)
   })
 
   it('halves Harness essence Arcana XP below Arcana proficiency', () => {
