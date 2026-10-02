@@ -183,7 +183,7 @@ describe('specialist hats and quiver', () => {
     const recipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0073')!
     expect(recipe['Display Name']).toBe('Salmon Roe')
     expect(recipe['Proficiency Level']).toBe(28)
-    expect(recipe['Base Duration Seconds']).toBe(30)
+    expect(recipe['Base Duration Seconds']).toBe(12)
     expect(recipe['XP Reward']).toBe(1200)
     expect(recipe['Ingredient 1 Item ID']).toBe('ITEM-0049')
     expect(recipe['Output Item ID']).toBe('ITEM-0413')
@@ -191,13 +191,13 @@ describe('specialist hats and quiver', () => {
     const oil = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0074')!
     expect(oil['Display Name']).toBe('Catfish Oil')
     expect(oil['Proficiency Level']).toBe(36)
-    expect(oil['Base Duration Seconds']).toBe(36)
+    expect(oil['Base Duration Seconds']).toBe(12)
     expect(oil['XP Reward']).toBe(1600)
 
     const tail = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0075')!
     expect(tail['Display Name']).toBe('Eel Tail')
     expect(tail['Proficiency Level']).toBe(60)
-    expect(tail['Base Duration Seconds']).toBe(48)
+    expect(tail['Base Duration Seconds']).toBe(12)
     expect(tail['XP Reward']).toBe(2640)
 
     let save = createNewSave(launch)

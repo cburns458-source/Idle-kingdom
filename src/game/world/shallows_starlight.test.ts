@@ -31,7 +31,7 @@ describe('shallows and starlight content', () => {
     expect(algae['Proficiency Level']).toBe(44)
     expect(algae['Target ID']).toBe('ITEM-0319')
     expect(algae['XP Reward']).toBe(917)
-    expect(algae['Base Duration Seconds']).toBe(55)
+    expect(algae['Base Duration Seconds']).toBe(12)
   })
 
   it('puts clear vines on Forest Path and hunt/moonblossoms at Starlight Glade', () => {

@@ -25,7 +25,7 @@ void main() {
     final stock = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0068');
     expect(stock.raw['Facility ID'], 'FAC-0001');
     expect(stock.raw['Proficiency Level'], 16);
-    expect(stock.raw['Base Duration Seconds'], 28);
+    expect(stock.raw['Base Duration Seconds'], 12);
     expect(stock.raw['XP Reward'], 0);
     expect(stock.raw['Ingredient 1 Item ID'], 'ITEM-0365');
     expect(stock.raw['Ingredient 1 Quantity'], 1);

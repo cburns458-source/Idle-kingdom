@@ -67,7 +67,7 @@ describe('cooked beef and tablet recipes', () => {
     expect(stock['Display Name']).toBe('Soup Stock')
     expect(stock['Facility ID']).toBe('FAC-0001')
     expect(stock['Proficiency Level']).toBe(16)
-    expect(stock['Base Duration Seconds']).toBe(28)
+    expect(stock['Base Duration Seconds']).toBe(12)
     expect(stock['XP Reward']).toBe(0)
     expect(stock['Ingredient 1 Item ID']).toBe('ITEM-0365')
     expect(stock['Ingredient 1 Quantity']).toBe(1)

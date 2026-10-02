@@ -57,10 +57,11 @@ void main() {
     expect(unlocks.projects, contains('Magic Bola'));
   });
 
-  test('mining 4 to 5 names the copper-mine activity, not the ore action', () {
+  test('mining 4 to 5 lists each action as a proficient gerund phrase', () {
     final save = atLevel('SKL-0002', 5);
     final unlocks = skillUnlocksBetween(db, save, 'SKL-0002', 4, 5);
-    expect(unlocks.proficientActivities, contains('Work the copper mine'));
+    expect(unlocks.proficientActivities, contains('mining tin ore'));
+    expect(unlocks.proficientActivities, isNot(contains('Work the copper mine')));
     expect(unlocks.proficientActivities, isNot(contains('Mine tin ore')));
   });
 }

@@ -7,6 +7,7 @@ import type { PlayerSave } from '../save/types'
 
 export interface SkillUnlockSummary {
   unlockedActivities: string[]
+  /** Gerund phrases for newly proficient actions, e.g. `mining tin ore`. */
   proficientActivities: string[]
   recipes: string[]
   projects: string[]
@@ -17,6 +18,38 @@ export interface SkillLevelUpNotice {
   skillName: string
   level: number
   unlocks: SkillUnlockSummary
+}
+
+const ACTION_GERUNDS: Record<string, string> = {
+  Mine: 'mining',
+  Hunt: 'hunting',
+  Cut: 'cutting',
+  Gather: 'gathering',
+  Catch: 'catching',
+  Steal: 'stealing',
+  Fight: 'fighting',
+  Dig: 'digging',
+  Harvest: 'harvesting',
+  Chop: 'chopping',
+  Pick: 'picking',
+  Harness: 'harnessing',
+  Clear: 'clearing',
+  Collect: 'collecting',
+  Dry: 'drying',
+  Craft: 'crafting',
+}
+
+/** `Mine tin ore` → `mining tin ore` for “Now proficient in …” copy. */
+export function proficientActionPhrase(displayName: string): string {
+  const trimmed = displayName.trim()
+  if (!trimmed) return trimmed
+  const parts = trimmed.split(/\s+/)
+  const gerund = ACTION_GERUNDS[parts[0]!]
+  if (gerund) {
+    const rest = parts.slice(1).join(' ')
+    return rest ? `${gerund} ${rest}` : gerund
+  }
+  return trimmed.charAt(0).toLowerCase() + trimmed.slice(1)
 }
 
 function inLevelRange(value: number, fromLevel: number, toLevel: number): boolean {
@@ -84,7 +117,7 @@ export function skillUnlocksBetween(
       if (action['Relevant Skill ID'] !== skillId) continue
       const proficiency = action['Proficiency Level']
       if (typeof proficiency === 'number' && inLevelRange(proficiency, fromLevel, toLevel)) {
-        proficient.push(name)
+        proficient.push(proficientActionPhrase(action['Display Name']))
       }
     }
   }
@@ -110,11 +143,9 @@ export function skillUnlocksBetween(
     if (hit) projects.push(project['Display Name'])
   }
 
-  const unlockedActivities = uniqueSorted(unlocked)
-  const unlockedSet = new Set(unlockedActivities)
   return {
-    unlockedActivities,
-    proficientActivities: uniqueSorted(proficient.filter((name) => !unlockedSet.has(name))),
+    unlockedActivities: uniqueSorted(unlocked),
+    proficientActivities: uniqueSorted(proficient),
     recipes: uniqueSorted(recipes),
     projects: uniqueSorted(projects),
   }

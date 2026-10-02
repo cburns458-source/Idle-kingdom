@@ -14,22 +14,23 @@ import 'xp.dart';
 
 /// Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
 /// Plus +1% for each level above the action's proficiency level.
+/// Base 80%. −0.75% per level below proficiency, +1% per level above.
+/// Clamped to 0–100. Gathering and standard production share this curve.
 num gatheringSuccessChancePercent(num level, [num proficiencyLevel = 1]) {
-  return _successChancePercent(level, proficiencyLevel, 40);
+  return _successChancePercent(level, proficiencyLevel);
 }
 
-/// Standard production copy of the gathering curve with a +10% base
-/// (level 1 = 50%, 99.5% at level 100, same above-proficiency bonus).
+/// Same curve as gathering (shared Launch success formula).
 num productionSuccessChancePercent(num level, [num proficiencyLevel = 1]) {
-  return _successChancePercent(level, proficiencyLevel, 50);
+  return _successChancePercent(level, proficiencyLevel);
 }
 
-num _successChancePercent(num level, num proficiencyLevel, num baseAtLevel1) {
+num _successChancePercent(num level, num proficiencyLevel) {
   final lvl = math.max(1, level.floor());
   final proficiency = math.max(1, proficiencyLevel.floor());
-  final base = baseAtLevel1 + 0.5 * (lvl - 1);
-  final aboveProficiency = math.max(0, lvl - proficiency);
-  return math.min(100, base + aboveProficiency);
+  final delta = lvl - proficiency;
+  final chance = delta < 0 ? 80 + delta * 0.75 : 80 + delta;
+  return math.max(0, math.min(100, chance));
 }
 
 /// False means the action yields no loot and no XP.

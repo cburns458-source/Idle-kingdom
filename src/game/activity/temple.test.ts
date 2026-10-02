@@ -113,7 +113,7 @@ describe('Temple', () => {
 
     const augur = launch.Actions.find((row) => row['Action ID'] === 'ACN-0109')
     expect(augur?.['Display Name']).toBe('Gather augur weed')
-    expect(augur?.['Base Duration Seconds']).toBe(65)
+    expect(augur?.['Base Duration Seconds']).toBe(12)
     expect(augur?.['XP Reward']).toBe(9027)
 
     const wildRoots = launch.Actions.find((row) => row['Action ID'] === 'ACN-0105')

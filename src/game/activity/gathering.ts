@@ -18,37 +18,30 @@ export function configString(db: GameDatabase, key: string, fallback: string): s
 }
 
 /**
- * Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
- * Plus +1% for each level above the action's proficiency level.
+ * Base 80%. −0.75% per level below proficiency, +1% per level above.
+ * Clamped to 0–100. Gathering and standard production share this curve.
  */
 export function gatheringSuccessChancePercent(
   level: number,
   proficiencyLevel: number = 1,
 ): number {
-  return successChancePercent(level, proficiencyLevel, 40)
+  return successChancePercent(level, proficiencyLevel)
 }
 
-/**
- * Standard production uses a copy of the gathering curve with a +10% base
- * (level 1 = 50%, 99.5% at level 100, same above-proficiency bonus).
- */
+/** Same curve as gathering (shared Launch success formula). */
 export function productionSuccessChancePercent(
   level: number,
   proficiencyLevel: number = 1,
 ): number {
-  return successChancePercent(level, proficiencyLevel, 50)
+  return successChancePercent(level, proficiencyLevel)
 }
 
-function successChancePercent(
-  level: number,
-  proficiencyLevel: number,
-  baseAtLevel1: number,
-): number {
+function successChancePercent(level: number, proficiencyLevel: number): number {
   const lvl = Math.max(1, Math.floor(Number(level) || 1))
   const proficiency = Math.max(1, Math.floor(Number(proficiencyLevel) || 1))
-  const base = baseAtLevel1 + 0.5 * (lvl - 1)
-  const aboveProficiency = Math.max(0, lvl - proficiency)
-  return Math.min(100, base + aboveProficiency)
+  const delta = lvl - proficiency
+  const chance = delta < 0 ? 80 + delta * 0.75 : 80 + delta
+  return Math.max(0, Math.min(100, chance))
 }
 
 /** False means the action yields no loot and no XP. */

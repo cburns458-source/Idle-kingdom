@@ -54,7 +54,7 @@ describe('codex index', () => {
     expect(mine.displayName.toLowerCase()).toContain('copper')
     expect(mine.tables.map((table) => table.label)).toEqual(['Primary', 'Gems'])
     const ore = mine.tables.find((table) => table.label === 'Primary')!
-    expect(ore.dropChance).toBe(47.5)
+    expect(ore.dropChance).toBe(71.25)
     expect(ore.drops.map((row) => row.displayName)).toContain('Copper Ore')
     expect(ore.drops.find((row) => row.displayName === 'Copper Ore')?.dropRatePercent).toBe(100)
     expect(ore.drops.map((row) => row.displayName)).not.toContain('Sapphire')
