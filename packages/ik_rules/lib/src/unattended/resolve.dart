@@ -29,9 +29,41 @@ import '../time.dart';
 /// caught up on the next load instead of being silently lost.
 num _maxUnattendedSteps(GameDatabase db) {
   final capMs = unattendedCapMs(db);
-  final roundMs = math.max(1, configNumber(db, 'combat_round_duration', 4) * 1000);
+  final roundMs = math.max(1, configNumber(db, 'combat_round_duration', 6) * 1000);
   final minimumTickMs = math.min(roundMs, 1000);
   return math.max(20000, (capMs / minimumTickMs).ceil() + 1000);
+}
+
+/// Next discrete combat clock edge: eat end, player swing, or enemy/outcome.
+num? _nextCombatDueMs(GameDatabase db, PlayerSave save) {
+  if (isNotBlank(save.combatEatUntil)) {
+    final eatUntil = jsDateParse(save.combatEatUntil);
+    return eatUntil.isFinite ? eatUntil : null;
+  }
+  if (isBlank(save.combatEnemyId) || isBlank(save.combatRoundStartedAt)) return null;
+  final roundStart = jsDateParse(save.combatRoundStartedAt);
+  if (!roundStart.isFinite) return null;
+  final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5) * 1000;
+  final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
+  if (!save.combatPlayerSwingApplied) return playerAt;
+  return enemyAt;
+}
+
+PlayerSave _beginInterRoundEatSave(
+  GameDatabase db,
+  PlayerSave patched,
+  num atMs,
+  bool continueActivityAfterEat,
+) {
+  final eatSeconds = configNumber(db, 'combat_eat_between_seconds', 1);
+  final fed = consumeFoodAfterVictory(db, patched);
+  return fed.save.copyWith(
+    combatEatUntil: isoFromMs(atMs + math.max(0, eatSeconds) * 1000),
+    combatContinueActivityAfterEat: continueActivityAfterEat,
+    combatRoundStartedAt: null,
+    combatPlayerSwingApplied: false,
+    combatPendingRound: null,
+  );
 }
 
 class UnattendedResult {
@@ -183,31 +215,89 @@ UnattendedResult resolveUnattendedProgress(
       continue;
     }
 
-    // Combat rounds.
-    if (isNotBlank(current.combatEnemyId) && isNotBlank(current.combatRoundStartedAt)) {
-      final roundMs = configNumber(db, 'combat_round_duration', 4) * 1000;
+    // Combat phases + inter-round eat — same edges as live tick rules.
+    final combatDue = _nextCombatDueMs(db, current);
+    if (combatDue != null) {
+      if (combatDue > endMs) break;
+
+      if (isNotBlank(current.combatEatUntil)) {
+        final continueActivityAfterEat = current.combatContinueActivityAfterEat;
+        current = current.copyWith(
+          combatEatUntil: null,
+          combatContinueActivityAfterEat: false,
+        );
+        if (continueActivityAfterEat) {
+          final activityId = current.currentActivityId!;
+          if (!activityStillValid(db, current, activityId)) {
+            current = clearActivitySave(current, combatDue);
+            messages.add('Defeated enemy · activity stopped.');
+            break;
+          }
+          final generated = generateNextAction(db, current, activityId, random, combatDue);
+          current = generated != null ? generated.save : current;
+          lastResolvedMs = combatDue;
+          continue;
+        }
+        if (isNotBlank(current.combatEnemyId)) {
+          current = current.copyWith(
+            combatRoundStartedAt: isoFromMs(combatDue),
+            combatPlayerSwingApplied: false,
+            combatPendingRound: null,
+          );
+        }
+        lastResolvedMs = combatDue;
+        continue;
+      }
+
       final roundStart = jsDateParse(current.combatRoundStartedAt);
-      final roundEnd = roundStart + roundMs;
-      if (roundEnd > endMs) break;
+      final roundMs = configNumber(db, 'combat_round_duration', 6) * 1000;
+      final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5) * 1000;
+      final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
+      final roundEnd = math.max(enemyAt, roundStart + roundMs);
 
       final enemy = getEnemy(db, current.combatEnemyId!);
       final action = isNotBlank(current.currentActionId)
           ? db.actions.firstWhereOrNull((row) => row.raw['Action ID'] == current.currentActionId)
           : null;
       if (enemy == null || action == null || current.combatEnemyHp == null) {
-        current = clearActivitySave(current, roundEnd);
+        current = clearActivitySave(current, math.min(playerAt, combatDue));
         break;
       }
 
-      final round = resolveCombatRound(db, current, enemy, current.combatEnemyHp!, random);
-      if (round.lifestealHealed > 0) {
-        current = recordLifestealRoundHeal(current, round.lifestealHealed);
+      // Player swing phase.
+      if (!current.combatPlayerSwingApplied) {
+        final round = resolveCombatRound(db, current, enemy, current.combatEnemyHp!, random);
+        if (round.lifestealHealed > 0) {
+          current = recordLifestealRoundHeal(current, round.lifestealHealed);
+        }
+        current = current.copyWith(
+          combatEnemyHp: round.enemyHpAfterPlayer,
+          currentHp: round.playerHpAfterPlayer,
+          combatPlayerSwingApplied: true,
+          combatPendingRound: round.toPendingRound(),
+          combatBossInkActive: round.bossInkActive,
+        );
+        lastResolvedMs = combatDue;
+        continue;
       }
-      if (round.outcome == 'victory') {
+
+      // Enemy / outcome phase.
+      final pending = current.combatPendingRound;
+      if (pending == null) {
+        current = current.copyWith(
+          combatPlayerSwingApplied: false,
+          combatPendingRound: null,
+          combatRoundStartedAt: isoFromMs(roundEnd),
+        );
+        lastResolvedMs = combatDue;
+        continue;
+      }
+
+      if (pending.outcome == 'victory') {
         if (isSquidlingVictory(current, enemy)) {
           final squidlingResult = applySquidlingVictory(
             db,
-            current.copyWith(combatEnemyHp: 0, currentHp: round.playerHp),
+            current.copyWith(combatEnemyHp: 0, currentHp: pending.playerHp),
             enemy,
             isoFromMs(roundEnd),
           );
@@ -224,24 +314,18 @@ UnattendedResult resolveUnattendedProgress(
           messages.add(squidlingResult.message);
           if (squidlingResult.bossResumed) {
             current = next;
-            lastResolvedMs = roundEnd;
+            lastResolvedMs = combatDue;
             continue;
           }
           combatVictories += 1;
-          final activityId = current.currentActivityId!;
-          if (!activityStillValid(db, next, activityId)) {
-            current = clearActivitySave(next, roundEnd);
-            messages.add('Defeated ${jsString(enemy.raw['Display Name'])} · activity stopped.');
-            break;
-          }
-          current = next;
-          lastResolvedMs = roundEnd;
+          current = _beginInterRoundEatSave(db, next, roundEnd, true);
+          lastResolvedMs = combatDue;
           continue;
         }
 
         final victory = applyCombatVictory(
           db,
-          current.copyWith(combatEnemyHp: 0, currentHp: round.playerHp),
+          current.copyWith(combatEnemyHp: 0, currentHp: pending.playerHp),
           action,
           enemy,
           random,
@@ -260,19 +344,12 @@ UnattendedResult resolveUnattendedProgress(
         );
         next = critter.save;
         pushCritterSpawn(critter.spawned);
-        final activityId = current.currentActivityId!;
-        if (!activityStillValid(db, next, activityId)) {
-          current = clearActivitySave(next, roundEnd);
-          messages.add('Defeated ${jsString(enemy.raw['Display Name'])} · activity stopped.');
-          break;
-        }
-        final generated = generateNextAction(db, next, activityId, random, roundEnd);
-        current = generated != null ? generated.save : next;
-        lastResolvedMs = roundEnd;
+        current = _beginInterRoundEatSave(db, next, roundEnd, true);
+        lastResolvedMs = combatDue;
         continue;
       }
 
-      if (round.outcome == 'defeat') {
+      if (pending.outcome == 'defeat') {
         combatDeaths += 1;
         var defeated = applyCombatDefeat(db, current.copyWith(currentHp: 0), roundEnd);
         final critter = applyActivityTimeTowardCritters(
@@ -285,24 +362,20 @@ UnattendedResult resolveUnattendedProgress(
         defeated = critter.save;
         pushCritterSpawn(critter.spawned);
         current = defeated;
-        lastResolvedMs = roundEnd;
+        lastResolvedMs = combatDue;
         messages.add('Defeated by ${jsString(enemy.raw['Display Name'])} while away.');
         continue;
       }
 
-      var continued = consumeFoodAfterVictory(
-        db,
-        current.copyWith(
-          currentHp: round.playerHp,
-          combatEnemyHp: round.enemyHp,
-          combatRoundStartedAt: isoFromMs(roundEnd),
-          combatSkipEnemyAttack: round.skipNextEnemyAttack,
-          combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-          combatBossInkActive: round.bossInkActive,
-        ),
-      ).save;
+      var continued = current.copyWith(
+        currentHp: pending.playerHp,
+        combatEnemyHp: pending.enemyHp,
+        combatSkipEnemyAttack: pending.skipNextEnemyAttack,
+        combatBossSleepRoundsRemaining: pending.bossSleepRoundsRemaining,
+        combatBossInkActive: pending.bossInkActive,
+      );
 
-      if (round.bossAddsTriggered && round.bossPendingHp != null) {
+      if (pending.bossAddsTriggered && pending.bossPendingHp != null) {
         final profile = bossProfile(enemy);
         if (profile?.squidlingEnemyId != null) {
           continued = beginBossAddsEncounter(
@@ -310,7 +383,7 @@ UnattendedResult resolveUnattendedProgress(
             continued,
             enemy,
             profile!,
-            round.bossPendingHp!,
+            pending.bossPendingHp!,
             isoFromMs(roundEnd),
           );
           messages.add('${jsString(enemy.raw['Display Name'])} releases squidlings while away.');
@@ -326,8 +399,8 @@ UnattendedResult resolveUnattendedProgress(
       );
       continued = critter.save;
       pushCritterSpawn(critter.spawned);
-      current = continued;
-      lastResolvedMs = roundEnd;
+      current = _beginInterRoundEatSave(db, continued, roundEnd, false);
+      lastResolvedMs = combatDue;
       continue;
     }
 

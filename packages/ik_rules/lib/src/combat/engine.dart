@@ -44,6 +44,8 @@ class CombatRoundResult {
     required this.bossAddsTriggered,
     required this.bossInkActive,
     required this.bossPendingHp,
+    required this.enemyHpAfterPlayer,
+    required this.playerHpAfterPlayer,
     required this.enemyHp,
     required this.playerHp,
     required this.outcome,
@@ -88,6 +90,12 @@ class CombatRoundResult {
 
   /// HP to restore on the boss when adds finish. Set when bossAddsTriggered.
   final num? bossPendingHp;
+
+  /// Enemy HP after the player's swing, before the enemy attacks.
+  final num enemyHpAfterPlayer;
+
+  /// Player HP after lifesteal, before the enemy attacks.
+  final num playerHpAfterPlayer;
   final num enemyHp;
   final num playerHp;
 
@@ -112,11 +120,37 @@ class CombatRoundResult {
     'bossAddsTriggered': bossAddsTriggered,
     'bossInkActive': bossInkActive,
     'bossPendingHp': bossPendingHp,
+    'enemyHpAfterPlayer': enemyHpAfterPlayer,
+    'playerHpAfterPlayer': playerHpAfterPlayer,
     'enemyHp': enemyHp,
     'playerHp': playerHp,
     'outcome': outcome,
     'lifestealHealed': lifestealHealed,
   };
+
+  /// Persistable mid-round snapshot for the enemy/outcome phase.
+  CombatPendingRound toPendingRound() => CombatPendingRound(
+    playerHit: playerHit,
+    playerCrit: playerCrit,
+    offhandHit: offhandHit,
+    staffHit: staffHit,
+    poisonHit: poisonHit,
+    skipNextEnemyAttack: skipNextEnemyAttack,
+    enemyHit: enemyHit,
+    thornsHit: thornsHit,
+    bossSleepRoundsRemaining: bossSleepRoundsRemaining,
+    enemyAsleep: enemyAsleep,
+    enemyRampage: enemyRampage,
+    bossAddsTriggered: bossAddsTriggered,
+    bossInkActive: bossInkActive,
+    bossPendingHp: bossPendingHp,
+    enemyHpAfterPlayer: enemyHpAfterPlayer,
+    playerHpAfterPlayer: playerHpAfterPlayer,
+    enemyHp: enemyHp,
+    playerHp: playerHp,
+    outcome: outcome,
+    lifestealHealed: lifestealHealed,
+  );
 }
 
 class CombatVictoryResult {
@@ -177,6 +211,10 @@ PlayerSave beginCombatSave(
     combatEnemyId: enemy.raw['Enemy ID'] as String?,
     combatEnemyHp: enemyMaxHp,
     combatRoundStartedAt: nowIso,
+    combatPlayerSwingApplied: false,
+    combatPendingRound: null,
+    combatEatUntil: null,
+    combatContinueActivityAfterEat: false,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart,
     combatBossPendingId: null,
@@ -195,6 +233,10 @@ PlayerSave clearCombatSave(PlayerSave save) {
     combatEnemyHp: null,
     combatRoundStartedAt: null,
     combatManualEatRoundStartedAt: null,
+    combatPlayerSwingApplied: false,
+    combatPendingRound: null,
+    combatEatUntil: null,
+    combatContinueActivityAfterEat: false,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
     combatBossPendingId: null,
@@ -345,6 +387,8 @@ CombatRoundResult resolveCombatRound(
   final damageDealt = playerHit + (offhandHit ?? 0) + (staffHit ?? 0);
   final lifestealHealed = lifestealHealAmount(db, save, damageDealt);
   final hpAfterLifesteal = _applyLifestealHeal(db, save, save.currentHp, damageDealt);
+  final enemyHpAfterPlayer = nextEnemyHp;
+  final playerHpAfterPlayer = hpAfterLifesteal;
 
   if (nextEnemyHp <= 0 && !bossAddsTriggered) {
     return CombatRoundResult(
@@ -362,6 +406,8 @@ CombatRoundResult resolveCombatRound(
       bossAddsTriggered: false,
       bossInkActive: bossInkActive,
       bossPendingHp: null,
+      enemyHpAfterPlayer: enemyHpAfterPlayer,
+      playerHpAfterPlayer: playerHpAfterPlayer,
       enemyHp: 0,
       playerHp: hpAfterLifesteal,
       outcome: 'victory',
@@ -385,6 +431,8 @@ CombatRoundResult resolveCombatRound(
       bossAddsTriggered: true,
       bossInkActive: bossInkActive,
       bossPendingHp: bossPendingHp,
+      enemyHpAfterPlayer: enemyHpAfterPlayer,
+      playerHpAfterPlayer: playerHpAfterPlayer,
       enemyHp: bossPendingHp ?? nextEnemyHp,
       playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
@@ -408,6 +456,8 @@ CombatRoundResult resolveCombatRound(
       bossAddsTriggered: false,
       bossInkActive: bossInkActive,
       bossPendingHp: null,
+      enemyHpAfterPlayer: enemyHpAfterPlayer,
+      playerHpAfterPlayer: playerHpAfterPlayer,
       enemyHp: nextEnemyHp,
       playerHp: hpAfterLifesteal,
       outcome: 'ongoing',
@@ -445,6 +495,8 @@ CombatRoundResult resolveCombatRound(
     bossAddsTriggered: false,
     bossInkActive: bossInkActive,
     bossPendingHp: null,
+    enemyHpAfterPlayer: enemyHpAfterPlayer,
+    playerHpAfterPlayer: playerHpAfterPlayer,
     enemyHp: nextEnemyHp,
     playerHp: playerHp,
     outcome: playerHp <= 0

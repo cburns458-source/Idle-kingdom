@@ -923,6 +923,19 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     },
   ),
   SaveMigration(fromVersion: 57, toVersion: 58, migrate: (save, _) => _normalizeSettings(save, 58)),
+  SaveMigration(
+    fromVersion: 58,
+    toVersion: 59,
+    migrate: (save, _) {
+      final next = Map<String, Object?>.from(save);
+      next['combatPlayerSwingApplied'] = save['combatPlayerSwingApplied'] == true;
+      next['combatPendingRound'] = save['combatPendingRound'];
+      next['combatEatUntil'] = save['combatEatUntil'];
+      next['combatContinueActivityAfterEat'] = save['combatContinueActivityAfterEat'] == true;
+      next['saveVersion'] = 59;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.
