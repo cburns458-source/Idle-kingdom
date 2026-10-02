@@ -336,8 +336,16 @@ void main() {
     final entries = listRecipeBookEntries(save, launch);
     final gloves = entries.firstWhere((entry) => entry.name == "Falconer's Gloves");
     expect(gloves.materials, contains('Great Stag Hide'));
+    expect(gloves.materials, contains('Thread'));
     expect(gloves.materials, isNot(contains('Ancient Binding')));
     expect(gloves.materials, isNot(contains('ITEM-0290')));
+    final glovesProject = launch.projects.firstWhere((row) => row.projectId == 'PRJ-0049');
+    expect(glovesProject.raw['Status'], 'Confirmed');
+    expect(glovesProject.raw['Release Phase'], 'Launch');
+    expect(glovesProject.raw['Input 3 Item ID'], 'ITEM-0095');
+    final glovesItem = launch.items.firstWhere((row) => row.itemId == 'ITEM-0167');
+    expect(glovesItem.raw['Status'], 'Confirmed');
+    expect(glovesItem.raw['Release Phase'], 'Launch');
     final marlin = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
     expect(marlin.raw['Status'], 'Planned');
     expect(marlin.raw['Display Name'], 'Cooked Marlin');
@@ -345,6 +353,49 @@ void main() {
     final soup = entries.firstWhere((entry) => entry.name == 'Squid Noodle Soup');
     expect(soup.materials, contains('Soup Stock'));
     expect(soup.materials, isNot(contains('Starroot')));
+  });
+
+  test("Falconer's Gloves are craftable at the Artisans workshop", () {
+    final launch = filterLaunchContent(db);
+    final project = launch.projects.firstWhere((row) => row.projectId == 'PRJ-0049');
+    expect(project.raw['Facility ID'], 'FAC-0003');
+    expect(project.raw['Skill ID'], artisanrySkillId);
+    expect(
+      projectsForFacility(
+        launch,
+        'FAC-0003',
+        artisanrySkillId,
+      ).any((row) => row.projectId == 'PRJ-0049'),
+      isTrue,
+    );
+
+    final base = createNewSave(launch, 0);
+    var save = base.copyWith(
+      gold: 100000,
+      currentLocationId: 'LOC-0025',
+      skills: [
+        for (final skill in base.skills)
+          if (skill.skillId == artisanrySkillId) skill.copyWith(level: 60, xp: 5000000) else skill,
+      ],
+    );
+    save = addItemToInventory(save, 'ITEM-0197', 5);
+    save = addItemToInventory(save, 'ITEM-0039', 30);
+    save = addItemToInventory(save, 'ITEM-0095', 5);
+
+    expect(
+      readyProjectMenuList(
+        launch,
+        save,
+        'FAC-0003',
+        artisanrySkillId,
+      ).any((row) => row.projectId == 'PRJ-0049'),
+      isTrue,
+    );
+
+    final result = completeSpecialProject(launch, save, 'PRJ-0049', 1, nowMs: 0);
+    expect(result.ok, isTrue);
+    expect(result.outputLabel, "Falconer's Gloves");
+    expect(inventoryCount(result.save!, 'ITEM-0167'), 1);
   });
 
   test('recipe books expand skill-menu groups into individual rows', () {

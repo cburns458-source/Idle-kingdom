@@ -3372,7 +3372,7 @@
       "Associated Skill ID": "SKL-0012",
       "Equipment Slot ID": "SLOT-0007",
       "Functional / Source Tags": "hunting_reward_modifier; hunting_tool_compatible",
-      "Status": "Planned",
+      "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "falconer_s_gloves",
@@ -8688,7 +8688,7 @@
       "Healing Amount": null,
       "Action Time Reduction %": null,
       "Capabilities / Effects": "hunting_reward_modifier",
-      "Status": "Planned",
+      "Status": "Confirmed",
       "Notes": "Grants additional Hunting materials."
     },
     {
@@ -28734,7 +28734,7 @@
       "XP Reward": 1250000,
       "Gold Cost": 35000,
       "Instant": "Yes",
-      "Status": "Planned",
+      "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Great stag hide, pheasant feathers, and thread.",
       "Input 1 Item ID": "ITEM-0197",
