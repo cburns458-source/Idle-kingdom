@@ -41,4 +41,13 @@ void main() {
     expect(partial.save.currentHp, 1);
     expect(partial.remainderMs, 2500);
   });
+
+  test('leaves blessing surplus above max alone', () {
+    final base = createNewSave(db, 0);
+    final maxHp = playerMaxHp(db, base);
+    final surplus = maxHp + (maxHp * 0.1).floor();
+    final result = applyNaturalHpRegen(db, base.copyWith(currentHp: surplus), 60000);
+    expect(result.save.currentHp, surplus);
+    expect(result.remainderMs, 0);
+  });
 }

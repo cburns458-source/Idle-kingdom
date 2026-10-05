@@ -54,4 +54,14 @@ describe('natural HP regen', () => {
     expect(partial.save.currentHp).toBe(1)
     expect(partial.remainderMs).toBe(2_500)
   })
+
+  it('leaves blessing surplus above max alone', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const maxHp = playerMaxHp(launch, base)
+    const surplus = maxHp + Math.floor(maxHp * 0.1)
+    const result = applyNaturalHpRegen(launch, { ...base, currentHp: surplus }, 60_000)
+    expect(result.save.currentHp).toBe(surplus)
+    expect(result.remainderMs).toBe(0)
+  })
 })
