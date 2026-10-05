@@ -185,7 +185,7 @@ void _startNextCombatRound(GameDatabase db, _TickOutput out, num atMs) {
   out.set(openCombatRoundClock(db, out.current, atMs));
 }
 
-/// Both sides attack at round end. A killing blow skips the enemy swing.
+/// Both sides attack late in the round. A killing blow skips the enemy swing.
 void _applyDueCombatRound(
   GameDatabase db,
   _TickOutput out,
@@ -213,7 +213,7 @@ void _applyDueCombatRound(
   _applyDueEnemyCombatPhase(db, out, activityId, enemy, action, roundEnd, roundMs, random);
 }
 
-/// Enemy swing / outcome at combat_enemy_attack_at (round end).
+/// Enemy swing / outcome at combat_enemy_attack_at.
 void _applyDueEnemyCombatPhase(
   GameDatabase db,
   _TickOutput out,
@@ -432,8 +432,8 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
   if (isNotBlank(out.current.combatEnemyId) && isNotBlank(out.current.combatRoundStartedAt)) {
     final roundStart = jsDateParse(out.current.combatRoundStartedAt);
     final roundMs = configNumber(db, 'combat_round_duration', 6) * 1000;
-    final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000;
-    final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
+    final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000;
+    final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000;
     final roundEnd = roundStart + roundMs;
     final eatUntil = isNotBlank(out.current.combatEatUntil)
         ? jsDateParse(out.current.combatEatUntil)

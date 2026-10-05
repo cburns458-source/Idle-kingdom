@@ -197,7 +197,7 @@ EnemyRow? enemyForAction(GameDatabase db, ActionRow action) {
 
 /// Instant mid-round auto-eat offset. Does not extend the combat clock.
 num combatEatAtMs(GameDatabase db) {
-  return math.max(0, configNumber(db, 'combat_eat_at', 3)) * 1000;
+  return math.max(0, configNumber(db, 'combat_eat_at', 1)) * 1000;
 }
 
 /// Round clock + scheduled mid-round eat. Used when a fight or next round starts.

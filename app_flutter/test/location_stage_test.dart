@@ -24,14 +24,14 @@ void main() {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }
 
-  /// Advance to the end-of-round clash (both sides attack together).
+  /// Advance to the late-round clash (both sides attack together).
   Future<void> advanceCombatRound(
     WidgetTester tester,
     TestClock clock,
     GameController controller,
   ) async {
-    final playerAtMs = configNumber(database.launch, 'combat_player_attack_at', 6) * 1000;
-    final enemyAtMs = configNumber(database.launch, 'combat_enemy_attack_at', 6) * 1000;
+    final playerAtMs = configNumber(database.launch, 'combat_player_attack_at', 5.5) * 1000;
+    final enemyAtMs = configNumber(database.launch, 'combat_enemy_attack_at', 5.5) * 1000;
     clock.advance(playerAtMs);
     controller.tick();
     await tester.pump();
@@ -432,9 +432,9 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    final roundMs = configNumber(database.launch, 'combat_round_duration', 4) * 1000;
-    for (var i = 0; i < 40 && controller.healPopup == null; i++) {
-      clock.advance(roundMs);
+    final eatMs = configNumber(database.launch, 'combat_eat_at', 1) * 1000;
+    for (var i = 0; i < 80 && controller.healPopup == null; i++) {
+      clock.advance(eatMs);
       controller.tick();
       await tester.pump();
     }
@@ -443,6 +443,8 @@ void main() {
     expect(find.byKey(ValueKey('heal-${controller.healPopup!.seq}')), findsOne);
     expect(find.text('+${controller.healPopup!.amount.round()}'), findsNWidgets(2));
 
+    // Expire this floater 1s later. Stepping by eat-at (not a full round) keeps
+    // that window off the next auto-eat, which would install a new HealPopup.
     clock.advance(GameController.healPopupHoldMs);
     controller.tick();
     await tester.pump();
