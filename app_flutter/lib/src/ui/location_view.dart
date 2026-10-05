@@ -908,7 +908,7 @@ class _LocationViewState extends State<LocationView> {
               title: 'Fishing pot',
               subtitle: canPlace.ok
                   ? 'Place a fishing pot here. ${lock.remaining} '
-                      '${lock.remaining == 1 ? 'pot' : 'pots'} left today.'
+                        '${lock.remaining == 1 ? 'pot' : 'pots'} left today.'
                   : lock.locked
                   ? 'Already fished here today.'
                   : canPlace.reason,
