@@ -1151,7 +1151,7 @@
       "Description": null,
       "Icon Asset Key": "clay",
       "Notes": null,
-      "Base Sell Value": 2,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1168,7 +1168,7 @@
       "Description": null,
       "Icon Asset Key": "copper_ore",
       "Notes": "Mining Proficiency 1.",
-      "Base Sell Value": 8,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1185,7 +1185,7 @@
       "Description": null,
       "Icon Asset Key": "tin_ore",
       "Notes": "Mining Proficiency 5.",
-      "Base Sell Value": 10,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1202,7 +1202,7 @@
       "Description": null,
       "Icon Asset Key": "iron_ore",
       "Notes": "Mining Proficiency 20.",
-      "Base Sell Value": 25,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1219,7 +1219,7 @@
       "Description": null,
       "Icon Asset Key": "coal",
       "Notes": "Mining Proficiency 35.",
-      "Base Sell Value": 35,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -1236,7 +1236,7 @@
       "Description": null,
       "Icon Asset Key": "silver_ore",
       "Notes": "Exact Proficiency Level TBD.",
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -1253,7 +1253,7 @@
       "Description": null,
       "Icon Asset Key": "gold_ore",
       "Notes": "Exact Proficiency Level TBD.",
-      "Base Sell Value": 100,
+      "Base Sell Value": 17,
       "Stackable": null
     },
     {
@@ -1270,7 +1270,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_ore",
       "Notes": "Mining Proficiency 70.",
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -1287,7 +1287,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_ore",
       "Notes": "Mining Proficiency 60.",
-      "Base Sell Value": 180,
+      "Base Sell Value": 48,
       "Stackable": null
     },
     {
@@ -1304,7 +1304,7 @@
       "Description": null,
       "Icon Asset Key": "essence",
       "Notes": "Harnessed at the Wizard's Tower. Awards Arcana XP. Sold at a premium in the Wizard's Shop.",
-      "Base Sell Value": 100,
+      "Base Sell Value": 17,
       "Stackable": null
     },
     {
@@ -1321,7 +1321,7 @@
       "Description": null,
       "Icon Asset Key": "sapphire",
       "Notes": "Rare mining reward and Goblin Chief reward concept.",
-      "Base Sell Value": 300,
+      "Base Sell Value": 119,
       "Stackable": null
     },
     {
@@ -1338,7 +1338,7 @@
       "Description": null,
       "Icon Asset Key": "emerald",
       "Notes": "Rare mining reward and Goblin Chief reward concept.",
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -1372,7 +1372,7 @@
       "Description": null,
       "Icon Asset Key": "cedar_log",
       "Notes": null,
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1389,7 +1389,7 @@
       "Description": null,
       "Icon Asset Key": "oak_log",
       "Notes": null,
-      "Base Sell Value": 15,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1406,7 +1406,7 @@
       "Description": null,
       "Icon Asset Key": "poplar_log",
       "Notes": null,
-      "Base Sell Value": 40,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -1423,7 +1423,7 @@
       "Description": null,
       "Icon Asset Key": "maple_log",
       "Notes": null,
-      "Base Sell Value": 90,
+      "Base Sell Value": 14,
       "Stackable": null
     },
     {
@@ -1440,7 +1440,7 @@
       "Description": null,
       "Icon Asset Key": "mahogany_log",
       "Notes": null,
-      "Base Sell Value": 250,
+      "Base Sell Value": 86,
       "Stackable": null
     },
     {
@@ -1457,7 +1457,7 @@
       "Description": null,
       "Icon Asset Key": "potato",
       "Notes": null,
-      "Base Sell Value": 10,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1474,7 +1474,7 @@
       "Description": null,
       "Icon Asset Key": "golden_spud",
       "Notes": "Rare field drop. The harvest Action looks like Harvest potato; the item name and icon reveal Golden Spud.",
-      "Base Sell Value": 900,
+      "Base Sell Value": 1000,
       "Stackable": null
     },
     {
@@ -1491,7 +1491,7 @@
       "Description": null,
       "Icon Asset Key": "carrot",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1508,7 +1508,7 @@
       "Description": null,
       "Icon Asset Key": "wild_berries",
       "Notes": "Can be equipped as Food. Eating deals 10 damage instead of healing.",
-      "Base Sell Value": 20,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1525,7 +1525,7 @@
       "Description": null,
       "Icon Asset Key": "grapes",
       "Notes": null,
-      "Base Sell Value": 25,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1542,7 +1542,7 @@
       "Description": null,
       "Icon Asset Key": "wild_roots",
       "Notes": null,
-      "Base Sell Value": 3,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1559,7 +1559,7 @@
       "Description": null,
       "Icon Asset Key": "fernleaf",
       "Notes": null,
-      "Base Sell Value": 8,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1576,7 +1576,7 @@
       "Description": null,
       "Icon Asset Key": "mosstole",
       "Notes": null,
-      "Base Sell Value": 30,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -1593,7 +1593,7 @@
       "Description": null,
       "Icon Asset Key": "augur_weed",
       "Notes": null,
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -1610,7 +1610,7 @@
       "Description": null,
       "Icon Asset Key": "rabbit_s_foot",
       "Notes": null,
-      "Base Sell Value": 80,
+      "Base Sell Value": 12,
       "Stackable": null
     },
     {
@@ -1627,7 +1627,7 @@
       "Description": null,
       "Icon Asset Key": "pheasant_feathers",
       "Notes": null,
-      "Base Sell Value": 50,
+      "Base Sell Value": 5,
       "Stackable": null
     },
     {
@@ -1644,7 +1644,7 @@
       "Description": null,
       "Icon Asset Key": "bull_horns",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -1661,7 +1661,7 @@
       "Description": null,
       "Icon Asset Key": "elk_horns",
       "Notes": null,
-      "Base Sell Value": 180,
+      "Base Sell Value": 48,
       "Stackable": null
     },
     {
@@ -1678,7 +1678,7 @@
       "Description": null,
       "Icon Asset Key": "weasel_tail",
       "Notes": null,
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1695,7 +1695,7 @@
       "Description": null,
       "Icon Asset Key": "boar_tusk",
       "Notes": null,
-      "Base Sell Value": 250,
+      "Base Sell Value": 86,
       "Stackable": null
     },
     {
@@ -1712,7 +1712,7 @@
       "Description": null,
       "Icon Asset Key": "animal_tendons",
       "Notes": "Approved Bowstring material.",
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -1729,7 +1729,7 @@
       "Description": null,
       "Icon Asset Key": "leather",
       "Notes": null,
-      "Base Sell Value": 40,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -1763,7 +1763,7 @@
       "Description": null,
       "Icon Asset Key": "raw_perch",
       "Notes": null,
-      "Base Sell Value": 4,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1780,7 +1780,7 @@
       "Description": null,
       "Icon Asset Key": "raw_trout",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1797,7 +1797,7 @@
       "Description": null,
       "Icon Asset Key": "raw_salmon",
       "Notes": null,
-      "Base Sell Value": 35,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -1814,7 +1814,7 @@
       "Description": "A raw bass ready for the kitchen.",
       "Icon Asset Key": "raw_bass",
       "Notes": null,
-      "Base Sell Value": 90,
+      "Base Sell Value": 14,
       "Stackable": null
     },
     {
@@ -1831,7 +1831,7 @@
       "Description": null,
       "Icon Asset Key": "raw_shark",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -1848,7 +1848,7 @@
       "Description": null,
       "Icon Asset Key": "raw_rabbit",
       "Notes": null,
-      "Base Sell Value": 10,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1865,7 +1865,7 @@
       "Description": null,
       "Icon Asset Key": "raw_pheasant",
       "Notes": null,
-      "Base Sell Value": 35,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -1882,7 +1882,7 @@
       "Description": null,
       "Icon Asset Key": "beef",
       "Notes": null,
-      "Base Sell Value": 15,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1899,7 +1899,7 @@
       "Description": null,
       "Icon Asset Key": "venison",
       "Notes": null,
-      "Base Sell Value": 90,
+      "Base Sell Value": 14,
       "Stackable": null
     },
     {
@@ -1916,7 +1916,7 @@
       "Description": null,
       "Icon Asset Key": "baked_potato",
       "Notes": null,
-      "Base Sell Value": 8,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1933,7 +1933,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_perch",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -1950,7 +1950,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_trout",
       "Notes": null,
-      "Base Sell Value": 30,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -1967,7 +1967,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_salmon",
       "Notes": null,
-      "Base Sell Value": 80,
+      "Base Sell Value": 12,
       "Stackable": null
     },
     {
@@ -1984,7 +1984,7 @@
       "Description": "A cooked bass that restores health.",
       "Icon Asset Key": "cooked_bass",
       "Notes": null,
-      "Base Sell Value": 200,
+      "Base Sell Value": 58,
       "Stackable": null
     },
     {
@@ -2001,7 +2001,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_shark",
       "Notes": null,
-      "Base Sell Value": 750,
+      "Base Sell Value": 602,
       "Stackable": null
     },
     {
@@ -2018,7 +2018,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_rabbit",
       "Notes": null,
-      "Base Sell Value": 35,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -2035,7 +2035,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_pheasant",
       "Notes": null,
-      "Base Sell Value": 90,
+      "Base Sell Value": 14,
       "Stackable": null
     },
     {
@@ -2052,7 +2052,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_beef",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -2069,7 +2069,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_venison",
       "Notes": null,
-      "Base Sell Value": 200,
+      "Base Sell Value": 58,
       "Stackable": null
     },
     {
@@ -2086,7 +2086,7 @@
       "Description": null,
       "Icon Asset Key": "pheasant_stew",
       "Notes": null,
-      "Base Sell Value": 160,
+      "Base Sell Value": 39,
       "Stackable": null
     },
     {
@@ -2103,7 +2103,7 @@
       "Description": null,
       "Icon Asset Key": "venison_stew",
       "Notes": null,
-      "Base Sell Value": 420,
+      "Base Sell Value": 216,
       "Stackable": null
     },
     {
@@ -2120,7 +2120,7 @@
       "Description": "Increases Drop Chance for defined Actions; provisional direction is to double the affected rare-drop chance.",
       "Icon Asset Key": "luck_potion",
       "Notes": null,
-      "Base Sell Value": 500,
+      "Base Sell Value": 294,
       "Stackable": null
     },
     {
@@ -2137,7 +2137,7 @@
       "Description": "Reduces Standard Production time; provisional target 10%; does not affect Alchemy under the current concept.",
       "Icon Asset Key": "speed_potion",
       "Notes": null,
-      "Base Sell Value": 200,
+      "Base Sell Value": 58,
       "Stackable": null
     },
     {
@@ -2154,7 +2154,7 @@
       "Description": "Increases applicable damage; provisional target 5%.",
       "Icon Asset Key": "strength_potion",
       "Notes": null,
-      "Base Sell Value": 300,
+      "Base Sell Value": 119,
       "Stackable": null
     },
     {
@@ -2171,7 +2171,7 @@
       "Description": "Deals 10% of the enemy's current HP after each of your swings. Stops at 10% of their maximum HP and cannot kill.",
       "Icon Asset Key": "poison_potion",
       "Notes": null,
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -2188,7 +2188,7 @@
       "Description": null,
       "Icon Asset Key": "copper_bar",
       "Notes": "Proficiency 1. Recipe: Copper Ore",
-      "Base Sell Value": 15,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2205,7 +2205,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_bar",
       "Notes": "Proficiency 5. Recipe: Copper Ore + Tin Ore",
-      "Base Sell Value": 28,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -2222,7 +2222,7 @@
       "Description": null,
       "Icon Asset Key": "iron_bar",
       "Notes": "Proficiency 20. Recipe: Iron Ore",
-      "Base Sell Value": 50,
+      "Base Sell Value": 5,
       "Stackable": null
     },
     {
@@ -2239,7 +2239,7 @@
       "Description": null,
       "Icon Asset Key": "steel_bar",
       "Notes": "Proficiency 35. Recipe: Iron Ore + Coal",
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -2256,7 +2256,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_bar",
       "Notes": "Proficiency 45. Recipe: Steel Bar + Coal",
-      "Base Sell Value": 95,
+      "Base Sell Value": 16,
       "Stackable": null
     },
     {
@@ -2273,7 +2273,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_bar",
       "Notes": "Metallurgy 70. Titanium combat gear requires Might/Vitality 70.",
-      "Base Sell Value": 900,
+      "Base Sell Value": 830,
       "Stackable": null
     },
     {
@@ -2290,7 +2290,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_bar",
       "Notes": "Metallurgy 60. Tungsten combat gear requires Might/Vitality 60.",
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -2307,7 +2307,7 @@
       "Description": null,
       "Icon Asset Key": "silver_bar",
       "Notes": "Silver Ore; exact level TBD",
-      "Base Sell Value": 200,
+      "Base Sell Value": 58,
       "Stackable": null
     },
     {
@@ -2324,7 +2324,7 @@
       "Description": null,
       "Icon Asset Key": "gold_bar",
       "Notes": "Gold Ore; exact level TBD",
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -2341,7 +2341,7 @@
       "Description": null,
       "Icon Asset Key": "bowstring",
       "Notes": null,
-      "Base Sell Value": 55,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -2358,7 +2358,7 @@
       "Description": null,
       "Icon Asset Key": "leather_straps",
       "Notes": null,
-      "Base Sell Value": 30,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -2375,7 +2375,7 @@
       "Description": null,
       "Icon Asset Key": "cut_sapphire",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -2392,7 +2392,7 @@
       "Description": null,
       "Icon Asset Key": "cut_emerald",
       "Notes": null,
-      "Base Sell Value": 650,
+      "Base Sell Value": 467,
       "Stackable": null
     },
     {
@@ -2409,7 +2409,7 @@
       "Description": null,
       "Icon Asset Key": "cut_ruby",
       "Notes": null,
-      "Base Sell Value": 950,
+      "Base Sell Value": 913,
       "Stackable": null
     },
     {
@@ -2426,7 +2426,7 @@
       "Description": null,
       "Icon Asset Key": "plant_fiber_component",
       "Notes": null,
-      "Base Sell Value": 8,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2443,7 +2443,7 @@
       "Description": "Created through Crafting and consumed by Arcana to apply an enchantment.",
       "Icon Asset Key": "enchanting_tablet",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -2460,7 +2460,7 @@
       "Description": "Created through Crafting and consumed by Arcana to create or unlock a magical project.",
       "Icon Asset Key": "spell_tablet",
       "Notes": null,
-      "Base Sell Value": 650,
+      "Base Sell Value": 467,
       "Stackable": null
     },
     {
@@ -2477,7 +2477,7 @@
       "Description": null,
       "Icon Asset Key": "wooden_axe",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2494,7 +2494,7 @@
       "Description": null,
       "Icon Asset Key": "wooden_hatchet",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2511,7 +2511,7 @@
       "Description": null,
       "Icon Asset Key": "wooden_pickaxe",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2528,7 +2528,7 @@
       "Description": null,
       "Icon Asset Key": "wooden_fishing_rod",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2545,7 +2545,7 @@
       "Description": null,
       "Icon Asset Key": "sling",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2562,7 +2562,7 @@
       "Description": null,
       "Icon Asset Key": "bola",
       "Notes": "Artisanry 25 craft. Hunting 15 to use. 4% action time reduction.",
-      "Base Sell Value": 100,
+      "Base Sell Value": 17,
       "Stackable": null
     },
     {
@@ -2579,7 +2579,7 @@
       "Description": null,
       "Icon Asset Key": "copper_hatchet",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -2596,7 +2596,7 @@
       "Description": null,
       "Icon Asset Key": "copper_pickaxe",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -2613,7 +2613,7 @@
       "Description": null,
       "Icon Asset Key": "copper_fishing_rod",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -2630,7 +2630,7 @@
       "Description": null,
       "Icon Asset Key": "copper_harpoon",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -2647,7 +2647,7 @@
       "Description": null,
       "Icon Asset Key": "iron_hatchet",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -2664,7 +2664,7 @@
       "Description": null,
       "Icon Asset Key": "iron_pickaxe",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -2681,7 +2681,7 @@
       "Description": null,
       "Icon Asset Key": "iron_fishing_rod",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -2698,7 +2698,7 @@
       "Description": null,
       "Icon Asset Key": "iron_harpoon",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -2715,7 +2715,7 @@
       "Description": null,
       "Icon Asset Key": "steel_hatchet",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -2732,7 +2732,7 @@
       "Description": null,
       "Icon Asset Key": "steel_pickaxe",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -2749,7 +2749,7 @@
       "Description": null,
       "Icon Asset Key": "steel_fishing_rod",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -2766,7 +2766,7 @@
       "Description": null,
       "Icon Asset Key": "steel_harpoon",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -2783,7 +2783,7 @@
       "Description": null,
       "Icon Asset Key": "goblin_staff",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -2800,7 +2800,7 @@
       "Description": null,
       "Icon Asset Key": "dwarven_warhammer",
       "Notes": null,
-      "Base Sell Value": 450,
+      "Base Sell Value": 244,
       "Stackable": null
     },
     {
@@ -2817,7 +2817,7 @@
       "Description": null,
       "Icon Asset Key": "wooden_sword",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2834,7 +2834,7 @@
       "Description": null,
       "Icon Asset Key": "wooden_dagger",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2851,7 +2851,7 @@
       "Description": null,
       "Icon Asset Key": "iron_sword",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -2868,7 +2868,7 @@
       "Description": null,
       "Icon Asset Key": "iron_dagger",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -2885,7 +2885,7 @@
       "Description": null,
       "Icon Asset Key": "steel_sword",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -2902,7 +2902,7 @@
       "Description": null,
       "Icon Asset Key": "steel_dagger",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -2919,7 +2919,7 @@
       "Description": null,
       "Icon Asset Key": "copper_axe",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -2936,7 +2936,7 @@
       "Description": null,
       "Icon Asset Key": "iron_axe",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -2953,7 +2953,7 @@
       "Description": null,
       "Icon Asset Key": "steel_axe",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -2970,7 +2970,7 @@
       "Description": null,
       "Icon Asset Key": "regular_bow",
       "Notes": "Retired from artisanry crafting. Existing copies still equip.",
-      "Base Sell Value": 80,
+      "Base Sell Value": 12,
       "Stackable": null
     },
     {
@@ -2987,7 +2987,7 @@
       "Description": null,
       "Icon Asset Key": "cedar_bow",
       "Notes": null,
-      "Base Sell Value": 90,
+      "Base Sell Value": 14,
       "Stackable": null
     },
     {
@@ -3004,7 +3004,7 @@
       "Description": null,
       "Icon Asset Key": "oak_bow",
       "Notes": null,
-      "Base Sell Value": 100,
+      "Base Sell Value": 17,
       "Stackable": null
     },
     {
@@ -3021,7 +3021,7 @@
       "Description": null,
       "Icon Asset Key": "poplar_bow",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -3038,7 +3038,7 @@
       "Description": null,
       "Icon Asset Key": "maple_bow",
       "Notes": null,
-      "Base Sell Value": 250,
+      "Base Sell Value": 86,
       "Stackable": null
     },
     {
@@ -3055,7 +3055,7 @@
       "Description": null,
       "Icon Asset Key": "mahogany_bow",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -3072,7 +3072,7 @@
       "Description": null,
       "Icon Asset Key": "boar_spear",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3089,7 +3089,7 @@
       "Description": null,
       "Icon Asset Key": "steel_battleaxe",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3106,7 +3106,7 @@
       "Description": null,
       "Icon Asset Key": "steel_warhammer",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -3123,7 +3123,7 @@
       "Description": null,
       "Icon Asset Key": "wooden_shield",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -3140,7 +3140,7 @@
       "Description": null,
       "Icon Asset Key": "iron_shield",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -3157,7 +3157,7 @@
       "Description": null,
       "Icon Asset Key": "steel_shield",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3174,7 +3174,7 @@
       "Description": null,
       "Icon Asset Key": "wizard_s_tome",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3191,7 +3191,7 @@
       "Description": null,
       "Icon Asset Key": "iron_helmet",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -3208,7 +3208,7 @@
       "Description": null,
       "Icon Asset Key": "iron_chestplate",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -3225,7 +3225,7 @@
       "Description": null,
       "Icon Asset Key": "iron_platelegs",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -3242,7 +3242,7 @@
       "Description": null,
       "Icon Asset Key": "iron_boots",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -3259,7 +3259,7 @@
       "Description": null,
       "Icon Asset Key": "iron_gloves",
       "Notes": null,
-      "Base Sell Value": 150,
+      "Base Sell Value": 35,
       "Stackable": null
     },
     {
@@ -3276,7 +3276,7 @@
       "Description": null,
       "Icon Asset Key": "steel_helmet",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3293,7 +3293,7 @@
       "Description": null,
       "Icon Asset Key": "steel_chestplate",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3310,7 +3310,7 @@
       "Description": null,
       "Icon Asset Key": "steel_platelegs",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3327,7 +3327,7 @@
       "Description": null,
       "Icon Asset Key": "steel_boots",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3344,7 +3344,7 @@
       "Description": null,
       "Icon Asset Key": "steel_gloves",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3361,7 +3361,7 @@
       "Description": "1/100 chance to double cooking output. No extra experience.",
       "Icon Asset Key": "chef_s_hat",
       "Notes": "Replaces the old cooking time reduction.",
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -3378,7 +3378,7 @@
       "Description": "Reduces essence cost of Arcana projects by 1%, rounded up.",
       "Icon Asset Key": "wizard_s_hat",
       "Notes": "Replaces the old Arcana time reduction.",
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -3395,7 +3395,7 @@
       "Description": null,
       "Icon Asset Key": "falconer_s_gloves",
       "Notes": null,
-      "Base Sell Value": 200,
+      "Base Sell Value": 58,
       "Stackable": null
     },
     {
@@ -3412,7 +3412,7 @@
       "Description": null,
       "Icon Asset Key": "bull_horn_helmet",
       "Notes": null,
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -3429,7 +3429,7 @@
       "Description": null,
       "Icon Asset Key": "silver_necklace",
       "Notes": null,
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -3446,7 +3446,7 @@
       "Description": null,
       "Icon Asset Key": "silver_ring",
       "Notes": null,
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -3463,7 +3463,7 @@
       "Description": null,
       "Icon Asset Key": "gold_necklace",
       "Notes": null,
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -3480,7 +3480,7 @@
       "Description": null,
       "Icon Asset Key": "gold_ring",
       "Notes": null,
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -3497,7 +3497,7 @@
       "Description": null,
       "Icon Asset Key": "sapphire_necklace",
       "Notes": null,
-      "Base Sell Value": 450,
+      "Base Sell Value": 244,
       "Stackable": null
     },
     {
@@ -3514,7 +3514,7 @@
       "Description": null,
       "Icon Asset Key": "sapphire_ring",
       "Notes": null,
-      "Base Sell Value": 450,
+      "Base Sell Value": 244,
       "Stackable": null
     },
     {
@@ -3531,7 +3531,7 @@
       "Description": null,
       "Icon Asset Key": "emerald_necklace",
       "Notes": null,
-      "Base Sell Value": 650,
+      "Base Sell Value": 467,
       "Stackable": null
     },
     {
@@ -3548,7 +3548,7 @@
       "Description": null,
       "Icon Asset Key": "emerald_ring",
       "Notes": null,
-      "Base Sell Value": 650,
+      "Base Sell Value": 467,
       "Stackable": null
     },
     {
@@ -3565,7 +3565,7 @@
       "Description": null,
       "Icon Asset Key": "ruby_necklace",
       "Notes": null,
-      "Base Sell Value": 950,
+      "Base Sell Value": 913,
       "Stackable": null
     },
     {
@@ -3582,7 +3582,7 @@
       "Description": null,
       "Icon Asset Key": "ruby_ring",
       "Notes": null,
-      "Base Sell Value": 950,
+      "Base Sell Value": 913,
       "Stackable": null
     },
     {
@@ -3599,7 +3599,7 @@
       "Description": null,
       "Icon Asset Key": "lucky_necklace",
       "Notes": null,
-      "Base Sell Value": 500,
+      "Base Sell Value": 294,
       "Stackable": null
     },
     {
@@ -3616,7 +3616,7 @@
       "Description": null,
       "Icon Asset Key": "old_boots",
       "Notes": null,
-      "Base Sell Value": 25,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -3633,7 +3633,7 @@
       "Description": null,
       "Icon Asset Key": "raw_baby_giant_squid",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -3667,7 +3667,7 @@
       "Description": null,
       "Icon Asset Key": "raw_duck",
       "Notes": null,
-      "Base Sell Value": 20,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -3684,7 +3684,7 @@
       "Description": null,
       "Icon Asset Key": "raw_boar_meat",
       "Notes": null,
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -3701,7 +3701,7 @@
       "Description": null,
       "Icon Asset Key": "boar_hide",
       "Notes": null,
-      "Base Sell Value": 100,
+      "Base Sell Value": 17,
       "Stackable": null
     },
     {
@@ -3718,7 +3718,7 @@
       "Description": null,
       "Icon Asset Key": "goat_hide",
       "Notes": null,
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -3735,7 +3735,7 @@
       "Description": null,
       "Icon Asset Key": "great_stag_hide",
       "Notes": null,
-      "Base Sell Value": 450,
+      "Base Sell Value": 244,
       "Stackable": null
     },
     {
@@ -3752,7 +3752,7 @@
       "Description": null,
       "Icon Asset Key": "moonhorn_hide",
       "Notes": null,
-      "Base Sell Value": 800,
+      "Base Sell Value": 674,
       "Stackable": null
     },
     {
@@ -3769,7 +3769,7 @@
       "Description": null,
       "Icon Asset Key": "great_antler",
       "Notes": null,
-      "Base Sell Value": 500,
+      "Base Sell Value": 294,
       "Stackable": null
     },
     {
@@ -3803,7 +3803,7 @@
       "Description": null,
       "Icon Asset Key": "troll_tooth",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3820,7 +3820,7 @@
       "Description": null,
       "Icon Asset Key": "ancient_sap",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -3837,7 +3837,7 @@
       "Description": null,
       "Icon Asset Key": "ent_bark",
       "Notes": null,
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -3871,7 +3871,7 @@
       "Description": null,
       "Icon Asset Key": "corrupted_sap",
       "Notes": null,
-      "Base Sell Value": 500,
+      "Base Sell Value": 294,
       "Stackable": null
     },
     {
@@ -3905,7 +3905,7 @@
       "Description": null,
       "Icon Asset Key": "moonblossom",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -3922,7 +3922,7 @@
       "Description": null,
       "Icon Asset Key": "starroot",
       "Notes": null,
-      "Base Sell Value": 600,
+      "Base Sell Value": 406,
       "Stackable": null
     },
     {
@@ -3956,7 +3956,7 @@
       "Description": null,
       "Icon Asset Key": "minor_luck_potion",
       "Notes": null,
-      "Base Sell Value": 40,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -3973,7 +3973,7 @@
       "Description": null,
       "Icon Asset Key": "minor_strength_potion",
       "Notes": null,
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -3990,7 +3990,7 @@
       "Description": null,
       "Icon Asset Key": "greater_strength_potion",
       "Notes": null,
-      "Base Sell Value": 700,
+      "Base Sell Value": 533,
       "Stackable": null
     },
     {
@@ -4024,7 +4024,7 @@
       "Description": null,
       "Icon Asset Key": "cedar_timber",
       "Notes": null,
-      "Base Sell Value": 25,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -4041,7 +4041,7 @@
       "Description": null,
       "Icon Asset Key": "oak_timber",
       "Notes": null,
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -4058,7 +4058,7 @@
       "Description": null,
       "Icon Asset Key": "poplar_timber",
       "Notes": null,
-      "Base Sell Value": 100,
+      "Base Sell Value": 17,
       "Stackable": null
     },
     {
@@ -4075,7 +4075,7 @@
       "Description": null,
       "Icon Asset Key": "maple_timber",
       "Notes": null,
-      "Base Sell Value": 200,
+      "Base Sell Value": 58,
       "Stackable": null
     },
     {
@@ -4092,7 +4092,7 @@
       "Description": null,
       "Icon Asset Key": "mahogany_timber",
       "Notes": null,
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -4126,7 +4126,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_hatchet",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -4143,7 +4143,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -4160,7 +4160,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -4177,7 +4177,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_harpoon",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -4194,7 +4194,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_sword",
       "Notes": null,
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -4211,7 +4211,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_dagger",
       "Notes": null,
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -4228,7 +4228,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_axe",
       "Notes": null,
-      "Base Sell Value": 60,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -4245,7 +4245,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_shield",
       "Notes": null,
-      "Base Sell Value": 65,
+      "Base Sell Value": 8,
       "Stackable": null
     },
     {
@@ -4262,7 +4262,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_helmet",
       "Notes": null,
-      "Base Sell Value": 55,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -4279,7 +4279,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_chestplate",
       "Notes": null,
-      "Base Sell Value": 55,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -4296,7 +4296,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_platelegs",
       "Notes": null,
-      "Base Sell Value": 55,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -4313,7 +4313,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_boots",
       "Notes": null,
-      "Base Sell Value": 55,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -4330,7 +4330,7 @@
       "Description": null,
       "Icon Asset Key": "bronze_gloves",
       "Notes": null,
-      "Base Sell Value": 55,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -4347,7 +4347,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_hatchet",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4364,7 +4364,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4381,7 +4381,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4398,7 +4398,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_harpoon",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4415,7 +4415,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_sword",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4432,7 +4432,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_dagger",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4449,7 +4449,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_axe",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4466,7 +4466,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_shield",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4483,7 +4483,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_helmet",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4500,7 +4500,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_chestplate",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4517,7 +4517,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_platelegs",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4534,7 +4534,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_boots",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4551,7 +4551,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_gloves",
       "Notes": null,
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -4568,7 +4568,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_hatchet",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4585,7 +4585,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4602,7 +4602,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4619,7 +4619,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_harpoon",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4636,7 +4636,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_sword",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4653,7 +4653,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_dagger",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4670,7 +4670,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_axe",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4687,7 +4687,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_shield",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4704,7 +4704,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_helmet",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4721,7 +4721,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_chestplate",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4738,7 +4738,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_platelegs",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4755,7 +4755,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_boots",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4772,7 +4772,7 @@
       "Description": null,
       "Icon Asset Key": "titanium_gloves",
       "Notes": null,
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -4789,7 +4789,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_hatchet",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4806,7 +4806,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4823,7 +4823,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4840,7 +4840,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_harpoon",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4857,7 +4857,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_sword",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4874,7 +4874,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_dagger",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4891,7 +4891,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_axe",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4908,7 +4908,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_shield",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4925,7 +4925,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_helmet",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4942,7 +4942,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_chestplate",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4959,7 +4959,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_platelegs",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4976,7 +4976,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_boots",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -4993,7 +4993,7 @@
       "Description": null,
       "Icon Asset Key": "tungsten_gloves",
       "Notes": null,
-      "Base Sell Value": 550,
+      "Base Sell Value": 348,
       "Stackable": null
     },
     {
@@ -5248,7 +5248,7 @@
       "Description": null,
       "Icon Asset Key": "grave_cloth",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -5265,7 +5265,7 @@
       "Description": null,
       "Icon Asset Key": "pirate_insignia",
       "Notes": null,
-      "Base Sell Value": 500,
+      "Base Sell Value": 294,
       "Stackable": null
     },
     {
@@ -5282,7 +5282,7 @@
       "Description": null,
       "Icon Asset Key": "ancient_binding",
       "Notes": null,
-      "Base Sell Value": 900,
+      "Base Sell Value": 830,
       "Stackable": null
     },
     {
@@ -5299,7 +5299,7 @@
       "Description": "A prepared Strength spell. Equip it in a spell slot to grant +10% damage range while equipped. Duplicate Strength spells stack.",
       "Icon Asset Key": "strength_spell",
       "Notes": "Crafted at the Arcana Facility. May fill any spell slot; duplicates allowed.",
-      "Base Sell Value": 800,
+      "Base Sell Value": 674,
       "Stackable": null
     },
     {
@@ -5329,7 +5329,7 @@
       "Release Phase": "Launch",
       "Associated Skill ID": null,
       "Equipment Slot ID": null,
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Icon Asset Key": "cosmetic_travelers_tunic",
       "Description": "A cozy, well-worn medieval traveler's outfit.",
       "Functional / Source Tags": "cosmetic; outfit",
@@ -5350,7 +5350,7 @@
       "Description": "Light leather gloves that add a little protection in combat.",
       "Icon Asset Key": "leather_gloves",
       "Notes": "Artisanry 1 at the Crafting Workshop. Sold at the Clothier.",
-      "Base Sell Value": 28,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -5418,7 +5418,7 @@
       "Description": "A rich bowl of baby giant squid, potatoes, and carrots.",
       "Icon Asset Key": "squid_noodle_soup",
       "Notes": "Heals 1,100. Level 66 kitchen recipe.",
-      "Base Sell Value": 900,
+      "Base Sell Value": 830,
       "Stackable": null
     },
     {
@@ -5435,7 +5435,7 @@
       "Description": "Improves hunting experience by 5% while equipped.",
       "Icon Asset Key": "quiver",
       "Notes": "Artisanry 15. Worn on the back.",
-      "Base Sell Value": 180,
+      "Base Sell Value": 48,
       "Stackable": null
     },
     {
@@ -5452,7 +5452,7 @@
       "Description": "A poplar staff that throws a second spark after each hit.",
       "Icon Asset Key": "staff_of_sparks",
       "Notes": "Arcana 35 craft. Equip Combat 25 / Arcana 30. Two-handed.",
-      "Base Sell Value": 700,
+      "Base Sell Value": 533,
       "Stackable": null
     },
     {
@@ -5469,7 +5469,7 @@
       "Description": "A maple staff that can bind the next enemy attack.",
       "Icon Asset Key": "staff_of_binding",
       "Notes": "Arcana 45 craft. Equip Combat 30 / Arcana 40. Two-handed.",
-      "Base Sell Value": 750,
+      "Base Sell Value": 602,
       "Stackable": null
     },
     {
@@ -5486,7 +5486,7 @@
       "Description": "A mahogany staff that grows stronger with Arcana.",
       "Icon Asset Key": "staff_of_power",
       "Notes": "Arcana 65 craft. Equip Combat 40 / Arcana 50. Two-handed.",
-      "Base Sell Value": 850,
+      "Base Sell Value": 751,
       "Stackable": null
     },
     {
@@ -5503,7 +5503,7 @@
       "Description": "A maple wand that throws a second spark after each hit.",
       "Icon Asset Key": "mages_wand",
       "Notes": "Arcana 55 craft. Equip Arcana 50. One-handed.",
-      "Base Sell Value": 720,
+      "Base Sell Value": 560,
       "Stackable": null
     },
     {
@@ -5520,7 +5520,7 @@
       "Description": "A light leather cap that adds a little protection in combat.",
       "Icon Asset Key": "leather_helmet",
       "Notes": "Artisanry 1 at the Crafting Workshop. Sold at the Clothier.",
-      "Base Sell Value": 28,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -5537,7 +5537,7 @@
       "Description": "A light leather chest that adds a little protection in combat.",
       "Icon Asset Key": "leather_chestplate",
       "Notes": "Artisanry 1 at the Crafting Workshop. Sold at the Clothier.",
-      "Base Sell Value": 28,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -5554,7 +5554,7 @@
       "Description": "Light leather leggings that add a little protection in combat.",
       "Icon Asset Key": "leather_platelegs",
       "Notes": "Artisanry 1 at the Crafting Workshop. Sold at the Clothier.",
-      "Base Sell Value": 28,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -5571,7 +5571,7 @@
       "Description": "Light leather boots that add a little protection in combat.",
       "Icon Asset Key": "leather_boots",
       "Notes": "Artisanry 1 at the Crafting Workshop. Sold at the Clothier.",
-      "Base Sell Value": 28,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -5588,7 +5588,7 @@
       "Description": "A prepared Gluttony spell. Equip it in a spell slot to eat extra equipped food on combat victory. Duplicate Gluttony spells stack.",
       "Icon Asset Key": "gluttony_spell",
       "Notes": "Crafted at the Arcana Facility. May fill any spell slot; duplicates allowed.",
-      "Base Sell Value": 800,
+      "Base Sell Value": 674,
       "Stackable": null
     },
     {
@@ -5605,7 +5605,7 @@
       "Description": "A unique pick from the abandoned shaft. Slightly luckier than reinforced steel.",
       "Icon Asset Key": "excavators_pickaxe",
       "Notes": "Unique Going Deeper reward. Reinforced steel stats plus +5% relative Drop Chance.",
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -5622,7 +5622,7 @@
       "Description": "A bola bound with essence and gold, faster in the hand.",
       "Icon Asset Key": "magic_bola",
       "Notes": "Arcana 40 craft. Hunting 45 to use. 12% action time reduction. Crafted from a Bola.",
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -5639,7 +5639,7 @@
       "Description": "Thick mitts that shave time off kitchen and forge work.",
       "Icon Asset Key": "oven_mitts",
       "Notes": "Clothier. Cooking 1, Metallurgy 1. -5% action time for Cooking and Metallurgy.",
-      "Base Sell Value": 40,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -5656,7 +5656,7 @@
       "Description": "A two-handed harvest blade that slightly improves herb finds.",
       "Icon Asset Key": "scythe",
       "Notes": "Clothier. Harvesting 1. +10% relative harvesting drop chance.",
-      "Base Sell Value": 36,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -5673,7 +5673,7 @@
       "Description": "While crafting potions, output rolls 2\u20133 instead of 1\u20133. No extra experience. Not yet obtainable.",
       "Icon Asset Key": "alchemist_goggles",
       "Notes": "Output-only specialist. Stub content; no acquisition path yet.",
-      "Base Sell Value": 220,
+      "Base Sell Value": 69,
       "Stackable": null
     },
     {
@@ -5690,7 +5690,7 @@
       "Description": "Soft green strands from the shallows. No known use yet.",
       "Icon Asset Key": "algae",
       "Notes": "Gathered in The Shallows. No recipes yet.",
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5775,7 +5775,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "potato_seed",
       "Notes": "BotanyPlant; Output:ITEM-0025; GrowSeconds:10800; Xp:1000; RequiresLevel:1",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5792,7 +5792,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "cedar_sapling",
       "Notes": "BotanyPlant; Output:ITEM-0015; GrowSeconds:43200; Xp:17980; RequiresLevel:21",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5809,7 +5809,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "oak_sapling",
       "Notes": "BotanyPlant; Output:ITEM-0016; GrowSeconds:43200; Xp:25200; RequiresLevel:31",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5826,7 +5826,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "poplar_sapling",
       "Notes": "BotanyPlant; Output:ITEM-0017; GrowSeconds:43200; Xp:22500; RequiresLevel:51",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5843,7 +5843,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "maple_sapling",
       "Notes": "BotanyPlant; Output:ITEM-0018; GrowSeconds:43200; Xp:36000; RequiresLevel:61",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5860,7 +5860,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "mahogany_sapling",
       "Notes": "BotanyPlant; Output:ITEM-0019; GrowSeconds:43200; Xp:157500; RequiresLevel:81",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5877,7 +5877,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "ancient_sapling",
       "Notes": "Retired from Botany planting.",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5894,7 +5894,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "wild_root_seed",
       "Notes": "Retired from Botany planting.",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5911,7 +5911,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "fernleaf_seed",
       "Notes": "BotanyPlant; Output:ITEM-0031; GrowSeconds:10800; Xp:1070; RequiresLevel:15",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5928,7 +5928,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "mosstole_seed",
       "Notes": "BotanyPlant; Output:ITEM-0032; GrowSeconds:10800; Xp:1600; RequiresLevel:30",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5945,7 +5945,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "wild_berry_seed",
       "Notes": "Retired from Botany planting.",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5962,7 +5962,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "augur_weed_seed",
       "Notes": "BotanyPlant; Output:ITEM-0033; GrowSeconds:10800; Xp:8330; RequiresLevel:60",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5979,7 +5979,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "moonblossom_seed",
       "Notes": "BotanyPlant; Output:ITEM-0207; GrowSeconds:10800; Xp:8330; RequiresLevel:70",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -5996,7 +5996,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "starroot_seed",
       "Notes": "Retired from Botany planting.",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6013,7 +6013,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "carrot_seed",
       "Notes": "BotanyPlant; Output:ITEM-0027; GrowSeconds:10800; Xp:600; RequiresLevel:10",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6030,7 +6030,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "grape_seed",
       "Notes": "BotanyPlant; Output:ITEM-0029; GrowSeconds:10800; Xp:1670; RequiresLevel:54",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6047,7 +6047,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "mushroom_spore",
       "Notes": "Retired from Botany planting.",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6064,7 +6064,7 @@
       "Description": null,
       "Icon Asset Key": "mushroom",
       "Notes": null,
-      "Base Sell Value": 8,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6081,7 +6081,7 @@
       "Description": null,
       "Icon Asset Key": "kelp",
       "Notes": null,
-      "Base Sell Value": 6,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6098,7 +6098,7 @@
       "Description": null,
       "Icon Asset Key": "dried_kelp",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6115,7 +6115,7 @@
       "Description": null,
       "Icon Asset Key": "pirate_hook",
       "Notes": null,
-      "Base Sell Value": 250,
+      "Base Sell Value": 86,
       "Stackable": null
     },
     {
@@ -6149,7 +6149,7 @@
       "Description": null,
       "Icon Asset Key": "fishing_pot",
       "Notes": "Place at Goblin Camp or Docks for pot fishing. One pot per site per UTC day; 6 hour soak.",
-      "Base Sell Value": 50,
+      "Base Sell Value": 5,
       "Stackable": null
     },
     {
@@ -6166,7 +6166,7 @@
       "Description": null,
       "Icon Asset Key": "raw_sea_turtle",
       "Notes": null,
-      "Base Sell Value": 40,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -6179,7 +6179,7 @@
       "Equipment Slot ID": null,
       "Functional / Source Tags": "botany_seed; shallows_only",
       "Stackable": null,
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Plant only in The Shallows.",
@@ -6197,7 +6197,7 @@
       "Equipment Slot ID": "SLOT-0001",
       "Functional / Source Tags": "thievery_tool; lockpick; stackable_tool",
       "Stackable": "Yes",
-      "Base Sell Value": 8,
+      "Base Sell Value": 1,
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Description": "Required to crack safes and bank deposit boxes.",
@@ -6219,7 +6219,7 @@
       "Description": null,
       "Icon Asset Key": "raw_crawfish",
       "Notes": "Pot fishing catch. Fishing 14.",
-      "Base Sell Value": 8,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6236,7 +6236,7 @@
       "Description": null,
       "Icon Asset Key": "raw_red_crab",
       "Notes": "Pot fishing catch. Fishing 35.",
-      "Base Sell Value": 25,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6253,7 +6253,7 @@
       "Description": null,
       "Icon Asset Key": "raw_catfish",
       "Notes": "Pot fishing catch. Fishing 44. No stew.",
-      "Base Sell Value": 35,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -6270,7 +6270,7 @@
       "Description": null,
       "Icon Asset Key": "raw_dungeness_crab",
       "Notes": "Pot fishing catch. Fishing 55.",
-      "Base Sell Value": 55,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -6287,7 +6287,7 @@
       "Description": null,
       "Icon Asset Key": "raw_eel",
       "Notes": "Pot fishing catch. Fishing 64. Alchemy only; not cooked.",
-      "Base Sell Value": 70,
+      "Base Sell Value": 9,
       "Stackable": null
     },
     {
@@ -6304,7 +6304,7 @@
       "Description": null,
       "Icon Asset Key": "raw_lobster",
       "Notes": "Pot fishing catch. Fishing 75.",
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -6321,7 +6321,7 @@
       "Description": null,
       "Icon Asset Key": "crawfish_stew",
       "Notes": null,
-      "Base Sell Value": 40,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -6338,7 +6338,7 @@
       "Description": null,
       "Icon Asset Key": "red_crab_stew",
       "Notes": null,
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -6355,7 +6355,7 @@
       "Description": null,
       "Icon Asset Key": "dungeness_stew",
       "Notes": null,
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -6372,7 +6372,7 @@
       "Description": null,
       "Icon Asset Key": "lobster_stew",
       "Notes": null,
-      "Base Sell Value": 600,
+      "Base Sell Value": 406,
       "Stackable": null
     },
     {
@@ -6389,7 +6389,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_catfish",
       "Notes": null,
-      "Base Sell Value": 70,
+      "Base Sell Value": 9,
       "Stackable": null
     },
     {
@@ -6406,7 +6406,7 @@
       "Description": "Hand shears that turn a harvest or woodcut into Botany practice.",
       "Icon Asset Key": "pruners",
       "Notes": "Seed Stall. No skill requirement. Converts 1/4 XP to Botany and 10% node seeds.",
-      "Base Sell Value": 18,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6474,7 +6474,7 @@
       "Description": null,
       "Icon Asset Key": "copper_sword",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -6491,7 +6491,7 @@
       "Description": null,
       "Icon Asset Key": "copper_dagger",
       "Notes": null,
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -6508,7 +6508,7 @@
       "Description": "Plantable in a botany plot. Potato and carrot plots can return this seed.",
       "Icon Asset Key": "turnip_seed",
       "Notes": "BotanyPlant; Output:ITEM-0370; GrowSeconds:10800; Xp:6000; RequiresLevel:18",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6525,7 +6525,7 @@
       "Description": "Plot-only harvest. Unused for now.",
       "Icon Asset Key": "turnip",
       "Notes": null,
-      "Base Sell Value": 11,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6542,7 +6542,7 @@
       "Description": "Plantable in a botany plot. Grape and potato plots can return this seed.",
       "Icon Asset Key": "elder_berry_seed",
       "Notes": "BotanyPlant; Output:ITEM-0372; GrowSeconds:10800; Xp:9600; RequiresLevel:45",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6559,7 +6559,7 @@
       "Description": "Plot-only harvest. Unused for now.",
       "Icon Asset Key": "elder_berry",
       "Notes": null,
-      "Base Sell Value": 28,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -6576,7 +6576,7 @@
       "Description": "Plantable in a botany plot. Fernleaf and augur weed plots can return this seed.",
       "Icon Asset Key": "hagroot_seed",
       "Notes": "BotanyPlant; Output:ITEM-0374; GrowSeconds:10800; Xp:42000; RequiresLevel:72",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6593,7 +6593,7 @@
       "Description": "Plot-only harvest. Unused for now.",
       "Icon Asset Key": "hagroot",
       "Notes": null,
-      "Base Sell Value": 180,
+      "Base Sell Value": 48,
       "Stackable": null
     },
     {
@@ -6610,7 +6610,7 @@
       "Description": "Plantable in a botany plot. Augur weed and moonblossom plots can return this seed.",
       "Icon Asset Key": "emberblossom_seed",
       "Notes": "BotanyPlant; Output:ITEM-0376; GrowSeconds:10800; Xp:45000; RequiresLevel:75",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6627,7 +6627,7 @@
       "Description": "Plot-only harvest. Unused for now.",
       "Icon Asset Key": "emberblossom",
       "Notes": null,
-      "Base Sell Value": 450,
+      "Base Sell Value": 244,
       "Stackable": null
     },
     {
@@ -6644,7 +6644,7 @@
       "Description": "Patch fertilizer. Spend it when planting to give each seed a better chance to live.",
       "Icon Asset Key": "compost",
       "Notes": null,
-      "Base Sell Value": 2,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6661,7 +6661,7 @@
       "Description": "A raw hide. A tanner can turn it into leather.",
       "Icon Asset Key": "cow_hide",
       "Notes": "Cow and bull drop this instead of leather.",
-      "Base Sell Value": 90,
+      "Base Sell Value": 14,
       "Stackable": null
     },
     {
@@ -6678,7 +6678,7 @@
       "Description": "A raw hide. A tanner can turn it into leather.",
       "Icon Asset Key": "elk_hide",
       "Notes": "Elk hunts drop this instead of leather.",
-      "Base Sell Value": 180,
+      "Base Sell Value": 48,
       "Stackable": null
     },
     {
@@ -6695,7 +6695,7 @@
       "Description": null,
       "Icon Asset Key": "chromium_ore",
       "Notes": "Mining Proficiency 80.. Future expansion \u2014 hidden from Launch until wired into the world.",
-      "Base Sell Value": 320,
+      "Base Sell Value": 134,
       "Stackable": null
     },
     {
@@ -6712,7 +6712,7 @@
       "Description": null,
       "Icon Asset Key": "vanadium_ore",
       "Notes": "Mining Proficiency 90.. Future expansion \u2014 hidden from Launch until wired into the world.",
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -6746,7 +6746,7 @@
       "Description": null,
       "Icon Asset Key": "willow_log",
       "Notes": "Retired gather drop; willow trees drop Willow Branches.",
-      "Base Sell Value": 12,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6763,7 +6763,7 @@
       "Description": null,
       "Icon Asset Key": "cinnamon_log",
       "Notes": "Retired gather drop; cinnamon trees drop Cinnamon Bark.. Future expansion \u2014 hidden from Launch until wired into the world.",
-      "Base Sell Value": 40,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -6780,7 +6780,7 @@
       "Description": null,
       "Icon Asset Key": "ironwood_log",
       "Notes": null,
-      "Base Sell Value": 90,
+      "Base Sell Value": 14,
       "Stackable": null
     },
     {
@@ -6797,7 +6797,7 @@
       "Description": "Supple willow branches cut from the tree.",
       "Icon Asset Key": "willow_branches",
       "Notes": "Primary willow woodcutting drop.",
-      "Base Sell Value": 2,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6814,7 +6814,7 @@
       "Description": "Fragrant bark stripped from a cinnamon tree.",
       "Icon Asset Key": "cinnamon_bark",
       "Notes": "Primary cinnamon woodcutting drop.. Future expansion \u2014 hidden from Launch until wired into the world.",
-      "Base Sell Value": 8,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6831,7 +6831,7 @@
       "Description": null,
       "Icon Asset Key": "bleeding_tooth",
       "Notes": "Placeholder art: mushroom. Harvesting Proficiency 90.",
-      "Base Sell Value": 700,
+      "Base Sell Value": 533,
       "Stackable": null
     },
     {
@@ -6848,7 +6848,7 @@
       "Description": null,
       "Icon Asset Key": "man_of_war",
       "Notes": "Fishing Proficiency 54. No cooked form.",
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     },
     {
@@ -6865,7 +6865,7 @@
       "Description": null,
       "Icon Asset Key": "raw_marlin",
       "Notes": null,
-      "Base Sell Value": 200,
+      "Base Sell Value": 58,
       "Stackable": null
     },
     {
@@ -6882,7 +6882,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_marlin",
       "Notes": null,
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -6899,7 +6899,7 @@
       "Description": null,
       "Icon Asset Key": "raw_swordfish",
       "Notes": "Future expansion \u2014 hidden from Launch until wired into the world.",
-      "Base Sell Value": 280,
+      "Base Sell Value": 106,
       "Stackable": null
     },
     {
@@ -6916,7 +6916,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_swordfish",
       "Notes": "Future expansion \u2014 hidden from Launch until wired into the world.",
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -7137,7 +7137,7 @@
       "Description": "A woodcutter\u2019s blade. Better than a steel sword, and it clears vines faster.",
       "Icon Asset Key": "machete",
       "Notes": "Might 40 and Woodcutting 40. Vine chops use 24% action time reduction.",
-      "Base Sell Value": 400,
+      "Base Sell Value": 198,
       "Stackable": null
     },
     {
@@ -7171,7 +7171,7 @@
       "Description": null,
       "Icon Asset Key": "ironwood_timber",
       "Notes": null,
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -7188,7 +7188,7 @@
       "Description": null,
       "Icon Asset Key": "ironwood_bow",
       "Notes": null,
-      "Base Sell Value": 320,
+      "Base Sell Value": 134,
       "Stackable": null
     },
     {
@@ -7205,7 +7205,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "willow_sapling",
       "Notes": "BotanyPlant; Output:ITEM-0386; GrowSeconds:43200; Xp:28000; RequiresLevel:41",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -7222,7 +7222,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "ironwood_sapling",
       "Notes": "BotanyPlant; Output:ITEM-0385; GrowSeconds:43200; Xp:90000; RequiresLevel:71",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -7239,7 +7239,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "elder_yew_sapling",
       "Notes": "BotanyPlant; Output:ITEM-0219; GrowSeconds:43200; Xp:200000; RequiresLevel:91",
-      "Base Sell Value": 5,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -7256,7 +7256,7 @@
       "Description": null,
       "Icon Asset Key": "salmon_roe",
       "Notes": "Crafted 1:1 from Raw Salmon at the Apothecary (Alchemy 28). Arcana spell ingredient.",
-      "Base Sell Value": 40,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -7273,7 +7273,7 @@
       "Description": null,
       "Icon Asset Key": "eel_tail",
       "Notes": "Crafted 1:1 from Raw Eel at the Apothecary (Alchemy 60). Arcana spell ingredient.",
-      "Base Sell Value": 80,
+      "Base Sell Value": 12,
       "Stackable": null
     },
     {
@@ -7290,7 +7290,7 @@
       "Description": null,
       "Icon Asset Key": "fox_tail",
       "Notes": "Placeholder art: moonhorn hide. Drop from Hunt fox (35% base).",
-      "Base Sell Value": 35,
+      "Base Sell Value": 3,
       "Stackable": null
     },
     {
@@ -7307,7 +7307,7 @@
       "Description": null,
       "Icon Asset Key": "bat_wings",
       "Notes": "Placeholder art: butterfly wing. Guaranteed from Cave Bat.",
-      "Base Sell Value": 45,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -7324,7 +7324,7 @@
       "Description": null,
       "Icon Asset Key": "catfish_oil",
       "Notes": "Crafted 1:1 from Raw Catfish at the Apothecary (Alchemy 36). Arcana enchant ingredient.",
-      "Base Sell Value": 25,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -7341,7 +7341,7 @@
       "Description": null,
       "Icon Asset Key": "cyclops_eye",
       "Notes": "Placeholder art: troll tooth. 10% drop from Cyclops.",
-      "Base Sell Value": 600,
+      "Base Sell Value": 406,
       "Stackable": null
     },
     {
@@ -7358,7 +7358,7 @@
       "Description": "Soft feathers shed by a mountain harpy.",
       "Icon Asset Key": "harpy_feathers",
       "Notes": "Placeholder art: pheasant feathers. Drop from Harpy.",
-      "Base Sell Value": 180,
+      "Base Sell Value": 48,
       "Stackable": null
     },
     {
@@ -7375,7 +7375,7 @@
       "Description": "A membrane wing torn from a wyvern.",
       "Icon Asset Key": "wyvern_wing",
       "Notes": "Placeholder art: butterfly wing. Drop from Wyvern.",
-      "Base Sell Value": 420,
+      "Base Sell Value": 216,
       "Stackable": null
     },
     {
@@ -7392,7 +7392,7 @@
       "Description": "A heavy toe cut from a mountain giant.",
       "Icon Asset Key": "giants_toe",
       "Notes": "Placeholder art: boar tusk. Drop from Giant.",
-      "Base Sell Value": 350,
+      "Base Sell Value": 157,
       "Stackable": null
     },
     {
@@ -7409,7 +7409,7 @@
       "Description": "Meaty legs harvested from a giant toad.",
       "Icon Asset Key": "toad_legs",
       "Notes": "Placeholder art: raw food. Drop from Hunt giant toad.",
-      "Base Sell Value": 95,
+      "Base Sell Value": 16,
       "Stackable": null
     },
     {
@@ -7426,7 +7426,7 @@
       "Description": "Jointed legs taken from a giant spider.",
       "Icon Asset Key": "spider_legs",
       "Notes": "Placeholder art: bone shard. Drop from Hunt giant spider.",
-      "Base Sell Value": 120,
+      "Base Sell Value": 24,
       "Stackable": null
     }
   ],

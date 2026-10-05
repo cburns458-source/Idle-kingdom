@@ -91,7 +91,7 @@ describe('clothes', () => {
     expect(gloves?.['Input 2 Item ID']).toBe('ITEM-0095')
     expect(gloves?.['Required Skill 1 Level']).toBe(1)
     expect(launch.Items.find((row) => row['Item ID'] === LEATHER_GLOVES_ID)?.['Base Sell Value']).toBe(
-      28,
+      2,
     )
   })
 })

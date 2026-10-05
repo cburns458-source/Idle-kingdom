@@ -28,21 +28,31 @@ describe('shops', () => {
     expect(stock).toContain('ITEM-0108')
     expect(stock).not.toContain('ITEM-0104')
     expect(stock.length).toBeGreaterThanOrEqual(10)
-    expect(playerBuyPrice(launch, shop, 'ITEM-0102')).toBe(24)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0102')).toBe(2)
   })
 
-  it('prices compost at 2 gold so shops and the bazaar will take it', () => {
+  it('prices compost at 1 gold so shops and the bazaar will take it', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const compost = launch.Items.find((row) => row['Item ID'] === 'ITEM-0377')!
-    expect(compost['Base Sell Value']).toBe(2)
+    expect(compost['Base Sell Value']).toBe(1)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!
-    expect(playerSellPrice(launch, shop, 'ITEM-0377')).toBe(2)
+    expect(playerSellPrice(launch, shop, 'ITEM-0377')).toBe(1)
+  })
+
+  it('keeps low-tier sells near 1 gold and high-tier tags near 1k', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const value = (id: string) => launch.Items.find((row) => row['Item ID'] === id)!['Base Sell Value']
+    expect(value('ITEM-0025')).toBe(1)
+    expect(value('ITEM-0102')).toBe(1)
+    expect(value('ITEM-0026')).toBe(1000)
+    expect(value('ITEM-0250')).toBe(751)
+    expect(value('ITEM-0285')).toBe(8000)
   })
 
   it('prices Essence at 100× base sell value in the Wizard shop', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0003')!
-    expect(playerBuyPrice(launch, shop, ESSENCE_ITEM_ID)).toBe(10_000)
+    expect(playerBuyPrice(launch, shop, ESSENCE_ITEM_ID)).toBe(1_700)
   })
 
   it('lets Dwarves access the Mining Store at Mining 35', () => {
@@ -65,7 +75,7 @@ describe('shops', () => {
   it('buys ores at 1.5× in the Mining Store when Mining is high enough', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0002')!
-    expect(playerSellPrice(launch, shop, 'ITEM-0003')).toBe(12)
+    expect(playerSellPrice(launch, shop, 'ITEM-0003')).toBe(2)
 
     let save = createNewSave(launch)
     save = {
@@ -83,13 +93,13 @@ describe('shops', () => {
     })
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.save.gold).toBe(24)
+    expect(result.save.gold).toBe(4)
   })
 
   it('requires confirmation flow to buy a tool for 2× base sell value', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = { ...save, gold: 24, currentLocationId: 'LOC-0024' }
+    save = { ...save, gold: 2, currentLocationId: 'LOC-0024' }
     const result = confirmShopOffer(launch, save, 'SHP-0001', {
       buys: [{ itemId: 'ITEM-0102', quantity: 1 }],
       sells: [],
@@ -172,8 +182,8 @@ describe('shops', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0007')!
     expect(shop['Location ID']).toBe('LOC-0032')
-    expect(playerBuyPrice(launch, shop, 'ITEM-0224')).toBe(120)
-    expect(playerSellPrice(launch, shop, 'ITEM-0224')).toBe(60)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0224')).toBe(14)
+    expect(playerSellPrice(launch, shop, 'ITEM-0224')).toBe(7)
     expect(playerSellPrice(launch, shop, 'ITEM-0128')).toBe(
       playerSellPrice(launch, launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!, 'ITEM-0128'),
     )
@@ -196,10 +206,10 @@ describe('shops', () => {
       'ITEM-0316',
       'ITEM-0317',
     ])
-    expect(playerBuyPrice(launch, shop, 'ITEM-0298')).toBe(56)
-    expect(playerBuyPrice(launch, shop, 'ITEM-0308')).toBe(56)
-    expect(playerBuyPrice(launch, shop, 'ITEM-0316')).toBe(80)
-    expect(playerBuyPrice(launch, shop, 'ITEM-0317')).toBe(72)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0298')).toBe(4)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0308')).toBe(4)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0316')).toBe(6)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0317')).toBe(6)
     const fresh = createNewSave(launch)
     expect(shopStockForPlayer(launch, fresh, shop).map((entry) => entry.itemId)).not.toContain(
       'ITEM-0296',
@@ -215,7 +225,7 @@ describe('shops', () => {
       'ITEM-0004',
       'ITEM-0005',
     ])
-    expect(playerBuyPrice(launch, shop, 'ITEM-0003')).toBe(16)
+    expect(playerBuyPrice(launch, shop, 'ITEM-0003')).toBe(2)
     expect(playerSellPrice(launch, shop, 'ITEM-0003')).toBeNull()
     expect(playerSellPrice(launch, shop, 'ITEM-0077')).toBeNull()
     expect(playerSellPrice(launch, shop, 'ITEM-0128')).toBe(
