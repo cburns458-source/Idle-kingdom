@@ -33,6 +33,7 @@ import { equippedWeaponIsLockpick, itemHasCapability, WEAPON_TOOL_SLOT_ID } from
 import { currentHpAfterMaxChange } from '../equipment/vitals'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
 import {
+  applyEnemyDamageResistance,
   applyMitigation,
   enemyCombatXp,
   fishingCombatDamageRange,
@@ -245,6 +246,7 @@ export function resolveCombatRound(
       if (bossInkActive) playerHit = Math.max(1, Math.floor(playerHit / 2))
       playerHit = applySleepIncoming(playerHit, asleep)
     }
+    playerHit = applyEnemyDamageResistance(playerHit, enemy, floor)
   }
 
   let nextEnemyHp = Math.max(0, enemyHp - playerHit)
@@ -268,6 +270,7 @@ export function resolveCombatRound(
     }
     if (bossInkActive) secondHit = Math.max(1, Math.floor(secondHit / 2))
     secondHit = applySleepIncoming(secondHit, asleep)
+    secondHit = applyEnemyDamageResistance(secondHit, enemy, floor)
     playerHit += secondHit
     nextEnemyHp = Math.max(0, nextEnemyHp - secondHit)
   }
@@ -280,7 +283,11 @@ export function resolveCombatRound(
     itemHasCapability(db, weaponId, 'staff_sparks')
   ) {
     const sparks = staffSparksDamageRange(getSkillProgress(save, ARCANA_SKILL_ID).level)
-    staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep)
+    staffHit = applyEnemyDamageResistance(
+      applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep),
+      enemy,
+      floor,
+    )
     nextEnemyHp = Math.max(0, nextEnemyHp - staffHit)
   }
 
@@ -290,6 +297,7 @@ export function resolveCombatRound(
     if (offhandRange) {
       offhandHit = applySleepIncoming(rollDamage(offhandRange.min, offhandRange.max, random), asleep)
       if (bossInkActive) offhandHit = Math.max(1, Math.floor(offhandHit / 2))
+      offhandHit = applyEnemyDamageResistance(offhandHit, enemy, floor)
       nextEnemyHp = Math.max(0, nextEnemyHp - offhandHit)
     }
   }
@@ -431,6 +439,7 @@ export function resolveCombatRound(
   let thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0
   thornsHit = applySleepIncoming(thornsHit, asleep)
   if (lockpickCombat) thornsHit = 0
+  thornsHit = applyEnemyDamageResistance(thornsHit, enemy, floor)
   if (thornsHit > 0) {
     nextEnemyHp = Math.max(0, nextEnemyHp - thornsHit)
   }

@@ -19,13 +19,43 @@ import {
 } from '../equipment/loadout'
 import { potionEnemyHpFloor } from '../potions/effects'
 import { tryConsumeFoodAfterVictory } from './food'
-import { applyMitigation, playerDamageRange, staffSparksDamageRange } from './stats'
+import {
+  applyEnemyDamageResistance,
+  applyMitigation,
+  enemyDamageResistance,
+  playerDamageRange,
+  staffSparksDamageRange,
+} from './stats'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
 describe('combat engine', () => {
+  it('applies enemy Damage Resistance like player DR (blank = 0)', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const cow = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
+    const bull = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0002')!
+    expect(enemyDamageResistance(cow)).toBe(0)
+    expect(enemyDamageResistance(bull)).toBe(2)
+    expect(applyEnemyDamageResistance(20, bull, 1)).toBe(18)
+    expect(applyEnemyDamageResistance(0, bull, 1)).toBe(0)
+
+    const save = {
+      ...createNewSave(launch),
+      equipment: {
+        ...createNewSave(launch).equipment,
+        slots: {
+          ...createNewSave(launch).equipment.slots,
+          'SLOT-0001': { itemId: 'ITEM-0124', quantity: 1 }, // Wooden Sword 10-30
+        },
+      },
+    }
+    const round = resolveCombatRound(launch, save, bull, bull['Maximum HP'], () => 0)
+    expect(round.playerHit).toBe(8) // min 10 minus 2 DR
+    expect(round.enemyHp).toBe(bull['Maximum HP'] - 8)
+  })
+
   it('lets the player attack first and can finish a cow in one strong hit path', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)

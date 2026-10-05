@@ -216,6 +216,10 @@ class EnemyRow extends DbRow {
 
   num get maxDamage => numberValue('Max Damage');
 
+  /// Flat damage resistance points (same units as player gear DR / "%").
+  /// Null or missing means 0.
+  num? get damageResistance => numberOrNull('Damage Resistance');
+
   num? get combatXp => numberOrNull('Combat XP');
 
   num? get minimumGold => numberOrNull('Minimum Gold');

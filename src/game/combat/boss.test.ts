@@ -54,7 +54,8 @@ describe('dragon boss', () => {
       expect(result.enemyAsleep).toBe(true)
       expect(result.enemyHit).toBeNull()
       expect(result.playerHp).toBe(save.currentHp)
-      expect(result.playerHit).toBe(5)
+      // Unarmed min 10 → sleep halves to 5 → Dragon DR 10 floors at 1.
+      expect(result.playerHit).toBe(1)
       save = {
         ...save,
         combatEnemyHp: result.enemyHp,
@@ -75,16 +76,17 @@ describe('dragon boss', () => {
     const dragon = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0006')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0092')!
     const started = beginCombatSave(launch, saveAtQueen(launch), action, dragon)
+    // Scaled Dragon HP is 18_500; wake threshold is half (9_250).
     const crossing = resolveCombatRound(
       launch,
       { ...started, combatBossSleepRoundsRemaining: 3 },
       dragon,
-      12_510,
+      9_255,
       () => 0.999,
     )
     expect(crossing.enemyAsleep).toBe(true)
     expect(crossing.enemyHit).toBeNull()
-    expect(crossing.enemyHp).toBeLessThanOrEqual(12_500)
+    expect(crossing.enemyHp).toBeLessThanOrEqual(9_250)
     expect(crossing.bossSleepRoundsRemaining).toBe(0)
 
     const next = resolveCombatRound(
@@ -107,18 +109,19 @@ describe('dragon boss', () => {
     const dragon = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0006')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0092')!
     const started = beginCombatSave(launch, saveAtQueen(launch), action, dragon)
+    // Rampage at 25% of scaled max HP (18_500 → 4_625).
     const calm = resolveCombatRound(
       launch,
       { ...started, combatBossSleepRoundsRemaining: 0 },
       dragon,
-      20_000,
+      10_000,
       () => 0,
     )
     const rage = resolveCombatRound(
       launch,
       { ...started, combatBossSleepRoundsRemaining: 0 },
       dragon,
-      6_000,
+      4_000,
       () => 0,
     )
     expect(calm.enemyRampage).toBe(false)

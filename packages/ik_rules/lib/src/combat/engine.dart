@@ -311,6 +311,7 @@ CombatRoundResult resolveCombatRound(
       if (bossInkActive) playerHit = math.max(1, (playerHit / 2).floor());
       playerHit = applySleepIncoming(playerHit, asleep);
     }
+    playerHit = applyEnemyDamageResistance(playerHit, enemy, floor);
   }
 
   var nextEnemyHp = math.max(0, enemyHp - playerHit);
@@ -331,6 +332,7 @@ CombatRoundResult resolveCombatRound(
     }
     if (bossInkActive) secondHit = math.max(1, (secondHit / 2).floor());
     secondHit = applySleepIncoming(secondHit, asleep);
+    secondHit = applyEnemyDamageResistance(secondHit, enemy, floor);
     playerHit += secondHit;
     nextEnemyHp = math.max(0, nextEnemyHp - secondHit);
   }
@@ -341,7 +343,11 @@ CombatRoundResult resolveCombatRound(
       isNotBlank(weaponId) &&
       itemHasCapability(db, weaponId!, 'staff_sparks')) {
     final sparks = staffSparksDamageRange(getSkillProgress(save, arcanaSkillId).level);
-    staffHit = applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep);
+    staffHit = applyEnemyDamageResistance(
+      applySleepIncoming(rollDamage(sparks.min, sparks.max, random), asleep),
+      enemy,
+      floor,
+    );
     nextEnemyHp = math.max(0, nextEnemyHp - staffHit);
   }
 
@@ -354,6 +360,7 @@ CombatRoundResult resolveCombatRound(
         asleep,
       );
       if (bossInkActive) offhandHit = math.max(1, (offhandHit / 2).floor());
+      offhandHit = applyEnemyDamageResistance(offhandHit, enemy, floor);
       nextEnemyHp = math.max(0, nextEnemyHp - offhandHit);
     }
   }
@@ -490,6 +497,7 @@ CombatRoundResult resolveCombatRound(
   num thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;
   thornsHit = applySleepIncoming(thornsHit, asleep);
   if (lockpickCombat) thornsHit = 0;
+  thornsHit = applyEnemyDamageResistance(thornsHit, enemy, floor);
   if (thornsHit > 0) {
     nextEnemyHp = math.max(0, nextEnemyHp - thornsHit);
   }
