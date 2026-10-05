@@ -32,7 +32,7 @@ void main() {
     expect(enemy.raw['Maximum HP'], 50);
     expect(enemy.raw['Min Damage'], 10);
     expect(enemy.raw['Max Damage'], 20);
-    expect(enemy.raw['Combat XP'], 100);
+    expect(enemy.raw['Combat XP'], 25);
     expect(enemy.raw['Drop Chance'], 0);
     expect(enemy.raw['Reward Table ID'], isNull);
 

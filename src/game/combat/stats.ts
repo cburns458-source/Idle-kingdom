@@ -86,9 +86,9 @@ export function enemyScaledMaxHp(enemy: EnemyRow): number {
   )
 }
 
-/** Kill XP = true (Vitality-scaled) HP × 2. */
+/** Kill XP = floor(true Vitality-scaled HP / 2). */
 export function enemyCombatXp(enemy: EnemyRow): number {
-  return enemyScaledMaxHp(enemy) * 2
+  return Math.floor(enemyScaledMaxHp(enemy) / 2)
 }
 
 /** Encounter damage from table base × Might bonus. Boss player-base overrides sit elsewhere. */
