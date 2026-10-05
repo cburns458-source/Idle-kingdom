@@ -234,8 +234,8 @@ describe('codex index', () => {
   it('lists Combat XP and Might/Vitality on every other enemy', () => {
     const cow = codex.enemy('ENM-0001')!
     expect(cow.xpSkillLabel).toBe('Combat')
-    expect(cow.mightLevel).toBe(2)
-    expect(cow.vitalityLevel).toBe(3)
+    expect(cow.mightLevel).toBe(1)
+    expect(cow.vitalityLevel).toBe(5)
     const harpy = codex.enemy('ENM-0030')!
     expect(harpy.xpSkillLabel).toBe('Combat')
     expect(harpy.mightLevel).toBe(70)

@@ -186,8 +186,8 @@ void main() {
 
     final rat = codex.enemy('ENM-0025')!;
     expect(rat.displayName, 'Giant Rat');
-    expect(rat.combatLevel, 6);
-    expect(rat.maximumHp, 150);
+    expect(rat.combatLevel, 8);
+    expect(rat.maximumHp, 157);
     expect(rat.drops, isEmpty);
     expect(rat.tables, isEmpty);
     expect(rat.locations.map((row) => row.displayName), contains('Deep Mines'));
@@ -269,8 +269,8 @@ void main() {
   test('lists Combat XP and Might/Vitality on every other enemy', () {
     final cow = codex.enemy('ENM-0001')!;
     expect(cow.xpSkillLabel, 'Combat');
-    expect(cow.mightLevel, 2);
-    expect(cow.vitalityLevel, 3);
+    expect(cow.mightLevel, 1);
+    expect(cow.vitalityLevel, 5);
     final harpy = codex.enemy('ENM-0030')!;
     expect(harpy.xpSkillLabel, 'Combat');
     expect(harpy.mightLevel, 70);

@@ -40,7 +40,7 @@ void main() {
     final started = beginCombatSave(db, save, action, enemy, '2026-01-01T00:00:00.000Z');
 
     expect(slotStack(started, potionSlotId), isNull);
-    expect(started.combatEnemyHp, enemy.raw['Maximum HP']);
+    expect(started.combatEnemyHp, enemyEncounterMaxHp(db, started, enemy));
     expect(started.activePotionEffect?.enemyMaxHpDamagePercent, 10);
   });
 

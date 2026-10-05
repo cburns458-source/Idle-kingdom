@@ -25,7 +25,7 @@ const String vitalitySkillId = 'SKL-0016';
 const String combatSkillId = mightSkillId;
 
 /// Level bonuses (Might→damage, Vitality→HP) begin at this level (inclusive).
-const int combatLevelBonusStart = 10;
+const int combatLevelBonusStart = 5;
 
 /// Each contributing skill level grants this percent once the bonus is active.
 const num combatLevelBonusPercentPerLevel = 1;

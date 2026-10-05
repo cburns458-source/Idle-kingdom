@@ -28,8 +28,8 @@ function withSave(kind: SaveKind, extra: Record<string, JsonValue> = {}): JsonVa
   return { source: 'content', save: asJson(saveFor(kind)), ...extra }
 }
 
-/** Combat levels around the level-10 bonus threshold. */
-const COMBAT_LEVELS = [1, 9, 10, 11, 25, 99]
+/** Combat levels around the level-5 bonus threshold. */
+const COMBAT_LEVELS = [1, 4, 5, 6, 10, 25, 99]
 
 const ROLL_SEED = 20260812
 const ROLL_COUNT = 24

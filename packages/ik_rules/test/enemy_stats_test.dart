@@ -12,17 +12,36 @@ void main() {
     db = _db();
   });
 
+  test('player Might/Vitality bonuses start at skill level 5', () {
+    final save = createNewSave(db, 0);
+    expect(mightDamageMultiplier(save), 1);
+    expect(vitalityHpMultiplier(save), 1);
+    expect(playerMaxHp(db, save), 1000);
+    final level5 = save.copyWith(
+      skills: save.skills
+          .map(
+            (skill) => skill.skillId == mightSkillId || skill.skillId == vitalitySkillId
+                ? skill.copyWith(level: 5)
+                : skill,
+          )
+          .toList(),
+    );
+    expect(mightDamageMultiplier(level5), closeTo(1.05, 0.0001));
+    expect(vitalityHpMultiplier(level5), closeTo(1.05, 0.0001));
+    expect(playerMaxHp(db, level5), 1050);
+  });
+
   test('existing enemies keep table HP/damage as bases and scale from Might/Vitality', () {
     final save = createNewSave(db, 0);
     final cow = getEnemy(db, 'ENM-0001')!;
     final scout = getEnemy(db, 'ENM-0003')!;
 
-    expect(enemyMightLevel(cow), 2);
-    expect(enemyVitalityLevel(cow), 3);
-    expect(enemyCombatLevel(cow), 4);
-    expect(enemyScaledMaxHp(cow), 100);
-    expect(enemyCombatXp(cow), 50);
-    expect(enemyEncounterMaxHp(db, save, cow), 100);
+    expect(enemyMightLevel(cow), 1);
+    expect(enemyVitalityLevel(cow), 5);
+    expect(enemyCombatLevel(cow), 5);
+    expect(enemyScaledMaxHp(cow), 105);
+    expect(enemyCombatXp(cow), 52);
+    expect(enemyEncounterMaxHp(db, save, cow), 105);
     expect(enemyEncounterDamageRange(db, save, cow).toJson(), {'min': 10, 'max': 20});
 
     expect(enemyMightLevel(scout), 12);
@@ -39,9 +58,9 @@ void main() {
     final source = assertGameDatabaseShape(contentDatabaseJson());
     // id, name, might, vitality, baseHp, minDmg, maxDmg, combatXp, locationId
     const launchEnemies = <(String, String, num, num, num, num, num, num, String?)>[
-      ('ENM-0025', 'Giant Rat', 5, 3, 150, 12, 26, 75, 'LOC-0011'),
-      ('ENM-0026', 'Bandit', 15, 6, 260, 16, 40, 130, 'LOC-0052'),
-      ('ENM-0027', 'Cave Bat', 14, 8, 580, 37, 73, 290, 'LOC-0046'),
+      ('ENM-0025', 'Giant Rat', 5, 5, 150, 12, 26, 78, 'LOC-0011'),
+      ('ENM-0026', 'Bandit', 15, 6, 260, 16, 40, 137, 'LOC-0052'),
+      ('ENM-0027', 'Cave Bat', 14, 8, 580, 37, 73, 313, 'LOC-0046'),
       ('ENM-0029', 'Bandit Captain', 26, 16, 930, 55, 108, 539, 'LOC-0052'),
       ('ENM-0030', 'Harpy', 70, 40, 3860, 152, 268, 2702, 'LOC-0047'),
       ('ENM-0031', 'Giant', 60, 50, 4440, 164, 288, 3330, 'LOC-0049'),
