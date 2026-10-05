@@ -212,7 +212,7 @@ function startNextCombatRound(db: GameDatabase, out: TickOutput, atMs: number): 
   })
 }
 
-/** Both sides attack at round end. A killing blow skips the enemy swing. */
+/** Both sides attack late in the round. A killing blow skips the enemy swing. */
 function applyDueCombatRound(
   db: GameDatabase,
   out: TickOutput,
@@ -239,7 +239,7 @@ function applyDueCombatRound(
   applyDueEnemyCombatPhase(db, out, activityId, enemy, action, roundEnd, roundMs, random)
 }
 
-/** Enemy swing / outcome at combat_enemy_attack_at (round end). */
+/** Enemy swing / outcome at combat_enemy_attack_at. */
 function applyDueEnemyCombatPhase(
   db: GameDatabase,
   out: TickOutput,
@@ -459,7 +459,7 @@ export function advanceSession(
   }
 
   // Legacy inter-round eat pause (no active round clock). Mid-round eat is
-  // handled below and does not block the 6s attack.
+  // handled below and does not block the attack.
   if (out.current.combatEatUntil && !out.current.combatRoundStartedAt) {
     const eatUntil = Date.parse(out.current.combatEatUntil)
     if (eatUntil > nowMs) return out.result()
@@ -493,9 +493,9 @@ export function advanceSession(
     const roundStart = Date.parse(out.current.combatRoundStartedAt)
     const roundMs = configNumber(db, 'combat_round_duration', 6) * 1000
     const playerAt =
-      roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000
+      roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000
     const enemyAt =
-      roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000
+      roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000
     const roundEnd = roundStart + roundMs
     const eatUntil = out.current.combatEatUntil
       ? Date.parse(out.current.combatEatUntil)
