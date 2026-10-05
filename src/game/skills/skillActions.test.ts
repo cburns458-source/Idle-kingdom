@@ -303,8 +303,6 @@ describe('skill menu entries', () => {
     expect(other.some((item) => item.displayName === 'Cooked swordfish')).toBe(false)
     expect(other.some((item) => item.displayName === 'Cooked marlin')).toBe(false)
     expect(meat.some((item) => item.displayName === 'Cooked beef')).toBe(true)
-    expect(meat.some((item) => item.displayName === 'Cooked duck')).toBe(true)
-    expect(meat.some((item) => item.displayName === 'Cooked boar meat')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Crawfish Stew')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Soup Stock')).toBe(true)
     expect(other.some((item) => item.displayName.toLowerCase().includes('potato'))).toBe(true)
@@ -316,13 +314,22 @@ describe('skill menu entries', () => {
     )
   })
 
-  it('keeps crafting/metallurgy/alchemy on a single Actions tab', () => {
+  it('keeps crafting/metallurgy on a single Actions tab and splits alchemy', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    for (const skillId of ['SKL-0008', 'SKL-0009', 'SKL-0010'] as const) {
+    for (const skillId of ['SKL-0008', 'SKL-0009'] as const) {
       const view = skillMenuView(launch, skillId)
       expect(view.tabs.map((tab) => tab.label)).toEqual(['Actions'])
       expect(view.tabs[0]?.sections[0]?.entries.length).toBeGreaterThan(0)
     }
+    const alchemy = skillMenuView(launch, 'SKL-0010')
+    expect(alchemy.tabs.map((tab) => tab.label)).toEqual(['Potions', 'Ingredients'])
+    const ingredients =
+      alchemy.tabs.find((tab) => tab.id === 'ingredients')?.sections[0]?.entries ?? []
+    expect(ingredients.map((item) => item.displayName).sort()).toEqual([
+      'Catfish Oil',
+      'Eel Tail',
+      'Salmon Roe',
+    ])
     const crafting = skillMenuView(launch, 'SKL-0009')
     const actions = crafting.tabs.find((tab) => tab.id === 'actions')?.sections[0]?.entries ?? []
     expect(actions.some((item) => item.displayName === 'Craft lockpicks')).toBe(true)

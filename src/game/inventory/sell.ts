@@ -106,12 +106,6 @@ export function sellInventoryIndexes(
     ...save,
     inventory,
     gold: save.gold + goldEarned,
-    statistics: {
-      values: {
-        ...save.statistics.values,
-        gold_earned: Number(save.statistics.values.gold_earned ?? 0) + goldEarned,
-      },
-    },
   }
   if (soldAtShop.length > 0) {
     next = recordItemsSoldAtLocation(next, soldAtShop, save.currentLocationId)

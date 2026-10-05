@@ -54,15 +54,22 @@ class RewardsEvent extends SessionEvent {
 
 /// Transient status line, e.g. the blow-by-blow of a combat round.
 class MessageEvent extends SessionEvent {
-  const MessageEvent(this.text);
+  const MessageEvent(this.text, {this.topic});
 
   final String text;
+
+  /// Away-summary topic. Mid-fight chatter is hidden from AFK panels.
+  final String? topic;
 
   @override
   String get kind => 'message';
 
   @override
-  Map<String, Object?> toJson() => <String, Object?>{'kind': kind, 'text': text};
+  Map<String, Object?> toJson() => <String, Object?>{
+    'kind': kind,
+    'text': text,
+    if (topic != null) 'topic': topic,
+  };
 }
 
 /// The running activity ended on its own; the reason explains why.

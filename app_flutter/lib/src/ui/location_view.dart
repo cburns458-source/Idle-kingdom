@@ -907,7 +907,8 @@ class _LocationViewState extends State<LocationView> {
             builder: (context) => _InteractionCard(
               title: 'Fishing pot',
               subtitle: canPlace.ok
-                  ? 'Place a fishing pot here.'
+                  ? 'Place a fishing pot here. ${lock.remaining} '
+                        '${lock.remaining == 1 ? 'pot' : 'pots'} left today.'
                   : lock.locked
                   ? 'Already fished here today.'
                   : canPlace.reason,

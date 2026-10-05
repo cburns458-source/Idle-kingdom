@@ -17,6 +17,7 @@ const Map<String, num> hideLeatherYields = <String, num>{
   'boar_hide': 2,
   'great_stag_hide': 4,
   'moonhorn_hide': 4,
+  'rabbit_hide': 1,
 };
 
 class TannerHideOption {

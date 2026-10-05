@@ -149,18 +149,6 @@ export function confirmShopOffer(
   }
   next = spaceCheck
 
-  if (sellCredit.total > 0) {
-    const earned = Number(next.statistics.values.gold_earned ?? 0) + sellCredit.total
-    next = {
-      ...next,
-      statistics: {
-        values: {
-          ...next.statistics.values,
-          gold_earned: earned,
-        },
-      },
-    }
-  }
   if (sells.length > 0) {
     const shopLocation = String(shop['Location ID'] ?? save.currentLocationId)
     next = recordItemsSoldAtLocation(next, sells, shopLocation)

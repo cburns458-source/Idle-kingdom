@@ -34,9 +34,7 @@ num productionCraftDurationMs(
   ActivePotionEffect? potionEffect,
 ) {
   final baseDurationMs = jsNumber(recipe.raw['Base Duration Seconds']) * 1000;
-  final atr = equippedActionTimeReductionPercent(db, save, jsString(recipe.raw['Skill ID']));
-  final spellFactor = activeSpellProductionDurationMultiplier(db, save);
-  final reduced = baseDurationMs * math.max(0.01, 1 - atr / 100) * spellFactor;
+  final reduced = baseDurationMs * activeSpellProductionDurationMultiplier(db, save);
   return applyPotionDurationMs(reduced, potionEffect);
 }
 
@@ -192,7 +190,13 @@ ProductionCraftResult? completeProductionCraft(
   // The materials left the bag when the queue was placed, so a botched craft
   // costs them: rolling before the output means a full bag cannot save them.
   final craftLevel = getSkillProgress(save, skillId).level;
-  if (!rollProductionSuccess(craftLevel, random, jsNumber(recipe.raw['Proficiency Level']))) {
+  final successBonus = equippedSuccessChanceBonusPercent(db, save, skillId);
+  if (!rollProductionSuccess(
+    craftLevel,
+    random,
+    jsNumber(recipe.raw['Proficiency Level']),
+    successBonus,
+  )) {
     final ruinedName = db.items
         .firstWhereOrNull((item) => item.raw['Item ID'] == outputItemId)
         ?.raw['Display Name'];

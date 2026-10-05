@@ -5,7 +5,7 @@ import type { EnemyRow } from '../data/enemyTypes'
 import type { PlayerSave } from '../save/types'
 import { recordEnemyKill } from '../achievements/progress'
 import { bossProfile, isBossAddFight, type BossProfile } from './boss'
-import { getEnemy } from './engine'
+import { getEnemy, openCombatRoundClock } from './engine'
 import { enemyCombatXp } from './stats'
 
 export interface SquidlingVictoryResult {
@@ -37,9 +37,9 @@ export function beginBossAddsEncounter(
     combatBossInkActive: false,
     combatEnemyId: squidling['Enemy ID'],
     combatEnemyHp: squidling['Maximum HP'],
-    combatRoundStartedAt: roundEndIso,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
+    ...openCombatRoundClock(db, Date.parse(roundEndIso)),
   }
 }
 
@@ -82,9 +82,9 @@ export function applySquidlingVictory(
         combatBossAddsRemaining: remaining,
         combatEnemyId: nextSquidling['Enemy ID'],
         combatEnemyHp: nextSquidling['Maximum HP'],
-        combatRoundStartedAt: roundEndIso,
         combatBossInkActive: false,
         combatSkipEnemyAttack: false,
+        ...openCombatRoundClock(db, Date.parse(roundEndIso)),
       },
       xpGained: xpAmount,
       xpSkillId: FISHING_SKILL_ID,
@@ -110,10 +110,10 @@ export function applySquidlingVictory(
       combatBossPendingHp: null,
       combatEnemyId: bossId,
       combatEnemyHp: pendingHp,
-      combatRoundStartedAt: roundEndIso,
       combatBossInkActive: false,
       combatSkipEnemyAttack: false,
       combatBossSleepRoundsRemaining: null,
+      ...openCombatRoundClock(db, Date.parse(roundEndIso)),
     },
     xpGained: xpAmount,
       xpSkillId: FISHING_SKILL_ID,

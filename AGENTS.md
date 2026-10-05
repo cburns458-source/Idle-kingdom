@@ -11,6 +11,11 @@ Standing since 18 Aug 2026, until the owner says otherwise.
 A feature branch is still worth keeping while the work is in progress, and worth
 pushing so there is a record of it, but it is not where the work stops.
 
+**Balance / playable behavior must target `test-launch` as the PR base.** Merging
+into a feature stack only does not put the change in front of players. Before
+calling balance work done, confirm the merge commit is an ancestor of
+`origin/test-launch` (for example `git merge-base --is-ancestor <sha> origin/test-launch`).
+
 ## What has to pass before pushing
 
 `test-launch` is deployed, so a broken commit on it is a broken game rather than
@@ -41,6 +46,10 @@ loads them.
 
 The formatter is the gate most easily forgotten and it fails the build on its
 own, so run it last thing before committing.
+
+**CI flake note:** a red check with zero failed jobs often means the hosted
+runner never acquired the job (or the forge returned a 5xx), not that the game
+code failed. Retrigger the empty/failed run before debugging logic.
 
 ## Migrations
 

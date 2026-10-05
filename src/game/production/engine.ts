@@ -12,7 +12,7 @@ import {
   productionOutputReservePerCraft,
   ALCHEMY_SKILL_ID,
 } from '../equipment/specialist'
-import { equippedActionTimeReductionPercent } from '../equipment/loadout'
+import { equippedSuccessChanceBonusPercent } from '../equipment/loadout'
 import { canFitItemQuantity, maxAddableQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
 import type { RecipeRow } from '../data/recipeTypes'
@@ -31,11 +31,7 @@ export function productionCraftDurationMs(
   potionEffect: ActivePotionEffect | null | undefined,
 ): number {
   const baseDurationMs = recipe['Base Duration Seconds'] * 1000
-  const atr = equippedActionTimeReductionPercent(db, save, recipe['Skill ID'])
-  const reduced =
-    baseDurationMs *
-    Math.max(0.01, 1 - atr / 100) *
-    activeSpellProductionDurationMultiplier(db, save)
+  const reduced = baseDurationMs * activeSpellProductionDurationMultiplier(db, save)
   return applyPotionDurationMs(reduced, potionEffect)
 }
 import { removeIngredients } from './inventory'
@@ -189,7 +185,8 @@ export function completeProductionCraft(
   // The materials left the bag when the queue was placed, so a botched craft
   // costs them: rolling before the output means a full bag cannot save them.
   const craftLevel = getSkillProgress(save, recipe['Skill ID']).level
-  if (!rollProductionSuccess(craftLevel, random, recipe['Proficiency Level'])) {
+  const successBonus = equippedSuccessChanceBonusPercent(db, save, recipe['Skill ID'])
+  if (!rollProductionSuccess(craftLevel, random, recipe['Proficiency Level'], successBonus)) {
     const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
     return finishProductionCraft(db, save, recipe, nowMs, {
       next: save,

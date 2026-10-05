@@ -12,7 +12,12 @@ final RegExp _craftedLine = RegExp(
 );
 
 /// Mid-fight chatter that catch-up still simulates but the away panel hides.
-bool isIncompleteCombatAwayLine(String text) {
+///
+/// Prefer structured [topic] from session message events. Regex is only a
+/// fallback for older untagged lines.
+bool isIncompleteCombatAwayLine(String text, [String? topic]) {
+  if (topic == 'combat-swing' || topic == 'combat-phase') return true;
+  if (topic == 'combat-outcome' || topic == 'general') return false;
   if (RegExp(r'^You (hit |crit for )').hasMatch(text)) return true;
   if (text.contains('releases squidlings!')) return true;
   return false;

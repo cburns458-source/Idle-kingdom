@@ -30,9 +30,9 @@ class RaceChangeCost {
   final List<RaceChangeItemCost> items;
 }
 
-/// Mid-level (30–55) costs. No gems or ruby. Human is maple; High Elf is bass.
+/// Mid-level (30–55) costs. Fallback when Config rows are missing.
 const Map<String, RaceChangeCost> raceChangeCosts = <String, RaceChangeCost>{
-  'RACE-0001': const RaceChangeCost(
+  'RACE-0001': RaceChangeCost(
     gold: 0,
     items: [RaceChangeItemCost(itemId: 'ITEM-0018', quantity: 40)],
   ),
@@ -43,7 +43,7 @@ const Map<String, RaceChangeCost> raceChangeCosts = <String, RaceChangeCost>{
       RaceChangeItemCost(itemId: 'ITEM-0196', quantity: 20),
     ],
   ),
-  'RACE-0003': const RaceChangeCost(
+  'RACE-0003': RaceChangeCost(
     gold: 0,
     items: [RaceChangeItemCost(itemId: 'ITEM-0050', quantity: 40)],
   ),
@@ -75,7 +75,34 @@ const Map<String, RaceChangeCost> raceChangeCosts = <String, RaceChangeCost>{
   ),
 };
 
-RaceChangeCost? raceChangeCostFor(String raceId) => raceChangeCosts[raceId];
+List<RaceChangeItemCost>? _parseRaceChangeItems(Object? raw) {
+  if (raw is! String || raw.trim().isEmpty) return null;
+  final items = <RaceChangeItemCost>[];
+  for (final part in raw.split(',')) {
+    final bits = part.trim().split(':');
+    if (bits.length != 2) continue;
+    final quantity = num.tryParse(bits[1]);
+    if (bits[0].isEmpty || quantity == null || quantity <= 0) continue;
+    items.add(RaceChangeItemCost(itemId: bits[0].trim(), quantity: quantity));
+  }
+  return items.isEmpty ? null : items;
+}
+
+/// Prefer Config `race_change_cost_<raceId>_{items,gold}`; fall back to [raceChangeCosts].
+RaceChangeCost? raceChangeCostFor(String raceId, [GameDatabase? db]) {
+  final fallback = raceChangeCosts[raceId];
+  if (db == null) return fallback;
+  final itemsRaw = db.config
+      .firstWhereOrNull((row) => row.raw['Key'] == 'race_change_cost_${raceId}_items')
+      ?.raw['Value'];
+  final goldRaw = db.config
+      .firstWhereOrNull((row) => row.raw['Key'] == 'race_change_cost_${raceId}_gold')
+      ?.raw['Value'];
+  final items = _parseRaceChangeItems(itemsRaw) ?? fallback?.items ?? const <RaceChangeItemCost>[];
+  final gold = goldRaw is num ? goldRaw : (fallback?.gold ?? 0);
+  if (fallback == null && items.isEmpty && gold <= 0) return null;
+  return RaceChangeCost(gold: gold, items: items);
+}
 
 bool raceChangeUnlocked(PlayerSave save) => totalLevel(save) >= raceChangeTotalLevel;
 
@@ -231,7 +258,7 @@ RaceChangeOffer raceChangeOffer(GameDatabase db, PlayerSave save, num nowMs) {
   final pitch = quest?['Pitch'];
   final options = races(db).map((race) {
     final raceId = jsString(race.raw['Race ID']);
-    final cost = raceChangeCostFor(raceId) ?? const RaceChangeCost(gold: 0, items: []);
+    final cost = raceChangeCostFor(raceId, db) ?? const RaceChangeCost(gold: 0, items: []);
     final bonus = raceBonusSummaryLines(db, raceId).join(' · ');
     final description = race.raw['Description'];
     return RaceChangeOption(
@@ -286,7 +313,7 @@ ChangeRaceResult changeRaceAtNpc(GameDatabase db, PlayerSave save, String raceId
     );
   }
 
-  final cost = raceChangeCostFor(raceId);
+  final cost = raceChangeCostFor(raceId, db);
   if (cost == null) {
     return const ChangeRaceResult.failed('Vesper will not weave that shape.');
   }

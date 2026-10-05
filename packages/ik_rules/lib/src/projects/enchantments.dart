@@ -394,28 +394,37 @@ String? _skillIdFromDurationEffect(String effect) {
   return null;
 }
 
-String? _skillIdFromAtrEffect(String effect) {
-  if (RegExp(r'Mining action time reduction', caseSensitive: false).hasMatch(effect)) {
+String? _skillIdFromSuccessChanceEffect(String effect) {
+  if (RegExp(
+    r'Mining (?:action time reduction|success chance)',
+    caseSensitive: false,
+  ).hasMatch(effect)) {
     return _miningSkillId;
   }
-  if (RegExp(r'Fishing action time reduction', caseSensitive: false).hasMatch(effect)) {
+  if (RegExp(
+    r'Fishing (?:action time reduction|success chance)',
+    caseSensitive: false,
+  ).hasMatch(effect)) {
     return _fishingSkillId;
   }
-  if (RegExp(r'Woodcutting action time reduction', caseSensitive: false).hasMatch(effect)) {
+  if (RegExp(
+    r'Woodcutting (?:action time reduction|success chance)',
+    caseSensitive: false,
+  ).hasMatch(effect)) {
     return _woodcuttingSkillId;
   }
   return null;
 }
 
-/// Action-time reduction percent from tool enchantments, keyed by skill.
-Map<String, num> equippedEnchantmentActionTimeReductionBySkill(GameDatabase db, PlayerSave save) {
+/// Success-chance bonus percent from tool enchantments, keyed by skill.
+Map<String, num> equippedEnchantmentSuccessChanceBonusBySkill(GameDatabase db, PlayerSave save) {
   final totals = <String, num>{};
   for (final enchantmentId in _equippedEnchantmentIds(save)) {
     final effect = _effectOf(db, enchantmentId);
-    final skillId = _skillIdFromAtrEffect(effect);
+    final skillId = _skillIdFromSuccessChanceEffect(effect);
     if (skillId == null) continue;
     final match = RegExp(
-      r'\+(\d+(?:\.\d+)?)%\s+\w+\s+action time reduction',
+      r'\+(\d+(?:\.\d+)?)%\s+\w+\s+(?:action time reduction|success chance)',
       caseSensitive: false,
     ).firstMatch(effect);
     if (match == null) continue;
@@ -423,6 +432,10 @@ Map<String, num> equippedEnchantmentActionTimeReductionBySkill(GameDatabase db, 
   }
   return totals;
 }
+
+/// @deprecated Use [equippedEnchantmentSuccessChanceBonusBySkill]
+Map<String, num> equippedEnchantmentActionTimeReductionBySkill(GameDatabase db, PlayerSave save) =>
+    equippedEnchantmentSuccessChanceBonusBySkill(db, save);
 
 const String _critStrikeEnchantmentId = 'ENCH-0008';
 const num _critStrikeChancePerEnchant = 10;

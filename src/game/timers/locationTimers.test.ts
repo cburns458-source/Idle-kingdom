@@ -23,6 +23,7 @@ import {
   TURNIP_SEED_ITEM_ID,
   discoverTimerSpotsForLocation,
   FISHING_POT_ITEM_ID,
+  OLD_BOOTS_ITEM_ID,
   TIMER_INVENTORY_FULL_CATCH_REASON,
   TIMER_INVENTORY_FULL_HARVEST_REASON,
   locationHasBotanyPatch,
@@ -226,9 +227,10 @@ describe('locationTimers', () => {
     expect(canPlantBotanySeed(launch, save, 'ITEM-0350').ok).toBe(false)
   })
 
-  it('places fishing pots once per UTC day and rolls 3-6 fish per bait slot', () => {
+  it('places fishing pots three times per site per UTC day and rolls 3-6 fish per bait slot', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const dayStart = Date.parse('2026-03-01T12:00:00.000Z')
+    const collectAt = Date.parse('2026-03-01T18:00:00.000Z')
     let save = createNewSave(launch)
     save = {
       ...save,
@@ -242,17 +244,27 @@ describe('locationTimers', () => {
     const placed = placeTrap(launch, save, FISHING_POT_ITEM_ID, dayStart)
     expect(placed.ok).toBe(true)
     if (!placed.ok) return
-    expect(placed.save.fishingPotDayKeyByLocationId['LOC-0003']).toBe('2026-03-01')
+    expect(placed.save.fishingPotDayKeyByLocationId['LOC-0003']).toBe('2026-03-01:1')
     expect(timerAtLocationKind(placed.save, 'LOC-0003', 'fishing_pot')?.kind).toBe('fishing_pot')
     expect(timerAtLocationKind(placed.save, 'LOC-0003', 'fishing_pot')?.baitItemIds).toBeUndefined()
+    expect(canPlaceTrap(launch, placed.save, FISHING_POT_ITEM_ID, 'LOC-0003', dayStart).ok).toBe(
+      false,
+    )
 
+    const missBoots = () => {
+      let n = 0
+      return () => {
+        n += 1
+        return n <= 6 ? 0 : 1
+      }
+    }
     const collected = collectLocationTimer(
       launch,
       placed.save,
       'LOC-0003',
       'fishing_pot',
-      Date.parse('2026-03-01T18:00:00.000Z'),
-      () => 0,
+      collectAt,
+      missBoots(),
     )
     expect(collected.ok).toBe(true)
     if (!collected.ok) return
@@ -270,15 +282,82 @@ describe('locationTimers', () => {
       collected.save.inventory.find((stack) => stack.itemId === FISHING_POT_ITEM_ID)?.quantity,
     ).toBe(2)
 
-    const blocked = canPlaceTrap(launch, collected.save, FISHING_POT_ITEM_ID, 'LOC-0003', dayStart)
+    const second = placeTrap(launch, collected.save, FISHING_POT_ITEM_ID, dayStart)
+    expect(second.ok).toBe(true)
+    if (!second.ok) return
+    expect(second.save.fishingPotDayKeyByLocationId['LOC-0003']).toBe('2026-03-01:2')
+    const secondCollect = collectLocationTimer(
+      launch,
+      second.save,
+      'LOC-0003',
+      'fishing_pot',
+      collectAt,
+      missBoots(),
+    )
+    expect(secondCollect.ok).toBe(true)
+    if (!secondCollect.ok) return
+
+    const third = placeTrap(launch, secondCollect.save, FISHING_POT_ITEM_ID, dayStart)
+    expect(third.ok).toBe(true)
+    if (!third.ok) return
+    expect(third.save.fishingPotDayKeyByLocationId['LOC-0003']).toBe('2026-03-01:3')
+    const thirdCollect = collectLocationTimer(
+      launch,
+      third.save,
+      'LOC-0003',
+      'fishing_pot',
+      collectAt,
+      missBoots(),
+    )
+    expect(thirdCollect.ok).toBe(true)
+    if (!thirdCollect.ok) return
+
+    const blocked = canPlaceTrap(launch, thirdCollect.save, FISHING_POT_ITEM_ID, 'LOC-0003', dayStart)
     expect(blocked.ok).toBe(false)
     if (blocked.ok) return
     expect(blocked.reason.toLowerCase()).toContain('overfish')
 
     const nextDay = Date.parse('2026-03-02T00:00:00.000Z')
-    expect(canPlaceTrap(launch, collected.save, FISHING_POT_ITEM_ID, 'LOC-0003', nextDay).ok).toBe(
-      true,
+    expect(
+      canPlaceTrap(launch, thirdCollect.save, FISHING_POT_ITEM_ID, 'LOC-0003', nextDay).ok,
+    ).toBe(true)
+  })
+
+  it('rolls Old Boots as a 1% pot-collect secondary and treats a bare day key as one use', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const dayStart = Date.parse('2026-03-01T12:00:00.000Z')
+    const perch = launch.Actions.find((row) => row['Action ID'] === 'ACN-0099')!
+    expect(perch['Secondary Reward Table ID']).toBeNull()
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0003',
+      skills: createNewSave(launch).skills.map((row) =>
+        row.skillId === 'SKL-0003' ? { ...row, level: 50, xp: 848633 } : row,
+      ),
+      inventory: [{ itemId: FISHING_POT_ITEM_ID, quantity: 1 }],
+      fishingPotDayKeyByLocationId: { 'LOC-0003': '2026-03-01' },
+    }
+    expect(canPlaceTrap(launch, save, FISHING_POT_ITEM_ID, 'LOC-0003', dayStart).ok).toBe(true)
+    const placed = placeTrap(launch, save, FISHING_POT_ITEM_ID, dayStart)
+    expect(placed.ok).toBe(true)
+    if (!placed.ok) return
+    expect(placed.save.fishingPotDayKeyByLocationId['LOC-0003']).toBe('2026-03-01:2')
+
+    const collected = collectLocationTimer(
+      launch,
+      placed.save,
+      'LOC-0003',
+      'fishing_pot',
+      Date.parse('2026-03-01T18:00:00.000Z'),
+      () => 0,
     )
+    expect(collected.ok).toBe(true)
+    if (!collected.ok) return
+    expect(collected.loot.map((row) => row.itemId)).toEqual([
+      'ITEM-0352',
+      FISHING_POT_ITEM_ID,
+      OLD_BOOTS_ITEM_ID,
+    ])
   })
 
   it('baits pots by overall fishing level and awards matching hunter XP', () => {

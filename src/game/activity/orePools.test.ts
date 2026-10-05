@@ -18,6 +18,17 @@ function poolWeights(
 }
 
 describe('ore pool weights', () => {
+  it('weights the copper mine 60/20/20 copper tin clay', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(poolWeights(launch, 'POOL-0005')).toEqual(
+      expect.arrayContaining([
+        { actionId: 'ACN-0018', weight: 60 },
+        { actionId: 'ACN-0020', weight: 20 },
+        { actionId: 'ACN-0019', weight: 20 },
+      ]),
+    )
+  })
+
   it('adds titanium and tungsten to the deep mines', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const weights = poolWeights(launch, 'POOL-0013')

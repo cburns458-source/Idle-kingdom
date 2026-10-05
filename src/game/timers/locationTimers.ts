@@ -1,6 +1,7 @@
 import { recordBotanyHarvest } from '../achievements/progress'
 import { addItemsToInventory } from '../activity/rewards'
 import { applyXp, getSkillProgress } from '../activity/xp'
+import { applyRelativeDropChance, totalRelativeDropChanceBonusPercent } from '../loot/dropChance'
 import { canFitItemQuantity } from '../inventory/capacity'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
 import type { GameDatabase, ItemRow } from '../data/types'
@@ -169,6 +170,11 @@ export function locationHasCompostCollect(locationId: string): boolean {
 export const FISHING_POT_LOCATIONS = new Set(['LOC-0003', 'LOC-0004'])
 /** @deprecated Use FISHING_POT_LOCATIONS */
 export const FISHING_TRAP_LOCATIONS = FISHING_POT_LOCATIONS
+/** One pot at a time, up to this many places per site per UTC day. */
+export const FISHING_POT_MAX_PER_SITE_PER_DAY = 3
+export const OLD_BOOTS_ITEM_ID = 'ITEM-0181'
+/** Secondary-style 1% Old Boots roll on each pot collect. */
+export const FISHING_POT_BOOTS_CHANCE_PERCENT = 1
 
 /** Default trap soak time: 6 hours. */
 export const TRAP_DURATION_MS = 6 * 60 * 60 * 1000
@@ -617,17 +623,41 @@ export function msUntilNextUtcDay(nowMs: number): number {
   return Math.max(0, next - nowMs)
 }
 
+/** Places already used at this site on the current UTC day. */
+export function fishingPotUsesToday(
+  save: PlayerSave,
+  locationId: string,
+  nowMs: number = Date.now(),
+): number {
+  const dayKey = fishingPotUtcDayKey(nowMs)
+  const raw = save.fishingPotDayKeyByLocationId?.[locationId]
+  if (!raw) return 0
+  if (raw === dayKey) return 1
+  if (raw.startsWith(`${dayKey}:`)) {
+    const parsed = Number(raw.slice(dayKey.length + 1))
+    if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed)
+  }
+  return 0
+}
+
 export function fishingPotLockedUntilDay(
   save: PlayerSave,
   locationId: string,
   nowMs: number = Date.now(),
-): { locked: boolean; dayKey: string; msRemaining: number } {
+): {
+  locked: boolean
+  dayKey: string
+  msRemaining: number
+  uses: number
+  remaining: number
+} {
   const dayKey = fishingPotUtcDayKey(nowMs)
-  const used = save.fishingPotDayKeyByLocationId?.[locationId]
-  if (used === dayKey) {
-    return { locked: true, dayKey, msRemaining: msUntilNextUtcDay(nowMs) }
+  const uses = fishingPotUsesToday(save, locationId, nowMs)
+  const remaining = Math.max(0, FISHING_POT_MAX_PER_SITE_PER_DAY - uses)
+  if (remaining <= 0) {
+    return { locked: true, dayKey, msRemaining: msUntilNextUtcDay(nowMs), uses, remaining: 0 }
   }
-  return { locked: false, dayKey, msRemaining: 0 }
+  return { locked: false, dayKey, msRemaining: 0, uses, remaining }
 }
 
 export function canPlaceTrap(
@@ -715,7 +745,7 @@ export function placeTrap(
     ],
     fishingPotDayKeyByLocationId: {
       ...(removed.fishingPotDayKeyByLocationId ?? {}),
-      [locationId]: fishingPotUtcDayKey(nowMs),
+      [locationId]: `${fishingPotUtcDayKey(nowMs)}:${fishingPotUsesToday(removed, locationId, nowMs) + 1}`,
     },
   }
   return {
@@ -933,6 +963,13 @@ export function collectLocationTimer(
       xpGained += row.xp
     }
     grants.push({ itemId: timer.inputItemId, quantity: 1 })
+    const bootsChance = applyRelativeDropChance(
+      FISHING_POT_BOOTS_CHANCE_PERCENT,
+      totalRelativeDropChanceBonusPercent(db, save),
+    )
+    if (typeof bootsChance === 'number' && random() * 100 < bootsChance) {
+      grants.push({ itemId: OLD_BOOTS_ITEM_ID, quantity: 1 })
+    }
   } else {
     return { ok: false, reason: 'Unknown timer kind.' }
   }
