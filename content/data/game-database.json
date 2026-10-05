@@ -40,7 +40,7 @@
       "Key": "combat_round_duration",
       "Value": 6,
       "Unit": "seconds",
-      "Notes": "Combat round length. Both sides attack at combat_player_attack_at / combat_enemy_attack_at (late in the round so hit numbers can fade before the next round). Mid-round auto-eat uses combat_eat_at. No extra eat delay."
+      "Notes": "Combat round length. Hits display at combat_player_attack_at / combat_enemy_attack_at; victory, defeat, and the next round wait until this full duration so the round bar stays continuous. Mid-round auto-eat uses combat_eat_at. No extra eat delay."
     },
     {
       "Key": "combat_eat_between_seconds",
@@ -50,7 +50,7 @@
     },
     {
       "Key": "combat_eat_at",
-      "Value": 1,
+      "Value": 0.5,
       "Unit": "seconds",
       "Notes": "Seconds into a combat round when auto-eat resolves. Instant; does not extend the round."
     },
@@ -58,13 +58,13 @@
       "Key": "combat_enemy_attack_at",
       "Value": 5.5,
       "Unit": "seconds",
-      "Notes": "Seconds into a combat round when the enemy attacks (same time as the player). Skipped on a killing blow. Early enough that hit numbers fade by round end."
+      "Notes": "Seconds into a combat round when hit numbers are shown (same time as the player). Skipped on a killing blow. Outcomes still wait for combat_round_duration."
     },
     {
       "Key": "combat_player_attack_at",
       "Value": 5.5,
       "Unit": "seconds",
-      "Notes": "Seconds into a combat round when the player attacks (same time as the enemy). Early enough that hit numbers fade by round end."
+      "Notes": "Seconds into a combat round when hit numbers are shown (same time as the enemy). Outcomes still wait for combat_round_duration."
     },
     {
       "Key": "gathering_below_proficiency_duration_multiplier",

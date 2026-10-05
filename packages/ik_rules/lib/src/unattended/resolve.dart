@@ -45,7 +45,8 @@ num? _nextCombatDueMs(GameDatabase db, PlayerSave save) {
   if (!roundStart.toDouble().isFinite) return null;
   final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000;
   final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000;
-  final attackAt = save.combatPlayerSwingApplied ? enemyAt : playerAt;
+  final roundEnd = roundStart + math.max(1, configNumber(db, 'combat_round_duration', 6) * 1000);
+  final attackAt = save.combatPlayerSwingApplied ? roundEnd : math.min(playerAt, enemyAt);
   if (isNotBlank(save.combatEatUntil)) {
     final eatUntil = jsDateParse(save.combatEatUntil);
     if (eatUntil.toDouble().isFinite && eatUntil <= attackAt) return eatUntil;
@@ -301,7 +302,7 @@ UnattendedResult resolveUnattendedProgress(
         break;
       }
 
-      // End-of-round attack: both sides, then outcome. Killing blows skip the enemy.
+      // Late-round hits: both sides. Outcomes wait for combat_round_duration.
       if (!current.combatPlayerSwingApplied) {
         final round = resolveCombatRound(db, current, enemy, current.combatEnemyHp!, random);
         if (round.lifestealHealed > 0) {
@@ -314,9 +315,11 @@ UnattendedResult resolveUnattendedProgress(
           combatPendingRound: round.toPendingRound(),
           combatBossInkActive: round.bossInkActive,
         );
+        lastResolvedMs = combatDue;
+        continue;
       }
 
-      // Enemy / outcome phase.
+      // Outcome phase at round end.
       final pending = current.combatPendingRound;
       if (pending == null) {
         current = current.copyWith(
