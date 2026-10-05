@@ -67,7 +67,7 @@ void main() {
     expect(intact.result.xpGained, greaterThan(0));
     expect(intact.save.equipment.slots[weaponToolSlotId]?.quantity, 3);
 
-    final rolls = <num>[0.81, 0];
+    final rolls = <double>[0.81, 0];
     var i = 0;
     final caught = completeGatheringAction(
       db,
