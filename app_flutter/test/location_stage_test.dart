@@ -432,9 +432,9 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    final roundMs = configNumber(database.launch, 'combat_round_duration', 4) * 1000;
-    for (var i = 0; i < 40 && controller.healPopup == null; i++) {
-      clock.advance(roundMs);
+    final eatMs = configNumber(database.launch, 'combat_eat_at', 1) * 1000;
+    for (var i = 0; i < 80 && controller.healPopup == null; i++) {
+      clock.advance(eatMs);
       controller.tick();
       await tester.pump();
     }
@@ -443,6 +443,8 @@ void main() {
     expect(find.byKey(ValueKey('heal-${controller.healPopup!.seq}')), findsOne);
     expect(find.text('+${controller.healPopup!.amount.round()}'), findsNWidgets(2));
 
+    // Expire this floater 1s later. Stepping by eat-at (not a full round) keeps
+    // that window off the next auto-eat, which would install a new HealPopup.
     clock.advance(GameController.healPopupHoldMs);
     controller.tick();
     await tester.pump();
