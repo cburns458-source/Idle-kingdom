@@ -679,7 +679,13 @@ int fishingPotUsesToday(PlayerSave save, String locationId, {required num nowMs}
   return 0;
 }
 
-({bool locked, String dayKey, num msRemaining, int uses, int remaining}) fishingPotLockedUntilDay(
+({
+  bool locked,
+  String dayKey,
+  num msRemaining,
+  int uses,
+  int remaining,
+}) fishingPotLockedUntilDay(
   PlayerSave save,
   String locationId, {
   required num nowMs,
@@ -687,7 +693,9 @@ int fishingPotUsesToday(PlayerSave save, String locationId, {required num nowMs}
   final now = nowMs;
   final dayKey = fishingPotUtcDayKey(now);
   final uses = fishingPotUsesToday(save, locationId, nowMs: now);
-  final remaining = uses >= fishingPotMaxPerSitePerDay ? 0 : fishingPotMaxPerSitePerDay - uses;
+  final remaining = uses >= fishingPotMaxPerSitePerDay
+      ? 0
+      : fishingPotMaxPerSitePerDay - uses;
   if (remaining <= 0) {
     return (
       locked: true,

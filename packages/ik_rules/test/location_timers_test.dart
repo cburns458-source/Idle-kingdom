@@ -118,7 +118,11 @@ void main() {
       random: () => 0,
     );
     expect(collected.ok, isTrue);
-    expect(collected.loot.map((row) => row.itemId), ['ITEM-0352', fishingPotItemId, oldBootsItemId]);
+    expect(collected.loot.map((row) => row.itemId), [
+      'ITEM-0352',
+      fishingPotItemId,
+      oldBootsItemId,
+    ]);
     expect(collected.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity, 9);
     expect(collected.xpGained, 4050);
     expect(collected.bonusXp, [(skillId: 'SKL-0005', xp: 4050)]);
