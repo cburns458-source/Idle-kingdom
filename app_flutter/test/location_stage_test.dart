@@ -22,30 +22,24 @@ void main() {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }
 
-  /// Advance through hit display (5.5s) and round-end outcomes (6s).
+  /// Advance through the end-of-round clash (hits + outcome together).
   Future<void> advanceCombatRound(
     WidgetTester tester,
     TestClock clock,
     GameController controller,
   ) async {
     final startedAt = jsDateParse(controller.save.combatRoundStartedAt!);
-    final attackAtMs = configNumber(database.launch, 'combat_player_attack_at', 5.5) * 1000;
-    final roundMs = configNumber(database.launch, 'combat_round_duration', 6) * 1000;
+    final attackAtMs = configNumber(database.launch, 'combat_player_attack_at', 6) * 1000;
 
     final toAttack = startedAt + attackAtMs - clock.read();
     if (toAttack > 0) clock.advance(toAttack);
-    // Jumping past eat-at lands on the mid-round eat first; tick again for hits.
+    // Jumping past eat-at lands on the mid-round eat first; tick again for the clash.
     controller.tick();
     await tester.pump();
     if (controller.lastRound == null) {
       controller.tick();
       await tester.pump();
     }
-
-    final toEnd = startedAt + roundMs - clock.read();
-    if (toEnd > 0) clock.advance(toEnd);
-    controller.tick();
-    await tester.pump();
   }
 
   testWidgets('entering a location shows the adventurer idle', (tester) async {
@@ -551,7 +545,7 @@ void main() {
     expect(find.textContaining('slots'), findsOne);
   });
 
-  testWidgets('a killing blow keeps sprites and damage up, then shows defeated', (tester) async {
+  testWidgets('a killing blow shows damage without a defeated banner', (tester) async {
     final clock = TestClock();
     final controller = buildController(
       database,
@@ -571,19 +565,17 @@ void main() {
     await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound?.outcome, 'victory');
-    expect(controller.combatBlowHold, isTrue);
+    expect(controller.combatBlowHold, isFalse);
+    expect(controller.defeatedFlash, isFalse);
     expect(find.text('defeated'), findsNothing);
+    expect(controller.showLastRoundFloaters, isTrue);
     expect(find.textContaining('${controller.lastRound!.playerHit.round()}'), findsWidgets);
     expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/enemies/')), findsOne);
 
-    clock.advance(GameController.combatBlowHoldMs);
+    clock.advance(GameController.combatFloaterHoldMs);
+    controller.tick();
     await tester.pump();
-    expect(controller.defeatedFlash, isTrue);
-    expect(find.text('defeated'), findsOne);
-
-    clock.advance(GameController.combatDefeatedBannerMs);
-    await tester.pump();
-    expect(controller.defeatedFlash, isFalse);
+    expect(controller.showLastRoundFloaters, isFalse);
     expect(find.text('defeated'), findsNothing);
   });
 

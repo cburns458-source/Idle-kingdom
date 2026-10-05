@@ -34,7 +34,7 @@ num _maxUnattendedSteps(GameDatabase db) {
   return math.max(20000, (capMs / minimumTickMs).ceil() + 1000);
 }
 
-/// Next discrete combat clock edge: mid-round eat or late-round attack.
+/// Next discrete combat clock edge: mid-round eat or end-of-round clash.
 num? _nextCombatDueMs(GameDatabase db, PlayerSave save) {
   if (isNotBlank(save.combatEatUntil) && isBlank(save.combatRoundStartedAt)) {
     final eatUntil = jsDateParse(save.combatEatUntil);
@@ -43,8 +43,8 @@ num? _nextCombatDueMs(GameDatabase db, PlayerSave save) {
   if (isBlank(save.combatEnemyId) || isBlank(save.combatRoundStartedAt)) return null;
   final roundStart = jsDateParse(save.combatRoundStartedAt);
   if (!roundStart.toDouble().isFinite) return null;
-  final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000;
-  final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000;
+  final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000;
+  final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
   final roundEnd = roundStart + math.max(1, configNumber(db, 'combat_round_duration', 6) * 1000);
   final attackAt = save.combatPlayerSwingApplied ? roundEnd : math.min(playerAt, enemyAt);
   if (isNotBlank(save.combatEatUntil)) {
@@ -289,8 +289,8 @@ UnattendedResult resolveUnattendedProgress(
 
       final roundStart = jsDateParse(current.combatRoundStartedAt);
       final roundMs = configNumber(db, 'combat_round_duration', 6) * 1000;
-      final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000;
-      final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000;
+      final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000;
+      final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
       final roundEnd = math.max(enemyAt, roundStart + roundMs);
 
       final enemy = getEnemy(db, current.combatEnemyId!);
@@ -302,7 +302,7 @@ UnattendedResult resolveUnattendedProgress(
         break;
       }
 
-      // Late-round hits: both sides. Outcomes wait for combat_round_duration.
+      // End-of-round clash: both sides, then outcome in the same step.
       if (!current.combatPlayerSwingApplied) {
         final round = resolveCombatRound(db, current, enemy, current.combatEnemyHp!, random);
         if (round.lifestealHealed > 0) {
@@ -315,11 +315,9 @@ UnattendedResult resolveUnattendedProgress(
           combatPendingRound: round.toPendingRound(),
           combatBossInkActive: round.bossInkActive,
         );
-        lastResolvedMs = combatDue;
-        continue;
       }
 
-      // Outcome phase at round end.
+      // Outcome phase (also finishes leftover split-swing saves).
       final pending = current.combatPendingRound;
       if (pending == null) {
         current = current.copyWith(

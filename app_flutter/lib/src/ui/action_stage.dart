@@ -79,7 +79,7 @@ class ActionStage extends StatelessWidget {
     final save = controller.save;
     if (save.currentActivityId == null) return const SizedBox.shrink();
     // A death blow keeps the last fight on screen for a beat, then Recovering
-    // takes over. Victory uses the same hold, then a short "defeated" banner.
+    // takes over. Victory skips the "defeated" banner — hit floaters are enough.
     if (controller.showRecoveringStage) return _RecoveringStage(controller: controller);
     if (save.combatEnemyId != null || controller.combatBlowHold || controller.defeatedFlash) {
       return _CombatStage(controller: controller);

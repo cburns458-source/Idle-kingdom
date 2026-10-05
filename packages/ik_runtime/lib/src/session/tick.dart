@@ -185,8 +185,17 @@ void _startNextCombatRound(GameDatabase db, _TickOutput out, num atMs) {
   out.set(openCombatRoundClock(db, out.current, atMs));
 }
 
-/// Roll both swings, apply HP, and emit floaters. Outcomes wait for round end.
-void _applyDueCombatHits(GameDatabase db, _TickOutput out, EnemyRow enemy, RandomFn random) {
+/// Both sides attack at round end; outcomes follow in the same beat.
+void _applyDueCombatRound(
+  GameDatabase db,
+  _TickOutput out,
+  String activityId,
+  EnemyRow enemy,
+  ActionRow action,
+  num roundEnd,
+  num roundMs,
+  RandomFn random,
+) {
   final before = out.current;
   final round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random);
   if (round.lifestealHealed > 0) {
@@ -218,9 +227,10 @@ void _applyDueCombatHits(GameDatabase db, _TickOutput out, EnemyRow enemy, Rando
       bossInkActive: round.bossInkActive,
     ),
   );
+  _applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random);
 }
 
-/// Victory, defeat, or next round at combat_round_duration.
+/// Victory, defeat, or next round from a pending clash.
 void _applyDueCombatOutcome(
   GameDatabase db,
   _TickOutput out,
@@ -422,8 +432,8 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
   if (isNotBlank(out.current.combatEnemyId) && isNotBlank(out.current.combatRoundStartedAt)) {
     final roundStart = jsDateParse(out.current.combatRoundStartedAt);
     final roundMs = configNumber(db, 'combat_round_duration', 6) * 1000;
-    final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000;
-    final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000;
+    final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000;
+    final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
     final roundEnd = roundStart + roundMs;
     final eatUntil = isNotBlank(out.current.combatEatUntil)
         ? jsDateParse(out.current.combatEatUntil)
@@ -443,10 +453,20 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
 
     final attackAt = math.min(playerAt, enemyAt);
     if (!out.current.combatPlayerSwingApplied && attackAt <= nowMs) {
-      _applyDueCombatHits(db, out, enemy, random);
+      _applyDueCombatRound(
+        db,
+        out,
+        activityId!,
+        enemy,
+        action,
+        math.max(attackAt, roundEnd),
+        roundMs,
+        random,
+      );
       return out.result();
     }
 
+    // Leftover split-swing saves: finish the pending outcome at round end.
     if (out.current.combatPlayerSwingApplied && roundEnd <= nowMs) {
       _applyDueCombatOutcome(db, out, activityId!, enemy, action, roundEnd, roundMs, random);
       return out.result();
