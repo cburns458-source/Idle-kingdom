@@ -27,11 +27,9 @@ NaturalHpRegenResult applyNaturalHpRegen(GameDatabase db, PlayerSave save, num e
     return NaturalHpRegenResult(save: save, remainderMs: 0);
   }
   final maxHp = playerMaxHp(db, save);
+  // Blessing may sit above max. Regen fills up to max and never cuts surplus.
   if (save.currentHp >= maxHp) {
-    return NaturalHpRegenResult(
-      save: save.currentHp == maxHp ? save : save.copyWith(currentHp: maxHp),
-      remainderMs: 0,
-    );
+    return NaturalHpRegenResult(save: save, remainderMs: 0);
   }
   final interval = naturalHpRegenIntervalMs();
   final gained = (elapsedMs / interval).floor();

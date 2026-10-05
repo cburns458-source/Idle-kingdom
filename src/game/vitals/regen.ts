@@ -21,11 +21,9 @@ export function applyNaturalHpRegen(
     return { save, remainderMs: 0 }
   }
   const maxHp = playerMaxHp(db, save)
+  // Blessing may sit above max. Regen fills up to max and never cuts surplus.
   if (save.currentHp >= maxHp) {
-    return {
-      save: save.currentHp === maxHp ? save : { ...save, currentHp: maxHp },
-      remainderMs: 0,
-    }
+    return { save, remainderMs: 0 }
   }
   const interval = naturalHpRegenIntervalMs()
   const gained = Math.floor(elapsedMs / interval)
