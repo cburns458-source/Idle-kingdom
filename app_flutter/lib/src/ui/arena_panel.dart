@@ -271,7 +271,10 @@ class _ArenaPanelState extends State<ArenaPanel> {
           Row(
             children: [
               const Expanded(
-                child: Text('Arena', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+                child: Text(
+                  'Arena',
+                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                ),
               ),
               GoldAmount(
                 amount: save.gold,
@@ -469,7 +472,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
                       _outcome == 'win' ? 'Victory' : 'Defeat',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: GameFont.xl,
                         fontWeight: FontWeight.w400,
                         color: _outcome == 'win'
                             ? const Color(0xFFB6E38A)

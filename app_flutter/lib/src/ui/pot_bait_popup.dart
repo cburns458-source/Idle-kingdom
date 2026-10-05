@@ -98,7 +98,7 @@ class _PotBaitGridPopupState extends State<_PotBaitGridPopup> {
                 _picked.isEmpty
                     ? 'No bait · random unlocked catch'
                     : '${_picked.length} / $potBaitCount bait selected',
-                style: TextStyle(fontSize: 14, color: chrome.panelInk),
+                style: TextStyle(fontSize: GameFont.m, color: chrome.panelInk),
               ),
               const SizedBox(height: 10),
               Row(
@@ -165,7 +165,7 @@ class _BaitTile extends StatelessWidget {
               child: Text(
                 '$selectedCount',
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: GameFont.xs,
                   fontWeight: FontWeight.w400,
                   color: Palette.parchmentText,
                 ),

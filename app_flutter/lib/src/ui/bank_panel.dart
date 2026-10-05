@@ -175,7 +175,10 @@ class _BankPanelState extends State<BankPanel> {
           Row(
             children: [
               const Expanded(
-                child: Text('Bank', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+                child: Text(
+                  'Bank',
+                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                ),
               ),
               GoldAmount(
                 amount: save.gold,
@@ -200,7 +203,10 @@ class _BankPanelState extends State<BankPanel> {
           ),
           if (_error case final error?) ...[
             const SizedBox(height: 6),
-            Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+            Text(
+              error,
+              style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+            ),
           ],
           const SizedBox(height: 10),
           Expanded(
@@ -270,7 +276,7 @@ class _BankPanelState extends State<BankPanel> {
                 '×${formatThousands(stack.quantity)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10.5, color: Palette.muted, height: 1.1),
+                style: const TextStyle(fontSize: GameFont.xs, color: Palette.muted, height: 1.1),
               ),
             ],
           ),
@@ -304,7 +310,10 @@ class _Column extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(heading, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
+        Text(
+          heading,
+          style: const TextStyle(fontSize: GameFont.m, fontWeight: FontWeight.w400),
+        ),
         const SizedBox(height: 5),
         Expanded(
           child: FloatingItemWell(

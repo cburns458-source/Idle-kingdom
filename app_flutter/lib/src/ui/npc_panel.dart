@@ -613,13 +613,13 @@ class _DialogueCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                  style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(line, style: const TextStyle(fontSize: 15)),
+          Text(line, style: const TextStyle(fontSize: GameFont.m)),
           if (detail case final detail?) ...[const SizedBox(height: 4), MutedText(detail)],
           if (journal.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -628,7 +628,10 @@ class _DialogueCard extends StatelessWidget {
           if (extra case final extra?) ...[const SizedBox(height: 8), extra],
           if (error case final error?) ...[
             const SizedBox(height: 6),
-            Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+            Text(
+              error,
+              style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+            ),
           ],
           const SizedBox(height: 10),
           Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: actions),
@@ -695,7 +698,7 @@ Future<void> showQuestRewards(
           ),
           if (spokenLine case final spoken?) ...[
             const SizedBox(height: 8),
-            Text(spoken, style: const TextStyle(fontSize: 15)),
+            Text(spoken, style: const TextStyle(fontSize: GameFont.m)),
           ],
           const SizedBox(height: 8),
           if (rewards.isEmpty && questName != botanyAllDiedTitle)

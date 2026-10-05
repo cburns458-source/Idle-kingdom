@@ -160,7 +160,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
               const Expanded(
                 child: Text(
                   'Player profile',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
               GameButton(
@@ -188,7 +188,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                         MottoText(
                           view.motto!,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: GameFont.m,
                             height: 1.25,
                             color: UiChrome.of(context).panelInk.withValues(alpha: 0.9),
                           ),
@@ -208,7 +208,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                             child: Text(
                               view.username,
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: GameFont.l,
                                 fontWeight: FontWeight.w400,
                                 color: UiChrome.of(context).panelInk,
                               ),
@@ -332,7 +332,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                   Text(
                     levels[skill.skillId] == null ? '—' : '${levels[skill.skillId]}',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: GameFont.xs,
                       fontWeight: FontWeight.w400,
                       color: UiChrome.of(context).panelInk,
                     ),

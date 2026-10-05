@@ -201,7 +201,10 @@ class _CodexViewState extends State<CodexView> {
         else
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
+            ),
           ),
         Expanded(
           child: switch (route) {
@@ -369,7 +372,7 @@ class _CodexViewState extends State<CodexView> {
                 child: Text(
                   item,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: GameFont.m,
                     fontWeight: FontWeight.w600,
                     color: chrome.embossFace,
                   ),
@@ -509,10 +512,13 @@ class _ItemPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.displayName, style: TextStyle(fontSize: 16, color: ink)),
+                  Text(
+                    entry.displayName,
+                    style: TextStyle(fontSize: GameFont.l, color: ink),
+                  ),
                   Text(
                     [entry.groupLabel, ?entry.category, ?entry.subtype].join(' · '),
-                    style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
+                    style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
                   ),
                 ],
               ),
@@ -521,14 +527,20 @@ class _ItemPage extends StatelessWidget {
         ),
         if (entry.description case final description? when description.isNotEmpty) ...[
           const SizedBox(height: 10),
-          Text(description, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35)),
+          Text(
+            description,
+            style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
+          ),
         ],
         if (entry.statLines.isNotEmpty) ...[
           const SizedBox(height: 10),
           for (final line in entry.statLines)
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: Text(line, style: TextStyle(fontSize: 13, color: ink)),
+              child: Text(
+                line,
+                style: TextStyle(fontSize: GameFont.m, color: ink),
+              ),
             ),
         ],
         _Section(
@@ -615,11 +627,14 @@ class _EnemyPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.displayName, style: TextStyle(fontSize: 16, color: ink)),
+                  Text(
+                    entry.displayName,
+                    style: TextStyle(fontSize: GameFont.l, color: ink),
+                  ),
                   if (entry.combatLevel != null)
                     Text(
                       'Level ${formatThousands(entry.combatLevel!)}',
-                      style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
+                      style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
                     ),
                   if (entry.mightLevel != null || entry.vitalityLevel != null)
                     Text(
@@ -628,10 +643,13 @@ class _EnemyPage extends StatelessWidget {
                         if (entry.vitalityLevel != null)
                           'Vitality ${formatThousands(entry.vitalityLevel!)}',
                       ].join(' · '),
-                      style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
+                      style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
                     ),
                   if (places.isNotEmpty)
-                    Text(places, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35)),
+                    Text(
+                      places,
+                      style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
+                    ),
                 ],
               ),
             ),
@@ -641,17 +659,17 @@ class _EnemyPage extends StatelessWidget {
         Text(
           'Health ${formatThousands(entry.maximumHp)} · '
           'Damage ${formatThousands(entry.minDamage)}–${formatThousands(entry.maxDamage)}',
-          style: TextStyle(fontSize: 13, color: ink),
+          style: TextStyle(fontSize: GameFont.m, color: ink),
         ),
         if (entry.combatXp != null)
           Text(
             '${entry.xpSkillLabel} XP ${formatThousands(entry.combatXp!)}',
-            style: TextStyle(fontSize: 13, color: ink),
+            style: TextStyle(fontSize: GameFont.m, color: ink),
           ),
         if (entry.minimumGold != null || entry.maximumGold != null)
           Text(
             'Gold ${_range(entry.minimumGold, entry.maximumGold)}',
-            style: TextStyle(fontSize: 13, color: ink),
+            style: TextStyle(fontSize: GameFont.m, color: ink),
           ),
         if (entry.tables.isEmpty)
           _Section(
@@ -722,14 +740,20 @@ class _ActionPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.displayName, style: TextStyle(fontSize: 16, color: ink)),
+                  Text(
+                    entry.displayName,
+                    style: TextStyle(fontSize: GameFont.l, color: ink),
+                  ),
                   if (entry.skillName != null || level != null)
                     Text(
                       [?entry.skillName, ?level].join(' · '),
-                      style: TextStyle(fontSize: 12.5, color: muted, height: 1.35),
+                      style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
                     ),
                   if (places.isNotEmpty)
-                    Text(places, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35)),
+                    Text(
+                      places,
+                      style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
+                    ),
                 ],
               ),
             ),
@@ -801,7 +825,10 @@ class _CraftBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(header, style: TextStyle(fontSize: 13, color: chrome.panelInk)),
+          Text(
+            header,
+            style: TextStyle(fontSize: GameFont.m, color: chrome.panelInk),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -856,7 +883,10 @@ class _ItemChip extends StatelessWidget {
           ItemIcon(item: item, size: 22),
           const SizedBox(width: 6),
           Flexible(
-            child: Text(label, style: const TextStyle(fontSize: 12.5, color: Palette.panelInk)),
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: GameFont.s, color: Palette.panelInk),
+            ),
           ),
         ],
       ),
@@ -886,10 +916,16 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: TextStyle(fontSize: 15, color: ink)),
+          Text(
+            title,
+            style: TextStyle(fontSize: GameFont.m, color: ink),
+          ),
           const SizedBox(height: 8),
           if (children.isEmpty)
-            Text(empty, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35))
+            Text(
+              empty,
+              style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
+            )
           else
             for (final child in children)
               Padding(padding: const EdgeInsets.only(bottom: 8), child: child),
@@ -929,9 +965,15 @@ class _LinkRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 14, color: ink)),
+                Text(
+                  title,
+                  style: TextStyle(fontSize: GameFont.m, color: ink),
+                ),
                 if (detail case final detail? when detail.isNotEmpty)
-                  Text(detail, style: TextStyle(fontSize: 12.5, color: muted, height: 1.35)),
+                  Text(
+                    detail,
+                    style: TextStyle(fontSize: GameFont.s, color: muted, height: 1.35),
+                  ),
               ],
             ),
           ),

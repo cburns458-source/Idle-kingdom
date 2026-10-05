@@ -86,7 +86,7 @@ class PlayerGearSheet extends StatelessWidget {
             Expanded(
               child: Text(
                 '$username\'s gear',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
               ),
             ),
             if (!embedded)
@@ -152,7 +152,7 @@ class _GearSlotTile extends StatelessWidget {
                           top: 0,
                           child: Text(
                             '★',
-                            style: TextStyle(fontSize: 11, color: Palette.softGreen),
+                            style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
                           ),
                         ),
                     ],

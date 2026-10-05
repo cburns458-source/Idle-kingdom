@@ -112,7 +112,10 @@ class _MenuViewState extends State<MenuView> {
           if (widget.onClose != null)
             PageHeader(title: 'Settings', onClose: widget.onClose!)
           else
-            const Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+            const Text(
+              'Settings',
+              style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
+            ),
           if (widget.onClose == null) const SizedBox(height: 4),
           const MutedText('Settings and save tools.'),
           const SizedBox(height: 12),
@@ -317,7 +320,7 @@ class _MenuViewState extends State<MenuView> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Chat notifications',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -450,7 +453,7 @@ class _MenuViewState extends State<MenuView> {
         children: [
           const Text(
             _playerArtHeading,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
           ),
           const MutedText(_playerArtBlurb),
           if (hasOverride) ...[
@@ -478,7 +481,10 @@ class _MenuViewState extends State<MenuView> {
             const SizedBox(height: 8),
             Text(
               notice,
-              style: TextStyle(color: _artError ? Palette.warning : Palette.gold, fontSize: 12),
+              style: TextStyle(
+                color: _artError ? Palette.warning : Palette.gold,
+                fontSize: GameFont.s,
+              ),
             ),
           ],
         ],
@@ -496,7 +502,10 @@ class _MenuViewState extends State<MenuView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Testing tools', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+          const Text(
+            'Testing tools',
+            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+          ),
           const MutedText('Local debug grants. They are not a live economy.'),
           const SizedBox(height: 10),
           GameButton(
@@ -620,7 +629,10 @@ class _MenuViewState extends State<MenuView> {
           ),
           if (_toolNotice case final notice?) ...[
             const SizedBox(height: 8),
-            Text(notice, style: const TextStyle(color: Palette.gold, fontSize: 12)),
+            Text(
+              notice,
+              style: const TextStyle(color: Palette.gold, fontSize: GameFont.s),
+            ),
           ],
         ],
       ),
@@ -723,7 +735,7 @@ class _SettingsFoldState extends State<_SettingsFold> {
                 Expanded(
                   child: Text(
                     widget.heading,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                    style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                   ),
                 ),
                 Icon(

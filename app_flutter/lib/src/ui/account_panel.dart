@@ -113,7 +113,10 @@ class _AccountPanelState extends State<AccountPanel> {
   Widget _build() {
     final session = net.session;
     final children = <Widget>[
-      const Text('Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+      const Text(
+        'Account',
+        style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+      ),
       const SizedBox(height: 12),
       _character(),
       const SizedBox(height: 12),
@@ -174,7 +177,7 @@ class _AccountPanelState extends State<AccountPanel> {
         children: [
           Text(
             displayNameForSave(save, 'Unnamed'),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
           ),
           MutedText('Race: ${raceDisplayName(widget.controller.db, save.raceId) ?? 'Unchosen'}'),
           MutedText('Play time: ${formatPlayTimeMs(save.playTimeMs)}'),
@@ -207,7 +210,7 @@ class _AccountPanelState extends State<AccountPanel> {
     return <Widget>[
       Text(
         'Signed in as ${session.username}',
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+        style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
       ),
       MutedText(session.email),
       const SizedBox(height: 12),
@@ -350,7 +353,7 @@ class _PeopleFoldState extends State<_PeopleFold> {
                 Expanded(
                   child: Text(
                     widget.heading,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                    style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                   ),
                 ),
                 if (widget.people.isNotEmpty)

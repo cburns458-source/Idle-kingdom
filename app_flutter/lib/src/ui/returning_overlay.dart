@@ -25,7 +25,7 @@ class ReturningOverlay extends StatelessWidget {
               const Text(
                 'Returning to your adventure…',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
               ),
             ],
           ),

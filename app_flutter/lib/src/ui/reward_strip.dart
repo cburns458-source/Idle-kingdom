@@ -62,7 +62,7 @@ class _RewardRow extends StatelessWidget {
         for (final levelUp in bundle.xpRewards.where((xp) => xp.leveledUp))
           Text(
             'level ${levelUp.level} ${levelUp.skillName} achieved',
-            style: TextStyle(fontSize: 12, color: UiChrome.of(context).embossFace),
+            style: TextStyle(fontSize: GameFont.s, color: UiChrome.of(context).embossFace),
           ),
       ],
     );
@@ -83,7 +83,10 @@ class _Chip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: GameFont.s, fontWeight: FontWeight.w400),
+          ),
           const SizedBox(width: 4),
           GameImage(iconPath, width: 14, height: 14),
         ],

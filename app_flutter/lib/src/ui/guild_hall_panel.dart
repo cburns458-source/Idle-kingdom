@@ -169,7 +169,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
               const Expanded(
                 child: Text(
                   'Guild Hall',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
               GoldAmount(

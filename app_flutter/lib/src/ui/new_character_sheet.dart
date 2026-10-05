@@ -105,7 +105,7 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
             children: [
               const Text(
                 'Name your character',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
+                style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
               ),
               const MutedText(
                 'Choose a name and a people. Other players will know you by this name.',

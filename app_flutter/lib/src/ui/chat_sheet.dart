@@ -64,7 +64,10 @@ class ChatLauncher extends StatelessWidget {
                           ),
                           child: Text(
                             badge,
-                            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w400),
+                            style: const TextStyle(
+                              fontSize: GameFont.xs,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
                         ),
                       ),
@@ -274,7 +277,7 @@ class _ChatSheetState extends State<ChatSheet> {
                                   text: TextSpan(
                                     style: const TextStyle(
                                       fontFamily: gameFontFamily,
-                                      fontSize: 13,
+                                      fontSize: GameFont.m,
                                       color: Palette.parchmentText,
                                     ),
                                     children: [
@@ -295,7 +298,7 @@ class _ChatSheetState extends State<ChatSheet> {
                                               '${line.username}: ',
                                               style: TextStyle(
                                                 fontFamily: gameFontFamily,
-                                                fontSize: 13,
+                                                fontSize: GameFont.m,
                                                 fontWeight: FontWeight.w400,
                                                 color:
                                                     colorFromHexRgb(
@@ -452,7 +455,10 @@ class _ChatTabButton extends StatelessWidget {
                 color: Palette.danger,
                 borderRadius: BorderRadius.zero /* pixel step 1 */,
               ),
-              child: Text(badge, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w400)),
+              child: Text(
+                badge,
+                style: const TextStyle(fontSize: GameFont.xs, fontWeight: FontWeight.w400),
+              ),
             ),
           ),
       ],

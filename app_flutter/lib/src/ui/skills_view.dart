@@ -29,7 +29,10 @@ class SkillsView extends StatelessWidget {
           else
             const Padding(
               padding: EdgeInsets.fromLTRB(10, 8, 10, 6),
-              child: Text('Skills', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+              child: Text(
+                'Skills',
+                style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+              ),
             ),
         Expanded(
           child: Padding(
@@ -116,12 +119,16 @@ class _SkillTile extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w400, height: 1.15),
+                style: const TextStyle(
+                  fontSize: GameFont.xs,
+                  fontWeight: FontWeight.w400,
+                  height: 1.15,
+                ),
               ),
               const SizedBox(height: 1),
               Text(
                 'Lv ${progress.level}',
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
+                style: const TextStyle(fontSize: GameFont.xs, fontWeight: FontWeight.w400),
               ),
               const SizedBox(height: 3),
               MeterBar(value: fraction, color: Palette.skillXp, height: 4),
@@ -189,7 +196,10 @@ class _Total extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MutedText(label),
-          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: GameFont.m, fontWeight: FontWeight.w400),
+          ),
         ],
       ),
     );

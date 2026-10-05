@@ -217,7 +217,10 @@ class SignedOutNotice extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showTitle) ...[
-            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
+            ),
             const SizedBox(height: 8),
           ],
           Text(prompt),

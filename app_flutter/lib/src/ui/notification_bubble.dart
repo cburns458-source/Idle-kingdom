@@ -25,7 +25,10 @@ class NotificationBubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: const BoxDecoration(color: Palette.danger),
-      child: Text(badge, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w400)),
+      child: Text(
+        badge,
+        style: const TextStyle(fontSize: GameFont.xs, fontWeight: FontWeight.w400),
+      ),
     );
   }
 }

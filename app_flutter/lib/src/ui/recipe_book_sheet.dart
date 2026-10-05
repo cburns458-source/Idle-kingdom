@@ -102,7 +102,10 @@ class _RecipeBookBodyState extends State<_RecipeBookBody> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const MutedText('Recipe book'),
-        Text(widget.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+        Text(
+          widget.title,
+          style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+        ),
         if (widget.view.tabs.length > 1) ...[
           const SizedBox(height: 10),
           Row(

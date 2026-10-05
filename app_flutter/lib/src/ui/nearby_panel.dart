@@ -109,7 +109,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
             const Expanded(
               child: Text(
                 'Nearby adventurers',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
               ),
             ),
             GameButton(

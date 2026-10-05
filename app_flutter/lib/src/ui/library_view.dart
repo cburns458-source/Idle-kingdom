@@ -28,7 +28,10 @@ class LibraryView extends StatelessWidget {
             else
               const Padding(
                 padding: EdgeInsets.fromLTRB(12, 12, 12, 0),
-                child: Text('Library', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+                child: Text(
+                  'Library',
+                  style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
+                ),
               ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
@@ -128,7 +131,7 @@ class LibraryUnlockPopup extends StatelessWidget {
                 const MutedText('New Book'),
                 const Text(
                   'You found a book!',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                  style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
                 ),
                 const SizedBox(height: 10),
                 Text(notice.name, style: const TextStyle(fontWeight: FontWeight.w400)),

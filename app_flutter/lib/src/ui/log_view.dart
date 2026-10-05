@@ -58,7 +58,7 @@ class _LogViewState extends State<LogView> {
             trailing: Text(
               '${jsNumberToString(completion.overall.percent)}% complete',
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: GameFont.s,
                 fontWeight: FontWeight.w400,
                 color: UiChrome.of(context).embossFace,
               ),
@@ -72,11 +72,14 @@ class _LogViewState extends State<LogView> {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                const Text('Log', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
+                const Text(
+                  'Log',
+                  style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
+                ),
                 Text(
                   '${jsNumberToString(completion.overall.percent)}% complete',
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: GameFont.s,
                     fontWeight: FontWeight.w400,
                     color: UiChrome.of(context).embossFace,
                   ),
@@ -150,7 +153,7 @@ class _LogViewState extends State<LogView> {
                 Text(
                   section.label,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: GameFont.s,
                     fontWeight: FontWeight.w400,
                     color: UiChrome.of(context).embossFace,
                   ),
@@ -309,7 +312,7 @@ class _DifficultyBand extends StatelessWidget {
                 difficulty,
                 style: TextStyle(
                   fontWeight: FontWeight.w400,
-                  fontSize: 16,
+                  fontSize: GameFont.l,
                   color: UiChrome.of(context).panelInk,
                 ),
               ),
@@ -542,7 +545,7 @@ class _MiniquestList extends StatelessWidget {
                               ? row.repeatLabel
                               : '${row.repeatLabel} · ${row.repeatEveryLabel}')
                         : row.repeatLabel,
-                    style: TextStyle(fontSize: 12, color: UiChrome.of(context).embossFace),
+                    style: TextStyle(fontSize: GameFont.s, color: UiChrome.of(context).embossFace),
                   ),
                 ],
               ),
@@ -606,7 +609,11 @@ class _QuestSortMenu extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Text(
             'Sort',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: Color(0xFFFFF4D4)),
+            style: TextStyle(
+              fontSize: GameFont.s,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFFFFF4D4),
+            ),
           ),
         ),
       ),

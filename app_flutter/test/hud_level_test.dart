@@ -88,8 +88,8 @@ void main() {
     expect(controller.hudShowTotalXp, isFalse);
     expect(find.textContaining(level), findsOne);
     expect(find.text('Human'), findsOne);
-    expect(tester.widget<Text>(find.text('Human')).style?.fontSize, 11);
-    expect(tester.widget<Text>(find.textContaining(level)).style?.fontSize, 11);
+    expect(tester.widget<Text>(find.text('Human')).style?.fontSize, GameFont.s);
+    expect(tester.widget<Text>(find.textContaining(level)).style?.fontSize, GameFont.s);
     final hpLabel =
         '${formatThousands(controller.save.currentHp)}/'
         '${formatThousands(playerMaxHp(controller.db, controller.save))}';

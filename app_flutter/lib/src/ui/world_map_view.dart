@@ -389,7 +389,7 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: GameFont.s,
               fontWeight: FontWeight.w400,
               color: Palette.parchmentText,
               shadows: overlayShadow,
@@ -462,7 +462,7 @@ class _SelectionPanel extends StatelessWidget {
                     children: [
                       Text(
                         mapNodeLabel(place, browseMapId),
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                        style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                       ),
                       if (showIcons) ...[
                         const SizedBox(height: 8),

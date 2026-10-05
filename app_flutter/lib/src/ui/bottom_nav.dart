@@ -330,7 +330,7 @@ class _NavSection extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: alignStart ? TextAlign.left : TextAlign.center,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+            style: const TextStyle(fontSize: GameFont.s, fontWeight: FontWeight.w400),
           );
     final content =
         child ??
