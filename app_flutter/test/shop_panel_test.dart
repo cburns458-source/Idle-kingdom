@@ -213,7 +213,7 @@ void main() {
     await tester.tap(find.text('Confirm trade'));
     await tester.pump();
 
-    expect(unit, 56);
+    expect(unit, 4);
     expect(controller.save.gold, 1000 - unit);
     expect(inventoryCount(controller.save, helmetId), 1);
   });

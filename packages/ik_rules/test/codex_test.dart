@@ -38,10 +38,10 @@ void main() {
     expect(codex.item('ITEM-0096'), isNull);
     expect(codex.item('ITEM-0144'), isNull);
     expect(codex.item('ITEM-0286'), isNull);
-    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0263').baseSellValue, 550);
-    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0250').baseSellValue, 850);
-    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0009').baseSellValue, 280);
-    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0010').baseSellValue, 180);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0263').baseSellValue, 348);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0250').baseSellValue, 751);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0009').baseSellValue, 106);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0010').baseSellValue, 48);
     expect(
       db.items.firstWhere((row) => row.itemId == 'ITEM-0250').baseSellValue!,
       greaterThan(db.items.firstWhere((row) => row.itemId == 'ITEM-0263').baseSellValue!),

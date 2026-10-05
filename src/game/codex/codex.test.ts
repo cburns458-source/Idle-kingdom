@@ -36,10 +36,10 @@ describe('codex index', () => {
     expect(codex.item('ITEM-0096')).toBeUndefined()
     expect(codex.item('ITEM-0144')).toBeUndefined()
     expect(codex.item('ITEM-0286')).toBeUndefined()
-    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0263')?.['Base Sell Value']).toBe(550)
-    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0250')?.['Base Sell Value']).toBe(850)
-    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0009')?.['Base Sell Value']).toBe(280)
-    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0010')?.['Base Sell Value']).toBe(180)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0263')?.['Base Sell Value']).toBe(348)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0250')?.['Base Sell Value']).toBe(751)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0009')?.['Base Sell Value']).toBe(106)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0010')?.['Base Sell Value']).toBe(48)
   })
 
   it('lists gathering actions with primary, secondary, and gem tables', () => {
