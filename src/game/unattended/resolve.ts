@@ -20,6 +20,7 @@ import { resolveProductionProgress } from '../production/engine'
 import { accruePlayTime } from '../save/playTime'
 import type { PlayerSave } from '../save/types'
 import { advanceSession } from '../session/tick'
+import { isIncompleteCombatAwayLine } from './summary'
 import { applyNaturalHpRegen } from '../vitals/regen'
 
 /**
@@ -192,7 +193,9 @@ export function resolveUnattendedProgress(
       for (const event of tick.events) {
         if (event.kind === 'enemy-defeated') combatVictories += 1
         if (event.kind === 'player-defeated') combatDeaths += 1
-        if (event.kind === 'message') messages.push(event.text)
+        if (event.kind === 'message' && !isIncompleteCombatAwayLine(event.text)) {
+          messages.push(event.text)
+        }
       }
       current = tick.save
       lastResolvedMs = combatDue

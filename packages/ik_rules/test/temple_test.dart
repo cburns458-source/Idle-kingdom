@@ -91,7 +91,7 @@ void main() {
     expect(enemy.raw['Maximum HP'], 420);
     expect(enemy.raw['Min Damage'], 11);
     expect(enemy.raw['Max Damage'], 33);
-    expect(enemy.raw['Combat XP'], 840);
+    expect(enemy.raw['Combat XP'], 882);
     expect(enemy.raw['Drop Chance'], 0);
     expect(enemy.raw['Reward Table ID'], isNull);
 
@@ -114,7 +114,7 @@ void main() {
     expect(save.currentActivityId, 'ACT-0035');
     expect(save.currentActionId, 'ACN-0172');
     expect(save.combatEnemyId, 'ENM-0020');
-    expect(save.combatEnemyHp, 420);
+    expect(save.combatEnemyHp, 441);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0100'), isTrue);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0145'), isTrue);
   });

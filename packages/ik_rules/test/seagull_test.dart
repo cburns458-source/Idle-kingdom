@@ -26,9 +26,13 @@ void main() {
     final enemy = getEnemy(db, 'ENM-0021')!;
     expect(enemy.raw['Display Name'], 'Seagull');
     expect(enemy.raw['Location ID'], 'LOC-0004');
-    expect(enemy.raw['Maximum HP'], 110);
-    expect(enemy.raw['Min Damage'], 20);
-    expect(enemy.raw['Max Damage'], 40);
+    expect(enemyMightLevel(enemy), 1);
+    expect(enemyVitalityLevel(enemy), 1);
+    expect(enemyCombatLevel(enemy), 2);
+    expect(enemy.raw['Maximum HP'], 50);
+    expect(enemy.raw['Min Damage'], 10);
+    expect(enemy.raw['Max Damage'], 20);
+    expect(enemy.raw['Combat XP'], 100);
     expect(enemy.raw['Drop Chance'], 0);
     expect(enemy.raw['Reward Table ID'], isNull);
 

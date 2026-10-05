@@ -275,4 +275,44 @@ describe('unattended progression', () => {
     expect(fighting.save.currentHp).toBe(1)
     expect(fighting.save.combatEnemyId).toBe('ENM-0001')
   })
+
+  it('only records finished fights in the away summary, not every swing', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, currentLocationId: 'LOC-0001', currentHp: 1000 }
+    const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
+    save = beginActivitySave(save, 'ACT-0001', new Date(startedAt).toISOString())
+
+    const combatAction = launch.Actions.find(
+      (action) =>
+        action.Category === 'Combat' &&
+        action['Action ID'] &&
+        launch.PoolEntries.some(
+          (entry) =>
+            entry['Pool ID'] === 'POOL-0001' && entry['Action ID'] === action['Action ID'],
+        ),
+    )
+    expect(combatAction).toBeTruthy()
+    const enemy = launch.Enemies.find((row) => row['Enemy ID'] === combatAction!['Target ID'])
+    expect(enemy).toBeTruthy()
+
+    save = {
+      ...save,
+      unattendedProgressAt: new Date(startedAt).toISOString(),
+      currentActionId: combatAction!['Action ID'],
+      actionStartedAt: new Date(startedAt).toISOString(),
+      actionDurationMs: null,
+      combatEnemyId: enemy!['Enemy ID'],
+      combatEnemyHp: enemy!['Maximum HP'],
+      combatRoundStartedAt: new Date(startedAt).toISOString(),
+    }
+
+    const resolved = resolveUnattendedProgress(launch, save, startedAt + 180_000, () => 0.99)
+    expect(resolved.messages.some((line) => /^You (hit |crit for )/.test(line))).toBe(false)
+    expect(resolved.messages.some((line) => /releases squidlings!/.test(line))).toBe(false)
+    expect(resolved.combatVictories + resolved.combatDeaths).toBeGreaterThan(0)
+    expect(
+      resolved.messages.some((line) => /Defeated/.test(line) || /Recovered from defeat/.test(line)),
+    ).toBe(true)
+  })
 })

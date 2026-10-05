@@ -11,6 +11,13 @@ final RegExp _craftedLine = RegExp(
   caseSensitive: false,
 );
 
+/// Mid-fight chatter that catch-up still simulates but the away panel hides.
+bool isIncompleteCombatAwayLine(String text) {
+  if (RegExp(r'^You (hit |crit for )').hasMatch(text)) return true;
+  if (text.contains('releases squidlings!')) return true;
+  return false;
+}
+
 /// One line per crafted item, holding the totals and the order they arrived in.
 ///
 /// Anything that is not a craft line is left exactly as the resolver wrote it,
@@ -22,6 +29,7 @@ List<String> consolidateAwayMessages(List<String> messages) {
   final lines = <String?>[];
 
   for (final message in messages) {
+    if (isIncompleteCombatAwayLine(message)) continue;
     final match = _craftedLine.firstMatch(message);
     if (match == null) {
       lines.add(message);

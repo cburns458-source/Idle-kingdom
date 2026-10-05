@@ -82,12 +82,12 @@ describe('might / vitality combat stats', () => {
     const save = createNewSave(launch)
     const cow = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const scout = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0003')!
-    expect(enemyMightLevel(cow)).toBe(2)
-    expect(enemyVitalityLevel(cow)).toBe(3)
-    expect(enemyCombatLevel(cow)).toBe(4)
-    expect(enemyScaledMaxHp(cow)).toBe(100)
-    expect(enemyCombatXp(cow)).toBe(200)
-    expect(enemyEncounterMaxHp(launch, save, cow)).toBe(100)
+    expect(enemyMightLevel(cow)).toBe(1)
+    expect(enemyVitalityLevel(cow)).toBe(5)
+    expect(enemyCombatLevel(cow)).toBe(5)
+    expect(enemyScaledMaxHp(cow)).toBe(105)
+    expect(enemyCombatXp(cow)).toBe(210)
+    expect(enemyEncounterMaxHp(launch, save, cow)).toBe(105)
     expect(enemyEncounterDamageRange(launch, save, cow)).toEqual({ min: 10, max: 20 })
 
     expect(enemyMightLevel(scout)).toBe(12)
@@ -104,9 +104,9 @@ describe('might / vitality combat stats', () => {
     const { launch, source } = prepareDatabase(rawDatabase)
     // id, name, might, vitality, baseHp, minDmg, maxDmg, combatXp, locationId
     const launchEnemies = [
-      ['ENM-0025', 'Giant Rat', 5, 3, 150, 12, 26, 300, 'LOC-0011'],
-      ['ENM-0026', 'Bandit', 15, 6, 260, 16, 40, 520, 'LOC-0052'],
-      ['ENM-0027', 'Cave Bat', 14, 8, 580, 37, 73, 1160, 'LOC-0046'],
+      ['ENM-0025', 'Giant Rat', 5, 5, 150, 12, 26, 314, 'LOC-0011'],
+      ['ENM-0026', 'Bandit', 15, 6, 260, 16, 40, 550, 'LOC-0052'],
+      ['ENM-0027', 'Cave Bat', 14, 8, 580, 37, 73, 1252, 'LOC-0046'],
       ['ENM-0029', 'Bandit Captain', 26, 16, 930, 55, 108, 2156, 'LOC-0052'],
       ['ENM-0030', 'Harpy', 70, 40, 3860, 152, 268, 10808, 'LOC-0047'],
       ['ENM-0031', 'Giant', 60, 50, 4440, 164, 288, 13320, 'LOC-0049'],
@@ -199,12 +199,16 @@ describe('might / vitality combat stats', () => {
     ).toBe(false)
   })
 
-  it('gives no level bonus below skill level 10', () => {
+  it('gives no level bonus below skill level 5', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     expect(mightDamageMultiplier(save)).toBe(1)
     expect(vitalityHpMultiplier(save)).toBe(1)
     expect(playerMaxHp(launch, save)).toBe(1000)
+    const level5 = withSkillLevels(save, { 'SKL-0001': 5, 'SKL-0016': 5 })
+    expect(mightDamageMultiplier(level5)).toBeCloseTo(1.05)
+    expect(vitalityHpMultiplier(level5)).toBeCloseTo(1.05)
+    expect(playerMaxHp(launch, level5)).toBe(1050)
   })
 
   it('scales damage from Might and HP from Vitality', () => {
