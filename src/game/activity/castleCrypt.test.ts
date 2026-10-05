@@ -53,10 +53,10 @@ describe('Castle Crypt', () => {
       'Might Level': 35,
       'Vitality Level': 25,
       'Combat Level': 45,
-      'Maximum HP': 1560,
+      'Maximum HP': 450,
       'Min Damage': 80,
       'Max Damage': 160,
-      'Combat XP': 975,
+      'Combat XP': 281,
       'Minimum Gold': 0,
       'Maximum Gold': 0,
       'Drop Chance': 0,
@@ -66,8 +66,8 @@ describe('Castle Crypt', () => {
       'Might Level': 25,
       'Vitality Level': 35,
       'Combat Level': 45,
-      'Maximum HP': 1560,
-      'Combat XP': 1053,
+      'Maximum HP': 450,
+      'Combat XP': 303,
     })
 
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0176')
@@ -75,7 +75,7 @@ describe('Castle Crypt', () => {
       'Target ID': 'ENM-0022',
       'Drop Chance': 0,
       'Reward Table ID': null,
-      'XP Reward': 3900,
+      'XP Reward': 281,
     })
   })
 

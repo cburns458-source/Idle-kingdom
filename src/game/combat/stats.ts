@@ -91,6 +91,24 @@ export function enemyCombatXp(enemy: EnemyRow): number {
   return Math.floor(enemyScaledMaxHp(enemy) / 2)
 }
 
+/** Enemy DR points from the sheet; blank / null means 0. Same units as player gear DR. */
+export function enemyDamageResistance(enemy: EnemyRow): number {
+  return Math.max(0, Number(enemy['Damage Resistance'] ?? 0))
+}
+
+/**
+ * Apply enemy DR to a positive hit. Zero-damage swings stay zero so the damage
+ * floor does not invent a 1-damage tick on a whiff / lockpick.
+ */
+export function applyEnemyDamageResistance(
+  rawDamage: number,
+  enemy: EnemyRow,
+  damageFloor: number,
+): number {
+  if (rawDamage <= 0) return 0
+  return applyMitigation(rawDamage, enemyDamageResistance(enemy), damageFloor)
+}
+
 /** Encounter damage from table base × Might bonus. Boss player-base overrides sit elsewhere. */
 export function enemyScaledDamageRange(enemy: EnemyRow): { min: number; max: number } {
   const multiplier = skillLevelBonusMultiplier(enemyMightLevel(enemy))

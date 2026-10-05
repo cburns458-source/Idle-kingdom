@@ -14,6 +14,11 @@ export interface EnemyRow {
   'Maximum HP': number
   'Min Damage': number
   'Max Damage': number
+  /**
+   * Flat damage resistance points (same units as player gear DR / "%").
+   * Null or missing means 0.
+   */
+  'Damage Resistance': number | null
   'Combat XP': number | null
   'Minimum Gold': number | null
   'Maximum Gold': number | null

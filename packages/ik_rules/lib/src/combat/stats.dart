@@ -84,6 +84,18 @@ num enemyScaledMaxHp(EnemyRow enemy) {
 /// Kill XP = floor(true Vitality-scaled HP / 2).
 num enemyCombatXp(EnemyRow enemy) => (enemyScaledMaxHp(enemy) / 2).floor();
 
+/// Enemy DR points from the sheet; blank / null means 0. Same units as player gear DR.
+num enemyDamageResistance(EnemyRow enemy) {
+  return math.max(0, jsNumber(enemy.raw['Damage Resistance'] ?? 0));
+}
+
+/// Apply enemy DR to a positive hit. Zero-damage swings stay zero so the damage
+/// floor does not invent a 1-damage tick on a whiff / lockpick.
+num applyEnemyDamageResistance(num rawDamage, EnemyRow enemy, num damageFloor) {
+  if (rawDamage <= 0) return 0;
+  return applyMitigation(rawDamage, enemyDamageResistance(enemy), damageFloor);
+}
+
 /// Encounter damage from table base × Might bonus. Boss player-base overrides sit elsewhere.
 DamageRange enemyScaledDamageRange(EnemyRow enemy) {
   final multiplier = skillLevelBonusMultiplier(enemyMightLevel(enemy));
