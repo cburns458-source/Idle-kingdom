@@ -6,7 +6,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { completeSpecialProject } from './engine'
 import { encodeEnchantTarget } from './enchantments'
-import { projectsForFacility, specialProductionStationsAt } from './projects'
+import { projectInputs, projectsForFacility, specialProductionStationsAt } from './projects'
 import { readyProjectMenuList } from './menu'
 
 const rawDatabase = JSON.parse(
@@ -188,7 +188,6 @@ describe('special production', () => {
     save = { ...save, unlockedNpcIds: ['NPC-0003'], currentLocationId: 'LOC-0025' }
     save = addItemToInventory(save, 'ITEM-0074', 10)
     save = addItemToInventory(save, 'ITEM-0214', 5)
-    save = addItemToInventory(save, 'ITEM-0084', 10)
 
     const known = projectsForFacility(launch, 'FAC-0005', 'SKL-0011')
     expect(known.some((project) => project['Project ID'] === 'PRJ-0007')).toBe(true)
@@ -209,7 +208,6 @@ describe('special production', () => {
     save = { ...save, currentLocationId: 'LOC-0025' }
     save = addItemToInventory(save, 'ITEM-0074', 10)
     save = addItemToInventory(save, 'ITEM-0214', 5)
-    save = addItemToInventory(save, 'ITEM-0084', 10)
     const result = completeSpecialProject(launch, save, 'PRJ-0007', 1)
     expect(result.ok).toBe(false)
     if (result.ok) return
@@ -269,7 +267,6 @@ describe('special production', () => {
     }
     save = addItemToInventory(save, 'ITEM-0074', 10)
     save = addItemToInventory(save, 'ITEM-0214', 5)
-    save = addItemToInventory(save, 'ITEM-0084', 10)
     const result = completeSpecialProject(launch, save, 'PRJ-0007', 1)
     expect(result.ok).toBe(false)
     if (result.ok) return
@@ -323,5 +320,39 @@ describe('special production', () => {
         (stack) => stack.itemId === 'ITEM-0119' && stack.enchantmentId === 'ENCH-0010',
       ),
     ).toHaveLength(2)
+  })
+})
+
+function smithingKind(name: string): 'tool' | 'weapon' | 'armor' | 'shield' | 'other' {
+  const n = name.toLowerCase()
+  if (/\bshield\b/.test(n)) return 'shield'
+  if (/\b(helmet|chestplate|platelegs|boots|gloves)\b/.test(n)) return 'armor'
+  if (/\b(pickaxe|hatchet|fishing rod|harpoon|axe)\b/.test(n) && !/battleaxe/.test(n)) return 'tool'
+  if (/\b(sword|dagger|warhammer|battleaxe|spear)\b/.test(n)) return 'weapon'
+  return 'other'
+}
+
+describe('smithing leather straps and armor XP', () => {
+  it('drops leather straps from tools and weapons, and keeps them on armor and shields', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const smithing = launch.Projects.filter((row) => row['Skill ID'] === 'SKL-0011')
+    expect(smithing.some((row) => smithingKind(row['Display Name']) === 'other')).toBe(false)
+
+    for (const project of smithing) {
+      const kind = smithingKind(project['Display Name'])
+      const usesStraps = projectInputs(project).some((input) => input.itemId === 'ITEM-0084')
+      if (kind === 'tool' || kind === 'weapon') expect(usesStraps, project['Display Name']).toBe(false)
+      else expect(usesStraps, project['Display Name']).toBe(true)
+    }
+  })
+
+  it('raises armor and shield smithing XP by 10%', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(launch.Projects.find((row) => row['Project ID'] === 'PRJ-0007')?.['XP Reward']).toBe(2560)
+    expect(launch.Projects.find((row) => row['Project ID'] === 'PRJ-0003')?.['XP Reward']).toBe(4125)
+    expect(launch.Projects.find((row) => row['Project ID'] === 'PRJ-0020')?.['XP Reward']).toBe(2723)
+    expect(launch.Projects.find((row) => row['Project ID'] === 'PRJ-0013')?.['XP Reward']).toBe(7260)
+    expect(launch.Projects.find((row) => row['Project ID'] === 'PRJ-0025')?.['XP Reward']).toBe(8620)
+    expect(launch.Projects.find((row) => row['Project ID'] === 'PRJ-0113')?.['XP Reward']).toBe(35822)
   })
 })
