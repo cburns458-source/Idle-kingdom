@@ -25,8 +25,9 @@ describe('woodcutting byproduct drops', () => {
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0386')?.['Display Name']).toBe(
       'Willow Branches',
     )
-    expect(action('ACN-0200')['Drop Chance']).toBe(63.75)
+    expect(action('ACN-0200')['Drop Chance']).toBe(30)
     expect(action('ACN-0200')['Secondary Reward Table ID']).toBe('RWT-0182')
+    expect(action('ACN-0200')['Secondary Drop Chance']).toBe(0.1)
 
     // Cinnamon woodcutting is Expansion-gated until it has a world pool.
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0201')).toBeUndefined()
@@ -39,7 +40,14 @@ describe('woodcutting byproduct drops', () => {
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0219')?.['Display Name']).toBe(
       'Yew Branches',
     )
-    expect(action('ACN-0051')['Drop Chance']).toBe(56.25)
+    expect(action('ACN-0051')['Drop Chance']).toBe(25)
+    expect(action('ACN-0051')['Secondary Drop Chance']).toBe(0.1)
+  })
+
+  it('keeps woodcutting sapling secondaries at 0.1%', () => {
+    for (const id of ['ACN-0046', 'ACN-0047', 'ACN-0048', 'ACN-0049', 'ACN-0050', 'ACN-0202']) {
+      expect(action(id)['Secondary Drop Chance'], id).toBe(0.1)
+    }
   })
 
   it('removes generic bark from ironwood and keeps a sapling secondary', () => {

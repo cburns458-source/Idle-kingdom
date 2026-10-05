@@ -6148,7 +6148,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "fishing_pot",
-      "Notes": "Place at Goblin Camp or Docks for pot fishing. One pot per site per UTC day; 6 hour soak.",
+      "Notes": "Place at Goblin Camp or the Docks. Up to three pots per site per UTC day, one at a time; 6 hour soak. Old Boots 1% secondary per collect.",
       "Base Sell Value": 50,
       "Stackable": null
     },
@@ -15895,13 +15895,13 @@
       "Base Duration Seconds": 12,
       "XP Reward": 300,
       "Guaranteed Gold": 0,
-      "Drop Chance": 60.0,
+      "Drop Chance": 30,
       "Reward Table ID": "RWT-0049",
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Weasel Tail 100% when the drop rolls (40% base). No tendons.",
+      "Notes": "Weasel Tail 100% when the drop rolls (30% drop chance). No tendons.",
       "Sprite Asset Key": "actions/acn_hunt_butterfly.webp",
       "Tertiary Drop Chance": null,
       "Tertiary Reward Table ID": null
@@ -16176,11 +16176,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 71.25,
       "Reward Table ID": "RWT-0029",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0131",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_cedar.webp"
     },
     {
@@ -16197,11 +16197,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 69.0,
       "Reward Table ID": "RWT-0030",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0132",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_oak.webp"
     },
     {
@@ -16218,11 +16218,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 67.5,
       "Reward Table ID": "RWT-0031",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0133",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_poplar.webp"
     },
     {
@@ -16239,11 +16239,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 63.75,
       "Reward Table ID": "RWT-0032",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0134",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_maple.webp"
     },
     {
@@ -16260,11 +16260,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 60.0,
       "Reward Table ID": "RWT-0033",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0135",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_mahogany.webp"
     },
     {
@@ -16279,13 +16279,13 @@
       "Base Duration Seconds": 12,
       "XP Reward": 1928,
       "Guaranteed Gold": 0,
-      "Drop Chance": 56.25,
+      "Drop Chance": 25,
       "Reward Table ID": "RWT-0034",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0184",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Primary Yew Branches. Sapling secondary 0.5%.",
+      "Notes": "Primary Yew Branches. Sapling secondary 0.1%. Elder yew 25% primary.",
       "Sprite Asset Key": "actions/acn_cut_ancient.webp"
     },
     {
@@ -16424,11 +16424,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 71.25,
       "Reward Table ID": "RWT-0035",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_crawfish.webp"
     },
     {
@@ -16445,11 +16445,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 69.0,
       "Reward Table ID": "RWT-0036",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_trout.webp"
     },
     {
@@ -16466,11 +16466,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 67.5,
       "Reward Table ID": "RWT-0037",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_salmon.webp"
     },
     {
@@ -16487,11 +16487,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 63.75,
       "Reward Table ID": "RWT-0038",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_bass.webp"
     },
     {
@@ -16508,11 +16508,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 60.0,
       "Reward Table ID": "RWT-0039",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_shark.webp"
     },
     {
@@ -16529,11 +16529,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 56.25,
       "Reward Table ID": "RWT-0040",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_baby_giant_squid.webp"
     },
     {
@@ -18368,13 +18368,13 @@
       "Base Duration Seconds": 12,
       "XP Reward": 275,
       "Guaranteed Gold": 0,
-      "Drop Chance": 63.75,
+      "Drop Chance": 30,
       "Reward Table ID": "RWT-0157",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0182",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Primary Willow Branches. Sapling secondary 0.5%.",
+      "Notes": "Primary Willow Branches. Sapling secondary 0.1%. Willow 30% primary.",
       "Sprite Asset Key": "actions/acn_cut_oak.webp"
     },
     {
@@ -18412,11 +18412,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 60.0,
       "Reward Table ID": "RWT-0161",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0183",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Primary Ironwood Log. Sapling secondary 0.5%. No bark.",
+      "Notes": "Primary Ironwood Log. Sapling secondary 0.1%. No bark.",
       "Sprite Asset Key": "actions/acn_cut_mahogany.webp"
     },
     {
