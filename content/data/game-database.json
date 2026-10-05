@@ -7441,7 +7441,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": "cooked_pheasant",
+      "Icon Asset Key": "cooked_duck",
       "Notes": "Placeholder art: cooked pheasant.",
       "Base Sell Value": 2,
       "Stackable": null
@@ -7458,7 +7458,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": null,
-      "Icon Asset Key": "cooked_beef",
+      "Icon Asset Key": "cooked_boar_meat",
       "Notes": "Placeholder art: cooked beef.",
       "Base Sell Value": 12,
       "Stackable": null

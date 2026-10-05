@@ -83,7 +83,7 @@ void main() {
     expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0424').raw['Base Sell Value'], 2);
     expect(
       db.items.firstWhere((row) => row.itemId == 'ITEM-0424').raw['Icon Asset Key'],
-      'cooked_pheasant',
+      'cooked_duck',
     );
     expect(
       db.equipment.firstWhere((row) => row.raw['Equipment ID'] == 'EQP-0219').raw['Healing Amount'],
@@ -98,7 +98,7 @@ void main() {
     expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0425').raw['Base Sell Value'], 12);
     expect(
       db.items.firstWhere((row) => row.itemId == 'ITEM-0425').raw['Icon Asset Key'],
-      'cooked_beef',
+      'cooked_boar_meat',
     );
     expect(
       db.equipment.firstWhere((row) => row.raw['Equipment ID'] == 'EQP-0220').raw['Healing Amount'],

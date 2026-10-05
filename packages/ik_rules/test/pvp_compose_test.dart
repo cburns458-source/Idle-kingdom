@@ -44,8 +44,10 @@ void main() {
     expect(combatLevelOf(fighter), 30);
     expect(fighter.raceId, 'RACE-0003');
     expect(slotItemId(gathering, weaponToolSlotId), 'ITEM-0102');
+    expect(raceSkillDropChanceBonusPercent(db, fighter, 'SKL-0003'), 5);
 
     final stale = composePvpFighter(db, sword, sword);
+    expect(raceSkillDropChanceBonusPercent(db, stale, 'SKL-0003'), 0);
     expect(playerMaxHp(db, fighter), greaterThan(playerMaxHp(db, stale)));
     expect(playerDamageRange(db, fighter).min, greaterThan(playerDamageRange(db, gathering).min));
   });

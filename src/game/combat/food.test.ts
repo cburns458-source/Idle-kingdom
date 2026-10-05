@@ -105,7 +105,7 @@ describe('cooked beef and tablet recipes', () => {
     expect(duckAction['Proficiency Level']).toBe(11)
     expect(duckAction['XP Reward']).toBe(240)
     expect(duckItem['Base Sell Value']).toBe(2)
-    expect(duckItem['Icon Asset Key']).toBe('cooked_pheasant')
+    expect(duckItem['Icon Asset Key']).toBe('cooked_duck')
     expect(duckEquipment['Healing Amount']).toBe(90)
 
     const boarRecipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0077')!
@@ -118,7 +118,7 @@ describe('cooked beef and tablet recipes', () => {
     expect(boarAction['Proficiency Level']).toBe(26)
     expect(boarAction['XP Reward']).toBe(300)
     expect(boarItem['Base Sell Value']).toBe(12)
-    expect(boarItem['Icon Asset Key']).toBe('cooked_beef')
+    expect(boarItem['Icon Asset Key']).toBe('cooked_boar_meat')
     expect(boarEquipment['Healing Amount']).toBe(160)
 
     const pheasantRecipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0008')!
