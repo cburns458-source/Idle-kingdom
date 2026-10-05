@@ -34,36 +34,32 @@ num _maxUnattendedSteps(GameDatabase db) {
   return math.max(20000, (capMs / minimumTickMs).ceil() + 1000);
 }
 
-/// Next discrete combat clock edge: eat end, player swing, or enemy/outcome.
+/// Next discrete combat clock edge: mid-round eat or end-of-round attack.
 num? _nextCombatDueMs(GameDatabase db, PlayerSave save) {
-  if (isNotBlank(save.combatEatUntil)) {
+  if (isNotBlank(save.combatEatUntil) && isBlank(save.combatRoundStartedAt)) {
     final eatUntil = jsDateParse(save.combatEatUntil);
-    return eatUntil.isFinite ? eatUntil : null;
+    return eatUntil.toDouble().isFinite ? eatUntil : null;
   }
   if (isBlank(save.combatEnemyId) || isBlank(save.combatRoundStartedAt)) return null;
   final roundStart = jsDateParse(save.combatRoundStartedAt);
-  if (!roundStart.isFinite) return null;
-  final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5) * 1000;
+  if (!roundStart.toDouble().isFinite) return null;
+  final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000;
   final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
-  if (!save.combatPlayerSwingApplied) return playerAt;
-  return enemyAt;
+  final attackAt = save.combatPlayerSwingApplied ? enemyAt : playerAt;
+  if (isNotBlank(save.combatEatUntil)) {
+    final eatUntil = jsDateParse(save.combatEatUntil);
+    if (eatUntil.toDouble().isFinite && eatUntil <= attackAt) return eatUntil;
+  }
+  return attackAt;
 }
 
-PlayerSave _beginInterRoundEatSave(
-  GameDatabase db,
-  PlayerSave patched,
-  num atMs,
-  bool continueActivityAfterEat,
-) {
-  final eatSeconds = configNumber(db, 'combat_eat_between_seconds', 1);
-  final fed = consumeFoodAfterVictory(db, patched);
-  return fed.save.copyWith(
-    combatEatUntil: isoFromMs(atMs + math.max(0, eatSeconds) * 1000),
-    combatContinueActivityAfterEat: continueActivityAfterEat,
-    combatRoundStartedAt: null,
-    combatPlayerSwingApplied: false,
-    combatPendingRound: null,
-  );
+PlayerSave _continueAfterCombat(GameDatabase db, PlayerSave save, num atMs, RandomFn random) {
+  final activityId = save.currentActivityId;
+  if (activityId == null || !activityStillValid(db, save, activityId)) {
+    return clearActivitySave(save, atMs);
+  }
+  final generated = generateNextAction(db, save, activityId, random, atMs);
+  return generated != null ? generated.save : save;
 }
 
 /// Same wording as the live tick's combat-round message event.
@@ -261,7 +257,7 @@ UnattendedResult resolveUnattendedProgress(
     if (combatDue != null) {
       if (combatDue > endMs) break;
 
-      if (isNotBlank(current.combatEatUntil)) {
+      if (isNotBlank(current.combatEatUntil) && isBlank(current.combatRoundStartedAt)) {
         final continueActivityAfterEat = current.combatContinueActivityAfterEat;
         current = current.copyWith(combatEatUntil: null, combatContinueActivityAfterEat: false);
         if (continueActivityAfterEat) {
@@ -277,19 +273,22 @@ UnattendedResult resolveUnattendedProgress(
           continue;
         }
         if (isNotBlank(current.combatEnemyId)) {
-          current = current.copyWith(
-            combatRoundStartedAt: isoFromMs(combatDue),
-            combatPlayerSwingApplied: false,
-            combatPendingRound: null,
-          );
+          current = openCombatRoundClock(db, current, combatDue);
         }
+        lastResolvedMs = combatDue;
+        continue;
+      }
+
+      if (isNotBlank(current.combatEatUntil) && isNotBlank(current.combatRoundStartedAt)) {
+        final fed = consumeFoodAfterVictory(db, current);
+        current = fed.save.copyWith(combatEatUntil: null);
         lastResolvedMs = combatDue;
         continue;
       }
 
       final roundStart = jsDateParse(current.combatRoundStartedAt);
       final roundMs = configNumber(db, 'combat_round_duration', 6) * 1000;
-      final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5) * 1000;
+      final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000;
       final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
       final roundEnd = math.max(enemyAt, roundStart + roundMs);
 
@@ -302,21 +301,19 @@ UnattendedResult resolveUnattendedProgress(
         break;
       }
 
-      // Player swing phase.
+      // End-of-round attack: both sides, then outcome. Killing blows skip the enemy.
       if (!current.combatPlayerSwingApplied) {
         final round = resolveCombatRound(db, current, enemy, current.combatEnemyHp!, random);
         if (round.lifestealHealed > 0) {
           current = recordLifestealRoundHeal(current, round.lifestealHealed);
         }
         current = current.copyWith(
-          combatEnemyHp: round.enemyHpAfterPlayer,
-          currentHp: round.playerHpAfterPlayer,
+          combatEnemyHp: round.enemyHp,
+          currentHp: round.playerHp,
           combatPlayerSwingApplied: true,
           combatPendingRound: round.toPendingRound(),
           combatBossInkActive: round.bossInkActive,
         );
-        lastResolvedMs = combatDue;
-        continue;
       }
 
       // Enemy / outcome phase.
@@ -356,7 +353,7 @@ UnattendedResult resolveUnattendedProgress(
             continue;
           }
           combatVictories += 1;
-          current = _beginInterRoundEatSave(db, next, roundEnd, true);
+          current = _continueAfterCombat(db, next, roundEnd, random);
           lastResolvedMs = combatDue;
           continue;
         }
@@ -383,7 +380,7 @@ UnattendedResult resolveUnattendedProgress(
         next = critter.save;
         pushCritterSpawn(critter.spawned);
         messages.add(_combatVictoryMessage(enemy, pending));
-        current = _beginInterRoundEatSave(db, next, roundEnd, true);
+        current = _continueAfterCombat(db, next, roundEnd, random);
         lastResolvedMs = combatDue;
         continue;
       }
@@ -437,7 +434,7 @@ UnattendedResult resolveUnattendedProgress(
           );
           continued = critter.save;
           pushCritterSpawn(critter.spawned);
-          current = _beginInterRoundEatSave(db, continued, roundEnd, false);
+          current = continued;
           lastResolvedMs = combatDue;
           continue;
         }
@@ -453,7 +450,7 @@ UnattendedResult resolveUnattendedProgress(
       continued = critter.save;
       pushCritterSpawn(critter.spawned);
       messages.add(_combatRoundMessage(enemy, pending));
-      current = _beginInterRoundEatSave(db, continued, roundEnd, false);
+      current = openCombatRoundClock(db, continued, roundEnd);
       lastResolvedMs = combatDue;
       continue;
     }
