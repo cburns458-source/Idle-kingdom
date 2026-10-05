@@ -74,6 +74,52 @@ void main() {
     expect(cancelled.inventory, isEmpty);
   });
 
+  test('cooked duck twins trout and cooked boar twins salmon; pheasant moves to 17', () {
+    final duck = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0076');
+    expect(duck.raw['Proficiency Level'], 11);
+    expect(duck.raw['XP Reward'], 240);
+    expect(duck.raw['Ingredient 1 Item ID'], 'ITEM-0193');
+    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0243').proficiencyLevel, 11);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0424').raw['Base Sell Value'], 2);
+    expect(
+      db.items.firstWhere((row) => row.itemId == 'ITEM-0424').raw['Icon Asset Key'],
+      'cooked_duck',
+    );
+    expect(
+      db.equipment.firstWhere((row) => row.raw['Equipment ID'] == 'EQP-0219').raw['Healing Amount'],
+      90,
+    );
+
+    final boar = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0077');
+    expect(boar.raw['Proficiency Level'], 26);
+    expect(boar.raw['XP Reward'], 300);
+    expect(boar.raw['Ingredient 1 Item ID'], 'ITEM-0194');
+    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0244').proficiencyLevel, 26);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0425').raw['Base Sell Value'], 12);
+    expect(
+      db.items.firstWhere((row) => row.itemId == 'ITEM-0425').raw['Icon Asset Key'],
+      'cooked_boar_meat',
+    );
+    expect(
+      db.equipment.firstWhere((row) => row.raw['Equipment ID'] == 'EQP-0220').raw['Healing Amount'],
+      160,
+    );
+
+    expect(
+      db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0008').raw['Proficiency Level'],
+      17,
+    );
+    expect(
+      db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0008').raw['XP Reward'],
+      534,
+    );
+    expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0121').proficiencyLevel, 17);
+    expect(
+      db.equipment.firstWhere((row) => row.raw['Item ID'] == 'ITEM-0065').raw['Healing Amount'],
+      200,
+    );
+  });
+
   test('Gluttony is an Arcana 30 spell that costs bass, stew, and essence', () {
     final project = db.projects.firstWhere((row) => row.raw['Project ID'] == 'PRJ-0153');
     expect(project.displayName, 'Gluttony Spell');
@@ -209,6 +255,79 @@ void main() {
     );
     expect(nextRound.ok, isTrue);
     expect(nextRound.save!.equipment.slots[foodSlotId]?.quantity, 1);
+  });
+
+  test('catfish overheals on a manual eat, including at full HP', () {
+    final bag = createNewSave(db, 0).copyWith(
+      currentHp: 1000,
+      inventory: const [InventoryStack(itemId: 'ITEM-0362', quantity: 2)],
+    );
+    final equipped = bag.copyWith(
+      equipment: EquipmentLoadout(
+        slots: {
+          ...bag.equipment.slots,
+          foodSlotId: const EquippedStack(itemId: 'ITEM-0362', quantity: 1),
+        },
+      ),
+    );
+    expect(stageEatBlockedReason(db, equipped), isNull);
+
+    final atFull = eatInventoryFood(db, bag, 0);
+    expect(atFull.ok, isTrue);
+    expect(atFull.healed, 50);
+    expect(atFull.save!.currentHp, 1050);
+
+    final ceiling = eatInventoryFood(db, atFull.save!, 0);
+    expect(ceiling.ok, isTrue);
+    expect(ceiling.healed, 0);
+    expect(ceiling.save!.currentHp, 1050);
+    expect(
+      stageEatBlockedReason(
+        db,
+        ceiling.save!.copyWith(
+          equipment: EquipmentLoadout(
+            slots: {
+              ...ceiling.save!.equipment.slots,
+              foodSlotId: const EquippedStack(itemId: 'ITEM-0362', quantity: 1),
+            },
+          ),
+        ),
+      ),
+      'Already at full health.',
+    );
+
+    final blessed = eatInventoryFood(
+      db,
+      createNewSave(db, 0).copyWith(
+        currentHp: 1100,
+        inventory: const [InventoryStack(itemId: 'ITEM-0362', quantity: 1)],
+      ),
+      0,
+    );
+    expect(blessed.ok, isTrue);
+    expect(blessed.healed, 0);
+    expect(blessed.save!.currentHp, 1100);
+  });
+
+  test('catfish auto-eat still skips at full HP and can land at 105% from below', () {
+    final equipped = createNewSave(db, 0).copyWith(
+      currentHp: 1000,
+      equipment: EquipmentLoadout(
+        slots: {
+          ...createNewSave(db, 0).equipment.slots,
+          foodSlotId: const EquippedStack(itemId: 'ITEM-0362', quantity: 2),
+        },
+      ),
+    );
+    final skipped = consumeFoodAfterVictory(db, equipped);
+    expect(skipped.consumed, isFalse);
+    expect(skipped.save.currentHp, 1000);
+    expect(skipped.save.equipment.slots[foodSlotId]?.quantity, 2);
+
+    final eaten = consumeFoodAfterVictory(db, equipped.copyWith(currentHp: 900));
+    expect(eaten.consumed, isTrue);
+    expect(eaten.save.currentHp, 1050);
+    expect(eaten.save.equipment.slots[foodSlotId]?.quantity, 1);
   });
 
   test('stage eat is blocked at full HP unless the food damages', () {

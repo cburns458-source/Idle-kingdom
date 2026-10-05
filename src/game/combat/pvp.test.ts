@@ -6,6 +6,7 @@ import { mulberry32 } from '../rng/mulberry32'
 import { createNewSave } from '../save/saveStore'
 import { composePvpFighter, overlayPvpLiveStats, simulatePvpFight } from './pvp'
 import { COMBAT_SKILL_ID, playerDamageRange, playerMaxHp } from './stats'
+import { raceSkillDropChanceBonusPercent } from '../races/races'
 import { equipStackToSlot, FOOD_SLOT_ID, POTION_SLOT_ID, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
 import type { PlayerSave } from '../save/types'
 
@@ -58,7 +59,8 @@ describe('pvp snapshot combat', () => {
     expect(fighter.skills.find((skill) => skill.skillId === COMBAT_SKILL_ID)?.level).toBe(20)
     expect(fighter.raceId).toBe('RACE-0003')
     const stale = composePvpFighter(launch, sword, sword)
-    expect(playerMaxHp(launch, fighter)).toBeGreaterThan(playerMaxHp(launch, stale))
+    expect(raceSkillDropChanceBonusPercent(launch, fighter, 'SKL-0003')).toBe(5)
+    expect(raceSkillDropChanceBonusPercent(launch, stale, 'SKL-0003')).toBe(0)
     expect(playerDamageRange(launch, fighter).min).toBeGreaterThan(playerDamageRange(launch, gathering).min)
   })
 

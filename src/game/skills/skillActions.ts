@@ -463,7 +463,7 @@ const COOKING_FISH_NAMES = [
   'marlin',
 ]
 
-const COOKING_MEAT_NAMES = ['rabbit', 'pheasant', 'beef', 'venison']
+const COOKING_MEAT_NAMES = ['rabbit', 'pheasant', 'beef', 'venison', 'duck', 'boar']
 
 function cookingTabId(displayName: string): 'fish' | 'meat' | 'stew' | 'other' {
   const lower = displayName.toLowerCase()

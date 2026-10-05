@@ -29,15 +29,12 @@ export interface RaceChangeCost {
   items: RaceChangeItemCost[]
 }
 
-/** Mid-level (30–55) costs. No gems or ruby. Human stays bass and maple. */
+/** Mid-level (30–55) costs. No gems or ruby. Human is maple; High Elf is bass. */
 export const RACE_CHANGE_COSTS: Record<string, RaceChangeCost> = {
-  // Human — fishing 40 + woodcutting 50
+  // Human — woodcutting 50
   'RACE-0001': {
     gold: 0,
-    items: [
-      { itemId: 'ITEM-0050', quantity: 40 },
-      { itemId: 'ITEM-0018', quantity: 40 },
-    ],
+    items: [{ itemId: 'ITEM-0018', quantity: 40 }],
   },
   // Wood Elf — hunt elk 35 + mountain goat 52
   'RACE-0002': {
@@ -47,14 +44,10 @@ export const RACE_CHANGE_COSTS: Record<string, RaceChangeCost> = {
       { itemId: 'ITEM-0196', quantity: 20 },
     ],
   },
-  // High Elf — crafting 35, alchemy 40, cooking 40
+  // High Elf — fishing 40
   'RACE-0003': {
     gold: 0,
-    items: [
-      { itemId: 'ITEM-0099', quantity: 15 },
-      { itemId: 'ITEM-0071', quantity: 10 },
-      { itemId: 'ITEM-0062', quantity: 15 },
-    ],
+    items: [{ itemId: 'ITEM-0050', quantity: 40 }],
   },
   // Orc — hunting 35 + leather
   'RACE-0004': {

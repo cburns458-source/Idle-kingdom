@@ -92,6 +92,43 @@ describe('cooked beef and tablet recipes', () => {
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0104')?.['Proficiency Level']).toBe(63)
     expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['Proficiency Level']).toBe(66)
   })
+
+  it('adds cooked duck at 11 as a trout twin and cooked boar at 26 as a salmon twin', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const duckRecipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0076')!
+    const duckAction = launch.Actions.find((row) => row['Action ID'] === 'ACN-0243')!
+    const duckItem = launch.Items.find((row) => row['Item ID'] === 'ITEM-0424')!
+    const duckEquipment = launch.Equipment.find((row) => row['Equipment ID'] === 'EQP-0219')!
+    expect(duckRecipe['Proficiency Level']).toBe(11)
+    expect(duckRecipe['XP Reward']).toBe(240)
+    expect(duckRecipe['Ingredient 1 Item ID']).toBe('ITEM-0193')
+    expect(duckAction['Proficiency Level']).toBe(11)
+    expect(duckAction['XP Reward']).toBe(240)
+    expect(duckItem['Base Sell Value']).toBe(2)
+    expect(duckItem['Icon Asset Key']).toBe('cooked_duck')
+    expect(duckEquipment['Healing Amount']).toBe(90)
+
+    const boarRecipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0077')!
+    const boarAction = launch.Actions.find((row) => row['Action ID'] === 'ACN-0244')!
+    const boarItem = launch.Items.find((row) => row['Item ID'] === 'ITEM-0425')!
+    const boarEquipment = launch.Equipment.find((row) => row['Equipment ID'] === 'EQP-0220')!
+    expect(boarRecipe['Proficiency Level']).toBe(26)
+    expect(boarRecipe['XP Reward']).toBe(300)
+    expect(boarRecipe['Ingredient 1 Item ID']).toBe('ITEM-0194')
+    expect(boarAction['Proficiency Level']).toBe(26)
+    expect(boarAction['XP Reward']).toBe(300)
+    expect(boarItem['Base Sell Value']).toBe(12)
+    expect(boarItem['Icon Asset Key']).toBe('cooked_boar_meat')
+    expect(boarEquipment['Healing Amount']).toBe(160)
+
+    const pheasantRecipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0008')!
+    const pheasantAction = launch.Actions.find((row) => row['Action ID'] === 'ACN-0121')!
+    const pheasantEquipment = launch.Equipment.find((row) => row['Item ID'] === 'ITEM-0065')!
+    expect(pheasantRecipe['Proficiency Level']).toBe(17)
+    expect(pheasantRecipe['XP Reward']).toBe(534)
+    expect(pheasantAction['Proficiency Level']).toBe(17)
+    expect(pheasantEquipment['Healing Amount']).toBe(200)
+  })
 })
 
 describe('gluttony extra auto-eats', () => {
@@ -271,6 +308,77 @@ describe('manual eat', () => {
     const eaten = eatEquippedFood(launch, save)
     expect(eaten.ok).toBe(true)
     if (!eaten.ok) return
+    expect(eaten.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
+  })
+
+  it('lets catfish overheal on a manual eat, including at full HP', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const catfish = {
+      ...createNewSave(launch),
+      currentHp: 1000,
+      inventory: [{ itemId: 'ITEM-0362', quantity: 2 }],
+    }
+    expect(stageEatBlockedReason(launch, {
+      ...catfish,
+      equipment: {
+        ...catfish.equipment,
+        slots: { ...catfish.equipment.slots, 'SLOT-0011': { itemId: 'ITEM-0362', quantity: 1 } },
+      },
+    })).toBeNull()
+
+    const atFull = eatInventoryFood(launch, catfish, 0)
+    expect(atFull.ok).toBe(true)
+    if (!atFull.ok) return
+    expect(atFull.healed).toBe(50)
+    expect(atFull.save.currentHp).toBe(1050)
+
+    const ceiling = eatInventoryFood(launch, atFull.save, 0)
+    expect(ceiling.ok).toBe(true)
+    if (!ceiling.ok) return
+    expect(ceiling.healed).toBe(0)
+    expect(ceiling.save.currentHp).toBe(1050)
+    expect(
+      stageEatBlockedReason(launch, {
+        ...ceiling.save,
+        equipment: {
+          ...ceiling.save.equipment,
+          slots: { ...ceiling.save.equipment.slots, 'SLOT-0011': { itemId: 'ITEM-0362', quantity: 1 } },
+        },
+      }),
+    ).toBe('Already at full health.')
+
+    const blessed = eatInventoryFood(
+      launch,
+      { ...createNewSave(launch), currentHp: 1100, inventory: [{ itemId: 'ITEM-0362', quantity: 1 }] },
+      0,
+    )
+    expect(blessed.ok).toBe(true)
+    if (!blessed.ok) return
+    expect(blessed.healed).toBe(0)
+    expect(blessed.save.currentHp).toBe(1100)
+  })
+
+  it('keeps auto-eat on normal rules even for catfish', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const equipped = {
+      ...createNewSave(launch),
+      currentHp: 1000,
+      equipment: {
+        ...createNewSave(launch).equipment,
+        slots: {
+          ...createNewSave(launch).equipment.slots,
+          'SLOT-0011': { itemId: 'ITEM-0362', quantity: 2 },
+        },
+      },
+    }
+    const skipped = consumeFoodAfterVictory(launch, equipped)
+    expect(skipped.consumed).toBe(false)
+    expect(skipped.save.currentHp).toBe(1000)
+    expect(skipped.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
+
+    const eaten = consumeFoodAfterVictory(launch, { ...equipped, currentHp: 900 })
+    expect(eaten.consumed).toBe(true)
+    expect(eaten.save.currentHp).toBe(1050)
     expect(eaten.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
   })
 

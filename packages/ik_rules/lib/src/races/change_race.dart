@@ -30,14 +30,11 @@ class RaceChangeCost {
   final List<RaceChangeItemCost> items;
 }
 
-/// Mid-level (30–55) costs. No gems or ruby. Human stays bass and maple.
+/// Mid-level (30–55) costs. No gems or ruby. Human is maple; High Elf is bass.
 const Map<String, RaceChangeCost> raceChangeCosts = <String, RaceChangeCost>{
-  'RACE-0001': RaceChangeCost(
+  'RACE-0001': const RaceChangeCost(
     gold: 0,
-    items: [
-      RaceChangeItemCost(itemId: 'ITEM-0050', quantity: 40),
-      RaceChangeItemCost(itemId: 'ITEM-0018', quantity: 40),
-    ],
+    items: [RaceChangeItemCost(itemId: 'ITEM-0018', quantity: 40)],
   ),
   'RACE-0002': RaceChangeCost(
     gold: 0,
@@ -46,13 +43,9 @@ const Map<String, RaceChangeCost> raceChangeCosts = <String, RaceChangeCost>{
       RaceChangeItemCost(itemId: 'ITEM-0196', quantity: 20),
     ],
   ),
-  'RACE-0003': RaceChangeCost(
+  'RACE-0003': const RaceChangeCost(
     gold: 0,
-    items: [
-      RaceChangeItemCost(itemId: 'ITEM-0099', quantity: 15),
-      RaceChangeItemCost(itemId: 'ITEM-0071', quantity: 10),
-      RaceChangeItemCost(itemId: 'ITEM-0062', quantity: 15),
-    ],
+    items: [RaceChangeItemCost(itemId: 'ITEM-0050', quantity: 40)],
   ),
   'RACE-0004': RaceChangeCost(
     gold: 0,

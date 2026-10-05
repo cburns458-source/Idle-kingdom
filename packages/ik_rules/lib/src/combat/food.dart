@@ -9,6 +9,7 @@ import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
 import '../tags.dart';
+import '../vitals/overheal.dart';
 import 'stats.dart';
 
 /// The outcome of the post-victory auto-eat.
@@ -79,7 +80,7 @@ FoodConsumption tryConsumeFoodAfterVictory(GameDatabase db, PlayerSave save) {
   final nextQuantity = food.quantity - 1;
   final nextHp = damaging
       ? math.max(1, save.currentHp + healAmount)
-      : math.min(maxHp, save.currentHp + healAmount);
+      : healTowardCeiling(save.currentHp, maxHp, healAmount, foodOverhealRatio(db, food.itemId));
   final displayName = db.items
       .firstWhereOrNull((item) => item.raw['Item ID'] == food.itemId)
       ?.raw['Display Name'];
@@ -160,6 +161,12 @@ num foodHealAmount(GameDatabase db, String itemId) {
   return jsNumber(equipment?.raw['Healing Amount'] ?? 0);
 }
 
+/// Overheal ratio for this food (0 unless it carries `overheal_percent:N`).
+num foodOverhealRatio(GameDatabase db, String itemId) {
+  final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
+  return parseOverhealRatio(equipment?.raw['Capabilities / Effects']);
+}
+
 bool isEdibleItem(GameDatabase db, String itemId) => foodHealAmount(db, itemId) != 0;
 
 bool isInCombat(PlayerSave save) => save.combatEnemyId != null && save.combatEnemyId!.isNotEmpty;
@@ -187,14 +194,17 @@ String? manualEatBlockedReason(PlayerSave save) {
 }
 
 /// Why the location-stage Eat chip is disabled, besides an empty slot.
-/// Healing food is refused at full HP; damaging food is not.
+/// Healing food is refused at its own ceiling (max HP, or that food's overheal
+/// cap). Damaging food is not. Overheal food can be eaten at full HP.
 String? stageEatBlockedReason(GameDatabase db, PlayerSave save) {
   final blocked = manualEatBlockedReason(save);
   if (blocked != null) return blocked;
   final food = slotStack(save, foodSlotId);
   if (food == null || food.quantity <= 0) return null;
   if (foodHealAmount(db, food.itemId) < 0) return null;
-  if (save.currentHp >= playerMaxHp(db, save)) return 'Already at full health.';
+  final maxHp = playerMaxHp(db, save);
+  final ceiling = overhealCeilingHp(maxHp, foodOverhealRatio(db, food.itemId));
+  if (save.currentHp >= ceiling) return 'Already at full health.';
   return null;
 }
 
@@ -222,9 +232,7 @@ class EatFoodResult {
   final damaging = healAmount < 0;
   final nextHp = damaging
       ? math.max(1, save.currentHp + healAmount)
-      : save.currentHp >= maxHp
-      ? save.currentHp
-      : math.min(maxHp, save.currentHp + healAmount);
+      : healTowardCeiling(save.currentHp, maxHp, healAmount, foodOverhealRatio(db, itemId));
   final displayName = db.items
       .firstWhereOrNull((item) => item.raw['Item ID'] == itemId)
       ?.raw['Display Name'];

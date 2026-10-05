@@ -3,6 +3,7 @@ import type { GameDatabase, LocationRow } from '../data/types'
 import { isDeathPaused, RECOVERING_BLOCKED_REASON } from '../combat/engine'
 import { withRecalculatedVitals } from '../equipment/vitals'
 import type { PlayerSave } from '../save/types'
+import { snapToOverhealCeiling } from '../vitals/overheal'
 
 export const TEMPLE_LOCATION_ID = 'LOC-0036'
 
@@ -18,7 +19,7 @@ export const BLESSING_OVERHEAL_RATIO = 0.1
 
 /** Blessing always snaps to 110% of current max. Extra 10% does not stack. */
 export function blessedCurrentHp(maxHp: number): number {
-  return maxHp + Math.floor(maxHp * BLESSING_OVERHEAL_RATIO)
+  return snapToOverhealCeiling(maxHp, BLESSING_OVERHEAL_RATIO)
 }
 
 function blessingMessage(db: GameDatabase, alreadyBlessed: boolean): string {

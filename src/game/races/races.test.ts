@@ -107,7 +107,7 @@ describe('playable races', () => {
     }
   })
 
-  it('applies High Elf +20% max HP without Orc combat damage bonus', () => {
+  it('gives High Elf fishing drop chance and no HP bonus', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
     expect(playerMaxHp(launch, base)).toBe(1000)
@@ -116,8 +116,10 @@ describe('playable races', () => {
     const highElf = assignRace(launch, base, 'RACE-0003')
     expect(highElf.ok).toBe(true)
     if (!highElf.ok) return
-    expect(playerMaxHp(launch, highElf.save)).toBe(1200)
-    expect(highElf.save.maxHp).toBe(1200)
+    expect(playerMaxHp(launch, highElf.save)).toBe(1000)
+    expect(highElf.save.maxHp).toBe(1000)
+    expect(raceSkillDropChanceBonusPercent(launch, highElf.save, 'SKL-0003')).toBe(5)
+    expect(raceSkillDropChanceBonusPercent(launch, highElf.save, 'SKL-0006')).toBe(0)
 
     const orc = assignRace(launch, base, 'RACE-0004')
     expect(orc.ok).toBe(true)
@@ -138,6 +140,12 @@ describe('playable races', () => {
     if (!woodElf.ok) return
     expect(raceSkillDropChanceBonusPercent(launch, woodElf.save, 'SKL-0005')).toBe(5)
     expect(raceSkillDropChanceBonusPercent(launch, woodElf.save, 'SKL-0002')).toBe(0)
+
+    const human = assignRace(launch, base, 'RACE-0001')
+    expect(human.ok).toBe(true)
+    if (!human.ok) return
+    expect(raceSkillDropChanceBonusPercent(launch, human.save, 'SKL-0006')).toBe(5)
+    expect(raceSkillDropChanceBonusPercent(launch, human.save, 'SKL-0003')).toBe(0)
   })
 
   it('lets Goblin players skip Goblin Camp forced hostility but keep the activity available', () => {
