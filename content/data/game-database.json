@@ -13839,7 +13839,7 @@
       "Internal Key": "steal_kitchen",
       "Contextual Name": "Steal from the kitchen",
       "Location ID": "LOC-0023",
-      "Description": "Swipe low cooked food from the steel. No one notices.",
+      "Description": "Swipe low cooked food from the steel. Get caught and it costs you.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0045",
       "Pool Internal Key": "steal_kitchen",
@@ -18129,7 +18129,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; NoConsequences",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_kitchen.webp"
     },
     {

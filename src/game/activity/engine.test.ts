@@ -249,17 +249,18 @@ describe('primary activity engine', () => {
     expect(caught.save.equipment.slots['SLOT-0001']?.quantity).toBe(2)
   })
 
-  it('keeps kitchen NoConsequences as a silent miss', () => {
+  it('catches a missed kitchen steal like other thievery', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0188')!
-    expect(action.Notes).toMatch(/NoConsequences/i)
+    expect(action.Notes).toMatch(/FailDamagePercent:10/i)
+    expect(action.Notes).not.toMatch(/NoConsequences/i)
     const save = createNewSave(launch)
     const completed = completeGatheringAction(launch, save, action, () => 0.81)
-    expect(completed.result.thieveryFailed).toBe(false)
-    expect(completed.result.damageTaken).toBe(0)
+    expect(completed.result.thieveryFailed).toBe(true)
+    expect(completed.result.damageTaken).toBeGreaterThan(0)
     expect(completed.result.xpGained).toBe(0)
     expect(completed.result.loot).toEqual([])
-    expect(completed.save.currentHp).toBe(save.currentHp)
+    expect(completed.save.currentHp).toBe(save.currentHp - (completed.result.damageTaken ?? 0))
   })
 
   it('doubles gathering duration and halves XP below proficiency', () => {

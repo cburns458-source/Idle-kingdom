@@ -82,14 +82,15 @@ void main() {
     expect(caught.save.equipment.slots[weaponToolSlotId]?.quantity, 2);
   });
 
-  test('kitchen NoConsequences stays a silent miss', () {
+  test('a missed kitchen steal is a catch like other thievery', () {
     final kitchen = action('ACN-0188');
-    expect(jsString(kitchen.raw['Notes']), contains('NoConsequences'));
+    expect(jsString(kitchen.raw['Notes']), contains('FailDamagePercent:10'));
+    expect(jsString(kitchen.raw['Notes']), isNot(contains('NoConsequences')));
     final save = createNewSave(db, 0);
     final completed = completeGatheringAction(db, save, kitchen, () => 0.81, 0);
-    expect(completed.result.thieveryFailed, isFalse);
-    expect(completed.result.damageTaken, 0);
+    expect(completed.result.thieveryFailed, isTrue);
+    expect(completed.result.damageTaken, greaterThan(0));
     expect(completed.result.xpGained, 0);
-    expect(completed.save.currentHp, save.currentHp);
+    expect(completed.save.currentHp, save.currentHp - completed.result.damageTaken);
   });
 }
