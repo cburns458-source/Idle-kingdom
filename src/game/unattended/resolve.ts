@@ -149,7 +149,12 @@ export function resolveUnattendedProgress(
       )
       current = critter.save
       pushCritterSpawn(critter.spawned)
-      current = applyNaturalHpRegen(db, current, production.activityMs).save
+      current = applyNaturalHpRegen(
+        db,
+        current,
+        production.activityMs,
+        anchor + production.activityMs,
+      ).save
       lastResolvedMs = anchor + production.activityMs
     }
   }
@@ -241,7 +246,7 @@ export function resolveUnattendedProgress(
       )
       next = critter.save
       pushCritterSpawn(critter.spawned)
-      next = applyNaturalHpRegen(db, next, actionState.durationMs).save
+      next = applyNaturalHpRegen(db, next, actionState.durationMs, due).save
 
       const activityId = current.currentActivityId
       if (!activityStillValid(db, next, activityId)) {
@@ -306,9 +311,8 @@ export function resolveUnattendedProgress(
   // of step budget while there was still more due within the window, only
   // advance the anchor as far as the simulation actually got — the
   // remainder will be caught up on the next load instead of being lost.
-  if (!current.combatEnemyId) {
-    current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs).save
-  }
+  // Regen runs even mid-combat once the 60s no-damage gate has passed.
+  current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs, endMs).save
 
   const stampAt = hitStepLimit ? Math.min(nowMs, lastResolvedMs) : nowMs
   const stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), effectiveElapsedMs)

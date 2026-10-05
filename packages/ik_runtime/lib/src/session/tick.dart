@@ -201,15 +201,17 @@ void _applyDueCombatRound(
   if (round.lifestealHealed > 0) {
     out.set(recordLifestealRoundHeal(out.current, round.lifestealHealed));
   }
-  out.set(
-    out.current.copyWith(
-      combatEnemyHp: round.enemyHp,
-      currentHp: round.playerHp,
-      combatPlayerSwingApplied: true,
-      combatPendingRound: round.toPendingRound(),
-      combatBossInkActive: round.bossInkActive,
-    ),
+  var afterRound = out.current.copyWith(
+    combatEnemyHp: round.enemyHp,
+    currentHp: round.playerHp,
+    combatPlayerSwingApplied: true,
+    combatPendingRound: round.toPendingRound(),
+    combatBossInkActive: round.bossInkActive,
   );
+  if ((round.enemyHit ?? 0) > 0) {
+    afterRound = notePlayerDamaged(afterRound, roundEnd);
+  }
+  out.set(afterRound);
   final enemyId = jsString(enemy.raw['Enemy ID']);
   final enemyName = jsString(enemy.raw['Display Name']);
   out.emit(

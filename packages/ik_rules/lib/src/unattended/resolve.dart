@@ -217,7 +217,12 @@ UnattendedResult resolveUnattendedProgress(
       );
       current = critter.save;
       pushCritterSpawn(critter.spawned);
-      current = applyNaturalHpRegen(db, current, production.activityMs).save;
+      current = applyNaturalHpRegen(
+        db,
+        current,
+        production.activityMs,
+        anchor + production.activityMs,
+      ).save;
       lastResolvedMs = anchor + production.activityMs;
     }
   }
@@ -309,13 +314,17 @@ UnattendedResult resolveUnattendedProgress(
         if (round.lifestealHealed > 0) {
           current = recordLifestealRoundHeal(current, round.lifestealHealed);
         }
-        current = current.copyWith(
+        var afterRound = current.copyWith(
           combatEnemyHp: round.enemyHp,
           currentHp: round.playerHp,
           combatPlayerSwingApplied: true,
           combatPendingRound: round.toPendingRound(),
           combatBossInkActive: round.bossInkActive,
         );
+        if ((round.enemyHit ?? 0) > 0) {
+          afterRound = notePlayerDamaged(afterRound, roundEnd);
+        }
+        current = afterRound;
       }
 
       // Outcome phase (also finishes leftover split-swing saves).
@@ -498,7 +507,7 @@ UnattendedResult resolveUnattendedProgress(
       );
       next = critter.save;
       pushCritterSpawn(critter.spawned);
-      next = applyNaturalHpRegen(db, next, actionState.durationMs).save;
+      next = applyNaturalHpRegen(db, next, actionState.durationMs, due).save;
 
       final activityId = current.currentActivityId!;
       if (!activityStillValid(db, next, activityId)) {
@@ -566,9 +575,8 @@ UnattendedResult resolveUnattendedProgress(
   // budget while there was still more due within the window, only advance the
   // anchor as far as the simulation actually got — the remainder will be caught
   // up on the next load instead of being lost.
-  if (isBlank(current.combatEnemyId)) {
-    current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs).save;
-  }
+  // Regen runs even mid-combat once the 60s no-damage gate has passed.
+  current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs, endMs).save;
 
   final stampAt = hitStepLimit ? math.min(nowMs, lastResolvedMs) : nowMs;
   final stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), effectiveElapsedMs);

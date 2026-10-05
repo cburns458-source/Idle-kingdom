@@ -124,6 +124,7 @@ SaveJson _normalizeSettings(SaveJson save, int version) {
     'skippedMixedCombatActivityIds': _stringIdList(settings['skippedMixedCombatActivityIds']),
     'potionsPaused': settings['potionsPaused'] ?? false,
     'botanyUseCompost': settings['botanyUseCompost'] ?? false,
+    'shareLocationWithFriends': settings['shareLocationWithFriends'] ?? true,
   };
   return next;
 }
@@ -933,6 +934,17 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       next['combatEatUntil'] = save['combatEatUntil'];
       next['combatContinueActivityAfterEat'] = save['combatContinueActivityAfterEat'] == true;
       next['saveVersion'] = 59;
+      return next;
+    },
+  ),
+  SaveMigration(
+    fromVersion: 59,
+    toVersion: 60,
+    migrate: (save, _) {
+      final next = _normalizeSettings(save, 60);
+      final rawDamaged = save['lastDamagedAt'];
+      next['lastDamagedAt'] = rawDamaged is String ? rawDamaged : null;
+      next['hpRegenStreak'] = math.max(0, jsNumber(save['hpRegenStreak'] ?? 0).floor());
       return next;
     },
   ),

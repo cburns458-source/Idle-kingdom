@@ -351,7 +351,7 @@ List<GuildRosterRow> guildRosterRows(
   }).toList();
 }
 
-/// One friends-list row, same shape as a guild roster line: name, guild, online.
+/// One friends-list row: name, guild, Online/Away/Offline, and optional location.
 class FriendListRow {
   const FriendListRow({
     required this.userId,
@@ -360,7 +360,9 @@ class FriendListRow {
     this.raceId,
     required this.subtitle,
     required this.isOnline,
-    required this.lastOnlineLabel,
+    required this.statusLabel,
+    this.locationId,
+    this.locationName,
   });
 
   final String userId;
@@ -368,10 +370,16 @@ class FriendListRow {
   final PlayerAppearance appearance;
   final String? raceId;
 
-  /// `Devguild · Online`, or just the last-online label when they have no guild.
+  /// `Devguild · Online · Meadow`, or `Offline` when they have been gone 24h+.
   final String subtitle;
   final bool isOnline;
-  final String lastOnlineLabel;
+
+  /// `Online`, `Away`, or `Offline`.
+  final String statusLabel;
+
+  /// World location when Online/Away and they share it; null when Offline/hidden.
+  final String? locationId;
+  final String? locationName;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
@@ -379,37 +387,76 @@ class FriendListRow {
     'appearance': appearance.toJson(),
     'subtitle': subtitle,
     'isOnline': isOnline,
-    'lastOnlineLabel': lastOnlineLabel,
+    'statusLabel': statusLabel,
+    'locationId': locationId,
+    'locationName': locationName,
   };
 }
 
-/// Guild name plus last-online, matching how the roster writes its second line.
-String friendContactSubtitle(SocialContact contact, String lastOnlineLabel) {
-  final guild = contact.guildName;
-  if (guild == null || guild.isEmpty) return lastOnlineLabel;
-  return '$guild · $lastOnlineLabel';
+/// Presence age for friends: Online (&lt;2m), Away (&lt;24h), else Offline.
+String friendPresenceStatus(String? updatedAt, num nowMs) {
+  if (updatedAt == null || updatedAt.isEmpty) return 'Offline';
+  final then = jsDateParse(updatedAt);
+  if (!then.isFinite) return 'Offline';
+  final age = nowMs - then;
+  if (age >= 0 && age < presenceTtlSeconds * 1000) return 'Online';
+  if (age >= 0 && age < presenceAwayTtlSeconds * 1000) return 'Away';
+  return 'Offline';
+}
+
+/// Guild · status · location (location omitted when Offline or privacy-hidden).
+String friendContactSubtitle(
+  SocialContact contact,
+  String statusLabel, {
+  String? locationName,
+}) {
+  final parts = <String>[
+    if (contact.guildName != null && contact.guildName!.isNotEmpty) contact.guildName!,
+    statusLabel,
+    if (locationName != null && locationName.isNotEmpty) locationName,
+  ];
+  return parts.join(' · ');
 }
 
 List<FriendListRow> friendListRows(
   List<SocialContact> friends, {
   List<ActivityPresence> presence = const <ActivityPresence>[],
   num? nowMs,
+  String Function(String locationId)? locationName,
 }) {
   final clock = nowMs ?? 0;
-  final seen = <String, String>{for (final row in presence) row.userId: row.updatedAt};
-  return [for (final contact in friends) _friendListRow(contact, seen[contact.userId], clock)];
+  final seen = <String, ActivityPresence>{for (final row in presence) row.userId: row};
+  return [
+    for (final contact in friends) _friendListRow(contact, seen[contact.userId], clock, locationName),
+  ];
 }
 
-FriendListRow _friendListRow(SocialContact contact, String? updatedAt, num nowMs) {
-  final online = rosterLastOnline(updatedAt, nowMs);
+FriendListRow _friendListRow(
+  SocialContact contact,
+  ActivityPresence? presence,
+  num nowMs,
+  String Function(String locationId)? locationName,
+) {
+  final status = friendPresenceStatus(presence?.updatedAt, nowMs);
+  final showLocation =
+      status != 'Offline' &&
+      presence != null &&
+      presence.shareLocationWithFriends &&
+      presence.locationId.isNotEmpty;
+  final locId = showLocation ? presence.locationId : null;
+  final locName = locId == null
+      ? null
+      : (locationName?.call(locId) ?? locId);
   return FriendListRow(
     userId: contact.userId,
     username: contact.username,
     appearance: contact.appearance,
     raceId: contact.raceId,
-    subtitle: friendContactSubtitle(contact, online.lastOnlineLabel),
-    isOnline: online.isOnline,
-    lastOnlineLabel: online.lastOnlineLabel,
+    subtitle: friendContactSubtitle(contact, status, locationName: locName),
+    isOnline: status == 'Online',
+    statusLabel: status,
+    locationId: locId,
+    locationName: locName,
   );
 }
 

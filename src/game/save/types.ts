@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 59
+export const SAVE_VERSION = 60
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -167,6 +167,11 @@ export interface PlayerSettings {
    * Cleared automatically when compost runs out.
    */
   botanyUseCompost: boolean
+  /**
+   * When true, friends can see this character's world location on their
+   * friends list (Online / Away). Nearby at the same tile still works either way.
+   */
+  shareLocationWithFriends: boolean
 }
 
 export const APPEARANCE_CATEGORIES = [
@@ -457,6 +462,16 @@ export interface PlayerSave {
   /** Potion consumed for the current gathering action, craft, or combat encounter. */
   activePotionEffect: ActivePotionEffect | null
   deathPauseUntil: string | null
+  /**
+   * ISO timestamp of the last non-PvP damage taken. Natural regen waits 60s
+   * after this before the next heal trigger.
+   */
+  lastDamagedAt: string | null
+  /**
+   * Consecutive natural-regen triggers since the last damage / full heal.
+   * Heal amount is 1% max HP × 2^streak each minute.
+   */
+  hpRegenStreak: number
   /**
    * Whether this character has ever been beaten in the world. Arena losses do
    * not count. Once true it stays true, which is what makes the Undying title

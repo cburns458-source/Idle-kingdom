@@ -668,7 +668,11 @@ RemoteRow presenceRowFor({
 }) => <String, Object?>{
   'user_id': session.userId,
   'username': session.username,
-  'appearance_json': appearanceJsonForRemote(input.appearance, input.raceId),
+  'appearance_json': appearanceJsonForRemote(
+    input.appearance,
+    input.raceId,
+    input.shareLocationWithFriends,
+  ),
   'guild_name': guildName,
   'location_id': input.locationId,
   'current_activity_id': input.currentActivityId,
@@ -694,6 +698,7 @@ ActivityPresence activityPresenceFrom(RemoteRow row) => ActivityPresence(
   mountCosmeticId: _optStr(row['mount_cosmetic_id']),
   updatedAt: _str(row['updated_at']),
   expiresAt: _str(row['expires_at']),
+  shareLocationWithFriends: shareLocationWithFriendsFromRemote(row['appearance_json']),
 );
 
 /// A hosted `profiles` row as the account card social surfaces list.

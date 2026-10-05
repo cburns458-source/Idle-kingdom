@@ -27,6 +27,7 @@ export function presenceInputFromSave(save: PlayerSave): PresenceInput {
     skillLevel: skill?.level ?? null,
     outfitCosmeticId: save.cosmetics.equipped[OUTFIT_COSMETIC_SLOT_ID] ?? null,
     mountCosmeticId: save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
+    shareLocationWithFriends: save.settings.shareLocationWithFriends,
   }
 }
 

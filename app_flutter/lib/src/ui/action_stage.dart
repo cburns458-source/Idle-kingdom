@@ -814,8 +814,8 @@ class _CombatStage extends StatelessWidget {
     final temple = usesTempleLayeredBackground(save.currentLocationId);
     final shell = _StageShell(
       semanticsLabel: 'Combat',
-      reserveLoadoutStrip: !temple,
-      fillStage: temple,
+      reserveLoadoutStrip: false,
+      fillStage: true,
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -985,7 +985,7 @@ class _RecoveringStage extends StatelessWidget {
     final temple = usesTempleLayeredBackground(controller.save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Recovering',
-      fillStage: temple,
+      fillStage: true,
       scene: _TwoPortraits(
         player: const _Portrait(
           assetPath: null,
@@ -1081,8 +1081,8 @@ class _GatheringStage extends StatelessWidget {
     final temple = usesTempleLayeredBackground(save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Gathering',
-      reserveLoadoutStrip: !temple,
-      fillStage: temple,
+      reserveLoadoutStrip: false,
+      fillStage: true,
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -1151,8 +1151,8 @@ class _ProductionStage extends StatelessWidget {
     final temple = usesTempleLayeredBackground(save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Production',
-      reserveLoadoutStrip: !temple,
-      fillStage: temple,
+      reserveLoadoutStrip: false,
+      fillStage: true,
       scene: _TwoPortraits(
         player: const SizedBox(height: _portraitSlotHeight),
         scene: _Portrait(

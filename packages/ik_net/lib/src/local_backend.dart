@@ -1521,6 +1521,7 @@ class LocalMultiplayerBackend {
       mountCosmeticId: input.mountCosmeticId,
       updatedAt: updatedAt,
       expiresAt: expiresAt,
+      shareLocationWithFriends: input.shareLocationWithFriends,
     );
     db.presence = db.presence
         .where(

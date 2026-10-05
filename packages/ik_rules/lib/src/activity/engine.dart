@@ -19,6 +19,7 @@ import '../save/generated/save_models.dart';
 import '../timers/location_timers.dart';
 import '../time.dart';
 import '../trackers/trackers.dart';
+import '../vitals/regen.dart';
 import '../world/main_hall_kitchen.dart';
 import 'bonus_xp.dart';
 import 'gathering.dart';
@@ -381,7 +382,7 @@ GatheringCompletion completeGatheringAction(
     final damage = (save.maxHp * damagePercent / 100).floor();
     final appliedDamage = damage < 1 ? 1 : damage;
     final nextHp = save.currentHp - appliedDamage;
-    var next = save.copyWith(currentHp: nextHp);
+    var next = notePlayerDamaged(save.copyWith(currentHp: nextHp), now);
     var lockpickBroke = false;
     if (requiresLockpick) {
       final rolled = _maybeBreakLockpick(db, next, random, thieveryLevel);

@@ -295,22 +295,20 @@ class _LocationViewState extends State<LocationView> {
           borderRadius: BorderRadius.zero /* pixel step 3 */,
           border: Border.all(color: const Color(0x479A7B32)),
         ),
-        child: ClipPath(
-          clipper: const PixelSteppedClipper(step: 3),
+        child: ClipRect(
           child: RepaintBoundary(
             key: const Key('location-card'),
             child: LayoutBuilder(
               builder: (context, card) {
-                final temple = usesTempleLayeredBackground(locationId);
-                final collapsedBand = _collapsedBand + (temple ? 52.0 : 0);
-                final bandTop = _bandExpanded
-                    ? 8.0
-                    : card.maxHeight - collapsedBand - (temple ? 0 : 8);
+                final layered = usesTempleLayeredBackground(locationId);
+                // Solid lower band + loadout-in-band for every location (Temple layout).
+                final collapsedBand = _collapsedBand + 52.0;
+                final bandTop = _bandExpanded ? 8.0 : card.maxHeight - collapsedBand;
                 final stageBottom = card.maxHeight - bandTop;
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    if (temple)
+                    if (layered)
                       Positioned(
                         left: 0,
                         right: 0,
@@ -320,7 +318,7 @@ class _LocationViewState extends State<LocationView> {
                       )
                     else
                       RepaintBoundary(child: _locationPlate(locationId)),
-                    if (!temple)
+                    if (!layered)
                       const DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -331,7 +329,7 @@ class _LocationViewState extends State<LocationView> {
                           ),
                         ),
                       ),
-                    if (temple && !liftArena)
+                    if (!liftArena)
                       Positioned(
                         left: 0,
                         right: 0,
@@ -461,48 +459,12 @@ class _LocationViewState extends State<LocationView> {
                           child: RepaintBoundary(
                             child: Stack(
                               children: [
-                                if (!liftArena && !temple)
-                                  Positioned(
-                                    top: 0,
-                                    left: 13,
-                                    right: 13,
-                                    bottom: _collapsedBand + 8,
-                                    child: _groundedStage(
-                                      // Separate bottom layers so starting a gather
-                                      // does not resize a shared stack and jump the art.
-                                      Stack(
-                                        fit: StackFit.expand,
-                                        clipBehavior: Clip.none,
-                                        children: [
-                                          Align(
-                                            alignment: Alignment.bottomCenter,
-                                            child: OverflowBox(
-                                              maxHeight: double.infinity,
-                                              alignment: Alignment.bottomCenter,
-                                              child: LocationIdlePlayer(controller: controller),
-                                            ),
-                                          ),
-                                          if (running)
-                                            Align(
-                                              alignment: Alignment.bottomCenter,
-                                              child: OverflowBox(
-                                                maxHeight: double.infinity,
-                                                alignment: Alignment.bottomCenter,
-                                                child: IgnorePointer(
-                                                  child: ActivityPanel(controller: controller),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
                                 if (stage != null && !running && !liftArena)
                                   Positioned(
                                     top: _overlayGap,
                                     left: 13,
                                     right: 13,
-                                    bottom: _collapsedBand + 8 + _overlayGap,
+                                    bottom: collapsedBand + _overlayGap,
                                     child: openPanel is ArenaOpen
                                         ? stage
                                         : _fittedPanel(stage, fill: _panelFillsSlot(openPanel)),
@@ -512,7 +474,7 @@ class _LocationViewState extends State<LocationView> {
                                     top: _overlayGap,
                                     left: 13,
                                     right: 13,
-                                    bottom: _collapsedBand + 8 + _overlayGap,
+                                    bottom: collapsedBand + _overlayGap,
                                     child: openPanel is ArenaOpen
                                         ? overlayPanel
                                         : _fittedPanel(
@@ -524,7 +486,7 @@ class _LocationViewState extends State<LocationView> {
                                   Positioned(
                                     left: 10,
                                     right: 10,
-                                    bottom: 8 + keyboard + _overlayGap,
+                                    bottom: keyboard + _overlayGap,
                                     child: SizedBox(
                                       height: (card.maxHeight - keyboard - 16 - _overlayGap).clamp(
                                         180,
@@ -556,19 +518,17 @@ class _LocationViewState extends State<LocationView> {
                       ],
                     ),
                     Positioned(
-                      left: temple ? 0 : 10,
-                      right: temple ? 0 : 10,
-                      bottom: temple ? 0 : 8,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
                       top: bandTop,
                       child: _FloatingOptionBand(
                         expanded: _bandExpanded,
-                        opaque: temple,
-                        leading: temple
-                            ? Padding(
-                                padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
-                                child: StageLoadoutStrip(controller: controller),
-                              )
-                            : null,
+                        opaque: true,
+                        leading: Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                          child: StageLoadoutStrip(controller: controller),
+                        ),
                         onToggle: () => setState(() => _bandExpanded = !_bandExpanded),
                         tabs: _optionSections(locationId).map((section) => section.label).toList(),
                         selectedTab: _selectedBandTab(locationId),

@@ -1324,6 +1324,7 @@ export class LocalMultiplayerBackend {
       mountCosmeticId: input.mountCosmeticId,
       updatedAt,
       expiresAt,
+      shareLocationWithFriends: input.shareLocationWithFriends !== false,
     }
     db.presence = db.presence.filter(
       (entry) => entry.userId !== session.userId && Date.parse(entry.expiresAt) > this.now(),
