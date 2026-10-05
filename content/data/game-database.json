@@ -13839,7 +13839,7 @@
       "Internal Key": "steal_kitchen",
       "Contextual Name": "Steal from the kitchen",
       "Location ID": "LOC-0023",
-      "Description": "Swipe low cooked food from the steel. No one notices.",
+      "Description": "Swipe low cooked food from the steel. Get caught and it costs you.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0045",
       "Pool Internal Key": "steal_kitchen",
@@ -18066,7 +18066,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:30; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18087,7 +18087,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:35; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_barracks.webp"
     },
     {
@@ -18108,7 +18108,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:45; FailDamagePercent:10",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18129,7 +18129,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; NoConsequences",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_kitchen.webp"
     },
     {
@@ -18170,7 +18170,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:40; FailDamagePercent:10",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_goblins.webp"
     },
     {
@@ -18191,7 +18191,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; BankThievery; FailChance:50; FailDamagePercent:10",
+      "Notes": "ThieveryLockpick; RequiresLockpick; BankThievery; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_pick_deposit_box.webp"
     },
     {
@@ -18212,7 +18212,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:55; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18859,7 +18859,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryShop; ThieveryLockpick; RequiresLockpick; FailChance:40; FailDamagePercent:10",
+      "Notes": "ThieveryShop; ThieveryLockpick; RequiresLockpick; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18880,7 +18880,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:40; FailDamagePercent:10; Wired at Kingsroad.",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10; Wired at Kingsroad.",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18901,7 +18901,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:45; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18922,7 +18922,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:50; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18943,7 +18943,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:55; FailDamagePercent:10; Wired at Riverside Manor.",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10; Wired at Riverside Manor.",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18964,7 +18964,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:55; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18985,7 +18985,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:60; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -19006,7 +19006,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:65; FailDamagePercent:10; BankThievery",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10; BankThievery",
       "Sprite Asset Key": "actions/acn_pick_deposit_box.webp"
     },
     {

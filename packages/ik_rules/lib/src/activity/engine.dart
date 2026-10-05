@@ -307,18 +307,16 @@ class GatheringCompletion {
   final ActionCompletionResult result;
 }
 
-num lockpickBreakChancePercent(num thieveryLevel) {
-  final level = thieveryLevel.floor() < 1 ? 1 : thieveryLevel.floor();
-  final chance = 50 + (level - 1) * 0.5;
-  return chance > 100 ? 100 : chance;
-}
-
 ({PlayerSave save, bool broke}) _maybeBreakLockpick(
+  GameDatabase db,
   PlayerSave save,
   RandomFn random,
   num thieveryLevel,
 ) {
-  final chance = lockpickBreakChancePercent(thieveryLevel);
+  final chance = lockpickBreakChancePercent(
+    thieveryLevel,
+    equippedLockpickBreakChanceReductionPercent(db, save),
+  );
   if (random() * 100 >= chance) return (save: save, broke: false);
   return (save: _consumeLockpick(save), broke: true);
 }
@@ -363,146 +361,62 @@ GatheringCompletion completeGatheringAction(
   final gatheringLevel = getSkillProgress(save, skillId).level;
   final proficiencyLevel = jsNumber(action.raw['Proficiency Level'] ?? 1);
   final successBonus = equippedSuccessChanceBonusPercentForAction(db, save, action);
+  final noConsequences = RegExp(r'NoConsequences', caseSensitive: false).hasMatch(notesText);
   if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel, successBonus)) {
-    return GatheringCompletion(
-      save: withoutHeldAction(save, save.currentActivityId),
-      result: emptyResult(),
-    );
-  }
-
-  GatheringCompletion awardXpOnly(
-    PlayerSave base, {
-    num damageTaken = 0,
-    num foodHealed = 0,
-    bool showZeroDamageHit = false,
-    bool thieveryFailed = false,
-    bool lockpickBroke = false,
-  }) {
-    final xpAmount = gatheringXpReward(db, base, action);
-    var next = tickPotionAction(base);
-    final xpApplied = applyXp(next, db, skillId, xpAmount);
-    next = xpApplied.save;
-    var leveledUpTo = xpApplied.leveledUpTo;
-    final bonusXp = <BonusXpGrant>[];
-    final xpRewards = <ActionXpRewardSummary>[];
-    final primaryReward = summarizeXpReward(db, next, skillId, xpAmount, xpApplied.leveledUpTo);
-    if (primaryReward != null) xpRewards.add(primaryReward);
-
-    void applyBonusXp(String bonusSkillId, num amount) {
-      if (amount <= 0) return;
-      final applied = applyXp(next, db, bonusSkillId, amount);
-      next = applied.save;
-      bonusXp.add(BonusXpGrant(skillId: bonusSkillId, xp: amount));
-      final reward = summarizeXpReward(db, next, bonusSkillId, amount, applied.leveledUpTo);
-      if (reward != null) xpRewards.add(reward);
-      if (applied.leveledUpTo != null) leveledUpTo = applied.leveledUpTo;
+    if (!isThievery || noConsequences) {
+      return GatheringCompletion(
+        save: withoutHeldAction(save, save.currentActivityId),
+        result: emptyResult(),
+      );
     }
-
-    final bonus = bonusSkillXpForAction(jsString(action.raw['Action ID']));
-    if (bonus != null && bonus.xp > 0) {
-      applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp));
+    final damagePercent =
+        num.tryParse(
+          RegExp(
+                r'FailDamagePercent:(\d+)',
+                caseSensitive: false,
+              ).firstMatch(notesText)?.group(1) ??
+              '',
+        ) ??
+        10;
+    final damage = (save.maxHp * damagePercent / 100).floor();
+    final appliedDamage = damage < 1 ? 1 : damage;
+    final nextHp = save.currentHp - appliedDamage;
+    var next = save.copyWith(currentHp: nextHp);
+    var lockpickBroke = false;
+    if (requiresLockpick) {
+      final rolled = _maybeBreakLockpick(db, next, random, thieveryLevel);
+      next = rolled.save;
+      lockpickBroke = rolled.broke;
     }
-    for (final bowBonus in bowHuntingCombatXpBonus(db, save, skillId, xpAmount)) {
-      applyBonusXp(bowBonus.skillId, bowBonus.xp);
+    num foodHealed = 0;
+    if (nextHp <= 0) {
+      next = applyCombatDefeat(db, next, now);
+    } else {
+      final fed = consumeFoodAfterVictory(db, next);
+      next = fed.save;
+      foodHealed = fed.healed;
     }
-
-    next = addLifetimeStat(next, gatheringActionsStat);
-    next = applyQuestActionProgress(db, next, jsString(action.raw['Action ID']));
-    next = applyQuestAutoCompleteOnAction(db, next).save;
-    final source = lootSourceForAction(action);
-    next = creditLootTracker(next, source.kind, source.sourceId, const <LootGrant>[], 0, now);
-    next = creditXpAwards(next, [
-      for (final reward in xpRewards) (skillId: reward.skillId, xp: reward.xp),
-    ], now);
-
     return GatheringCompletion(
       save: withoutHeldAction(next, save.currentActivityId),
       result: ActionCompletionResult(
         actionId: jsString(action.raw['Action ID']),
         actionName: jsString(action.raw['Display Name']),
         skillId: skillId,
-        xpGained: xpAmount,
-        bonusXp: bonusXp,
-        xpRewards: xpRewards,
+        xpGained: 0,
+        bonusXp: const <BonusXpGrant>[],
+        xpRewards: const <ActionXpRewardSummary>[],
         goldGained: 0,
         loot: const <LootGrant>[],
-        leveledUpTo: leveledUpTo,
-        damageTaken: damageTaken,
+        leveledUpTo: null,
+        damageTaken: appliedDamage,
         foodHealed: foodHealed,
-        showZeroDamageHit: showZeroDamageHit,
-        thieveryFailed: thieveryFailed,
+        thieveryFailed: true,
         lockpickBroke: lockpickBroke,
       ),
     );
   }
 
-  final failChanceMatch = RegExp(r'FailChance:(\d+)', caseSensitive: false).firstMatch(notesText);
-  if (isThievery &&
-      failChanceMatch != null &&
-      !RegExp(r'NoConsequences', caseSensitive: false).hasMatch(notesText)) {
-    final failChance = num.parse(failChanceMatch.group(1)!);
-    if (random() * 100 < failChance) {
-      final damagePercent =
-          num.tryParse(
-            RegExp(
-                  r'FailDamagePercent:(\d+)',
-                  caseSensitive: false,
-                ).firstMatch(notesText)?.group(1) ??
-                '',
-          ) ??
-          10;
-      final damage = (save.maxHp * damagePercent / 100).floor();
-      final appliedDamage = damage < 1 ? 1 : damage;
-      final nextHp = save.currentHp - appliedDamage;
-      var next = save.copyWith(currentHp: nextHp);
-      var lockpickBroke = false;
-      if (requiresLockpick) {
-        final rolled = _maybeBreakLockpick(next, random, thieveryLevel);
-        next = rolled.save;
-        lockpickBroke = rolled.broke;
-      }
-      num foodHealed = 0;
-      if (nextHp <= 0) {
-        next = applyCombatDefeat(db, next, now);
-      } else {
-        final fed = consumeFoodAfterVictory(db, next);
-        next = fed.save;
-        foodHealed = fed.healed;
-      }
-      return awardXpOnly(
-        next,
-        damageTaken: appliedDamage,
-        foodHealed: foodHealed,
-        // Real fail damage uses the floater amount; zero-hit is for lockpick success.
-        showZeroDamageHit: false,
-        thieveryFailed: true,
-        lockpickBroke: lockpickBroke,
-      );
-    }
-  }
-
-  var working = save;
-  var lockpickBroke = false;
-  if (requiresLockpick) {
-    final rolled = _maybeBreakLockpick(working, random, thieveryLevel);
-    working = rolled.save;
-    lockpickBroke = rolled.broke;
-    if (lockpickBroke) {
-      num foodHealed = 0;
-      if (isThievery) {
-        final fed = consumeFoodAfterVictory(db, working);
-        working = fed.save;
-        foodHealed = fed.healed;
-      }
-      return awardXpOnly(
-        working,
-        foodHealed: foodHealed,
-        showZeroDamageHit: true,
-        lockpickBroke: true,
-      );
-    }
-  }
-
+  final working = save;
   final pruning = isPruningToolEquipped(db, working) && prunableSkillIds.contains(skillId);
   final rewarded = pruning
       ? _resolvePruningRewards(db, working, action, random)

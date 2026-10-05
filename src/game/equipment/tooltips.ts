@@ -1,3 +1,4 @@
+import { parseLockpickBreakChanceReductionPercent } from './loadout'
 import {
   parseRelativeDropChanceBonusPercent,
   skillRelativeDropChanceTooltipLines,
@@ -62,6 +63,16 @@ export function equipmentTooltipStatLines(
     lines.push(`+${dropBonus}% relative Drop Chance`)
   }
   lines.push(...skillRelativeDropChanceTooltipLines(equipment['Capabilities / Effects']))
+  const lockpickBreakReduction = parseLockpickBreakChanceReductionPercent(
+    equipment['Capabilities / Effects'],
+  )
+  if (lockpickBreakReduction !== 0) {
+    lines.push(
+      lockpickBreakReduction > 0
+        ? `Lockpick break chance -${lockpickBreakReduction}%`
+        : `Lockpick break chance +${Math.abs(lockpickBreakReduction)}%`,
+    )
+  }
 
   return lines
 }

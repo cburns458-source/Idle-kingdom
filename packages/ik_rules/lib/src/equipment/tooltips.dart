@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
 import '../loot/drop_chance.dart';
+import 'loadout.dart';
 
 String? _skillDisplayName(GameDatabase? db, String? skillId) {
   if (isBlank(skillId)) return null;
@@ -74,6 +75,16 @@ List<String> equipmentTooltipStatLines(EquipmentRow? equipment, [GameDatabase? d
     lines.add('+${jsNumberToString(dropBonus)}% relative Drop Chance');
   }
   lines.addAll(skillRelativeDropChanceTooltipLines(equipment.raw['Capabilities / Effects']));
+  final lockpickBreakReduction = parseLockpickBreakChanceReductionPercent(
+    equipment.raw['Capabilities / Effects'],
+  );
+  if (lockpickBreakReduction != 0) {
+    lines.add(
+      lockpickBreakReduction > 0
+          ? 'Lockpick break chance -${jsNumberToString(lockpickBreakReduction)}%'
+          : 'Lockpick break chance +${jsNumberToString(lockpickBreakReduction.abs())}%',
+    );
+  }
 
   return lines;
 }

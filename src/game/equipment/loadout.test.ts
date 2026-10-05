@@ -23,6 +23,8 @@ import {
   WEAPON_TOOL_SLOT_ID,
   equippedActionTimeReductionPercent,
   equippedActionTimeReductionPercentForAction,
+  lockpickBreakChancePercent,
+  parseLockpickBreakChanceReductionPercent,
 } from './loadout'
 import { withRecalculatedVitals } from './vitals'
 
@@ -465,5 +467,15 @@ describe('equipment loadout', () => {
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0406')?.['Icon Asset Key']).toBe(
       'machete',
     )
+  })
+
+  it('treats lockpick break chance as its own reducible roll', () => {
+    expect(lockpickBreakChancePercent(1)).toBe(50)
+    expect(lockpickBreakChancePercent(100)).toBe(99.5)
+    expect(lockpickBreakChancePercent(1, 20)).toBe(30)
+    expect(lockpickBreakChancePercent(1, 80)).toBe(0)
+    expect(parseLockpickBreakChanceReductionPercent('-20% lockpick break chance')).toBe(20)
+    expect(parseLockpickBreakChanceReductionPercent('lockpick_break:-15')).toBe(15)
+    expect(parseLockpickBreakChanceReductionPercent('+10% lockpick break chance')).toBe(-10)
   })
 })

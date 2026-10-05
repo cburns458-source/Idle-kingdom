@@ -91,4 +91,14 @@ describe('equipment tooltips', () => {
       ),
     ).toEqual(['+10% relative Harvesting Drop Chance'])
   })
+
+  it('lists lockpick break-chance reduction from capabilities', () => {
+    expect(
+      equipmentTooltipStatLines(
+        equipment({
+          'Capabilities / Effects': 'gloves; -20% lockpick break chance',
+        }),
+      ),
+    ).toEqual(['Lockpick break chance -20%'])
+  })
 })
