@@ -40,7 +40,7 @@ void main() {
     expect(enemyVitalityLevel(cow), 5);
     expect(enemyCombatLevel(cow), 5);
     expect(enemyScaledMaxHp(cow), 105);
-    expect(enemyCombatXp(cow), 210);
+    expect(enemyCombatXp(cow), 52);
     expect(enemyEncounterMaxHp(db, save, cow), 105);
     expect(enemyEncounterDamageRange(db, save, cow).toJson(), {'min': 10, 'max': 20});
 
@@ -48,7 +48,7 @@ void main() {
     expect(enemyVitalityLevel(scout), 10);
     expect(enemyCombatLevel(scout), 17);
     expect(enemyScaledMaxHp(scout), 462);
-    expect(enemyCombatXp(scout), 924);
+    expect(enemyCombatXp(scout), 231);
     expect(enemyScaledDamageRange(scout).toJson(), {'min': 33, 'max': 67});
     expect(enemyEncounterMaxHp(db, save, scout), 462);
     expect(enemyEncounterDamageRange(db, save, scout).toJson(), {'min': 33, 'max': 67});
@@ -58,20 +58,20 @@ void main() {
     final source = assertGameDatabaseShape(contentDatabaseJson());
     // id, name, might, vitality, baseHp, minDmg, maxDmg, combatXp, locationId
     const launchEnemies = <(String, String, num, num, num, num, num, num, String?)>[
-      ('ENM-0025', 'Giant Rat', 5, 5, 150, 12, 26, 314, 'LOC-0011'),
-      ('ENM-0026', 'Bandit', 15, 6, 260, 16, 40, 550, 'LOC-0052'),
-      ('ENM-0027', 'Cave Bat', 14, 8, 580, 37, 73, 1252, 'LOC-0046'),
-      ('ENM-0029', 'Bandit Captain', 26, 16, 930, 55, 108, 2156, 'LOC-0052'),
-      ('ENM-0030', 'Harpy', 70, 40, 3860, 152, 268, 10808, 'LOC-0047'),
-      ('ENM-0031', 'Giant', 60, 50, 4440, 164, 288, 13320, 'LOC-0049'),
-      ('ENM-0033', 'Wyvern', 85, 60, 7920, 236, 404, 25344, 'LOC-0047'),
-      ('ENM-0034', 'Cyclops', 75, 70, 9000, 260, 440, 30600, 'LOC-0049'),
+      ('ENM-0025', 'Giant Rat', 5, 5, 150, 12, 26, 78, 'LOC-0011'),
+      ('ENM-0026', 'Bandit', 15, 6, 260, 16, 40, 137, 'LOC-0052'),
+      ('ENM-0027', 'Cave Bat', 14, 8, 580, 37, 73, 313, 'LOC-0046'),
+      ('ENM-0029', 'Bandit Captain', 26, 16, 930, 55, 108, 539, 'LOC-0052'),
+      ('ENM-0030', 'Harpy', 70, 40, 3860, 152, 268, 2702, 'LOC-0047'),
+      ('ENM-0031', 'Giant', 60, 50, 4440, 164, 288, 3330, 'LOC-0049'),
+      ('ENM-0033', 'Wyvern', 85, 60, 7920, 236, 404, 6336, 'LOC-0047'),
+      ('ENM-0034', 'Cyclops', 75, 70, 9000, 260, 440, 7650, 'LOC-0049'),
     ];
     const expansionEnemies = <(String, String, num, num, num, num, num, num, String?)>[
-      ('ENM-0028', 'Mage Apprentice', 25, 12, 750, 45, 90, 1680, null),
-      ('ENM-0032', 'Gargoyle', 65, 60, 5940, 192, 338, 19008, null),
-      ('ENM-0035', 'Demon', 90, 65, 15000, 475, 745, 49500, null),
-      ('ENM-0036', 'Greater Gargoyle', 90, 75, 17760, 555, 860, 62160, null),
+      ('ENM-0028', 'Mage Apprentice', 25, 12, 750, 45, 90, 420, null),
+      ('ENM-0032', 'Gargoyle', 65, 60, 5940, 192, 338, 4752, null),
+      ('ENM-0035', 'Demon', 90, 65, 15000, 475, 745, 12375, null),
+      ('ENM-0036', 'Greater Gargoyle', 90, 75, 17760, 555, 860, 15540, null),
     ];
     final placeholderIds = {
       for (final row in launchEnemies) row.$1,

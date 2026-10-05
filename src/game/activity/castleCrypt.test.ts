@@ -56,7 +56,7 @@ describe('Castle Crypt', () => {
       'Maximum HP': 1560,
       'Min Damage': 80,
       'Max Damage': 160,
-      'Combat XP': 3900,
+      'Combat XP': 975,
       'Minimum Gold': 0,
       'Maximum Gold': 0,
       'Drop Chance': 0,
@@ -67,7 +67,7 @@ describe('Castle Crypt', () => {
       'Vitality Level': 35,
       'Combat Level': 45,
       'Maximum HP': 1560,
-      'Combat XP': 4212,
+      'Combat XP': 1053,
     })
 
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0176')
