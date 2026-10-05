@@ -66,10 +66,10 @@ class MessageEvent extends SessionEvent {
 
   @override
   Map<String, Object?> toJson() => <String, Object?>{
-        'kind': kind,
-        'text': text,
-        if (topic != null) 'topic': topic,
-      };
+    'kind': kind,
+    'text': text,
+    if (topic != null) 'topic': topic,
+  };
 }
 
 /// The running activity ended on its own; the reason explains why.

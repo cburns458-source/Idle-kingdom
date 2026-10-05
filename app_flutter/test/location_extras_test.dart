@@ -922,7 +922,7 @@ void main() {
       database,
       seed: started.copyWith(
         currentLocationId: 'LOC-0004',
-        fishingPotDayKeyByLocationId: {'LOC-0004': fishingPotUtcDayKey(testStartMs)},
+        fishingPotDayKeyByLocationId: {'LOC-0004': '${fishingPotUtcDayKey(testStartMs)}:3'},
         skills: [
           for (final skill in started.skills)
             if (skill.skillId == 'SKL-0003')
@@ -941,6 +941,7 @@ void main() {
 
     await selectLocationBandTab(tester, 'Traps');
     expect(find.text('Already fished here today.'), findsOne);
+    expect(find.text('Place pot'), findsNothing);
     await tapVisible(tester, find.widgetWithText(GameButton, 'Overfished'));
     await tester.pump();
     expect(find.text("You shouldn't overfish"), findsOne);

@@ -359,7 +359,12 @@ void _applyDueCombatOutcome(
       );
       out.set(addsStarted);
       out.creditCritterTime(roundMs, roundEnd, random);
-      out.emit(MessageEvent('$enemyName releases squidlings! Defeat them to continue.', topic: 'combat-phase'));
+      out.emit(
+        MessageEvent(
+          '$enemyName releases squidlings! Defeat them to continue.',
+          topic: 'combat-phase',
+        ),
+      );
       return;
     }
   }
@@ -498,7 +503,9 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       out.emit(CraftCompletedEvent(itemId: output.itemId, displayName: output.displayName));
     }
     if (finished.failed) {
-      out.emit(MessageEvent('Ruined the ${finished.outputName} — materials lost.', topic: 'general'));
+      out.emit(
+        MessageEvent('Ruined the ${finished.outputName} — materials lost.', topic: 'general'),
+      );
     }
     out.emit(RewardsEvent(finished.reward));
     return out.result();

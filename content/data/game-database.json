@@ -18253,7 +18253,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_kitchen.webp"
     },
     {

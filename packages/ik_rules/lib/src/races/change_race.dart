@@ -32,7 +32,7 @@ class RaceChangeCost {
 
 /// Mid-level (30–55) costs. Fallback when Config rows are missing.
 const Map<String, RaceChangeCost> raceChangeCosts = <String, RaceChangeCost>{
-  'RACE-0001': const RaceChangeCost(
+  'RACE-0001': RaceChangeCost(
     gold: 0,
     items: [RaceChangeItemCost(itemId: 'ITEM-0018', quantity: 40)],
   ),
@@ -43,7 +43,7 @@ const Map<String, RaceChangeCost> raceChangeCosts = <String, RaceChangeCost>{
       RaceChangeItemCost(itemId: 'ITEM-0196', quantity: 20),
     ],
   ),
-  'RACE-0003': const RaceChangeCost(
+  'RACE-0003': RaceChangeCost(
     gold: 0,
     items: [RaceChangeItemCost(itemId: 'ITEM-0050', quantity: 40)],
   ),
@@ -92,10 +92,12 @@ List<RaceChangeItemCost>? _parseRaceChangeItems(Object? raw) {
 RaceChangeCost? raceChangeCostFor(String raceId, [GameDatabase? db]) {
   final fallback = raceChangeCosts[raceId];
   if (db == null) return fallback;
-  final itemsRaw =
-      db.config.firstWhereOrNull((row) => row.raw['Key'] == 'race_change_cost_${raceId}_items')?.raw['Value'];
-  final goldRaw =
-      db.config.firstWhereOrNull((row) => row.raw['Key'] == 'race_change_cost_${raceId}_gold')?.raw['Value'];
+  final itemsRaw = db.config
+      .firstWhereOrNull((row) => row.raw['Key'] == 'race_change_cost_${raceId}_items')
+      ?.raw['Value'];
+  final goldRaw = db.config
+      .firstWhereOrNull((row) => row.raw['Key'] == 'race_change_cost_${raceId}_gold')
+      ?.raw['Value'];
   final items = _parseRaceChangeItems(itemsRaw) ?? fallback?.items ?? const <RaceChangeItemCost>[];
   final gold = goldRaw is num ? goldRaw : (fallback?.gold ?? 0);
   if (fallback == null && items.isEmpty && gold <= 0) return null;

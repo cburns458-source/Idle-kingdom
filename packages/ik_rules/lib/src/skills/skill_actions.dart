@@ -557,7 +557,14 @@ const List<String> _cookingFishNames = <String>[
   'marlin',
 ];
 
-const List<String> _cookingMeatNames = <String>['rabbit', 'pheasant', 'beef', 'venison', 'duck', 'boar'];
+const List<String> _cookingMeatNames = <String>[
+  'rabbit',
+  'pheasant',
+  'beef',
+  'venison',
+  'duck',
+  'boar',
+];
 
 SkillMenuPlacement _cookingPlacement(String displayName) {
   return switch (_cookingTabId(displayName)) {

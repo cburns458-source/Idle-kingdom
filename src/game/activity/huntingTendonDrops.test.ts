@@ -40,16 +40,26 @@ describe('hunting Animal Tendon drops', () => {
   it('can roll Rabbit\'s Foot from the rabbit main table', () => {
     const save = createNewSave(launch)
     const rabbit = launch.Actions.find((row) => row['Action ID'] === 'ACN-0016')!
-    // chance 0 (pass), weight 0.95 → Rabbit's Foot (90–100 band).
-    const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0.95, 1, 1]))
+    // Entries are meat 60, foot 10, hide 30 → foot sits in the 60–70 band.
+    const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0.65, 1, 1]))
     expect(rabbitDrop.loot).toContainEqual(
       expect.objectContaining({ itemId: 'ITEM-0038', quantity: 1 }),
+    )
+  })
+
+  it('can roll Rabbit Hide from the rabbit main table', () => {
+    const save = createNewSave(launch)
+    const rabbit = launch.Actions.find((row) => row['Action ID'] === 'ACN-0016')!
+    const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0.95, 1, 1]))
+    expect(rabbitDrop.loot).toContainEqual(
+      expect.objectContaining({ itemId: 'ITEM-0426', quantity: 1 }),
     )
   })
 
   it('does not grant tendons on weasel hunt', () => {
     const save = createNewSave(launch)
     const weasel = launch.Actions.find((row) => row['Action ID'] === 'ACN-0015')!
+    expect(weasel['Drop Chance']).toBe(30)
     const result = resolveActionRewards(launch, save, weasel, seqRandom([0, 0]))
     expect(result.loot.every((grant) => grant.itemId !== 'ITEM-0044')).toBe(true)
   })

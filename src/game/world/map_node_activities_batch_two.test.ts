@@ -25,9 +25,9 @@ describe('map node activity batch two', () => {
     ])
     expect(activityHasMixedCombatPool(launch, 'ACT-0004')).toBe(true)
     expect(poolWeights(launch, 'POOL-0005')).toEqual([
-      'ACN-0018:50',
+      'ACN-0018:60',
       'ACN-0019:20',
-      'ACN-0020:30',
+      'ACN-0020:20',
     ])
     expect(poolWeights(launch, 'POOL-0027')).toEqual(['ACN-0099:90', 'ACN-0100:10'])
     expect(poolWeights(launch, 'POOL-0069')).toEqual(['ACN-0013:100'])

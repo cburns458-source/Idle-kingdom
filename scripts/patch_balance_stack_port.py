@@ -202,6 +202,8 @@ def patch_db(db: dict) -> None:
             cleaned = re.sub(r"\s*FailChance:\d+;?", "", notes)
             cleaned = re.sub(r"\s*NoConsequences;?", "", cleaned)
             cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" ;")
+            if "ThieverySteal" in cleaned and "FailDamagePercent" not in cleaned:
+                cleaned = (cleaned + "; FailDamagePercent:10").strip(" ;")
             if cleaned != notes:
                 action["Notes"] = cleaned or None
 
