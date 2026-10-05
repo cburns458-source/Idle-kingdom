@@ -46,9 +46,7 @@ num? _nextCombatDueMs(GameDatabase db, PlayerSave save) {
   final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000;
   final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000;
   final roundEnd = roundStart + math.max(1, configNumber(db, 'combat_round_duration', 6) * 1000);
-  final attackAt = save.combatPlayerSwingApplied
-      ? roundEnd
-      : math.min(playerAt, enemyAt);
+  final attackAt = save.combatPlayerSwingApplied ? roundEnd : math.min(playerAt, enemyAt);
   if (isNotBlank(save.combatEatUntil)) {
     final eatUntil = jsDateParse(save.combatEatUntil);
     if (eatUntil.toDouble().isFinite && eatUntil <= attackAt) return eatUntil;

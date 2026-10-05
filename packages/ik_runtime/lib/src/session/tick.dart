@@ -186,12 +186,7 @@ void _startNextCombatRound(GameDatabase db, _TickOutput out, num atMs) {
 }
 
 /// Roll both swings, apply HP, and emit floaters. Outcomes wait for round end.
-void _applyDueCombatHits(
-  GameDatabase db,
-  _TickOutput out,
-  EnemyRow enemy,
-  RandomFn random,
-) {
+void _applyDueCombatHits(GameDatabase db, _TickOutput out, EnemyRow enemy, RandomFn random) {
   final before = out.current;
   final round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random);
   if (round.lifestealHealed > 0) {
