@@ -88,9 +88,10 @@ ActivityRow? getActivity(GameDatabase db, String activityId) {
 
 bool activityIsComingSoon(ActivityRow? activity) {
   if (activity == null) return false;
-  return jsString(
-    activity.raw['Notes'],
-  ).split(';').map((token) => token.trim().toLowerCase()).contains('coming_soon');
+  return jsString(activity.raw['Notes'])
+      .split(';')
+      .map((token) => token.trim().toLowerCase())
+      .contains('coming_soon');
 }
 
 /// Earliest time the next pool action can start, or null when nothing is waiting.
