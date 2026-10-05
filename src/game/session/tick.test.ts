@@ -73,7 +73,7 @@ describe('session tick', () => {
     expect(result.events.map((event) => event.kind)).toEqual(['rewards', 'activity-stopped'])
   })
 
-  it('shows combat hits at 5.5s and starts the next round at 6s', () => {
+  it('resolves both combat swings at 6s and starts the next round immediately', () => {
     const armed = newSave({
       currentLocationId: 'LOC-0003',
       currentHp: 100_000,
@@ -86,15 +86,15 @@ describe('session tick', () => {
     expect(fighting.combatEatUntil).toBeTruthy()
     expect(fighting.combatRoundStartedAt).toBe(new Date(START_MS).toISOString())
 
-    const tooEarly = advanceSession(db, fighting, START_MS + 499, firstOfPool)
+    const tooEarly = advanceSession(db, fighting, START_MS + 999, firstOfPool)
     expect(tooEarly.changed).toBe(false)
 
-    const midRound = advanceSession(db, fighting, START_MS + 5_499, firstOfPool)
+    const midRound = advanceSession(db, fighting, START_MS + 5_999, firstOfPool)
     expect(midRound.save.combatEatUntil).toBeNull()
     expect(midRound.events.some((event) => event.kind === 'combat-round')).toBe(false)
     expect(midRound.save.combatRoundStartedAt).toBe(fighting.combatRoundStartedAt)
 
-    const clash = advanceSession(db, midRound.save, START_MS + 5_500, firstOfPool)
+    const clash = advanceSession(db, midRound.save, START_MS + 6_000, firstOfPool)
     expect(clash.save.combatEnemyHp!).toBeLessThan(fighting.combatEnemyHp!)
     const round = clash.events.find((event) => event.kind === 'combat-round')
     expect(round).toBeTruthy()
@@ -102,17 +102,11 @@ describe('session tick', () => {
       expect(round.outcome === 'victory' || round.enemyHit != null).toBe(true)
       expect(round.bossInkActive).toBe(false)
     }
-    // Hits land early; the round clock stays until the full 6s bar finishes.
-    expect(clash.save.combatRoundStartedAt).toBe(fighting.combatRoundStartedAt)
-    expect(clash.save.combatPlayerSwingApplied).toBe(true)
-    expect(clash.events.map((event) => event.kind)).not.toContain('enemy-defeated')
-
-    const wrap = advanceSession(db, clash.save, START_MS + 6_000, firstOfPool)
-    expect(wrap.save.combatRoundStartedAt).toBe(new Date(START_MS + 6_000).toISOString())
-    expect(wrap.save.combatEatUntil).toBe(new Date(START_MS + 6_500).toISOString())
+    expect(clash.save.combatRoundStartedAt).toBe(new Date(START_MS + 6_000).toISOString())
+    expect(clash.save.combatEatUntil).toBe(new Date(START_MS + 7_000).toISOString())
   })
 
-  it('auto-eats 0.5s into the round and never adds eat time', () => {
+  it('auto-eats 1s into the round and never adds eat time', () => {
     const armed = newSave({
       currentLocationId: 'LOC-0003',
       currentHp: 500,
@@ -131,28 +125,26 @@ describe('session tick', () => {
     expect(fighting.combatEnemyId).toBeTruthy()
     expect(fighting.equipment.slots['SLOT-0011']?.quantity).toBe(3)
 
-    const firstEat = advanceSession(db, fighting, START_MS + 500, firstOfPool)
+    const firstEat = advanceSession(db, fighting, START_MS + 1_000, firstOfPool)
     expect(firstEat.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
     expect(firstEat.events.map((event) => event.kind)).toContain('food-healed')
     expect(firstEat.save.combatEatUntil).toBeNull()
 
-    const clash = advanceSession(db, firstEat.save, START_MS + 5_500, firstOfPool)
+    const clash = advanceSession(db, firstEat.save, START_MS + 6_000, firstOfPool)
     const round = clash.events.find(
       (event) => event.kind === 'combat-round' && event.outcome === 'ongoing',
     )
     expect(round).toBeTruthy()
     expect(clash.save.equipment.slots['SLOT-0011']?.quantity).toBe(2)
     expect(clash.events.map((event) => event.kind)).not.toContain('food-healed')
-    expect(clash.save.combatRoundStartedAt).toBe(fighting.combatRoundStartedAt)
+    expect(clash.save.combatRoundStartedAt).toBe(new Date(START_MS + 6_000).toISOString())
+    expect(clash.save.combatEatUntil).toBe(new Date(START_MS + 7_000).toISOString())
 
-    const wrap = advanceSession(db, clash.save, START_MS + 6_000, firstOfPool)
-    expect(wrap.save.combatEatUntil).toBe(new Date(START_MS + 6_500).toISOString())
-
-    const afterEat = advanceSession(db, wrap.save, START_MS + 6_500, firstOfPool)
+    const afterEat = advanceSession(db, clash.save, START_MS + 7_000, firstOfPool)
     expect(afterEat.save.equipment.slots['SLOT-0011']?.quantity).toBe(1)
     expect(afterEat.events.map((event) => event.kind)).toContain('food-healed')
     expect(afterEat.save.combatEatUntil).toBeNull()
-    expect(afterEat.save.combatRoundStartedAt).toBe(wrap.save.combatRoundStartedAt)
+    expect(afterEat.save.combatRoundStartedAt).toBe(clash.save.combatRoundStartedAt)
 
     const killSetup = {
       ...afterEat.save,
@@ -161,29 +153,19 @@ describe('session tick', () => {
       combatPlayerSwingApplied: false,
       combatPendingRound: null,
     }
-    const killHits = advanceSession(
+    const kill = advanceSession(
       db,
       killSetup,
-      Date.parse(killSetup.combatRoundStartedAt!) + 5_500,
+      Date.parse(killSetup.combatRoundStartedAt!) + 6_000,
       () => 0,
     )
-    const killRound = killHits.events.find(
+    const killRound = kill.events.find(
       (event) => event.kind === 'combat-round' && event.outcome === 'victory',
     )
     expect(killRound).toBeTruthy()
     if (killRound?.kind === 'combat-round') {
       expect(killRound.enemyHit).toBeNull()
     }
-    expect(killHits.events.map((event) => event.kind)).not.toContain('enemy-defeated')
-    expect(killHits.save.combatEnemyHp).toBe(0)
-    expect(killHits.save.combatRoundStartedAt).toBe(killSetup.combatRoundStartedAt)
-
-    const kill = advanceSession(
-      db,
-      killHits.save,
-      Date.parse(killSetup.combatRoundStartedAt!) + 6_000,
-      () => 0,
-    )
     expect(kill.events.map((event) => event.kind)).toContain('enemy-defeated')
     expect(kill.events.map((event) => event.kind)).not.toContain('food-healed')
     expect(kill.save.combatEnemyId).toBeTruthy()

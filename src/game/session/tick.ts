@@ -212,11 +212,15 @@ function startNextCombatRound(db: GameDatabase, out: TickOutput, atMs: number): 
   })
 }
 
-/** Roll both swings, apply HP, and emit floaters. Outcomes wait for round end. */
-function applyDueCombatHits(
+/** Both sides attack at round end; outcomes follow in the same beat. */
+function applyDueCombatRound(
   db: GameDatabase,
   out: TickOutput,
+  activityId: string,
   enemy: EnemyRow,
+  action: ActionRow,
+  roundEnd: number,
+  roundMs: number,
   random: RandomFn,
 ): void {
   const before = out.current
@@ -246,9 +250,10 @@ function applyDueCombatHits(
     outcome: round.outcome,
     bossInkActive: round.bossInkActive,
   })
+  applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random)
 }
 
-/** Victory, defeat, or next round at combat_round_duration. */
+/** Victory, defeat, or next round from a pending clash. */
 function applyDueCombatOutcome(
   db: GameDatabase,
   out: TickOutput,
@@ -485,9 +490,9 @@ export function advanceSession(
     const roundStart = Date.parse(out.current.combatRoundStartedAt)
     const roundMs = configNumber(db, 'combat_round_duration', 6) * 1000
     const playerAt =
-      roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000
+      roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000
     const enemyAt =
-      roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000
+      roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000
     const roundEnd = roundStart + roundMs
     const eatUntil = out.current.combatEatUntil
       ? Date.parse(out.current.combatEatUntil)
@@ -507,10 +512,20 @@ export function advanceSession(
 
     const attackAt = Math.min(playerAt, enemyAt)
     if (!out.current.combatPlayerSwingApplied && attackAt <= nowMs) {
-      applyDueCombatHits(db, out, enemy, random)
+      applyDueCombatRound(
+        db,
+        out,
+        activityId,
+        enemy,
+        action,
+        Math.max(attackAt, roundEnd),
+        roundMs,
+        random,
+      )
       return out.result()
     }
 
+    // Leftover split-swing saves: finish the pending outcome at round end.
     if (out.current.combatPlayerSwingApplied && roundEnd <= nowMs) {
       applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random)
       return out.result()
