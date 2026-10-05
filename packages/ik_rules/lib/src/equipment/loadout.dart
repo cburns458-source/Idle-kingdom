@@ -392,15 +392,13 @@ PlayerSave equipStackToSlot(PlayerSave save, String slotId, String itemId, num q
 
 bool _isEquipmentSkillId(Object? value) => value is String && value.isNotEmpty && value != 'None';
 
-/// Per-skill action time reduction cap; excess is ignored and not shown.
-const num actionTimeReductionCapPercent = 50;
-
-/// Action-time reduction totals keyed by required and secondary skills.
-Map<String, num> equippedActionTimeReductionBySkill(GameDatabase db, PlayerSave save) {
+/// Per-skill success-chance bonus from equipment (no cap).
+Map<String, num> equippedSuccessChanceBonusBySkill(GameDatabase db, PlayerSave save) {
   final totals = <String, num>{};
   for (final stack in save.equipment.slots.values) {
     if (stack == null || isBlank(stack.itemId)) continue;
     final row = db.equipment.firstWhereOrNull((entry) => entry.raw['Item ID'] == stack.itemId);
+    // Existing Equipment "Action Time Reduction %" column now means success chance.
     final amount = jsNumber(row?.raw['Action Time Reduction %'] ?? 0);
     if (amount <= 0) continue;
     for (final skillId in <Object?>[
@@ -412,24 +410,23 @@ Map<String, num> equippedActionTimeReductionBySkill(GameDatabase db, PlayerSave 
       totals[id] = (totals[id] ?? 0) + amount;
     }
   }
-  // Tool enchantments (Mining/Fishing/Woodcutting ATR) add on top of item ATR.
-  final fromEnchant = equippedEnchantmentActionTimeReductionBySkill(db, save);
+  final fromEnchant = equippedEnchantmentSuccessChanceBonusBySkill(db, save);
   for (final entry in fromEnchant.entries) {
     totals[entry.key] = (totals[entry.key] ?? 0) + entry.value;
   }
   for (final skillId in totals.keys.toList()) {
-    totals[skillId] = math.min(actionTimeReductionCapPercent, math.max(0, totals[skillId]!));
+    totals[skillId] = math.max(0, totals[skillId]!);
   }
   return totals;
 }
 
-/// Reduction that applies only to actions of this skill (capped).
-num equippedActionTimeReductionPercent(GameDatabase db, PlayerSave save, String? skillId) {
+/// Success-chance bonus that applies only to actions of this skill.
+num equippedSuccessChanceBonusPercent(GameDatabase db, PlayerSave save, String? skillId) {
   if (isBlank(skillId)) return 0;
-  return math.max(0, equippedActionTimeReductionBySkill(db, save)[skillId!] ?? 0);
+  return math.max(0, equippedSuccessChanceBonusBySkill(db, save)[skillId!] ?? 0);
 }
 
-final RegExp _vineAtrCapability = RegExp(r'vine_atr:\s*(\d+)', caseSensitive: false);
+final RegExp _vineSuccessCapability = RegExp(r'vine_atr:\s*(\d+)', caseSensitive: false);
 
 bool isVineChopAction(ActionRow action) {
   if (RegExp(
@@ -441,41 +438,52 @@ bool isVineChopAction(ActionRow action) {
   return jsString(action.raw['Internal Key']).toLowerCase().contains('vine');
 }
 
-({num override, num listedAtr})? _equippedVineChopOverride(GameDatabase db, PlayerSave save) {
-  ({num override, num listedAtr})? best;
+({num override, num listedBonus})? _equippedVineChopOverride(GameDatabase db, PlayerSave save) {
+  ({num override, num listedBonus})? best;
   for (final stack in save.equipment.slots.values) {
     if (stack == null || isBlank(stack.itemId)) continue;
     final row = db.equipment.firstWhereOrNull((entry) => entry.raw['Item ID'] == stack.itemId);
     final caps = row?.raw['Capabilities / Effects'];
     if (caps is! String) continue;
-    final match = _vineAtrCapability.firstMatch(caps);
+    final match = _vineSuccessCapability.firstMatch(caps);
     if (match == null) continue;
     final override = jsNumber(match.group(1));
     if (override <= 0) continue;
-    final listedAtr = jsNumber(row?.raw['Action Time Reduction %'] ?? 0);
+    final listedBonus = jsNumber(row?.raw['Action Time Reduction %'] ?? 0);
     if (best == null || override > best.override) {
-      best = (override: override, listedAtr: listedAtr);
+      best = (override: override, listedBonus: listedBonus);
     }
   }
   return best;
 }
 
-/// Vine chops can raise ATR to a tool-specific value (machete).
-num equippedActionTimeReductionPercentForAction(
-  GameDatabase db,
-  PlayerSave save,
-  ActionRow action,
-) {
-  final skillAtr = equippedActionTimeReductionPercent(
+/// Vine chops can raise the success bonus to a tool-specific value (machete).
+num equippedSuccessChanceBonusPercentForAction(GameDatabase db, PlayerSave save, ActionRow action) {
+  final skillBonus = equippedSuccessChanceBonusPercent(
     db,
     save,
     jsString(action.raw['Relevant Skill ID']),
   );
-  if (!isVineChopAction(action)) return skillAtr;
+  if (!isVineChopAction(action)) return skillBonus;
   final vine = _equippedVineChopOverride(db, save);
-  if (vine == null) return skillAtr;
-  return math.min(
-    actionTimeReductionCapPercent,
-    math.max(0, skillAtr - vine.listedAtr + vine.override),
-  );
+  if (vine == null) return skillBonus;
+  return math.max(0, skillBonus - vine.listedBonus + vine.override);
 }
+
+/// @deprecated Use [equippedSuccessChanceBonusBySkill]
+Map<String, num> equippedActionTimeReductionBySkill(GameDatabase db, PlayerSave save) =>
+    equippedSuccessChanceBonusBySkill(db, save);
+
+/// @deprecated Use [equippedSuccessChanceBonusPercent]
+num equippedActionTimeReductionPercent(GameDatabase db, PlayerSave save, String? skillId) =>
+    equippedSuccessChanceBonusPercent(db, save, skillId);
+
+/// @deprecated Use [equippedSuccessChanceBonusPercentForAction]
+num equippedActionTimeReductionPercentForAction(
+  GameDatabase db,
+  PlayerSave save,
+  ActionRow action,
+) => equippedSuccessChanceBonusPercentForAction(db, save, action);
+
+/// Removed: success chance is uncapped. Kept as 100 so old callers that still clamp do nothing harmful.
+const num actionTimeReductionCapPercent = 100;

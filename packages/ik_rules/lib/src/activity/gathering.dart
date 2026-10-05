@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:ik_content/ik_content.dart';
 
 import '../config.dart';
-import '../equipment/loadout.dart';
 import '../equipment/specialist.dart';
 import '../js_compat.dart';
 import '../projects/enchantments.dart';
@@ -12,35 +11,64 @@ import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
 import 'xp.dart';
 
-/// Level 1 = 40%, +0.5% per skill level (89.5% at level 100).
-/// Plus +1% for each level above the action's proficiency level.
-/// Base 80%. −0.75% per level below proficiency, +1% per level above.
-/// Clamped to 0–100. Gathering and standard production share this curve.
-num gatheringSuccessChancePercent(num level, [num proficiencyLevel = 1]) {
-  return _successChancePercent(level, proficiencyLevel);
+/// Gathering: base = 80 − (proficiency ~/ 4) (lvl 1 → 80%, lvl 40 → 70%, lvl 88 → 58%).
+/// Then −0.75%/level below proficiency, +1%/level above. Clamped 0–100.
+/// Optional flat success-chance bonus from gear is applied by callers.
+num gatheringSuccessChancePercent(
+  num level, [
+  num proficiencyLevel = 1,
+  num successChanceBonusPercent = 0,
+]) {
+  final proficiency = math.max(1, proficiencyLevel.floor());
+  final base = 80 - (proficiency ~/ 4);
+  return _successChancePercent(level, proficiency, base, successChanceBonusPercent);
 }
 
-/// Same curve as gathering (shared Launch success formula).
-num productionSuccessChancePercent(num level, [num proficiencyLevel = 1]) {
-  return _successChancePercent(level, proficiencyLevel);
+/// Production: base 70%. −0.75%/level below proficiency, +1%/level above.
+/// Clamped 0–100. Optional flat success-chance bonus from gear is applied by callers.
+num productionSuccessChancePercent(
+  num level, [
+  num proficiencyLevel = 1,
+  num successChanceBonusPercent = 0,
+]) {
+  return _successChancePercent(level, proficiencyLevel, 70, successChanceBonusPercent);
 }
 
-num _successChancePercent(num level, num proficiencyLevel) {
+num _successChancePercent(
+  num level,
+  num proficiencyLevel,
+  num baseAtProficiency, [
+  num successChanceBonusPercent = 0,
+]) {
   final lvl = math.max(1, level.floor());
   final proficiency = math.max(1, proficiencyLevel.floor());
   final delta = lvl - proficiency;
-  final chance = delta < 0 ? 80 + delta * 0.75 : 80 + delta;
+  final chance =
+      (delta < 0 ? baseAtProficiency + delta * 0.75 : baseAtProficiency + delta) +
+      math.max(0, successChanceBonusPercent);
   return math.max(0, math.min(100, chance));
 }
 
 /// False means the action yields no loot and no XP.
-bool rollGatheringSuccess(num level, RandomFn random, [num proficiencyLevel = 1]) {
-  return random() * 100 < gatheringSuccessChancePercent(level, proficiencyLevel);
+bool rollGatheringSuccess(
+  num level,
+  RandomFn random, [
+  num proficiencyLevel = 1,
+  num successChanceBonusPercent = 0,
+]) {
+  return random() * 100 <
+      gatheringSuccessChancePercent(level, proficiencyLevel, successChanceBonusPercent);
 }
 
 /// False means the craft botches: materials spent, no output/XP.
-bool rollProductionSuccess(num level, RandomFn random, [num proficiencyLevel = 1]) {
-  return random() * 100 < productionSuccessChancePercent(level, proficiencyLevel);
+bool rollProductionSuccess(
+  num level,
+  RandomFn random, [
+  num proficiencyLevel = 1,
+  num successChanceBonusPercent = 0,
+]) {
+  return random() * 100 <
+      productionSuccessChancePercent(level, proficiencyLevel, successChanceBonusPercent);
 }
 
 num gatheringDurationMs(GameDatabase db, PlayerSave save, ActionRow action) {
@@ -51,14 +79,9 @@ num gatheringDurationMs(GameDatabase db, PlayerSave save, ActionRow action) {
       ? configNumber(db, 'gathering_below_proficiency_duration_multiplier', 2)
       : 1;
   final skillId = jsString(action.raw['Relevant Skill ID']);
-  final actionTimeReduction = equippedActionTimeReductionPercentForAction(db, save, action);
-  final reductionFactor = math.max(0.01, 1 - actionTimeReduction / 100);
   final enchantFactor = equippedEnchantmentGatheringMultiplier(db, save, skillId);
   final spellFactor = activeSpellGatheringDurationMultiplier(db, save);
-  return math.max(
-    0,
-    baseSeconds * multiplier * reductionFactor * enchantFactor * spellFactor * 1000,
-  );
+  return math.max(0, baseSeconds * multiplier * enchantFactor * spellFactor * 1000);
 }
 
 bool isBelowProficiency(PlayerSave save, ActionRow action) {

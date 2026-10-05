@@ -81,8 +81,8 @@ num enemyScaledMaxHp(EnemyRow enemy) {
   );
 }
 
-/// Kill XP = true (Vitality-scaled) HP × 2.
-num enemyCombatXp(EnemyRow enemy) => enemyScaledMaxHp(enemy) * 2;
+/// Kill XP = floor(true Vitality-scaled HP / 2).
+num enemyCombatXp(EnemyRow enemy) => (enemyScaledMaxHp(enemy) / 2).floor();
 
 /// Encounter damage from table base × Might bonus. Boss player-base overrides sit elsewhere.
 DamageRange enemyScaledDamageRange(EnemyRow enemy) {

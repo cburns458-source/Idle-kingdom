@@ -90,8 +90,10 @@ num equippedRelativeDropChanceBonusPercent(GameDatabase db, PlayerSave save) {
 num totalRelativeDropChanceBonusPercent(GameDatabase db, PlayerSave save) {
   var total = equippedRelativeDropChanceBonusPercent(db, save);
   final potion = save.activePotionEffect;
-  if (potion?.scope == 'one_action') {
-    total += potion?.relativeDropChanceBonusPercent ?? 0;
+  if (potion != null &&
+      (potion.scope == 'one_action' || potion.scope == 'one_combat_encounter') &&
+      (potion.relativeDropChanceBonusPercent ?? 0) != 0) {
+    total += potion.relativeDropChanceBonusPercent ?? 0;
   }
   return total;
 }

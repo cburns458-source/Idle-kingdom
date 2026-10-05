@@ -150,16 +150,7 @@ SellInventoryResult sellInventoryQuantities(
     }
   }
 
-  var next = save.copyWith(
-    inventory: inventory,
-    gold: save.gold + goldEarned,
-    statistics: PlayerStatistics(
-      values: {
-        ...save.statistics.values,
-        'gold_earned': jsNumber(save.statistics.values['gold_earned'] ?? 0) + goldEarned,
-      },
-    ),
-  );
+  var next = save.copyWith(inventory: inventory, gold: save.gold + goldEarned);
   if (soldAtShop.isNotEmpty) {
     next = recordItemsSoldAtLocation(next, soldAtShop, save.currentLocationId);
   }

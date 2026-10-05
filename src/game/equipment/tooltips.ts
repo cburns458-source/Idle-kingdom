@@ -3,7 +3,6 @@ import {
   skillRelativeDropChanceTooltipLines,
 } from '../loot/dropChance'
 import type { EquipmentRow, GameDatabase } from '../data/types'
-import { ACTION_TIME_REDUCTION_CAP_PERCENT } from './loadout'
 
 function skillDisplayName(
   db: GameDatabase | undefined,
@@ -46,15 +45,16 @@ export function equipmentTooltipStatLines(
     lines.push(healing > 0 ? `Healing +${healing}` : `Healing ${healing}`)
   }
 
-  const atrRaw = equipment['Action Time Reduction %']
-  if (typeof atrRaw === 'number' && atrRaw > 0) {
-    const atr = Math.min(ACTION_TIME_REDUCTION_CAP_PERCENT, atrRaw)
-    if (atr > 0) {
-      const skills = [equipment['Required Skill ID'], equipment['Secondary Required Skill ID']]
-        .map((id) => skillDisplayName(db, id))
-        .filter((name): name is string => Boolean(name))
-      lines.push(skills.length > 0 ? `${skills.join(', ')}: -${atr}% action time` : `-${atr}% action time`)
-    }
+  const successRaw = equipment['Action Time Reduction %']
+  if (typeof successRaw === 'number' && successRaw > 0) {
+    const skills = [equipment['Required Skill ID'], equipment['Secondary Required Skill ID']]
+      .map((id) => skillDisplayName(db, id))
+      .filter((name): name is string => Boolean(name))
+    lines.push(
+      skills.length > 0
+        ? `${skills.join(', ')}: +${successRaw}% success chance`
+        : `+${successRaw}% success chance`,
+    )
   }
 
   const dropBonus = parseRelativeDropChanceBonusPercent(equipment['Capabilities / Effects'])

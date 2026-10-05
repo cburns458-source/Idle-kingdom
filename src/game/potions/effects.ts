@@ -25,13 +25,21 @@ const SCOPE_TAGS: PotionConsumeScope[] = [
 export function parsePotionEffect(
   equipment: EquipmentRow | undefined,
   itemId: string,
+  preferredScope?: PotionConsumeScope,
 ): ActivePotionEffect | null {
   if (!equipment) return null
   const tags = capabilityTags(equipment['Capabilities / Effects'])
   if (!tags.includes('potion_slot')) return null
 
-  const scope = SCOPE_TAGS.find((tag) => tags.includes(tag))
-  if (!scope) return null
+  const scopes = SCOPE_TAGS.filter((tag) => tags.includes(tag))
+  if (scopes.length === 0) return null
+  if (preferredScope && !scopes.includes(preferredScope)) return null
+  const scope =
+    preferredScope && scopes.includes(preferredScope)
+      ? preferredScope
+      : scopes.includes('one_action')
+        ? 'one_action'
+        : scopes[0]!
 
   let damageBonusPercent: number | null = null
   let enemyMaxHpDamagePercent: number | null = null
@@ -123,8 +131,16 @@ export function tryConsumePotionForScope(
   potionName: string | null
 } {
   const existing = save.activePotionEffect
-  if (existing && potionActionsRemaining(existing) > 0 && existing.scope === scope) {
-    return { save, consumed: false, effect: existing, potionName: null }
+  if (existing && potionActionsRemaining(existing) > 0) {
+    if (existing.scope === scope) {
+      return { save, consumed: false, effect: existing, potionName: null }
+    }
+    // Multi-scope bottles (e.g. luck): an already-open bottle covers the other
+    // eligible scope without drinking a second dose.
+    const openEquipment = db.Equipment.find((row) => row['Item ID'] === existing.itemId)
+    if (parsePotionEffect(openEquipment, existing.itemId, scope)) {
+      return { save, consumed: false, effect: existing, potionName: null }
+    }
   }
 
   // Pause blocks new bottles only; an already-running effect keeps ticking.
@@ -148,8 +164,8 @@ export function tryConsumePotionForScope(
   }
 
   const equipment = db.Equipment.find((row) => row['Item ID'] === potion.itemId)
-  const effect = parsePotionEffect(equipment, potion.itemId)
-  if (!effect || effect.scope !== scope) {
+  const effect = parsePotionEffect(equipment, potion.itemId, scope)
+  if (!effect) {
     return { save, consumed: false, effect: null, potionName: null }
   }
 
