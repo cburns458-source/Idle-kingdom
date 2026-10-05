@@ -3,7 +3,7 @@ import { WEAPON_TOOL_SLOT_ID, type EquippedStack, type PlayerSave } from '../sav
 import { addItemToInventory } from '../activity/rewards'
 import { getSkillProgress } from '../activity/xp'
 import { canFitItemQuantity } from '../inventory/capacity'
-import { equippedEnchantmentActionTimeReductionBySkill } from '../projects/enchantments'
+import { equippedEnchantmentSuccessChanceBonusBySkill } from '../projects/enchantments'
 import { firstEmptySpellSlot, isSpellEquipment, isSpellSlotId } from '../spells/spells'
 import { TEMPLE_LOCATION_ID } from '../world/blessing'
 
@@ -17,6 +17,60 @@ export { WEAPON_TOOL_SLOT_ID }
 /** True when lockpicks are equipped in Weapon/Tool. */
 export function equippedWeaponIsLockpick(save: PlayerSave): boolean {
   return save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId === LOCKPICK_ITEM_ID
+}
+
+/** Base lockpick snap chance at Thievery 1. Independent of steal success. */
+export const LOCKPICK_BREAK_BASE_CHANCE_PERCENT = 50
+/** Extra snap chance per Thievery level after 1. */
+export const LOCKPICK_BREAK_CHANCE_PER_LEVEL = 0.5
+
+/**
+ * How much equipped text lowers lockpick break chance.
+ * `-15% lockpick break chance` or `lockpick_break:-15` → +15 reduction.
+ * A leading `+` / positive compact value raises break chance (negative reduction).
+ */
+export function parseLockpickBreakChanceReductionPercent(
+  effects: string | null | undefined,
+): number {
+  if (!effects) return 0
+  let total = 0
+  for (const match of effects.matchAll(/([+-]?\d+(?:\.\d+)?)%\s+lockpick\s+break\s+chance/gi)) {
+    total -= Number(match[1])
+  }
+  for (const match of effects.matchAll(/lockpick_break:\s*([+-]?\d+(?:\.\d+)?)/gi)) {
+    total -= Number(match[1])
+  }
+  return total
+}
+
+/** Sum lockpick-break reductions from every equipped item. */
+export function equippedLockpickBreakChanceReductionPercent(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  let total = 0
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.itemId) continue
+    const row = db.Equipment.find((entry) => entry['Item ID'] === stack.itemId)
+    total += parseLockpickBreakChanceReductionPercent(row?.['Capabilities / Effects'])
+  }
+  return total
+}
+
+/**
+ * Lockpick break chance: 50% at level 1, +0.5% per level after, minus gear reduction.
+ * Clamped 0–100. Separate from steal success chance.
+ */
+export function lockpickBreakChancePercent(
+  thieveryLevel: number,
+  reductionPercent: number = 0,
+): number {
+  const level = Math.max(1, Math.floor(thieveryLevel))
+  const base = Math.min(
+    100,
+    LOCKPICK_BREAK_BASE_CHANCE_PERCENT + (level - 1) * LOCKPICK_BREAK_CHANCE_PER_LEVEL,
+  )
+  return Math.max(0, Math.min(100, base - (Number(reductionPercent) || 0)))
 }
 
 export function isDaggerItem(db: GameDatabase, itemId: string): boolean {
@@ -398,11 +452,8 @@ function isEquipmentSkillId(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value !== 'None'
 }
 
-/** Per-skill action time reduction cap; excess is ignored and not shown. */
-export const ACTION_TIME_REDUCTION_CAP_PERCENT = 50
-
-/** Action-time reduction totals keyed by required and secondary skills. */
-export function equippedActionTimeReductionBySkill(
+/** Per-skill success-chance bonus from equipment (no cap). */
+export function equippedSuccessChanceBonusBySkill(
   db: GameDatabase,
   save: PlayerSave,
 ): Record<string, number> {
@@ -410,6 +461,7 @@ export function equippedActionTimeReductionBySkill(
   for (const stack of Object.values(save.equipment.slots)) {
     if (!stack?.itemId) continue
     const row = db.Equipment.find((entry) => entry['Item ID'] === stack.itemId)
+    // Existing Equipment "Action Time Reduction %" column now means success chance.
     const amount = Number(row?.['Action Time Reduction %'] ?? 0)
     if (amount <= 0) continue
     for (const skillId of [row?.['Required Skill ID'], row?.['Secondary Required Skill ID']]) {
@@ -417,28 +469,27 @@ export function equippedActionTimeReductionBySkill(
       totals[skillId] = (totals[skillId] ?? 0) + amount
     }
   }
-  // Tool enchantments (Mining/Fishing/Woodcutting ATR) add on top of item ATR.
-  const fromEnchant = equippedEnchantmentActionTimeReductionBySkill(db, save)
+  const fromEnchant = equippedEnchantmentSuccessChanceBonusBySkill(db, save)
   for (const [skillId, amount] of Object.entries(fromEnchant)) {
     totals[skillId] = (totals[skillId] ?? 0) + amount
   }
   for (const skillId of Object.keys(totals)) {
-    totals[skillId] = Math.min(ACTION_TIME_REDUCTION_CAP_PERCENT, Math.max(0, totals[skillId]!))
+    totals[skillId] = Math.max(0, totals[skillId]!)
   }
   return totals
 }
 
-/** Reduction that applies only to actions of this skill (capped). */
-export function equippedActionTimeReductionPercent(
+/** Success-chance bonus that applies only to actions of this skill. */
+export function equippedSuccessChanceBonusPercent(
   db: GameDatabase,
   save: PlayerSave,
   skillId: string | null | undefined,
 ): number {
   if (!skillId) return 0
-  return Math.max(0, equippedActionTimeReductionBySkill(db, save)[skillId] ?? 0)
+  return Math.max(0, equippedSuccessChanceBonusBySkill(db, save)[skillId] ?? 0)
 }
 
-const VINE_ATR_CAPABILITY = /vine_atr:\s*(\d+)/i
+const VINE_SUCCESS_CAPABILITY = /vine_atr:\s*(\d+)/i
 
 export function isVineChopAction(action: { Notes?: string | null; 'Internal Key'?: string | null }): boolean {
   if (/(?:^|;)\s*VineChop\s*(?:;|$)/i.test(action.Notes ?? '')) return true
@@ -448,37 +499,43 @@ export function isVineChopAction(action: { Notes?: string | null; 'Internal Key'
 function equippedVineChopOverride(
   db: GameDatabase,
   save: PlayerSave,
-): { override: number; listedAtr: number } | null {
-  let best: { override: number; listedAtr: number } | null = null
+): { override: number; listedBonus: number } | null {
+  let best: { override: number; listedBonus: number } | null = null
   for (const stack of Object.values(save.equipment.slots)) {
     if (!stack?.itemId) continue
     const row = db.Equipment.find((entry) => entry['Item ID'] === stack.itemId)
     const caps = row?.['Capabilities / Effects']
     if (typeof caps !== 'string') continue
-    const match = caps.match(VINE_ATR_CAPABILITY)
+    const match = caps.match(VINE_SUCCESS_CAPABILITY)
     if (!match) continue
     const override = Number(match[1])
     if (!Number.isFinite(override) || override <= 0) continue
-    const listedAtr = Number(row?.['Action Time Reduction %'] ?? 0)
+    const listedBonus = Number(row?.['Action Time Reduction %'] ?? 0)
     if (!best || override > best.override) {
-      best = { override, listedAtr: Number.isFinite(listedAtr) ? listedAtr : 0 }
+      best = { override, listedBonus: Number.isFinite(listedBonus) ? listedBonus : 0 }
     }
   }
   return best
 }
 
-/** Vine chops can raise ATR to a tool-specific value (machete). */
-export function equippedActionTimeReductionPercentForAction(
+/** Vine chops can raise the success bonus to a tool-specific value (machete). */
+export function equippedSuccessChanceBonusPercentForAction(
   db: GameDatabase,
   save: PlayerSave,
   action: { Notes?: string | null; 'Internal Key'?: string | null; 'Relevant Skill ID'?: string | null },
 ): number {
-  const skillAtr = equippedActionTimeReductionPercent(db, save, action['Relevant Skill ID'])
-  if (!isVineChopAction(action)) return skillAtr
+  const skillBonus = equippedSuccessChanceBonusPercent(db, save, action['Relevant Skill ID'])
+  if (!isVineChopAction(action)) return skillBonus
   const vine = equippedVineChopOverride(db, save)
-  if (!vine) return skillAtr
-  return Math.min(
-    ACTION_TIME_REDUCTION_CAP_PERCENT,
-    Math.max(0, skillAtr - vine.listedAtr + vine.override),
-  )
+  if (!vine) return skillBonus
+  return Math.max(0, skillBonus - vine.listedBonus + vine.override)
 }
+
+/** @deprecated Use equippedSuccessChanceBonusBySkill */
+export const equippedActionTimeReductionBySkill = equippedSuccessChanceBonusBySkill
+/** @deprecated Use equippedSuccessChanceBonusPercent */
+export const equippedActionTimeReductionPercent = equippedSuccessChanceBonusPercent
+/** @deprecated Use equippedSuccessChanceBonusPercentForAction */
+export const equippedActionTimeReductionPercentForAction = equippedSuccessChanceBonusPercentForAction
+/** Removed: success chance is uncapped. Kept as 100 so old callers that still clamp do nothing harmful. */
+export const ACTION_TIME_REDUCTION_CAP_PERCENT = 100

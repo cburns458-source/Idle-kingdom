@@ -59,6 +59,9 @@ void main() {
     expect(raceChangeCostFor('RACE-0001')!.items.single.quantity, 40);
     expect(raceChangeCostFor('RACE-0003')!.items.single.itemId, 'ITEM-0050');
     expect(raceChangeCostFor('RACE-0003')!.items.single.quantity, 40);
+    expect(raceChangeCostFor('RACE-0001', db)!.items.single.itemId, 'ITEM-0018');
+    expect(raceChangeCostFor('RACE-0003', db)!.items.single.itemId, 'ITEM-0050');
+    expect(raceChangeCostFor('RACE-0005', db)!.gold, 5000);
   });
 
   test('changes race for mid-level goods and starts a weekly cooldown', () {

@@ -5,8 +5,8 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { POTION_SLOT_ID } from '../equipment/loadout'
 import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
+import { enemyScaledMaxHp } from '../combat/stats'
 import { beginCombatSave } from '../combat/engine'
-import { enemyEncounterMaxHp } from '../combat/boss'
 import { beginProductionQueue } from '../production/engine'
 import { generateNextAction } from '../activity/engine'
 import { addItemToInventory } from '../activity/rewards'
@@ -114,7 +114,7 @@ describe('potion effects', () => {
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
     const started = beginCombatSave(launch, save, action, enemy)
     expect(started.equipment.slots[POTION_SLOT_ID]).toBeNull()
-    expect(started.combatEnemyHp).toBe(enemyEncounterMaxHp(launch, started, enemy))
+    expect(started.combatEnemyHp).toBe(enemyScaledMaxHp(enemy))
     expect(started.activePotionEffect?.enemyMaxHpDamagePercent).toBe(10)
   })
 

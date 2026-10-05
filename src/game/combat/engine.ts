@@ -115,6 +115,34 @@ export function enemyForAction(db: GameDatabase, action: ActionRow): EnemyRow | 
   return getEnemy(db, action['Target ID'])
 }
 
+/** Instant mid-round auto-eat offset. Does not extend the combat clock. */
+export function combatEatAtMs(db: GameDatabase): number {
+  return Math.max(0, configNumber(db, 'combat_eat_at', 1)) * 1000
+}
+
+/** Round clock + scheduled mid-round eat. Used when a fight or next round starts. */
+export function openCombatRoundClock(
+  db: GameDatabase,
+  atMs: number,
+): Pick<
+  PlayerSave,
+  | 'combatRoundStartedAt'
+  | 'combatPlayerSwingApplied'
+  | 'combatPendingRound'
+  | 'combatEatUntil'
+  | 'combatContinueActivityAfterEat'
+  | 'combatManualEatRoundStartedAt'
+> {
+  return {
+    combatRoundStartedAt: new Date(atMs).toISOString(),
+    combatPlayerSwingApplied: false,
+    combatPendingRound: null,
+    combatEatUntil: new Date(atMs + combatEatAtMs(db)).toISOString(),
+    combatContinueActivityAfterEat: false,
+    combatManualEatRoundStartedAt: null,
+  }
+}
+
 export function beginCombatSave(
   db: GameDatabase,
   save: PlayerSave,
@@ -123,6 +151,8 @@ export function beginCombatSave(
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
   const potion = tryConsumePotionForScope(db, save, 'one_combat_encounter')
+  const startedAtMs = Date.parse(nowIso)
+  const atMs = Number.isFinite(startedAtMs) ? startedAtMs : Date.now()
   return {
     ...potion.save,
     currentActionId: action['Action ID'],
@@ -130,11 +160,7 @@ export function beginCombatSave(
     actionDurationMs: null,
     combatEnemyId: enemy['Enemy ID'],
     combatEnemyHp: enemyEncounterMaxHp(db, potion.save, enemy),
-    combatRoundStartedAt: nowIso,
-    combatPlayerSwingApplied: false,
-    combatPendingRound: null,
-    combatEatUntil: null,
-    combatContinueActivityAfterEat: false,
+    ...openCombatRoundClock(db, atMs),
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart ?? null,
     combatBossPendingId: null,

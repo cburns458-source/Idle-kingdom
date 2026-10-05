@@ -198,11 +198,11 @@ describe('playable races', () => {
 
     const woodcut = launch.Actions.find((row) => row['Action ID'] === 'ACN-0051')
     expect(woodcut).toBeTruthy()
-    // Human +5% flat on 56.25% base → 61.25% effective drop chance.
-    const dropped = resolveActionRewards(launch, save, woodcut!, () => 0.61)
+    // Human +5% flat on 25% base → 30% effective drop chance.
+    const dropped = resolveActionRewards(launch, save, woodcut!, () => 0.29)
     expect(dropped.loot.length).toBeGreaterThan(0)
 
-    const missed = resolveActionRewards(launch, save, woodcut!, () => 0.6125)
+    const missed = resolveActionRewards(launch, save, woodcut!, () => 0.3)
     expect(missed.loot).toHaveLength(0)
   })
 

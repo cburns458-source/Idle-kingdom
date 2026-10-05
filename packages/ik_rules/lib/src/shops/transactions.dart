@@ -190,16 +190,6 @@ ShopTransactionResult confirmShopOffer(
   }
   next = staging;
 
-  if (sellCredit.total > 0) {
-    next = next.copyWith(
-      statistics: PlayerStatistics(
-        values: {
-          ...next.statistics.values,
-          'gold_earned': jsNumber(next.statistics.values['gold_earned'] ?? 0) + sellCredit.total,
-        },
-      ),
-    );
-  }
   if (offer.sells.isNotEmpty) {
     final shopLocation = jsString(shop.raw['Location ID']);
     next = recordItemsSoldAtLocation(

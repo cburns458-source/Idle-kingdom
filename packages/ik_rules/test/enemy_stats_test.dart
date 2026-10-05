@@ -156,4 +156,19 @@ void main() {
       isFalse,
     );
   });
+
+  test('keeps every enemy Combat XP column in sync with floor(scaledMaxHp / 2)', () {
+    final source = assertGameDatabaseShape(contentDatabaseJson());
+    for (final enemy in source.enemies) {
+      if (enemy.raw['Maximum HP'] is! num) continue;
+      final expected = (enemyScaledMaxHp(enemy) / 2).floor();
+      expect(enemy.combatXp, expected, reason: enemy.enemyId);
+      expect(enemyCombatXp(enemy), expected, reason: enemy.enemyId);
+    }
+    for (final enemy in db.enemies) {
+      final expected = (enemyScaledMaxHp(enemy) / 2).floor();
+      expect(enemy.combatXp, expected, reason: enemy.enemyId);
+      expect(enemyCombatXp(enemy), expected, reason: enemy.enemyId);
+    }
+  });
 }

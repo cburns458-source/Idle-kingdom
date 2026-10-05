@@ -195,6 +195,23 @@ EnemyRow? enemyForAction(GameDatabase db, ActionRow action) {
   return getEnemy(db, targetId);
 }
 
+/// Instant mid-round auto-eat offset. Does not extend the combat clock.
+num combatEatAtMs(GameDatabase db) {
+  return math.max(0, configNumber(db, 'combat_eat_at', 1)) * 1000;
+}
+
+/// Round clock + scheduled mid-round eat. Used when a fight or next round starts.
+PlayerSave openCombatRoundClock(GameDatabase db, PlayerSave save, num atMs) {
+  return save.copyWith(
+    combatRoundStartedAt: isoFromMs(atMs),
+    combatPlayerSwingApplied: false,
+    combatPendingRound: null,
+    combatEatUntil: isoFromMs(atMs + combatEatAtMs(db)),
+    combatContinueActivityAfterEat: false,
+    combatManualEatRoundStartedAt: null,
+  );
+}
+
 PlayerSave beginCombatSave(
   GameDatabase db,
   PlayerSave save,
@@ -204,17 +221,14 @@ PlayerSave beginCombatSave(
 ) {
   final potion = tryConsumePotionForScope(db, save, 'one_combat_encounter');
   final enemyMaxHp = enemyEncounterMaxHp(db, potion.save, enemy);
-  return potion.save.copyWith(
+  final startedAtMs = jsDateParse(nowIso);
+  final atMs = startedAtMs.toDouble().isFinite ? startedAtMs : 0;
+  return openCombatRoundClock(db, potion.save, atMs).copyWith(
     currentActionId: action.raw['Action ID'] as String?,
     actionStartedAt: nowIso,
     actionDurationMs: null,
     combatEnemyId: enemy.raw['Enemy ID'] as String?,
     combatEnemyHp: enemyMaxHp,
-    combatRoundStartedAt: nowIso,
-    combatPlayerSwingApplied: false,
-    combatPendingRound: null,
-    combatEatUntil: null,
-    combatContinueActivityAfterEat: false,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart,
     combatBossPendingId: null,

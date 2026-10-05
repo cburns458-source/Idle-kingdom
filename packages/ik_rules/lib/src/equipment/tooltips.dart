@@ -53,24 +53,21 @@ List<String> equipmentTooltipStatLines(EquipmentRow? equipment, [GameDatabase? d
     );
   }
 
-  final atrRaw = equipment.raw['Action Time Reduction %'];
-  if (atrRaw is num && atrRaw > 0) {
-    final atr = math.min(actionTimeReductionCapPercent, atrRaw);
-    if (atr > 0) {
-      final skills = <String>[];
-      for (final id in <Object?>[
-        equipment.raw['Required Skill ID'],
-        equipment.raw['Secondary Required Skill ID'],
-      ]) {
-        final name = _skillDisplayName(db, id is String ? id : null);
-        if (name != null) skills.add(name);
-      }
-      lines.add(
-        skills.isEmpty
-            ? '-${jsNumberToString(atr)}% action time'
-            : '${skills.join(', ')}: -${jsNumberToString(atr)}% action time',
-      );
+  final successRaw = equipment.raw['Action Time Reduction %'];
+  if (successRaw is num && successRaw > 0) {
+    final skills = <String>[];
+    for (final id in <Object?>[
+      equipment.raw['Required Skill ID'],
+      equipment.raw['Secondary Required Skill ID'],
+    ]) {
+      final name = _skillDisplayName(db, id is String ? id : null);
+      if (name != null) skills.add(name);
     }
+    lines.add(
+      skills.isEmpty
+          ? '+${jsNumberToString(successRaw)}% success chance'
+          : '${skills.join(', ')}: +${jsNumberToString(successRaw)}% success chance',
+    );
   }
 
   final dropBonus = parseRelativeDropChanceBonusPercent(equipment.raw['Capabilities / Effects']);
@@ -78,6 +75,16 @@ List<String> equipmentTooltipStatLines(EquipmentRow? equipment, [GameDatabase? d
     lines.add('+${jsNumberToString(dropBonus)}% relative Drop Chance');
   }
   lines.addAll(skillRelativeDropChanceTooltipLines(equipment.raw['Capabilities / Effects']));
+  final lockpickBreakReduction = parseLockpickBreakChanceReductionPercent(
+    equipment.raw['Capabilities / Effects'],
+  );
+  if (lockpickBreakReduction != 0) {
+    lines.add(
+      lockpickBreakReduction > 0
+          ? 'Lockpick break chance -${jsNumberToString(lockpickBreakReduction)}%'
+          : 'Lockpick break chance +${jsNumberToString(lockpickBreakReduction.abs())}%',
+    );
+  }
 
   return lines;
 }

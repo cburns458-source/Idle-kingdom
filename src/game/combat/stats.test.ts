@@ -209,6 +209,21 @@ describe('might / vitality combat stats', () => {
     ).toBe(false)
   })
 
+  it('keeps every enemy Combat XP column in sync with floor(scaledMaxHp / 2)', () => {
+    const { launch, source } = prepareDatabase(rawDatabase)
+    for (const enemy of source.Enemies) {
+      if (typeof enemy['Maximum HP'] !== 'number') continue
+      const expected = Math.floor(enemyScaledMaxHp(enemy) / 2)
+      expect(enemy['Combat XP'], enemy['Enemy ID']).toBe(expected)
+      expect(enemyCombatXp(enemy), enemy['Enemy ID']).toBe(expected)
+    }
+    for (const enemy of launch.Enemies) {
+      const expected = Math.floor(enemyScaledMaxHp(enemy) / 2)
+      expect(enemy['Combat XP'], enemy['Enemy ID']).toBe(expected)
+      expect(enemyCombatXp(enemy), enemy['Enemy ID']).toBe(expected)
+    }
+  })
+
   it('gives no level bonus below skill level 5', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)

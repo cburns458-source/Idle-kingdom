@@ -11,6 +11,11 @@ import { isStandardProductionActivity, recipesForActivity } from '../production/
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { EquippedStack, PlayerSave } from '../save/types'
 import { tickPotionAction, tryConsumePotionForScope } from '../potions/effects'
+import {
+  equippedLockpickBreakChanceReductionPercent,
+  equippedSuccessChanceBonusPercentForAction,
+  lockpickBreakChancePercent,
+} from '../equipment/loadout'
 import { gatheringDurationMs, gatheringXpReward, rollGatheringSuccess } from './gathering'
 import { heldActionIdFor, withHeldAction, withoutHeldAction } from './heldAction'
 import { eligiblePoolEntries, isSelectableAction, pickWeightedAction, type RandomFn } from './pools'
@@ -272,18 +277,24 @@ function consumeLockpick(save: PlayerSave): PlayerSave {
 
 const THIEVERY_SKILL_ID = 'SKL-0015'
 
-/** Lockpick break chance: 50% at level 1, +0.5% per level after. */
-export function lockpickBreakChancePercent(thieveryLevel: number): number {
-  const level = Math.max(1, Math.floor(thieveryLevel))
-  return Math.min(100, 50 + (level - 1) * 0.5)
-}
+export {
+  LOCKPICK_BREAK_BASE_CHANCE_PERCENT,
+  LOCKPICK_BREAK_CHANCE_PER_LEVEL,
+  equippedLockpickBreakChanceReductionPercent,
+  lockpickBreakChancePercent,
+  parseLockpickBreakChanceReductionPercent,
+} from '../equipment/loadout'
 
 function maybeBreakLockpick(
+  db: GameDatabase,
   save: PlayerSave,
   random: RandomFn,
   thieveryLevel: number,
 ): { save: PlayerSave; broke: boolean } {
-  const chance = lockpickBreakChancePercent(thieveryLevel)
+  const chance = lockpickBreakChancePercent(
+    thieveryLevel,
+    equippedLockpickBreakChanceReductionPercent(db, save),
+  )
   if (random() * 100 >= chance) return { save, broke: false }
   return { save: consumeLockpick(save), broke: true }
 }
@@ -377,137 +388,46 @@ export function completeGatheringAction(
 
   const gatheringLevel = getSkillProgress(save, skillId).level
   const proficiencyLevel = Number(action['Proficiency Level'] ?? 1)
-  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel)) {
-    return {
-      save: withoutHeldAction(save, save.currentActivityId),
-      result: emptyResult(),
+  const successBonus = equippedSuccessChanceBonusPercentForAction(db, save, action)
+  const noConsequences = /NoConsequences/i.test(notes)
+  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel, successBonus)) {
+    if (!isThievery || noConsequences) {
+      return {
+        save: withoutHeldAction(save, save.currentActivityId),
+        result: emptyResult(),
+      }
     }
-  }
-
-  const awardXpOnly = (
-    base: PlayerSave,
-    opts: {
-      damageTaken?: number
-      foodHealed?: number
-      showZeroDamageHit?: boolean
-      thieveryFailed?: boolean
-      lockpickBroke?: boolean
-    } = {},
-  ): { save: PlayerSave; result: ActionCompletionResult } => {
-    const xpAmount = gatheringXpReward(db, base, action)
-    let next = tickPotionAction(base)
-    const xpApplied = applyXp(next, db, skillId, xpAmount)
-    next = xpApplied.save
-    let leveledUpTo = xpApplied.leveledUpTo
-    const bonusXp: { skillId: string; xp: number }[] = []
-    const xpRewards: ActionXpRewardSummary[] = []
-    const primaryReward = summarizeXpReward(db, next, skillId, xpAmount, xpApplied.leveledUpTo)
-    if (primaryReward) xpRewards.push(primaryReward)
-
-    const applyBonusXp = (bonusSkillId: string, amount: number) => {
-      if (amount <= 0) return
-      const applied = applyXp(next, db, bonusSkillId, amount)
-      next = applied.save
-      bonusXp.push({ skillId: bonusSkillId, xp: amount })
-      const reward = summarizeXpReward(db, next, bonusSkillId, amount, applied.leveledUpTo)
-      if (reward) xpRewards.push(reward)
-      if (applied.leveledUpTo != null) leveledUpTo = applied.leveledUpTo
+    const damagePercent = Number(/FailDamagePercent:(\d+)/i.exec(notes)?.[1] ?? 10)
+    const damage = Math.max(1, Math.floor((save.maxHp * damagePercent) / 100))
+    const nextHp = save.currentHp - damage
+    let next: PlayerSave = { ...save, currentHp: nextHp }
+    let lockpickBroke = false
+    if (requiresLockpick) {
+      const rolled = maybeBreakLockpick(db, next, random, thieveryLevel)
+      next = rolled.save
+      lockpickBroke = rolled.broke
     }
-
-    const bonus = bonusSkillXpForAction(action)
-    if (bonus && bonus.xp > 0) {
-      applyBonusXp(bonus.skillId, gatheringXpReward(db, save, action, bonus.xp))
+    let foodHealed = 0
+    if (nextHp <= 0) {
+      next = applyCombatDefeat(db, next, nowMs)
+    } else {
+      const fed = consumeFoodAfterVictory(db, next)
+      next = fed.save
+      foodHealed = fed.healed
     }
-    for (const bowBonus of bowHuntingCombatXpBonus(db, save, action, xpAmount)) {
-      applyBonusXp(bowBonus.skillId, bowBonus.xp)
-    }
-
-    next = addLifetimeStat(next, GATHERING_ACTIONS_STAT)
-    next = applyQuestActionProgress(db, next, action['Action ID'])
-    next = applyQuestAutoCompleteOnAction(db, next).save
-    const source = lootSourceForAction(action)
-    next = creditLootTracker(next, source.kind, source.sourceId, [], 0, nowMs)
-    next = creditXpAwards(
-      next,
-      xpRewards.map((reward) => ({ skillId: reward.skillId, xp: reward.xp })),
-      nowMs,
-    )
-
     return {
       save: withoutHeldAction(next, save.currentActivityId),
       result: {
-        actionId: action['Action ID'],
-        actionName: action['Display Name'],
-        skillId,
-        xpGained: xpAmount,
-        bonusXp,
-        xpRewards,
-        goldGained: 0,
-        loot: [],
-        leveledUpTo,
-        damageTaken: opts.damageTaken ?? 0,
-        foodHealed: opts.foodHealed ?? 0,
-        showZeroDamageHit: opts.showZeroDamageHit ?? false,
-        thieveryFailed: opts.thieveryFailed ?? false,
-        lockpickBroke: opts.lockpickBroke ?? false,
+        ...emptyResult(),
+        damageTaken: damage,
+        foodHealed,
+        thieveryFailed: true,
+        lockpickBroke,
       },
     }
   }
 
-  const failChanceMatch = /FailChance:(\d+)/i.exec(notes)
-  if (isThievery && failChanceMatch && !/NoConsequences/i.test(notes)) {
-    const failChance = Number(failChanceMatch[1])
-    if (random() * 100 < failChance) {
-      const damagePercent = Number(/FailDamagePercent:(\d+)/i.exec(notes)?.[1] ?? 10)
-      const damage = Math.max(1, Math.floor((save.maxHp * damagePercent) / 100))
-      const nextHp = save.currentHp - damage
-      let next: PlayerSave = { ...save, currentHp: nextHp }
-      let lockpickBroke = false
-      if (requiresLockpick) {
-        const rolled = maybeBreakLockpick(next, random, thieveryLevel)
-        next = rolled.save
-        lockpickBroke = rolled.broke
-      }
-      let foodHealed = 0
-      if (nextHp <= 0) {
-        next = applyCombatDefeat(db, next, nowMs)
-      } else {
-        const fed = consumeFoodAfterVictory(db, next)
-        next = fed.save
-        foodHealed = fed.healed
-      }
-      return awardXpOnly(next, {
-        damageTaken: damage,
-        foodHealed,
-        // Real fail damage uses the floater amount; zero-hit is for lockpick success.
-        showZeroDamageHit: false,
-        thieveryFailed: true,
-        lockpickBroke,
-      })
-    }
-  }
-
-  let working = save
-  let lockpickBroke = false
-  if (requiresLockpick) {
-    const rolled = maybeBreakLockpick(working, random, thieveryLevel)
-    working = rolled.save
-    lockpickBroke = rolled.broke
-    if (lockpickBroke) {
-      let foodHealed = 0
-      if (isThievery) {
-        const fed = consumeFoodAfterVictory(db, working)
-        working = fed.save
-        foodHealed = fed.healed
-      }
-      return awardXpOnly(working, {
-        foodHealed,
-        showZeroDamageHit: true,
-        lockpickBroke: true,
-      })
-    }
-  }
-
+  const working = save
   const pruning = isPruningToolEquipped(db, working) && PRUNABLE_SKILL_IDS.has(skillId)
   const rewarded = pruning
     ? { ...resolvePruningRewards(db, working, action, random), cosmeticsGranted: [] }

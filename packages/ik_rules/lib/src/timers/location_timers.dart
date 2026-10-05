@@ -10,6 +10,7 @@ import '../inventory/add_items.dart';
 import '../inventory/capacity.dart';
 import '../production/inventory.dart';
 import '../production/recipes.dart';
+import '../loot/drop_chance.dart';
 import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
@@ -193,6 +194,13 @@ const Set<String> fishingPotLocations = <String>{'LOC-0003', 'LOC-0004'};
 
 /// Deprecated alias for [fishingPotLocations].
 const Set<String> fishingTrapLocations = fishingPotLocations;
+
+/// One pot at a time, up to this many places per site per UTC day.
+const int fishingPotMaxPerSitePerDay = 3;
+const String oldBootsItemId = 'ITEM-0181';
+
+/// Secondary-style 1% Old Boots roll on each pot collect.
+const num fishingPotBootsChancePercent = 1;
 
 const num trapDurationMs = 6 * 60 * 60 * 1000;
 
@@ -658,18 +666,38 @@ num msUntilNextUtcDay(num nowMs) {
   return delta < 0 ? 0 : delta;
 }
 
-({bool locked, String dayKey, num msRemaining}) fishingPotLockedUntilDay(
+/// Places already used at this site on the current UTC day.
+int fishingPotUsesToday(PlayerSave save, String locationId, {required num nowMs}) {
+  final dayKey = fishingPotUtcDayKey(nowMs);
+  final raw = save.fishingPotDayKeyByLocationId[locationId];
+  if (raw == null || raw.isEmpty) return 0;
+  if (raw == dayKey) return 1;
+  if (raw.startsWith('$dayKey:')) {
+    final parsed = num.tryParse(raw.substring(dayKey.length + 1));
+    if (parsed != null && parsed > 0) return parsed.floor();
+  }
+  return 0;
+}
+
+({bool locked, String dayKey, num msRemaining, int uses, int remaining}) fishingPotLockedUntilDay(
   PlayerSave save,
   String locationId, {
   required num nowMs,
 }) {
   final now = nowMs;
   final dayKey = fishingPotUtcDayKey(now);
-  final used = save.fishingPotDayKeyByLocationId[locationId];
-  if (used == dayKey) {
-    return (locked: true, dayKey: dayKey, msRemaining: msUntilNextUtcDay(now));
+  final uses = fishingPotUsesToday(save, locationId, nowMs: now);
+  final remaining = uses >= fishingPotMaxPerSitePerDay ? 0 : fishingPotMaxPerSitePerDay - uses;
+  if (remaining <= 0) {
+    return (
+      locked: true,
+      dayKey: dayKey,
+      msRemaining: msUntilNextUtcDay(now),
+      uses: uses,
+      remaining: 0,
+    );
   }
-  return (locked: false, dayKey: dayKey, msRemaining: 0);
+  return (locked: false, dayKey: dayKey, msRemaining: 0, uses: uses, remaining: remaining);
 }
 
 ({bool ok, String? kind, String reason}) canPlaceTrap(
@@ -772,7 +800,7 @@ num msUntilNextUtcDay(num nowMs) {
   next = next.copyWith(
     fishingPotDayKeyByLocationId: <String, String>{
       ...next.fishingPotDayKeyByLocationId,
-      loc: fishingPotUtcDayKey(now),
+      loc: '${fishingPotUtcDayKey(now)}:${fishingPotUsesToday(removed, loc, nowMs: now) + 1}',
     },
   );
   return (ok: true, save: discoverTimerSpotsForLocation(next, loc), reason: '');
@@ -1039,6 +1067,13 @@ LocationTimerCollectResult collectLocationTimer(
       xpGained += row.xp;
     }
     grants.add((itemId: timer.inputItemId, quantity: 1));
+    final bootsChance = applyRelativeDropChance(
+      fishingPotBootsChancePercent,
+      totalRelativeDropChanceBonusPercent(db, save),
+    );
+    if (bootsChance != null && rng() * 100 < bootsChance) {
+      grants.add((itemId: oldBootsItemId, quantity: 1));
+    }
   } else {
     return LocationTimerCollectResult(ok: false, reason: 'Unknown timer kind.');
   }

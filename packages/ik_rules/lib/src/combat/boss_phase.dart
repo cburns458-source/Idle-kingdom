@@ -6,6 +6,7 @@ import '../achievements/progress.dart';
 import '../activity/xp.dart';
 import '../skills/skill_actions.dart' show fishingSkillId;
 import '../save/generated/save_models.dart';
+import '../time.dart';
 import 'boss.dart';
 import 'engine.dart';
 import 'stats.dart';
@@ -38,7 +39,7 @@ PlayerSave beginBossAddsEncounter(
 ) {
   final squidling = getEnemy(db, profile.squidlingEnemyId!);
   if (squidling == null) return save;
-  return save.copyWith(
+  return openCombatRoundClock(db, save, jsDateParse(roundEndIso)).copyWith(
     combatBossPendingId: bossEnemy.raw['Enemy ID'] as String?,
     combatBossPendingHp: pendingHp,
     combatBossAddsRemaining: profile.squidlingCount,
@@ -46,7 +47,6 @@ PlayerSave beginBossAddsEncounter(
     combatBossInkActive: false,
     combatEnemyId: squidling.raw['Enemy ID'] as String?,
     combatEnemyHp: squidling.maximumHp,
-    combatRoundStartedAt: roundEndIso,
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
   );
@@ -89,11 +89,10 @@ SquidlingVictoryResult applySquidlingVictory(
     final total = profile?.squidlingCount ?? remaining + 1;
     final defeated = total - remaining;
     return SquidlingVictoryResult(
-      save: next.copyWith(
+      save: openCombatRoundClock(db, next, jsDateParse(roundEndIso)).copyWith(
         combatBossAddsRemaining: remaining,
         combatEnemyId: nextSquidling.raw['Enemy ID'] as String?,
         combatEnemyHp: nextSquidling.maximumHp,
-        combatRoundStartedAt: roundEndIso,
         combatBossInkActive: false,
         combatSkipEnemyAttack: false,
       ),
@@ -126,13 +125,12 @@ SquidlingVictoryResult applySquidlingVictory(
   }
 
   return SquidlingVictoryResult(
-    save: next.copyWith(
+    save: openCombatRoundClock(db, next, jsDateParse(roundEndIso)).copyWith(
       combatBossAddsRemaining: null,
       combatBossPendingId: null,
       combatBossPendingHp: null,
       combatEnemyId: bossId,
       combatEnemyHp: pendingHp,
-      combatRoundStartedAt: roundEndIso,
       combatBossInkActive: false,
       combatSkipEnemyAttack: false,
       combatBossSleepRoundsRemaining: null,
