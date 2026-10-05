@@ -59,6 +59,7 @@ describe('hunting Animal Tendon drops', () => {
   it('does not grant tendons on weasel hunt', () => {
     const save = createNewSave(launch)
     const weasel = launch.Actions.find((row) => row['Action ID'] === 'ACN-0015')!
+    expect(weasel['Drop Chance']).toBe(30)
     const result = resolveActionRewards(launch, save, weasel, seqRandom([0, 0]))
     expect(result.loot.every((grant) => grant.itemId !== 'ITEM-0044')).toBe(true)
   })

@@ -118,7 +118,7 @@ void main() {
       random: () => 0,
     );
     expect(collected.ok, isTrue);
-    expect(collected.loot.map((row) => row.itemId), ['ITEM-0352', fishingPotItemId]);
+    expect(collected.loot.map((row) => row.itemId), ['ITEM-0352', fishingPotItemId, oldBootsItemId]);
     expect(collected.loot.firstWhere((row) => row.itemId == 'ITEM-0352').quantity, 9);
     expect(collected.xpGained, 4050);
     expect(collected.bonusXp, [(skillId: 'SKL-0005', xp: 4050)]);
@@ -129,6 +129,69 @@ void main() {
     expect(
       getSkillProgress(collected.save!, 'SKL-0005').xp,
       getSkillProgress(save, 'SKL-0005').xp + 4050,
+    );
+    expect(
+      canPlaceTrap(
+        db,
+        collected.save!,
+        fishingPotItemId,
+        nowMs: DateTime.utc(2026, 3, 1, 12).millisecondsSinceEpoch,
+      ).ok,
+      isTrue,
+    );
+
+    final second = placeTrap(
+      db,
+      collected.save!,
+      fishingPotItemId,
+      nowMs: DateTime.utc(2026, 3, 1, 12).millisecondsSinceEpoch,
+    );
+    expect(second.ok, isTrue);
+    expect(second.save!.fishingPotDayKeyByLocationId['LOC-0003'], '2026-03-01:2');
+    final secondCollect = collectLocationTimer(
+      db,
+      second.save!,
+      'LOC-0003',
+      'fishing_pot',
+      nowMs: DateTime.utc(2026, 3, 1, 18).millisecondsSinceEpoch,
+      random: () => 0.99,
+    );
+    expect(secondCollect.ok, isTrue);
+
+    final third = placeTrap(
+      db,
+      secondCollect.save!,
+      fishingPotItemId,
+      nowMs: DateTime.utc(2026, 3, 1, 12).millisecondsSinceEpoch,
+    );
+    expect(third.ok, isTrue);
+    expect(third.save!.fishingPotDayKeyByLocationId['LOC-0003'], '2026-03-01:3');
+    final thirdCollect = collectLocationTimer(
+      db,
+      third.save!,
+      'LOC-0003',
+      'fishing_pot',
+      nowMs: DateTime.utc(2026, 3, 1, 18).millisecondsSinceEpoch,
+      random: () => 0.99,
+    );
+    expect(thirdCollect.ok, isTrue);
+    expect(
+      canPlaceTrap(
+        db,
+        thirdCollect.save!,
+        fishingPotItemId,
+        nowMs: DateTime.utc(2026, 3, 1, 12).millisecondsSinceEpoch,
+      ).ok,
+      isFalse,
+    );
+    expect(
+      canPlaceTrap(
+        db,
+        thirdCollect.save!,
+        fishingPotItemId,
+        nowMs: DateTime.utc(2026, 3, 2).millisecondsSinceEpoch,
+      ).ok,
+      isTrue,
     );
   });
 
