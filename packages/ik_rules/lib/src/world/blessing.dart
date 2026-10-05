@@ -5,12 +5,13 @@ import '../combat/engine.dart';
 import '../config.dart';
 import '../equipment/vitals.dart';
 import '../save/generated/save_models.dart';
+import '../vitals/overheal.dart';
 
 const String templeLocationId = 'LOC-0036';
 const num blessingOverhealRatio = 0.1;
 
 /// Blessing always snaps to 110% of current max. Extra 10% does not stack.
-num blessedCurrentHp(num maxHp) => maxHp + (maxHp * blessingOverhealRatio).floor();
+num blessedCurrentHp(num maxHp) => snapToOverhealCeiling(maxHp, blessingOverhealRatio);
 
 bool locationHasBlessing(LocationRow? location) {
   return location?.raw['Internal Key'] == 'temple';

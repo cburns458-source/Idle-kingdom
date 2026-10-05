@@ -47,7 +47,7 @@ void main() {
     );
     expect(
       summary.activeBonuses.firstWhere((bonus) => bonus.kind == 'race').effect,
-      contains('maximum HP'),
+      contains('Fishing drop chance'),
     );
   });
 
@@ -81,8 +81,8 @@ void main() {
     expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('Base')));
     expect(summary.healthBreakdown.map((line) => line.label), contains('Steel Helmet'));
     expect(summary.healthBreakdown.map((line) => line.label), contains('Vitality 25'));
-    expect(summary.healthBreakdown.map((line) => line.label), contains('High Elf'));
-    expect(summary.healthBreakdown.last.detail, '1647');
+    expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('High Elf')));
+    expect(summary.healthBreakdown.last.detail, jsNumberToString(playerMaxHp(db, save)));
 
     expect(summary.reductionBreakdown.map((line) => line.label), contains('Steel Helmet'));
     expect(summary.reductionBreakdown.last.detail, '1');

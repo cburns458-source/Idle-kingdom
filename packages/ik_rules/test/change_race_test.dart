@@ -54,6 +54,13 @@ void main() {
     );
   });
 
+  test('Human costs 40 maple and High Elf costs 40 bass', () {
+    expect(raceChangeCostFor('RACE-0001')!.items.single.itemId, 'ITEM-0018');
+    expect(raceChangeCostFor('RACE-0001')!.items.single.quantity, 40);
+    expect(raceChangeCostFor('RACE-0003')!.items.single.itemId, 'ITEM-0050');
+    expect(raceChangeCostFor('RACE-0003')!.items.single.quantity, 40);
+  });
+
   test('changes race for mid-level goods and starts a weekly cooldown', () {
     final assigned = assignRace(db, createNewSave(db, nowMs), 'RACE-0001');
     final ready = _payFor(

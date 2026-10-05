@@ -81,10 +81,11 @@ describe('Vesper race change', () => {
   it('uses mid-level costs without gems, grapes, or moonblossom', () => {
     expect(RACE_CHANGE_COSTS['RACE-0001']).toEqual({
       gold: 0,
-      items: [
-        { itemId: 'ITEM-0050', quantity: 40 },
-        { itemId: 'ITEM-0018', quantity: 40 },
-      ],
+      items: [{ itemId: 'ITEM-0018', quantity: 40 }],
+    })
+    expect(RACE_CHANGE_COSTS['RACE-0003']).toEqual({
+      gold: 0,
+      items: [{ itemId: 'ITEM-0050', quantity: 40 }],
     })
     expect(RACE_CHANGE_COSTS['RACE-0006']?.items).toEqual(
       expect.arrayContaining([{ itemId: 'ITEM-0006', quantity: 20 }]),

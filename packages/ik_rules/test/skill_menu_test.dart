@@ -293,6 +293,8 @@ void main() {
     expect(tab('other').any((row) => row.displayName == 'Cooked swordfish'), isFalse);
     expect(tab('other').any((row) => row.displayName == 'Cooked marlin'), isFalse);
     expect(tab('meat').any((row) => row.displayName == 'Cooked beef'), isTrue);
+    expect(tab('meat').any((row) => row.displayName == 'Cooked duck'), isTrue);
+    expect(tab('meat').any((row) => row.displayName == 'Cooked boar meat'), isTrue);
     expect(tab('stew').any((row) => row.displayName == 'Crawfish Stew'), isTrue);
     expect(tab('stew').any((row) => row.displayName == 'Soup Stock'), isTrue);
     expect(tab('other').any((row) => row.displayName.toLowerCase().contains('potato')), isTrue);

@@ -303,6 +303,8 @@ describe('skill menu entries', () => {
     expect(other.some((item) => item.displayName === 'Cooked swordfish')).toBe(false)
     expect(other.some((item) => item.displayName === 'Cooked marlin')).toBe(false)
     expect(meat.some((item) => item.displayName === 'Cooked beef')).toBe(true)
+    expect(meat.some((item) => item.displayName === 'Cooked duck')).toBe(true)
+    expect(meat.some((item) => item.displayName === 'Cooked boar meat')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Crawfish Stew')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Soup Stock')).toBe(true)
     expect(other.some((item) => item.displayName.toLowerCase().includes('potato'))).toBe(true)

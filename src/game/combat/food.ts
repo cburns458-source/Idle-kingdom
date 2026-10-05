@@ -3,6 +3,7 @@ import { FOOD_SLOT_ID, slotStack } from '../equipment/loadout'
 import type { GameDatabase } from '../data/types'
 import type { InventoryStack, PlayerSave } from '../save/types'
 import { equippedSpellStacks } from '../spells/spells'
+import { healTowardCeiling, overhealCeilingHp, parseOverhealRatio } from '../vitals/overheal'
 import { playerMaxHp } from './stats'
 
 export type FoodConsumption = {
@@ -69,7 +70,7 @@ export function tryConsumeFoodAfterVictory(db: GameDatabase, save: PlayerSave): 
   }
   const nextHp = damaging
     ? Math.max(1, save.currentHp + healAmount)
-    : Math.min(maxHp, save.currentHp + healAmount)
+    : healTowardCeiling(save.currentHp, maxHp, healAmount, foodOverhealRatio(db, food.itemId))
   const healed = nextHp - save.currentHp
   const foodName =
     db.Items.find((item) => item['Item ID'] === food.itemId)?.['Display Name'] ?? food.itemId
@@ -115,6 +116,12 @@ export function foodHealAmount(db: GameDatabase, itemId: string): number {
   return Number(equipment?.['Healing Amount'] ?? 0)
 }
 
+/** Overheal ratio for this food (0 unless it carries `overheal_percent:N`). */
+export function foodOverhealRatio(db: GameDatabase, itemId: string): number {
+  const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
+  return parseOverhealRatio(equipment?.['Capabilities / Effects'])
+}
+
 export function isEdibleItem(db: GameDatabase, itemId: string): boolean {
   return foodHealAmount(db, itemId) !== 0
 }
@@ -149,7 +156,8 @@ export function manualEatBlockedReason(save: PlayerSave): string | null {
 
 /**
  * Why the location-stage Eat chip is disabled, besides an empty slot.
- * Healing food is refused at full HP; damaging food is not.
+ * Healing food is refused at its own ceiling (max HP, or that food's overheal
+ * cap). Damaging food is not. Overheal food can be eaten at full HP.
  */
 export function stageEatBlockedReason(db: GameDatabase, save: PlayerSave): string | null {
   const blocked = manualEatBlockedReason(save)
@@ -157,7 +165,9 @@ export function stageEatBlockedReason(db: GameDatabase, save: PlayerSave): strin
   const food = slotStack(save, FOOD_SLOT_ID)
   if (!food || food.quantity <= 0) return null
   if (foodHealAmount(db, food.itemId) < 0) return null
-  if (save.currentHp >= playerMaxHp(db, save)) return 'Already at full health.'
+  const maxHp = playerMaxHp(db, save)
+  const ceiling = overhealCeilingHp(maxHp, foodOverhealRatio(db, food.itemId))
+  if (save.currentHp >= ceiling) return 'Already at full health.'
   return null
 }
 
@@ -171,9 +181,7 @@ function applyManualEat(
   const damaging = healAmount < 0
   const nextHp = damaging
     ? Math.max(1, save.currentHp + healAmount)
-    : save.currentHp >= maxHp
-      ? save.currentHp
-      : Math.min(maxHp, save.currentHp + healAmount)
+    : healTowardCeiling(save.currentHp, maxHp, healAmount, foodOverhealRatio(db, itemId))
   const foodName =
     db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name'] ?? itemId
   return {
