@@ -152,7 +152,7 @@ class _ProjectPickerState extends State<ProjectPicker> {
               Expanded(
                 child: Text(
                   widget.station.label,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                  style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
               GameButton(
@@ -189,7 +189,10 @@ class _ProjectPickerState extends State<ProjectPicker> {
               _ProjectDetails(controller: controller, detail: detail),
               const SizedBox(height: 10),
               if (detail.lockedReason case final reason?)
-                Text(reason, style: const TextStyle(color: Palette.danger, fontSize: 12))
+                Text(
+                  reason,
+                  style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+                )
               else if (detail.isEnchantment)
                 _enchantRow(detail)
               else
@@ -198,7 +201,10 @@ class _ProjectPickerState extends State<ProjectPicker> {
           ],
           if (_error case final error?) ...[
             const SizedBox(height: 6),
-            Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+            Text(
+              error,
+              style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+            ),
           ],
         ],
       ),
@@ -264,7 +270,7 @@ class _ProjectPickerState extends State<ProjectPicker> {
     if (detail.enchantTargets.isEmpty) {
       return const Text(
         'Equip or keep a valid unenchanted item in the bag.',
-        style: TextStyle(color: Palette.danger, fontSize: 12),
+        style: TextStyle(color: Palette.danger, fontSize: GameFont.s),
       );
     }
     final selected = detail.enchantTargets.any((target) => target.id == _enchantTargetId)
@@ -343,7 +349,7 @@ class _ProjectDetails extends StatelessWidget {
                 amount: detail.goldCost,
                 style: TextStyle(
                   color: detail.goldOwned < detail.goldCost ? Palette.danger : Palette.gold,
-                  fontSize: 11,
+                  fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -366,7 +372,7 @@ Future<void> showProjectReceipt(BuildContext context, {required ProjectReceipt r
           const MutedText('Project complete'),
           Text(
             receipt.projectName,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+            style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
           ),
           const SizedBox(height: 8),
           for (final line in receipt.lines)

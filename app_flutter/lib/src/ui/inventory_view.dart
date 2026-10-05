@@ -371,7 +371,10 @@ class _InventoryViewState extends State<InventoryView> {
     }
     return const Padding(
       padding: EdgeInsets.fromLTRB(10, 8, 10, 4),
-      child: Text('Inventory', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+      child: Text(
+        'Inventory',
+        style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+      ),
     );
   }
 
@@ -569,7 +572,7 @@ class _InventoryViewState extends State<InventoryView> {
                         const Expanded(
                           child: Text(
                             'Attributes',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                           ),
                         ),
                         GameButton(
@@ -617,7 +620,7 @@ class _InventoryViewState extends State<InventoryView> {
                       const Expanded(
                         child: Text(
                           'Stance',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                          style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                         ),
                       ),
                       GameButton(
@@ -673,7 +676,7 @@ class _InventoryViewState extends State<InventoryView> {
                       const Expanded(
                         child: Text(
                           'Eat',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                          style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                         ),
                       ),
                       GameButton(
@@ -862,7 +865,7 @@ class _InventoryViewState extends State<InventoryView> {
               children: [
                 Text(
                   'Equip — ${slot?.displayName ?? slotId}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                  style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
                 const SizedBox(height: 8),
                 ConstrainedBox(
@@ -1018,7 +1021,7 @@ class _InventoryViewState extends State<InventoryView> {
                       TextSpan(text: ' — ${bonus.effect}'),
                     ],
                   ),
-                  style: const TextStyle(fontSize: 12, height: 1.3),
+                  style: const TextStyle(fontSize: GameFont.s, height: 1.3),
                 ),
               ),
           if (showSources) ...[
@@ -1047,7 +1050,10 @@ class _InventoryViewState extends State<InventoryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: GameFont.s, fontWeight: FontWeight.w400),
+          ),
           for (final line in lines)
             Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -1056,7 +1062,7 @@ class _InventoryViewState extends State<InventoryView> {
                   Expanded(child: MutedText(line.label)),
                   Text(
                     line.detail,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+                    style: const TextStyle(fontSize: GameFont.s, fontWeight: FontWeight.w400),
                   ),
                 ],
               ),
@@ -1120,7 +1126,11 @@ class _SortMenu extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Text(
             'Sort',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: Color(0xFFFFF4D4)),
+            style: TextStyle(
+              fontSize: GameFont.s,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFFFFF4D4),
+            ),
           ),
         ),
       ),
@@ -1193,7 +1203,7 @@ class _ItemTile extends StatelessWidget {
             child: Text(
               '${quantity.round()}',
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: GameFont.xs,
                 fontWeight: FontWeight.w400,
                 color: Palette.parchmentText,
               ),
@@ -1207,7 +1217,10 @@ class _ItemTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (enchanted)
-                  const Text('★', style: TextStyle(fontSize: 11, color: Palette.softGreen)),
+                  const Text(
+                    '★',
+                    style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
+                  ),
                 if (favorite)
                   const Padding(
                     padding: EdgeInsets.all(4),

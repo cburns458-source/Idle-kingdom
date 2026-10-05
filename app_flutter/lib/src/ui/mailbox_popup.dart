@@ -275,7 +275,7 @@ class MailboxHudButton extends StatelessWidget {
                         child: Text(
                           unread > 9 ? '9+' : '$unread',
                           style: const TextStyle(
-                            fontSize: 8,
+                            fontSize: GameFont.xs,
                             height: 1.1,
                             fontWeight: FontWeight.w600,
                             color: Palette.parchmentText,

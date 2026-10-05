@@ -39,7 +39,7 @@ class CritterOverlay extends StatelessWidget {
               GameImage(critterAssetPath(critter.internalKey), width: 40, height: 40),
               Text(
                 critter.displayName,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+                style: const TextStyle(fontSize: GameFont.s, fontWeight: FontWeight.w400),
               ),
             ],
           ),
@@ -72,7 +72,7 @@ class AutoEquipPrompt extends StatelessWidget {
               children: [
                 Text(
                   prompt.title,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                  style: const TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
                 ),
                 const SizedBox(height: 6),
                 Text(prompt.reason),

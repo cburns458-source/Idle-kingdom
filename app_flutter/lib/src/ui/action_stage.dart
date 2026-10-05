@@ -15,7 +15,6 @@ import 'equipment_presets_bar.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
 import 'out_of_sight.dart';
-import 'playable_frame.dart';
 import 'temple_stage.dart';
 
 /// Portrait slot stays 152 so the stage does not jump between activities.
@@ -66,11 +65,7 @@ class ActionStage extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge(<Listenable>[controller, controller.stageFx]),
       builder: (context, _) {
-        return MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
-          child: Builder(builder: _buildStage),
-        );
+        return Builder(builder: _buildStage);
       },
     );
   }
@@ -129,60 +124,56 @@ class LocationIdlePlayer extends StatelessWidget {
     }
     final maxHp = playerMaxHp(controller.db, save);
     final hp = save.currentHp;
-    return MediaQuery(
-      data: MediaQuery.of(context)
-          .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
-      child: Semantics(
-        container: true,
-        explicitChildNodes: true,
-        label: 'Adventurer stand',
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(2, 4, 2, 6),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _TwoPortraits(
-                  player: IgnorePointer(
-                    child: _playerWithPet(
-                      save: save,
-                      player: _Portrait(
-                        assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-                        bytes: controller.localPlayerPng,
-                        semanticsLabel: 'Adventurer',
-                        alignment: Alignment.centerRight,
-                        height: _playerArtHeight,
-                        slotHeight: _portraitSlotHeight,
-                        filterQuality: FilterQuality.high,
-                      ),
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: 'Adventurer stand',
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(2, 4, 2, 6),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _TwoPortraits(
+                player: IgnorePointer(
+                  child: _playerWithPet(
+                    save: save,
+                    player: _Portrait(
+                      assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                      bytes: controller.localPlayerPng,
+                      semanticsLabel: 'Adventurer',
+                      alignment: Alignment.centerRight,
+                      height: _playerArtHeight,
+                      slotHeight: _portraitSlotHeight,
+                      filterQuality: FilterQuality.high,
                     ),
                   ),
-                  scene: _groundedSceneArt(controller),
-                  playerCaption: ExcludeSemantics(
-                    child: Opacity(
-                      opacity: 0,
-                      child: _FighterCaption(
-                        name: save.characterName ?? 'Adventurer',
-                        hpLabel: '${hp.round()}/${maxHp.round()}',
-                        alignEnd: false,
-                        meter: _Meter(
-                          label: 'Player health',
-                          value: maxHp <= 0 ? 0 : (hp / maxHp).clamp(0, 1).toDouble(),
-                          gradient: Meters.hudHp,
-                        ),
-                      ),
-                    ),
-                  ),
-                  sceneCaption: const SizedBox(height: _captionMinHeight),
                 ),
-                const SizedBox(height: 7),
-                const SizedBox(height: _stageFooterHeight),
-                const SizedBox(height: _stageLoadoutStripGap),
-                StageLoadoutStrip(controller: controller),
-              ],
-            ),
+                scene: _groundedSceneArt(controller),
+                playerCaption: ExcludeSemantics(
+                  child: Opacity(
+                    opacity: 0,
+                    child: _FighterCaption(
+                      name: save.characterName ?? 'Adventurer',
+                      hpLabel: '${hp.round()}/${maxHp.round()}',
+                      alignEnd: false,
+                      meter: _Meter(
+                        label: 'Player health',
+                        value: maxHp <= 0 ? 0 : (hp / maxHp).clamp(0, 1).toDouble(),
+                        gradient: Meters.hudHp,
+                      ),
+                    ),
+                  ),
+                ),
+                sceneCaption: const SizedBox(height: _captionMinHeight),
+              ),
+              const SizedBox(height: 7),
+              const SizedBox(height: _stageFooterHeight),
+              const SizedBox(height: _stageLoadoutStripGap),
+              StageLoadoutStrip(controller: controller),
+            ],
           ),
         ),
       ),
@@ -190,48 +181,44 @@ class LocationIdlePlayer extends StatelessWidget {
   }
 
   Widget _buildTempleIdle(BuildContext context, PlayerSave save) {
-    return MediaQuery(
-      data: MediaQuery.of(context)
-          .copyWith(textScaler: playableHudTextScaler(MediaQuery.textScalerOf(context))),
-      child: Semantics(
-        container: true,
-        explicitChildNodes: true,
-        label: 'Adventurer stand',
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final layout = TempleStageLayout(Size(constraints.maxWidth, constraints.maxHeight));
-            final playerFoot = layout.playerFoot;
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                _templeFootedPortrait(
-                  foot: playerFoot,
-                  height: _playerArtHeight,
-                  child: IgnorePointer(
-                    child: _playerWithPet(
-                      save: save,
-                      player: _Portrait(
-                        assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
-                        bytes: controller.localPlayerPng,
-                        semanticsLabel: 'Adventurer',
-                        alignment: Alignment.bottomCenter,
-                        height: _playerArtHeight,
-                        slotHeight: _playerArtHeight,
-                        filterQuality: FilterQuality.high,
-                      ),
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: 'Adventurer stand',
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final layout = TempleStageLayout(Size(constraints.maxWidth, constraints.maxHeight));
+          final playerFoot = layout.playerFoot;
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _templeFootedPortrait(
+                foot: playerFoot,
+                height: _playerArtHeight,
+                child: IgnorePointer(
+                  child: _playerWithPet(
+                    save: save,
+                    player: _Portrait(
+                      assetPath: playerAssetPath(save.appearance, raceId: save.raceId),
+                      bytes: controller.localPlayerPng,
+                      semanticsLabel: 'Adventurer',
+                      alignment: Alignment.bottomCenter,
+                      height: _playerArtHeight,
+                      slotHeight: _playerArtHeight,
+                      filterQuality: FilterQuality.high,
                     ),
                   ),
                 ),
-                if (save.currentActivityId != null)
-                  _templeFootedPortrait(
-                    foot: layout.actionStand,
-                    height: _actionArtHeight,
-                    child: _groundedSceneArt(controller),
-                  ),
-              ],
-            );
-          },
-        ),
+              ),
+              if (save.currentActivityId != null)
+                _templeFootedPortrait(
+                  foot: layout.actionStand,
+                  height: _actionArtHeight,
+                  child: _groundedSceneArt(controller),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -701,7 +688,7 @@ class _SceneName extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: const TextStyle(
-        fontSize: 13.5,
+        fontSize: GameFont.m,
         fontWeight: FontWeight.w400,
         color: _sceneNameColor,
         height: 1.15,
@@ -780,7 +767,7 @@ class _FighterCaption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hpStyle = const TextStyle(fontSize: 11, color: Palette.muted);
+    final hpStyle = const TextStyle(fontSize: GameFont.s, color: Palette.muted);
     final nameRow = alignEnd
         ? Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -1056,7 +1043,11 @@ class _ActionProgress extends StatelessWidget {
         Text(
           '${formatDurationMs(durationMs * progress)} / ${formatDurationMs(durationMs)}',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12.5, color: _sceneNameColor, shadows: overlayShadow),
+          style: const TextStyle(
+            fontSize: GameFont.s,
+            color: _sceneNameColor,
+            shadows: overlayShadow,
+          ),
         ),
         const SizedBox(height: 4),
         Semantics(
@@ -1112,13 +1103,17 @@ class _GatheringStage extends StatelessWidget {
                 const Text(
                   'this is tough work',
                   textAlign: TextAlign.right,
-                  style: TextStyle(fontSize: 12.5, color: Palette.muted, shadows: overlayShadow),
+                  style: TextStyle(
+                    fontSize: GameFont.s,
+                    color: Palette.muted,
+                    shadows: overlayShadow,
+                  ),
                 ),
                 Text(
                   'Recommended lvl ${formatThousands(action.proficiencyLevel ?? 1)}',
                   textAlign: TextAlign.right,
                   style: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: GameFont.s,
                     color: Palette.muted,
                     shadows: overlayShadow,
                   ),
@@ -1209,7 +1204,7 @@ class _ProductionStage extends StatelessWidget {
                   _queueLine(controller, recipeId),
                   textAlign: TextAlign.right,
                   style: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: GameFont.s,
                     color: Palette.muted,
                     shadows: overlayShadow,
                   ),
@@ -1479,7 +1474,7 @@ class _StageEatNowButton extends StatelessWidget {
                             '${food.quantity.round()}',
                             style: TextStyle(
                               fontFamily: gameFontFamily,
-                              fontSize: 9,
+                              fontSize: GameFont.xs,
                               fontWeight: FontWeight.w400,
                               color: Palette.parchmentText,
                               shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
@@ -1560,7 +1555,7 @@ class _StagePotionButton extends StatelessWidget {
                             '${stackQty.round()}',
                             style: TextStyle(
                               fontFamily: gameFontFamily,
-                              fontSize: 9,
+                              fontSize: GameFont.xs,
                               fontWeight: FontWeight.w400,
                               color: Palette.parchmentText,
                               shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
@@ -1575,7 +1570,7 @@ class _StagePotionButton extends StatelessWidget {
                             '${remaining.round()}',
                             style: TextStyle(
                               fontFamily: gameFontFamily,
-                              fontSize: 13,
+                              fontSize: GameFont.m,
                               fontWeight: FontWeight.w700,
                               color: Palette.gold,
                               shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],

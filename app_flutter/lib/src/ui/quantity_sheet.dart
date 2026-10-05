@@ -143,7 +143,7 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                       _text,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: GameFont.xl,
                         fontWeight: FontWeight.w400,
                         color: Palette.parchmentText,
                       ),
@@ -197,7 +197,10 @@ class _QuantitySheetState extends State<_QuantitySheet> {
             ),
             if (_error case final error?) ...[
               const SizedBox(height: 6),
-              Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+              Text(
+                error,
+                style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+              ),
             ],
             const SizedBox(height: 10),
             if (widget.removeLabel case final removeLabel?) ...[

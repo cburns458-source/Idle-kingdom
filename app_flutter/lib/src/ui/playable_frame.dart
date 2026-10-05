@@ -28,19 +28,6 @@ const double playableFrameSideChatMinLeftover =
 /// so SafeArea / browser chrome still leaves room to dock chat.
 const double playableFrameSideChatMinWidth = 1000;
 
-/// Menus and location copy sit smaller than HUD and combat numbers.
-const double playableUiTextScale = 0.75;
-
-double _textScaleFactor(TextScaler scaler) => scaler.scale(100) / 100;
-
-/// Apply [playableUiTextScale] on top of the ambient scaler.
-TextScaler playableUiTextScaler(TextScaler parent) =>
-    TextScaler.linear(_textScaleFactor(parent) * playableUiTextScale);
-
-/// Undo [playableUiTextScale] so combat numbers stay full size.
-TextScaler playableHudTextScaler(TextScaler parent) =>
-    TextScaler.linear(_textScaleFactor(parent) / playableUiTextScale);
-
 /// True when the window can keep a full-height 9:16 column and still fit chat.
 bool playableFrameHasSideChat(Size available) {
   if (available.isEmpty || available.width < playableFrameSideChatMinWidth) {

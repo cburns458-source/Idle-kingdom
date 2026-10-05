@@ -1139,7 +1139,10 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Create guild', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+            const Text(
+              'Create guild',
+              style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+            ),
             const SizedBox(height: 4),
             MutedText(form.costLine),
             const SizedBox(height: 12),
@@ -1283,7 +1286,7 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
           children: [
             const Text(
               'Guild settings',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+              style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
             ),
             const SizedBox(height: 12),
             GameSelectField(

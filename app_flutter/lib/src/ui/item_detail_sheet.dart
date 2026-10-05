@@ -95,7 +95,7 @@ class ItemDetailSheet extends StatelessWidget {
                     children: [
                       Text(
                         item?.displayName ?? slot?.displayName ?? id ?? 'Empty slot',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                        style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                       ),
                       if (quantity > 1) MutedText('×${formatThousands(quantity)}'),
                       if (id != null && slot != null) MutedText('Worn: ${slot.displayName}'),
@@ -113,7 +113,7 @@ class ItemDetailSheet extends StatelessWidget {
               for (final line in lines)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(line, style: const TextStyle(fontSize: 13)),
+                  child: Text(line, style: const TextStyle(fontSize: GameFont.m)),
                 ),
             ],
             if (priced != null) ...[
@@ -124,7 +124,10 @@ class ItemDetailSheet extends StatelessWidget {
                     child: MutedText(priced.shopId == null ? 'Field value each' : 'Shop pays each'),
                   ),
                   const SizedBox(width: 6),
-                  GoldAmount(amount: priced.unitPrice, style: const TextStyle(fontSize: 13)),
+                  GoldAmount(
+                    amount: priced.unitPrice,
+                    style: const TextStyle(fontSize: GameFont.m),
+                  ),
                 ],
               ),
             ],

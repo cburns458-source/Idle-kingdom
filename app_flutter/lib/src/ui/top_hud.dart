@@ -30,13 +30,12 @@ const double _hudHpBarWidth = 76;
 /// Settings and mail sit as a pair at the top middle. Smaller than the old 28 chip.
 const double _hudHeaderButtonSize = 24;
 
-/// Name stays the heading. Everything else matches body UI (~12) without
-/// matching the name, so race / gold / activity stay readable in 56px.
-const double _hudNameSize = 14;
-const double _hudMetaSize = 11;
-const double _hudActivitySize = 12;
-const double _hudActivityDetailSize = 11;
-const double _hudHpSize = 11;
+/// Name is body size. Meta, gold, HP, and activity sit on the caption step.
+const double _hudNameSize = GameFont.m;
+const double _hudMetaSize = GameFont.s;
+const double _hudActivitySize = GameFont.s;
+const double _hudActivityDetailSize = GameFont.s;
+const double _hudHpSize = GameFont.s;
 
 /// Name, race, totals, gold, HP, and what is running.
 class TopHud extends StatelessWidget {

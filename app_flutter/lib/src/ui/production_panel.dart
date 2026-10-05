@@ -109,7 +109,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
               Expanded(
                 child: Text(
                   widget.activity.contextualName ?? widget.activity.internalKey,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                  style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
               GameButton(
@@ -157,7 +157,10 @@ class _ProductionPickerState extends State<ProductionPicker> {
           ],
           if (_error case final error?) ...[
             const SizedBox(height: 6),
-            Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+            Text(
+              error,
+              style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+            ),
           ],
         ],
       ),

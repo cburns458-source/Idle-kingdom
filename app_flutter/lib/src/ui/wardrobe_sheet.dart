@@ -66,7 +66,7 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                 const Expanded(
                   child: Text(
                     'Wardrobe',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                    style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
                   ),
                 ),
                 GameButton(
@@ -180,7 +180,10 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                   ],
                   if (_error case final error?) ...[
                     const SizedBox(height: 8),
-                    Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+                    Text(
+                      error,
+                      style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+                    ),
                   ],
                 ],
               ),
@@ -235,7 +238,7 @@ class _CosmeticTile extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11),
+              style: const TextStyle(fontSize: GameFont.s),
             ),
           ],
         ),
@@ -273,7 +276,7 @@ class WardrobeUnlockPopup extends StatelessWidget {
                 const MutedText('New Cosmetic'),
                 const Text(
                   'You found a Cosmetic!',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
+                  style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
                 ),
                 const SizedBox(height: 10),
                 Row(

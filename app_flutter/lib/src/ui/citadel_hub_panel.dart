@@ -155,7 +155,10 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+                    Text(
+                      title,
+                      style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                    ),
                     MutedText(subtitle),
                   ],
                 ),

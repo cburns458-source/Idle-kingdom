@@ -99,7 +99,10 @@ class _TannerPanelState extends State<TannerPanel> {
           Row(
             children: [
               const Expanded(
-                child: Text('Tanner', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+                child: Text(
+                  'Tanner',
+                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                ),
               ),
               GoldAmount(
                 amount: save.gold,
@@ -144,14 +147,23 @@ class _TannerPanelState extends State<TannerPanel> {
           ),
           if (_error case final error?) ...[
             const SizedBox(height: 6),
-            Text(error, style: const TextStyle(color: Palette.danger, fontSize: 12)),
+            Text(
+              error,
+              style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+            ),
           ],
           if (_receipt case final receipt?) ...[
             const SizedBox(height: 6),
-            Text(receipt, style: const TextStyle(color: Palette.gold, fontSize: 12)),
+            Text(
+              receipt,
+              style: const TextStyle(color: Palette.gold, fontSize: GameFont.s),
+            ),
           ],
           const SizedBox(height: 12),
-          const Text('Hides', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w400)),
+          const Text(
+            'Hides',
+            style: TextStyle(fontSize: GameFont.m, fontWeight: FontWeight.w400),
+          ),
           const SizedBox(height: 5),
           Expanded(
             child: FloatingItemWell(
@@ -199,7 +211,7 @@ class _TannerPanelState extends State<TannerPanel> {
                 '${formatThousands(hide.owned)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10.5, color: Palette.muted, height: 1.1),
+                style: const TextStyle(fontSize: GameFont.xs, color: Palette.muted, height: 1.1),
               ),
             ],
           ),
@@ -213,7 +225,7 @@ class _TannerPanelState extends State<TannerPanel> {
                 child: Text(
                   '×${formatThousands(offered)}',
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: GameFont.xs,
                     fontWeight: FontWeight.w400,
                     color: Color(0xFF1A1208),
                     height: 1.2,

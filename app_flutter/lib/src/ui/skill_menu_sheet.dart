@@ -101,7 +101,7 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
                   const MutedText('Skill'),
                   Text(
                     widget.skillName,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                    style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                   ),
                 ],
               ),

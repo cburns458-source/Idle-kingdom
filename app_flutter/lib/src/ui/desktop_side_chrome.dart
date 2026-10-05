@@ -57,7 +57,10 @@ class DesktopMenuRail extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Menu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+                const Text(
+                  'Menu',
+                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                ),
                 const SizedBox(height: 2),
                 const MutedText('Codex, Library, Timers, and social pages.'),
                 const SizedBox(height: 12),

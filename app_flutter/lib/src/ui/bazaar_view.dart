@@ -316,7 +316,7 @@ class _BazaarViewState extends State<BazaarView> {
                       const Expanded(
                         child: Text(
                           'Recent trades',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                          style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                         ),
                       ),
                       GameButton(
@@ -541,7 +541,7 @@ class _BazaarViewState extends State<BazaarView> {
                     children: [
                       Text(
                         _name(itemId),
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w400),
+                        style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                       ),
                       MutedText(
                         guide == null
@@ -695,7 +695,10 @@ class _Heading extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+            ),
           ),
           ?action,
         ],
@@ -737,7 +740,7 @@ class _Field extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 20,
+              fontSize: GameFont.xl,
               fontWeight: FontWeight.w400,
               color: Palette.parchmentText,
             ),

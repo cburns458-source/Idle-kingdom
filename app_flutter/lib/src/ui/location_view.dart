@@ -1252,7 +1252,7 @@ class _LocationHead extends StatelessWidget {
         danger != null && locationShowsDangerWarning(controller.db, location.locationId);
     const chipStyle = TextStyle(
       fontFamily: gameFontFamily,
-      fontSize: 10,
+      fontSize: GameFont.xs,
       fontWeight: FontWeight.w400,
       color: Palette.heading,
       height: 1,
@@ -1264,7 +1264,7 @@ class _LocationHead extends StatelessWidget {
         Text(
           location.displayName,
           style: const TextStyle(
-            fontSize: 21.5,
+            fontSize: GameFont.xl,
             fontWeight: FontWeight.w400,
             color: Palette.heading,
             height: 1.2,

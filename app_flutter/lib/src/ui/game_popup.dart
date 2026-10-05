@@ -23,8 +23,8 @@ enum GamePopupPlacement {
 /// Shared card size for every floating popup.
 const double gamePopupMaxWidth = 320;
 const double gamePopupMaxHeight = 360;
-const double gamePopupTitleSize = 11;
-const double gamePopupBodySize = 10;
+const double gamePopupTitleSize = GameFont.l;
+const double gamePopupBodySize = GameFont.s;
 
 /// Gap under the HUD and above the chin when a popup grows to fit.
 const double gamePopupHudChinGap = 20;

@@ -231,11 +231,29 @@ const List<Shadow> overlayShadow = [
 
 const String gameFontFamily = 'PixeloidSans';
 
+/// On-screen UI type sizes. Combat float numbers stay outside this ladder.
+abstract final class GameFont {
+  /// Item counts, prices, badges, slot labels.
+  static const double xs = 8;
+
+  /// Captions, muted copy, HUD meta, chin, errors.
+  static const double s = 9;
+
+  /// Body copy, lists, dialogue, buttons.
+  static const double m = 11;
+
+  /// Popup titles, page headers, section headings.
+  static const double l = 12;
+
+  /// Screen titles (Settings, Log, Codex, Tracker).
+  static const double xl = 15;
+}
+
 /// Combat and gathering warnings.
 const TextStyle warningStyle = TextStyle(
   fontFamily: gameFontFamily,
   color: Palette.warning,
-  fontSize: 13,
+  fontSize: GameFont.m,
   fontWeight: FontWeight.w400,
   height: 1.35,
   shadows: overlayShadow,
@@ -402,12 +420,10 @@ class _GameButtonState extends State<GameButton> {
                         ? const ['Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji']
                         : null,
                     fontSize: widget.symbol
-                        ? 15
+                        ? GameFont.m
                         : widget.dense
-                        ? 10.5
-                        : widget.compact
-                        ? 11
-                        : 11.5,
+                        ? GameFont.xs
+                        : GameFont.s,
                     fontWeight: FontWeight.w400,
                     height: widget.symbol ? 1 : null,
                     color: primary ? chrome.primaryLabel : chrome.secondaryLabel,
@@ -458,7 +474,7 @@ class GameTextButton extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontFamily: gameFontFamily,
-                  fontSize: 12,
+                  fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
                   color: selected ? chrome.embossFace : ink,
                   height: 1.1,
@@ -590,7 +606,7 @@ class GameDropdown<T> extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: gameFontFamily,
                       fontWeight: FontWeight.w400,
-                      fontSize: 13.5,
+                      fontSize: GameFont.m,
                       color: chrome.primaryLabel,
                     ),
                   ),
@@ -644,7 +660,7 @@ class GameSelectField extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: gameFontFamily,
                     fontWeight: FontWeight.w400,
-                    fontSize: 13.5,
+                    fontSize: GameFont.m,
                     color: chrome.primaryLabel,
                   ),
                 ),
@@ -754,7 +770,7 @@ class DockRow extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 13.5,
+                    fontSize: GameFont.m,
                     fontWeight: FontWeight.w400,
                     color: Palette.parchmentText,
                     shadows: overlayShadow,
@@ -858,12 +874,12 @@ class GamePanel extends StatelessWidget {
               color: ink,
               fontFamily: gameFontFamily,
               fontWeight: FontWeight.w400,
-              fontSize: 16,
+              fontSize: GameFont.l,
             ),
             subtitleTextStyle: TextStyle(
               color: muted,
               fontFamily: gameFontFamily,
-              fontSize: 12.5,
+              fontSize: GameFont.s,
               height: 1.35,
             ),
           ),
@@ -1182,7 +1198,7 @@ class MutedText extends StatelessWidget {
       text,
       textAlign: textAlign,
       style: TextStyle(
-        fontSize: 12.5,
+        fontSize: GameFont.s,
         color: color ?? (onPanel ? UiChrome.of(context).panelMuted : Palette.muted),
         height: 1.35,
       ),

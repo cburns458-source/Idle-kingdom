@@ -38,7 +38,7 @@ class AuthGateSheet extends StatelessWidget {
                         children: [
                           const Text(
                             'Sign in to play',
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
+                            style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
                           ),
                           const SizedBox(height: 4),
                           MutedText(authGateIntro(multiplayer.mode)),
@@ -90,7 +90,10 @@ class _TesterPasskeyFormState extends State<_TesterPasskeyForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Test launch', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
+          const Text(
+            'Test launch',
+            style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
+          ),
           const SizedBox(height: 4),
           const MutedText('Enter the tester passkey to create an account or sign in.'),
           const SizedBox(height: 16),

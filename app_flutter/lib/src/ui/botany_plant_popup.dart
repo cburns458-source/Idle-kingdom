@@ -189,11 +189,11 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                   _picked.length == 1
                       ? (_optionFor(_picked.first)?.displayName ?? 'Seed')
                       : '${_picked.length} seeds selected',
-                  style: TextStyle(fontSize: 14, color: chrome.panelInk),
+                  style: TextStyle(fontSize: GameFont.m, color: chrome.panelInk),
                 ),
                 Text(
                   'Grows in ${formatDurationSeconds(_growSeconds)} · plant ${_picked.length}',
-                  style: TextStyle(color: chrome.embossFace, fontSize: 12.5),
+                  style: TextStyle(color: chrome.embossFace, fontSize: GameFont.s),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -203,7 +203,7 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                         _hasKelp
                             ? 'Compost cannot be used on kelp.'
                             : 'Use compost ($compostCost) · have $compostOwned',
-                        style: TextStyle(fontSize: 13, color: chrome.panelInk),
+                        style: TextStyle(fontSize: GameFont.m, color: chrome.panelInk),
                       ),
                     ),
                     GameSwitch(
@@ -276,7 +276,7 @@ class _PlantTile extends StatelessWidget {
               child: Text(
                 '${option.owned.round()}',
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
                   color: Palette.parchmentText,
                 ),
@@ -289,7 +289,7 @@ class _PlantTile extends StatelessWidget {
               child: Text(
                 '$selectedCount',
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
                   color: Palette.gold,
                 ),

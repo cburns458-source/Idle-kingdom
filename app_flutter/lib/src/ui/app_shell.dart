@@ -829,12 +829,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                                 type: MaterialType.transparency,
                                 clipBehavior: Clip.hardEdge,
                                 child: MediaQuery(
-                                  data: MediaQuery.of(context).copyWith(
-                                    size: frame,
-                                    textScaler: playableUiTextScaler(
-                                      MediaQuery.textScalerOf(context),
-                                    ),
-                                  ),
+                                  data: MediaQuery.of(context).copyWith(size: frame),
                                   // Outer builder already listens to [controller].
                                   // Multiplayer polls must not rebuild LocationView —
                                   // chat / nearby / HUD badge listen on their own.
@@ -853,9 +848,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                           ),
                         );
                         if (!sideRails) return Center(child: game);
-                        final railText = MediaQuery.of(context).copyWith(
-                          textScaler: playableUiTextScaler(MediaQuery.textScalerOf(context)),
-                        );
+                        final railText = MediaQuery.of(context);
                         return SideRailTrackerHost(
                           open: (kind) {
                             if (!mounted) return;
@@ -988,7 +981,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                     child: Text(
                       'Cloud unavailable — progress is not syncing.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 12),
+                      style: TextStyle(color: Colors.white, fontSize: GameFont.s),
                     ),
                   ),
                 );
@@ -1172,10 +1165,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                         children: [
                           const Text(
                             'Fennel',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
+                            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                           ),
                           const SizedBox(height: 8),
-                          const Text(fennelWelcome, style: TextStyle(fontSize: 15)),
+                          const Text(fennelWelcome, style: TextStyle(fontSize: GameFont.m)),
                           const SizedBox(height: 12),
                           Align(
                             alignment: Alignment.centerRight,
@@ -1367,7 +1360,11 @@ class _BatterySaverPlaque extends StatelessWidget {
               SizedBox(width: 4),
               Text(
                 'Battery saver',
-                style: TextStyle(color: Palette.gold, fontSize: 11, fontWeight: FontWeight.w400),
+                style: TextStyle(
+                  color: Palette.gold,
+                  fontSize: GameFont.s,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
           ),
