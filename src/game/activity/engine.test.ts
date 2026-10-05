@@ -174,10 +174,10 @@ describe('primary activity engine', () => {
     expect(lockpickBreakChancePercent(100)).toBe(99.5)
   })
 
-  it('grants XP with empty loot when a thievery fail check always fails', () => {
+  it('treats a missed steal as a catch: damage, no XP, no loot', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0185')!
-    expect(action.Notes).toMatch(/FailChance:30/i)
+    expect(action.Notes).not.toMatch(/FailChance:/i)
     let save = createNewSave(launch)
     save = {
       ...save,
@@ -187,23 +187,22 @@ describe('primary activity engine', () => {
       ),
     }
     const beforeXp = save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0
-    // random() * 100 < FailChance → always fail the steal check.
-    const completed = completeGatheringAction(launch, save, action, () => 0)
+    // Level 1 / proficiency 1 → 80%; 0.81 fails the gather roll.
+    const completed = completeGatheringAction(launch, save, action, () => 0.81)
     expect(completed.result.thieveryFailed).toBe(true)
-    expect(completed.result.xpGained).toBeGreaterThan(0)
+    expect(completed.result.xpGained).toBe(0)
     expect(completed.result.loot).toEqual([])
     expect(completed.result.showZeroDamageHit).toBe(false)
     expect(completed.result.damageTaken).toBeGreaterThan(0)
-    expect(completed.save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0).toBeGreaterThan(
-      beforeXp,
-    )
+    expect(completed.save.currentHp).toBe(save.currentHp - (completed.result.damageTaken ?? 0))
+    expect(completed.save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0).toBe(beforeXp)
   })
 
-  it('shows a zero-damage floater on lockpick success and grants full XP with no loot when the pick breaks', () => {
+  it('does not snap a lockpick on a successful pick, and breaks it on a catch', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0187')!
     expect(action.Notes).toMatch(/RequiresLockpick/i)
-    expect(action.Notes).toMatch(/FailChance:45/i)
+    expect(action.Notes).not.toMatch(/FailChance:/i)
 
     const saveWithPicks = () => {
       const base = createNewSave(launch)
@@ -211,7 +210,7 @@ describe('primary activity engine', () => {
         ...base,
         currentHp: base.maxHp,
         skills: base.skills.map((row) =>
-          row.skillId === 'SKL-0015' ? { ...row, level: 1, xp: 0 } : row,
+          row.skillId === 'SKL-0015' ? { ...row, level: 45, xp: 0 } : row,
         ),
         equipment: {
           ...base.equipment,
@@ -223,15 +222,7 @@ describe('primary activity engine', () => {
       }
     }
 
-    // Success (0), pass fail check (50 >= 45), then survive break roll (60 >= 50).
-    const intactRolls = [0, 0.5, 0.6]
-    let intactI = 0
-    const intact = completeGatheringAction(
-      launch,
-      saveWithPicks(),
-      action,
-      () => intactRolls[intactI++] ?? 0.99,
-    )
+    const intact = completeGatheringAction(launch, saveWithPicks(), action, () => 0)
     expect(intact.result.thieveryFailed).toBe(false)
     expect(intact.result.lockpickBroke).toBe(false)
     expect(intact.result.showZeroDamageHit).toBe(true)
@@ -239,26 +230,36 @@ describe('primary activity engine', () => {
     expect(intact.result.xpGained).toBeGreaterThan(0)
     expect(intact.save.equipment.slots['SLOT-0001']?.quantity).toBe(3)
 
-    // Success, pass fail check, then always break the pick (0 < 50).
     const beforeXp = saveWithPicks().skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0
-    const brokeRolls = [0, 0.5, 0]
-    let brokeI = 0
-    const broke = completeGatheringAction(
+    // 0.81 misses at-level 69% success; 0 always snaps the pick (72% at L45).
+    const caughtRolls = [0.81, 0]
+    let caughtI = 0
+    const caught = completeGatheringAction(
       launch,
       saveWithPicks(),
       action,
-      () => brokeRolls[brokeI++] ?? 0,
+      () => caughtRolls[caughtI++] ?? 0,
     )
-    expect(broke.result.thieveryFailed).toBe(false)
-    expect(broke.result.lockpickBroke).toBe(true)
-    expect(broke.result.showZeroDamageHit).toBe(true)
-    expect(broke.result.damageTaken).toBe(0)
-    expect(broke.result.loot).toEqual([])
-    expect(broke.result.xpGained).toBeGreaterThan(0)
-    expect(broke.save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0).toBeGreaterThan(
-      beforeXp,
-    )
-    expect(broke.save.equipment.slots['SLOT-0001']?.quantity).toBe(2)
+    expect(caught.result.thieveryFailed).toBe(true)
+    expect(caught.result.lockpickBroke).toBe(true)
+    expect(caught.result.damageTaken).toBeGreaterThan(0)
+    expect(caught.result.loot).toEqual([])
+    expect(caught.result.xpGained).toBe(0)
+    expect(caught.save.skills.find((row) => row.skillId === 'SKL-0015')?.xp ?? 0).toBe(beforeXp)
+    expect(caught.save.equipment.slots['SLOT-0001']?.quantity).toBe(2)
+  })
+
+  it('keeps kitchen NoConsequences as a silent miss', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0188')!
+    expect(action.Notes).toMatch(/NoConsequences/i)
+    const save = createNewSave(launch)
+    const completed = completeGatheringAction(launch, save, action, () => 0.81)
+    expect(completed.result.thieveryFailed).toBe(false)
+    expect(completed.result.damageTaken).toBe(0)
+    expect(completed.result.xpGained).toBe(0)
+    expect(completed.result.loot).toEqual([])
+    expect(completed.save.currentHp).toBe(save.currentHp)
   })
 
   it('doubles gathering duration and halves XP below proficiency', () => {

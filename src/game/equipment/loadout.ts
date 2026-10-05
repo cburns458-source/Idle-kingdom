@@ -19,6 +19,60 @@ export function equippedWeaponIsLockpick(save: PlayerSave): boolean {
   return save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId === LOCKPICK_ITEM_ID
 }
 
+/** Base lockpick snap chance at Thievery 1. Independent of steal success. */
+export const LOCKPICK_BREAK_BASE_CHANCE_PERCENT = 50
+/** Extra snap chance per Thievery level after 1. */
+export const LOCKPICK_BREAK_CHANCE_PER_LEVEL = 0.5
+
+/**
+ * How much equipped text lowers lockpick break chance.
+ * `-15% lockpick break chance` or `lockpick_break:-15` → +15 reduction.
+ * A leading `+` / positive compact value raises break chance (negative reduction).
+ */
+export function parseLockpickBreakChanceReductionPercent(
+  effects: string | null | undefined,
+): number {
+  if (!effects) return 0
+  let total = 0
+  for (const match of effects.matchAll(/([+-]?\d+(?:\.\d+)?)%\s+lockpick\s+break\s+chance/gi)) {
+    total -= Number(match[1])
+  }
+  for (const match of effects.matchAll(/lockpick_break:\s*([+-]?\d+(?:\.\d+)?)/gi)) {
+    total -= Number(match[1])
+  }
+  return total
+}
+
+/** Sum lockpick-break reductions from every equipped item. */
+export function equippedLockpickBreakChanceReductionPercent(
+  db: GameDatabase,
+  save: PlayerSave,
+): number {
+  let total = 0
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.itemId) continue
+    const row = db.Equipment.find((entry) => entry['Item ID'] === stack.itemId)
+    total += parseLockpickBreakChanceReductionPercent(row?.['Capabilities / Effects'])
+  }
+  return total
+}
+
+/**
+ * Lockpick break chance: 50% at level 1, +0.5% per level after, minus gear reduction.
+ * Clamped 0–100. Separate from steal success chance.
+ */
+export function lockpickBreakChancePercent(
+  thieveryLevel: number,
+  reductionPercent: number = 0,
+): number {
+  const level = Math.max(1, Math.floor(thieveryLevel))
+  const base = Math.min(
+    100,
+    LOCKPICK_BREAK_BASE_CHANCE_PERCENT + (level - 1) * LOCKPICK_BREAK_CHANCE_PER_LEVEL,
+  )
+  return Math.max(0, Math.min(100, base - (Number(reductionPercent) || 0)))
+}
+
 export function isDaggerItem(db: GameDatabase, itemId: string): boolean {
   const item = db.Items.find((row) => row['Item ID'] === itemId)
   if (!item) return false

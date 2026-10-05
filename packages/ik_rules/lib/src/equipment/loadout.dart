@@ -20,6 +20,58 @@ const String offhandSlotId = 'SLOT-0002';
 /// Stackable lockpicks that occupy the Weapon/Tool slot.
 const String lockpickItemId = 'ITEM-0351';
 
+/// Base lockpick snap chance at Thievery 1. Independent of steal success.
+const num lockpickBreakBaseChancePercent = 50;
+
+/// Extra snap chance per Thievery level after 1.
+const num lockpickBreakChancePerLevel = 0.5;
+
+final RegExp _lockpickBreakChanceTag = RegExp(
+  r'([+-]?\d+(?:\.\d+)?)%\s+lockpick\s+break\s+chance',
+  caseSensitive: false,
+);
+final RegExp _lockpickBreakCompactTag = RegExp(
+  r'lockpick_break:\s*([+-]?\d+(?:\.\d+)?)',
+  caseSensitive: false,
+);
+
+/// How much equipped text lowers lockpick break chance.
+/// `-15% lockpick break chance` or `lockpick_break:-15` → +15 reduction.
+num parseLockpickBreakChanceReductionPercent(Object? effects) {
+  if (effects is! String) return 0;
+  var total = 0.0;
+  for (final match in _lockpickBreakChanceTag.allMatches(effects)) {
+    total -= num.parse(match.group(1)!);
+  }
+  for (final match in _lockpickBreakCompactTag.allMatches(effects)) {
+    total -= num.parse(match.group(1)!);
+  }
+  return total;
+}
+
+/// Sum lockpick-break reductions from every equipped item.
+num equippedLockpickBreakChanceReductionPercent(GameDatabase db, PlayerSave save) {
+  var total = 0.0;
+  for (final stack in save.equipment.slots.values) {
+    if (stack == null || isBlank(stack.itemId)) continue;
+    final row = db.equipment.firstWhereOrNull((entry) => entry.raw['Item ID'] == stack.itemId);
+    total += parseLockpickBreakChanceReductionPercent(row?.raw['Capabilities / Effects']);
+  }
+  return total;
+}
+
+/// Lockpick break chance: 50% at level 1, +0.5% per level after, minus gear.
+/// Clamped 0–100. Separate from steal success chance.
+num lockpickBreakChancePercent(num thieveryLevel, [num reductionPercent = 0]) {
+  final level = thieveryLevel.floor() < 1 ? 1 : thieveryLevel.floor();
+  final base = lockpickBreakBaseChancePercent + (level - 1) * lockpickBreakChancePerLevel;
+  final clampedBase = base > 100 ? 100 : base;
+  final chance = clampedBase - reductionPercent;
+  if (chance < 0) return 0;
+  if (chance > 100) return 100;
+  return chance;
+}
+
 /// True when lockpicks are equipped in Weapon/Tool.
 bool equippedWeaponIsLockpick(PlayerSave save) {
   return save.equipment.slots[weaponToolSlotId]?.itemId == lockpickItemId;
