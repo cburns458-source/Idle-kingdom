@@ -24,13 +24,13 @@ void main() {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }
 
-  /// Player swing and enemy phase are separate ticks; advance both.
+  /// Advance to the end-of-round clash (both sides attack together).
   Future<void> advanceCombatRound(
     WidgetTester tester,
     TestClock clock,
     GameController controller,
   ) async {
-    final playerAtMs = configNumber(database.launch, 'combat_player_attack_at', 5) * 1000;
+    final playerAtMs = configNumber(database.launch, 'combat_player_attack_at', 6) * 1000;
     final enemyAtMs = configNumber(database.launch, 'combat_enemy_attack_at', 6) * 1000;
     clock.advance(playerAtMs);
     controller.tick();
@@ -276,9 +276,7 @@ void main() {
     expect(enemy, isNotNull);
     final maxHp = enemyEncounterMaxHp(database.launch, controller.save, enemy!);
 
-    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
-    controller.tick();
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.playerHit, 0);
@@ -311,9 +309,7 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
-    controller.tick();
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.playerHit, 0);
@@ -346,9 +342,7 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
-    controller.tick();
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.poisonHit, isNotNull);

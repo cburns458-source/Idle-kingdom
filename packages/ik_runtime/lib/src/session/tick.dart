@@ -175,29 +175,27 @@ String _roundMessage(EnemyRow enemy, CombatPendingRound round) {
       : 'You $hitLabel.$offhandLabel$sparksLabel$poisonLabel$inkLabel $swing.';
 }
 
-void _beginInterRoundEat(
-  GameDatabase db,
-  _TickOutput out,
-  num atMs,
-  bool continueActivityAfterEat,
-  PlayerSave patched,
-) {
-  final eatSeconds = configNumber(db, 'combat_eat_between_seconds', 1);
-  final fed = consumeFoodAfterVictory(db, patched);
-  out.set(
-    fed.save.copyWith(
-      combatEatUntil: isoFromMs(atMs + math.max(0, eatSeconds) * 1000),
-      combatContinueActivityAfterEat: continueActivityAfterEat,
-      combatRoundStartedAt: null,
-      combatPlayerSwingApplied: false,
-      combatPendingRound: null,
-    ),
-  );
+void _applyMidRoundEat(GameDatabase db, _TickOutput out) {
+  final fed = consumeFoodAfterVictory(db, out.current);
+  out.set(fed.save.copyWith(combatEatUntil: null));
   _emitRoundEndAutoEat(out, fed);
 }
 
-/// Player swing at combat_player_attack_at: roll the round and apply player-side HP.
-void _applyDuePlayerCombatSwing(GameDatabase db, _TickOutput out, EnemyRow enemy, RandomFn random) {
+void _startNextCombatRound(GameDatabase db, _TickOutput out, num atMs) {
+  out.set(openCombatRoundClock(db, out.current, atMs));
+}
+
+/// Both sides attack at round end. A killing blow skips the enemy swing.
+void _applyDueCombatRound(
+  GameDatabase db,
+  _TickOutput out,
+  String activityId,
+  EnemyRow enemy,
+  ActionRow action,
+  num roundEnd,
+  num roundMs,
+  RandomFn random,
+) {
   final before = out.current;
   final round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random);
   if (round.lifestealHealed > 0) {
@@ -205,34 +203,21 @@ void _applyDuePlayerCombatSwing(GameDatabase db, _TickOutput out, EnemyRow enemy
   }
   out.set(
     out.current.copyWith(
-      combatEnemyHp: round.enemyHpAfterPlayer,
-      currentHp: round.playerHpAfterPlayer,
+      combatEnemyHp: round.enemyHp,
+      currentHp: round.playerHp,
       combatPlayerSwingApplied: true,
       combatPendingRound: round.toPendingRound(),
       combatBossInkActive: round.bossInkActive,
     ),
   );
-  out.emit(
-    CombatRoundEvent(
-      enemyId: jsString(enemy.raw['Enemy ID']),
-      enemyName: jsString(enemy.raw['Display Name']),
-      playerHit: round.playerHit,
-      playerCrit: round.playerCrit,
-      offhandHit: round.offhandHit,
-      staffHit: round.staffHit,
-      poisonHit: round.poisonHit,
-      enemyHit: null,
-      thornsHit: 0,
-      outcome: round.enemyHpAfterPlayer <= 0 && !round.bossAddsTriggered ? 'victory' : 'ongoing',
-      bossInkActive: round.bossInkActive,
-    ),
-  );
+  _applyDueEnemyCombatPhase(db, out, activityId, enemy, action, roundEnd, roundMs, random);
 }
 
 /// Enemy swing / outcome at combat_enemy_attack_at (round end).
 void _applyDueEnemyCombatPhase(
   GameDatabase db,
   _TickOutput out,
+  String activityId,
   EnemyRow enemy,
   ActionRow action,
   num roundEnd,
@@ -301,7 +286,14 @@ void _applyDueEnemyCombatPhase(
       }
       if (!squidlingResult.bossResumed) {
         out.emit(EnemyDefeatedEvent(enemyId: enemyId, enemyName: enemyName));
-        _beginInterRoundEat(db, out, roundEnd, true, out.current);
+        _continueActivity(
+          db,
+          out,
+          activityId,
+          roundEnd,
+          random,
+          'Defeated enemy · activity stopped.',
+        );
       }
       return;
     }
@@ -341,7 +333,7 @@ void _applyDueEnemyCombatPhase(
       ),
     );
     out.emit(EnemyDefeatedEvent(enemyId: enemyId, enemyName: enemyName));
-    _beginInterRoundEat(db, out, roundEnd, true, out.current);
+    _continueActivity(db, out, activityId, roundEnd, random, 'Defeated enemy · activity stopped.');
     return;
   }
 
@@ -366,20 +358,6 @@ void _applyDueEnemyCombatPhase(
       );
       out.set(addsStarted);
       out.creditCritterTime(roundMs, roundEnd, random);
-      _beginInterRoundEat(
-        db,
-        out,
-        roundEnd,
-        false,
-        out.current.copyWith(
-          combatEnemyId: addsStarted.combatEnemyId,
-          combatEnemyHp: addsStarted.combatEnemyHp,
-          combatBossPendingId: addsStarted.combatBossPendingId,
-          combatBossPendingHp: addsStarted.combatBossPendingHp,
-          combatBossAddsRemaining: addsStarted.combatBossAddsRemaining,
-          combatBossAddsTriggered: addsStarted.combatBossAddsTriggered,
-        ),
-      );
       out.emit(MessageEvent('$enemyName releases squidlings! Defeat them to continue.'));
       return;
     }
@@ -395,19 +373,7 @@ void _applyDueEnemyCombatPhase(
     ),
   );
   out.creditCritterTime(roundMs, roundEnd, random);
-  _beginInterRoundEat(
-    db,
-    out,
-    roundEnd,
-    false,
-    out.current.copyWith(
-      currentHp: round.playerHp,
-      combatEnemyHp: round.enemyHp,
-      combatSkipEnemyAttack: round.skipNextEnemyAttack,
-      combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-      combatBossInkActive: round.bossInkActive,
-    ),
-  );
+  _startNextCombatRound(db, out, roundEnd);
   out.emit(MessageEvent(_roundMessage(enemy, round)));
 }
 
@@ -441,7 +407,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
     return out.result();
   }
 
-  if (isNotBlank(out.current.combatEatUntil)) {
+  if (isNotBlank(out.current.combatEatUntil) && isBlank(out.current.combatRoundStartedAt)) {
     final eatUntil = jsDateParse(out.current.combatEatUntil);
     if (eatUntil > nowMs) return out.result();
     final continueActivityAfterEat = out.current.combatContinueActivityAfterEat;
@@ -458,13 +424,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       return out.result();
     }
     if (isNotBlank(out.current.combatEnemyId)) {
-      out.set(
-        out.current.copyWith(
-          combatRoundStartedAt: isoFromMs(eatUntil),
-          combatPlayerSwingApplied: false,
-          combatPendingRound: null,
-        ),
-      );
+      out.set(openCombatRoundClock(db, out.current, eatUntil));
     }
     return out.result();
   }
@@ -472,9 +432,12 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
   if (isNotBlank(out.current.combatEnemyId) && isNotBlank(out.current.combatRoundStartedAt)) {
     final roundStart = jsDateParse(out.current.combatRoundStartedAt);
     final roundMs = configNumber(db, 'combat_round_duration', 6) * 1000;
-    final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5) * 1000;
+    final playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000;
     final enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000;
     final roundEnd = roundStart + roundMs;
+    final eatUntil = isNotBlank(out.current.combatEatUntil)
+        ? jsDateParse(out.current.combatEatUntil)
+        : double.nan;
 
     final enemy = getEnemy(db, out.current.combatEnemyId!);
     final action = _actionById(db, out.current.currentActionId);
@@ -483,8 +446,22 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       return out.result();
     }
 
+    if (eatUntil.toDouble().isFinite && eatUntil <= nowMs) {
+      _applyMidRoundEat(db, out);
+      return out.result();
+    }
+
     if (!out.current.combatPlayerSwingApplied && playerAt <= nowMs) {
-      _applyDuePlayerCombatSwing(db, out, enemy, random);
+      _applyDueCombatRound(
+        db,
+        out,
+        activityId!,
+        enemy,
+        action,
+        math.max(playerAt, math.max(enemyAt, roundEnd)),
+        roundMs,
+        random,
+      );
       return out.result();
     }
 
@@ -492,6 +469,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       _applyDueEnemyCombatPhase(
         db,
         out,
+        activityId!,
         enemy,
         action,
         math.max(enemyAt, roundEnd),

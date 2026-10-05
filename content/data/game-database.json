@@ -40,25 +40,31 @@
       "Key": "combat_round_duration",
       "Value": 6,
       "Unit": "seconds",
-      "Notes": "Combat round length. Player swing at combat_player_attack_at; enemy swing at round end; auto-eat uses combat_eat_between_seconds."
+      "Notes": "Combat round length. Both sides attack at combat_player_attack_at / combat_enemy_attack_at (round end). Mid-round auto-eat uses combat_eat_at. No extra eat delay."
     },
     {
       "Key": "combat_eat_between_seconds",
-      "Value": 1,
+      "Value": 0,
       "Unit": "seconds",
-      "Notes": "Auto-eat delay inserted between combat rounds and between actions after a kill."
+      "Notes": "Legacy inter-round eat pause. Unused; auto-eat is combat_eat_at inside the round."
+    },
+    {
+      "Key": "combat_eat_at",
+      "Value": 3,
+      "Unit": "seconds",
+      "Notes": "Seconds into a combat round when auto-eat resolves. Instant; does not extend the round."
     },
     {
       "Key": "combat_enemy_attack_at",
       "Value": 6,
       "Unit": "seconds",
-      "Notes": "Seconds into a combat round when the enemy's attack resolves (round end)."
+      "Notes": "Seconds into a combat round when the enemy attacks (same time as the player). Skipped on a killing blow."
     },
     {
       "Key": "combat_player_attack_at",
-      "Value": 5,
+      "Value": 6,
       "Unit": "seconds",
-      "Notes": "Seconds into a combat round when the player's attack resolves."
+      "Notes": "Seconds into a combat round when the player attacks (round end, same time as the enemy)."
     },
     {
       "Key": "gathering_below_proficiency_duration_multiplier",

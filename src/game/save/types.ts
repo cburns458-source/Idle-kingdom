@@ -410,23 +410,22 @@ export interface PlayerSave {
    */
   combatManualEatRoundStartedAt: string | null
   /**
-   * True after the player's swing has resolved for the current combat round
-   * (at combat_player_attack_at). Reset when a new round begins.
+   * True after this round's end-of-round attack has resolved. Reset when a new
+   * round begins. Also used to finish a leftover split swing from older saves.
    */
   combatPlayerSwingApplied: boolean
   /**
-   * Full round roll captured when the player swings, applied for the enemy
-   * swing / outcome at round end. Null before the player swing.
+   * Full round roll applied at round end. Null before the attack.
    */
   combatPendingRound: CombatPendingRound | null
   /**
-   * When set, auto-eat / inter-round delay is in progress until this ISO time.
-   * Used between ongoing rounds and between actions after a kill.
+   * When a round is active, the ISO time of the mid-round auto-eat. Cleared
+   * after eating. When no round is active, leftover inter-round eat pause.
    */
   combatEatUntil: string | null
   /**
-   * When true, finishing [combatEatUntil] should pick the next activity action
-   * (post-victory). When false, finishing eat starts the next combat round.
+   * When true, finishing a leftover [combatEatUntil] pause (no active round)
+   * should pick the next activity action (post-victory).
    */
   combatContinueActivityAfterEat: boolean
   /**
