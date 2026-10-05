@@ -3,7 +3,8 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/requirements.dart';
 import '../combat/stats.dart' show mightSkillId, vitalitySkillId;
-import '../equipment/specialist.dart' show cookingSkillId;
+import '../equipment/specialist.dart'
+    show alchemyRecipeUsesPotionDie, alchemySkillId, cookingSkillId;
 import '../js_compat.dart';
 import '../npcs/knowledge.dart';
 import '../production/recipes.dart';
@@ -348,6 +349,9 @@ SkillMenuPlacement skillMenuPlacementForOutput(
   if (skillId == cookingSkillId) {
     return _cookingPlacement(displayName);
   }
+  if (skillId == alchemySkillId) {
+    return _alchemyPlacement(db, displayName, outputId);
+  }
   if (skillMenuView(db, skillId).tabs.any((tab) => tab.id == 'actions')) {
     return const SkillMenuPlacement(tabId: 'actions', tabLabel: 'Actions');
   }
@@ -410,6 +414,9 @@ List<SkillMenuTab> _tabsForSkill(GameDatabase db, String skillId) {
   }
   if (skillId == arcanaSkillId) {
     return _arcanaTabs(db);
+  }
+  if (skillId == alchemySkillId) {
+    return _alchemyTabs(db);
   }
   return <SkillMenuTab>[_listTab('actions', 'Actions', skillMenuEntries(db, skillId))];
 }
@@ -550,14 +557,7 @@ const List<String> _cookingFishNames = <String>[
   'marlin',
 ];
 
-const List<String> _cookingMeatNames = <String>[
-  'rabbit',
-  'pheasant',
-  'beef',
-  'venison',
-  'duck',
-  'boar',
-];
+const List<String> _cookingMeatNames = <String>['rabbit', 'pheasant', 'beef', 'venison', 'duck', 'boar'];
 
 SkillMenuPlacement _cookingPlacement(String displayName) {
   return switch (_cookingTabId(displayName)) {
@@ -598,6 +598,46 @@ List<SkillMenuTab> _cookingTabs(GameDatabase db) {
     _listTab('meat', 'Meat', meat),
     _listTab('stew', 'Stew', stew),
     _listTab('other', 'Other', other),
+  ];
+}
+
+String _alchemyOutputItemId(GameDatabase db, String displayName, String outputId) {
+  if (outputId.isNotEmpty) return outputId;
+  final action = db.actions.firstWhereOrNull((row) => row.displayName == displayName);
+  final targetId = action?.targetId;
+  if (targetId != null && targetId.isNotEmpty) return targetId;
+  final recipe = db.recipes.firstWhereOrNull((row) => row.displayName == displayName);
+  return recipe?.outputItemId ?? '';
+}
+
+bool _isAlchemyPotionOutput(GameDatabase db, String displayName, [String outputId = '']) {
+  final itemId = _alchemyOutputItemId(db, displayName, outputId);
+  if (itemId.isEmpty) return true;
+  return alchemyRecipeUsesPotionDie(db, itemId);
+}
+
+SkillMenuPlacement _alchemyPlacement(GameDatabase db, String displayName, [String outputId = '']) {
+  if (_isAlchemyPotionOutput(db, displayName, outputId)) {
+    return const SkillMenuPlacement(tabId: 'potions', tabLabel: 'Potions');
+  }
+  return const SkillMenuPlacement(tabId: 'ingredients', tabLabel: 'Ingredients');
+}
+
+List<SkillMenuTab> _alchemyTabs(GameDatabase db) {
+  final potions = <SkillMenuListItem>[];
+  final ingredients = <SkillMenuListItem>[];
+  for (final item in skillMenuEntries(db, alchemySkillId)) {
+    final action = db.actions.firstWhereOrNull((row) => row.actionId == item.id);
+    final outputId = action?.targetId ?? '';
+    if (outputId.isNotEmpty && alchemyRecipeUsesPotionDie(db, outputId)) {
+      potions.add(item);
+    } else {
+      ingredients.add(item);
+    }
+  }
+  return <SkillMenuTab>[
+    _listTab('potions', 'Potions', potions),
+    _listTab('ingredients', 'Ingredients', ingredients),
   ];
 }
 

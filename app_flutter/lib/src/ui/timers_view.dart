@@ -219,7 +219,7 @@ class _TimerRow extends StatelessWidget {
         final lock = fishingPotLockedUntilDay(save, spot.locationId, nowMs: nowMs);
         status = lock.locked
             ? 'Overfished · resets in ${formatDurationMs(lock.msRemaining)}'
-            : 'Empty';
+            : 'Empty · ${lock.remaining} left today';
       } else {
         status = 'Empty';
       }

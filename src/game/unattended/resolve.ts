@@ -41,17 +41,22 @@ function maxUnattendedSteps(db: GameDatabase): number {
 }
 
 function nextCombatDueMs(db: GameDatabase, save: PlayerSave): number | null {
-  if (save.combatEatUntil) {
+  if (save.combatEatUntil && !save.combatRoundStartedAt) {
     const eatUntil = Date.parse(save.combatEatUntil)
     return Number.isFinite(eatUntil) ? eatUntil : null
   }
   if (!save.combatEnemyId || !save.combatRoundStartedAt) return null
   const roundStart = Date.parse(save.combatRoundStartedAt)
   if (!Number.isFinite(roundStart)) return null
-  const playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5) * 1000
+  const playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 6) * 1000
   const enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000
-  if (!save.combatPlayerSwingApplied) return playerAt
-  return enemyAt
+  const roundEnd = roundStart + Math.max(1, configNumber(db, 'combat_round_duration', 6) * 1000)
+  const attackAt = save.combatPlayerSwingApplied
+    ? roundEnd
+    : Math.min(playerAt, enemyAt)
+  const eatUntil = save.combatEatUntil ? Date.parse(save.combatEatUntil) : Number.NaN
+  if (Number.isFinite(eatUntil) && eatUntil <= attackAt) return eatUntil
+  return attackAt
 }
 
 export interface UnattendedResult {
@@ -193,7 +198,10 @@ export function resolveUnattendedProgress(
       for (const event of tick.events) {
         if (event.kind === 'enemy-defeated') combatVictories += 1
         if (event.kind === 'player-defeated') combatDeaths += 1
-        if (event.kind === 'message' && !isIncompleteCombatAwayLine(event.text)) {
+        if (
+          event.kind === 'message' &&
+          !isIncompleteCombatAwayLine(event.text, event.topic)
+        ) {
           messages.push(event.text)
         }
       }

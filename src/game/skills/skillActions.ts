@@ -11,6 +11,10 @@ import {
   projectSkillRequirements,
 } from '../projects/projects'
 import {
+  alchemyRecipeUsesPotionDie,
+  ALCHEMY_SKILL_ID,
+} from '../equipment/specialist'
+import {
   botanyPlantDisplayName,
   FISHING_POT_ITEM_ID,
   POT_FISH_BY_LOCATION,
@@ -284,6 +288,7 @@ export function skillMenuPlacementForOutput(
     return { tabId: 'shops', tabLabel: 'Shops', sectionTitle: null }
   }
   if (skillId === COOKING_SKILL_ID) return cookingPlacement(displayName)
+  if (skillId === ALCHEMY_SKILL_ID) return alchemyPlacement(db, displayName, outputId)
   if (skillMenuView(db, skillId).tabs.some((tab) => tab.id === 'actions')) {
     return { tabId: 'actions', tabLabel: 'Actions', sectionTitle: null }
   }
@@ -334,6 +339,7 @@ function tabsForSkill(db: GameDatabase, skillId: string): SkillMenuTab[] {
   if (skillId === SMITHING_SKILL_ID) return smithingTabs(db)
   if (skillId === ARTISANRY_SKILL_ID) return artisanryTabs(db)
   if (skillId === ARCANA_SKILL_ID) return arcanaTabs(db)
+  if (skillId === ALCHEMY_SKILL_ID) return alchemyTabs(db)
   return [listTab('actions', 'Actions', skillMenuEntries(db, skillId))]
 }
 
@@ -505,6 +511,39 @@ function cookingTabs(db: GameDatabase): SkillMenuTab[] {
     listTab('stew', 'Stew', stew),
     listTab('other', 'Other', other),
   ]
+}
+
+function alchemyOutputItemId(db: GameDatabase, displayName: string, outputId: string): string {
+  if (outputId) return outputId
+  const action = db.Actions.find((row) => row['Display Name'] === displayName)
+  if (action?.['Target ID']) return action['Target ID']
+  const recipe = db.Recipes.find((row) => row['Display Name'] === displayName)
+  return recipe?.['Output Item ID'] ?? ''
+}
+
+function isAlchemyPotionOutput(db: GameDatabase, displayName: string, outputId = ''): boolean {
+  const itemId = alchemyOutputItemId(db, displayName, outputId)
+  if (!itemId) return true
+  return alchemyRecipeUsesPotionDie(db, itemId)
+}
+
+function alchemyPlacement(db: GameDatabase, displayName: string, outputId = ''): SkillMenuPlacement {
+  if (isAlchemyPotionOutput(db, displayName, outputId)) {
+    return { tabId: 'potions', tabLabel: 'Potions', sectionTitle: null }
+  }
+  return { tabId: 'ingredients', tabLabel: 'Ingredients', sectionTitle: null }
+}
+
+function alchemyTabs(db: GameDatabase): SkillMenuTab[] {
+  const potions: SkillMenuListItem[] = []
+  const ingredients: SkillMenuListItem[] = []
+  for (const item of skillMenuEntries(db, ALCHEMY_SKILL_ID)) {
+    const action = db.Actions.find((row) => row['Action ID'] === item.id)
+    const outputId = action?.['Target ID'] ?? ''
+    if (outputId && alchemyRecipeUsesPotionDie(db, outputId)) potions.push(item)
+    else ingredients.push(item)
+  }
+  return [listTab('potions', 'Potions', potions), listTab('ingredients', 'Ingredients', ingredients)]
 }
 
 function smithingTabs(db: GameDatabase): SkillMenuTab[] {

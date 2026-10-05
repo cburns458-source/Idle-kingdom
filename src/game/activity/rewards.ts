@@ -240,7 +240,16 @@ export function resolveActionRewards(
 
   goldGained = applyRaceGoldGain(db, save, goldGained)
   if (goldGained > 0) {
-    next = { ...next, gold: next.gold + goldGained }
+    next = {
+      ...next,
+      gold: next.gold + goldGained,
+      statistics: {
+        values: {
+          ...next.statistics.values,
+          gold_earned: Number(next.statistics.values.gold_earned ?? 0) + goldGained,
+        },
+      },
+    }
   }
 
   return { save: next, loot, goldGained, cosmeticsGranted }

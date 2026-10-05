@@ -29,7 +29,7 @@ export interface RaceChangeCost {
   items: RaceChangeItemCost[]
 }
 
-/** Mid-level (30–55) costs. No gems or ruby. Human is maple; High Elf is bass. */
+/** Mid-level (30–55) costs. Fallback when Config rows are missing. */
 export const RACE_CHANGE_COSTS: Record<string, RaceChangeCost> = {
   // Human — woodcutting 50
   'RACE-0001': {
@@ -81,8 +81,33 @@ export const RACE_CHANGE_COSTS: Record<string, RaceChangeCost> = {
   },
 }
 
-export function raceChangeCostFor(raceId: string): RaceChangeCost | null {
-  return RACE_CHANGE_COSTS[raceId] ?? null
+function parseRaceChangeItems(raw: unknown): RaceChangeItemCost[] | null {
+  if (typeof raw !== 'string' || raw.trim().length === 0) return null
+  const items: RaceChangeItemCost[] = []
+  for (const part of raw.split(',')) {
+    const [itemId, qtyRaw] = part.trim().split(':')
+    const quantity = Number(qtyRaw)
+    if (!itemId || !Number.isFinite(quantity) || quantity <= 0) continue
+    items.push({ itemId: itemId.trim(), quantity })
+  }
+  return items.length > 0 ? items : null
+}
+
+/** Prefer Config `race_change_cost_<raceId>_{items,gold}`; fall back to [RACE_CHANGE_COSTS]. */
+export function raceChangeCostFor(raceId: string, db?: GameDatabase): RaceChangeCost | null {
+  const fallback = RACE_CHANGE_COSTS[raceId] ?? null
+  if (!db) return fallback
+  const itemsKey = `race_change_cost_${raceId}_items`
+  const goldKey = `race_change_cost_${raceId}_gold`
+  const itemsRaw = db.Config.find((row) => row.Key === itemsKey)?.Value
+  const goldRaw = db.Config.find((row) => row.Key === goldKey)?.Value
+  const items = parseRaceChangeItems(itemsRaw) ?? fallback?.items ?? []
+  const gold =
+    typeof goldRaw === 'number' && Number.isFinite(goldRaw)
+      ? goldRaw
+      : (fallback?.gold ?? 0)
+  if (!fallback && items.length === 0 && gold <= 0) return null
+  return { gold, items }
 }
 
 export function raceChangeUnlocked(save: PlayerSave): boolean {
@@ -188,7 +213,7 @@ export function raceChangeOffer(
   const readyAt = quest ? miniquestRepeatReadyAt(save, quest) : null
   const options = races(db).map((race) => {
     const raceId = race['Race ID']
-    const cost = raceChangeCostFor(raceId) ?? { gold: 0, items: [] }
+    const cost = raceChangeCostFor(raceId, db) ?? { gold: 0, items: [] }
     const lines = costLines(db, save, cost)
     return {
       raceId,
@@ -241,7 +266,7 @@ export function changeRaceAtNpc(
     return { ok: false, reason: raceChangeCooldownLabel(db, save, nowMs) ?? 'The last change is still settling.' }
   }
 
-  const cost = raceChangeCostFor(raceId)
+  const cost = raceChangeCostFor(raceId, db)
   if (!cost) return { ok: false, reason: 'Vesper will not weave that shape.' }
   if (save.gold < cost.gold) {
     return { ok: false, reason: `Need ${cost.gold.toLocaleString()} gold.` }

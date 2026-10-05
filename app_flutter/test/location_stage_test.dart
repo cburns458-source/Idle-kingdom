@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
@@ -24,20 +22,24 @@ void main() {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }
 
-  /// Player swing and enemy phase are separate ticks; advance both.
+  /// Advance through the end-of-round clash (hits + outcome together).
   Future<void> advanceCombatRound(
     WidgetTester tester,
     TestClock clock,
     GameController controller,
   ) async {
-    final playerAtMs = configNumber(database.launch, 'combat_player_attack_at', 5) * 1000;
-    final enemyAtMs = configNumber(database.launch, 'combat_enemy_attack_at', 6) * 1000;
-    clock.advance(playerAtMs);
+    final startedAt = jsDateParse(controller.save.combatRoundStartedAt!);
+    final attackAtMs = configNumber(database.launch, 'combat_player_attack_at', 6) * 1000;
+
+    final toAttack = startedAt + attackAtMs - clock.read();
+    if (toAttack > 0) clock.advance(toAttack);
+    // Jumping past eat-at lands on the mid-round eat first; tick again for the clash.
     controller.tick();
     await tester.pump();
-    clock.advance(math.max(0, enemyAtMs - playerAtMs));
-    controller.tick();
-    await tester.pump();
+    if (controller.lastRound == null) {
+      controller.tick();
+      await tester.pump();
+    }
   }
 
   testWidgets('entering a location shows the adventurer idle', (tester) async {
@@ -276,9 +278,7 @@ void main() {
     expect(enemy, isNotNull);
     final maxHp = enemyEncounterMaxHp(database.launch, controller.save, enemy!);
 
-    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
-    controller.tick();
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.playerHit, 0);
@@ -311,9 +311,7 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
-    controller.tick();
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.playerHit, 0);
@@ -346,9 +344,7 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
-    controller.tick();
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.poisonHit, isNotNull);
@@ -438,9 +434,9 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    final roundMs = configNumber(database.launch, 'combat_round_duration', 4) * 1000;
-    for (var i = 0; i < 40 && controller.healPopup == null; i++) {
-      clock.advance(roundMs);
+    final eatMs = configNumber(database.launch, 'combat_eat_at', 1) * 1000;
+    for (var i = 0; i < 80 && controller.healPopup == null; i++) {
+      clock.advance(eatMs);
       controller.tick();
       await tester.pump();
     }
@@ -449,6 +445,8 @@ void main() {
     expect(find.byKey(ValueKey('heal-${controller.healPopup!.seq}')), findsOne);
     expect(find.text('+${controller.healPopup!.amount.round()}'), findsNWidgets(2));
 
+    // Expire this floater 1s later. Stepping by eat-at (not a full round) keeps
+    // that window off the next auto-eat, which would install a new HealPopup.
     clock.advance(GameController.healPopupHoldMs);
     controller.tick();
     await tester.pump();
@@ -547,7 +545,7 @@ void main() {
     expect(find.textContaining('slots'), findsOne);
   });
 
-  testWidgets('a killing blow keeps sprites and damage up, then shows defeated', (tester) async {
+  testWidgets('a killing blow shows damage without a defeated banner', (tester) async {
     final clock = TestClock();
     final controller = buildController(
       database,
@@ -567,19 +565,17 @@ void main() {
     await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound?.outcome, 'victory');
-    expect(controller.combatBlowHold, isTrue);
+    expect(controller.combatBlowHold, isFalse);
+    expect(controller.defeatedFlash, isFalse);
     expect(find.text('defeated'), findsNothing);
+    expect(controller.showLastRoundFloaters, isTrue);
     expect(find.textContaining('${controller.lastRound!.playerHit.round()}'), findsWidgets);
     expect(find.byWidgetPredicate((widget) => assetNamed(widget, '/enemies/')), findsOne);
 
-    clock.advance(GameController.combatBlowHoldMs);
+    clock.advance(GameController.combatFloaterHoldMs);
+    controller.tick();
     await tester.pump();
-    expect(controller.defeatedFlash, isTrue);
-    expect(find.text('defeated'), findsOne);
-
-    clock.advance(GameController.combatDefeatedBannerMs);
-    await tester.pump();
-    expect(controller.defeatedFlash, isFalse);
+    expect(controller.showLastRoundFloaters, isFalse);
     expect(find.text('defeated'), findsNothing);
   });
 
@@ -648,7 +644,7 @@ void main() {
     expect(numeral.style?.color, Palette.heading);
     expect(numeral.style?.fontFamily, gameFontFamily);
     expect(numeral.style?.fontWeight, FontWeight.w400);
-    expect(numeral.style?.fontSize, GameFont.m);
+    expect(numeral.style?.fontSize, 15);
 
     final square = tester.getSize(
       find.ancestor(of: stageNumeral('II'), matching: find.byType(InkWell)),
@@ -876,7 +872,8 @@ void main() {
     clock.advance(roundMs);
     controller.tick();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+    controller.tick();
+    await tester.pump();
 
     expect(controller.inkPopup, isNotNull);
     expect(find.byKey(ValueKey('ink-${controller.inkPopup!.seq}')), findsOne);
@@ -903,6 +900,8 @@ void main() {
 
     final roundMs = configNumber(db, 'combat_round_duration', 4) * 1000;
     clock.advance(roundMs);
+    controller.tick();
+    await tester.pump();
     controller.tick();
     await tester.pump();
 

@@ -368,7 +368,8 @@ class GameController extends ChangeNotifier {
   /// How long the ink splat stays over the combat stage.
   static const int inkPopupHoldMs = 1200;
 
-  /// How long player and enemy hit numbers stay up.
+  /// How long player and enemy hit numbers stay up (1s from the 6s clash
+  /// into the next round's 1s eat).
   static const int combatFloaterHoldMs = stagePopupHoldMs;
 
   /// The last finished craft, or null once its second is up.
@@ -403,10 +404,10 @@ class GameController extends ChangeNotifier {
     return popup;
   }
 
-  /// How long the killing blow stays on screen before "defeated" or Recovering.
+  /// How long the killing blow stays on screen before Recovering (player death).
   static const int combatBlowHoldMs = 500;
 
-  /// How long "defeated" stays up after the blow hold. Total ~1s between kills.
+  /// Legacy victory banner duration. Victory no longer uses the defeated flash.
   static const int combatDefeatedBannerMs = 500;
 
   num get _holdElapsedMs {
@@ -457,7 +458,7 @@ class GameController extends ChangeNotifier {
     return save.combatEnemyHp ?? 0;
   }
 
-  /// Damage numbers stay for one second, then drop.
+  /// Damage numbers stay until the next eat, then drop.
   bool get showLastRoundFloaters {
     final round = _lastRound;
     final shownAt = _lastRoundAtMs;
@@ -979,19 +980,21 @@ class GameController extends ChangeNotifier {
         if (round.bossInkActive) {
           _inkPopup = InkPopup(shownAtMs: session.clock(), seq: (_inkPopup?.seq ?? 0) + 1);
         }
-        if (round.outcome == 'victory' || round.outcome == 'defeat') {
-          _outcomeHold = CombatOutcomeHold(
-            enemyId: round.enemyId,
-            outcome: round.outcome,
-            startedAtMs: session.clock(),
-            playerHp: round.outcome == 'defeat' ? 0 : save.currentHp,
-            enemyHp: round.outcome == 'victory' ? 0 : (_liveEnemyHp ?? 0),
-          );
-        } else {
+        // Victory has no defeated banner — hit floaters are enough. Clear any
+        // leftover hold so the next enemy is not covered by old FX.
+        if (round.outcome != 'defeat') {
           _outcomeHold = null;
         }
       case EnemyDefeatedEvent():
-      case PlayerDefeatedEvent():
+        break;
+      case PlayerDefeatedEvent(enemyId: final enemyId):
+        _outcomeHold = CombatOutcomeHold(
+          enemyId: enemyId,
+          outcome: 'defeat',
+          startedAtMs: session.clock(),
+          playerHp: 0,
+          enemyHp: _liveEnemyHp ?? save.combatEnemyHp ?? 0,
+        );
       case RecoveredEvent():
       case CritterSpawnedEvent():
         break;

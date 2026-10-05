@@ -40,25 +40,25 @@
       "Key": "combat_round_duration",
       "Value": 6,
       "Unit": "seconds",
-      "Notes": "Combat round length. Player swing at combat_player_attack_at; enemy swing at round end; auto-eat uses combat_eat_between_seconds."
+      "Notes": "Combat round length. Hits and outcomes resolve together at combat_player_attack_at / combat_enemy_attack_at (round end). Mid-round auto-eat uses combat_eat_at. No extra eat delay."
     },
     {
       "Key": "combat_eat_between_seconds",
-      "Value": 1,
+      "Value": 0,
       "Unit": "seconds",
-      "Notes": "Auto-eat delay inserted between combat rounds and between actions after a kill."
+      "Notes": "Legacy inter-round eat pause. Unused; auto-eat is combat_eat_at inside the round."
     },
     {
       "Key": "combat_enemy_attack_at",
       "Value": 6,
       "Unit": "seconds",
-      "Notes": "Seconds into a combat round when the enemy's attack resolves (round end)."
+      "Notes": "Seconds into a combat round when the enemy attacks (same time as the player). Skipped on a killing blow. Same as combat_round_duration so the bar stays continuous."
     },
     {
       "Key": "combat_player_attack_at",
-      "Value": 5,
+      "Value": 6,
       "Unit": "seconds",
-      "Notes": "Seconds into a combat round when the player's attack resolves."
+      "Notes": "Seconds into a combat round when the player attacks (same time as the enemy). Same as combat_round_duration so hits and the next round share one beat."
     },
     {
       "Key": "gathering_below_proficiency_duration_multiplier",
@@ -323,6 +323,60 @@
       "Value": 2,
       "Unit": "count",
       "Notes": "Min potions per Alchemy craft with Alchemist Goggles."
+    },
+    {
+      "Key": "combat_eat_at",
+      "Value": 1,
+      "Unit": "seconds",
+      "Notes": "Seconds into a combat round when auto-eat resolves. Instant; does not extend the round. Timed so previous-round hit numbers have finished fading."
+    },
+    {
+      "Key": "race_change_cost_RACE-0001_items",
+      "Value": "ITEM-0018:40",
+      "Unit": null,
+      "Notes": "Vesper race-change item costs for RACE-0001 (itemId:qty, comma-separated)."
+    },
+    {
+      "Key": "race_change_cost_RACE-0002_items",
+      "Value": "ITEM-0041:20,ITEM-0196:20",
+      "Unit": null,
+      "Notes": "Vesper race-change item costs for RACE-0002 (itemId:qty, comma-separated)."
+    },
+    {
+      "Key": "race_change_cost_RACE-0003_items",
+      "Value": "ITEM-0050:40",
+      "Unit": null,
+      "Notes": "Vesper race-change item costs for RACE-0003 (itemId:qty, comma-separated)."
+    },
+    {
+      "Key": "race_change_cost_RACE-0004_items",
+      "Value": "ITEM-0045:20,ITEM-0041:15",
+      "Unit": null,
+      "Notes": "Vesper race-change item costs for RACE-0004 (itemId:qty, comma-separated)."
+    },
+    {
+      "Key": "race_change_cost_RACE-0005_items",
+      "Value": "ITEM-0077:20",
+      "Unit": null,
+      "Notes": "Vesper race-change item costs for RACE-0005 (itemId:qty, comma-separated)."
+    },
+    {
+      "Key": "race_change_cost_RACE-0005_gold",
+      "Value": 5000,
+      "Unit": "gold",
+      "Notes": "Vesper race-change gold cost for RACE-0005."
+    },
+    {
+      "Key": "race_change_cost_RACE-0006_items",
+      "Value": "ITEM-0005:60,ITEM-0006:20,ITEM-0007:20",
+      "Unit": null,
+      "Notes": "Vesper race-change item costs for RACE-0006 (itemId:qty, comma-separated)."
+    },
+    {
+      "Key": "race_change_cost_RACE-0007_items",
+      "Value": "ITEM-0028:40,ITEM-0033:20",
+      "Unit": null,
+      "Notes": "Vesper race-change item costs for RACE-0007 (itemId:qty, comma-separated)."
     }
   ],
   "Skills": [
@@ -6148,7 +6202,7 @@
       "Release Phase": "Launch",
       "Description": null,
       "Icon Asset Key": "fishing_pot",
-      "Notes": "Place at Goblin Camp or Docks for pot fishing. One pot per site per UTC day; 6 hour soak.",
+      "Notes": "Place at Goblin Camp or the Docks. Up to three pots per site per UTC day, one at a time; 6 hour soak. Old Boots 1% secondary per collect.",
       "Base Sell Value": 5,
       "Stackable": null
     },
@@ -7462,6 +7516,23 @@
       "Notes": "Placeholder art: cooked beef.",
       "Base Sell Value": 12,
       "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0426",
+      "Internal Key": "rabbit_hide",
+      "Display Name": "Rabbit Hide",
+      "Category": "Resource",
+      "Subtype": "Creature material",
+      "Associated Skill ID": "SKL-0005",
+      "Equipment Slot ID": null,
+      "Functional / Source Tags": "hunting_output; crafting_input",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": null,
+      "Icon Asset Key": "rabbit_hide",
+      "Notes": "Tanner turns into 1 leather.",
+      "Base Sell Value": 40,
+      "Stackable": null
     }
   ],
   "Equipment": [
@@ -7695,7 +7766,7 @@
       "Damage Reduction": null,
       "Healing Amount": null,
       "Action Time Reduction %": null,
-      "Capabilities / Effects": "potion_slot; one_action; +25% relative Drop Chance",
+      "Capabilities / Effects": "potion_slot; one_action; one_combat_encounter; +25% relative Drop Chance",
       "Status": "Planned",
       "Notes": "One Potion is consumed per eligible Action or Combat encounter."
     },
@@ -8991,7 +9062,7 @@
       "Damage Reduction": null,
       "Healing Amount": null,
       "Action Time Reduction %": null,
-      "Capabilities / Effects": "potion_slot; one_action; +10% relative Drop Chance",
+      "Capabilities / Effects": "potion_slot; one_action; one_combat_encounter; +10% relative Drop Chance",
       "Status": "Planned",
       "Notes": "One Potion is consumed per eligible Action or Combat encounter."
     },
@@ -15140,17 +15211,17 @@
       "Pool Entry ID": "PEN-0141",
       "Pool ID": "POOL-0005",
       "Action ID": "ACN-0018",
-      "Weight": 50,
+      "Weight": 60,
       "Status": "Planned",
-      "Notes": "Copper 50%."
+      "Notes": "Copper 60%."
     },
     {
       "Pool Entry ID": "PEN-0142",
       "Pool ID": "POOL-0005",
       "Action ID": "ACN-0020",
-      "Weight": 30,
+      "Weight": 20,
       "Status": "Planned",
-      "Notes": "Tin 30%."
+      "Notes": "Tin 20%."
     },
     {
       "Pool Entry ID": "PEN-0143",
@@ -15948,13 +16019,13 @@
       "Base Duration Seconds": 12,
       "XP Reward": 300,
       "Guaranteed Gold": 0,
-      "Drop Chance": 60,
+      "Drop Chance": 30,
       "Reward Table ID": "RWT-0049",
       "Secondary Drop Chance": null,
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Weasel Tail 100% when the drop rolls (40% base). No tendons.",
+      "Notes": "Weasel Tail 100% when the drop rolls (30% drop chance). No tendons.",
       "Sprite Asset Key": "actions/acn_hunt_butterfly.webp",
       "Tertiary Drop Chance": null,
       "Tertiary Reward Table ID": null
@@ -15977,7 +16048,7 @@
       "Secondary Reward Table ID": "RWT-0119",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Raw Rabbit / Rabbit's Foot main. Animal Tendons secondary 5%.",
+      "Notes": "Raw Rabbit 60% / Rabbit Hide 30% / Rabbit's Foot 10% main. Animal Tendons secondary 5%.",
       "Tertiary Reward Table ID": null,
       "Tertiary Drop Chance": null,
       "Sprite Asset Key": "actions/acn_hunt_rabbit.webp"
@@ -16229,11 +16300,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 71.25,
       "Reward Table ID": "RWT-0029",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0131",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_cedar.webp"
     },
     {
@@ -16250,11 +16321,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 69,
       "Reward Table ID": "RWT-0030",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0132",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_oak.webp"
     },
     {
@@ -16271,11 +16342,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 67.5,
       "Reward Table ID": "RWT-0031",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0133",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_poplar.webp"
     },
     {
@@ -16292,11 +16363,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 63.75,
       "Reward Table ID": "RWT-0032",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0134",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_maple.webp"
     },
     {
@@ -16313,11 +16384,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 60,
       "Reward Table ID": "RWT-0033",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0135",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Sapling secondary 0.1%.",
       "Sprite Asset Key": "actions/acn_cut_mahogany.webp"
     },
     {
@@ -16332,13 +16403,13 @@
       "Base Duration Seconds": 12,
       "XP Reward": 1928,
       "Guaranteed Gold": 0,
-      "Drop Chance": 56.25,
+      "Drop Chance": 25,
       "Reward Table ID": "RWT-0034",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0184",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Primary Yew Branches. Sapling secondary 0.5%.",
+      "Notes": "Primary Yew Branches. Sapling secondary 0.1%. Elder yew 25% primary.",
       "Sprite Asset Key": "actions/acn_cut_ancient.webp"
     },
     {
@@ -16477,11 +16548,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 71.25,
       "Reward Table ID": "RWT-0035",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_crawfish.webp"
     },
     {
@@ -16498,11 +16569,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 69,
       "Reward Table ID": "RWT-0036",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_trout.webp"
     },
     {
@@ -16519,11 +16590,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 67.5,
       "Reward Table ID": "RWT-0037",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_salmon.webp"
     },
     {
@@ -16540,11 +16611,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 63.75,
       "Reward Table ID": "RWT-0038",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_bass.webp"
     },
     {
@@ -16561,11 +16632,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 60,
       "Reward Table ID": "RWT-0039",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_shark.webp"
     },
     {
@@ -16582,11 +16653,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 56.25,
       "Reward Table ID": "RWT-0040",
-      "Secondary Drop Chance": 1,
-      "Secondary Reward Table ID": "RWT-0061",
+      "Secondary Drop Chance": null,
+      "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null,
+      "Notes": "Old Boots moved to pot fishing.",
       "Sprite Asset Key": "actions/acn_catch_baby_giant_squid.webp"
     },
     {
@@ -18119,7 +18190,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:30; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18140,7 +18211,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:35; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_barracks.webp"
     },
     {
@@ -18161,7 +18232,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:45; FailDamagePercent:10",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18182,7 +18253,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; NoConsequences",
+      "Notes": "ThieverySteal",
       "Sprite Asset Key": "actions/acn_steal_kitchen.webp"
     },
     {
@@ -18223,7 +18294,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:40; FailDamagePercent:10",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_goblins.webp"
     },
     {
@@ -18244,7 +18315,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; BankThievery; FailChance:50; FailDamagePercent:10",
+      "Notes": "ThieveryLockpick; RequiresLockpick; BankThievery; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_pick_deposit_box.webp"
     },
     {
@@ -18265,7 +18336,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:55; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18421,13 +18492,13 @@
       "Base Duration Seconds": 12,
       "XP Reward": 275,
       "Guaranteed Gold": 0,
-      "Drop Chance": 63.75,
+      "Drop Chance": 30,
       "Reward Table ID": "RWT-0157",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0182",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Primary Willow Branches. Sapling secondary 0.5%.",
+      "Notes": "Primary Willow Branches. Sapling secondary 0.1%. Willow 30% primary.",
       "Sprite Asset Key": "actions/acn_cut_oak.webp"
     },
     {
@@ -18465,11 +18536,11 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 60,
       "Reward Table ID": "RWT-0161",
-      "Secondary Drop Chance": 0.5,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0183",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Primary Ironwood Log. Sapling secondary 0.5%. No bark.",
+      "Notes": "Primary Ironwood Log. Sapling secondary 0.1%. No bark.",
       "Sprite Asset Key": "actions/acn_cut_mahogany.webp"
     },
     {
@@ -18912,7 +18983,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryShop; ThieveryLockpick; RequiresLockpick; FailChance:40; FailDamagePercent:10",
+      "Notes": "ThieveryShop; ThieveryLockpick; RequiresLockpick; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18933,7 +19004,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:40; FailDamagePercent:10; Wired at Kingsroad.",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10; Wired at Kingsroad.",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -18954,7 +19025,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:45; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18975,7 +19046,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:50; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -18996,7 +19067,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:55; FailDamagePercent:10; Wired at Riverside Manor.",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10; Wired at Riverside Manor.",
       "Sprite Asset Key": "actions/acn_pick_safe.webp"
     },
     {
@@ -19017,7 +19088,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:55; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -19038,7 +19109,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieverySteal; FailChance:60; FailDamagePercent:10",
+      "Notes": "ThieverySteal; FailDamagePercent:10",
       "Sprite Asset Key": "actions/acn_steal_general_store.webp"
     },
     {
@@ -19059,7 +19130,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "ThieveryLockpick; RequiresLockpick; FailChance:65; FailDamagePercent:10; BankThievery",
+      "Notes": "ThieveryLockpick; RequiresLockpick; FailDamagePercent:10; BankThievery",
       "Sprite Asset Key": "actions/acn_pick_deposit_box.webp"
     },
     {
@@ -25578,13 +25649,13 @@
       "Purpose": "Hunting item drops",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0052",
-      "Weight": 90,
+      "Weight": 60,
       "Minimum Quantity": 1,
       "Maximum Quantity": 1,
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Raw Rabbit 60%."
     },
     {
       "Reward Entry ID": "RWE-0107",
@@ -25599,7 +25670,7 @@
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Planned",
-      "Notes": null
+      "Notes": "Rabbit's Foot 10%."
     },
     {
       "Reward Entry ID": "RWE-0093",
@@ -26095,6 +26166,21 @@
       "XP Amount": null,
       "Status": "Planned",
       "Notes": null
+    },
+    {
+      "Reward Entry ID": "RWE-9227",
+      "Reward Table ID": "RWT-0050",
+      "Reward Table Name": "Rabbit Drops",
+      "Purpose": "Hunting item drops",
+      "Reward Type": "Item",
+      "Reward ID / Value": "ITEM-0426",
+      "Weight": 30,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Planned",
+      "Notes": "Rabbit Hide 30%."
     }
   ],
   "Recipes": [

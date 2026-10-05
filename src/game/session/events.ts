@@ -17,7 +17,15 @@ export type SessionEvent =
       showZeroDamageHit?: boolean
     }
   /** Transient status line, e.g. the blow-by-blow of a combat round. */
-  | { kind: 'message'; text: string }
+  | {
+      kind: 'message'
+      text: string
+      /**
+       * Away-summary topic. Mid-fight chatter (`combat-swing` / `combat-phase`)
+       * is hidden from AFK panels; outcomes and untagged lines still show.
+       */
+      topic?: 'combat-swing' | 'combat-phase' | 'combat-outcome' | 'general'
+    }
   /** The running activity ended on its own; the text explains why. */
   | { kind: 'activity-stopped'; reason: string }
   /** A standard production craft finished, for the item pop. */

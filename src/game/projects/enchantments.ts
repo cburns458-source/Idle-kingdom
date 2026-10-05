@@ -360,15 +360,17 @@ function skillIdFromDurationEffect(effect: string): string | null {
   return null
 }
 
-function skillIdFromAtrEffect(effect: string): string | null {
-  if (/Mining action time reduction/i.test(effect)) return MINING_SKILL_ID
-  if (/Fishing action time reduction/i.test(effect)) return FISHING_SKILL_ID
-  if (/Woodcutting action time reduction/i.test(effect)) return WOODCUTTING_SKILL_ID
+function skillIdFromSuccessChanceEffect(effect: string): string | null {
+  if (/Mining (?:action time reduction|success chance)/i.test(effect)) return MINING_SKILL_ID
+  if (/Fishing (?:action time reduction|success chance)/i.test(effect)) return FISHING_SKILL_ID
+  if (/Woodcutting (?:action time reduction|success chance)/i.test(effect)) {
+    return WOODCUTTING_SKILL_ID
+  }
   return null
 }
 
-/** Action-time reduction percent from tool enchantments, keyed by skill. */
-export function equippedEnchantmentActionTimeReductionBySkill(
+/** Success-chance bonus percent from tool enchantments, keyed by skill. */
+export function equippedEnchantmentSuccessChanceBonusBySkill(
   db: GameDatabase,
   save: PlayerSave,
 ): Record<string, number> {
@@ -377,14 +379,20 @@ export function equippedEnchantmentActionTimeReductionBySkill(
     if (!stack?.enchantmentId) continue
     const row = getEnchantment(db, stack.enchantmentId)
     const effect = row?.Effect ?? ''
-    const skillId = skillIdFromAtrEffect(effect)
+    const skillId = skillIdFromSuccessChanceEffect(effect)
     if (!skillId) continue
-    const match = effect.match(/\+(\d+(?:\.\d+)?)%\s+\w+\s+action time reduction/i)
+    const match = effect.match(
+      /\+(\d+(?:\.\d+)?)%\s+\w+\s+(?:action time reduction|success chance)/i,
+    )
     if (!match) continue
     totals[skillId] = (totals[skillId] ?? 0) + Number(match[1])
   }
   return totals
 }
+
+/** @deprecated Use equippedEnchantmentSuccessChanceBonusBySkill */
+export const equippedEnchantmentActionTimeReductionBySkill =
+  equippedEnchantmentSuccessChanceBonusBySkill
 
 const CRIT_STRIKE_ENCHANTMENT_ID = 'ENCH-0008'
 const CRIT_STRIKE_CHANCE_PER_ENCHANT = 10
