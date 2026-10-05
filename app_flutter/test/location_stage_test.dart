@@ -870,7 +870,8 @@ void main() {
     clock.advance(roundMs);
     controller.tick();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+    controller.tick();
+    await tester.pump();
 
     expect(controller.inkPopup, isNotNull);
     expect(find.byKey(ValueKey('ink-${controller.inkPopup!.seq}')), findsOne);
@@ -897,6 +898,8 @@ void main() {
 
     final roundMs = configNumber(db, 'combat_round_duration', 4) * 1000;
     clock.advance(roundMs);
+    controller.tick();
+    await tester.pump();
     controller.tick();
     await tester.pump();
 
