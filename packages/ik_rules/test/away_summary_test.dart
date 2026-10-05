@@ -40,6 +40,19 @@ void main() {
     expect(consolidateAwayMessages(const <String>[]), isEmpty);
   });
 
+  test('drops mid-fight swings and squidling phase lines', () {
+    expect(
+      consolidateAwayMessages(<String>[
+        'You hit 12. Cow hits 8.',
+        'Defeated Cow',
+        'You crit for 40. Seagull hits 3.',
+        'Mother Squid releases squidlings! Defeat them to continue.',
+        'Defeated Seagull',
+      ]),
+      <String>['Defeated Cow', 'Defeated Seagull'],
+    );
+  });
+
   test('collapses identical non-craft lines with a repeat count', () {
     expect(
       consolidateAwayMessages(<String>[

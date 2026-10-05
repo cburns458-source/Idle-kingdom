@@ -31,7 +31,7 @@ export const VITALITY_SKILL_ID = 'SKL-0016'
 export const COMBAT_SKILL_ID = MIGHT_SKILL_ID
 
 /** Level bonuses (Might→damage, Vitality→HP) begin at this level (inclusive). */
-export const COMBAT_LEVEL_BONUS_START = 10
+export const COMBAT_LEVEL_BONUS_START = 5
 /** Each contributing skill level grants this percent once the bonus is active. */
 export const COMBAT_LEVEL_BONUS_PERCENT_PER_LEVEL = 1
 
