@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
@@ -20,6 +22,22 @@ void main() {
 
   Finder dockRow(String title) {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
+  }
+
+  /// Player swing and enemy phase are separate ticks; advance both.
+  Future<void> advanceCombatRound(
+    WidgetTester tester,
+    TestClock clock,
+    GameController controller,
+  ) async {
+    final playerAtMs = configNumber(database.launch, 'combat_player_attack_at', 5) * 1000;
+    final enemyAtMs = configNumber(database.launch, 'combat_enemy_attack_at', 6) * 1000;
+    clock.advance(playerAtMs);
+    controller.tick();
+    await tester.pump();
+    clock.advance(math.max(0, enemyAtMs - playerAtMs));
+    controller.tick();
+    await tester.pump();
   }
 
   testWidgets('entering a location shows the adventurer idle', (tester) async {
@@ -218,9 +236,7 @@ void main() {
     final combatPresets = tester.getRect(find.byKey(const Key('preset-chip-0')));
     expect(roundBar.bottom, lessThanOrEqualTo(combatPresets.top + 2));
 
-    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
-    controller.tick();
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound, isNotNull);
     expect(controller.lastRound!.playerHit, greaterThan(0));
@@ -260,7 +276,7 @@ void main() {
     expect(enemy, isNotNull);
     final maxHp = enemyEncounterMaxHp(database.launch, controller.save, enemy!);
 
-    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
+    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
     controller.tick();
     await tester.pump();
 
@@ -295,7 +311,7 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
+    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
     controller.tick();
     await tester.pump();
 
@@ -330,7 +346,7 @@ void main() {
       find.descendant(of: dockRow('Tend the pasture'), matching: find.bySemanticsLabel('Start')),
     );
 
-    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
+    clock.advance(configNumber(database.launch, 'combat_player_attack_at', 5) * 1000);
     controller.tick();
     await tester.pump();
 
@@ -548,8 +564,7 @@ void main() {
     expect(controller.save.combatEnemyId, isNotNull);
 
     controller.commit(controller.save.copyWith(combatEnemyHp: 1));
-    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound?.outcome, 'victory');
     expect(controller.combatBlowHold, isTrue);
@@ -585,8 +600,7 @@ void main() {
     expect(controller.save.combatEnemyId, isNotNull);
 
     controller.commit(controller.save.copyWith(currentHp: 1, combatEnemyHp: 50000));
-    clock.advance(configNumber(database.launch, 'combat_round_duration', 4) * 1000);
-    await tester.pump();
+    await advanceCombatRound(tester, clock, controller);
 
     expect(controller.lastRound?.outcome, 'defeat');
     expect(controller.showingDeathHold, isTrue);

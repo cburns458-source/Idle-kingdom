@@ -10,22 +10,16 @@ import { configNumber } from '../activity/gathering'
 import type { RandomFn } from '../activity/pools'
 import { resolveActivityTransitions } from '../activity/transition'
 import {
-  applyCombatDefeat,
-  applyCombatVictory,
   applyDeathRecovery,
   clearCombatSave,
   deathPauseRemainingMs,
-  getEnemy,
-  resolveCombatRound,
 } from '../combat/engine'
-import { consumeFoodAfterVictory } from '../combat/food'
-import { bossProfile } from '../combat/boss'
-import { applySquidlingVictory, beginBossAddsEncounter, isSquidlingVictory } from '../combat/bossPhase'
 import type { GameDatabase } from '../data/types'
 import { applyActivityTimeTowardCritters } from '../critters/critters'
 import { resolveProductionProgress } from '../production/engine'
 import { accruePlayTime } from '../save/playTime'
 import type { PlayerSave } from '../save/types'
+import { advanceSession } from '../session/tick'
 import { applyNaturalHpRegen } from '../vitals/regen'
 
 /**
@@ -40,9 +34,23 @@ import { applyNaturalHpRegen } from '../vitals/regen'
  */
 function maxUnattendedSteps(db: GameDatabase): number {
   const capMs = unattendedCapMs(db)
-  const roundMs = Math.max(1, configNumber(db, 'combat_round_duration', 4) * 1000)
+  const roundMs = Math.max(1, configNumber(db, 'combat_round_duration', 6) * 1000)
   const minimumTickMs = Math.min(roundMs, 1_000)
   return Math.max(20_000, Math.ceil(capMs / minimumTickMs) + 1_000)
+}
+
+function nextCombatDueMs(db: GameDatabase, save: PlayerSave): number | null {
+  if (save.combatEatUntil) {
+    const eatUntil = Date.parse(save.combatEatUntil)
+    return Number.isFinite(eatUntil) ? eatUntil : null
+  }
+  if (!save.combatEnemyId || !save.combatRoundStartedAt) return null
+  const roundStart = Date.parse(save.combatRoundStartedAt)
+  if (!Number.isFinite(roundStart)) return null
+  const playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5) * 1000
+  const enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000
+  if (!save.combatPlayerSwingApplied) return playerAt
+  return enemyAt
 }
 
 export interface UnattendedResult {
@@ -176,150 +184,18 @@ export function resolveUnattendedProgress(
       continue
     }
 
-    // Combat rounds.
-    if (current.combatEnemyId && current.combatRoundStartedAt) {
-      const roundMs = configNumber(db, 'combat_round_duration', 4) * 1000
-      const roundStart = Date.parse(current.combatRoundStartedAt)
-      const roundEnd = roundStart + roundMs
-      if (roundEnd > endMs) break
-
-      const enemy = getEnemy(db, current.combatEnemyId)
-      const action = current.currentActionId
-        ? db.Actions.find((row) => row['Action ID'] === current.currentActionId)
-        : undefined
-      if (!enemy || !action || current.combatEnemyHp == null) {
-        current = clearActivitySave(current, roundEnd)
-        break
+    // Combat phases + inter-round eat — reuse live tick rules.
+    const combatDue = nextCombatDueMs(db, current)
+    if (combatDue != null) {
+      if (combatDue > endMs) break
+      const tick = advanceSession(db, current, combatDue, random)
+      for (const event of tick.events) {
+        if (event.kind === 'enemy-defeated') combatVictories += 1
+        if (event.kind === 'player-defeated') combatDeaths += 1
+        if (event.kind === 'message') messages.push(event.text)
       }
-
-      const round = resolveCombatRound(db, current, enemy, current.combatEnemyHp, random)
-      if (round.outcome === 'victory') {
-        if (isSquidlingVictory(current, enemy)) {
-          const squidlingResult = applySquidlingVictory(
-            db,
-            { ...current, combatEnemyHp: 0, currentHp: round.playerHp },
-            enemy,
-            new Date(roundEnd).toISOString(),
-          )
-          let next = squidlingResult.save
-          const critter = applyActivityTimeTowardCritters(
-            next,
-            next.currentLocationId,
-            roundMs,
-            roundEnd,
-            random,
-          )
-          next = critter.save
-          pushCritterSpawn(critter.spawned)
-          messages.push(squidlingResult.message)
-          if (squidlingResult.bossResumed) {
-            current = next
-            lastResolvedMs = roundEnd
-            continue
-          }
-          combatVictories += 1
-          const activityId = current.currentActivityId
-          if (!activityStillValid(db, next, activityId)) {
-            current = clearActivitySave(next, roundEnd)
-            messages.push(`Defeated ${enemy['Display Name']} · activity stopped.`)
-            break
-          }
-          current = next
-          lastResolvedMs = roundEnd
-          continue
-        }
-
-        const victory = applyCombatVictory(
-          db,
-          { ...current, combatEnemyHp: 0, currentHp: round.playerHp },
-          action,
-          enemy,
-          random,
-          // Credit the kill to the hour it happened in, not to the hour the
-          // player happens to come back in.
-          roundEnd,
-        )
-        combatVictories += 1
-        let next = victory.save
-        const critter = applyActivityTimeTowardCritters(
-          next,
-          next.currentLocationId,
-          roundMs,
-          roundEnd,
-          random,
-        )
-        next = critter.save
-        pushCritterSpawn(critter.spawned)
-        const activityId = current.currentActivityId
-        if (!activityStillValid(db, next, activityId)) {
-          current = clearActivitySave(next, roundEnd)
-          messages.push(`Defeated ${enemy['Display Name']} · activity stopped.`)
-          break
-        }
-        const generated = generateNextAction(db, next, activityId, random, roundEnd)
-        current = generated ? generated.save : next
-        lastResolvedMs = roundEnd
-        continue
-      }
-
-      if (round.outcome === 'defeat') {
-        combatDeaths += 1
-        let defeated = applyCombatDefeat(
-          db,
-          { ...current, currentHp: 0 },
-          roundEnd,
-        )
-        const critter = applyActivityTimeTowardCritters(
-          defeated,
-          defeated.currentLocationId,
-          roundMs,
-          roundEnd,
-          random,
-        )
-        defeated = critter.save
-        pushCritterSpawn(critter.spawned)
-        current = defeated
-        lastResolvedMs = roundEnd
-        messages.push(`Defeated by ${enemy['Display Name']} while away.`)
-        continue
-      }
-
-      let continued: PlayerSave = consumeFoodAfterVictory(db, {
-        ...current,
-        currentHp: round.playerHp,
-        combatEnemyHp: round.enemyHp,
-        combatRoundStartedAt: new Date(roundEnd).toISOString(),
-        combatSkipEnemyAttack: round.skipNextEnemyAttack,
-        combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
-        combatBossInkActive: round.bossInkActive,
-      }).save
-
-      if (round.bossAddsTriggered && round.bossPendingHp != null) {
-        const profile = bossProfile(enemy)
-        if (profile?.squidlingEnemyId) {
-          continued = beginBossAddsEncounter(
-            db,
-            continued,
-            enemy,
-            profile,
-            round.bossPendingHp,
-            new Date(roundEnd).toISOString(),
-          )
-          messages.push(`${enemy['Display Name']} releases squidlings while away.`)
-        }
-      }
-
-      const critter = applyActivityTimeTowardCritters(
-        continued,
-        continued.currentLocationId,
-        roundMs,
-        roundEnd,
-        random,
-      )
-      continued = critter.save
-      pushCritterSpawn(critter.spawned)
-      current = continued
-      lastResolvedMs = roundEnd
+      current = tick.save
+      lastResolvedMs = combatDue
       continue
     }
 

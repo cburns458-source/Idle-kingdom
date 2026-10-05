@@ -170,7 +170,10 @@ function emitRoundEndAutoEat(out: TickOutput, food: FoodConsumption): void {
   })
 }
 
-function roundMessage(enemy: EnemyRow, round: ReturnType<typeof resolveCombatRound>): string {
+function roundMessage(
+  enemy: EnemyRow,
+  round: NonNullable<PlayerSave['combatPendingRound']>,
+): string {
   const inkLabel = round.bossInkActive ? ' Ink clouds your strike!' : ''
   const hitLabel = round.playerCrit ? `crit for ${round.playerHit}` : `hit ${round.playerHit}`
   const offhandLabel =
@@ -192,7 +195,66 @@ function roundMessage(enemy: EnemyRow, round: ReturnType<typeof resolveCombatRou
     : `You ${hitLabel}.${offhandLabel}${sparksLabel}${poisonLabel}${inkLabel} ${swing}.`
 }
 
-function resolveDueCombatRound(
+function beginInterRoundEat(
+  db: GameDatabase,
+  out: TickOutput,
+  atMs: number,
+  continueActivityAfterEat: boolean,
+  patch: Partial<PlayerSave>,
+): void {
+  const eatSeconds = configNumber(db, 'combat_eat_between_seconds', 1)
+  const fed = consumeFoodAfterVictory(db, { ...out.current, ...patch })
+  out.set({
+    ...fed.save,
+    combatEatUntil: new Date(atMs + Math.max(0, eatSeconds) * 1000).toISOString(),
+    combatContinueActivityAfterEat: continueActivityAfterEat,
+    combatRoundStartedAt: null,
+    combatPlayerSwingApplied: false,
+    combatPendingRound: null,
+  })
+  emitRoundEndAutoEat(out, fed)
+}
+
+/** Player swing at combat_player_attack_at: roll the round and apply player-side HP. */
+function applyDuePlayerCombatSwing(
+  db: GameDatabase,
+  out: TickOutput,
+  enemy: EnemyRow,
+  atMs: number,
+  random: RandomFn,
+): void {
+  const before = out.current
+  const round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random)
+  if (round.lifestealHealed > 0) {
+    out.set(recordLifestealRoundHeal(out.current, round.lifestealHealed))
+  }
+  out.set({
+    ...out.current,
+    combatEnemyHp: round.enemyHpAfterPlayer,
+    currentHp: round.playerHpAfterPlayer,
+    combatPlayerSwingApplied: true,
+    combatPendingRound: round,
+    combatBossInkActive: round.bossInkActive,
+  })
+  out.emit({
+    kind: 'combat-round',
+    enemyId: enemy['Enemy ID'],
+    enemyName: enemy['Display Name'],
+    playerHit: round.playerHit,
+    playerCrit: round.playerCrit,
+    offhandHit: round.offhandHit,
+    staffHit: round.staffHit,
+    poisonHit: round.poisonHit,
+    enemyHit: null,
+    thornsHit: 0,
+    outcome: round.enemyHpAfterPlayer <= 0 && !round.bossAddsTriggered ? 'victory' : 'ongoing',
+    bossInkActive: round.bossInkActive,
+  })
+  void atMs
+}
+
+/** Enemy swing / outcome at combat_enemy_attack_at (round end). */
+function applyDueEnemyCombatPhase(
   db: GameDatabase,
   out: TickOutput,
   activityId: string,
@@ -203,14 +265,23 @@ function resolveDueCombatRound(
   random: RandomFn,
 ): void {
   const before = out.current
-  const round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random)
-  if (round.lifestealHealed > 0) {
-    out.set(recordLifestealRoundHeal(out.current, round.lifestealHealed))
+  const round = before.combatPendingRound
+  if (!round) {
+    out.set({
+      ...before,
+      combatPlayerSwingApplied: false,
+      combatPendingRound: null,
+      combatRoundStartedAt: new Date(roundEnd).toISOString(),
+    })
+    return
   }
+
   out.emit({
     kind: 'combat-round',
     enemyId: enemy['Enemy ID'],
     enemyName: enemy['Display Name'],
+    // Carry player-side hits from the pending roll so end-of-round / catch-up
+    // floaters still show the swing that already applied at player-attack time.
     playerHit: round.playerHit,
     playerCrit: round.playerCrit,
     offhandHit: round.offhandHit,
@@ -254,6 +325,7 @@ function resolveDueCombatRound(
           enemyId: enemy['Enemy ID'],
           enemyName: enemy['Display Name'],
         })
+        beginInterRoundEat(db, out, roundEnd, true, {})
       }
       return
     }
@@ -295,7 +367,7 @@ function resolveDueCombatRound(
       enemyId: enemy['Enemy ID'],
       enemyName: enemy['Display Name'],
     })
-    continueActivity(db, out, activityId, roundEnd, random, `Defeated ${enemy['Display Name']} · activity stopped.`)
+    beginInterRoundEat(db, out, roundEnd, true, {})
     return
   }
 
@@ -314,14 +386,13 @@ function resolveDueCombatRound(
   if (round.bossAddsTriggered && round.bossPendingHp != null) {
     const profile = bossProfile(enemy)
     if (profile?.squidlingEnemyId) {
-      const fed = consumeFoodAfterVictory(db, {
-        ...before,
-        currentHp: round.playerHp,
-        combatBossInkActive: round.bossInkActive,
-      })
       const addsStarted = beginBossAddsEncounter(
         db,
-        fed.save,
+        {
+          ...before,
+          currentHp: round.playerHp,
+          combatBossInkActive: round.bossInkActive,
+        },
         enemy,
         profile,
         round.bossPendingHp,
@@ -329,7 +400,14 @@ function resolveDueCombatRound(
       )
       out.set(addsStarted)
       out.creditCritterTime(roundMs, roundEnd, random)
-      emitRoundEndAutoEat(out, fed)
+      beginInterRoundEat(db, out, roundEnd, false, {
+        combatEnemyId: addsStarted.combatEnemyId,
+        combatEnemyHp: addsStarted.combatEnemyHp,
+        combatBossPendingId: addsStarted.combatBossPendingId,
+        combatBossPendingHp: addsStarted.combatBossPendingHp,
+        combatBossAddsRemaining: addsStarted.combatBossAddsRemaining,
+        combatBossAddsTriggered: addsStarted.combatBossAddsTriggered,
+      })
       out.emit({
         kind: 'message',
         text: `${enemy['Display Name']} releases squidlings! Defeat them to continue.`,
@@ -338,19 +416,24 @@ function resolveDueCombatRound(
     }
   }
 
-  const continued = consumeFoodAfterVictory(db, {
+  out.set({
     ...before,
     currentHp: round.playerHp,
     combatEnemyHp: round.enemyHp,
-    combatRoundStartedAt: new Date(roundEnd).toISOString(),
     combatSkipEnemyAttack: round.skipNextEnemyAttack,
     combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
     combatBossInkActive: round.bossInkActive,
   })
-  out.set(continued.save)
   out.creditCritterTime(roundMs, roundEnd, random)
-  emitRoundEndAutoEat(out, continued)
+  beginInterRoundEat(db, out, roundEnd, false, {
+    currentHp: round.playerHp,
+    combatEnemyHp: round.enemyHp,
+    combatSkipEnemyAttack: round.skipNextEnemyAttack,
+    combatBossSleepRoundsRemaining: round.bossSleepRoundsRemaining,
+    combatBossInkActive: round.bossInkActive,
+  })
   out.emit({ kind: 'message', text: roundMessage(enemy, round) })
+  void activityId
 }
 
 /**
@@ -390,18 +473,72 @@ export function advanceSession(
     return out.result()
   }
 
+  if (out.current.combatEatUntil) {
+    const eatUntil = Date.parse(out.current.combatEatUntil)
+    if (eatUntil > nowMs) return out.result()
+    const continueActivityAfterEat = out.current.combatContinueActivityAfterEat
+    out.set({
+      ...out.current,
+      combatEatUntil: null,
+      combatContinueActivityAfterEat: false,
+    })
+    if (continueActivityAfterEat) {
+      continueActivity(
+        db,
+        out,
+        activityId,
+        eatUntil,
+        random,
+        'Defeated enemy · activity stopped.',
+      )
+      return out.result()
+    }
+    if (out.current.combatEnemyId) {
+      out.set({
+        ...out.current,
+        combatRoundStartedAt: new Date(eatUntil).toISOString(),
+        combatPlayerSwingApplied: false,
+        combatPendingRound: null,
+      })
+    }
+    return out.result()
+  }
+
   if (out.current.combatEnemyId && out.current.combatRoundStartedAt) {
-    const roundMs = configNumber(db, 'combat_round_duration', 4) * 1000
-    const roundEnd = Date.parse(out.current.combatRoundStartedAt) + roundMs
-    if (roundEnd > nowMs) return out.result()
+    const roundStart = Date.parse(out.current.combatRoundStartedAt)
+    const roundMs = configNumber(db, 'combat_round_duration', 6) * 1000
+    const playerAt =
+      roundStart + configNumber(db, 'combat_player_attack_at', 5) * 1000
+    const enemyAt =
+      roundStart + configNumber(db, 'combat_enemy_attack_at', 6) * 1000
+    const roundEnd = roundStart + roundMs
 
     const enemy = getEnemy(db, out.current.combatEnemyId)
     const action = actionById(db, out.current.currentActionId)
     if (!enemy || !action || out.current.combatEnemyHp == null) {
-      out.set(clearActivitySave(out.current, roundEnd))
+      out.set(clearActivitySave(out.current, Math.min(playerAt, nowMs)))
       return out.result()
     }
-    resolveDueCombatRound(db, out, activityId, enemy, action, roundEnd, roundMs, random)
+
+    if (!out.current.combatPlayerSwingApplied && playerAt <= nowMs) {
+      applyDuePlayerCombatSwing(db, out, enemy, playerAt, random)
+      return out.result()
+    }
+
+    if (out.current.combatPlayerSwingApplied && enemyAt <= nowMs) {
+      applyDueEnemyCombatPhase(
+        db,
+        out,
+        activityId,
+        enemy,
+        action,
+        Math.max(enemyAt, roundEnd),
+        roundMs,
+        random,
+      )
+      return out.result()
+    }
+
     return out.result()
   }
 

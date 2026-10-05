@@ -36,11 +36,7 @@ Future<void> showSkillLevelUp(BuildContext context, SkillLevelUpNotice notice, {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           ..._section(context, 'Unlocked', notice.unlocks.unlockedActivities),
-                          ..._section(
-                            context,
-                            'Now proficient',
-                            notice.unlocks.proficientActivities,
-                          ),
+                          ..._proficientSection(context, notice.unlocks.proficientActivities),
                           ..._section(context, 'Recipes', notice.unlocks.recipes),
                           ..._section(context, 'Projects', notice.unlocks.projects),
                         ],
@@ -68,6 +64,18 @@ List<Widget> _section(BuildContext context, String heading, List<String> names) 
       Padding(
         padding: const EdgeInsets.only(bottom: 2),
         child: Text('· $name', style: TextStyle(color: accent)),
+      ),
+  ];
+}
+
+List<Widget> _proficientSection(BuildContext context, List<String> phrases) {
+  if (phrases.isEmpty) return const <Widget>[];
+  final accent = UiChrome.of(context).embossFace;
+  return [
+    for (final phrase in phrases)
+      Padding(
+        padding: const EdgeInsets.only(top: 6, bottom: 2),
+        child: Text('Now proficient in $phrase', style: TextStyle(color: accent)),
       ),
   ];
 }

@@ -75,6 +75,38 @@ String _activityName(ActivityRow activity) {
   return activity.activityId;
 }
 
+const Map<String, String> _actionGerunds = <String, String>{
+  'Mine': 'mining',
+  'Hunt': 'hunting',
+  'Cut': 'cutting',
+  'Gather': 'gathering',
+  'Catch': 'catching',
+  'Steal': 'stealing',
+  'Fight': 'fighting',
+  'Dig': 'digging',
+  'Harvest': 'harvesting',
+  'Chop': 'chopping',
+  'Pick': 'picking',
+  'Harness': 'harnessing',
+  'Clear': 'clearing',
+  'Collect': 'collecting',
+  'Dry': 'drying',
+  'Craft': 'crafting',
+};
+
+/// `Mine tin ore` → `mining tin ore` for “Now proficient in …” copy.
+String proficientActionPhrase(String displayName) {
+  final trimmed = displayName.trim();
+  if (trimmed.isEmpty) return trimmed;
+  final parts = trimmed.split(RegExp(r'\s+'));
+  final gerund = _actionGerunds[parts.first];
+  if (gerund != null) {
+    final rest = parts.skip(1).join(' ');
+    return rest.isEmpty ? gerund : '$gerund $rest';
+  }
+  return trimmed[0].toLowerCase() + trimmed.substring(1);
+}
+
 List<ActionRow> _actionsForActivity(GameDatabase db, ActivityRow activity) {
   final poolId = activity.poolId;
   if (poolId == null || poolId.isEmpty) return const <ActionRow>[];
@@ -135,7 +167,7 @@ SkillUnlockSummary skillUnlocksBetween(
       if (action.relevantSkillId != skillId) continue;
       final proficiency = action.proficiencyLevel;
       if (proficiency is num && _inLevelRange(proficiency, fromLevel, toLevel)) {
-        proficient.add(name);
+        proficient.add(proficientActionPhrase(action.displayName));
       }
     }
   }
@@ -161,13 +193,9 @@ SkillUnlockSummary skillUnlocksBetween(
     if (hit) projects.add(jsString(project.raw['Display Name']));
   }
 
-  final unlockedNames = _uniqueSorted(unlocked);
-  final unlockedSet = unlockedNames.toSet();
-  final proficientNames = _uniqueSorted(proficient.where((name) => !unlockedSet.contains(name)));
-
   return SkillUnlockSummary(
-    unlockedActivities: unlockedNames,
-    proficientActivities: proficientNames,
+    unlockedActivities: _uniqueSorted(unlocked),
+    proficientActivities: _uniqueSorted(proficient),
     recipes: _uniqueSorted(recipes),
     projects: _uniqueSorted(projects),
   );

@@ -82,7 +82,7 @@ void main() {
 
     await pumpPanel(tester, CodexView(controller: controller, initialActionId: 'ACN-0018'));
     expect(find.text('Mine copper ore'), findsWidgets);
-    expect(find.textContaining('Primary · 47.5% drop'), findsOne);
+    expect(find.textContaining('Primary · 71.3% drop'), findsOne);
     expect(find.textContaining('Gems · 0.5% drop'), findsOne);
     expect(find.text('Copper Ore'), findsWidgets);
     expect(find.text('Sapphire'), findsWidgets);
@@ -99,7 +99,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, CodexView(controller: controller, initialActionId: 'ACN-0014'));
-    expect(find.textContaining('Primary · 42.5% drop'), findsOne);
+    expect(find.textContaining('Primary · 63.8% drop'), findsOne);
     expect(find.textContaining('Secondary · 5% drop'), findsOne);
     expect(find.text('Venison'), findsWidgets);
     expect(find.text('Elk Hide'), findsWidgets);
