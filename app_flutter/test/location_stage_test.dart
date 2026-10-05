@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
@@ -24,18 +22,28 @@ void main() {
     return find.ancestor(of: find.text(title), matching: find.byType(DockRow));
   }
 
-  /// Advance to the late-round clash (both sides attack together).
+  /// Advance through hit display (5.5s) and round-end outcomes (6s).
   Future<void> advanceCombatRound(
     WidgetTester tester,
     TestClock clock,
     GameController controller,
   ) async {
-    final playerAtMs = configNumber(database.launch, 'combat_player_attack_at', 5.5) * 1000;
-    final enemyAtMs = configNumber(database.launch, 'combat_enemy_attack_at', 5.5) * 1000;
-    clock.advance(playerAtMs);
+    final startedAt = jsDateParse(controller.save.combatRoundStartedAt!);
+    final attackAtMs = configNumber(database.launch, 'combat_player_attack_at', 5.5) * 1000;
+    final roundMs = configNumber(database.launch, 'combat_round_duration', 6) * 1000;
+
+    final toAttack = startedAt + attackAtMs - clock.read();
+    if (toAttack > 0) clock.advance(toAttack);
+    // Jumping past eat-at lands on the mid-round eat first; tick again for hits.
     controller.tick();
     await tester.pump();
-    clock.advance(math.max(0, enemyAtMs - playerAtMs));
+    if (controller.lastRound == null) {
+      controller.tick();
+      await tester.pump();
+    }
+
+    final toEnd = startedAt + roundMs - clock.read();
+    if (toEnd > 0) clock.advance(toEnd);
     controller.tick();
     await tester.pump();
   }

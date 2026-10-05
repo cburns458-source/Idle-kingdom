@@ -185,15 +185,11 @@ void _startNextCombatRound(GameDatabase db, _TickOutput out, num atMs) {
   out.set(openCombatRoundClock(db, out.current, atMs));
 }
 
-/// Both sides attack late in the round. A killing blow skips the enemy swing.
-void _applyDueCombatRound(
+/// Roll both swings, apply HP, and emit floaters. Outcomes wait for round end.
+void _applyDueCombatHits(
   GameDatabase db,
   _TickOutput out,
-  String activityId,
   EnemyRow enemy,
-  ActionRow action,
-  num roundEnd,
-  num roundMs,
   RandomFn random,
 ) {
   final before = out.current;
@@ -210,11 +206,27 @@ void _applyDueCombatRound(
       combatBossInkActive: round.bossInkActive,
     ),
   );
-  _applyDueEnemyCombatPhase(db, out, activityId, enemy, action, roundEnd, roundMs, random);
+  final enemyId = jsString(enemy.raw['Enemy ID']);
+  final enemyName = jsString(enemy.raw['Display Name']);
+  out.emit(
+    CombatRoundEvent(
+      enemyId: enemyId,
+      enemyName: enemyName,
+      playerHit: round.playerHit,
+      playerCrit: round.playerCrit,
+      offhandHit: round.offhandHit,
+      staffHit: round.staffHit,
+      poisonHit: round.poisonHit,
+      enemyHit: round.enemyHit,
+      thornsHit: round.thornsHit,
+      outcome: round.outcome,
+      bossInkActive: round.bossInkActive,
+    ),
+  );
 }
 
-/// Enemy swing / outcome at combat_enemy_attack_at.
-void _applyDueEnemyCombatPhase(
+/// Victory, defeat, or next round at combat_round_duration.
+void _applyDueCombatOutcome(
   GameDatabase db,
   _TickOutput out,
   String activityId,
@@ -239,23 +251,6 @@ void _applyDueEnemyCombatPhase(
 
   final enemyId = jsString(enemy.raw['Enemy ID']);
   final enemyName = jsString(enemy.raw['Display Name']);
-  out.emit(
-    CombatRoundEvent(
-      enemyId: enemyId,
-      enemyName: enemyName,
-      // Carry player-side hits from the pending roll so end-of-round / catch-up
-      // floaters still show the swing that already applied at player-attack time.
-      playerHit: round.playerHit,
-      playerCrit: round.playerCrit,
-      offhandHit: round.offhandHit,
-      staffHit: round.staffHit,
-      poisonHit: round.poisonHit,
-      enemyHit: round.enemyHit,
-      thornsHit: round.thornsHit,
-      outcome: round.outcome,
-      bossInkActive: round.bossInkActive,
-    ),
-  );
 
   if (round.outcome == 'victory') {
     if (isSquidlingVictory(before, enemy)) {
@@ -451,31 +446,14 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       return out.result();
     }
 
-    if (!out.current.combatPlayerSwingApplied && playerAt <= nowMs) {
-      _applyDueCombatRound(
-        db,
-        out,
-        activityId!,
-        enemy,
-        action,
-        math.max(playerAt, math.max(enemyAt, roundEnd)),
-        roundMs,
-        random,
-      );
+    final attackAt = math.min(playerAt, enemyAt);
+    if (!out.current.combatPlayerSwingApplied && attackAt <= nowMs) {
+      _applyDueCombatHits(db, out, enemy, random);
       return out.result();
     }
 
-    if (out.current.combatPlayerSwingApplied && enemyAt <= nowMs) {
-      _applyDueEnemyCombatPhase(
-        db,
-        out,
-        activityId!,
-        enemy,
-        action,
-        math.max(enemyAt, roundEnd),
-        roundMs,
-        random,
-      );
+    if (out.current.combatPlayerSwingApplied && roundEnd <= nowMs) {
+      _applyDueCombatOutcome(db, out, activityId!, enemy, action, roundEnd, roundMs, random);
       return out.result();
     }
 

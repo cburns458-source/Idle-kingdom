@@ -368,9 +368,9 @@ class GameController extends ChangeNotifier {
   /// How long the ink splat stays over the combat stage.
   static const int inkPopupHoldMs = 1200;
 
-  /// How long player and enemy hit numbers stay up (0.5s so they fade
-  /// between the 5.5s clash and the 6s round end).
-  static const int combatFloaterHoldMs = 500;
+  /// How long player and enemy hit numbers stay up (1s from the 5.5s display
+  /// through round end into the next round's 0.5s eat).
+  static const int combatFloaterHoldMs = stagePopupHoldMs;
 
   /// The last finished craft, or null once its second is up.
   CraftPopup? get craftPopup {
@@ -458,7 +458,7 @@ class GameController extends ChangeNotifier {
     return save.combatEnemyHp ?? 0;
   }
 
-  /// Damage numbers stay until the round ends, then drop.
+  /// Damage numbers stay until the next eat, then drop.
   bool get showLastRoundFloaters {
     final round = _lastRound;
     final shownAt = _lastRoundAtMs;
@@ -980,19 +980,27 @@ class GameController extends ChangeNotifier {
         if (round.bossInkActive) {
           _inkPopup = InkPopup(shownAtMs: session.clock(), seq: (_inkPopup?.seq ?? 0) + 1);
         }
-        if (round.outcome == 'victory' || round.outcome == 'defeat') {
-          _outcomeHold = CombatOutcomeHold(
-            enemyId: round.enemyId,
-            outcome: round.outcome,
-            startedAtMs: session.clock(),
-            playerHp: round.outcome == 'defeat' ? 0 : save.currentHp,
-            enemyHp: round.outcome == 'victory' ? 0 : (_liveEnemyHp ?? 0),
-          );
-        } else {
+        // Victory/defeat hold waits for the round-end defeated events so the
+        // blow banner lands at 6s while hit numbers are already fading.
+        if (round.outcome == 'ongoing') {
           _outcomeHold = null;
         }
-      case EnemyDefeatedEvent():
-      case PlayerDefeatedEvent():
+      case EnemyDefeatedEvent(enemyId: final enemyId):
+        _outcomeHold = CombatOutcomeHold(
+          enemyId: enemyId,
+          outcome: 'victory',
+          startedAtMs: session.clock(),
+          playerHp: save.currentHp,
+          enemyHp: 0,
+        );
+      case PlayerDefeatedEvent(enemyId: final enemyId):
+        _outcomeHold = CombatOutcomeHold(
+          enemyId: enemyId,
+          outcome: 'defeat',
+          startedAtMs: session.clock(),
+          playerHp: 0,
+          enemyHp: _liveEnemyHp ?? save.combatEnemyHp ?? 0,
+        );
       case RecoveredEvent():
       case CritterSpawnedEvent():
         break;

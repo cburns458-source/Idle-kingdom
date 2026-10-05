@@ -49,7 +49,10 @@ function nextCombatDueMs(db: GameDatabase, save: PlayerSave): number | null {
   if (!Number.isFinite(roundStart)) return null
   const playerAt = roundStart + configNumber(db, 'combat_player_attack_at', 5.5) * 1000
   const enemyAt = roundStart + configNumber(db, 'combat_enemy_attack_at', 5.5) * 1000
-  const attackAt = save.combatPlayerSwingApplied ? enemyAt : playerAt
+  const roundEnd = roundStart + Math.max(1, configNumber(db, 'combat_round_duration', 6) * 1000)
+  const attackAt = save.combatPlayerSwingApplied
+    ? roundEnd
+    : Math.min(playerAt, enemyAt)
   const eatUntil = save.combatEatUntil ? Date.parse(save.combatEatUntil) : Number.NaN
   if (Number.isFinite(eatUntil) && eatUntil <= attackAt) return eatUntil
   return attackAt

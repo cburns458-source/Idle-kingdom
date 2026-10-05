@@ -212,15 +212,11 @@ function startNextCombatRound(db: GameDatabase, out: TickOutput, atMs: number): 
   })
 }
 
-/** Both sides attack late in the round. A killing blow skips the enemy swing. */
-function applyDueCombatRound(
+/** Roll both swings, apply HP, and emit floaters. Outcomes wait for round end. */
+function applyDueCombatHits(
   db: GameDatabase,
   out: TickOutput,
-  activityId: string,
   enemy: EnemyRow,
-  action: ActionRow,
-  roundEnd: number,
-  roundMs: number,
   random: RandomFn,
 ): void {
   const before = out.current
@@ -236,11 +232,24 @@ function applyDueCombatRound(
     combatPendingRound: round,
     combatBossInkActive: round.bossInkActive,
   })
-  applyDueEnemyCombatPhase(db, out, activityId, enemy, action, roundEnd, roundMs, random)
+  out.emit({
+    kind: 'combat-round',
+    enemyId: enemy['Enemy ID'],
+    enemyName: enemy['Display Name'],
+    playerHit: round.playerHit,
+    playerCrit: round.playerCrit,
+    offhandHit: round.offhandHit,
+    staffHit: round.staffHit,
+    poisonHit: round.poisonHit,
+    enemyHit: round.enemyHit,
+    thornsHit: round.thornsHit,
+    outcome: round.outcome,
+    bossInkActive: round.bossInkActive,
+  })
 }
 
-/** Enemy swing / outcome at combat_enemy_attack_at. */
-function applyDueEnemyCombatPhase(
+/** Victory, defeat, or next round at combat_round_duration. */
+function applyDueCombatOutcome(
   db: GameDatabase,
   out: TickOutput,
   activityId: string,
@@ -261,23 +270,6 @@ function applyDueEnemyCombatPhase(
     })
     return
   }
-
-  out.emit({
-    kind: 'combat-round',
-    enemyId: enemy['Enemy ID'],
-    enemyName: enemy['Display Name'],
-    // Carry player-side hits from the pending roll so end-of-round / catch-up
-    // floaters still show the swing that already applied at player-attack time.
-    playerHit: round.playerHit,
-    playerCrit: round.playerCrit,
-    offhandHit: round.offhandHit,
-    staffHit: round.staffHit,
-    poisonHit: round.poisonHit,
-    enemyHit: round.enemyHit,
-    thornsHit: round.thornsHit,
-    outcome: round.outcome,
-    bossInkActive: round.bossInkActive,
-  })
 
   if (round.outcome === 'victory') {
     if (isSquidlingVictory(before, enemy)) {
@@ -513,31 +505,14 @@ export function advanceSession(
       return out.result()
     }
 
-    if (!out.current.combatPlayerSwingApplied && playerAt <= nowMs) {
-      applyDueCombatRound(
-        db,
-        out,
-        activityId,
-        enemy,
-        action,
-        Math.max(playerAt, enemyAt, roundEnd),
-        roundMs,
-        random,
-      )
+    const attackAt = Math.min(playerAt, enemyAt)
+    if (!out.current.combatPlayerSwingApplied && attackAt <= nowMs) {
+      applyDueCombatHits(db, out, enemy, random)
       return out.result()
     }
 
-    if (out.current.combatPlayerSwingApplied && enemyAt <= nowMs) {
-      applyDueEnemyCombatPhase(
-        db,
-        out,
-        activityId,
-        enemy,
-        action,
-        Math.max(enemyAt, roundEnd),
-        roundMs,
-        random,
-      )
+    if (out.current.combatPlayerSwingApplied && roundEnd <= nowMs) {
+      applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random)
       return out.result()
     }
 
