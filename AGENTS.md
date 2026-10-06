@@ -60,13 +60,18 @@ code failed. Retrigger the empty/failed run before debugging logic.
 
 ## Migrations
 
-A change that needs a new file under `supabase/migrations/` is not finished when
-it is pushed: say so plainly in the summary, because applying it is the owner's
-step and the game misbehaves quietly until it is done.
+The agent applies files under `supabase/migrations/` through the Supabase
+connection (`apply_migration`): the **test** project first, then the **live**
+project only at ship time. Say so in the summary. The game misbehaves quietly
+until the SQL is actually on that project.
+
+Do not use `supabase db push` against the hosted projects. That command decides
+what to apply from a tracking table. Live still has an empty history because
+everything so far was pasted into the SQL editor, so a push would try to replay
+from `001`. The early ones create policies without guards and would fail.
 
 Edge functions are not the same: `.github/workflows/deploy.yml` deploys every
-function in `supabase/functions/` on a push to `test-launch`. The database is left
-out of that on purpose. `supabase db push` works out what to apply from a tracking
-table that migrations pasted into the SQL editor never wrote to, so on this
-project it would try to replay from `001`, and the early ones create policies
-without guards and would fail.
+function in `supabase/functions/` on a push to `test-launch` (test project,
+`staging` environment) or `main` (live project, `production` environment). The
+database is left out of that on purpose. The job fails if the environment is
+missing `SUPABASE_ACCESS_TOKEN` or `SUPABASE_PROJECT_REF`.

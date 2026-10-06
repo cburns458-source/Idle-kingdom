@@ -171,7 +171,7 @@ player to arrange than the game inventing somewhere to keep the rest.
 
 | | |
 | --- | --- |
-| Offers open per account | 3 |
+| Offers open per account | 6 |
 | Own trades kept in history | 10 |
 | Box rows per claim | 40 |
 | Guide prices per read | 400, busiest first |
@@ -184,16 +184,18 @@ player to arrange than the game inventing somewhere to keep the rest.
 Apply `supabase/migrations/024_bazaar_market.sql` first, or every action refuses:
 the function only reads and writes through that migration's RPCs.
 
-Then the function. `.github/workflows/deploy.yml` does it on a push to
-`test-launch` once two repository secrets exist:
+Then the function. `.github/workflows/deploy.yml` deploys on a push to
+`test-launch` (test project, `staging` environment) or `main` (live project,
+`production` environment). Both environments need:
 
 | Secret | Where to get it |
 | --- | --- |
 | `SUPABASE_ACCESS_TOKEN` | Supabase dashboard, Account → Access Tokens |
-| `SUPABASE_PROJECT_REF` | The project's ref, the `abcdefgh` in its dashboard URL |
+| `SUPABASE_PROJECT_REF` | Test: `xlbwmxxtzrqjujvgqcuf`. Live: `fxcovagwwbptqaavispl` |
 
-Until both are set the deploy job warns and skips rather than failing. By hand,
-from the repo root, is the same thing:
+If either secret is missing the job fails (`::error` + exit 1). Do not
+redeploy the live `bazaar` function without an owner OK. By hand, from the
+repo root, is the same thing:
 
 ```bash
 supabase functions deploy bazaar
