@@ -120,8 +120,10 @@ class LocationIdlePlayer extends StatelessWidget {
     if (controller.showRecoveringStage) return const SizedBox.shrink();
     final save = controller.save;
     if (usesTempleLayeredBackground(save.currentLocationId)) {
-      return _buildTempleIdle(context, save);
+      return _buildFootedIdle(context, save);
     }
+    // Band owns the loadout strip for every tile; idle portraits stay put
+    // without a second strip under the feet.
     final maxHp = playerMaxHp(controller.db, save);
     final hp = save.currentHp;
     return Semantics(
@@ -171,8 +173,6 @@ class LocationIdlePlayer extends StatelessWidget {
               ),
               const SizedBox(height: 7),
               const SizedBox(height: _stageFooterHeight),
-              const SizedBox(height: _stageLoadoutStripGap),
-              StageLoadoutStrip(controller: controller),
             ],
           ),
         ),
@@ -180,7 +180,7 @@ class LocationIdlePlayer extends StatelessWidget {
     );
   }
 
-  Widget _buildTempleIdle(BuildContext context, PlayerSave save) {
+  Widget _buildFootedIdle(BuildContext context, PlayerSave save) {
     return Semantics(
       container: true,
       explicitChildNodes: true,
@@ -518,6 +518,8 @@ class _StageShell extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(2, 4, 2, 6),
         // Size to the portraits — do not expand and re-center inside a tall
         // location slot, or the gathering PNG jumps when the stage appears.
+        // Temple fill pins the column to the dirt above the band; non-temple
+        // plates bottom-align via OverflowBox in the location stack instead.
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _stageMaxWidth),
           child: fillStage ? Align(alignment: Alignment.bottomCenter, child: body) : body,
@@ -810,11 +812,12 @@ class _CombatStage extends StatelessWidget {
     final seq = controller.lastRoundSeq;
     final showFloaters = controller.showLastRoundFloaters;
     final ink = controller.inkPopup;
+    final temple = usesTempleLayeredBackground(save.currentLocationId);
 
     final shell = _StageShell(
       semanticsLabel: 'Combat',
       reserveLoadoutStrip: false,
-      fillStage: true,
+      fillStage: temple,
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -981,9 +984,10 @@ class _RecoveringStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final temple = usesTempleLayeredBackground(controller.save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Recovering',
-      fillStage: true,
+      fillStage: temple,
       scene: _TwoPortraits(
         player: const _Portrait(
           assetPath: null,
@@ -1075,11 +1079,12 @@ class _GatheringStage extends StatelessWidget {
         : controller.indexes.actionsById[save.currentActionId!];
     final actionName = action?.displayName ?? 'Preparing…';
     final slow = action != null && isBelowProficiency(save, action);
+    final temple = usesTempleLayeredBackground(save.currentLocationId);
 
     return _StageShell(
       semanticsLabel: 'Gathering',
       reserveLoadoutStrip: false,
-      fillStage: true,
+      fillStage: temple,
       scene: _TwoPortraits(
         player: SizedBox(
           height: _portraitSlotHeight,
@@ -1144,11 +1149,12 @@ class _ProductionStage extends StatelessWidget {
     final popup = controller.craftPopup;
     final popupItem = popup == null ? null : controller.indexes.itemsById[popup.itemId];
     final stationName = recipe?.displayName ?? popup?.displayName ?? 'Workstation';
+    final temple = usesTempleLayeredBackground(save.currentLocationId);
 
     return _StageShell(
       semanticsLabel: 'Production',
       reserveLoadoutStrip: false,
-      fillStage: true,
+      fillStage: temple,
       scene: _TwoPortraits(
         player: const SizedBox(height: _portraitSlotHeight),
         scene: _Portrait(

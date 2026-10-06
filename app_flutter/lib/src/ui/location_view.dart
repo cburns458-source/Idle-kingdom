@@ -339,15 +339,45 @@ class _LocationViewState extends State<LocationView> {
                           fit: StackFit.expand,
                           clipBehavior: Clip.none,
                           children: [
-                            LocationIdlePlayer(controller: controller),
-                            if (running)
-                              Positioned(
-                                left: 13,
-                                right: 13,
-                                top: 0,
-                                bottom: 0,
-                                child: IgnorePointer(child: ActivityPanel(controller: controller)),
+                            // Temple uses footed coords in the full slot. Other
+                            // plates bottom-align the grounded column so feet
+                            // stay on the dirt above the band.
+                            if (layered)
+                              LocationIdlePlayer(controller: controller)
+                            else
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: OverflowBox(
+                                  maxHeight: double.infinity,
+                                  alignment: Alignment.bottomCenter,
+                                  child: LocationIdlePlayer(controller: controller),
+                                ),
                               ),
+                            if (running)
+                              if (layered)
+                                Positioned(
+                                  left: 13,
+                                  right: 13,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: IgnorePointer(
+                                    child: ActivityPanel(controller: controller),
+                                  ),
+                                )
+                              else
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 13),
+                                  child: Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: OverflowBox(
+                                      maxHeight: double.infinity,
+                                      alignment: Alignment.bottomCenter,
+                                      child: IgnorePointer(
+                                        child: ActivityPanel(controller: controller),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                           ],
                         ),
                       ),

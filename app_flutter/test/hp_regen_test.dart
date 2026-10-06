@@ -11,29 +11,37 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
-  test('live ticks grant 1 HP every 6 seconds out of combat', () {
+  test('live ticks heal 1% max HP after a minute with no damage', () {
     final clock = TestClock();
-    final controller = buildController(
-      database,
-      seed: startedCharacter(database).copyWith(currentHp: 1),
-      clock: clock,
-    );
+    final seed = startedCharacter(database).copyWith(currentHp: 1);
+    final controller = buildController(database, seed: seed, clock: clock);
     addTearDown(controller.dispose);
 
     expect(controller.save.currentHp, 1);
-    // Live play-time / HP regen batch to 1000ms, so the grant lands on a
-    // 1-second tick rather than a 1ms boundary.
-    clock.advance(5000);
+    final maxHp = playerMaxHp(database.launch, controller.save);
+    final firstHeal = naturalHpRegenHealAmount(maxHp, 0);
+
+    // Live play-time / HP regen batch to 1000ms. Stay under the 15s foreground
+    // catch-up floor so remainder carry accumulates across live ticks.
+    clock.advance(10_000);
     controller.tick();
     expect(controller.save.currentHp, 1);
 
-    clock.advance(1000);
-    controller.tick();
-    expect(controller.save.currentHp, 2);
+    for (var i = 0; i < 5; i += 1) {
+      clock.advance(10_000);
+      controller.tick();
+    }
+    expect(controller.save.currentHp, 1 + firstHeal);
 
-    controller.commit(controller.save.copyWith(combatEnemyId: 'ENM-0001', combatEnemyHp: 40));
+    // Damage in combat resets the gate; a short window heals nothing.
+    controller.commit(
+      notePlayerDamaged(
+        controller.save.copyWith(combatEnemyId: 'ENM-0001', combatEnemyHp: 40),
+        clock.read(),
+      ),
+    );
     final fightingHp = controller.save.currentHp;
-    clock.advance(12000);
+    clock.advance(12_000);
     controller.tick();
     expect(controller.save.currentHp, fightingHp);
   });
@@ -53,8 +61,11 @@ void main() {
     final surplus = maxHp + (maxHp * 0.1).floor();
     expect(controller.save.currentHp, surplus);
 
-    clock.advance(12000);
-    controller.tick();
+    // Same live-tick path: short steps so catch-up does not skip the surplus check.
+    for (var i = 0; i < 12; i += 1) {
+      clock.advance(10_000);
+      controller.tick();
+    }
     expect(controller.save.currentHp, surplus);
   });
 }
