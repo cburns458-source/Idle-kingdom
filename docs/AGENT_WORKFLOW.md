@@ -30,7 +30,7 @@ Rules:
 - Do **not** commit to, rebase onto, or merge into `main` until the owner says the test-launch build is good.
 - A draft pull request from `test-launch` → `main` is only a ship vehicle. It must stay unmerged until step 7.
 
-`main` currently holds only the initial commit. The playable game lives on `test-launch`. Shipping to `main` is a later, owner-approved step — not the default end of a coding turn.
+`main` currently holds only the initial commit, and it has **no history in common** with `test-launch`. GitHub cannot open a pull request between them until that is fixed at ship time. When the owner confirms the playtest, the agent ships by aligning `main` to the confirmed `test-launch` revision (unrelated-histories merge or a same-tree reset — owner chooses). Do not do that until step 7.
 
 ## What a plan must include
 
