@@ -15,7 +15,7 @@ void main() {
   testWidgets('HUD mailbox opens the test letter and marks it read', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    expect(unreadMailCount(controller.save, testStartMs), 5);
+    expect(unreadMailCount(controller.save, testStartMs), 6);
 
     await pumpShell(tester, controller, size: const Size(900, 1600));
     expect(find.byKey(const Key('mailbox-button')), findsOneWidget);
@@ -35,7 +35,7 @@ void main() {
       controller.save.mailbox.where((message) => message.id == mailboxTestCatalogId).single.readAt,
       isNotNull,
     );
-    expect(unreadMailCount(controller.save, testStartMs), 4);
+    expect(unreadMailCount(controller.save, testStartMs), 5);
   });
 
   test('claiming mailbox items puts them in the bag', () {

@@ -17,6 +17,49 @@ const String mailUpdate20260929Part1CatalogId = 'mail-update-2026-09-29-1';
 
 const String mailUpdate20260929Part2CatalogId = 'mail-update-2026-09-29-2';
 
+const String mailUpdate20261006CatalogId = 'mail-update-2026-10-06';
+
+const String _mailUpdate20261006Body = '''Update (Oct 5–6)
+
+Combat
+- Might and Vitality HP and damage bonuses now start at Combat level 5 for players and enemies
+- Kill Combat XP is half the foe's HP
+- Enemy HP retuned (mostly reduced), some foes now have damage resistance
+- When you return after being away, the summary only lists finished fights, not every hit mid-battle
+
+Actions and gathering
+- actions use a 12 second base duration; XP/hr adjusted to stay the same
+- Gathering and crafting success chances reworked
+- Gear bonuses changed from time reduction to success chance
+
+Economy
+- Sell prices rescaled; very cheap items sell for 1–2 gold, high-value items mostly unchanged
+
+Food and races
+- Cooked duck and cooked boar meat recipes; pheasant cooking level lowered
+- High Elf bonus is fishing instead of extra max HP; Human keeps woodcutting only
+- Vesper's race-change gifts are 40 maple for Human and 40 bass for High Elf
+
+Smithing
+- Tools and weapons no longer need leather straps in the forge; armor and shields still do
+- Smithing XP on armor and shields increased
+
+Fishing pots
+- Up to three pot placements per fishing site per UTC day; UI shows how many are left
+
+Thievery
+- A failed steal attempt gets you caught: you take damage and get no XP or loot; lockpicks can still break on a catch
+
+Social
+- Friends list shows Online, Away, or Offline; optional setting to share your location with friends
+
+Vitality
+- Natural HP regen waits 60 seconds after damage, then heals 1% max HP per minute, doubling each minute until you take damage again or you are full;
+
+Minor UI tweaks
+
+Vari - ❤️''';
+
 const String _mailUpdate20260929Part1Body = '''Update (Sep 24–29)
 
 Combat and enemies
@@ -183,6 +226,12 @@ const List<SystemMailCatalogEntry> systemMailCatalog = <SystemMailCatalogEntry>[
     subject: 'Update (Sep 24–29) continued',
     body: _mailUpdate20260929Part2Body,
     sentAt: '2026-09-29T00:00:01.000Z',
+  ),
+  SystemMailCatalogEntry(
+    id: mailUpdate20261006CatalogId,
+    subject: 'Update (Oct 5–6)',
+    body: _mailUpdate20261006Body,
+    sentAt: '2026-10-06T00:00:00.000Z',
   ),
 ];
 

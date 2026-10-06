@@ -15,6 +15,49 @@ export const MAIL_UPDATE_2026_09_29_PART1_CATALOG_ID = 'mail-update-2026-09-29-1
 
 export const MAIL_UPDATE_2026_09_29_PART2_CATALOG_ID = 'mail-update-2026-09-29-2'
 
+export const MAIL_UPDATE_2026_10_06_CATALOG_ID = 'mail-update-2026-10-06'
+
+const MAIL_UPDATE_2026_10_06_BODY = `Update (Oct 5–6)
+
+Combat
+- Might and Vitality HP and damage bonuses now start at Combat level 5 for players and enemies
+- Kill Combat XP is half the foe's HP
+- Enemy HP retuned (mostly reduced), some foes now have damage resistance
+- When you return after being away, the summary only lists finished fights, not every hit mid-battle
+
+Actions and gathering
+- actions use a 12 second base duration; XP/hr adjusted to stay the same
+- Gathering and crafting success chances reworked
+- Gear bonuses changed from time reduction to success chance
+
+Economy
+- Sell prices rescaled; very cheap items sell for 1–2 gold, high-value items mostly unchanged
+
+Food and races
+- Cooked duck and cooked boar meat recipes; pheasant cooking level lowered
+- High Elf bonus is fishing instead of extra max HP; Human keeps woodcutting only
+- Vesper's race-change gifts are 40 maple for Human and 40 bass for High Elf
+
+Smithing
+- Tools and weapons no longer need leather straps in the forge; armor and shields still do
+- Smithing XP on armor and shields increased
+
+Fishing pots
+- Up to three pot placements per fishing site per UTC day; UI shows how many are left
+
+Thievery
+- A failed steal attempt gets you caught: you take damage and get no XP or loot; lockpicks can still break on a catch
+
+Social
+- Friends list shows Online, Away, or Offline; optional setting to share your location with friends
+
+Vitality
+- Natural HP regen waits 60 seconds after damage, then heals 1% max HP per minute, doubling each minute until you take damage again or you are full;
+
+Minor UI tweaks
+
+Vari - ❤️`
+
 const MAIL_UPDATE_2026_09_29_PART1_BODY = `Update (Sep 24–29)
 
 Combat and enemies
@@ -179,6 +222,13 @@ export const SYSTEM_MAIL_CATALOG: readonly SystemMailCatalogEntry[] = [
     subject: 'Update (Sep 24–29) continued',
     body: MAIL_UPDATE_2026_09_29_PART2_BODY,
     sentAt: '2026-09-29T00:00:01.000Z',
+    attachments: [],
+  },
+  {
+    id: MAIL_UPDATE_2026_10_06_CATALOG_ID,
+    subject: 'Update (Oct 5–6)',
+    body: MAIL_UPDATE_2026_10_06_BODY,
+    sentAt: '2026-10-06T00:00:00.000Z',
     attachments: [],
   },
 ]
