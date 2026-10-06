@@ -23,6 +23,7 @@ class RemoteTables {
   const RemoteTables._();
 
   static const String profiles = 'profiles';
+  static const String publicProfiles = 'public_profiles';
   static const String saves = 'player_saves';
   static const String leaderboard = 'leaderboard_snapshots';
   static const String leaderboardEntries = 'leaderboard_entries';
@@ -34,12 +35,23 @@ class RemoteTables {
   static const String guildApplications = 'guild_applications';
   static const String guildGuests = 'guild_guests';
   static const String guildHalls = 'guild_halls';
+  static const String guildHallTiers = 'guild_hall_tiers';
   static const String guildProjects = 'guild_projects';
   static const String guildChallenges = 'guild_challenges';
   static const String activityPresence = 'activity_presence';
   static const String friendRequests = 'friend_requests';
   static const String friendships = 'friendships';
   static const String pvpSnapshots = 'pvp_snapshots';
+}
+
+/// Postgres RPCs from migration 026 that signed-in clients may call.
+class RemoteRpcs {
+  const RemoteRpcs._();
+
+  static const String guildContributeProject = 'guild_contribute_project';
+  static const String guildPayHallDebt = 'guild_pay_hall_debt';
+  static const String guildDonateHallItem = 'guild_donate_hall_item';
+  static const String guildSetMemberRole = 'guild_set_member_role';
 }
 
 /// The edge function that writes chat, since a client may not insert directly.
@@ -219,12 +231,21 @@ const String remoteBazaarColumns = 'id, kind, user_id, username, body, created_a
 const String remotePresenceColumns =
     'user_id, username, appearance_json, guild_name, location_id, '
     'current_activity_id, skill_id, skill_level, outfit_cosmetic_id, '
+    'mount_cosmetic_id, share_location_with_friends, updated_at, expires_at';
+
+/// Presence columns before migration 026 added share_location_with_friends.
+const String remotePresenceColumnsWithoutShareFlag =
+    'user_id, username, appearance_json, guild_name, location_id, '
+    'current_activity_id, skill_id, skill_level, outfit_cosmetic_id, '
     'mount_cosmetic_id, updated_at, expires_at';
 
 /// Columns a public profile sheet needs from `profiles` that every project has.
 const String remotePublicProfileBaseColumns =
-    'user_id, username, appearance_json, guild_id, privacy_public_skills, '
-    'updated_at';
+    'user_id, username, appearance_json, guild_id, updated_at';
+
+/// Owner-only profile columns (base `profiles` table after migration 026).
+const String remoteOwnerProfileExtraColumns =
+    'privacy_public_skills, username_renamed_at, active_play_session_id';
 
 /// Chat-privacy columns from migration 011. Hosted projects that have not
 /// applied it still answer profile reads; these stay off the required select.
@@ -680,6 +701,7 @@ RemoteRow presenceRowFor({
   'skill_level': input.skillLevel,
   'outfit_cosmetic_id': input.outfitCosmeticId,
   'mount_cosmetic_id': input.mountCosmeticId,
+  'share_location_with_friends': input.shareLocationWithFriends,
   'updated_at': updatedAt,
   'expires_at': expiresAt,
 };
@@ -698,7 +720,9 @@ ActivityPresence activityPresenceFrom(RemoteRow row) => ActivityPresence(
   mountCosmeticId: _optStr(row['mount_cosmetic_id']),
   updatedAt: _str(row['updated_at']),
   expiresAt: _str(row['expires_at']),
-  shareLocationWithFriends: shareLocationWithFriendsFromRemote(row['appearance_json']),
+  shareLocationWithFriends: row.containsKey('share_location_with_friends')
+      ? row['share_location_with_friends'] != false
+      : shareLocationWithFriendsFromRemote(row['appearance_json']),
 );
 
 /// A hosted `profiles` row as the account card social surfaces list.

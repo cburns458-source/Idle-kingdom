@@ -112,5 +112,8 @@ class NotedReads implements RemoteTransport {
       inner.invoke(function, body);
 
   @override
+  Future<RemoteInvokeResult> rpc(String function, RemoteRow args) => inner.rpc(function, args);
+
+  @override
   Future<num?> serverNowMs() => inner.serverNowMs();
 }
