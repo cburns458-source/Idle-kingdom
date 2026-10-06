@@ -10,5 +10,8 @@ GameDatabase databaseOf(ParityFixture fixture) =>
 ///
 /// Reading it back through the generated model also proves `fromJson` and
 /// `toJson` preserve every field, since the resulting save is what gets compared.
-PlayerSave saveOf(ParityFixture fixture) =>
-    PlayerSave.fromJson(asJsonMap(fixture.inputMap['save']));
+PlayerSave saveOf(ParityFixture fixture) {
+  final nowMs = fixture.inputMap['nowMs'];
+  final clock = nowMs is num ? nowMs : 0;
+  return PlayerSave.fromJson(migrateSaveJson(asJsonMap(fixture.inputMap['save']), clock));
+}

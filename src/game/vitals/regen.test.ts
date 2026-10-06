@@ -66,7 +66,9 @@ describe('natural HP regen', () => {
     expect(blocked.save.currentHp).toBe(1)
     expect(blocked.remainderMs).toBe(0)
 
-    const afterGate = applyNaturalHpRegen(launch, damaged, 90_000, now + 60_000)
+    // Gate ends at (now-30s)+60s = now+30s. At now+90s with 120s elapsed,
+    // eligible time is a full minute past the gate.
+    const afterGate = applyNaturalHpRegen(launch, damaged, 120_000, now + 90_000)
     const maxHp = playerMaxHp(launch, base)
     expect(afterGate.save.currentHp).toBe(1 + naturalHpRegenHealAmount(maxHp, 0))
   })

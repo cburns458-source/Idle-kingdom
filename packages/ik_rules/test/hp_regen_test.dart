@@ -53,7 +53,9 @@ void main() {
     expect(blocked.save.currentHp, 1);
     expect(blocked.remainderMs, 0);
 
-    final afterGate = applyNaturalHpRegen(db, damaged, 90000, now + 60000);
+    // Gate ends at (now-30s)+60s = now+30s. At now+90s with 120s elapsed,
+    // eligible time is a full minute past the gate.
+    final afterGate = applyNaturalHpRegen(db, damaged, 120000, now + 90000);
     final maxHp = playerMaxHp(db, base);
     expect(afterGate.save.currentHp, 1 + naturalHpRegenHealAmount(maxHp, 0));
   });
@@ -63,7 +65,10 @@ void main() {
     final maxHp = playerMaxHp(db, base);
     const now = 1000 * 60 * 60.0;
     final save = base.copyWith(currentHp: 1, currentActivityId: 'ACT-0012');
-    expect(applyNaturalHpRegen(db, save, 60000, now).save.currentHp, 1 + naturalHpRegenHealAmount(maxHp, 0));
+    expect(
+      applyNaturalHpRegen(db, save, 60000, now).save.currentHp,
+      1 + naturalHpRegenHealAmount(maxHp, 0),
+    );
   });
 
   test('caps at max HP, clears streak, and keeps a remainder only while damaged', () {
