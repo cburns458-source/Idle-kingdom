@@ -9,6 +9,8 @@ Work directly from the supplied repository plus these two source files:
 
 Your job is to build the playable demo in controlled steps without inventing game design, balance, content, or requirements.
 
+Also follow `docs/AGENT_WORKFLOW.md` and `AGENTS.md` on every prompt: share a plan, wait for the owner to confirm, implement only on `test-launch`, and do not touch `main` until the owner confirms the test-launch playtest. Do not create standalone feature branches.
+
 ## 1. SOURCE AUTHORITY
 
 Use this authority order:
@@ -47,7 +49,7 @@ Preserve these core requirements:
 - Content is data-driven rather than individually hardcoded.
 - Stable database IDs are used for relationships.
 - The experience is portrait-oriented, readable, cozy, mobile-first, and suitable for long idle sessions.
-- Social systems (presence, chat, guilds, leaderboards, bounties, bazaar, arena) are part of ordinary play. Combat and gathering stay client-resolved with soft server validation — do not make the game remotely authoritative in this demo.
+- Social systems (presence, chat, guilds, leaderboards, bounties, bazaar, arena) are part of ordinary play. Combat and gathering stay client-resolved with soft server validation until the owner approves the server-authoritative game wave in `docs/AGENT_WORKFLOW.md`. That approved wave is allowed to move progression onto the server.
 
 Do not add features simply because they are common in other RPGs.
 
@@ -72,7 +74,7 @@ Null values are not permission to invent values.
 
 Notes such as "not fixed in the game bible" are explicit warnings not to guess.
 
-## 4. FIRST RESPONSE — DO NOT START CODING YET
+## 4. FIRST RESPONSE — SHARE A PLAN, DO NOT START CODING YET
 
 Before changing code:
 
@@ -108,6 +110,8 @@ If there are no blocking questions, explicitly say:
 Do not create unnecessary questions just to satisfy this section.
 
 STOP after this report and wait for the owner's approval or answers before Step 1.
+
+Implementation of an approved step goes on `test-launch` only. Do not open a standalone branch. Do not update `main` until the owner has playtested test-launch and said to ship.
 
 ## 5. REQUIRED WORKING METHOD FOR EVERY STEP
 
@@ -192,11 +196,12 @@ At the end of every implementation step:
 
 End with:
 
-`Please playtest and verify Step [N]. I will not move to Step [N+1] until you approve this checkpoint.`
+`Please playtest and verify Step [N] on test-launch. I will not move to Step [N+1], and I will not ship to main, until you approve this checkpoint.`
 
 Then STOP.
 
 Never continue automatically into the next step.
+Never merge to `main` from this checkpoint. Shipping to `main` is a separate owner-approved step after test-launch is confirmed.
 
 ## 6. IMAGE GENERATION RULES
 

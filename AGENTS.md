@@ -2,19 +2,20 @@
 
 ## Where work lands
 
-`test-launch` is the branch the test launch is played from, and it is the trunk:
-`main` holds only the initial commit. Push finished work straight to
-`test-launch` rather than leaving it on a branch for someone to merge.
+Read `docs/AGENT_WORKFLOW.md` first. Short version:
 
-Standing since 18 Aug 2026, until the owner says otherwise.
+1. Share a plan. Stop until the owner confirms it.
+2. Implement only on `test-launch`. No standalone feature branches.
+3. Owner playtests the live test-launch build.
+4. Ship that same revision to `main` only after the owner confirms it.
 
-A feature branch is still worth keeping while the work is in progress, and worth
-pushing so there is a record of it, but it is not where the work stops.
+`test-launch` is the branch the test launch is played from. `main` is the ship
+target and must not change until that playtest is confirmed. Do not commit to
+`main`, and do not leave work on a `cursor/*` or other side branch.
 
-**Balance / playable behavior must target `test-launch` as the PR base.** Merging
-into a feature stack only does not put the change in front of players. Before
-calling balance work done, confirm the merge commit is an ancestor of
-`origin/test-launch` (for example `git merge-base --is-ancestor <sha> origin/test-launch`).
+**Balance / playable behavior must land on `test-launch`.** Before calling
+balance work done, confirm the commit is an ancestor of `origin/test-launch`
+(for example `git merge-base --is-ancestor <sha> origin/test-launch`).
 
 ## What has to pass before pushing
 
