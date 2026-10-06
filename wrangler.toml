@@ -1,5 +1,13 @@
 name = "restoria-idlerpg"
+account_id = "77df1b8f6f00664859462a7a8b4441f5"
 compatibility_date = "2026-08-17"
+
+# Top-level config is the live Worker, published from `main`.
+# `npx wrangler deploy` with no --env updates restoria-idlerpg only.
+#
+# Live custom domains (restoriaidle.com and www.restoriaidle.com) are
+# already bound in the Cloudflare dashboard. Do not list them here: a
+# deploy that declared those routes would rewrite the live bindings.
 
 [build]
 command = "bash scripts/cf-build.sh"
@@ -7,3 +15,17 @@ command = "bash scripts/cf-build.sh"
 [assets]
 directory = "./app_flutter/build/web"
 not_found_handling = "single-page-application"
+
+# Test Worker: restoria-idlerpg-staging, published from `test-launch`.
+# Deploy with: npx wrangler deploy --env staging
+# Hostnames: test.restoriaidle.com and restoria-idlerpg-staging.cburns458.workers.dev
+[env.staging]
+name = "restoria-idlerpg-staging"
+workers_dev = true
+
+[[env.staging.routes]]
+pattern = "test.restoriaidle.com"
+custom_domain = true
+
+[env.staging.vars]
+ENVIRONMENT = "staging"

@@ -9,9 +9,14 @@ Read `docs/AGENT_WORKFLOW.md` first. Short version:
 3. Owner playtests the live test-launch build.
 4. Ship that same revision to `main` only after the owner confirms it.
 
-`test-launch` is the branch the test launch is played from. `main` is the ship
-target and must not change until that playtest is confirmed. Do not commit to
-`main`, and do not leave work on a `cursor/*` or other side branch.
+`test-launch` is the test site ([test.restoriaidle.com](https://test.restoriaidle.com)).
+`main` is the live site ([restoriaidle.com](https://restoriaidle.com)). Do not
+commit to `main` until the owner confirms the test-launch playtest, and do not
+leave work on a `cursor/*` or other side branch.
+
+A push to `test-launch` publishes Worker `restoria-idlerpg-staging`. Shipping
+that same revision to `main` publishes Worker `restoria-idlerpg`. See
+[docs/deployment.md](docs/deployment.md).
 
 **Balance / playable behavior must land on `test-launch`.** Before calling
 balance work done, confirm the commit is an ancestor of `origin/test-launch`
@@ -19,9 +24,10 @@ balance work done, confirm the commit is an ancestor of `origin/test-launch`
 
 ## What has to pass before pushing
 
-`test-launch` is deployed, so a broken commit on it is a broken game rather than
-a broken branch. Everything CI checks is worth running first, because a failure
-found here costs a minute and one found there costs a release:
+`test-launch` is deployed to the test site, so a broken commit on it is a
+broken test game rather than a broken branch. Everything CI checks is worth
+running first, because a failure found here costs a minute and one found there
+costs a release:
 
 ```
 dart format --output=none --set-exit-if-changed packages app_flutter/lib app_flutter/test

@@ -11,26 +11,30 @@ Owner’s newest direct instruction still wins if it conflicts with this file.
 3. Owner confirms the plan, or revises it.
 4. Agent implements only the confirmed plan on `test-launch`.
 5. Agent runs the checks in `AGENTS.md`, summarizes what changed, and gives a short playtest list.
-6. Owner tests the live **test-launch** build and confirms it works as intended.
-7. Only then does the agent ship that exact `test-launch` revision to `main`.
+6. Owner tests **https://test.restoriaidle.com** (`test-launch`) and confirms it.
+7. Only then does the agent ship that exact `test-launch` revision to `main`,
+   which publishes **https://restoriaidle.com**.
 
 Do not skip the plan step. Do not skip the playtest step.
 
 ## Branches
 
-| Branch | Role |
-| --- | --- |
-| `test-launch` | Only implementation branch. All approved work is committed and pushed here. |
-| `main` | Ship target. Untouched until the owner confirms the test-launch playtest. |
+| Branch | Site | Role |
+| --- | --- | --- |
+| `test-launch` | https://test.restoriaidle.com | Only implementation branch. All approved work is committed and pushed here. |
+| `main` | https://restoriaidle.com | Live ship target. Untouched until the owner confirms the test-launch playtest. |
 
 Rules:
 
 - Do **not** create standalone feature branches (`cursor/*` or otherwise).
 - Do **not** leave finished work on a side branch for someone else to merge.
 - Do **not** commit to, rebase onto, or merge into `main` until the owner says the test-launch build is good.
-- A draft pull request from `test-launch` → `main` is only a ship vehicle. It must stay unmerged until step 7.
+- A pull request from `test-launch` → `main` is only a ship vehicle. It must stay unmerged until step 7.
 
-`main` currently holds only the initial commit, and it has **no history in common** with `test-launch`. GitHub cannot open a pull request between them until that is fixed at ship time. When the owner confirms the playtest, the agent ships by aligning `main` to the confirmed `test-launch` revision (unrelated-histories merge or a same-tree reset — owner chooses). Do not do that until step 7.
+Ship by merging or fast-forwarding the confirmed `test-launch` revision to
+`main`. Do not re-implement on `main`. A push to `main` publishes the live
+Worker; a push to `test-launch` publishes the test Worker. See
+[docs/deployment.md](docs/deployment.md).
 
 ## What a plan must include
 
@@ -51,7 +55,7 @@ Then stop and wait.
 - Do not start the next wave until the owner playtests and approves this one, unless they explicitly asked to batch waves.
 - If a change needs a new file under `supabase/migrations/`, say so plainly. Applying SQL is still the owner’s step.
 - Edge functions deploy from `test-launch` via `.github/workflows/deploy.yml`. That workflow must fail when deploy secrets are missing — never report success after a silent skip.
-- After the owner confirms the test-launch playtest, ship by merging or fast-forwarding that same revision to `main`. Do not re-implement on `main`.
+- After the owner confirms the test-launch playtest, ship by merging or fast-forwarding that same revision to `main`. That push publishes the live site. Do not re-implement on `main`.
 
 ## Remaining work (as of 2026-10-06)
 
@@ -89,6 +93,6 @@ The long-term fix for save/item duplication: the server runs or validates progre
 
 ### Wave H — Owner smoke test, then ship
 
-In-game smoke testing is blocked on the owner’s side by a tester passkey and a second real player. The agent cannot finish that. After the owner confirms test-launch, ship that revision to `main`.
+In-game smoke testing is blocked on the owner’s side by a tester passkey and a second real player. The agent cannot finish that. After the owner confirms https://test.restoriaidle.com, ship that revision to `main` (https://restoriaidle.com).
 
 The tester passkey is a client latch in `app_flutter/lib/src/session/tester_access.dart` (`testerPasskey`). It is not a server secret. Rotate it there if the current key should change.

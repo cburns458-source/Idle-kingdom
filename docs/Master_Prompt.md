@@ -9,7 +9,7 @@ Work directly from the supplied repository plus these two source files:
 
 Your job is to build the playable demo in controlled steps without inventing game design, balance, content, or requirements.
 
-Also follow `docs/AGENT_WORKFLOW.md` and `AGENTS.md` on every prompt: share a plan, wait for the owner to confirm, implement only on `test-launch`, and do not touch `main` until the owner confirms the test-launch playtest. Do not create standalone feature branches.
+Also follow `docs/AGENT_WORKFLOW.md` and `AGENTS.md` on every prompt: share a plan, wait for the owner to confirm, implement only on `test-launch` (https://test.restoriaidle.com), and do not touch `main` (https://restoriaidle.com) until the owner confirms the test-launch playtest. Do not create standalone feature branches.
 
 ## 1. SOURCE AUTHORITY
 
