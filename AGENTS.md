@@ -63,3 +63,18 @@ out of that on purpose. `supabase db push` works out what to apply from a tracki
 table that migrations pasted into the SQL editor never wrote to, so on this
 project it would try to replay from `001`, and the early ones create policies
 without guards and would fail.
+
+## Worker deploys
+
+The Flutter web client is a Cloudflare Worker (`restoria-idlerpg`) on
+`restoriaidle.com`. Staging is a **different** Worker (`restoria-idlerpg-staging`)
+on `test.restoriaidle.com`. See [docs/deployment.md](docs/deployment.md).
+
+```
+npx wrangler deploy --env staging   # test.restoriaidle.com only
+npx wrangler deploy                 # production Worker only; never pass --env staging
+```
+
+`.github/workflows/deploy-worker-staging.yml` publishes staging. Production
+Worker publishes stay manual (`.github/workflows/deploy-worker-production.yml`)
+so a staging push cannot land on the apex.

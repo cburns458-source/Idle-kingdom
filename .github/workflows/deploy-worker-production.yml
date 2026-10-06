@@ -1,0 +1,49 @@
+name: Deploy Worker (production)
+
+# Manual promote only. Pushes never publish the production Worker.
+# Uses the top-level Wrangler config (no --env), which is the existing
+# restoria-idlerpg Worker on restoriaidle.com.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type deploy-production to publish restoria-idlerpg'
+        required: true
+        type: string
+
+concurrency:
+  group: worker-production
+  cancel-in-progress: false
+
+jobs:
+  production:
+    name: restoria-idlerpg
+    if: ${{ github.event.inputs.confirm == 'deploy-production' }}
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 77df1b8f6f00664859462a7a8b4441f5
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.0
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Deploy production Worker
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning title=Production Worker deploy skipped::Set the CLOUDFLARE_API_TOKEN repository secret (Workers Scripts Edit) to deploy restoria-idlerpg."
+            exit 0
+          fi
+          npx --yes wrangler@4.148.0 deploy
