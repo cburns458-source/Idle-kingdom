@@ -405,11 +405,7 @@ String friendPresenceStatus(String? updatedAt, num nowMs) {
 }
 
 /// Guild · status · location (location omitted when Offline or privacy-hidden).
-String friendContactSubtitle(
-  SocialContact contact,
-  String statusLabel, {
-  String? locationName,
-}) {
+String friendContactSubtitle(SocialContact contact, String statusLabel, {String? locationName}) {
   final parts = <String>[
     if (contact.guildName != null && contact.guildName!.isNotEmpty) contact.guildName!,
     statusLabel,
@@ -427,7 +423,8 @@ List<FriendListRow> friendListRows(
   final clock = nowMs ?? 0;
   final seen = <String, ActivityPresence>{for (final row in presence) row.userId: row};
   return [
-    for (final contact in friends) _friendListRow(contact, seen[contact.userId], clock, locationName),
+    for (final contact in friends)
+      _friendListRow(contact, seen[contact.userId], clock, locationName),
   ];
 }
 
@@ -444,9 +441,7 @@ FriendListRow _friendListRow(
       presence.shareLocationWithFriends &&
       presence.locationId.isNotEmpty;
   final locId = showLocation ? presence.locationId : null;
-  final locName = locId == null
-      ? null
-      : (locationName?.call(locId) ?? locId);
+  final locName = locId == null ? null : (locationName?.call(locId) ?? locId);
   return FriendListRow(
     userId: contact.userId,
     username: contact.username,

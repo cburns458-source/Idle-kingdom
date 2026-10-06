@@ -58,7 +58,10 @@ class PixelSteppedBorder extends OutlinedBorder {
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
     if (side.style == BorderStyle.none) return;
     final paint = side.toPaint()..style = PaintingStyle.stroke;
-    canvas.drawRect(rect.deflate(side.strokeAlign == BorderSide.strokeAlignInside ? side.strokeWidth / 2 : 0), paint);
+    canvas.drawRect(
+      rect.deflate(side.strokeAlign == BorderSide.strokeAlignInside ? side.width / 2 : 0),
+      paint,
+    );
   }
 
   @override
@@ -294,18 +297,6 @@ class PixelSteppedClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant PixelSteppedClipper oldClipper) => oldClipper.step != step;
-}
-
-class _SteppedClipper extends CustomClipper<Path> {
-  const _SteppedClipper({required this.step});
-
-  final double step;
-
-  @override
-  Path getClip(Size size) => PixelChrome.steppedPath(Offset.zero & size, step: step);
-
-  @override
-  bool shouldReclip(covariant _SteppedClipper oldClipper) => oldClipper.step != step;
 }
 
 /// Ink-friendly square plate for buttons and tappable chips (no gold emboss).

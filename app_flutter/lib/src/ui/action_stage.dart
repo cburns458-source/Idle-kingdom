@@ -811,7 +811,6 @@ class _CombatStage extends StatelessWidget {
     final showFloaters = controller.showLastRoundFloaters;
     final ink = controller.inkPopup;
 
-    final temple = usesTempleLayeredBackground(save.currentLocationId);
     final shell = _StageShell(
       semanticsLabel: 'Combat',
       reserveLoadoutStrip: false,
@@ -982,7 +981,6 @@ class _RecoveringStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final temple = usesTempleLayeredBackground(controller.save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Recovering',
       fillStage: true,
@@ -1078,7 +1076,6 @@ class _GatheringStage extends StatelessWidget {
     final actionName = action?.displayName ?? 'Preparing…';
     final slow = action != null && isBelowProficiency(save, action);
 
-    final temple = usesTempleLayeredBackground(save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Gathering',
       reserveLoadoutStrip: false,
@@ -1148,7 +1145,6 @@ class _ProductionStage extends StatelessWidget {
     final popupItem = popup == null ? null : controller.indexes.itemsById[popup.itemId];
     final stationName = recipe?.displayName ?? popup?.displayName ?? 'Workstation';
 
-    final temple = usesTempleLayeredBackground(save.currentLocationId);
     return _StageShell(
       semanticsLabel: 'Production',
       reserveLoadoutStrip: false,

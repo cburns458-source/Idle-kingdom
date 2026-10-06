@@ -560,11 +560,6 @@ class _LocationViewState extends State<LocationView> {
     );
   }
 
-  /// The grounded actors fill this slot; each layer bottom-aligns itself.
-  Widget _groundedStage(Widget panel) {
-    return panel;
-  }
-
   /// Shop and bank fill the slot so their inventories scroll; shorter cards
   /// stay at the top and scroll only if they would pass the activity band.
   bool _panelFillsSlot(LocationPanel? panel) {

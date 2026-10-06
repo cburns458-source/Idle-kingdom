@@ -245,7 +245,10 @@ class _AccountPanelState extends State<AccountPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Share location with friends', style: TextStyle(fontWeight: FontWeight.w400)),
+                  Text(
+                    'Share location with friends',
+                    style: TextStyle(fontWeight: FontWeight.w400),
+                  ),
                   MutedText(
                     'Let friends see which location you are in. Nearby players at the same tile still see you either way.',
                   ),
