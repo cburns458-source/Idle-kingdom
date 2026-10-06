@@ -670,6 +670,9 @@ class RemoteMultiplayerService implements MultiplayerService {
     _reenablePublishedProfileColumns();
     final profileRow = <String, Object?>{
       'user_id': current.userId,
+      // An upsert still validates NOT NULL columns on the insert path. Include
+      // the account name so a missing profile can be repaired by save sync.
+      'username': current.username,
       'appearance_json': appearanceJsonForRemote(stamped.appearance, stamped.raceId),
     };
     if (_profilesHaveGearPrivacy != false) {
@@ -1348,14 +1351,6 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   Future<ActionResult> _acceptHostedFriend(String me, String other) async {
-    await transport.delete(
-      RemoteTables.friendRequests,
-      equals: <String, Object?>{'from_user_id': other, 'to_user_id': me},
-    );
-    await transport.delete(
-      RemoteTables.friendRequests,
-      equals: <String, Object?>{'from_user_id': me, 'to_user_id': other},
-    );
     final pair = friendshipPair(me, other);
     final written = await transport.insert(RemoteTables.friendships, <String, Object?>{
       'user_a': pair.userA,
@@ -1367,6 +1362,16 @@ class RemoteMultiplayerService implements MultiplayerService {
       }
       return ActionResult.failed(written.reason ?? 'Could not accept friend request.');
     }
+    // The insert policy verifies the incoming request, so consume requests only
+    // after the friendship exists.
+    await transport.delete(
+      RemoteTables.friendRequests,
+      equals: <String, Object?>{'from_user_id': other, 'to_user_id': me},
+    );
+    await transport.delete(
+      RemoteTables.friendRequests,
+      equals: <String, Object?>{'from_user_id': me, 'to_user_id': other},
+    );
     return const ActionResult.ok();
   }
 
