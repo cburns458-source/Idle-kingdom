@@ -751,9 +751,7 @@ class RemoteGuildBackend {
       debtPaidBy: const <String, num>{},
       storehouse: const <InventoryStack>[],
       completedTiers: (summary['completed_tiers'] is List)
-          ? [
-              for (final value in summary['completed_tiers']! as List) '$value',
-            ]
+          ? [for (final value in summary['completed_tiers']! as List) '$value']
           : const <String>[],
       debtPaidOff: summary['debt_paid_off'] == true,
     );

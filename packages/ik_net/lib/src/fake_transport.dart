@@ -315,9 +315,7 @@ class FakeTransport implements RemoteTransport {
           .toList();
 
       if (table == RemoteTables.publicProfiles) {
-        rows = [
-          for (final row in rows) _publicProfileRow(row),
-        ];
+        rows = [for (final row in rows) _publicProfileRow(row)];
       }
       if (table == RemoteTables.guildHallTiers) {
         rows = [
@@ -616,8 +614,7 @@ class FakeTransport implements RemoteTransport {
         final pay = amount < remaining ? amount : remaining;
         final paidBy = <String, Object?>{
           ..._asMap(hall['debt_paid_by']),
-          '${_current!.userId}':
-              _asNum(_asMap(hall['debt_paid_by'])['${_current!.userId}']) + pay,
+          '${_current!.userId}': _asNum(_asMap(hall['debt_paid_by'])['${_current!.userId}']) + pay,
         };
         final nextRemaining = remaining - pay;
         final next = <String, Object?>{
@@ -641,9 +638,7 @@ class FakeTransport implements RemoteTransport {
         final at = stored.indexWhere((row) => row['guild_id'] == membership['guild_id']);
         if (at < 0) return const RemoteInvokeResult.failed('Guild hall not found.');
         final hall = stored[at];
-        final store = [
-          for (final entry in _asList(hall['storehouse'])) _asMap(entry),
-        ];
+        final store = [for (final entry in _asList(hall['storehouse'])) _asMap(entry)];
         var found = false;
         for (var i = 0; i < store.length; i++) {
           if (store[i]['itemId'] == itemId) {

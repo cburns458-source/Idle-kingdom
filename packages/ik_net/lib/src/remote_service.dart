@@ -1062,8 +1062,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     var refused = await transport.upsert(RemoteTables.activityPresence, <RemoteRow>[
       published,
     ], onConflict: remotePresenceConflict);
-    if (refused != null &&
-        refused.toLowerCase().contains('share_location_with_friends')) {
+    if (refused != null && refused.toLowerCase().contains('share_location_with_friends')) {
       _presenceHasShareLocationFlag = false;
       published.remove('share_location_with_friends');
       refused = await transport.upsert(RemoteTables.activityPresence, <RemoteRow>[
@@ -1091,9 +1090,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     String locationId, {
     bool excludeSelf = true,
   }) async {
-    final result = await _selectPresence(
-      equals: <String, Object?>{'location_id': locationId},
-    );
+    final result = await _selectPresence(equals: <String, Object?>{'location_id': locationId});
     if (!result.ok) return const <ActivityPresence>[];
     return _visiblePeers(livePresenceFrom(result.rows!, _nowMs()), excludeSelf);
   }
