@@ -565,12 +565,30 @@ class RemoteGuildBackend {
     }
     final refusal = memberRoleRefusal(guild, targetUserId, role);
     if (refusal != null) return ActionResult.failed(refusal);
-    final refused = await transport.update(
-      RemoteTables.guildMembers,
-      <String, Object?>{'role': role},
-      equals: <String, Object?>{'guild_id': guildId, 'user_id': targetUserId},
-    );
-    return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
+    final result = await transport.rpc(RemoteRpcs.guildSetMemberRole, <String, Object?>{
+      'p_guild_id': guildId,
+      'p_target_user_id': targetUserId,
+      'p_role': role,
+    });
+    if (result.ok) return const ActionResult.ok();
+    // Pre-026 projects still allow a leader update on the row.
+    if (_looksLikeMissingRpc(result.reason)) {
+      final refused = await transport.update(
+        RemoteTables.guildMembers,
+        <String, Object?>{'role': role},
+        equals: <String, Object?>{'guild_id': guildId, 'user_id': targetUserId},
+      );
+      return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
+    }
+    return ActionResult.failed(result.reason ?? 'Could not change role.');
+  }
+
+  bool _looksLikeMissingRpc(String? reason) {
+    if (reason == null) return false;
+    final lower = reason.toLowerCase();
+    return lower.contains('could not find the function') ||
+        lower.contains('schema cache') ||
+        lower.contains('does not exist');
   }
 
   /// Writes one guild setting, which only its leader may do.
@@ -681,14 +699,24 @@ class RemoteGuildBackend {
     if (project.guildId != membership.guildId) {
       return const ContributeProjectResult.failed('Project not found.');
     }
-    final next = contributedProject(project, amount);
-    final refused = await transport.update(
-      RemoteTables.guildProjects,
-      <String, Object?>{'contributed': next.contributed},
-      equals: <String, Object?>{'id': projectId},
-    );
-    if (refused != null) return ContributeProjectResult.failed(refused);
-    return ContributeProjectResult.ok(next);
+    final result = await transport.rpc(RemoteRpcs.guildContributeProject, <String, Object?>{
+      'p_project_id': projectId,
+      'p_amount': amount,
+    });
+    if (result.ok && result.data != null) {
+      return ContributeProjectResult.ok(guildProjectFrom(result.data!));
+    }
+    if (_looksLikeMissingRpc(result.reason)) {
+      final next = contributedProject(project, amount);
+      final refused = await transport.update(
+        RemoteTables.guildProjects,
+        <String, Object?>{'contributed': next.contributed},
+        equals: <String, Object?>{'id': projectId},
+      );
+      if (refused != null) return ContributeProjectResult.failed(refused);
+      return ContributeProjectResult.ok(next);
+    }
+    return ContributeProjectResult.failed(result.reason ?? 'Could not contribute.');
   }
 
   // --- The hall -------------------------------------------------------------
@@ -701,10 +729,34 @@ class RemoteGuildBackend {
       equals: <String, Object?>{'guild_id': guildId},
       limit: 1,
     );
-    final row = result.single;
-    // A guild made before the hall table, or one whose row was never written,
-    // has a hall that has simply had nothing done to it yet.
-    return row == null ? GuildHallState.fresh(guildId) : guildHallFrom(row);
+    if (result.ok) {
+      final row = result.single;
+      // A guild made before the hall table, or one whose row was never written,
+      // has a hall that has simply had nothing done to it yet.
+      return row == null ? GuildHallState.fresh(guildId) : guildHallFrom(row);
+    }
+
+    // Non-members only see tiers (migration 026). Storehouse and debt stay hidden.
+    final tiers = await transport.select(
+      RemoteTables.guildHallTiers,
+      columns: 'guild_id, completed_tiers, debt_paid_off',
+      equals: <String, Object?>{'guild_id': guildId},
+      limit: 1,
+    );
+    final summary = tiers.single;
+    if (summary == null) return GuildHallState.fresh(guildId);
+    return GuildHallState(
+      guildId: guildId,
+      debtRemaining: 0,
+      debtPaidBy: const <String, num>{},
+      storehouse: const <InventoryStack>[],
+      completedTiers: (summary['completed_tiers'] is List)
+          ? [
+              for (final value in summary['completed_tiers']! as List) '$value',
+            ]
+          : const <String>[],
+      debtPaidOff: summary['debt_paid_off'] == true,
+    );
   }
 
   Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount) async {
@@ -720,11 +772,25 @@ class RemoteGuildBackend {
 
     final paid = payGuildHallDebt(hall, current.userId, save, amount);
     if (!paid.ok) return paid;
-    final refused = await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
-      guildHallRowFor(paid.hall!),
-    ]);
-    if (refused != null) return GuildHallActionResult.failed(refused);
-    return paid;
+
+    final result = await transport.rpc(RemoteRpcs.guildPayHallDebt, <String, Object?>{
+      'p_amount': amount,
+    });
+    if (result.ok && result.data != null) {
+      return GuildHallActionResult.ok(
+        guildHallFrom(result.data!),
+        save: paid.save,
+        paidOffJustNow: paid.paidOffJustNow,
+      );
+    }
+    if (_looksLikeMissingRpc(result.reason)) {
+      final refused = await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
+        guildHallRowFor(paid.hall!),
+      ]);
+      if (refused != null) return GuildHallActionResult.failed(refused);
+      return paid;
+    }
+    return GuildHallActionResult.failed(result.reason ?? 'Could not pay hall debt.');
   }
 
   Future<GuildHallActionResult> contributeHallItem(
@@ -741,11 +807,24 @@ class RemoteGuildBackend {
 
     final given = donateToGuildHall(hall, save, inventoryIndex, quantity);
     if (!given.ok) return given;
-    final refused = await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
-      guildHallRowFor(given.hall!),
-    ]);
-    if (refused != null) return GuildHallActionResult.failed(refused);
-    return given;
+    final stack = save.inventory[inventoryIndex];
+
+    final result = await transport.rpc(RemoteRpcs.guildDonateHallItem, <String, Object?>{
+      'p_item_id': stack.itemId,
+      'p_quantity': quantity,
+    });
+    if (result.ok && result.data != null) {
+      // Tier settlement stays on a later server pass; this RPC only adds stock.
+      return GuildHallActionResult.ok(guildHallFrom(result.data!), save: given.save);
+    }
+    if (_looksLikeMissingRpc(result.reason)) {
+      final refused = await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
+        guildHallRowFor(given.hall!),
+      ]);
+      if (refused != null) return GuildHallActionResult.failed(refused);
+      return given;
+    }
+    return GuildHallActionResult.failed(result.reason ?? 'Could not donate.');
   }
 
   // --- Keeping this player's own rows current -------------------------------

@@ -661,7 +661,7 @@ void main() {
     expect(await hero.setChatPrivacy(directMessages: chatPrivacyFriends), isNotNull);
   });
 
-  test('hides snapshot skills when the account opted out of public skills', () async {
+  test('still shows snapshot skills when the dead privacy_public_skills flag is false', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
     final db = _database();
@@ -675,7 +675,7 @@ void main() {
     await rival.signUp('rival@example.com', 'Rival', 'secret');
     final profile = await rival.publicProfile(hero.session!.userId, db: db);
     expect(profile, isNotNull);
-    expect(profile!.publicSkills, isEmpty);
+    expect(profile!.publicSkills, isNotEmpty);
     expect(profile.totalLevel, totalLevel(save));
   });
 

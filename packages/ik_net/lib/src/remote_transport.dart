@@ -121,6 +121,12 @@ abstract interface class RemoteTransport {
 
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body);
 
+  /// Calls a Postgres RPC exposed by PostgREST (`/rest/v1/rpc/...`).
+  ///
+  /// Separate from [invoke], which hits an edge function. Guild contributions
+  /// and other SECURITY DEFINER routines use this path.
+  Future<RemoteInvokeResult> rpc(String function, RemoteRow args);
+
   /// Server wall clock in milliseconds, or null when the project cannot answer.
   Future<num?> serverNowMs();
 }

@@ -122,5 +122,10 @@ class RetryingTransport implements RemoteTransport {
   }
 
   @override
+  Future<RemoteInvokeResult> rpc(String function, RemoteRow args) {
+    return _retry(() => inner.rpc(function, args), (result) => result.reason);
+  }
+
+  @override
   Future<num?> serverNowMs() => inner.serverNowMs();
 }

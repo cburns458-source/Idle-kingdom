@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const MAX_BODY = 240
+const COOLDOWN_MS = 2000
 const SLURS = /\b(nigger|faggot)\b/i
 
 type SendBody = {
@@ -68,8 +69,40 @@ Deno.serve(async (req) => {
     return json({ error: 'Chat has been disabled.' }, 400)
   }
 
+  if (kind === 'dm') {
+    const peers = dmPeers(channelKey)
+    if (!peers || !peers.includes(user.id)) {
+      return json({ error: 'That private channel is not yours.' }, 400)
+    }
+  }
+
   const admin = connect(supabaseUrl, serviceKey)
   const username = await resolveUsername(admin, user.id, user.user_metadata)
+
+  const cooled = await enforceCooldown(admin, user.id, channelKey)
+  if (cooled) return cooled
+
+  if (kind === 'dm') {
+    const peers = dmPeers(channelKey)!
+    const peerId = peers.find((id) => id !== user.id)
+    if (!peerId) {
+      return json({ error: 'That private channel is not yours.' }, 400)
+    }
+    const blocked = await isEitherBlocked(admin, user.id, peerId)
+    if (blocked) {
+      return json({ error: 'You cannot message that player.' }, 400)
+    }
+    const privacy = await directMessagePrivacy(admin, peerId)
+    if (privacy === 'off') {
+      return json({ error: 'That player is not accepting messages.' }, 400)
+    }
+    if (privacy === 'friends') {
+      const friends = await areFriends(admin, user.id, peerId)
+      if (!friends) {
+        return json({ error: 'That player only accepts messages from friends.' }, 400)
+      }
+    }
+  }
 
   const { data: membership } = await admin
     .from('guild_members')
@@ -113,6 +146,13 @@ Deno.serve(async (req) => {
     }
   }
 
+  if (kind === 'local') {
+    const privacy = await localChatPrivacy(admin, user.id)
+    if (privacy === 'off') {
+      return json({ error: 'Local chat is turned off in your privacy settings.' }, 400)
+    }
+  }
+
   const { data: inserted, error: insertError } = await admin
     .from('chat_messages')
     .insert({
@@ -130,8 +170,74 @@ Deno.serve(async (req) => {
     return json({ error: insertError?.message ?? 'The chat message was not accepted.' }, 400)
   }
 
+  await admin.from('chat_cooldowns').upsert({
+    user_id: user.id,
+    channel_key: channelKey,
+    last_sent_at: new Date().toISOString(),
+  })
+
   return json(inserted, 200)
 })
+
+async function enforceCooldown(
+  admin: Client,
+  userId: string,
+  channelKey: string,
+): Promise<Response | null> {
+  const { data } = await admin
+    .from('chat_cooldowns')
+    .select('last_sent_at')
+    .eq('user_id', userId)
+    .eq('channel_key', channelKey)
+    .maybeSingle()
+  const last = typeof data?.last_sent_at === 'string' ? Date.parse(data.last_sent_at) : 0
+  if (last && Date.now() - last < COOLDOWN_MS) {
+    return json({ error: 'Slow down a moment before chatting again.' }, 429)
+  }
+  return null
+}
+
+async function isEitherBlocked(admin: Client, a: string, b: string): Promise<boolean> {
+  const { data } = await admin
+    .from('player_blocks')
+    .select('user_id')
+    .or(
+      `and(user_id.eq.${a},blocked_user_id.eq.${b}),and(user_id.eq.${b},blocked_user_id.eq.${a})`,
+    )
+    .limit(1)
+  return (data?.length ?? 0) > 0
+}
+
+async function areFriends(admin: Client, a: string, b: string): Promise<boolean> {
+  const [userA, userB] = a < b ? [a, b] : [b, a]
+  const { data } = await admin
+    .from('friendships')
+    .select('user_a')
+    .eq('user_a', userA)
+    .eq('user_b', userB)
+    .maybeSingle()
+  return data != null
+}
+
+async function directMessagePrivacy(admin: Client, userId: string): Promise<string> {
+  const { data } = await admin
+    .from('profiles')
+    .select('privacy_direct_messages')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const value = data?.privacy_direct_messages
+  return typeof value === 'string' && value ? value : 'public'
+}
+
+async function localChatPrivacy(admin: Client, userId: string): Promise<string> {
+  const { data } = await admin
+    .from('profiles')
+    .select('privacy_local_chat')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const value = data?.privacy_local_chat
+  return typeof value === 'string' && value ? value : 'public'
+}
 
 function guildRankIcon(theme: string, role: string): string {
   if (theme === 'crowns') {
@@ -142,10 +248,10 @@ function guildRankIcon(theme: string, role: string): string {
     return '·'
   }
   if (role === 'leader') return '★'
-  if (role === 'officer') return '▍▍▍▍'
-  if (role === 'veteran') return '▍▍▍'
-  if (role === 'member') return '▍▍'
-  return '▍'
+  if (role === 'officer') return '〇〇〇〇'
+  if (role === 'veteran') return '〇〇〇'
+  if (role === 'member') return '〇〇'
+  return '〇'
 }
 
 function channelKind(key: string): string | null {
@@ -154,6 +260,13 @@ function channelKind(key: string): string | null {
   if (key.startsWith('guild:') && key.length > 6) return 'guild'
   if (key.startsWith('dm:') && key.length > 3) return 'dm'
   return null
+}
+
+function dmPeers(channelKey: string): string[] | null {
+  const body = channelKey.slice('dm:'.length)
+  const parts = body.split(':').filter((part) => part.length > 0)
+  if (parts.length !== 2) return null
+  return parts
 }
 
 async function resolveUsername(

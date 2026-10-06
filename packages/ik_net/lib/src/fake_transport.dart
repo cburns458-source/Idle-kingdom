@@ -301,6 +301,10 @@ class FakeTransport implements RemoteTransport {
 
       final storedTable = table == RemoteTables.leaderboardEntries
           ? RemoteTables.leaderboard
+          : table == RemoteTables.publicProfiles
+          ? RemoteTables.profiles
+          : table == RemoteTables.guildHallTiers
+          ? RemoteTables.guildHalls
           : table;
       var rows = (tables[storedTable] ?? const <RemoteRow>[])
           .where((row) => equals.entries.every((filter) => row[filter.key] == filter.value))
@@ -309,6 +313,22 @@ class FakeTransport implements RemoteTransport {
           )
           .map((row) => <String, Object?>{...row})
           .toList();
+
+      if (table == RemoteTables.publicProfiles) {
+        rows = [
+          for (final row in rows) _publicProfileRow(row),
+        ];
+      }
+      if (table == RemoteTables.guildHallTiers) {
+        rows = [
+          for (final row in rows)
+            <String, Object?>{
+              'guild_id': row['guild_id'],
+              'completed_tiers': row['completed_tiers'] ?? const <Object?>[],
+              'debt_paid_off': row['debt_paid_off'] == true,
+            },
+        ];
+      }
 
       if (columns.contains('profiles')) {
         for (final row in rows) {
@@ -321,6 +341,24 @@ class FakeTransport implements RemoteTransport {
       if (limit != null && rows.length > limit) rows = rows.sublist(0, limit);
       return RemoteQueryResult.ok(rows);
     });
+  }
+
+  RemoteRow _publicProfileRow(RemoteRow row) {
+    final gearPublic = row['privacy_public_gear'] != false;
+    return <String, Object?>{
+      'user_id': row['user_id'],
+      'username': row['username'],
+      'appearance_json': row['appearance_json'],
+      'guild_id': row['guild_id'],
+      'privacy_public_gear': gearPublic,
+      'equipment_json': gearPublic ? row['equipment_json'] : null,
+      'privacy_direct_messages': row['privacy_direct_messages'],
+      'privacy_local_chat': row['privacy_local_chat'],
+      'name_color': row['name_color'],
+      'motto': row['motto'],
+      'pet_cosmetic_id': row['pet_cosmetic_id'],
+      'updated_at': row['updated_at'],
+    };
   }
 
   /// The profile a leaderboard read joins in, with its guild name folded in.
@@ -528,6 +566,126 @@ class FakeTransport implements RemoteTransport {
       return RemoteInvokeResult.ok(<String, Object?>{...row});
     });
   }
+
+  @override
+  Future<RemoteInvokeResult> rpc(String function, RemoteRow args) {
+    return _track(() async {
+      calls.add('rpc:$function');
+      final reason = _takeFailure('rpc:$function');
+      if (reason != null) return RemoteInvokeResult.failed(reason);
+
+      if (function == RemoteRpcs.guildContributeProject) {
+        final projectId = args['p_project_id'];
+        final amount = _asNum(args['p_amount']);
+        final stored = tables[RemoteTables.guildProjects]!;
+        final at = stored.indexWhere((row) => row['id'] == projectId);
+        if (at < 0) return const RemoteInvokeResult.failed('Project not found.');
+        final next = <String, Object?>{
+          ...stored[at],
+          'contributed': _asNum(stored[at]['contributed']) + amount,
+        };
+        stored[at] = next;
+        return RemoteInvokeResult.ok(next);
+      }
+
+      if (function == RemoteRpcs.guildSetMemberRole) {
+        final guildId = args['p_guild_id'];
+        final target = args['p_target_user_id'];
+        final role = args['p_role'];
+        final stored = tables[RemoteTables.guildMembers]!;
+        final at = stored.indexWhere(
+          (row) => row['guild_id'] == guildId && row['user_id'] == target,
+        );
+        if (at < 0) return const RemoteInvokeResult.failed('Member not found.');
+        final next = <String, Object?>{...stored[at], 'role': role};
+        stored[at] = next;
+        return RemoteInvokeResult.ok(next);
+      }
+
+      if (function == RemoteRpcs.guildPayHallDebt) {
+        final amount = _asNum(args['p_amount']);
+        final membership = _membershipFor(_current?.userId);
+        if (membership == null) {
+          return const RemoteInvokeResult.failed('Join a guild first.');
+        }
+        final stored = tables[RemoteTables.guildHalls]!;
+        final at = stored.indexWhere((row) => row['guild_id'] == membership['guild_id']);
+        if (at < 0) return const RemoteInvokeResult.failed('Guild hall not found.');
+        final hall = stored[at];
+        final remaining = _asNum(hall['debt_remaining']);
+        final pay = amount < remaining ? amount : remaining;
+        final paidBy = <String, Object?>{
+          ..._asMap(hall['debt_paid_by']),
+          '${_current!.userId}':
+              _asNum(_asMap(hall['debt_paid_by'])['${_current!.userId}']) + pay,
+        };
+        final nextRemaining = remaining - pay;
+        final next = <String, Object?>{
+          ...hall,
+          'debt_remaining': nextRemaining,
+          'debt_paid_by': paidBy,
+          'debt_paid_off': nextRemaining <= 0,
+        };
+        stored[at] = next;
+        return RemoteInvokeResult.ok(next);
+      }
+
+      if (function == RemoteRpcs.guildDonateHallItem) {
+        final itemId = '${args['p_item_id']}';
+        final quantity = _asNum(args['p_quantity']);
+        final membership = _membershipFor(_current?.userId);
+        if (membership == null) {
+          return const RemoteInvokeResult.failed('Join a guild first.');
+        }
+        final stored = tables[RemoteTables.guildHalls]!;
+        final at = stored.indexWhere((row) => row['guild_id'] == membership['guild_id']);
+        if (at < 0) return const RemoteInvokeResult.failed('Guild hall not found.');
+        final hall = stored[at];
+        final store = [
+          for (final entry in _asList(hall['storehouse'])) _asMap(entry),
+        ];
+        var found = false;
+        for (var i = 0; i < store.length; i++) {
+          if (store[i]['itemId'] == itemId) {
+            store[i] = <String, Object?>{
+              'itemId': itemId,
+              'quantity': _asNum(store[i]['quantity']) + quantity,
+            };
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          store.add(<String, Object?>{'itemId': itemId, 'quantity': quantity});
+        }
+        final next = <String, Object?>{...hall, 'storehouse': store};
+        stored[at] = next;
+        return RemoteInvokeResult.ok(next);
+      }
+
+      return RemoteInvokeResult.failed('No such function: $function');
+    });
+  }
+
+  RemoteRow? _membershipFor(String? userId) {
+    if (userId == null) return null;
+    for (final row in tables[RemoteTables.guildMembers]!) {
+      if (row['user_id'] == userId) return row;
+    }
+    return null;
+  }
+
+  static num _asNum(Object? value) => value is num ? value : num.tryParse('$value') ?? 0;
+
+  static Map<String, Object?> _asMap(Object? value) {
+    if (value is Map<String, Object?>) return value;
+    if (value is Map) {
+      return <String, Object?>{for (final entry in value.entries) '${entry.key}': entry.value};
+    }
+    return <String, Object?>{};
+  }
+
+  static List<Object?> _asList(Object? value) => value is List<Object?> ? value : const <Object?>[];
 
   @override
   Future<num?> serverNowMs() async {
