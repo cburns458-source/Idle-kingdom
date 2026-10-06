@@ -88,11 +88,14 @@ Deno.serve(async (req) => {
     if (!peerId) {
       return json({ error: 'That private channel is not yours.' }, 400)
     }
+    const privacy = await directMessagePrivacy(admin, peerId)
+    if (privacy == null) {
+      return json({ error: 'That player could not be found.' }, 400)
+    }
     const blocked = await isEitherBlocked(admin, user.id, peerId)
     if (blocked) {
       return json({ error: 'You cannot message that player.' }, 400)
     }
-    const privacy = await directMessagePrivacy(admin, peerId)
     if (privacy === 'off') {
       return json({ error: 'That player is not accepting messages.' }, 400)
     }
@@ -147,6 +150,21 @@ Deno.serve(async (req) => {
   }
 
   if (kind === 'local') {
+    const locationId = channelKey.slice('local:'.length)
+    const { data: presence } = await admin
+      .from('activity_presence')
+      .select('location_id, expires_at')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const expiresAt =
+      typeof presence?.expires_at === 'string' ? Date.parse(presence.expires_at) : Number.NaN
+    if (
+      presence?.location_id !== locationId ||
+      !Number.isFinite(expiresAt) ||
+      expiresAt <= Date.now()
+    ) {
+      return json({ error: 'Join that location before using its chat.' }, 400)
+    }
     const privacy = await localChatPrivacy(admin, user.id)
     if (privacy === 'off') {
       return json({ error: 'Local chat is turned off in your privacy settings.' }, 400)
@@ -219,12 +237,13 @@ async function areFriends(admin: Client, a: string, b: string): Promise<boolean>
   return data != null
 }
 
-async function directMessagePrivacy(admin: Client, userId: string): Promise<string> {
+async function directMessagePrivacy(admin: Client, userId: string): Promise<string | null> {
   const { data } = await admin
     .from('profiles')
     .select('privacy_direct_messages')
     .eq('user_id', userId)
     .maybeSingle()
+  if (!data) return null
   const value = data?.privacy_direct_messages
   return typeof value === 'string' && value ? value : 'public'
 }
@@ -265,7 +284,16 @@ function channelKind(key: string): string | null {
 function dmPeers(channelKey: string): string[] | null {
   const body = channelKey.slice('dm:'.length)
   const parts = body.split(':').filter((part) => part.length > 0)
-  if (parts.length !== 2) return null
+  if (
+    parts.length !== 2 ||
+    parts[0] === parts[1] ||
+    !parts.every((part) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        .test(part)
+    )
+  ) {
+    return null
+  }
   return parts
 }
 

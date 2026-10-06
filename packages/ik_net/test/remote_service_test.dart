@@ -177,6 +177,20 @@ void main() {
     expect(pulled.source, CloudSyncSource.downloaded);
   });
 
+  test('save upload repairs a missing profile with its required username', () async {
+    final transport = FakeTransport();
+    final service = await _signedIn(transport, MemorySaveStorage());
+    transport.tables[RemoteTables.profiles]!.clear();
+
+    final pushed = await service.pushSave(
+      _database(),
+      createNewSave(_database(), _nowMs).copyWith(characterName: 'Hero'),
+    );
+
+    expect(pushed.ok, isTrue, reason: pushed.reason);
+    expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Hero');
+  });
+
   test('submits every board the save is worth only when asked', () async {
     final transport = FakeTransport();
     final storage = MemorySaveStorage();
@@ -887,7 +901,13 @@ void main() {
     expect((await rival.incomingFriendRequests()).single.username, 'Hero');
     expect(await rival.friends(), isEmpty);
 
+    final beforeAccept = transport.calls.length;
     expect((await rival.sendFriendRequest(hero.session!.userId)).ok, isTrue);
+    final acceptCalls = transport.calls.sublist(beforeAccept);
+    expect(
+      acceptCalls.indexOf('insert:${RemoteTables.friendships}'),
+      lessThan(acceptCalls.indexOf('delete:${RemoteTables.friendRequests}')),
+    );
     expect(await hero.incomingFriendRequests(), isEmpty);
     expect(await rival.outgoingFriendRequests(), isEmpty);
     expect((await hero.friends()).single.username, 'Rival');
