@@ -30,6 +30,7 @@ import type { ActionRow, EnemyRow, GameDatabase } from '../data/types'
 import { completeProductionCraft } from '../production/engine'
 import { isStandardProductionActivity } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
+import { notePlayerDamaged } from '../vitals/regen'
 import type { SessionEvent } from './events'
 
 export interface SessionTickResult {
@@ -228,14 +229,18 @@ function applyDueCombatRound(
   if (round.lifestealHealed > 0) {
     out.set(recordLifestealRoundHeal(out.current, round.lifestealHealed))
   }
-  out.set({
+  let afterRound: PlayerSave = {
     ...out.current,
     combatEnemyHp: round.enemyHp,
     currentHp: round.playerHp,
     combatPlayerSwingApplied: true,
     combatPendingRound: round,
     combatBossInkActive: round.bossInkActive,
-  })
+  }
+  if ((round.enemyHit ?? 0) > 0) {
+    afterRound = notePlayerDamaged(afterRound, roundEnd)
+  }
+  out.set(afterRound)
   out.emit({
     kind: 'combat-round',
     enemyId: enemy['Enemy ID'],

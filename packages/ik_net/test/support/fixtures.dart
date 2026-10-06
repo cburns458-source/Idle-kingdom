@@ -11,8 +11,11 @@ GameDatabase databaseOf(ParityFixture fixture) =>
     assertGameDatabaseShape(fixtureDatabaseJson(fixture));
 
 /// A save carried in the fixture input under [key].
-PlayerSave saveOf(ParityFixture fixture, [String key = 'save']) =>
-    PlayerSave.fromJson(asJsonMap(fixture.inputMap[key]));
+///
+/// Older fixtures may predate the current [saveVersion]; migrate before parse.
+PlayerSave saveOf(ParityFixture fixture, [String key = 'save']) => PlayerSave.fromJson(
+  migrateSaveJson(asJsonMap(fixture.inputMap[key]), BackendHarness.defaultNowMs),
+);
 
 /// A backend with its clock and ids pinned, mirroring the recorder's harness.
 ///

@@ -1086,6 +1086,7 @@ class ActivityPresence {
     required this.mountCosmeticId,
     required this.updatedAt,
     required this.expiresAt,
+    this.shareLocationWithFriends = true,
   });
 
   factory ActivityPresence.fromJson(Map<String, Object?> json) => ActivityPresence(
@@ -1102,6 +1103,9 @@ class ActivityPresence {
     mountCosmeticId: json['mountCosmeticId'] as String?,
     updatedAt: json['updatedAt']! as String,
     expiresAt: json['expiresAt']! as String,
+    shareLocationWithFriends:
+        json['shareLocationWithFriends'] as bool? ??
+        shareLocationWithFriendsFromRemote(json['appearance']),
   );
 
   final String userId;
@@ -1118,6 +1122,9 @@ class ActivityPresence {
   final String updatedAt;
   final String expiresAt;
 
+  /// When false, friends lists omit this player's world location.
+  final bool shareLocationWithFriends;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'username': username,
@@ -1132,6 +1139,7 @@ class ActivityPresence {
     'mountCosmeticId': mountCosmeticId,
     'updatedAt': updatedAt,
     'expiresAt': expiresAt,
+    'shareLocationWithFriends': shareLocationWithFriends,
   };
 }
 
@@ -1146,6 +1154,7 @@ class PresenceInput {
     required this.skillLevel,
     required this.outfitCosmeticId,
     required this.mountCosmeticId,
+    this.shareLocationWithFriends = true,
   });
 
   final PlayerAppearance appearance;
@@ -1156,6 +1165,7 @@ class PresenceInput {
   final num? skillLevel;
   final String? outfitCosmeticId;
   final String? mountCosmeticId;
+  final bool shareLocationWithFriends;
 }
 
 class MultiplayerSession {
@@ -1382,11 +1392,18 @@ PlayerAppearance playerAppearanceFromRemote(Object? value) {
 }
 
 /// Race rides with the published look so other players can resolve the sprite
-/// without a cloud-save read. Older rows simply omit it.
-Map<String, Object?> appearanceJsonForRemote(PlayerAppearance appearance, [String? raceId]) {
+/// without a cloud-save read. Older rows simply omit it. Location-with-friends
+/// privacy rides here too so friends lists can hide a tile without a schema
+/// migration (Nearby still uses [ActivityPresence.locationId] either way).
+Map<String, Object?> appearanceJsonForRemote(
+  PlayerAppearance appearance, [
+  String? raceId,
+  bool? shareLocationWithFriends,
+]) {
   return <String, Object?>{
     ...appearance.toJson(),
     if (raceId != null && raceId.isNotEmpty) 'raceId': raceId,
+    if (shareLocationWithFriends != null) 'shareLocationWithFriends': shareLocationWithFriends,
   };
 }
 
@@ -1396,6 +1413,14 @@ String? raceIdFromRemote(Object? value) {
     if (id is String && id.isNotEmpty) return id;
   }
   return null;
+}
+
+/// Defaults to true when an older presence row never published the flag.
+bool shareLocationWithFriendsFromRemote(Object? value) {
+  if (value is Map && value.containsKey('shareLocationWithFriends')) {
+    return value['shareLocationWithFriends'] != false;
+  }
+  return true;
 }
 
 /// A stored symbol, an emoji from an older save, or anything unrecognized,

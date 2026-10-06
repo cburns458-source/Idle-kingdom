@@ -6,13 +6,13 @@ import 'session/ui_chrome.dart';
 
 /// Wood + gold embossed pixel chrome (photo-2 direction).
 ///
-/// Stepped corners replace soft [BorderRadius] curves. Layout sizes stay the
-/// same — only the outline geometry and border treatment change.
+/// Corners are square. [step] is kept for rivet inset spacing and call-site
+/// compatibility; it no longer shapes the outline.
 abstract final class PixelChrome {
-  /// Default stair size for buttons and panels.
+  /// Default border inset unit for rivets / legacy call sites.
   static const double step = 3;
 
-  /// Tighter stair for compact chips / icon buttons.
+  /// Tighter inset for compact chips / icon buttons.
   static const double stepTight = 2;
 
   /// Gold emboss face — the same mid gold as [Palette.gold].
@@ -27,28 +27,9 @@ abstract final class PixelChrome {
   /// Dark wood plate under gold rims.
   static const Color wood = Color(0xFF2A1C12);
 
-  /// Builds a stair-corner rectangle path inset to [rect].
+  /// Square rectangle path for [rect] ([step] ignored).
   static Path steppedPath(Rect rect, {double step = step}) {
-    final maxStep = math.min(rect.width, rect.height) / 3;
-    final s = step.clamp(1.0, maxStep);
-    final l = rect.left;
-    final t = rect.top;
-    final r = rect.right;
-    final b = rect.bottom;
-    return Path()
-      ..moveTo(l + s, t)
-      ..lineTo(r - s, t)
-      ..lineTo(r - s, t + s)
-      ..lineTo(r, t + s)
-      ..lineTo(r, b - s)
-      ..lineTo(r - s, b - s)
-      ..lineTo(r - s, b)
-      ..lineTo(l + s, b)
-      ..lineTo(l + s, b - s)
-      ..lineTo(l, b - s)
-      ..lineTo(l, t + s)
-      ..lineTo(l + s, t + s)
-      ..close();
+    return Path()..addRect(rect);
   }
 }
 
@@ -76,8 +57,11 @@ class PixelSteppedBorder extends OutlinedBorder {
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
     if (side.style == BorderStyle.none) return;
-    final path = getOuterPath(rect, textDirection: textDirection);
-    canvas.drawPath(path, side.toPaint()..style = PaintingStyle.stroke);
+    final paint = side.toPaint()..style = PaintingStyle.stroke;
+    canvas.drawRect(
+      rect.deflate(side.strokeAlign == BorderSide.strokeAlignInside ? side.width / 2 : 0),
+      paint,
+    );
   }
 
   @override
@@ -116,8 +100,7 @@ class _EmbossBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final inset = strokeWidth / 2;
-    final rect = Offset.zero & size;
-    final path = PixelChrome.steppedPath(rect.deflate(inset), step: step);
+    final rect = (Offset.zero & size).deflate(inset);
 
     final shadePaint = Paint()
       ..style = PaintingStyle.stroke
@@ -140,17 +123,16 @@ class _EmbossBorderPainter extends CustomPainter {
     canvas
       ..save()
       ..translate(0.8, 0.8)
-      ..drawPath(path, shadePaint)
+      ..drawRect(rect, shadePaint)
       ..restore()
-      ..drawPath(path, facePaint);
+      ..drawRect(rect, facePaint);
 
     // Subtle top + left lift — muted so borders stay matte, not shiny.
-    final s = step.clamp(1.0, math.min(size.width, size.height) / 3);
     final highlightPath = Path()
-      ..moveTo(inset + s, inset)
-      ..lineTo(size.width - inset - s, inset)
-      ..moveTo(inset, inset + s)
-      ..lineTo(inset, size.height - inset - s);
+      ..moveTo(inset, inset)
+      ..lineTo(size.width - inset, inset)
+      ..moveTo(inset, inset)
+      ..lineTo(inset, size.height - inset);
     canvas.drawPath(highlightPath, light);
   }
 
@@ -203,7 +185,7 @@ class _RivetPainter extends CustomPainter {
 /// Fill material for [PixelPlate] — wood outer boards vs tan inner panels.
 enum PixelPlateMaterial { auto, wood, tan, grain, none }
 
-/// Wood plate with stepped corners and gold emboss rim. Keeps child layout size.
+/// Wood plate with square corners and optional gold emboss rim.
 class PixelPlate extends StatelessWidget {
   const PixelPlate({
     super.key,
@@ -217,6 +199,7 @@ class PixelPlate extends StatelessWidget {
     this.rivets = false,
     this.shadow = true,
     this.clip = true,
+    this.emboss = true,
     this.material = PixelPlateMaterial.auto,
   });
 
@@ -230,6 +213,9 @@ class PixelPlate extends StatelessWidget {
   final bool rivets;
   final bool shadow;
   final bool clip;
+
+  /// When false, skips the gold emboss stroke (buttons / small controls).
+  final bool emboss;
   final PixelPlateMaterial material;
 
   DecorationImage? _texture(BuildContext context) {
@@ -260,26 +246,28 @@ class PixelPlate extends StatelessWidget {
       content = Padding(padding: padding!, child: content);
     }
 
-    Widget plate = CustomPaint(
-      foregroundPainter: _EmbossBorderPainter(
-        step: step,
-        strokeWidth: strokeWidth,
-        selected: selected,
-        face: selected ? chrome.embossFaceSelected : chrome.embossFace,
-        highlight: selected ? chrome.embossHighlightSelected : chrome.embossHighlight,
-        shade: selected ? chrome.embossShadeSelected : chrome.embossShade,
-      ),
-      child: rivets
-          ? CustomPaint(
-              painter: _RivetPainter(step: step, fill: chrome.rivetFill, shade: chrome.rivetShade),
-              child: content,
-            )
-          : content,
-    );
+    Widget plate = rivets
+        ? CustomPaint(
+            painter: _RivetPainter(step: step, fill: chrome.rivetFill, shade: chrome.rivetShade),
+            child: content,
+          )
+        : content;
+    if (emboss) {
+      plate = CustomPaint(
+        foregroundPainter: _EmbossBorderPainter(
+          step: step,
+          strokeWidth: strokeWidth,
+          selected: selected,
+          face: selected ? chrome.embossFaceSelected : chrome.embossFace,
+          highlight: selected ? chrome.embossHighlightSelected : chrome.embossHighlight,
+          shade: selected ? chrome.embossShadeSelected : chrome.embossShade,
+        ),
+        child: plate,
+      );
+    }
 
     if (clip) {
-      plate = ClipPath(
-        clipper: _SteppedClipper(step: step),
+      plate = ClipRect(
         child: DecoratedBox(
           decoration: BoxDecoration(color: fillColor, gradient: gradient, image: _texture(context)),
           child: plate,
@@ -311,19 +299,7 @@ class PixelSteppedClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant PixelSteppedClipper oldClipper) => oldClipper.step != step;
 }
 
-class _SteppedClipper extends CustomClipper<Path> {
-  const _SteppedClipper({required this.step});
-
-  final double step;
-
-  @override
-  Path getClip(Size size) => PixelChrome.steppedPath(Offset.zero & size, step: step);
-
-  @override
-  bool shouldReclip(covariant _SteppedClipper oldClipper) => oldClipper.step != step;
-}
-
-/// Ink-friendly stepped plate for buttons and tappable chips.
+/// Ink-friendly square plate for buttons and tappable chips (no gold emboss).
 class PixelInkPlate extends StatelessWidget {
   const PixelInkPlate({
     super.key,
@@ -354,9 +330,7 @@ class PixelInkPlate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Hit-test shape only. A stroked OutlinedBorder on Material insets the
-    // child and grows intrinsic width, which breaks tight button rows.
-    final border = PixelSteppedBorder(step: step);
+    final border = const RoundedRectangleBorder();
     final plate = Material(
       color: Colors.transparent,
       shape: border,
@@ -374,6 +348,7 @@ class PixelInkPlate extends StatelessWidget {
           strokeWidth: strokeWidth,
           selected: selected,
           shadow: false,
+          emboss: false,
           material: material,
           child: child,
         ),
@@ -381,9 +356,8 @@ class PixelInkPlate extends StatelessWidget {
     );
     if (!shadow) return plate;
     return DecoratedBox(
-      decoration: ShapeDecoration(
-        shape: PixelSteppedBorder(step: step),
-        shadows: const [BoxShadow(offset: Offset(2, 2), color: Color(0x66000000))],
+      decoration: const BoxDecoration(
+        boxShadow: [BoxShadow(offset: Offset(2, 2), color: Color(0x66000000))],
       ),
       child: plate,
     );

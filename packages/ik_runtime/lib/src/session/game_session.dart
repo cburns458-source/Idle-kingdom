@@ -187,7 +187,7 @@ class GameSession {
     final credited = last == null
         ? current
         : creditElapsedPlayTime(current, elapsed, unattendedCapMs(db));
-    final regen = applyNaturalHpRegen(db, credited, elapsed + _hpRegenCarryMs);
+    final regen = applyNaturalHpRegen(db, credited, elapsed + _hpRegenCarryMs, nowMs);
     _hpRegenCarryMs = regen.remainderMs;
     if (regen.save.unattendedProgressAt == isoFromMs(nowMs)) return regen.save;
     return stampUnattendedProgressAt(regen.save, nowMs);

@@ -19,6 +19,7 @@ PresenceInput presenceFromSave(PlayerSave save) {
     skillLevel: skill?.level,
     outfitCosmeticId: save.cosmetics.equipped[outfitCosmeticSlotId],
     mountCosmeticId: save.cosmetics.equipped[petCosmeticSlotId],
+    shareLocationWithFriends: save.settings.shareLocationWithFriends,
   );
 }
 

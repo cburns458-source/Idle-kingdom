@@ -726,6 +726,7 @@ Map<String, Object?> _presenceInputJson(PresenceInput input) => <String, Object?
   'skillLevel': input.skillLevel,
   'outfitCosmeticId': input.outfitCosmeticId,
   'mountCosmeticId': input.mountCosmeticId,
+  'shareLocationWithFriends': input.shareLocationWithFriends,
 };
 
 void _replayGuildBrowse(ParityFixture fixture) {

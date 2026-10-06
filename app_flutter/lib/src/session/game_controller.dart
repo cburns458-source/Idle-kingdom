@@ -581,6 +581,13 @@ class GameController extends ChangeNotifier {
     commit(save.copyWith(settings: save.settings.copyWith(showEatButton: value)));
   }
 
+  bool get shareLocationWithFriends => save.settings.shareLocationWithFriends;
+
+  void setShareLocationWithFriends(bool value) {
+    if (save.settings.shareLocationWithFriends == value) return;
+    commit(save.copyWith(settings: save.settings.copyWith(shareLocationWithFriends: value)));
+  }
+
   bool get potionsPaused => save.settings.potionsPaused;
 
   void setPotionsPaused(bool value) {

@@ -365,6 +365,11 @@ export interface ActivityPresence {
   mountCosmeticId: string | null
   updatedAt: string
   expiresAt: string
+  /**
+   * When false, friends lists omit this player's world location. Nearby at the
+   * same tile still uses [locationId] either way. Defaults to true when absent.
+   */
+  shareLocationWithFriends?: boolean
 }
 
 export interface MultiplayerSession {

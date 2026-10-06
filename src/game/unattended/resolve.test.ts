@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { beginActivitySave, generateNextAction } from '../activity/engine'
+import { playerMaxHp } from '../combat/stats'
 import { prepareDatabase } from '../data/loadDatabase'
 import { beginProductionQueue } from '../production/engine'
 import { addItemToInventory } from '../activity/rewards'
@@ -245,22 +246,24 @@ describe('unattended progression', () => {
   it('regens HP while idle away and skips an unfinished combat round', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
+    const base = createNewSave(launch)
+    const firstHeal = Math.max(1, Math.floor(playerMaxHp(launch, base) / 100))
     const idle = resolveUnattendedProgress(
       launch,
       {
-        ...createNewSave(launch),
+        ...base,
         currentHp: 1,
         unattendedProgressAt: new Date(startedAt).toISOString(),
       },
       startedAt + 60_000,
       () => 0,
     )
-    expect(idle.save.currentHp).toBe(11)
+    expect(idle.save.currentHp).toBe(1 + firstHeal)
 
     const fighting = resolveUnattendedProgress(
       launch,
       {
-        ...createNewSave(launch),
+        ...base,
         currentLocationId: 'LOC-0001',
         currentActivityId: 'ACT-0001',
         currentHp: 1,

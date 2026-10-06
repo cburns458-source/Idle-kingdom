@@ -38,6 +38,7 @@ import { itemHasCapability, LOCKPICK_ITEM_ID, WEAPON_TOOL_SLOT_ID, slotStack } f
 import { BOTANY_SKILL_ID, isBotanySeedItem } from '../timers/locationTimers'
 import { creditLootTracker, creditXpAwards, lootSourceForAction } from '../trackers/trackers'
 import { GATHERING_ACTIONS_STAT } from '../log/milestones'
+import { notePlayerDamaged } from '../vitals/regen'
 import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
 import { applyXp, getSkillProgress } from './xp'
@@ -400,7 +401,7 @@ export function completeGatheringAction(
     const damagePercent = Number(/FailDamagePercent:(\d+)/i.exec(notes)?.[1] ?? 10)
     const damage = Math.max(1, Math.floor((save.maxHp * damagePercent) / 100))
     const nextHp = save.currentHp - damage
-    let next: PlayerSave = { ...save, currentHp: nextHp }
+    let next: PlayerSave = notePlayerDamaged({ ...save, currentHp: nextHp }, nowMs)
     let lockpickBroke = false
     if (requiresLockpick) {
       const rolled = maybeBreakLockpick(db, next, random, thieveryLevel)

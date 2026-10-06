@@ -105,6 +105,7 @@ function normalizeSettings(settings?: Partial<PlayerSettings> | null): PlayerSet
     skippedMixedCombatActivityIds: normalizeStringIds(settings?.skippedMixedCombatActivityIds),
     potionsPaused: settings?.potionsPaused ?? false,
     botanyUseCompost: settings?.botanyUseCompost ?? false,
+    shareLocationWithFriends: settings?.shareLocationWithFriends ?? true,
   }
 }
 
@@ -971,6 +972,23 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
           .combatContinueActivityAfterEat,
       ),
       saveVersion: 59,
+    }),
+  },
+  {
+    fromVersion: 59,
+    toVersion: 60,
+    migrate: (save) => ({
+      ...save,
+      settings: normalizeSettings(save.settings),
+      lastDamagedAt:
+        typeof (save as PlayerSave & { lastDamagedAt?: string | null }).lastDamagedAt === 'string'
+          ? (save as PlayerSave & { lastDamagedAt?: string | null }).lastDamagedAt!
+          : null,
+      hpRegenStreak: Math.max(
+        0,
+        Math.floor(Number((save as PlayerSave & { hpRegenStreak?: number }).hpRegenStreak ?? 0)),
+      ),
+      saveVersion: 60,
     }),
   },
 ]

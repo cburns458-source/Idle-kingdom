@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -236,6 +238,36 @@ class _AccountPanelState extends State<AccountPanel> {
         ),
       ),
       const SizedBox(height: 12),
+      GamePanel(
+        child: Row(
+          children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Share location with friends',
+                    style: TextStyle(fontWeight: FontWeight.w400),
+                  ),
+                  MutedText(
+                    'Let friends see which location you are in. Nearby players at the same tile still see you either way.',
+                  ),
+                ],
+              ),
+            ),
+            GameSwitch(
+              value: widget.controller.shareLocationWithFriends,
+              onChanged: (value) {
+                widget.controller.setShareLocationWithFriends(value);
+                if (net.isSignedIn) {
+                  unawaited(net.publishPresence(widget.controller.save));
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
       GameButton(
         label: 'Sign out',
         tone: GameButtonTone.secondary,
@@ -249,6 +281,7 @@ class _AccountPanelState extends State<AccountPanel> {
         showOnline: true,
         nowMs: widget.controller.session.clock(),
         presence: net.presence,
+        locationName: _locationName,
         onOpen: (contact) => openPlayerProfile(
           context,
           controller: widget.controller,
@@ -264,6 +297,7 @@ class _AccountPanelState extends State<AccountPanel> {
         showOnline: true,
         nowMs: widget.controller.session.clock(),
         presence: net.presence,
+        locationName: _locationName,
         trailing: (contact) => GameTextButton(
           label: 'Accept',
           onPressed: net.busy ? null : () => net.sendFriendRequest(contact.userId),
@@ -283,6 +317,7 @@ class _AccountPanelState extends State<AccountPanel> {
           showOnline: true,
           nowMs: widget.controller.session.clock(),
           presence: net.presence,
+          locationName: _locationName,
           onOpen: (contact) => openPlayerProfile(
             context,
             controller: widget.controller,
@@ -309,6 +344,10 @@ class _AccountPanelState extends State<AccountPanel> {
       ),
     ];
   }
+
+  String _locationName(String locationId) {
+    return widget.controller.indexes.locationsById[locationId]?.displayName ?? locationId;
+  }
 }
 
 class _PeopleFold extends StatefulWidget {
@@ -320,6 +359,7 @@ class _PeopleFold extends StatefulWidget {
     this.showOnline = false,
     this.nowMs = 0,
     this.presence = const <ActivityPresence>[],
+    this.locationName,
     this.trailing,
   });
 
@@ -329,6 +369,7 @@ class _PeopleFold extends StatefulWidget {
   final bool showOnline;
   final num nowMs;
   final List<ActivityPresence> presence;
+  final String Function(String locationId)? locationName;
   final Widget Function(SocialContact contact)? trailing;
   final ValueChanged<SocialContact> onOpen;
 
@@ -385,7 +426,12 @@ class _PeopleFoldState extends State<_PeopleFold> {
       return <Widget>[MutedText(widget.empty)];
     }
     if (widget.showOnline) {
-      final rows = friendListRows(widget.people, presence: widget.presence, nowMs: widget.nowMs);
+      final rows = friendListRows(
+        widget.people,
+        presence: widget.presence,
+        nowMs: widget.nowMs,
+        locationName: widget.locationName,
+      );
       return <Widget>[
         for (final row in rows) ...[
           SocialRow(

@@ -49,7 +49,7 @@ void main() {
     expect(isUnreachableRemoteError('column profiles.name_color does not exist'), isFalse);
   });
 
-  test('friend list rows use guild name and last-online like the roster', () {
+  test('friend list rows use Online/Away/Offline with optional location', () {
     const friend = SocialContact(
       userId: 'usr_1',
       username: 'Vari',
@@ -75,14 +75,68 @@ void main() {
         ),
       ],
       nowMs: DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
+      locationName: (id) => id == 'LOC-0001' ? 'Meadow' : id,
     ).single;
-    expect(online.subtitle, 'Devguild · Online');
+    expect(online.subtitle, 'Devguild · Online · Meadow');
+    expect(online.statusLabel, 'Online');
     expect(online.isOnline, isTrue);
+    expect(online.locationName, 'Meadow');
 
-    final unknown = friendListRows(const <SocialContact>[
+    final away = friendListRows(
+      const <SocialContact>[friend],
+      presence: <ActivityPresence>[
+        ActivityPresence(
+          userId: 'usr_1',
+          username: 'Vari',
+          appearance: defaultPlayerAppearance,
+          guildName: 'Devguild',
+          locationId: 'LOC-0001',
+          currentActivityId: null,
+          skillId: null,
+          skillLevel: null,
+          outfitCosmeticId: null,
+          mountCosmeticId: null,
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          expiresAt: '2026-01-02T00:00:00.000Z',
+        ),
+      ],
+      nowMs: DateTime.utc(2026, 1, 1, 1).millisecondsSinceEpoch,
+      locationName: (_) => 'Meadow',
+    ).single;
+    expect(away.statusLabel, 'Away');
+    expect(away.subtitle, 'Devguild · Away · Meadow');
+
+    final hidden = friendListRows(
+      const <SocialContact>[friend],
+      presence: <ActivityPresence>[
+        ActivityPresence(
+          userId: 'usr_1',
+          username: 'Vari',
+          appearance: defaultPlayerAppearance,
+          guildName: 'Devguild',
+          locationId: 'LOC-0001',
+          currentActivityId: null,
+          skillId: null,
+          skillLevel: null,
+          outfitCosmeticId: null,
+          mountCosmeticId: null,
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          expiresAt: '2026-01-02T00:00:00.000Z',
+          shareLocationWithFriends: false,
+        ),
+      ],
+      nowMs: DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
+      locationName: (_) => 'Meadow',
+    ).single;
+    expect(hidden.subtitle, 'Devguild · Online');
+    expect(hidden.locationId, isNull);
+
+    final offline = friendListRows(const <SocialContact>[
       SocialContact(userId: 'usr_2', username: 'test', appearance: defaultPlayerAppearance),
     ]).single;
-    expect(unknown.subtitle, 'Unknown');
+    expect(offline.subtitle, 'Offline');
+    expect(offline.statusLabel, 'Offline');
+    expect(offline.locationId, isNull);
     expect(friendshipPair('b', 'a'), (userA: 'a', userB: 'b'));
   });
 

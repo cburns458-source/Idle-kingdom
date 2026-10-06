@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 59;
+const int saveVersion = 60;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1157,6 +1157,8 @@ class PlayerSave {
     required this.bossRespawnUntilByEnemyId,
     this.activePotionEffect,
     this.deathPauseUntil,
+    this.lastDamagedAt,
+    required this.hpRegenStreak,
     required this.hasEverDied,
     this.productionRecipeId,
     this.productionQuantityTotal,
@@ -1273,6 +1275,8 @@ class PlayerSave {
       ),
       activePotionEffect: mapOrNull(json['activePotionEffect'], ActivePotionEffect.fromJson),
       deathPauseUntil: json['deathPauseUntil'] as String?,
+      lastDamagedAt: json['lastDamagedAt'] as String?,
+      hpRegenStreak: json['hpRegenStreak'] as num,
       hasEverDied: json['hasEverDied'] as bool,
       productionRecipeId: json['productionRecipeId'] as String?,
       productionQuantityTotal: json['productionQuantityTotal'] as num?,
@@ -1500,6 +1504,14 @@ class PlayerSave {
 
   final String? deathPauseUntil;
 
+  /// ISO timestamp of the last non-PvP damage taken. Natural regen waits 60s
+  /// after this before the next heal trigger.
+  final String? lastDamagedAt;
+
+  /// Consecutive natural-regen triggers since the last damage / full heal.
+  /// Heal amount is 1% max HP × 2^streak each minute.
+  final num hpRegenStreak;
+
   /// Whether this character has ever been beaten in the world. Arena losses do
   /// not count. Once true it stays true, which is what makes the Undying title
   /// worth holding.
@@ -1624,6 +1636,8 @@ class PlayerSave {
       'bossRespawnUntilByEnemyId': bossRespawnUntilByEnemyId,
       'activePotionEffect': activePotionEffect?.toJson(),
       'deathPauseUntil': deathPauseUntil,
+      'lastDamagedAt': lastDamagedAt,
+      'hpRegenStreak': hpRegenStreak,
       'hasEverDied': hasEverDied,
       'productionRecipeId': productionRecipeId,
       'productionQuantityTotal': productionQuantityTotal,
@@ -1713,6 +1727,8 @@ class PlayerSave {
     Map<String, String>? bossRespawnUntilByEnemyId,
     Object? activePotionEffect = _unset,
     Object? deathPauseUntil = _unset,
+    Object? lastDamagedAt = _unset,
+    num? hpRegenStreak,
     bool? hasEverDied,
     Object? productionRecipeId = _unset,
     Object? productionQuantityTotal = _unset,
@@ -1834,6 +1850,8 @@ class PlayerSave {
       deathPauseUntil: deathPauseUntil == _unset
           ? this.deathPauseUntil
           : deathPauseUntil as String?,
+      lastDamagedAt: lastDamagedAt == _unset ? this.lastDamagedAt : lastDamagedAt as String?,
+      hpRegenStreak: hpRegenStreak ?? this.hpRegenStreak,
       hasEverDied: hasEverDied ?? this.hasEverDied,
       productionRecipeId: productionRecipeId == _unset
           ? this.productionRecipeId
@@ -1883,6 +1901,7 @@ class PlayerSettings {
     required this.skippedMixedCombatActivityIds,
     required this.potionsPaused,
     required this.botanyUseCompost,
+    required this.shareLocationWithFriends,
   });
 
   factory PlayerSettings.fromJson(Map<String, Object?> json) {
@@ -1904,6 +1923,7 @@ class PlayerSettings {
       ),
       potionsPaused: json['potionsPaused'] as bool,
       botanyUseCompost: json['botanyUseCompost'] as bool,
+      shareLocationWithFriends: json['shareLocationWithFriends'] as bool,
     );
   }
 
@@ -1946,6 +1966,10 @@ class PlayerSettings {
   /// Cleared automatically when compost runs out.
   final bool botanyUseCompost;
 
+  /// When true, friends can see this character's world location on their
+  /// friends list (Online / Away). Nearby at the same tile still works either way.
+  final bool shareLocationWithFriends;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'soundEnabled': soundEnabled,
@@ -1959,6 +1983,7 @@ class PlayerSettings {
       'skippedMixedCombatActivityIds': skippedMixedCombatActivityIds,
       'potionsPaused': potionsPaused,
       'botanyUseCompost': botanyUseCompost,
+      'shareLocationWithFriends': shareLocationWithFriends,
     };
   }
 
@@ -1974,6 +1999,7 @@ class PlayerSettings {
     List<String>? skippedMixedCombatActivityIds,
     bool? potionsPaused,
     bool? botanyUseCompost,
+    bool? shareLocationWithFriends,
   }) {
     return PlayerSettings(
       soundEnabled: soundEnabled ?? this.soundEnabled,
@@ -1989,6 +2015,7 @@ class PlayerSettings {
           skippedMixedCombatActivityIds ?? this.skippedMixedCombatActivityIds,
       potionsPaused: potionsPaused ?? this.potionsPaused,
       botanyUseCompost: botanyUseCompost ?? this.botanyUseCompost,
+      shareLocationWithFriends: shareLocationWithFriends ?? this.shareLocationWithFriends,
     );
   }
 }

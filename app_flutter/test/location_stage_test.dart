@@ -613,7 +613,8 @@ void main() {
   });
 
   Finder stageNumeral(String numeral) {
-    return find.descendant(of: find.byType(LocationIdlePlayer), matching: find.text(numeral));
+    // Loadout strip lives in the location band for every tile.
+    return find.descendant(of: find.byType(StageLoadoutStrip), matching: find.text(numeral));
   }
 
   testWidgets('location stage presets are tappable heading-colored squares', (tester) async {
