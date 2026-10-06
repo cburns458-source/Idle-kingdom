@@ -221,6 +221,20 @@ class SupabaseTransport implements RemoteTransport {
   }
 
   @override
+  Future<RemoteInvokeResult> rpc(String function, RemoteRow args) {
+    return _retryAuth(() async {
+      final value = await client.rpc<dynamic>(function, params: args);
+      if (value is Map) {
+        return RemoteInvokeResult.ok(Map<String, Object?>.from(value));
+      }
+      if (value is List && value.isNotEmpty && value.first is Map) {
+        return RemoteInvokeResult.ok(Map<String, Object?>.from(value.first as Map));
+      }
+      return RemoteInvokeResult.ok(value == null ? null : <String, Object?>{'value': value});
+    }, (reason) => RemoteInvokeResult.failed(reason));
+  }
+
+  @override
   Future<num?> serverNowMs() {
     return _retryAuth(() async {
       final value = await client.rpc<dynamic>('server_now_ms');

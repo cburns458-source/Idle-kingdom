@@ -26,9 +26,9 @@ npm run dev                 # Serves the Flutter client at http://localhost:5173
 npm install
 npm test                    # The reference rules, and the fixture drift check
 
-# Cloudflare Worker (see docs/deployment.md)
-npx wrangler deploy --env staging   # test.restoriaidle.com
-npx wrangler deploy                 # restoriaidle.com (existing production Worker)
+# Cloudflare Workers (see docs/deployment.md)
+npx wrangler deploy --env staging   # test-launch → test.restoriaidle.com
+npx wrangler deploy                 # main → restoriaidle.com
 ```
 
 ## Notes

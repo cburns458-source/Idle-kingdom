@@ -1,12 +1,12 @@
-name: Deploy Worker (staging)
+name: Deploy Worker (test-launch)
 
-# Separate Worker and hostname from production. Never runs `wrangler deploy`
-# without --env staging, so it cannot publish to restoria-idlerpg /
-# restoriaidle.com.
+# test.restoriaidle.com follows the test-launch branch. Never runs
+# `wrangler deploy` without --env staging, so it cannot publish to
+# restoria-idlerpg / restoriaidle.com.
 
 on:
   push:
-    branches: [staging]
+    branches: [test-launch]
   workflow_dispatch:
 
 concurrency:
@@ -36,10 +36,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Deploy staging Worker
+      - name: Deploy test-launch Worker
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::warning title=Staging Worker deploy skipped::Set the CLOUDFLARE_API_TOKEN repository secret (Workers Scripts Edit + Zone DNS Edit) to deploy restoria-idlerpg-staging."
-            exit 0
+            echo "::error title=Test Worker deploy skipped::Set the CLOUDFLARE_API_TOKEN repository secret (Workers Scripts Edit + Zone DNS Edit) to deploy restoria-idlerpg-staging."
+            exit 1
           fi
           npx --yes wrangler@4.148.0 deploy --env staging

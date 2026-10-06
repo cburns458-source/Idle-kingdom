@@ -96,12 +96,21 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// Whether `profiles` has `username_renamed_at`. Null until a read tells us.
   bool? _profilesHaveUsernameRenamedAt;
 
+  /// Whether presence has `share_location_with_friends`. Null until a write/read
+  /// tells us (migration 026).
+  bool? _presenceHasShareLocationFlag;
+
   String get _publicProfileSelectColumns {
     final parts = <String>[remotePublicProfileBaseColumns];
     if (_profilesHaveChatPrivacy != false) parts.add(remoteChatPrivacyColumns);
     if (_profilesHaveGearPrivacy != false) parts.add(remoteGearProfileColumns);
     if (_profilesHaveNameColor != false) parts.add(remoteNameColorColumn);
     if (_profilesHaveMottoPet != false) parts.add(remoteMottoPetColumns);
+    return parts.join(', ');
+  }
+
+  String get _ownerProfileSelectColumns {
+    final parts = <String>[_publicProfileSelectColumns];
     if (_profilesHaveUsernameRenamedAt != false) parts.add(remoteUsernameRenamedAtColumn);
     return parts.join(', ');
   }
@@ -251,12 +260,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (!isPendingAccountUsername(current.username)) {
       return const ActionResult.ok();
     }
-    final taken = await transport.select(
-      RemoteTables.profiles,
-      columns: 'user_id, username',
-      equals: <String, Object?>{'username': cleaned},
-      limit: 1,
-    );
+    final taken = await _selectProfilesForUsername(cleaned);
     if (taken.ok && taken.single != null && '${taken.single!['user_id']}' != current.userId) {
       return const ActionResult.failed('That name is taken.');
     }
@@ -271,6 +275,31 @@ class RemoteMultiplayerService implements MultiplayerService {
     return const ActionResult.ok();
   }
 
+  Future<RemoteQueryResult> _selectProfilesForUsername(String username) async {
+    final public = await transport.select(
+      RemoteTables.publicProfiles,
+      columns: 'user_id, username',
+      equals: <String, Object?>{'username': username},
+      limit: 1,
+    );
+    if (public.ok || !_looksLikeMissingRelation(public.reason)) return public;
+    return transport.select(
+      RemoteTables.profiles,
+      columns: 'user_id, username',
+      equals: <String, Object?>{'username': username},
+      limit: 1,
+    );
+  }
+
+  Future<RemoteQueryResult> _listUsernamesForRenameCheck() async {
+    final public = await transport.select(
+      RemoteTables.publicProfiles,
+      columns: 'user_id, username',
+    );
+    if (public.ok || !_looksLikeMissingRelation(public.reason)) return public;
+    return transport.select(RemoteTables.profiles, columns: 'user_id, username');
+  }
+
   @override
   Future<ActionResult> renameAccountUsername(String name) async {
     final current = session;
@@ -283,7 +312,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current.username.toLowerCase() == cleaned.toLowerCase()) {
       return const ActionResult.ok();
     }
-    final listed = await transport.select(RemoteTables.profiles, columns: 'user_id, username');
+    final listed = await _listUsernamesForRenameCheck();
     if (listed.ok) {
       final taken = (listed.rows ?? const <RemoteRow>[]).any((row) {
         final userId = '${row['user_id']}';
@@ -384,12 +413,27 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   @override
   Future<MultiplayerProfile?> profile(String userId) async {
+    // Own row: base `profiles` (owner-only fields like rename cooldown).
+    // Everyone else: `public_profiles` view (migration 026), falling back to
+    // the base table when the view is not applied yet.
+    final isOwn = session?.userId == userId;
+    var table = isOwn ? RemoteTables.profiles : RemoteTables.publicProfiles;
+    var columns = isOwn ? _ownerProfileSelectColumns : _publicProfileSelectColumns;
     var result = await transport.select(
-      RemoteTables.profiles,
-      columns: _publicProfileSelectColumns,
+      table,
+      columns: columns,
       equals: <String, Object?>{'user_id': userId},
       limit: 1,
     );
+    if (!result.ok && !isOwn && _looksLikeMissingRelation(result.reason)) {
+      table = RemoteTables.profiles;
+      result = await transport.select(
+        table,
+        columns: columns,
+        equals: <String, Object?>{'user_id': userId},
+        limit: 1,
+      );
+    }
     for (var attempt = 0; attempt < 6 && !result.ok; attempt++) {
       if (remoteMissingChatPrivacyColumn(result.reason)) {
         _profilesHaveChatPrivacy = false;
@@ -403,15 +447,16 @@ class RemoteMultiplayerService implements MultiplayerService {
       } else if (remoteMissingMottoPetColumns(result.reason)) {
         _profilesHaveMottoPet = false;
         _reads.clearIf(remoteMissingMottoPetColumns);
-      } else if (remoteMissingUsernameRenamedAtColumn(result.reason)) {
+      } else if (isOwn && remoteMissingUsernameRenamedAtColumn(result.reason)) {
         _profilesHaveUsernameRenamedAt = false;
         _reads.clearIf(remoteMissingUsernameRenamedAtColumn);
       } else {
         break;
       }
+      columns = isOwn ? _ownerProfileSelectColumns : _publicProfileSelectColumns;
       result = await transport.select(
-        RemoteTables.profiles,
-        columns: _publicProfileSelectColumns,
+        table,
+        columns: columns,
         equals: <String, Object?>{'user_id': userId},
         limit: 1,
       );
@@ -421,7 +466,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       _profilesHaveGearPrivacy ??= true;
       _profilesHaveNameColor ??= true;
       _profilesHaveMottoPet ??= true;
-      _profilesHaveUsernameRenamedAt ??= true;
+      if (isOwn) _profilesHaveUsernameRenamedAt ??= true;
     }
     if (!result.ok) return null;
     final profile = multiplayerProfileFromRemote(result.single);
@@ -429,6 +474,14 @@ class RemoteMultiplayerService implements MultiplayerService {
     final guildName = await _guildNameFor(profile.guildId);
     if (guildName == null) return profile;
     return profile.copyWith(guildName: guildName);
+  }
+
+  bool _looksLikeMissingRelation(String? reason) {
+    if (reason == null) return false;
+    final lower = reason.toLowerCase();
+    return lower.contains('schema cache') ||
+        lower.contains('does not exist') ||
+        lower.contains('could not find the table');
   }
 
   Future<String?> _guildNameFor(String? guildId) async {
@@ -510,7 +563,8 @@ class RemoteMultiplayerService implements MultiplayerService {
       appearance: account.appearance,
       raceId: save?.raceId ?? account.raceId,
       guildName: account.guildName,
-      publicSkills: account.privacyPublicSkills ? skills : const <PublicSkillLine>[],
+      // Skills are never private: leaderboards and public sheets share them.
+      publicSkills: skills,
       publicEquipment: !account.privacyPublicGear
           ? null
           : session?.userId == userId && save != null
@@ -616,6 +670,9 @@ class RemoteMultiplayerService implements MultiplayerService {
     _reenablePublishedProfileColumns();
     final profileRow = <String, Object?>{
       'user_id': current.userId,
+      // An upsert still validates NOT NULL columns on the insert path. Include
+      // the account name so a missing profile can be repaired by save sync.
+      'username': current.username,
       'appearance_json': appearanceJsonForRemote(stamped.appearance, stamped.raceId),
     };
     if (_profilesHaveGearPrivacy != false) {
@@ -1001,11 +1058,24 @@ class RemoteMultiplayerService implements MultiplayerService {
       updatedAt: isoFromMs(now),
       expiresAt: isoFromMs(now + presenceAwayTtlSeconds * 1000),
     );
-    final refused = await transport.upsert(RemoteTables.activityPresence, <RemoteRow>[
-      row,
+    var published = Map<String, Object?>.of(row);
+    if (_presenceHasShareLocationFlag == false) {
+      published.remove('share_location_with_friends');
+    }
+    var refused = await transport.upsert(RemoteTables.activityPresence, <RemoteRow>[
+      published,
     ], onConflict: remotePresenceConflict);
+    if (refused != null && refused.toLowerCase().contains('share_location_with_friends')) {
+      _presenceHasShareLocationFlag = false;
+      published.remove('share_location_with_friends');
+      refused = await transport.upsert(RemoteTables.activityPresence, <RemoteRow>[
+        published,
+      ], onConflict: remotePresenceConflict);
+    } else if (refused == null) {
+      _presenceHasShareLocationFlag ??= true;
+    }
     if (refused != null) return null;
-    return activityPresenceFrom(row);
+    return activityPresenceFrom(published);
   }
 
   @override
@@ -1023,13 +1093,34 @@ class RemoteMultiplayerService implements MultiplayerService {
     String locationId, {
     bool excludeSelf = true,
   }) async {
-    final result = await transport.select(
-      RemoteTables.activityPresence,
-      columns: remotePresenceColumns,
-      equals: <String, Object?>{'location_id': locationId},
-    );
+    final result = await _selectPresence(equals: <String, Object?>{'location_id': locationId});
     if (!result.ok) return const <ActivityPresence>[];
     return _visiblePeers(livePresenceFrom(result.rows!, _nowMs()), excludeSelf);
+  }
+
+  Future<RemoteQueryResult> _selectPresence({
+    Map<String, Object?> equals = const <String, Object?>{},
+  }) async {
+    final columns = _presenceHasShareLocationFlag == false
+        ? remotePresenceColumnsWithoutShareFlag
+        : remotePresenceColumns;
+    final result = await transport.select(
+      RemoteTables.activityPresence,
+      columns: columns,
+      equals: equals,
+    );
+    if (!result.ok &&
+        result.reason != null &&
+        result.reason!.toLowerCase().contains('share_location_with_friends')) {
+      _presenceHasShareLocationFlag = false;
+      return transport.select(
+        RemoteTables.activityPresence,
+        columns: remotePresenceColumnsWithoutShareFlag,
+        equals: equals,
+      );
+    }
+    if (result.ok) _presenceHasShareLocationFlag ??= true;
+    return result;
   }
 
   @override
@@ -1051,10 +1142,7 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   @override
   Future<List<ActivityPresence>> presenceRecords() async {
-    final result = await transport.select(
-      RemoteTables.activityPresence,
-      columns: remotePresenceColumns,
-    );
+    final result = await _selectPresence();
     if (!result.ok) return const <ActivityPresence>[];
     return result.rows!.map(activityPresenceFrom).toList();
   }
@@ -1263,14 +1351,6 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   Future<ActionResult> _acceptHostedFriend(String me, String other) async {
-    await transport.delete(
-      RemoteTables.friendRequests,
-      equals: <String, Object?>{'from_user_id': other, 'to_user_id': me},
-    );
-    await transport.delete(
-      RemoteTables.friendRequests,
-      equals: <String, Object?>{'from_user_id': me, 'to_user_id': other},
-    );
     final pair = friendshipPair(me, other);
     final written = await transport.insert(RemoteTables.friendships, <String, Object?>{
       'user_a': pair.userA,
@@ -1282,6 +1362,16 @@ class RemoteMultiplayerService implements MultiplayerService {
       }
       return ActionResult.failed(written.reason ?? 'Could not accept friend request.');
     }
+    // The insert policy verifies the incoming request, so consume requests only
+    // after the friendship exists.
+    await transport.delete(
+      RemoteTables.friendRequests,
+      equals: <String, Object?>{'from_user_id': other, 'to_user_id': me},
+    );
+    await transport.delete(
+      RemoteTables.friendRequests,
+      equals: <String, Object?>{'from_user_id': me, 'to_user_id': other},
+    );
     return const ActionResult.ok();
   }
 
