@@ -478,6 +478,17 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
+  /// Leaves the name sheet without creating a character. The next visit is
+  /// the auth gate; signing in again re-prompts character creation.
+  ///
+  /// Does not use [run], so Back still works if a sign-up refresh is in flight.
+  Future<void> leaveCharacterCreation() async {
+    if (isSignedIn) {
+      await _releaseUnfinishedSession();
+    }
+    notifyListeners();
+  }
+
   /// Rejoins an already-stored session: keep the seat if we still hold it,
   /// otherwise this device is kicked.
   Future<void> resumeAccount(
@@ -486,25 +497,23 @@ class MultiplayerController extends ChangeNotifier {
   }) {
     return run(() async {
       if (!isSignedIn) return null;
+      // A confirm-email sign-up can persist a session with no JWT. That
+      // session must not reopen the name sheet on the next load.
+      if ((session?.accessToken ?? '').isEmpty) {
+        await _releaseUnfinishedSession();
+        return null;
+      }
       final mine = session?.playSessionId;
       final active = await service.activePlaySessionId();
       final seatLost = mine != null && active != null && mine != active;
       final named = (localHint.characterName?.trim() ?? '').isNotEmpty;
-      if (seatLost) {
-        if (named) {
-          await _kickFromOtherDevice();
-          return remoteSignedInElsewhere;
-        }
-        final playable = await _adoptAccountSave(localHint, adopt);
-        if (playable == null && _cloudLoadProblem != null) {
-          _notice = _cloudLoadProblem;
-        }
-        await refresh(playable ?? localHint, includeMarket: false);
-        if (playable != null) await publishRanking(playable);
-        await refreshMarket();
-        return null;
+      if (seatLost && named) {
+        await _kickFromOtherDevice();
+        return remoteSignedInElsewhere;
       }
-      await service.claimPlaySession();
+      if (!seatLost) {
+        await service.claimPlaySession();
+      }
       final playable = await _adoptAccountSave(localHint, adopt);
       if (playable == null && _cloudLoadProblem != null) {
         _notice = _cloudLoadProblem;
@@ -512,6 +521,11 @@ class MultiplayerController extends ChangeNotifier {
       await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
       await refreshMarket();
+      // Closing the tab mid-create used to restore this unfinished session
+      // and skip the login gate. Drop it; sign-in will ask for a name again.
+      if (!isPlayableSave(playable ?? localHint)) {
+        await _releaseUnfinishedSession();
+      }
       return null;
     });
   }
@@ -652,6 +666,11 @@ class MultiplayerController extends ChangeNotifier {
     _resetSignedOutState();
     onAccountCleared?.call();
     _suppressUploads = false;
+  }
+
+  Future<void> _releaseUnfinishedSession() async {
+    await service.signOut();
+    _clearAccountLocally();
   }
 
   Future<void> _kickFromOtherDevice() async {

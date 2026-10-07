@@ -41,7 +41,7 @@ void main() {
     expect(matchesTesterPasskey('nope'), isFalse);
   });
 
-  test('resume adopts a named cloud save that still needs a race', () async {
+  test('resume drops a named cloud save that still needs a race', () async {
     final transport = FakeTransport();
     final storage = MemorySaveStorage();
     final service = RemoteMultiplayerService(transport: transport, storage: storage);
@@ -63,12 +63,73 @@ void main() {
       clock: () => testStartMs,
     );
     addTearDown(net.dispose);
+    net.onAccountCleared = controller.resetUnsigned;
     await net.resumeAccount(controller.save, adopt: controller.adoptAccountSave);
 
+    expect(net.isSignedIn, isFalse);
+    expect(controller.save.characterName, isNull);
+  });
+
+  test('signing in adopts a named cloud save that still needs a race', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    final service = RemoteMultiplayerService(transport: transport, storage: storage);
+    final signed = await service.signUp('vari@example.com', 'Vari', 'secret');
+    expect(signed.ok, isTrue, reason: signed.reason);
+
+    final cloud = startedCharacter(database)
+        .copyWith(characterName: 'Vari', gold: 777, raceId: null);
+    await transport.upsert(RemoteTables.saves, <RemoteRow>[
+      saveRowFor(service.session!.userId, cloud),
+    ]);
+    await service.signOut();
+
+    final controller = buildController(database);
+    addTearDown(controller.dispose);
+    final net = MultiplayerController(
+      database: database,
+      service: service,
+      storage: storage,
+      clock: () => testStartMs,
+    );
+    addTearDown(net.dispose);
+    await net.signIn(
+      'vari@example.com',
+      'secret',
+      controller.save,
+      adopt: controller.adoptAccountSave,
+    );
+
+    expect(net.isSignedIn, isTrue);
     expect(controller.save.characterName, 'Vari');
     expect(controller.save.gold, 777);
     expect(controller.save.raceId, isNull);
     expect(net.mustRestoreCloudSaveBeforeCreate, isFalse);
+  });
+
+  test('resume signs out a stored session that has no access token', () async {
+    final transport = FakeTransport();
+    final storage = MemorySaveStorage();
+    SessionStore(storage)
+        .write(sessionFromSignUp('usr_empty', 'empty@example.com', 'pending_usr_empty', ''));
+    final service = RemoteMultiplayerService(transport: transport, storage: storage);
+    expect(service.isSignedIn, isTrue);
+    expect(service.session!.accessToken, isEmpty);
+
+    final controller = buildController(database);
+    addTearDown(controller.dispose);
+    final net = MultiplayerController(
+      database: database,
+      service: service,
+      storage: storage,
+      clock: () => testStartMs,
+    );
+    addTearDown(net.dispose);
+    net.onAccountCleared = controller.resetUnsigned;
+    await net.resumeAccount(controller.save, adopt: controller.adoptAccountSave);
+
+    expect(net.isSignedIn, isFalse);
+    expect(service.session, isNull);
   });
 
   testWidgets('a new save asks for an account, then character creation', (tester) async {
@@ -158,6 +219,68 @@ void main() {
     expect(find.text('Name your character'), findsOne);
     expect(controller.save.characterName, isNull);
     expect(isPendingAccountUsername(net.session!.username), isTrue);
+  });
+
+  testWidgets('reloading mid character creation returns to sign-in', (tester) async {
+    final controller = buildController(database);
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    net.onAccountCleared = controller.resetUnsigned;
+    await pumpShell(tester, controller, multiplayer: net);
+
+    await tester.enterText(find.byKey(const Key('auth-email')), 'hero@example.com');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'secret');
+    await tester.tap(find.text('Create account'));
+    await tester.pump();
+    await tester.pump();
+    await dismissSocialAlertIfPresent(tester);
+
+    expect(find.text('Name your character'), findsOne);
+    expect(net.isSignedIn, isTrue);
+
+    await net.resumeAccount(controller.save, adopt: controller.adoptAccountSave);
+    await tester.pump();
+
+    expect(net.isSignedIn, isFalse);
+    expect(find.text('Sign in to play'), findsOne);
+    expect(find.text('Name your character'), findsNothing);
+  });
+
+  testWidgets('backing out of character creation returns to sign-in', (tester) async {
+    final controller = buildController(database);
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpShell(tester, controller, multiplayer: net);
+
+    await tester.enterText(find.byKey(const Key('auth-email')), 'hero@example.com');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'secret');
+    await tester.tap(find.text('Create account'));
+    await tester.pump();
+    await tester.pump();
+    await dismissSocialAlertIfPresent(tester);
+
+    expect(find.text('Name your character'), findsOne);
+
+    await tester.tap(find.text('Back'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(net.isSignedIn, isFalse);
+    expect(find.text('Sign in to play'), findsOne);
+    expect(find.text('Name your character'), findsNothing);
+
+    await tester.enterText(find.byKey(const Key('auth-email')), 'hero@example.com');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'secret');
+    await tester.tap(find.text('Sign in'));
+    await tester.pump();
+    await tester.pump();
+    await dismissSocialAlertIfPresent(tester);
+
+    expect(find.text('Sign in to play'), findsNothing);
+    expect(find.text('Name your character'), findsOne);
+    expect(net.isSignedIn, isTrue);
   });
 
   testWidgets('a typed URL on a fresh device asks for the tester passkey', (tester) async {
@@ -382,15 +505,8 @@ void main() {
     expect(firstNet.isSignedIn, isTrue);
 
     await firstNet.resumeAccount(firstGame.save, adopt: firstGame.adoptAccountSave);
-    expect(firstNet.isSignedIn, isTrue);
-    expect(firstNet.notice, isNot(remoteSignedInElsewhere));
-
-    firstNet.startPolling(() => firstGame.save);
-    await tester.pump(MultiplayerController.pollInterval);
-    await tester.pump();
     expect(firstNet.isSignedIn, isFalse);
-    expect(firstNet.notice, remoteSignedInElsewhere);
-    firstNet.stopPolling();
+    expect(firstNet.notice, isNot(remoteSignedInElsewhere));
     secondNet.stopPolling();
   });
 

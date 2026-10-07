@@ -103,6 +103,13 @@ class _NewCharacterSheetState extends State<NewCharacterSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: _submitting ? null : () => widget.multiplayer.leaveCharacterCreation(),
+                  child: const Text('Back'),
+                ),
+              ),
               const Text(
                 'Name your character',
                 style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),

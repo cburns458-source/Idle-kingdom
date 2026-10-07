@@ -138,14 +138,20 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   /// XP / Loot panel docked left of the desktop menu when side rails are up.
   TrackerKind? _railTracker;
 
-  /// Last auth gate we rebuilt the shell for. Multiplayer polls must not
-  /// rebuild LocationView — chat / nearby / HUD badge listen on their own.
+  /// Last usable session we rebuilt the shell for. Empty-token and signed-out
+  /// both count as the auth gate. Multiplayer polls must not rebuild
+  /// LocationView — chat / nearby / HUD badge listen on their own.
   bool? _shellSignedIn;
 
   GameController get controller => widget.controller;
   MultiplayerController get multiplayer => widget.multiplayer;
 
-  bool get _needsAuth => !multiplayer.isSignedIn;
+  bool get _needsAuth {
+    if (!multiplayer.isSignedIn) return true;
+    // A stored account with no JWT is not signed in. Showing the name sheet
+    // here is what trapped testers after a confirm-email sign-up.
+    return (multiplayer.session?.accessToken ?? '').isEmpty;
+  }
 
   bool get _needsCharacter {
     final save = controller.save;
@@ -165,7 +171,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
     multiplayer.onAccountCleared ??= controller.resetUnsigned;
     multiplayer.addListener(_onMultiplayerChanged);
-    _shellSignedIn = multiplayer.isSignedIn;
+    _shellSignedIn = !_needsAuth;
     controller.onSaveCommitted = (before, after) {
       unawaited(multiplayer.announceGuildSkillMilestones(before, after, controller.db));
     };
@@ -186,7 +192,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     _syncPlayLoop();
     // Auth gate flips the whole frame (sign-in sheet vs play). Everything else
     // multiplayer paints listens on its own ListenableBuilder.
-    final signedIn = multiplayer.isSignedIn;
+    final signedIn = !_needsAuth;
     if (_shellSignedIn != signedIn) {
       _shellSignedIn = signedIn;
       setState(() {});

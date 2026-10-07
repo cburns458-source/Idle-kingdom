@@ -56,6 +56,10 @@ leaves it on. Sign-up then creates the user with no session, character
 creation hits `profiles` RLS, and `updateUser` reports "Auth session
 missing". Live already has Confirm email off.
 
+Closing the tab or tapping Back on the name sheet signs that unfinished
+session out. The next visit is the login gate; signing in asks for a
+name again.
+
 Live keeps `https://restoriaidle.com`.
 
 ## Migrations
