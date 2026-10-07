@@ -176,12 +176,16 @@ Migration `20261007040000_player_save_shadow.sql` is applied to the
 ```
 
 `sync` advances the hosted save to now with the TS rules and a server RNG.
-`command` applies one named intent the same way. Both write with a
-compare-and-swap on `version`. A bazaar write bumps `version` so the next
-command cannot overwrite it. A play-session mismatch is refused.
+`command` first catches that copy up to now, then applies one named intent.
+Both write with a compare-and-swap on `version`. A bazaar write bumps
+`version` so the next command cannot overwrite it. A play-session mismatch
+is refused.
 
-The client adopts the returned save. Direct insert/update/delete on
-`player_saves` is revoked; `SELECT` of the caller's own row stays.
+The client adopts a `command` result. Periodic `sync` keeps the hosted row
+current and does not replace the live tick — adopting that snapshot was
+rewinding the action bar and putting sold items back. Direct
+insert/update/delete on `player_saves` is revoked; `SELECT` of the caller's
+own row stays.
 
 Migration `20261007050000_player_save_authority.sql` is applied to the
 **test** project with this wave. Live waits for ship.

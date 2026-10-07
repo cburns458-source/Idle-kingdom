@@ -232,6 +232,10 @@ function applyExistingCommand(
 ): GameCommandResult {
   const nowMs = options.nowMs
   const random = options.random
+  // Catch the hosted copy up before the intent so a sell/bank sees loot the
+  // client already gathered, and the returned action clock is "now".
+  save = advanceSession(db, resolveUnattendedProgress(db, save, nowMs, random).save, nowMs, random)
+    .save
 
   switch (command) {
     case 'set_meta':

@@ -646,10 +646,16 @@ class MultiplayerController extends ChangeNotifier {
           if (result.ok && result.save != null) {
             _adoptHosted(result.save!);
           } else if (!result.ok && remoteMissingGameFunction(result.reason)) {
-            await flushAccountSave();
-          } else if (!result.ok && result.reason != null) {
-            _notice = result.reason;
-            notifyListeners();
+            await _flushAccountSave(enqueue: false);
+          } else if (!result.ok) {
+            final pulled = await service.pullSave();
+            if (pulled.ok && pulled.save != null) {
+              _adoptHosted(pulled.save!);
+            }
+            if (result.reason != null) {
+              _notice = result.reason;
+              notifyListeners();
+            }
           }
           if (!done.isCompleted) done.complete(result);
         })
@@ -680,16 +686,31 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   /// Advances the hosted save to now. Discrete mutations go through commands.
-  Future<void> flushAccountSave([PlayerSave? save]) async {
+  ///
+  /// Does not replace the live client. A throttled sync is a pull of the last
+  /// hosted snapshot, which is seconds behind the local tick; adopting it
+  /// rewinds the action bar and puts sold items back in the bag.
+  Future<void> flushAccountSave([PlayerSave? save]) => _flushAccountSave(save: save);
+
+  Future<void> _flushAccountSave({PlayerSave? save, bool enqueue = true}) async {
     _accountSaveTimer?.cancel();
     _accountSaveTimer = null;
     final outgoing = save ?? _pendingAccountSave;
     _pendingAccountSave = null;
     if (!isSignedIn || _suppressUploads || !isPlayableSave(outgoing)) return;
-    final result = await service.pushSave(db, outgoing!, force: false);
-    if (result.ok && result.save != null && result.source == CloudSyncSource.downloaded) {
-      _adoptHosted(result.save!);
+    if (!enqueue) {
+      await service.pushSave(db, outgoing!, force: false);
+      return;
     }
+    final done = Completer<void>();
+    _commandTail = _commandTail
+        .then((_) async {
+          if (!isSignedIn || _suppressUploads) return;
+          await service.pushSave(db, outgoing!, force: false);
+        })
+        .catchError((Object _) {})
+        .whenComplete(done.complete);
+    return done.future;
   }
 
   /// Publishes a just-created character immediately.

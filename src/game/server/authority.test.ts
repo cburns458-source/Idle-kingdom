@@ -56,6 +56,44 @@ describe('phase 2 authority', () => {
     expect(started.save.currentActivityId).toBe('ACT-0012')
   })
 
+  it('gathers then sells from the hosted copy after time passes', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = { ...createNewSave(launch, START_MS), currentLocationId: 'LOC-0001' }
+    const started = applyGameCommand(rawDatabase, {
+      command: 'start_activity',
+      args: { activityId: 'ACT-0021' },
+      save,
+      nowMs: START_MS,
+      random: () => 0.1,
+    })
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+
+    const later = START_MS + 30_000
+    const caughtUp = applyGameCommand(rawDatabase, {
+      command: 'set_meta',
+      args: {},
+      save: started.save,
+      nowMs: later,
+      random: () => 0.1,
+    })
+    expect(caughtUp.ok).toBe(true)
+    if (!caughtUp.ok) return
+    expect(caughtUp.save.inventory.length).toBeGreaterThan(0)
+
+    const sold = applyGameCommand(rawDatabase, {
+      command: 'sell_inventory',
+      args: { indexes: caughtUp.save.inventory.map((_, index) => index) },
+      save: caughtUp.save,
+      nowMs: later,
+      random: () => 0.1,
+    })
+    expect(sold.ok).toBe(true)
+    if (!sold.ok) return
+    expect(sold.save.gold).toBeGreaterThan(caughtUp.save.gold)
+    expect(sold.save.inventory).toHaveLength(0)
+  })
+
   it('refuses an unknown command', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const refused = applyGameCommand(rawDatabase, {
