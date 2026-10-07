@@ -174,8 +174,9 @@ class FakeTransport implements RemoteTransport {
 
   /// The PostgREST line a missing column produces, so a retry can match it.
   String? _missingColumnRefusal(String table, String named) {
+    final asked = named.split(',').map((part) => part.trim()).toSet();
     for (final column in missingColumns) {
-      if (named.contains(column)) return 'column $table.$column does not exist';
+      if (asked.contains(column)) return 'column $table.$column does not exist';
     }
     return null;
   }

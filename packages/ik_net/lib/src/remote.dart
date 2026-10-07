@@ -199,6 +199,17 @@ bool remoteMissingMottoPetColumns(String? reason) => remoteMissingProfileColumn(
 bool remoteMissingUsernameRenamedAtColumn(String? reason) =>
     remoteMissingProfileColumn(reason, const <String>[remoteUsernameRenamedAtColumn]);
 
+/// True when [reason] is a project that has not added `version` / `rng_state`.
+bool remoteMissingSaveAuthorityColumns(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('does not exist') && !lower.contains('schema cache')) return false;
+  return lower.contains('player_saves.version') ||
+      lower.contains('player_saves.rng_state') ||
+      lower.contains('column version') ||
+      lower.contains('column rng_state');
+}
+
 /// True when [reason] is the hosted project missing migration 015.
 bool remoteMissingPvpSnapshotsTable(String? reason) {
   if (reason == null || reason.isEmpty) return false;
@@ -241,6 +252,7 @@ const int remoteDirectMessageLimit = 80;
 const int remoteUsernameMaxLength = 24;
 
 const String remoteSaveColumns = 'save_version, updated_at, payload, version, rng_state';
+const String remoteSaveColumnsWithoutAuthority = 'save_version, updated_at, payload';
 const String remoteChatColumns =
     'id, channel_key, user_id, username, body, created_at, '
     'guild_tag, rank_icon, guest';

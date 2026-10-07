@@ -514,6 +514,22 @@ void main() {
     expect((await service.pullSave()).reason, 'No cloud save for this account yet.');
   });
 
+  test('loads a hosted save when version columns are not on the project yet', () async {
+    final transport = FakeTransport()
+      ..missingColumns.addAll(const <String>['version', 'rng_state']);
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Vari', gold: 12);
+    await transport.upsert(RemoteTables.saves, <RemoteRow>[
+      saveRowFor(service.session!.userId, save, playSessionId: service.session!.playSessionId),
+    ]);
+
+    final pulled = await service.pullSave();
+    expect(pulled.ok, isTrue, reason: pulled.reason);
+    expect(pulled.save!.characterName, 'Vari');
+    expect(pulled.save!.gold, 12);
+  });
+
   test('a second sign-in takes the seat and the first cannot write', () async {
     final project = FakeTransport(database: _database());
     final first = await _signedIn(project, MemorySaveStorage());

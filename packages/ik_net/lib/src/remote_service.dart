@@ -399,10 +399,12 @@ class RemoteMultiplayerService implements MultiplayerService {
     // A new row needs a username. An existing row must keep whatever it has —
     // the seat claim must not turn an email-prefix session into a public name
     // before character create.
-    final seated = held == null
-        ? profilePlaySessionRow(next.copyWith(username: pendingAccountUsername(next.userId)))
-        : <String, Object?>{'user_id': next.userId, 'active_play_session_id': next.playSessionId};
-    await transport.upsert(RemoteTables.profiles, <RemoteRow>[seated]);
+    // Postgres evaluates INSERT NOT NULL before ON CONFLICT UPDATE, so a seat
+    // claim that omits username fails on live even when the row already exists.
+    final seated = profilePlaySessionRow(
+      next.copyWith(username: held ?? pendingAccountUsername(next.userId)),
+    );
+    await transport.upsert(RemoteTables.profiles, <RemoteRow>[seated], onConflict: 'user_id');
     // The column is missing until the play-session migration is applied; play
     // still works, but this device cannot kick or be kicked.
     return const ActionResult.ok();
@@ -643,12 +645,20 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   /// Distinguishes a missing row from a refused read so pull can say which.
   Future<({RemoteSaveRow? row, String? readError})> _querySaveRow(String userId) async {
-    final result = await transport.select(
+    var result = await transport.select(
       RemoteTables.saves,
       columns: remoteSaveColumns,
       equals: <String, Object?>{'user_id': userId},
       limit: 1,
     );
+    if (!result.ok && remoteMissingSaveAuthorityColumns(result.reason)) {
+      result = await transport.select(
+        RemoteTables.saves,
+        columns: remoteSaveColumnsWithoutAuthority,
+        equals: <String, Object?>{'user_id': userId},
+        limit: 1,
+      );
+    }
     if (!result.ok) {
       return (row: null, readError: result.reason ?? 'Could not read cloud save.');
     }
