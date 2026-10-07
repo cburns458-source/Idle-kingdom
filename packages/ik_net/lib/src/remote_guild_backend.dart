@@ -265,7 +265,11 @@ class RemoteGuildBackend {
       return CreateGuildResult.failed(seated.reason!);
     }
 
-    await _noteOwnGuild(current.userId, guild.id);
+    final tagged = await _noteOwnGuild(current.userId, guild.id);
+    if (tagged != null) {
+      await transport.delete(RemoteTables.guilds, equals: <String, Object?>{'id': guild.id});
+      return CreateGuildResult.failed(friendlyRemoteError(tagged));
+    }
     await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
       guildHallRowFor(GuildHallState.fresh(guild.id)),
     ]);
@@ -305,7 +309,8 @@ class RemoteGuildBackend {
       );
       if (!seated.ok) return ApplyToGuildResult.failed(seated.reason!);
       await _clearRequests(guildId, current.userId);
-      await _noteOwnGuild(current.userId, guildId);
+      final tagged = await _noteOwnGuild(current.userId, guildId);
+      if (tagged != null) return ApplyToGuildResult.failed(friendlyRemoteError(tagged));
       return const ApplyToGuildResult.ok(joined: true);
     }
 
@@ -417,7 +422,8 @@ class RemoteGuildBackend {
         equals: <String, Object?>{'id': guild.id},
       );
       if (refused != null) return ActionResult.failed(refused);
-      await _noteOwnGuild(current.userId, null);
+      final tagged = await _noteOwnGuild(current.userId, null);
+      if (tagged != null) return ActionResult.failed(friendlyRemoteError(tagged));
       return const ActionResult.ok();
     }
 
@@ -426,7 +432,8 @@ class RemoteGuildBackend {
       equals: <String, Object?>{'user_id': current.userId},
     );
     if (refused != null) return ActionResult.failed(refused);
-    await _noteOwnGuild(current.userId, null);
+    final tagged = await _noteOwnGuild(current.userId, null);
+    if (tagged != null) return ActionResult.failed(friendlyRemoteError(tagged));
     return const ActionResult.ok();
   }
 
@@ -829,8 +836,8 @@ class RemoteGuildBackend {
 
   /// Records the guild on this player's profile, which is what a leaderboard
   /// row joins to for a guild name.
-  Future<void> _noteOwnGuild(String userId, String? guildId) async {
-    await transport.update(
+  Future<String?> _noteOwnGuild(String userId, String? guildId) {
+    return transport.update(
       RemoteTables.profiles,
       <String, Object?>{'guild_id': guildId, 'updated_at': nowIso()},
       equals: <String, Object?>{'user_id': userId},

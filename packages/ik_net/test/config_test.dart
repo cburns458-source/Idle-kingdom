@@ -140,6 +140,19 @@ void main() {
     expect(friendshipPair('b', 'a'), (userA: 'a', userB: 'b'));
   });
 
+  test('maps profile-guard trigger text out of a PostgREST wrapper', () {
+    expect(
+      friendlyRemoteError('ERROR:  P0001: You can rename again in 7 days.'),
+      'You can rename again in 7 days.',
+    );
+    expect(
+      friendlyRemoteError('Could not update: $remoteProfileGuildTagMismatch'),
+      remoteProfileGuildTagMismatch,
+    );
+    expect(friendlyRemoteError(remoteUsernameRenamedAtLocked), remoteUsernameRenamedAtLocked);
+    expect(friendlyRemoteError(remoteGuildLeaderIdLocked), remoteGuildLeaderIdLocked);
+  });
+
   test('explains a skipped guild skill-milestone migration without the SQL column name', () {
     expect(
       friendlyRemoteError('column guilds.skill_milestone_settings does not exist'),

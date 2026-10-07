@@ -446,10 +446,19 @@ class FakeTransport implements RemoteTransport {
       final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
       for (final row in rows) {
         final at = stored.indexWhere((existing) => key.every((k) => existing[k] == row[k]));
+        final next = at >= 0 ? <String, Object?>{...stored[at], ...row} : <String, Object?>{...row};
+        if (table == RemoteTables.profiles) {
+          final blocked = _profileGuardRefusal(at >= 0 ? stored[at] : null, next);
+          if (blocked != null) return blocked;
+        }
+        if (table == RemoteTables.guilds) {
+          final blocked = _guildLeaderGuardRefusal(at >= 0 ? stored[at] : null, next);
+          if (blocked != null) return blocked;
+        }
         if (at >= 0) {
-          stored[at] = <String, Object?>{...stored[at], ...row};
+          stored[at] = next;
         } else {
-          stored.add(<String, Object?>{...row});
+          stored.add(next);
         }
       }
       return null;
@@ -469,6 +478,10 @@ class FakeTransport implements RemoteTransport {
     final key = _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
     final written = <String, Object?>{..._defaults(table), ...row};
+    if (table == RemoteTables.profiles) {
+      final blocked = _profileGuardRefusal(null, written);
+      if (blocked != null) return RemoteQueryResult.failed(blocked);
+    }
     if (stored.any((existing) => key.every((k) => existing[k] == written[k]))) {
       return RemoteQueryResult.failed(duplicateKeyRefusal);
     }
@@ -500,7 +513,16 @@ class FakeTransport implements RemoteTransport {
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
     for (var i = 0; i < stored.length; i++) {
       if (!equals.entries.every((filter) => stored[i][filter.key] == filter.value)) continue;
-      stored[i] = <String, Object?>{...stored[i], ...row};
+      final next = <String, Object?>{...stored[i], ...row};
+      if (table == RemoteTables.profiles) {
+        final blocked = _profileGuardRefusal(stored[i], next);
+        if (blocked != null) return blocked;
+      }
+      if (table == RemoteTables.guilds) {
+        final blocked = _guildLeaderGuardRefusal(stored[i], next);
+        if (blocked != null) return blocked;
+      }
+      stored[i] = next;
     }
     return null;
   }
@@ -517,6 +539,58 @@ class FakeTransport implements RemoteTransport {
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
     stored.removeWhere((row) => equals.entries.every((filter) => row[filter.key] == filter.value));
     return null;
+  }
+
+  num _clockMs() => nowMs?.call() ?? DateTime.parse(startIso).millisecondsSinceEpoch;
+
+  String _clockIso() =>
+      DateTime.fromMillisecondsSinceEpoch(_clockMs().round(), isUtc: true).toIso8601String();
+
+  /// Matches the SQL trigger on profiles: guild tag and weekly rename cooldown.
+  String? _profileGuardRefusal(RemoteRow? old, RemoteRow next) {
+    final guildId = next['guild_id'];
+    if (guildId != null) {
+      final userId = next['user_id'];
+      final members = tables[RemoteTables.guildMembers] ?? const <RemoteRow>[];
+      final member = members.any((row) => row['user_id'] == userId && row['guild_id'] == guildId);
+      if (!member) return remoteProfileGuildTagMismatch;
+    }
+
+    if (old == null) {
+      if (next[remoteUsernameRenamedAtColumn] != null) {
+        return remoteUsernameRenamedAtLocked;
+      }
+      return null;
+    }
+
+    final oldName = '${old['username'] ?? ''}';
+    final newName = '${next['username'] ?? ''}';
+    final oldStamp = old[remoteUsernameRenamedAtColumn];
+    final newStamp = next[remoteUsernameRenamedAtColumn];
+    if (newName == oldName) {
+      if (newStamp != oldStamp) return remoteUsernameRenamedAtLocked;
+      return null;
+    }
+
+    if (isPendingAccountUsername(oldName)) {
+      next[remoteUsernameRenamedAtColumn] = oldStamp;
+      return null;
+    }
+
+    if (oldStamp is String && oldStamp.isNotEmpty) {
+      final remaining = usernameRenameRemainingMs(oldStamp, _clockMs());
+      if (remaining != null) return usernameRenameCooldownReason(remaining);
+    }
+    next[remoteUsernameRenamedAtColumn] = _clockIso();
+    return null;
+  }
+
+  /// Matches the SQL trigger: only the current leader may write leader_id.
+  String? _guildLeaderGuardRefusal(RemoteRow? old, RemoteRow next) {
+    if (old == null) return null;
+    if (old['leader_id'] == next['leader_id']) return null;
+    if (_current?.userId == old['leader_id']) return null;
+    return remoteGuildLeaderIdLocked;
   }
 
   /// Matches the SQL trigger: a kicked device may not write the account save.

@@ -348,7 +348,7 @@ class RemoteMultiplayerService implements MultiplayerService {
           refused.toLowerCase().contains('unique')) {
         return const ActionResult.failed('That name is taken.');
       }
-      return ActionResult.failed(refused);
+      return ActionResult.failed(friendlyRemoteError(refused));
     }
     await transport.updateAuthUsername(cleaned);
     _local.backend.upsertProfile(current.userId, username: cleaned, usernameRenamedAt: stamp);

@@ -116,6 +116,17 @@ String friendlyRemoteError(String message) {
   if (remoteMissingGuildSkillMilestoneColumn(message)) {
     return remoteGuildSkillMilestonesUnavailable;
   }
+  final renameAgain = RegExp(r'You can rename again[^.]*\.').firstMatch(message);
+  if (renameAgain != null) return renameAgain.group(0)!;
+  if (message.contains(remoteProfileGuildTagMismatch)) {
+    return remoteProfileGuildTagMismatch;
+  }
+  if (message.contains(remoteUsernameRenamedAtLocked)) {
+    return remoteUsernameRenamedAtLocked;
+  }
+  if (message.contains(remoteGuildLeaderIdLocked)) {
+    return remoteGuildLeaderIdLocked;
+  }
   return message;
 }
 
@@ -265,6 +276,15 @@ const String remoteUsernameRenamedAtColumn = 'username_renamed_at';
 
 /// How long after a rename before the account may take another public name.
 const int usernameRenameCooldownMs = 7 * 24 * 60 * 60 * 1000;
+
+/// Server trigger copy when profiles.guild_id is not this player's membership.
+const String remoteProfileGuildTagMismatch = 'Guild tag must match your membership.';
+
+/// Server trigger copy when a client writes username_renamed_at itself.
+const String remoteUsernameRenamedAtLocked = 'Cannot change username_renamed_at.';
+
+/// Server trigger copy when someone other than the leader writes leader_id.
+const String remoteGuildLeaderIdLocked = 'Only the guild leader can change leader_id.';
 
 /// Remaining cooldown, or null when a rename is allowed now.
 int? usernameRenameRemainingMs(String? renamedAtIso, num nowMs) {
