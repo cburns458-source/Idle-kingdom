@@ -7,6 +7,9 @@ import type { PlayerSave } from '../save/types'
 import { advanceSession } from '../session/tick'
 import { resolveUnattendedProgress } from '../unattended/resolve'
 
+export { compareShadowSaves, runPhase1Shadow, SHADOW_PLAY_TIME_SLACK_MS } from './shadow'
+export type { Phase1ShadowResult, ShadowFieldDiff } from './shadow'
+
 const MEADOW_LOCATION_ID = 'LOC-0009'
 const MEADOW_ACTIVITY_ID = 'ACT-0012'
 const START_MS = Date.parse('2026-01-01T00:00:00.000Z')

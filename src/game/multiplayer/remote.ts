@@ -38,6 +38,9 @@ export const REMOTE_TABLES = {
 /** The edge function that writes chat, since a client may not insert directly. */
 export const REMOTE_SEND_CHAT_FUNCTION = 'send-chat'
 
+/** Wave G game function. Phase 1 `shadow` only; the client does not adopt saves. */
+export const REMOTE_GAME_FUNCTION = 'game'
+
 export const REMOTE_NOT_CONFIGURED = 'Supabase is not configured.'
 export const REMOTE_SIGN_UP_FAILED = 'Sign-up failed.'
 export const REMOTE_SIGN_IN_FAILED = 'Sign-in failed.'

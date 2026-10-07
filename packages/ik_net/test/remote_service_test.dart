@@ -246,6 +246,29 @@ void main() {
     expect(pulled.source, CloudSyncSource.downloaded);
   });
 
+  test('shadows the first upload and then waits the interval', () async {
+    var nowMs = _nowMs;
+    final transport = FakeTransport(nowMs: () => nowMs);
+    final service = RemoteMultiplayerService(
+      transport: transport,
+      storage: MemorySaveStorage(),
+      ports: LocalBackendPorts(nowMs: () => nowMs, newId: (prefix) => '${prefix}_${nowMs.toInt()}'),
+    );
+    expect((await service.signUp('hero@example.com', 'Hero', 'secret')).ok, isTrue);
+    final db = _database();
+    final save = createNewSave(db, nowMs).copyWith(characterName: 'Hero');
+
+    expect((await service.pushSave(db, save)).ok, isTrue);
+    expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 1);
+
+    expect((await service.pushSave(db, save.copyWith(gold: 2))).ok, isTrue);
+    expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 1);
+
+    nowMs += remoteShadowMinIntervalMs;
+    expect((await service.pushSave(db, save.copyWith(gold: 3))).ok, isTrue);
+    expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 2);
+  });
+
   test('save upload repairs a missing profile with its required username', () async {
     final transport = FakeTransport();
     final service = await _signedIn(transport, MemorySaveStorage());

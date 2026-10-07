@@ -668,6 +668,9 @@ class FakeTransport implements RemoteTransport {
           body: body,
         );
       }
+      if (function == remoteGameFunction) {
+        return RemoteInvokeResult.ok(<String, Object?>{'ok': true, 'phase': 1});
+      }
       if (function != remoteSendChatFunction) {
         return RemoteInvokeResult.failed('No such function: $function');
       }

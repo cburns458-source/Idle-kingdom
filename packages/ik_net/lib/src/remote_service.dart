@@ -71,6 +71,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   final LocalMultiplayerService _local;
   late final RemoteGuildBackend _guilds;
   bool _seatClaimedOnServer = false;
+  num _lastShadowMs = 0;
 
   /// The guild this account was last seen in, so a ranking update can refresh
   /// its own roster row without a read to find out where to write it.
@@ -695,7 +696,21 @@ class RemoteMultiplayerService implements MultiplayerService {
     profileRow[remoteMottoColumn] = stamped.motto;
     profileRow[remotePetCosmeticIdColumn] = stamped.cosmetics.equipped[petCosmeticSlotId];
     await _upsertProfileRow(profileRow);
+    await _shadowAfterUpload();
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
+  }
+
+  /// Phase 1: ask the server to advance its copy. Failures are ignored so an
+  /// upload still succeeds and the player never adopts a server save.
+  Future<void> _shadowAfterUpload() async {
+    final now = _nowMs();
+    if (_lastShadowMs > 0 && now - _lastShadowMs < remoteShadowMinIntervalMs) {
+      return;
+    }
+    _lastShadowMs = now;
+    try {
+      await transport.invoke(remoteGameFunction, <String, Object?>{'action': 'shadow'});
+    } catch (_) {}
   }
 
   @override

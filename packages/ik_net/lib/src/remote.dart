@@ -61,6 +61,13 @@ const String remoteSendChatFunction = 'send-chat';
 /// routines behind them are reachable by a signed-in client.
 const String remoteBazaarMarketFunction = 'bazaar';
 
+/// Wave G game function. Phase 1 `shadow` only; the client does not adopt saves.
+const String remoteGameFunction = 'game';
+
+/// How often a device asks the server to shadow an upload. Matches "every few
+/// minutes" so play does not spend the free-plan quota on the 8s save debounce.
+const num remoteShadowMinIntervalMs = 120000;
+
 const String remoteNotConfigured = 'Supabase is not configured.';
 const String remoteSignUpFailed = 'Sign-up failed.';
 const String remoteSignUpNeedsSession =

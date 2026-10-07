@@ -1,8 +1,9 @@
 # Server-authoritative backend
 
 The server owns every save. This page is the design for that, and the
-phases that get us there. Phase 0 is the only part that is live on
-`test-launch` today.
+phases that get us there. Phase 1 (shadow) is live on `test-launch`. Players still upload saves;
+the server advances a copy beside those uploads and logs diffs. Phase 2
+is not started.
 
 Combat and gathering still resolve on the device. That Master Prompt line
 stays until phase 4 ships.
@@ -31,7 +32,7 @@ Every hosted save gains three fields the client may not invent:
 | server RNG seed + counter | Loot and pool rolls come from this stream so a client cannot reroll. |
 
 Until phase 2, those columns are not required and clients still upload
-saves. Phase 0 does not add them.
+saves. Phase 1 stores the server copy on `player_save_shadows` instead.
 
 ## One `game` edge function
 
@@ -40,7 +41,8 @@ only. Later this function is the only writer of `player_saves`.
 
 | Action | Job |
 | --- | --- |
-| `prototype` | Phase 0. Times `advanceSession` and the unattended resolver on **copies** of saves. Does not write. |
+| `prototype` | Phase 0. Times `advanceSession` and the unattended resolver on **copies** of saves. Does not write `player_saves`. |
+| `shadow` | Phase 1. Replays the previous upload with the TS rules, advances the server's own copy, and logs diffs. Does not write `player_saves` and the client does not adopt the result. |
 | `sync` | Phase 2. Advance from `advanced_to` to now with `advanceSession` and the unattended resolver. |
 | `command` | Phase 2. Every place the Flutter session mutates a save becomes a named command, validated with the TS rules, written with a version check in one SQL call. |
 
@@ -52,7 +54,8 @@ because the server holds both the save and the guild ledger. The Bazaar
 can move into this function later.
 
 `sync` and `command` answer `501` until phase 2. Do not call them from
-the client yet.
+the client yet. A signed-in upload already calls `shadow` in the
+background, at most once every two minutes.
 
 ## How the client behaves
 
@@ -85,12 +88,14 @@ eight-hour gathering window fits.
 
 ## Phases
 
-0. **Prototype (this wave).** Bundle `src/game` into `game`. Time
+0. **Prototype.** Bundle `src/game` into `game`. Time
    `advanceSession` and `resolveUnattendedProgress` on synthetic copies
    and, when present, a copy of the caller's hosted save. No writes. No
    client switchover.
-1. **Shadow.** The server advances its own copy beside client uploads
-   and logs differences. Players see no change.
+1. **Shadow (this wave).** The server advances its own copy beside
+   client uploads and logs differences on `player_save_shadow_diffs`.
+   Players see no change. Loot/gold diffs are expected until phase 2
+   holds a server RNG; location, activity, and play time are the signal.
 2. **Commands live.** `sync` and `command` (including the economy
    commands) write. Clients switch over. Direct client insert/update on
    `player_saves` is revoked. Local-only play is removed.
@@ -100,7 +105,7 @@ eight-hour gathering window fits.
 4. **Docs.** Replace the Master Prompt line that says combat and
    gathering stay client-side.
 
-Stop for owner review after phase 0. Do not start phase 2 until that
+Stop for owner review after phase 1. Do not start phase 2 until that
 review.
 
 ## Phase 0 contract
@@ -123,3 +128,34 @@ does **not** write `player_saves`.
 Apply no migration for phase 0. The test project receives the function
 on the next `test-launch` deploy. Live does not, until this revision is
 shipped to `main`.
+
+## Phase 1 contract
+
+After a successful cloud save upload, the signed-in client invokes:
+
+```json
+{ "action": "shadow" }
+```
+
+The function reads `player_saves` itself. It never writes that table.
+
+- First call for an account: store the upload as the shadow baseline and
+  log an `initialized` row.
+- Later calls: advance the previous upload and the server-owned copy to
+  now, log `replay` (interval) and `own` (accumulated) diffs, then store
+  the latest upload as the next replay baseline.
+- Calls less than 90 seconds after the last real row are skipped.
+
+The client ignores the response. Play does not snap back.
+
+Query diffs on the test project:
+
+```sql
+select created_at, initialized, matched, own_matched, diff_count, diffs
+from public.player_save_shadow_diffs
+order by created_at desc
+limit 20;
+```
+
+Migration `20261007040000_player_save_shadow.sql` is applied to the
+**test** project with this wave. Live waits for ship.

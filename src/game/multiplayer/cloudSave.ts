@@ -6,6 +6,7 @@ import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
 import {
   cloudSaveRecordFrom,
   isRemoteSaveNewer,
+  REMOTE_GAME_FUNCTION,
   REMOTE_NOT_CONFIGURED,
   REMOTE_SAVE_COLUMNS,
   REMOTE_SAVE_CONFLICT,
@@ -78,6 +79,9 @@ export async function pushCloudSave(
     .from(REMOTE_TABLES.saves)
     .upsert(saveRowFor(session.userId, stamped))
   if (error) return { ok: false, reason: error.message }
+  void client.functions.invoke(REMOTE_GAME_FUNCTION, { body: { action: 'shadow' } }).catch(() => {
+    /* Phase 1 must not fail the upload or change play. */
+  })
   // Publish motto / pet onto the profile row so other players can see them
   // (RLS blocks reading another account's cloud save).
   const profileRow: RemoteRow = {
