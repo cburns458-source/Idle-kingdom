@@ -372,6 +372,7 @@ void main() {
     final guildId = created.guild!.id;
 
     final save = createNewSave(database, _nowMs).copyWith(characterName: 'Rowan of Oak');
+    expect((await seedHostedSave(leader, transport, save)).ok, isTrue);
     expect((await leader.submitLeaderboard(database, save)).ok, isTrue);
 
     final roster = await leader.guildMembers(guildId);

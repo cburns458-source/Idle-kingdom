@@ -94,6 +94,22 @@ describe('phase 2 authority', () => {
     expect(sold.save.inventory).toHaveLength(0)
   })
 
+  it('keeps the hosted save on ranking and PvP publish commands', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = { ...createNewSave(launch, START_MS), gold: 12 }
+    for (const command of ['submit_leaderboard', 'save_pvp_equipment'] as const) {
+      const result = applyGameCommand(rawDatabase, {
+        command,
+        save,
+        nowMs: START_MS,
+        random: () => 0,
+      })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.save.gold).toBe(12)
+    }
+  })
+
   it('refuses an unknown command', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const refused = applyGameCommand(rawDatabase, {

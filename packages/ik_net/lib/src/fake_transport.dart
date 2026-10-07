@@ -6,14 +6,15 @@ import 'fake_exchange.dart';
 import 'guild_rules.dart';
 import 'remote.dart';
 import 'remote_guilds.dart';
-import 'remote_service.dart';
 import 'remote_transport.dart';
 import 'results.dart';
+import 'service.dart';
+import 'snapshots.dart';
 import 'types.dart';
 
 /// Writes a hosted save the way the game function would, then loads its version.
 Future<CloudSyncResult> seedHostedSave(
-  RemoteMultiplayerService service,
+  MultiplayerService service,
   FakeTransport transport,
   PlayerSave save,
 ) async {
@@ -767,6 +768,7 @@ class FakeTransport implements RemoteTransport {
     final version = ((row['version'] as num?) ?? 1).toInt() + 1;
     row['version'] = version;
     row['updated_at'] = stamp();
+    _publishPhase3(caller.userId, caller.username ?? 'Adventurer', body, row);
     return RemoteInvokeResult.ok(<String, Object?>{
       'ok': true,
       'phase': 2,
@@ -775,6 +777,87 @@ class FakeTransport implements RemoteTransport {
       'version': version,
       'rngState': row['rng_state'] ?? 1,
     });
+  }
+
+  void _publishPhase3(String userId, String username, RemoteRow body, RemoteRow saveRow) {
+    final db = database;
+    final payload = saveRow['payload'];
+    if (db == null || payload is! Map) return;
+    PlayerSave save;
+    try {
+      save = parseSave(Map<String, Object?>.from(payload), _clockMs());
+    } on Object {
+      return;
+    }
+    final command = body['command'] as String? ?? '';
+    _overlayPublishedPvp(userId, username, save);
+    if (command == 'submit_leaderboard') {
+      final nowIso = isoFromMs(_clockMs());
+      final rows = leaderboardRowsFor(userId, buildLeaderboardSnapshot(db, save), nowIso);
+      final boards = tables[RemoteTables.leaderboard]!;
+      for (final row in rows) {
+        boards.removeWhere(
+          (existing) =>
+              existing['user_id'] == row['user_id'] && existing['board_key'] == row['board_key'],
+        );
+        boards.add(row);
+      }
+      final profiles = tables[RemoteTables.profiles]!;
+      final at = profiles.indexWhere((row) => row['user_id'] == userId);
+      if (at >= 0) {
+        final patch = <String, Object?>{
+          ...profiles[at],
+          'appearance_json': appearanceJsonForRemote(save.appearance, save.raceId),
+        };
+        if (!missingColumns.contains(remoteEquipmentJsonColumn)) {
+          patch[remoteEquipmentJsonColumn] = publicEquipmentFromSave(save)
+              .map((row) => row.toJson())
+              .toList();
+        }
+        if (!missingColumns.contains(remoteMottoColumn)) {
+          patch[remoteMottoColumn] = save.motto;
+        }
+        if (!missingColumns.contains(remotePetCosmeticIdColumn)) {
+          patch[remotePetCosmeticIdColumn] = save.cosmetics.equipped[petCosmeticSlotId];
+        }
+        profiles[at] = patch;
+      }
+    }
+    if (command == 'save_pvp_equipment') {
+      final snapshots = tables[RemoteTables.pvpSnapshots]!;
+      snapshots.removeWhere((row) => row['user_id'] == userId);
+      snapshots.add(
+        pvpSnapshotRowFor(
+          session: MultiplayerSession(
+            userId: userId,
+            email: '',
+            username: username,
+            accessToken: '',
+          ),
+          save: save,
+          updatedAt: isoFromMs(_clockMs()),
+        ),
+      );
+    }
+  }
+
+  void _overlayPublishedPvp(String userId, String username, PlayerSave live) {
+    final snapshots = tables[RemoteTables.pvpSnapshots]!;
+    final at = snapshots.indexWhere((row) => row['user_id'] == userId);
+    if (at < 0) return;
+    final existing = pvpSnapshotPayloadFrom(snapshots[at]);
+    if (existing == null) return;
+    PlayerSave snapshot;
+    try {
+      snapshot = parseSave(existing, _clockMs());
+    } on Object {
+      return;
+    }
+    snapshots[at] = pvpSnapshotRowFor(
+      session: MultiplayerSession(userId: userId, email: '', username: username, accessToken: ''),
+      save: overlayPvpLiveStats(snapshot, live),
+      updatedAt: isoFromMs(_clockMs()),
+    );
   }
 
   RemoteInvokeResult? _applyGuildHallCommand(String userId, RemoteRow body, RemoteRow saveRow) {
@@ -820,6 +903,7 @@ class FakeTransport implements RemoteTransport {
     final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;
     saveRow['version'] = version;
     saveRow['updated_at'] = stamp();
+    _publishPhase3(userId, _current?.username ?? 'Adventurer', body, saveRow);
     return RemoteInvokeResult.ok(<String, Object?>{
       'ok': true,
       'phase': 2,

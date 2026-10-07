@@ -254,6 +254,7 @@ void main() {
     final net = buildRemoteMultiplayer(database, transport: transport);
     addTearDown(net.dispose);
     expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    expect((await seedHostedSave(net.service, transport, controller.save)).ok, isTrue);
     await net.service.submitLeaderboard(database.launch, controller.save);
 
     await transport.upsert(RemoteTables.profiles, <RemoteRow>[

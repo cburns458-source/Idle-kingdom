@@ -109,6 +109,8 @@ export type GameCommandName =
   | 'guild_pay_hall_debt'
   | 'guild_donate_hall_item'
   | 'guild_withdraw_hall_item'
+  | 'submit_leaderboard'
+  | 'save_pvp_equipment'
 
 export type GameCommandArgs = Record<string, unknown>
 
@@ -507,6 +509,9 @@ function applyExistingCommand(
       const withdrawn = withdrawFromGuildHall(options.hall, save, index, quantity)
       return withdrawn.ok ? ok(withdrawn.save, { hall: withdrawn.hall }) : failed(withdrawn.reason)
     }
+    case 'submit_leaderboard':
+    case 'save_pvp_equipment':
+      return ok(save)
     default:
       return failed('Unknown command.')
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -73,6 +75,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   num _lastGameSyncMs = 0;
   int _hostedSaveVersion = 0;
   int _hostedRngState = 1;
+  Future<void> _gameTail = Future<void>.value();
 
   /// The guild this account was last seen in, so a ranking update can refresh
   /// its own roster row without a read to find out where to write it.
@@ -693,14 +696,9 @@ class RemoteMultiplayerService implements MultiplayerService {
       'user_id': current.userId,
       'username': current.username,
       'appearance_json': appearanceJsonForRemote(hosted.appearance, hosted.raceId),
+      remoteMottoColumn: hosted.motto,
+      remotePetCosmeticIdColumn: hosted.cosmetics.equipped[petCosmeticSlotId],
     };
-    if (_profilesHaveGearPrivacy != false) {
-      profileRow[remoteEquipmentJsonColumn] = publicEquipmentFromSave(hosted)
-          .map((row) => row.toJson())
-          .toList();
-    }
-    profileRow[remoteMottoColumn] = hosted.motto;
-    profileRow[remotePetCosmeticIdColumn] = hosted.cosmetics.equipped[petCosmeticSlotId];
     await _upsertProfileRow(profileRow);
     return result;
   }
@@ -756,7 +754,23 @@ class RemoteMultiplayerService implements MultiplayerService {
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
   }
 
-  Future<CloudSyncResult> _invokeGame(Map<String, Object?> body, {bool force = false}) async {
+  Future<CloudSyncResult> _invokeGame(Map<String, Object?> body, {bool force = false}) {
+    final done = Completer<CloudSyncResult>();
+    _gameTail = _gameTail
+        .then((_) async {
+          final result = await _invokeGameUnlocked(body, force: force);
+          if (!done.isCompleted) done.complete(result);
+        })
+        .catchError((Object error) {
+          if (!done.isCompleted) done.complete(CloudSyncResult.failed(error.toString()));
+        });
+    return done.future;
+  }
+
+  Future<CloudSyncResult> _invokeGameUnlocked(
+    Map<String, Object?> body, {
+    bool force = false,
+  }) async {
     if (session == null) {
       return const CloudSyncResult.failed('Sign in to sync cloud saves.');
     }
@@ -861,6 +875,49 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current == null) {
       return const ActionResult.failed('Sign in to submit leaderboard scores.');
     }
+    final published = await gameCommand('submit_leaderboard', <String, Object?>{
+      if (publishNameColor) 'publishNameColor': true,
+      'nameColor': ?nameColor,
+    });
+    if (!published.ok && remoteMissingGameFunction(published.reason)) {
+      return _submitLeaderboardClient(
+        db,
+        save,
+        nameColor: nameColor,
+        publishNameColor: publishNameColor,
+      );
+    }
+    if (!published.ok) {
+      return ActionResult.failed(published.reason ?? 'Could not submit ranking.');
+    }
+    _reenablePublishedProfileColumns();
+    final profileRow = <String, Object?>{
+      'user_id': current.userId,
+      'username': current.username,
+      'appearance_json': appearanceJsonForRemote(save.appearance, save.raceId),
+      remoteMottoColumn: save.motto,
+      remotePetCosmeticIdColumn: save.cosmetics.equipped[petCosmeticSlotId],
+    };
+    if (publishNameColor) {
+      profileRow[remoteNameColorColumn] = normalizeNameColorHex(nameColor);
+    }
+    await _upsertProfileRow(profileRow);
+    final guildId = _guildIdSeen;
+    if (guildId != null) await _guilds.refreshOwnMemberRow(guildId, current, save);
+    return const ActionResult.ok();
+  }
+
+  /// Pre-phase-3 write, used when live has not deployed `game` yet.
+  Future<ActionResult> _submitLeaderboardClient(
+    GameDatabase db,
+    PlayerSave save, {
+    String? nameColor,
+    bool publishNameColor = false,
+  }) async {
+    final current = session;
+    if (current == null) {
+      return const ActionResult.failed('Sign in to submit leaderboard scores.');
+    }
     final snapshot = buildLeaderboardSnapshot(db, save);
     final refused = await transport.upsert(
       RemoteTables.leaderboard,
@@ -884,9 +941,6 @@ class RemoteMultiplayerService implements MultiplayerService {
     profileRow[remoteMottoColumn] = save.motto;
     profileRow[remotePetCosmeticIdColumn] = save.cosmetics.equipped[petCosmeticSlotId];
     await _upsertProfileRow(profileRow);
-    // A roster lists each member's name, look, and level, and only that member
-    // may write their own row, so the submit that refreshes the boards refreshes
-    // the roster too.
     final guildId = _guildIdSeen;
     if (guildId != null) await _guilds.refreshOwnMemberRow(guildId, current, save);
     await _refreshPvpLiveStats(save);
@@ -1769,6 +1823,22 @@ class RemoteMultiplayerService implements MultiplayerService {
       return const ActionResult.failed('Sign in to save PvP equipment.');
     }
     if (!await _ensurePvpSnapshotsHosted()) return _local.savePvpEquipment(save);
+    final published = await gameCommand('save_pvp_equipment');
+    if (!published.ok && remoteMissingGameFunction(published.reason)) {
+      return _savePvpEquipmentClient(save);
+    }
+    if (!published.ok) {
+      if (_markPvpSnapshotsUnhosted(published.reason)) return _local.savePvpEquipment(save);
+      return ActionResult.failed(published.reason ?? 'Could not save PvP equipment.');
+    }
+    return const ActionResult.ok();
+  }
+
+  Future<ActionResult> _savePvpEquipmentClient(PlayerSave save) async {
+    final current = session;
+    if (current == null) {
+      return const ActionResult.failed('Sign in to save PvP equipment.');
+    }
     final refused = await transport.upsert(RemoteTables.pvpSnapshots, <RemoteRow>[
       pvpSnapshotRowFor(session: current, save: save, updatedAt: isoFromMs(_nowMs())),
     ], onConflict: remotePvpSnapshotConflict);
@@ -1926,25 +1996,8 @@ class RemoteMultiplayerService implements MultiplayerService {
       _local.backend.refreshPvpLiveStats(current.userId, live);
       return;
     }
-    final result = await transport.select(
-      RemoteTables.pvpSnapshots,
-      columns: remotePvpSnapshotColumns,
-      equals: <String, Object?>{'user_id': current.userId},
-      limit: 1,
-    );
-    if (!result.ok) {
-      _markPvpSnapshotsUnhosted(result.reason);
-      return;
-    }
-    final existing = _parsePvpSnapshotPayload(pvpSnapshotPayloadFrom(result.single));
-    if (existing == null) return;
-    await transport.upsert(RemoteTables.pvpSnapshots, <RemoteRow>[
-      pvpSnapshotRowFor(
-        session: current,
-        save: overlayPvpLiveStats(existing, live),
-        updatedAt: isoFromMs(_nowMs()),
-      ),
-    ], onConflict: remotePvpSnapshotConflict);
+    // Hosted overlays happen in `game` after sync/command. Direct upserts are
+    // revoked in phase 3.
   }
 
   PlayerSave? _parsePvpSnapshotPayload(Map<String, Object?>? payload) {

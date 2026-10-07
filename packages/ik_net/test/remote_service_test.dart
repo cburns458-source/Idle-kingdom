@@ -40,6 +40,23 @@ Future<RemoteMultiplayerService> _signedIn(
   return service;
 }
 
+Future<ActionResult> _rank(
+  RemoteMultiplayerService service,
+  FakeTransport transport,
+  GameDatabase db,
+  PlayerSave save, {
+  String? nameColor,
+  bool publishNameColor = false,
+}) async {
+  expect((await seedHostedSave(service, transport, save)).ok, isTrue);
+  return service.submitLeaderboard(
+    db,
+    save,
+    nameColor: nameColor,
+    publishNameColor: publishNameColor,
+  );
+}
+
 void main() {
   test('signs an account up and starts its profile row', () async {
     final transport = FakeTransport();
@@ -313,7 +330,7 @@ void main() {
     expect(transport.tables[RemoteTables.profiles]!.single.containsKey('name_color'), isFalse);
     final rows = transport.tables[RemoteTables.leaderboard]!;
     expect(rows, isNotEmpty);
-    expect(rows.every((row) => row['updated_at'] == isoFromMs(_nowMs)), isTrue);
+    expect(rows.map((row) => row['updated_at']).toSet(), hasLength(1));
     expect(
       transport.tables[RemoteTables.profiles]!.single['appearance_json'],
       save.appearance.toJson(),
@@ -778,8 +795,7 @@ void main() {
           skill.skillId == combatSkillId ? skill.copyWith(level: 18, xp: 4000) : skill,
       ],
     );
-    await hero.pushSave(db, save, force: true);
-    await hero.submitLeaderboard(db, save);
+    await _rank(hero, transport, db, save);
 
     final rival = _service(transport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
@@ -807,7 +823,7 @@ void main() {
     final hero = await _signedIn(transport, MemorySaveStorage());
     final db = _database();
     final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
-    await hero.submitLeaderboard(db, save);
+    await _rank(hero, transport, db, save);
 
     final rival = _service(transport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
@@ -833,7 +849,7 @@ void main() {
     final hero = await _signedIn(transport, MemorySaveStorage());
     final db = _database();
     final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
-    await hero.submitLeaderboard(db, save);
+    await _rank(hero, transport, db, save);
     transport.tables[RemoteTables.profiles]!.firstWhere(
       (row) => row['user_id'] == hero.session!.userId,
     )['privacy_public_skills'] = false;
@@ -856,7 +872,7 @@ void main() {
       'ITEM-0110',
       1,
     );
-    expect((await hero.submitLeaderboard(db, save)).ok, isTrue);
+    expect((await _rank(hero, transport, db, save)).ok, isTrue);
 
     final rival = _service(transport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
@@ -887,7 +903,7 @@ void main() {
     final hero = await _signedIn(transport, MemorySaveStorage());
     final db = _database();
     final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
-    await hero.submitLeaderboard(db, save);
+    await _rank(hero, transport, db, save);
     await hero.pushSave(db, save, force: true);
     expect(await hero.setPrivacyPublicGear(false), isNotNull);
 
@@ -905,7 +921,7 @@ void main() {
     final hero = await _signedIn(transport, MemorySaveStorage());
     final db = _database();
     final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
-    await hero.submitLeaderboard(db, save);
+    await _rank(hero, transport, db, save);
 
     final rival = _service(transport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
@@ -931,7 +947,7 @@ void main() {
     final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
     final userId = service.session!.userId;
 
-    await service.submitLeaderboard(db, save, nameColor: '#d4af37', publishNameColor: true);
+    await _rank(service, transport, db, save, nameColor: '#d4af37', publishNameColor: true);
     expect(transport.tables[RemoteTables.profiles]!.single['name_color'], '#D4AF37');
     expect((await service.profile(userId))?.nameColor, '#D4AF37');
     expect(await service.publishedNameColors(<String>[userId]), <String, String>{
@@ -948,7 +964,7 @@ void main() {
       _nowMs,
     ).copyWith(characterName: 'Vari', motto: 'Keep the watch.');
     expect(
-      (await hero.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+      (await _rank(hero, transport, db, save, nameColor: '#FA3', publishNameColor: true)).ok,
       isTrue,
     );
 
@@ -975,7 +991,7 @@ void main() {
       transport.failOnce['upsert:profiles'] =
           "Could not find the 'name_color' column of 'profiles' in the schema cache";
       expect(
-        (await service.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+        (await _rank(service, transport, db, save, nameColor: '#FA3', publishNameColor: true)).ok,
         isTrue,
       );
       expect(transport.tables[RemoteTables.profiles]!.single['motto'], 'Keep the watch.');
@@ -1000,7 +1016,7 @@ void main() {
       _nowMs,
     ).copyWith(characterName: 'Vari', motto: 'Keep the watch.');
     expect(
-      (await hero.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+      (await _rank(hero, transport, db, save, nameColor: '#FA3', publishNameColor: true)).ok,
       isTrue,
     );
     expect(transport.tables[RemoteTables.profiles]!.single.containsKey('name_color'), isFalse);
@@ -1029,7 +1045,7 @@ void main() {
     final db = _database();
     final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
     expect(
-      (await hero.submitLeaderboard(db, save, nameColor: '#FA3', publishNameColor: true)).ok,
+      (await _rank(hero, transport, db, save, nameColor: '#FA3', publishNameColor: true)).ok,
       isTrue,
     );
 
@@ -1255,6 +1271,7 @@ void main() {
     expect(await hero.readOpponentSave(rival.session!.userId), isNull);
 
     final rivalLoadout = equipStackToSlot(rivalSave, weaponToolSlotId, 'ITEM-0128', 1);
+    expect((await seedHostedSave(rival, transport, rivalLoadout)).ok, isTrue);
     expect((await rival.savePvpEquipment(rivalLoadout)).ok, isTrue);
     expect(await rival.ownPvpSnapshot(), isNotNull);
 

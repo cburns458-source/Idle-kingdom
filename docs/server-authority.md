@@ -102,14 +102,14 @@ eight-hour gathering window fits.
    economy commands) write. Clients switch over. Direct client
    insert/update on `player_saves` is revoked. Local-only play is
    removed.
-3. **Rankings.** Server writes `leaderboard_snapshots`, `pvp_snapshots`,
-   and public profile equipment. Client writes to those tables are
-   revoked.
+3. **Rankings (this wave).** Server writes `leaderboard_snapshots`,
+   `pvp_snapshots`, and public profile equipment. Client writes to those
+   tables are revoked.
 4. **Docs.** Replace the Master Prompt line that says combat and
    gathering stay client-side.
 
-Stop for owner review after phase 2. Do not start phase 3 until that
-review.
+Stop for owner review after phase 3. Do not start phase 4, D, E, F, or H
+until that review.
 
 ## Phase 0 contract
 
@@ -191,4 +191,28 @@ items back. Direct insert/update/delete on `player_saves` is revoked; `SELECT`
 of the caller's own row stays.
 
 Migration `20261007050000_player_save_authority.sql` is applied to the
+**test** project with this wave. Live waits for ship.
+
+## Phase 3 contract
+
+`submit_leaderboard` and `save_pvp_equipment` are named commands. The
+function derives board rows, public `equipment_json`, and the PvP
+snapshot from the hosted save. A crafted client cannot invent a rank or
+a published loadout. Periodic `sync` and other commands overlay live
+combat stats onto an already-published PvP row; they do not create one.
+
+Direct client insert/update/delete on `leaderboard_snapshots` and
+`pvp_snapshots` is revoked. `SELECT` stays (boards remain public; PvP
+rows stay signed-in readable). A trigger refuses authenticated writes to
+`profiles.equipment_json`.
+
+```json
+{ "action": "command", "command": "submit_leaderboard", "version": 3 }
+```
+
+```json
+{ "action": "command", "command": "save_pvp_equipment", "version": 3 }
+```
+
+Migration `20261007060000_player_save_rankings.sql` is applied to the
 **test** project with this wave. Live waits for ship.

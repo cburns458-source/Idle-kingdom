@@ -15,6 +15,13 @@ export {
   runPhase2Sync,
 } from './authority'
 export type { GameCommandResult, Phase2SyncResult } from './authority'
+export {
+  overlayPublishedPvpSnapshot,
+  pvpSnapshotRowForSave,
+  rankingBoardRowsFor,
+  rankingProfilePatch,
+} from './rankings'
+export { prepareDatabase } from '../data/loadDatabase'
 
 const MEADOW_LOCATION_ID = 'LOC-0009'
 const MEADOW_ACTIVITY_ID = 'ACT-0012'

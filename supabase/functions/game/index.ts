@@ -1,6 +1,7 @@
 // Server-authoritative game function.
 //
-// Phase 2: `sync` and `command` write `player_saves` with a version check.
+// Phase 3: `submit_leaderboard` and `save_pvp_equipment` write ranking rows
+// from the hosted save. Phase 2 `sync` / `command` still write `player_saves`.
 // Phase 1 `shadow` and phase 0 `prototype` stay available.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -9,6 +10,11 @@ import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 import {
   applyGameCommand,
   createTrackedMulberry32,
+  overlayPublishedPvpSnapshot,
+  prepareDatabase,
+  pvpSnapshotRowForSave,
+  rankingBoardRowsFor,
+  rankingProfilePatch,
   runPhase0Prototype,
   runPhase1Shadow,
   runPhase2Sync,
@@ -291,6 +297,8 @@ async function handleSync(admin: Client, userId: string, payload: GameBody): Pro
       nowMs,
     })
     if (!written.ok) return written.response
+    const published = await publishPhase3Rows(admin, rawDatabase, userId, result.save, nowMs)
+    if (!published.ok) return published.response
     return json({
       ok: true,
       phase: 2,
@@ -343,6 +351,8 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
           nowMs,
         })
     if (!written.ok) return written.response
+    const published = await publishPhase3Rows(admin, rawDatabase, userId, result.save, nowMs, command)
+    if (!published.ok) return published.response
     if (result.hall && hallContext) {
       const { error: hallError } = await admin
         .from('guild_halls')
@@ -371,6 +381,60 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     const message = error instanceof Error ? error.message : 'Command failed.'
     return json({ error: message, phase: 2 }, 400)
   }
+}
+
+async function publishPhase3Rows(
+  admin: Client,
+  rawDatabase: unknown,
+  userId: string,
+  save: unknown,
+  nowMs: number,
+  command?: string,
+): Promise<{ ok: true } | { ok: false; response: Response }> {
+  const nowIso = new Date(nowMs).toISOString()
+  const { launch } = prepareDatabase(rawDatabase)
+  const hosted = save as Parameters<typeof rankingProfilePatch>[0]
+  const overlaid = await refreshPublishedPvp(admin, userId, hosted, nowMs, nowIso)
+  if (!overlaid.ok) return overlaid
+  if (command === 'submit_leaderboard') {
+    const rows = rankingBoardRowsFor(launch, hosted, userId, nowIso)
+    const { error: boardError } = await admin.from('leaderboard_snapshots').upsert(rows, {
+      onConflict: 'user_id,board_key',
+    })
+    if (boardError) return { ok: false, response: json({ error: boardError.message, phase: 3 }, 500) }
+    const { error: profileError } = await admin
+      .from('profiles')
+      .update(rankingProfilePatch(hosted))
+      .eq('user_id', userId)
+    if (profileError) return { ok: false, response: json({ error: profileError.message, phase: 3 }, 500) }
+  }
+  if (command === 'save_pvp_equipment') {
+    const { data: profile } = await admin.from('profiles').select('username').eq('user_id', userId).maybeSingle()
+    const username = typeof profile?.username === 'string' ? profile.username : 'Adventurer'
+    const row = pvpSnapshotRowForSave({ userId, username, save: hosted, nowIso })
+    const { error: pvpError } = await admin.from('pvp_snapshots').upsert(row, { onConflict: 'user_id' })
+    if (pvpError) return { ok: false, response: json({ error: pvpError.message, phase: 3 }, 500) }
+  }
+  return { ok: true }
+}
+
+async function refreshPublishedPvp(
+  admin: Client,
+  userId: string,
+  live: Parameters<typeof rankingProfilePatch>[0],
+  nowMs: number,
+  nowIso: string,
+): Promise<{ ok: true } | { ok: false; response: Response }> {
+  const { data, error } = await admin.from('pvp_snapshots').select('payload, username').eq('user_id', userId).maybeSingle()
+  if (error) return { ok: false, response: json({ error: error.message, phase: 3 }, 500) }
+  if (!data) return { ok: true }
+  const merged = overlayPublishedPvpSnapshot(data.payload, live, nowMs)
+  if (!merged) return { ok: true }
+  const username = typeof data.username === 'string' ? data.username : 'Adventurer'
+  const row = pvpSnapshotRowForSave({ userId, username, save: merged, nowIso })
+  const { error: writeError } = await admin.from('pvp_snapshots').upsert(row, { onConflict: 'user_id' })
+  if (writeError) return { ok: false, response: json({ error: writeError.message, phase: 3 }, 500) }
+  return { ok: true }
 }
 
 async function writeHostedSave(
