@@ -264,7 +264,8 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current.username.toLowerCase() == cleaned.toLowerCase()) {
       return const ActionResult.ok();
     }
-    if (!isPendingAccountUsername(current.username)) {
+    final held = await _profileUsername(current.userId);
+    if (held != null && !isUnclaimedAccountUsername(held)) {
       return const ActionResult.ok();
     }
     final taken = await _selectProfilesForUsername(cleaned);
@@ -313,7 +314,10 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current == null) return const ActionResult.failed('Sign in required.');
     final cleaned = remoteUsername(name);
     if (cleaned.length < 2) return const ActionResult.failed('Enter a name to continue.');
-    if (isPendingAccountUsername(current.username)) {
+    final held = await profile(current.userId);
+    if (isUnclaimedAccountUsername(current.username) ||
+        held == null ||
+        isUnclaimedAccountUsername(held.username)) {
       return claimAccountUsername(cleaned);
     }
     if (current.username.toLowerCase() == cleaned.toLowerCase()) {
@@ -331,8 +335,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       if (taken) return const ActionResult.failed('That name is taken.');
     }
     final nowMs = await authoritativeNowMs();
-    final mine = await profile(current.userId);
-    final remaining = usernameRenameRemainingMs(mine?.usernameRenamedAt, nowMs);
+    final remaining = usernameRenameRemainingMs(held.usernameRenamedAt, nowMs);
     if (remaining != null) {
       return ActionResult.failed(usernameRenameCooldownReason(remaining));
     }

@@ -567,7 +567,18 @@ class FakeTransport implements RemoteTransport {
       if (named != null) return named;
       break;
     }
-    return publicName(sender.username) ?? 'Adventurer';
+    final fromMeta = publicName(sender.username);
+    if (fromMeta != null) return fromMeta;
+    for (final save in tables[RemoteTables.saves] ?? const <RemoteRow>[]) {
+      if (save['user_id'] != sender.userId) continue;
+      final payload = save['payload'];
+      if (payload is Map) {
+        final named = publicName(payload['characterName']);
+        if (named != null) return named;
+      }
+      break;
+    }
+    return 'Adventurer';
   }
 
   num _clockMs() => nowMs?.call() ?? DateTime.parse(startIso).millisecondsSinceEpoch;

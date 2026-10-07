@@ -86,6 +86,20 @@ void main() {
     expect(isPendingAccountUsername(rival.session!.username), isTrue);
   });
 
+  test('claims a first name when the hosted profile username is blank', () async {
+    final transport = FakeTransport();
+    final service = await _signedIn(transport, MemorySaveStorage());
+    transport.tables[RemoteTables.profiles]!.single['username'] = '';
+    expect(
+      isUnclaimedAccountUsername('${transport.tables[RemoteTables.profiles]!.single['username']}'),
+      isTrue,
+    );
+
+    expect((await service.claimAccountUsername('Vari')).ok, isTrue);
+    expect(service.session?.username, 'Vari');
+    expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Vari');
+  });
+
   test('renames a claimed username once per week when the name is free', () async {
     var nowMs = _nowMs;
     final transport = FakeTransport(nowMs: () => nowMs);
@@ -512,6 +526,22 @@ void main() {
     final claimed = await service.sendChat(const ChatChannel.global(), 'hello');
     expect(claimed.ok, isTrue, reason: claimed.reason);
     expect(claimed.message!.username, 'Vari');
+  });
+
+  test('chat uses the character name when the profile username is blank', () async {
+    final transport = FakeTransport();
+    final service = await _signedIn(transport, MemorySaveStorage());
+    transport.tables[RemoteTables.profiles]!.single['username'] = '';
+    transport.accounts.values.single.username = '';
+    transport.tables.putIfAbsent(RemoteTables.saves, () => <RemoteRow>[]);
+    transport.tables[RemoteTables.saves]!.add(<String, Object?>{
+      'user_id': service.session!.userId,
+      'payload': <String, Object?>{'characterName': 'vari'},
+    });
+
+    final sent = await service.sendChat(const ChatChannel.global(), 'hi');
+    expect(sent.ok, isTrue, reason: sent.reason);
+    expect(sent.message!.username, 'vari');
   });
 
   test('sends a private message through the function and the other account reads it', () async {

@@ -150,14 +150,15 @@ class LocalMultiplayerBackend {
     if (accountIndex < 0) return const ActionResult.failed('Sign in required.');
     final current = db.users[accountIndex].username;
     if (current.toLowerCase() == cleaned.toLowerCase()) return const ActionResult.ok();
-    if (!isPendingAccountUsername(current)) return const ActionResult.ok();
+    final profileIndex = db.profiles.indexWhere((row) => row.userId == userId);
+    final held = profileIndex >= 0 ? db.profiles[profileIndex].username : current;
+    if (!isUnclaimedAccountUsername(held)) return const ActionResult.ok();
     if (db.users.any(
       (row) => row.userId != userId && row.username.toLowerCase() == cleaned.toLowerCase(),
     )) {
       return const ActionResult.failed('That name is taken.');
     }
     db.users[accountIndex] = db.users[accountIndex].copyWith(username: cleaned);
-    final profileIndex = db.profiles.indexWhere((row) => row.userId == userId);
     if (profileIndex >= 0) {
       db.profiles[profileIndex] = db.profiles[profileIndex].copyWith(
         username: cleaned,
@@ -178,7 +179,7 @@ class LocalMultiplayerBackend {
     final accountIndex = db.users.indexWhere((row) => row.userId == userId);
     if (accountIndex < 0) return const ActionResult.failed('Sign in required.');
     final current = db.users[accountIndex].username;
-    if (isPendingAccountUsername(current)) {
+    if (isUnclaimedAccountUsername(current)) {
       return claimAccountUsername(userId, cleaned);
     }
     if (current.toLowerCase() == cleaned.toLowerCase()) return const ActionResult.ok();

@@ -81,6 +81,16 @@ export function isPendingAccountUsername(username: string): boolean {
   return username.startsWith(PENDING_ACCOUNT_USERNAME_PREFIX)
 }
 
+/** Empty, `pending_`, or the chat fallback — first character create may still claim. */
+export function isUnclaimedAccountUsername(username: string): boolean {
+  const trimmed = username.trim()
+  return (
+    trimmed.length === 0 ||
+    isPendingAccountUsername(trimmed) ||
+    trimmed.toLowerCase() === 'adventurer'
+  )
+}
+
 /** False for the `pending_<id>` stand-in used before character creation. */
 export function isPublicAdventurerUsername(username: string): boolean {
   return !isPendingAccountUsername(username)
@@ -153,10 +163,11 @@ export function sessionFromSignIn(
 ): MultiplayerSession {
   const email = accountEmail ?? remoteEmail(typedEmail)
   const fallback = (accountEmail ?? '').split('@')[0]
+  const named = metadataUsername?.trim()
   return {
     userId,
     email,
-    username: metadataUsername ?? (fallback ? fallback : 'Adventurer'),
+    username: named ? named : fallback ? fallback : 'Adventurer',
     accessToken: accessToken ?? '',
   }
 }

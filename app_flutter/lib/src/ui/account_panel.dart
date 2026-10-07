@@ -136,7 +136,7 @@ class _AccountPanelState extends State<AccountPanel> {
   Widget _renamePanel() {
     final nowMs = widget.controller.session.clock();
     final remaining = usernameRenameRemainingMs(net.usernameRenamedAt, nowMs);
-    final pending = isPendingAccountUsername(net.session?.username ?? '');
+    final pending = isUnclaimedAccountUsername(net.session?.username ?? '');
     return GamePanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

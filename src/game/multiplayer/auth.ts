@@ -1,6 +1,6 @@
 import { getLocalBackend, getSupabaseClient, multiplayerMode } from './client'
 import {
-  isPendingAccountUsername,
+  isUnclaimedAccountUsername,
   pendingAccountUsername,
   profileRowForSignUp,
   remoteUsername,
@@ -133,7 +133,7 @@ export async function claimAccountUsername(
   const cleaned = remoteUsername(name)
   if (cleaned.length < 2) return { ok: false, reason: 'Enter a name to continue.' }
   if (session.username.toLowerCase() === cleaned.toLowerCase()) return { ok: true }
-  if (!isPendingAccountUsername(session.username)) return { ok: true }
+  if (!isUnclaimedAccountUsername(session.username)) return { ok: true }
 
   if (multiplayerMode() === 'local') {
     const result = getLocalBackend().claimAccountUsername(session.userId, name)

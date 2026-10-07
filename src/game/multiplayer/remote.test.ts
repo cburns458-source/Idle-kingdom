@@ -4,6 +4,7 @@ import {
   cloudSaveRecordFrom,
   isPendingAccountUsername,
   isPublicAdventurerUsername,
+  isUnclaimedAccountUsername,
   isRemoteSaveNewer,
   leaderboardEntriesFrom,
   leaderboardRowsFor,
@@ -44,6 +45,10 @@ describe('remote identity', () => {
     expect(pendingAccountUsername('usr_0001')).toBe('pending_usr0001')
     expect(isPendingAccountUsername('pending_usr0001')).toBe(true)
     expect(isPendingAccountUsername('Hero')).toBe(false)
+    expect(isUnclaimedAccountUsername('')).toBe(true)
+    expect(isUnclaimedAccountUsername('Adventurer')).toBe(true)
+    expect(isUnclaimedAccountUsername('pending_usr0001')).toBe(true)
+    expect(isUnclaimedAccountUsername('Hero')).toBe(false)
     expect(isPublicAdventurerUsername('pending_usr0001')).toBe(false)
     expect(isPublicAdventurerUsername('Hero')).toBe(true)
   })
@@ -76,6 +81,7 @@ describe('remote identity', () => {
     expect(sessionFromSignIn('usr-1', 'hero@example.com', 'x@y.co', null, null).username).toBe(
       'hero',
     )
+    expect(sessionFromSignIn('usr-1', 'hero@example.com', 'x@y.co', '', null).username).toBe('hero')
     expect(sessionFromSignIn('usr-1', null, ' TYPED@X.co ', null, null)).toEqual({
       userId: 'usr-1',
       email: 'typed@x.co',

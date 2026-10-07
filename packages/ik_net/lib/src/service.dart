@@ -310,7 +310,7 @@ class LocalMultiplayerService implements MultiplayerService {
     final result = _backend.claimAccountUsername(current.userId, name);
     if (!result.ok) return result;
     final cleaned = remoteUsername(name);
-    if (isPendingAccountUsername(current.username) ||
+    if (isUnclaimedAccountUsername(current.username) ||
         current.username.toLowerCase() == cleaned.toLowerCase()) {
       _sessions.write(current.copyWith(username: cleaned));
     }

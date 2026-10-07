@@ -310,11 +310,17 @@ async function resolveUsername(
   metadata: Record<string, unknown> | undefined,
 ): Promise<string> {
   const { data } = await admin.from('profiles').select('username').eq('user_id', userId).maybeSingle()
-  return (
-    publicChatUsername(data?.username) ||
-    publicChatUsername(metadata?.username) ||
-    'Adventurer'
-  )
+  const fromProfile = publicChatUsername(data?.username)
+  if (fromProfile) return fromProfile
+  const fromMeta = publicChatUsername(metadata?.username)
+  if (fromMeta) return fromMeta
+  const { data: save } = await admin.from('player_saves').select('payload').eq('user_id', userId).maybeSingle()
+  const payload = save?.payload
+  const characterName =
+    payload && typeof payload === 'object' && payload !== null && 'characterName' in payload
+      ? publicChatUsername((payload as { characterName?: unknown }).characterName)
+      : ''
+  return characterName || 'Adventurer'
 }
 
 function cors(): HeadersInit {

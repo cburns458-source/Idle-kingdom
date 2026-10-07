@@ -341,6 +341,14 @@ String pendingAccountUsername(String userId) {
 
 bool isPendingAccountUsername(String username) => username.startsWith(pendingAccountUsernamePrefix);
 
+/// Empty, `pending_`, or the chat fallback — first character create may still claim.
+bool isUnclaimedAccountUsername(String username) {
+  final trimmed = username.trim();
+  return trimmed.isEmpty ||
+      isPendingAccountUsername(trimmed) ||
+      trimmed.toLowerCase() == 'adventurer';
+}
+
 /// False for the `pending_<id>` stand-in used before character creation.
 bool isPublicAdventurerUsername(String username) => !isPendingAccountUsername(username);
 
@@ -374,10 +382,13 @@ MultiplayerSession sessionFromSignIn(
 ) {
   final email = accountEmail ?? remoteEmail(typedEmail);
   final fallback = (accountEmail ?? '').split('@').first;
+  final named = metadataUsername?.trim();
   return MultiplayerSession(
     userId: userId,
     email: email,
-    username: metadataUsername ?? (fallback.isEmpty ? 'Adventurer' : fallback),
+    username: (named != null && named.isNotEmpty)
+        ? named
+        : (fallback.isEmpty ? 'Adventurer' : fallback),
     accessToken: accessToken ?? '',
   );
 }

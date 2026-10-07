@@ -9,7 +9,7 @@ import {
   type PlayerAppearance,
   type PlayerSave,
 } from '../save/types'
-import { pendingAccountUsername, isPendingAccountUsername, remoteUsername } from './remote'
+import { pendingAccountUsername, isUnclaimedAccountUsername, remoteUsername } from './remote'
 import { totalLevel } from '../skills/totals'
 import { BAZAAR_POST_COOLDOWN_SECONDS, PRESENCE_AWAY_TTL_SECONDS } from './config'
 import { containsSlur, CHAT_DISABLED_NOTICE } from './moderation'
@@ -357,7 +357,9 @@ export class LocalMultiplayerBackend {
     const account = db.users.find((row) => row.userId === userId)
     if (!account) return { ok: false, reason: 'Sign in required.' }
     if (account.username.toLowerCase() === cleaned.toLowerCase()) return { ok: true }
-    if (!isPendingAccountUsername(account.username)) return { ok: true }
+    const existing = db.profiles.find((row) => row.userId === userId)
+    const held = existing?.username ?? account.username
+    if (!isUnclaimedAccountUsername(held)) return { ok: true }
     if (
       db.users.some(
         (row) => row.userId !== userId && row.username.toLowerCase() === cleaned.toLowerCase(),
