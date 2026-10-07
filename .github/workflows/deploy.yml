@@ -81,6 +81,21 @@ jobs:
             echo "normalized_ref_is=org"
           else
             echo "normalized_ref_is=other"
+            echo "normalized_ref_mask=$(printf '%s' "$ref" | sed 's/[a-z]/L/g;s/[0-9]/D/g;s/[^A-Za-z0-9]/./g')"
+            expected="xlbwmxxtzrqjujvgqcuf"
+            i=0
+            while [ "$i" -lt 20 ]; do
+              e="${expected:$i:1}"
+              a="${ref:$i:1}"
+              if [ "$e" != "$a" ]; then
+                if printf '%s' "$a" | grep -q '[0-9]'; then kind=digit
+                elif printf '%s' "$a" | grep -q '[a-z]'; then kind=letter
+                else kind=other
+                fi
+                echo "diff_at_${i}_expected_${e}_got_${kind}"
+              fi
+              i=$((i + 1))
+            done
           fi
           if [ -z "$token" ] || [ -z "$ref" ]; then
             echo "::error title=Deploy secrets missing::Set SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF on the GitHub environment for this branch (staging for test-launch, production for main)."
