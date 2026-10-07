@@ -682,6 +682,9 @@ class RemoteMultiplayerService implements MultiplayerService {
             'appearance': save.appearance.toJson(),
           })
         : await gameSync(force: force);
+    if (!result.ok && remoteMissingGameFunction(result.reason)) {
+      return _uploadClientSave(save);
+    }
     if (!result.ok) return result;
     final hosted = result.save ?? save;
     await _refreshPvpLiveStats(hosted);
@@ -719,6 +722,39 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   /// Server mulberry32 state from the last hosted read or write.
   int get hostedRngState => _hostedRngState;
+
+  /// Writes [save] the way pre-phase-2 clients did, when `game` is not deployed.
+  Future<CloudSyncResult> _uploadClientSave(PlayerSave save) async {
+    final current = session;
+    if (current == null) {
+      return const CloudSyncResult.failed('Sign in to sync cloud saves.');
+    }
+    final stamped = save.copyWith(updatedAt: isoFromMs(_nowMs()));
+    final validation = softValidateSave(stamped);
+    if (!validation.ok) return CloudSyncResult.failed(validation.reason!);
+    final refused = await transport.upsert(RemoteTables.saves, <RemoteRow>[
+      saveRowFor(current.userId, stamped, playSessionId: current.playSessionId),
+    ]);
+    if (refused != null) {
+      return CloudSyncResult.failed(friendlyRemoteError(refused));
+    }
+    await _refreshPvpLiveStats(stamped);
+    _reenablePublishedProfileColumns();
+    final profileRow = <String, Object?>{
+      'user_id': current.userId,
+      'username': current.username,
+      'appearance_json': appearanceJsonForRemote(stamped.appearance, stamped.raceId),
+    };
+    if (_profilesHaveGearPrivacy != false) {
+      profileRow[remoteEquipmentJsonColumn] = publicEquipmentFromSave(stamped)
+          .map((row) => row.toJson())
+          .toList();
+    }
+    profileRow[remoteMottoColumn] = stamped.motto;
+    profileRow[remotePetCosmeticIdColumn] = stamped.cosmetics.equipped[petCosmeticSlotId];
+    await _upsertProfileRow(profileRow);
+    return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
+  }
 
   Future<CloudSyncResult> _invokeGame(Map<String, Object?> body, {bool force = false}) async {
     if (session == null) {

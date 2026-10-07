@@ -65,6 +65,9 @@ class FakeTransport implements RemoteTransport {
   /// hosted project that still has Confirm email on.
   bool omitSignUpSession = false;
 
+  /// When true, `game` is missing the way a live project is before ship.
+  bool missingGameFunction = false;
+
   final _FakeProject _project;
 
   /// A fresh timestamp, a second later each time.
@@ -842,6 +845,9 @@ class FakeTransport implements RemoteTransport {
         );
       }
       if (function == remoteGameFunction) {
+        if (missingGameFunction) {
+          return const RemoteInvokeResult.failed('Requested function was not found');
+        }
         return _invokeGame(body);
       }
       if (function != remoteSendChatFunction) {

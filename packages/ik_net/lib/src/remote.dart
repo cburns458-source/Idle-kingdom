@@ -199,6 +199,25 @@ bool remoteMissingMottoPetColumns(String? reason) => remoteMissingProfileColumn(
 bool remoteMissingUsernameRenamedAtColumn(String? reason) =>
     remoteMissingProfileColumn(reason, const <String>[remoteUsernameRenamedAtColumn]);
 
+/// What a missing Wave G `game` function looks like from the client.
+///
+/// A project that has not deployed it returns 404. Browsers often surface that
+/// as `Failed to fetch` because the preflight never gets CORS headers.
+const String remoteGameFunctionUnavailable = 'The game function is not on this project yet.';
+
+/// True when [reason] is a project that has no `game` edge function.
+bool remoteMissingGameFunction(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  if (reason == remoteGameFunctionUnavailable) return true;
+  if (isUnreachableRemoteError(reason)) return true;
+  final lower = reason.toLowerCase();
+  if (lower.contains('requested function was not found')) return true;
+  if (lower.contains('function not found')) return true;
+  if (lower.contains('no such function')) return true;
+  if (lower.contains('invalid jwt') || lower.contains('jwt expired')) return false;
+  return lower.contains('function') && lower.contains('not found');
+}
+
 /// True when [reason] is a project that has not added `version` / `rng_state`.
 bool remoteMissingSaveAuthorityColumns(String? reason) {
   if (reason == null || reason.isEmpty) return false;

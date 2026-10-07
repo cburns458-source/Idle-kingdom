@@ -645,6 +645,8 @@ class MultiplayerController extends ChangeNotifier {
           }
           if (result.ok && result.save != null) {
             _adoptHosted(result.save!);
+          } else if (!result.ok && remoteMissingGameFunction(result.reason)) {
+            await flushAccountSave();
           } else if (!result.ok && result.reason != null) {
             _notice = result.reason;
             notifyListeners();

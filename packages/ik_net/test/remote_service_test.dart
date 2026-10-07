@@ -514,6 +514,26 @@ void main() {
     expect((await service.pullSave()).reason, 'No cloud save for this account yet.');
   });
 
+  test('writes the client save when the game function is not deployed', () async {
+    final transport = FakeTransport(database: _database())..missingGameFunction = true;
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Vari', gold: 42);
+
+    final created = await service.pushSave(db, save);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.source, CloudSyncSource.uploaded);
+    expect(created.save!.gold, 42);
+    expect(created.save!.characterName, 'Vari');
+    expect((transport.tables[RemoteTables.saves]!.single['payload'] as Map)['gold'], 42);
+
+    final later = save.copyWith(gold: 99);
+    final updated = await service.pushSave(db, later, force: true);
+    expect(updated.ok, isTrue, reason: updated.reason);
+    expect(updated.source, CloudSyncSource.uploaded);
+    expect((transport.tables[RemoteTables.saves]!.single['payload'] as Map)['gold'], 99);
+  });
+
   test('loads a hosted save when version columns are not on the project yet', () async {
     final transport = FakeTransport()
       ..missingColumns.addAll(const <String>['version', 'rng_state']);
