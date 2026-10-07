@@ -74,12 +74,19 @@ jobs:
           export SUPABASE_ACCESS_TOKEN="$token"
           export SUPABASE_PROJECT_REF="$ref"
           echo "normalized_ref_chars=${#ref}"
+          if [ "$ref" = "xlbwmxxtzrqjujvgqcuf" ]; then
+            echo "normalized_ref_is=test"
+          elif [ "$ref" = "fxcovagwwbptqaavispl" ]; then
+            echo "normalized_ref_is=live"
+          else
+            echo "normalized_ref_is=other"
+          fi
           if [ -z "$token" ] || [ -z "$ref" ]; then
             echo "::error title=Deploy secrets missing::Set SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF on the GitHub environment for this branch (staging for test-launch, production for main)."
             exit 1
           fi
-          if ! printf '%s' "$ref" | grep -Eq '^[a-z]{20}$'; then
-            echo "::error title=Invalid project ref::staging/production SUPABASE_PROJECT_REF must be the 20-letter project id (test: xlbwmxxtzrqjujvgqcuf, live: fxcovagwwbptqaavispl), not the anon key or a paste of several values."
+          if ! printf '%s' "$ref" | grep -Eq '^[a-z0-9]{20}$'; then
+            echo "::error title=Invalid project ref::staging SUPABASE_PROJECT_REF must be exactly xlbwmxxtzrqjujvgqcuf (no URL, no key, no quotes). production must be fxcovagwwbptqaavispl."
             exit 1
           fi
           # Refuse a crossed wire: test-launch must never publish to live,
