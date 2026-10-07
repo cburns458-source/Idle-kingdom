@@ -619,7 +619,10 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   /// Called when the hosted save should replace the local copy.
-  void Function(PlayerSave save)? onHostedSave;
+  ///
+  /// [command] is set only for a successful `gameCommand` result so the client
+  /// can keep the local start clocks. Pulls after a conflict or failure omit it.
+  void Function(PlayerSave save, {String? command})? onHostedSave;
 
   Future<void> _commandTail = Future<void>.value();
 
@@ -644,7 +647,7 @@ class MultiplayerController extends ChangeNotifier {
             result = await service.gameCommand(command, args);
           }
           if (result.ok && result.save != null) {
-            _adoptHosted(result.save!);
+            _adoptHosted(result.save!, command: command);
           } else if (!result.ok && remoteMissingGameFunction(result.reason)) {
             await _flushAccountSave(enqueue: false);
           } else if (!result.ok) {
@@ -666,10 +669,10 @@ class MultiplayerController extends ChangeNotifier {
     return done.future;
   }
 
-  void _adoptHosted(PlayerSave save) {
+  void _adoptHosted(PlayerSave save, {String? command}) {
     _suppressUploads = true;
     try {
-      onHostedSave?.call(save);
+      onHostedSave?.call(save, command: command);
     } finally {
       _suppressUploads = false;
     }

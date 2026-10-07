@@ -7,6 +7,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 
 import 'activity_icons_pref.dart';
 import 'battery_saver_pref.dart';
+import 'hosted_save_adopt.dart';
 import 'hud_level_pref.dart';
 import 'hud_title_pref.dart';
 import 'local_player_art.dart';
@@ -829,9 +830,13 @@ class GameController extends ChangeNotifier {
   }
 
   /// Replaces the local save with the server copy after a command or sync.
-  void adoptHostedSave(PlayerSave incoming) {
+  ///
+  /// Start-command results keep the local action / combat clocks when the
+  /// activity matches, so the first bar does not snap back to the server's
+  /// later `nowMs`. Conflict and failure pulls omit [command] and adopt whole.
+  void adoptHostedSave(PlayerSave incoming, {String? command}) {
     if (!_alive) return;
-    session.apply(incoming);
+    session.apply(mergeHostedStartSave(save, incoming, command: command));
     notifyListeners();
   }
 

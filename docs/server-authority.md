@@ -181,11 +181,14 @@ Both write with a compare-and-swap on `version`. A bazaar write bumps
 `version` so the next command cannot overwrite it. A play-session mismatch
 is refused.
 
-The client adopts a `command` result. Periodic `sync` keeps the hosted row
-current and does not replace the live tick — adopting that snapshot was
-rewinding the action bar and putting sold items back. Direct
-insert/update/delete on `player_saves` is revoked; `SELECT` of the caller's
-own row stays.
+The client adopts a `command` result. Start commands
+(`start_activity`, `confirm_auto_equip`, `start_production`) keep the local
+action and combat clocks when the activity matches, because the function's
+`nowMs` is a round-trip later than the tap and would restart the first bar.
+Periodic `sync` keeps the hosted row current and does not replace the live
+tick — adopting that snapshot was rewinding the action bar and putting sold
+items back. Direct insert/update/delete on `player_saves` is revoked; `SELECT`
+of the caller's own row stays.
 
 Migration `20261007050000_player_save_authority.sql` is applied to the
 **test** project with this wave. Live waits for ship.
