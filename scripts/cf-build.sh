@@ -23,6 +23,16 @@ flutter --version
 cd "$ROOT/app_flutter"
 flutter pub get
 
+# GitHub secret fields keep a trailing newline (or a multi-line paste).
+# A newline inside --dart-define makes Flutter treat the next line as a
+# target file ("Target file --dart-define=… not found").
+SUPABASE_URL="${SUPABASE_URL%%$'\n'*}"
+SUPABASE_URL="${SUPABASE_URL%%$'\r'*}"
+SUPABASE_URL="$(printf '%s' "$SUPABASE_URL" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\n'*}"
+SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\r'*}"
+SUPABASE_ANON_KEY="$(printf '%s' "$SUPABASE_ANON_KEY" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
 if [[ -n "${SUPABASE_URL:-}" && -n "${SUPABASE_ANON_KEY:-}" ]]; then
   flutter build web --release --pwa-strategy=none \
     --dart-define="SUPABASE_URL=$SUPABASE_URL" \
