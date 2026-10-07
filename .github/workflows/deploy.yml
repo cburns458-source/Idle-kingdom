@@ -9,6 +9,7 @@ name: Deploy
 # The job fails when the environment is missing SUPABASE_ACCESS_TOKEN or
 # SUPABASE_PROJECT_REF. A silent skip used to report success while the
 # live bazaar function stayed on a September build.
+# Test ref is xlbwmxxtzrqjujvgqcuf (letter l after x, not the digit 1).
 
 on:
   push:
