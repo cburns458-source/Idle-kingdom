@@ -60,12 +60,10 @@ jobs:
 
       - name: Deploy
         run: |
-          # Secrets pasted from a table or chat often include a trailing
-          # newline or the full https://….supabase.co URL. Take the first
-          # line, strip space, and accept either a bare ref or that URL.
-          ref="${SUPABASE_PROJECT_REF%%$'\n'*}"
-          ref="${ref%%$'\r'*}"
-          ref="$(printf '%s' "$ref" | tr -d '[:space:]')"
+          # Secrets pasted from a table or chat often include a newline in
+          # the middle of https://….supabase.co. Join whitespace, then
+          # accept either a bare ref or that URL.
+          ref="$(printf '%s' "$SUPABASE_PROJECT_REF" | tr -d '\r\n[:space:]')"
           ref="${ref#https://}"
           ref="${ref%.supabase.co}"
           ref="${ref%%/*}"
@@ -78,6 +76,8 @@ jobs:
             echo "normalized_ref_is=test"
           elif [ "$ref" = "fxcovagwwbptqaavispl" ]; then
             echo "normalized_ref_is=live"
+          elif [ "$ref" = "gncevapkklzyyfckappn" ]; then
+            echo "normalized_ref_is=org"
           else
             echo "normalized_ref_is=other"
           fi

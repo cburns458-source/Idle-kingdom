@@ -23,12 +23,18 @@ flutter --version
 cd "$ROOT/app_flutter"
 flutter pub get
 
-# GitHub secret fields keep a trailing newline (or a multi-line paste).
-# A newline inside --dart-define makes Flutter treat the next line as a
-# target file ("Target file --dart-define=… not found").
-SUPABASE_URL="${SUPABASE_URL%%$'\n'*}"
-SUPABASE_URL="${SUPABASE_URL%%$'\r'*}"
-SUPABASE_URL="$(printf '%s' "$SUPABASE_URL" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+# GitHub secret fields keep a trailing newline. A URL pasted as
+# "https://" + newline + "….supabase.co" must be joined; taking the first
+# line would compile SUPABASE_URL as "https://" and nobody can sign in.
+# A leftover newline inside --dart-define also makes Flutter treat the
+# next line as a target file.
+if printf '%s' "${SUPABASE_URL:-}" | grep -q 'https://\|supabase'; then
+  SUPABASE_URL="$(printf '%s' "$SUPABASE_URL" | tr -d '\r\n[:space:]')"
+else
+  SUPABASE_URL="${SUPABASE_URL%%$'\n'*}"
+  SUPABASE_URL="${SUPABASE_URL%%$'\r'*}"
+  SUPABASE_URL="$(printf '%s' "$SUPABASE_URL" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+fi
 SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\n'*}"
 SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\r'*}"
 SUPABASE_ANON_KEY="$(printf '%s' "$SUPABASE_ANON_KEY" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
