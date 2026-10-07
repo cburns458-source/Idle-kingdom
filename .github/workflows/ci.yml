@@ -36,6 +36,9 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      # The game entry imports generated files that are intentionally ignored.
+      # Build them before checking every function, matching the deploy job.
+      - run: npm run bundle:game-edge
       # `npm run typecheck` covers `src` and `tools`; it cannot cover these,
       # because Deno's `npm:` specifiers and `.ts` imports are not tsc's. The
       # Bazaar is the one part of the game the server decides, so an edge
