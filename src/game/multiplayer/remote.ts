@@ -38,7 +38,7 @@ export const REMOTE_TABLES = {
 /** The edge function that writes chat, since a client may not insert directly. */
 export const REMOTE_SEND_CHAT_FUNCTION = 'send-chat'
 
-/** Wave G game function. Phase 1 `shadow` only; the client does not adopt saves. */
+/** Wave G game function. Phase 2 `sync` / `command` write the hosted save. */
 export const REMOTE_GAME_FUNCTION = 'game'
 
 export const REMOTE_NOT_CONFIGURED = 'Supabase is not configured.'
@@ -54,7 +54,7 @@ export const REMOTE_DIRECT_MESSAGE_LIMIT = 80
 /** As long as a username may be, which is what the account metadata carries. */
 export const REMOTE_USERNAME_MAX_LENGTH = 24
 
-export const REMOTE_SAVE_COLUMNS = 'save_version, updated_at, payload'
+export const REMOTE_SAVE_COLUMNS = 'save_version, updated_at, payload, version, rng_state'
 export const REMOTE_CHAT_COLUMNS =
   'id, channel_key, user_id, username, body, created_at, guild_tag, rank_icon, guest'
 export const REMOTE_LEADERBOARD_COLUMNS =

@@ -1,7 +1,34 @@
+import 'package:ik_content/ik_content.dart';
+import 'package:ik_rules/ik_rules.dart';
+
+import 'cloud_save.dart';
 import 'fake_exchange.dart';
+import 'guild_rules.dart';
 import 'remote.dart';
+import 'remote_guilds.dart';
+import 'remote_service.dart';
 import 'remote_transport.dart';
+import 'results.dart';
 import 'types.dart';
+
+/// Writes a hosted save the way the game function would, then loads its version.
+Future<CloudSyncResult> seedHostedSave(
+  RemoteMultiplayerService service,
+  FakeTransport transport,
+  PlayerSave save,
+) async {
+  final userId = service.session?.userId;
+  if (userId == null) return const CloudSyncResult.failed('Sign in required.');
+  final refused = await transport.upsert(RemoteTables.saves, <RemoteRow>[
+    <String, Object?>{
+      ...saveRowFor(userId, save, playSessionId: service.session?.playSessionId),
+      'version': 1,
+      'rng_state': 1,
+    },
+  ]);
+  if (refused != null) return CloudSyncResult.failed(refused);
+  return service.pullSave();
+}
 
 /// A remote backend held in memory, standing in for the hosted one.
 ///
@@ -10,7 +37,7 @@ import 'types.dart';
 /// a leaderboard row to its profile — because those are the assumptions that
 /// would otherwise only be checked against a live project.
 class FakeTransport implements RemoteTransport {
-  FakeTransport({this.startIso = '2026-08-13T00:00:00.000Z', this.nowMs})
+  FakeTransport({this.startIso = '2026-08-13T00:00:00.000Z', this.nowMs, this.database})
     : _project = _FakeProject();
 
   /// A second client on the project [other] is already connected to.
@@ -22,6 +49,7 @@ class FakeTransport implements RemoteTransport {
   FakeTransport.joining(FakeTransport other)
     : startIso = other.startIso,
       nowMs = other.nowMs,
+      database = other.database,
       _project = other._project;
 
   /// The instant the first stamped row is written at.
@@ -29,6 +57,9 @@ class FakeTransport implements RemoteTransport {
 
   /// Optional authoritative clock for [serverNowMs], matching a hosted now().
   final num Function()? nowMs;
+
+  /// When set, [create_character] builds a real starting save.
+  GameDatabase? database;
 
   /// When true, [signUp] creates the account and returns no session, matching a
   /// hosted project that still has Confirm email on.
@@ -653,6 +684,147 @@ class FakeTransport implements RemoteTransport {
   /// wording, which a caller must not depend on.
   static const String duplicateKeyRefusal = 'duplicate key value violates unique constraint';
 
+  RemoteInvokeResult _invokeGame(RemoteRow body) {
+    final caller = _current;
+    if (caller == null) return const RemoteInvokeResult.failed('Not signed in.');
+    final action = body['action'] as String? ?? '';
+    final seated = _playSessionRefusal(<RemoteRow>[
+      <String, Object?>{'user_id': caller.userId, 'play_session_id': body['playSessionId']},
+    ]);
+    if (seated != null) return RemoteInvokeResult.failed(seated);
+    final saves = tables[RemoteTables.saves]!;
+    RemoteRow? row;
+    for (final candidate in saves) {
+      if (candidate['user_id'] == caller.userId) {
+        row = candidate;
+        break;
+      }
+    }
+    if (action == 'command' && body['command'] == 'create_character') {
+      if (row != null) {
+        return RemoteInvokeResult.ok(<String, Object?>{
+          'ok': true,
+          'phase': 2,
+          'save': row['payload'],
+          'version': row['version'] ?? 1,
+          'rngState': row['rng_state'] ?? 1,
+        });
+      }
+      final args = (body['args'] as Map?) ?? const <Object?, Object?>{};
+      final db = database;
+      Map<String, Object?> payload;
+      if (db != null) {
+        var save = createNewSave(db, _clockMs()).copyWith(characterName: args['name'] as String?);
+        final raceId = args['raceId'];
+        if (raceId is String && raceId.isNotEmpty) {
+          final assigned = assignRace(db, save, raceId);
+          if (assigned.ok) save = assigned.save!;
+        }
+        if (args['appearance'] is Map) {
+          save = save.copyWith(
+            appearance: PlayerAppearance.fromJson(<String, Object?>{
+              ...save.appearance.toJson(),
+              ...Map<String, Object?>.from(args['appearance'] as Map),
+            }),
+          );
+        }
+        payload = save.toJson();
+      } else {
+        payload = <String, Object?>{
+          'characterName': args['name'],
+          'raceId': args['raceId'],
+          if (args['appearance'] is Map) 'appearance': args['appearance'],
+          'gold': 0,
+          'saveVersion': 60,
+        };
+      }
+      final created = <String, Object?>{
+        'user_id': caller.userId,
+        'save_version': payload['saveVersion'] ?? 60,
+        'updated_at': stamp(),
+        'payload': payload,
+        'version': 1,
+        'rng_state': 1,
+      };
+      saves.add(created);
+      return RemoteInvokeResult.ok(<String, Object?>{
+        'ok': true,
+        'phase': 2,
+        'save': payload,
+        'version': 1,
+        'rngState': 1,
+      });
+    }
+    if (row == null) {
+      return const RemoteInvokeResult.failed('No cloud save.');
+    }
+    final hallCommand = _applyGuildHallCommand(caller.userId, body, row);
+    if (hallCommand != null) return hallCommand;
+    final version = ((row['version'] as num?) ?? 1).toInt() + 1;
+    row['version'] = version;
+    row['updated_at'] = stamp();
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'phase': 2,
+      'action': action,
+      'save': row['payload'],
+      'version': version,
+      'rngState': row['rng_state'] ?? 1,
+    });
+  }
+
+  RemoteInvokeResult? _applyGuildHallCommand(String userId, RemoteRow body, RemoteRow saveRow) {
+    final command = body['command'] as String? ?? '';
+    if (command != 'guild_pay_hall_debt' &&
+        command != 'guild_donate_hall_item' &&
+        command != 'guild_withdraw_hall_item') {
+      return null;
+    }
+    final membership = _membershipFor(userId);
+    if (membership == null) return const RemoteInvokeResult.failed('Join a guild first.');
+    final halls = tables[RemoteTables.guildHalls]!;
+    final at = halls.indexWhere((row) => row['guild_id'] == membership['guild_id']);
+    if (at < 0) return const RemoteInvokeResult.failed('Guild hall not found.');
+    final hall = guildHallFrom(halls[at]);
+    final payload = saveRow['payload'];
+    if (payload is! Map)
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    PlayerSave save;
+    try {
+      save = parseSave(Map<String, Object?>.from(payload), _clockMs());
+    } on Object {
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    }
+    final args = (body['args'] as Map?) ?? const <Object?, Object?>{};
+    final GuildHallActionResult result;
+    if (command == 'guild_pay_hall_debt') {
+      result = payGuildHallDebt(hall, userId, save, _asNum(args['amount']));
+    } else if (command == 'guild_donate_hall_item') {
+      result = donateToGuildHall(
+        hall,
+        save,
+        _asNum(args['inventoryIndex']).toInt(),
+        _asNum(args['quantity']),
+      );
+    } else {
+      result = const GuildHallActionResult.failed('Withdraw is not available in this stand-in.');
+    }
+    if (!result.ok) return RemoteInvokeResult.failed(result.reason ?? 'Guild hall action failed.');
+    halls[at] = <String, Object?>{...halls[at], ...guildHallRowFor(result.hall!)};
+    final next = result.save ?? save;
+    saveRow['payload'] = next.toJson();
+    final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;
+    saveRow['version'] = version;
+    saveRow['updated_at'] = stamp();
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'phase': 2,
+      'save': next.toJson(),
+      'version': version,
+      'rngState': saveRow['rng_state'] ?? 1,
+    });
+  }
+
   @override
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body) {
     return _track(() async {
@@ -669,7 +841,7 @@ class FakeTransport implements RemoteTransport {
         );
       }
       if (function == remoteGameFunction) {
-        return RemoteInvokeResult.ok(<String, Object?>{'ok': true, 'phase': 1});
+        return _invokeGame(body);
       }
       if (function != remoteSendChatFunction) {
         return RemoteInvokeResult.failed('No such function: $function');

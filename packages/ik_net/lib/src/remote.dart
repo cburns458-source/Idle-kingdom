@@ -61,12 +61,11 @@ const String remoteSendChatFunction = 'send-chat';
 /// routines behind them are reachable by a signed-in client.
 const String remoteBazaarMarketFunction = 'bazaar';
 
-/// Wave G game function. Phase 1 `shadow` only; the client does not adopt saves.
+/// Wave G game function. Phase 2 `sync` / `command` write the hosted save.
 const String remoteGameFunction = 'game';
 
-/// How often a device asks the server to shadow an upload. Matches "every few
-/// minutes" so play does not spend the free-plan quota on the 8s save debounce.
-const num remoteShadowMinIntervalMs = 120000;
+/// How often a signed-in device asks the server to advance time.
+const num remoteGameSyncMinIntervalMs = 120000;
 
 const String remoteNotConfigured = 'Supabase is not configured.';
 const String remoteSignUpFailed = 'Sign-up failed.';
@@ -241,7 +240,7 @@ const int remoteDirectMessageLimit = 80;
 /// As long as a username may be, which is what the account metadata carries.
 const int remoteUsernameMaxLength = 24;
 
-const String remoteSaveColumns = 'save_version, updated_at, payload';
+const String remoteSaveColumns = 'save_version, updated_at, payload, version, rng_state';
 const String remoteChatColumns =
     'id, channel_key, user_id, username, body, created_at, '
     'guild_tag, rank_icon, guest';
@@ -475,12 +474,16 @@ class RemoteSaveRow {
     required this.saveVersion,
     required this.updatedAt,
     required this.payload,
+    this.version = 0,
+    this.rngState = 1,
   });
 
   final String userId;
   final num saveVersion;
   final String updatedAt;
   final Map<String, Object?> payload;
+  final int version;
+  final int rngState;
 
   /// The same row with its payload read as a save, which throws if it cannot be.
   CloudSaveRecord toCloudSaveRecord() => CloudSaveRecord(
@@ -516,6 +519,8 @@ RemoteSaveRow? remoteSaveRowFrom(String userId, RemoteRow? row) {
     saveVersion: _num(row['save_version']),
     updatedAt: _str(row['updated_at']),
     payload: (row['payload'] as Map<String, Object?>?) ?? const <String, Object?>{},
+    version: _num(row['version']).toInt(),
+    rngState: _num(row['rng_state']).toInt(),
   );
 }
 

@@ -18,6 +18,7 @@ const CreateGuildInput _ironLeague = CreateGuildInput(
 GameDatabase _database() => assertGameDatabaseShape(contentDatabaseJson());
 
 RemoteMultiplayerService _service(FakeTransport transport, {num startMs = _nowMs}) {
+  transport.database ??= _database();
   var counter = 0;
   return RemoteMultiplayerService(
     transport: transport,
@@ -35,7 +36,7 @@ Future<RemoteMultiplayerService> _player(
   String email,
   String username,
 ) async {
-  final service = _service(transport);
+  final service = _service(FakeTransport.joining(transport));
   final created = await service.signUp(email, username, 'secret');
   expect(created.ok, isTrue, reason: created.reason);
   return service;
@@ -286,6 +287,7 @@ void main() {
     final donor = createNewSave(database, _nowMs).copyWith(
       inventory: const <InventoryStack>[InventoryStack(itemId: 'ITEM-0015', quantity: 60)],
     );
+    expect((await seedHostedSave(leader, transport, donor)).ok, isTrue);
     final given = await leader.contributeHallItem(donor, 0, 60);
     expect(given.ok, isTrue, reason: given.reason);
     expect(given.save!.inventory, isEmpty);
@@ -301,6 +303,7 @@ void main() {
       isTrue,
     );
     final payer = createNewSave(database, _nowMs).copyWith(gold: 400);
+    expect((await seedHostedSave(member, transport, payer)).ok, isTrue);
     final paid = await member.payGuildDebt(payer, 400);
     expect(paid.ok, isTrue, reason: paid.reason);
     expect(paid.save!.gold, 0);

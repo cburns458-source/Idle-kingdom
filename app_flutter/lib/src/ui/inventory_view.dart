@@ -157,7 +157,11 @@ class _InventoryViewState extends State<InventoryView> {
       return;
     }
     setState(() => _message = null);
-    controller.commitLoadout(result.save!);
+    controller.commitLoadout(
+      result.save!,
+      command: 'equip_index',
+      args: <String, Object?>{'inventoryIndex': index},
+    );
   }
 
   void _unequip(String slotId) {
@@ -167,7 +171,11 @@ class _InventoryViewState extends State<InventoryView> {
       return;
     }
     setState(() => _message = null);
-    controller.commitLoadout(result.save!);
+    controller.commitLoadout(
+      result.save!,
+      command: 'unequip_slot',
+      args: <String, Object?>{'slotId': slotId},
+    );
   }
 
   void _toggleFavorite(int index) {
@@ -178,14 +186,22 @@ class _InventoryViewState extends State<InventoryView> {
       // Favorites sort to the front, so any sell selection now points elsewhere.
       if (_selling != null) _selling = <int, int>{};
     });
-    controller.commitLoadout(next);
+    controller.commitLoadout(
+      next,
+      command: 'set_meta',
+      args: <String, Object?>{'inventoryFavoriteIndex': index},
+    );
   }
 
   void _toggleEquippedFavorite(String slotId) {
     final next = toggleEquippedFavorite(save, slotId);
     if (next == null) return;
     setState(() => _message = null);
-    controller.commitLoadout(next);
+    controller.commitLoadout(
+      next,
+      command: 'set_meta',
+      args: <String, Object?>{'equippedFavoriteSlotId': slotId},
+    );
   }
 
   Future<void> _toggleSelection(int index) async {
@@ -267,7 +283,15 @@ class _InventoryViewState extends State<InventoryView> {
       });
       return;
     }
-    controller.commitLoadout(result.save!);
+    controller.commitLoadout(
+      result.save!,
+      command: 'sell_inventory',
+      args: <String, Object?>{
+        'quantities': <String, Object?>{
+          for (final entry in selected.entries) '${entry.key}': entry.value,
+        },
+      },
+    );
     setState(() {
       _message = result.message;
       _selling = null;

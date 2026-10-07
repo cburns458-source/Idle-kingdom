@@ -16,6 +16,7 @@ RemoteMultiplayerService _service(
   MemorySaveStorage storage, {
   num startMs = _nowMs,
 }) {
+  transport.database ??= _database();
   final num clock = startMs;
   var counter = 0;
   return RemoteMultiplayerService(
@@ -224,8 +225,8 @@ void main() {
     expect((await local.sendMagicLink('hero@example.com')).reason, remoteMagicLinkUnavailable);
   });
 
-  test('uploads a save and reads it back', () async {
-    final transport = FakeTransport();
+  test('creates a hosted save and reads it back', () async {
+    final transport = FakeTransport(database: _database());
     final storage = MemorySaveStorage();
     final service = await _signedIn(transport, storage);
     final db = _database();
@@ -233,22 +234,34 @@ void main() {
 
     final pushed = await service.pushSave(db, save);
     expect(pushed.ok, isTrue, reason: pushed.reason);
-    expect(pushed.source, CloudSyncSource.uploaded);
-    expect(pushed.save!.updatedAt, isoFromMs(_nowMs));
+    expect(pushed.save!.characterName, 'Hero');
 
     final row = transport.tables[RemoteTables.saves]!.single;
     expect(row['user_id'], service.session!.userId);
-    expect(row['updated_at'], isoFromMs(_nowMs));
+    expect(row['version'], 1);
 
     final pulled = await service.pullSave();
     expect(pulled.ok, isTrue, reason: pulled.reason);
-    expect(pulled.save!.gold, 250);
+    expect(pulled.save!.characterName, 'Hero');
     expect(pulled.source, CloudSyncSource.downloaded);
   });
 
-  test('shadows the first upload and then waits the interval', () async {
+  test('seeds a hosted save that later syncs stay on', () async {
+    final transport = FakeTransport(database: _database());
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero', gold: 250);
+    final seeded = await seedHostedSave(service, transport, save);
+    expect(seeded.ok, isTrue, reason: seeded.reason);
+    expect(seeded.save!.gold, 250);
+
+    final pulled = await service.pullSave();
+    expect(pulled.save!.gold, 250);
+  });
+
+  test('throttles hosted sync after the first advance', () async {
     var nowMs = _nowMs;
-    final transport = FakeTransport(nowMs: () => nowMs);
+    final transport = FakeTransport(nowMs: () => nowMs, database: _database());
     final service = RemoteMultiplayerService(
       transport: transport,
       storage: MemorySaveStorage(),
@@ -261,16 +274,19 @@ void main() {
     expect((await service.pushSave(db, save)).ok, isTrue);
     expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 1);
 
-    expect((await service.pushSave(db, save.copyWith(gold: 2))).ok, isTrue);
-    expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 1);
-
-    nowMs += remoteShadowMinIntervalMs;
-    expect((await service.pushSave(db, save.copyWith(gold: 3))).ok, isTrue);
+    expect((await service.pushSave(db, save)).ok, isTrue);
     expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 2);
+
+    expect((await service.pushSave(db, save)).ok, isTrue);
+    expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 2);
+
+    nowMs += remoteGameSyncMinIntervalMs;
+    expect((await service.pushSave(db, save, force: true)).ok, isTrue);
+    expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 3);
   });
 
   test('save upload repairs a missing profile with its required username', () async {
-    final transport = FakeTransport();
+    final transport = FakeTransport(database: _database());
     final service = await _signedIn(transport, MemorySaveStorage());
     transport.tables[RemoteTables.profiles]!.clear();
 
@@ -455,26 +471,8 @@ void main() {
     expect(service.takeReadProblem(), remoteInvalidBackendUrl);
   });
 
-  test('refuses an upload the account has a newer save than', () async {
-    final transport = FakeTransport();
-    final storage = MemorySaveStorage();
-    final service = await _signedIn(transport, storage);
-    final db = _database();
-    final base = createNewSave(db, _nowMs);
-
-    // A row a later session wrote, which this one must not overwrite blindly.
-    await transport.upsert(RemoteTables.saves, <RemoteRow>[
-      saveRowFor(service.session!.userId, base.copyWith(updatedAt: '2099-01-01T00:00:00.000Z')),
-    ]);
-
-    final blocked = await service.pushSave(db, base);
-    expect(blocked.ok, isFalse);
-    expect(blocked.reason, remoteSaveConflict);
-    expect(blocked.remote?.updatedAt, '2099-01-01T00:00:00.000Z');
-  });
-
-  test('stops a sync when the stored save is newer, and forces past it', () async {
-    final transport = FakeTransport();
+  test('stops a sync when the stored save is newer', () async {
+    final transport = FakeTransport(database: _database());
     final storage = MemorySaveStorage();
     final service = await _signedIn(transport, storage);
     final db = _database();
@@ -488,14 +486,10 @@ void main() {
     expect(blocked.ok, isFalse);
     expect(blocked.reason, 'Cloud save is newer than the local save.');
     expect(blocked.remote?.payload.updatedAt, '2099-01-01T00:00:00.000Z');
-
-    final forced = await service.syncSave(db, base, forceUpload: true);
-    expect(forced.ok, isTrue, reason: forced.reason);
-    expect(transport.tables[RemoteTables.saves]!.single['updated_at'], isoFromMs(_nowMs));
   });
 
-  test('uploads over a stored row this build cannot read', () async {
-    final transport = FakeTransport();
+  test('refuses a hosted sync when the stored payload cannot be read', () async {
+    final transport = FakeTransport(database: _database());
     final storage = MemorySaveStorage();
     final service = await _signedIn(transport, storage);
     final db = _database();
@@ -505,14 +499,12 @@ void main() {
       'save_version': 999,
       'updated_at': '2099-01-01T00:00:00.000Z',
       'payload': <String, Object?>{'notASave': true},
+      'version': 1,
+      'rng_state': 1,
     });
 
-    final synced = await service.syncSave(db, createNewSave(db, _nowMs));
-    expect(synced.ok, isTrue, reason: synced.reason);
-
-    // The same unreadable row is refused on a pull, where there is nothing to
-    // replace it with.
-    transport.tables[RemoteTables.saves]!.first['payload'] = <String, Object?>{'notASave': true};
+    final synced = await service.syncSave(db, createNewSave(db, _nowMs), forceUpload: true);
+    expect(synced.ok, isFalse);
     expect((await service.pullSave()).reason, 'The cloud save could not be read.');
   });
 
@@ -523,16 +515,17 @@ void main() {
   });
 
   test('a second sign-in takes the seat and the first cannot write', () async {
-    final transport = FakeTransport();
-    final first = await _signedIn(transport, MemorySaveStorage());
+    final project = FakeTransport(database: _database());
+    final first = await _signedIn(project, MemorySaveStorage());
     expect((await first.claimPlaySession()).ok, isTrue);
     expect(first.session!.playSessionId, isNotNull);
 
     final db = _database();
     final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero', gold: 10);
-    expect((await first.pushSave(db, save, force: true)).ok, isTrue);
+    final seeded = await seedHostedSave(first, project, save);
+    expect(seeded.ok, isTrue, reason: seeded.reason);
 
-    final second = _service(transport, MemorySaveStorage());
+    final second = _service(FakeTransport.joining(project), MemorySaveStorage());
     final signed = await second.signIn('hero@example.com', 'secret');
     expect(signed.ok, isTrue, reason: signed.reason);
     expect((await second.claimPlaySession()).ok, isTrue);
@@ -1205,7 +1198,7 @@ void main() {
           skill.skillId == combatSkillId ? skill.copyWith(level: 4) : skill,
       ],
     );
-    expect((await hero.pushSave(db, heroSave)).ok, isTrue);
+    expect((await seedHostedSave(hero, transport, heroSave)).ok, isTrue);
     expect((await hero.submitLeaderboard(db, heroSave)).ok, isTrue);
 
     final rival = _service(transport, MemorySaveStorage());
@@ -1220,7 +1213,7 @@ void main() {
               : skill,
       ],
     );
-    expect((await rival.pushSave(db, rivalSave)).ok, isTrue);
+    expect((await seedHostedSave(rival, transport, rivalSave)).ok, isTrue);
     expect((await rival.submitLeaderboard(db, rivalSave)).ok, isTrue);
     expect(await hero.listArenaOpponents(), isEmpty);
     expect(await hero.readOpponentSave(rival.session!.userId), isNull);
@@ -1258,7 +1251,8 @@ void main() {
       'ITEM-0102',
       1,
     );
-    expect((await rival.pushSave(db, later)).ok, isTrue);
+    expect((await seedHostedSave(rival, transport, later)).ok, isTrue);
+    expect((await rival.pushSave(db, later, force: true)).ok, isTrue);
     final refreshed = await hero.readOpponentSave(rival.session!.userId);
     expect(combatLevelOf(refreshed!), 20);
     expect(refreshed.raceId, 'RACE-0004');
@@ -1271,7 +1265,7 @@ void main() {
     transport.missingTables.add(RemoteTables.pvpSnapshots);
     final hero = await _signedIn(transport, MemorySaveStorage());
     final db = _database();
-    expect((await hero.pushSave(db, createNewSave(db, _nowMs))).ok, isTrue);
+    expect((await seedHostedSave(hero, transport, createNewSave(db, _nowMs))).ok, isTrue);
     expect(await hero.listArenaOpponents(), isEmpty);
   });
 }

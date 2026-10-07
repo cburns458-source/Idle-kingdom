@@ -752,6 +752,17 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               ),
             ),
           ),
+          command: 'set_meta',
+          args: <String, Object?>{
+            'settings': controller.save.settings
+                .copyWith(
+                  skippedHostileTravelLocationIds: withSkippedId(
+                    controller.save.settings.skippedHostileTravelLocationIds,
+                    locationId,
+                  ),
+                )
+                .toJson(),
+          },
         );
         return true;
     }
@@ -765,7 +776,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   void _openWardrobe() {
     final save = controller.save;
     if (!save.hasSeenWardrobeIntro) {
-      controller.commit(save.copyWith(hasSeenWardrobeIntro: true));
+      controller.commit(
+        save.copyWith(hasSeenWardrobeIntro: true),
+        command: 'set_meta',
+        args: <String, Object?>{'hasSeenWardrobeIntro': true},
+      );
     }
     setState(() => _wardrobeOpen = true);
   }
@@ -1180,8 +1195,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                             alignment: Alignment.centerRight,
                             child: GameButton(
                               label: 'OK',
-                              onPressed: () =>
-                                  controller.commit(save.copyWith(hasSeenFennelIntro: true)),
+                              onPressed: () => controller.commit(
+                                save.copyWith(hasSeenFennelIntro: true),
+                                command: 'set_meta',
+                                args: <String, Object?>{'hasSeenFennelIntro': true},
+                              ),
                             ),
                           ),
                         ],

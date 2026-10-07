@@ -79,7 +79,15 @@ class _ProductionPickerState extends State<ProductionPicker> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'start_production',
+      args: <String, Object?>{
+        'activityId': widget.activity.activityId,
+        'recipeId': recipe.recipeId,
+        'quantity': quantity,
+      },
+    );
     widget.onClose?.call();
   }
 

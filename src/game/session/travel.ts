@@ -9,6 +9,7 @@ import {
 } from '../world/hostility'
 import { resolveSubMapTravelDestination } from '../world/submaps'
 import { canTravelTo } from '../world/travel'
+import { GUILD_HALL_LOCATION_ID } from '../world/constants'
 
 /** What a travel request turns into, once the rules have had their say. */
 export type TravelPlan =
@@ -75,5 +76,19 @@ export function planTravel(
   return {
     kind: 'instant',
     arrival: arrivalOf(db, applyHostileTravelArrival(db, save, arrivalId, nowMs, random)),
+  }
+}
+
+/** Guild Travel: the hall is reachable from the guild screen from anywhere. */
+export function planGuildHallTravel(
+  db: GameDatabase,
+  save: PlayerSave,
+  nowMs: number = Date.now(),
+  random: () => number = Math.random,
+): TravelPlan {
+  if (isDeathPaused(save, nowMs)) return { kind: 'blocked' }
+  return {
+    kind: 'instant',
+    arrival: arrivalOf(db, applyHostileTravelArrival(db, save, GUILD_HALL_LOCATION_ID, nowMs, random)),
   }
 }

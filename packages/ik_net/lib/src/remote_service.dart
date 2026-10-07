@@ -70,8 +70,9 @@ class RemoteMultiplayerService implements MultiplayerService {
   final SessionStore _sessions;
   final LocalMultiplayerService _local;
   late final RemoteGuildBackend _guilds;
-  bool _seatClaimedOnServer = false;
-  num _lastShadowMs = 0;
+  num _lastGameSyncMs = 0;
+  int _hostedSaveVersion = 0;
+  int _hostedRngState = 1;
 
   /// The guild this account was last seen in, so a ranking update can refresh
   /// its own roster row without a read to find out where to write it.
@@ -401,10 +402,9 @@ class RemoteMultiplayerService implements MultiplayerService {
     final seated = held == null
         ? profilePlaySessionRow(next.copyWith(username: pendingAccountUsername(next.userId)))
         : <String, Object?>{'user_id': next.userId, 'active_play_session_id': next.playSessionId};
-    final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[seated]);
+    await transport.upsert(RemoteTables.profiles, <RemoteRow>[seated]);
     // The column is missing until the play-session migration is applied; play
     // still works, but this device cannot kick or be kicked.
-    _seatClaimedOnServer = refused == null;
     return const ActionResult.ok();
   }
 
@@ -661,56 +661,99 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current == null) {
       return const CloudSyncResult.failed('Sign in to sync cloud saves.');
     }
-    final stamped = save.copyWith(updatedAt: isoFromMs(_nowMs()));
-    final validation = softValidateSave(stamped);
+    final validation = softValidateSave(save);
     if (!validation.ok) return CloudSyncResult.failed(validation.reason!);
 
-    final existing = force ? null : await _readSaveRow(current.userId);
-    if (existing != null && isRemoteSaveNewer(existing, stamped)) {
-      return CloudSyncResult.failed(remoteSaveConflict, remote: existing.toCloudSaveRecordOrNull());
-    }
-
-    final refused = await transport.upsert(RemoteTables.saves, <RemoteRow>[
-      saveRowFor(
-        current.userId,
-        stamped,
-        playSessionId: _seatClaimedOnServer ? current.playSessionId : null,
-      ),
-    ]);
-    if (refused != null) return CloudSyncResult.failed(refused);
-
-    await _refreshPvpLiveStats(stamped);
+    final existing = await _readSaveRow(current.userId);
+    final result = existing == null
+        ? await gameCommand('create_character', <String, Object?>{
+            'name': save.characterName,
+            'raceId': save.raceId,
+            'appearance': save.appearance.toJson(),
+          })
+        : await gameSync(force: force);
+    if (!result.ok) return result;
+    final hosted = result.save ?? save;
+    await _refreshPvpLiveStats(hosted);
     _reenablePublishedProfileColumns();
     final profileRow = <String, Object?>{
       'user_id': current.userId,
-      // An upsert still validates NOT NULL columns on the insert path. Include
-      // the account name so a missing profile can be repaired by save sync.
       'username': current.username,
-      'appearance_json': appearanceJsonForRemote(stamped.appearance, stamped.raceId),
+      'appearance_json': appearanceJsonForRemote(hosted.appearance, hosted.raceId),
     };
     if (_profilesHaveGearPrivacy != false) {
-      profileRow[remoteEquipmentJsonColumn] = publicEquipmentFromSave(stamped)
+      profileRow[remoteEquipmentJsonColumn] = publicEquipmentFromSave(hosted)
           .map((row) => row.toJson())
           .toList();
     }
-    profileRow[remoteMottoColumn] = stamped.motto;
-    profileRow[remotePetCosmeticIdColumn] = stamped.cosmetics.equipped[petCosmeticSlotId];
+    profileRow[remoteMottoColumn] = hosted.motto;
+    profileRow[remotePetCosmeticIdColumn] = hosted.cosmetics.equipped[petCosmeticSlotId];
     await _upsertProfileRow(profileRow);
-    await _shadowAfterUpload();
-    return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
+    return result;
   }
 
-  /// Phase 1: ask the server to advance its copy. Failures are ignored so an
-  /// upload still succeeds and the player never adopts a server save.
-  Future<void> _shadowAfterUpload() async {
-    final now = _nowMs();
-    if (_lastShadowMs > 0 && now - _lastShadowMs < remoteShadowMinIntervalMs) {
-      return;
+  /// Advances the hosted save to now and returns it for the client to adopt.
+  @override
+  Future<CloudSyncResult> gameSync({bool force = false}) {
+    return _invokeGame(<String, Object?>{'action': 'sync'}, force: force);
+  }
+
+  /// Applies a named intent on the hosted save and returns the server copy.
+  @override
+  Future<CloudSyncResult> gameCommand(String command, [Map<String, Object?> args = const {}]) {
+    return _invokeGame(<String, Object?>{'action': 'command', 'command': command, 'args': args});
+  }
+
+  /// Compare-and-swap token from the last hosted read or write.
+  int get hostedSaveVersion => _hostedSaveVersion;
+
+  /// Server mulberry32 state from the last hosted read or write.
+  int get hostedRngState => _hostedRngState;
+
+  Future<CloudSyncResult> _invokeGame(Map<String, Object?> body, {bool force = false}) async {
+    if (session == null) {
+      return const CloudSyncResult.failed('Sign in to sync cloud saves.');
     }
-    _lastShadowMs = now;
+    final now = _nowMs();
+    if (!force &&
+        body['action'] == 'sync' &&
+        _lastGameSyncMs > 0 &&
+        now - _lastGameSyncMs < remoteGameSyncMinIntervalMs) {
+      return pullSave();
+    }
+    final request = <String, Object?>{
+      ...body,
+      'version': _hostedSaveVersion,
+      'playSessionId': session?.playSessionId,
+    };
     try {
-      await transport.invoke(remoteGameFunction, <String, Object?>{'action': 'shadow'});
-    } catch (_) {}
+      final invoked = await transport.invoke(remoteGameFunction, request);
+      if (!invoked.ok) {
+        return CloudSyncResult.failed(invoked.reason ?? 'Game sync failed.');
+      }
+      final data = invoked.data ?? const <String, Object?>{};
+      if (data['error'] is String) {
+        return CloudSyncResult.failed(data['error']! as String);
+      }
+      final rawSave = data['save'];
+      if (rawSave is! Map) {
+        return const CloudSyncResult.failed('Game function returned no save.');
+      }
+      final save = parseSave(Map<String, Object?>.from(rawSave), _nowMs());
+      final validation = softValidateSave(save);
+      if (!validation.ok) return CloudSyncResult.failed(validation.reason!);
+      final version = data['version'];
+      if (version is num) _hostedSaveVersion = version.toInt();
+      final rngState = data['rngState'];
+      if (rngState is num) _hostedRngState = rngState.toInt();
+      if (body['action'] == 'sync') _lastGameSyncMs = now;
+      return CloudSyncResult.ok(
+        save,
+        body['action'] == 'sync' ? CloudSyncSource.downloaded : CloudSyncSource.uploaded,
+      );
+    } catch (error) {
+      return CloudSyncResult.failed(error.toString());
+    }
   }
 
   @override
@@ -735,6 +778,8 @@ class RemoteMultiplayerService implements MultiplayerService {
     }
     final validation = softValidateSave(payload);
     if (!validation.ok) return CloudSyncResult.failed(validation.reason!);
+    _hostedSaveVersion = row.version;
+    _hostedRngState = row.rngState;
     return CloudSyncResult.ok(payload, CloudSyncSource.downloaded);
   }
 
@@ -1728,15 +1773,31 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<GuildHallState?> guildHall(String guildId) => _guilds.guildHall(guildId);
 
   @override
-  Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount) =>
-      _guilds.payGuildDebt(save, amount);
+  Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount) async {
+    final paid = await gameCommand('guild_pay_hall_debt', <String, Object?>{'amount': amount});
+    if (!paid.ok) return GuildHallActionResult.failed(paid.reason ?? 'Could not pay hall debt.');
+    final guildId = await currentGuildId();
+    final hall = guildId == null ? null : await guildHall(guildId);
+    if (hall == null) return GuildHallActionResult.failed('Guild hall not found.');
+    return GuildHallActionResult.ok(hall, save: paid.save);
+  }
 
   @override
   Future<GuildHallActionResult> contributeHallItem(
     PlayerSave save,
     int inventoryIndex,
     num quantity,
-  ) => _guilds.contributeHallItem(save, inventoryIndex, quantity);
+  ) async {
+    final donated = await gameCommand('guild_donate_hall_item', <String, Object?>{
+      'inventoryIndex': inventoryIndex,
+      'quantity': quantity,
+    });
+    if (!donated.ok) return GuildHallActionResult.failed(donated.reason ?? 'Could not donate.');
+    final guildId = await currentGuildId();
+    final hall = guildId == null ? null : await guildHall(guildId);
+    if (hall == null) return GuildHallActionResult.failed('Guild hall not found.');
+    return GuildHallActionResult.ok(hall, save: donated.save);
+  }
 
   Future<String?> _remoteChatPrivacyRefusal(ChatChannel channel) async {
     final me = session?.userId;

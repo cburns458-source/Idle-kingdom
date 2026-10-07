@@ -1,13 +1,18 @@
 // Server-authoritative game function.
 //
-// Phase 0 `prototype` times ticks on copies. Phase 1 `shadow` advances the
-// server's copy beside a client upload and logs diffs. Neither writes
-// `player_saves`. `sync` and `command` stay 501 until phase 2.
+// Phase 2: `sync` and `command` write `player_saves` with a version check.
+// Phase 1 `shadow` and phase 0 `prototype` stay available.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
-import { runPhase0Prototype, runPhase1Shadow } from '../_shared/game_rules.js'
+import {
+  applyGameCommand,
+  createTrackedMulberry32,
+  runPhase0Prototype,
+  runPhase1Shadow,
+  runPhase2Sync,
+} from '../_shared/game_rules.js'
 
 const SHADOW_MIN_INTERVAL_MS = 90_000
 
@@ -15,6 +20,10 @@ type GameBody = {
   action?: unknown
   awayMs?: unknown
   save?: unknown
+  command?: unknown
+  args?: unknown
+  version?: unknown
+  playSessionId?: unknown
 }
 
 function connect(url: string, key: string, options?: Parameters<typeof createClient>[2]) {
@@ -53,24 +62,24 @@ Deno.serve(async (req) => {
   }
 
   const action = typeof payload.action === 'string' ? payload.action.trim() : ''
-  if (action === 'sync' || action === 'command') {
-    return json(
-      {
-        error: 'Phase 1 shadow only. sync and command are not live yet.',
-        phase: 1,
-      },
-      501,
-    )
-  }
-
   const admin = connect(supabaseUrl, serviceKey)
 
+  if (action === 'sync' || action === 'command') {
+    const seated = await refuseOtherPlaySession(admin, user.id, payload)
+    if (seated) return seated
+  }
+  if (action === 'sync') {
+    return handleSync(admin, user.id, payload)
+  }
+  if (action === 'command') {
+    return handleCommand(admin, user.id, payload)
+  }
   if (action === 'shadow') {
     return handleShadow(admin, user.id)
   }
 
   if (action && action !== 'prototype') {
-    return json({ error: 'Unknown action.', phase: 1 }, 400)
+    return json({ error: 'Unknown action.', phase: 2 }, 400)
   }
 
   const awayMs = parseAwayMs(payload.awayMs)
@@ -215,9 +224,249 @@ async function handleShadow(admin: Client, userId: string): Promise<Response> {
   }
 }
 
+type HostedSaveRow = {
+  payload: unknown
+  version: number
+  advanced_to: string | null
+  rng_state: number
+  play_session_id: string | null
+}
+
+async function loadHostedRow(admin: Client, userId: string): Promise<HostedSaveRow | null> {
+  const { data } = await admin
+    .from('player_saves')
+    .select('payload, version, advanced_to, rng_state, play_session_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!data) return null
+  return {
+    payload: data.payload,
+    version: typeof data.version === 'number' ? data.version : 1,
+    advanced_to: typeof data.advanced_to === 'string' ? data.advanced_to : null,
+    rng_state: typeof data.rng_state === 'number' ? data.rng_state >>> 0 : 1,
+    play_session_id: typeof data.play_session_id === 'string' ? data.play_session_id : null,
+  }
+}
+
 async function loadHostedSaveCopy(admin: Client, userId: string): Promise<unknown> {
-  const { data } = await admin.from('player_saves').select('payload').eq('user_id', userId).maybeSingle()
-  return data?.payload ?? undefined
+  const row = await loadHostedRow(admin, userId)
+  return row?.payload
+}
+
+async function refuseOtherPlaySession(
+  admin: Client,
+  userId: string,
+  payload: GameBody,
+): Promise<Response | null> {
+  const { data } = await admin
+    .from('profiles')
+    .select('active_play_session_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const active = typeof data?.active_play_session_id === 'string' ? data.active_play_session_id : ''
+  if (!active) return null
+  const claimed = typeof payload.playSessionId === 'string' ? payload.playSessionId : ''
+  if (!claimed || claimed !== active) {
+    return json({ error: 'Signed in on another device.', phase: 2 }, 409)
+  }
+  return null
+}
+
+async function handleSync(admin: Client, userId: string, payload: GameBody): Promise<Response> {
+  const hosted = await loadHostedRow(admin, userId)
+  if (!hosted) return json({ error: 'No cloud save.', phase: 2 }, 400)
+  const expected = parseVersion(payload.version, hosted.version)
+  if (expected === null) return json({ error: 'version must be a whole number.', phase: 2 }, 400)
+  const nowMs = Date.now()
+  try {
+    const result = runPhase2Sync(rawDatabase, {
+      save: hosted.payload,
+      nowMs,
+      rngState: hosted.rng_state,
+    })
+    const written = await writeHostedSave(admin, userId, {
+      expectedVersion: expected,
+      payload: result.save,
+      rngState: result.rngState,
+      nowMs,
+    })
+    if (!written.ok) return written.response
+    return json({
+      ok: true,
+      phase: 2,
+      action: 'sync',
+      save: result.save,
+      version: written.version,
+      rngState: result.rngState,
+      gatheringActions: result.gatheringActions,
+      wroteSave: true,
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Sync failed.'
+    return json({ error: message, phase: 2 }, 400)
+  }
+}
+
+async function handleCommand(admin: Client, userId: string, payload: GameBody): Promise<Response> {
+  const command = typeof payload.command === 'string' ? payload.command.trim() : ''
+  if (!command) return json({ error: 'Missing command.', phase: 2 }, 400)
+  const args = payload.args && typeof payload.args === 'object' ? (payload.args as Record<string, unknown>) : {}
+  const nowMs = Date.now()
+  const hosted = await loadHostedRow(admin, userId)
+  const expected = parseVersion(payload.version, hosted?.version ?? 0)
+  if (expected === null) return json({ error: 'version must be a whole number.', phase: 2 }, 400)
+
+  const hallContext = await loadHallContext(admin, userId)
+  const rng = createTrackedMulberry32(hosted?.rng_state ?? ((nowMs ^ userId.length) >>> 0))
+  try {
+    const result = applyGameCommand(rawDatabase, {
+      command,
+      args,
+      save: hosted?.payload,
+      nowMs,
+      random: rng.random,
+      hall: hallContext?.hall,
+      userId,
+      guildRole: hallContext?.role,
+    })
+    if (!result.ok) return json({ error: result.reason, phase: 2 }, 400)
+    const written = hosted
+      ? await writeHostedSave(admin, userId, {
+          expectedVersion: expected,
+          payload: result.save,
+          rngState: rng.getState(),
+          nowMs,
+        })
+      : await insertHostedSave(admin, userId, {
+          payload: result.save,
+          rngState: rng.getState(),
+          nowMs,
+        })
+    if (!written.ok) return written.response
+    if (result.hall && hallContext) {
+      const { error: hallError } = await admin
+        .from('guild_halls')
+        .update({
+          debt_remaining: result.hall.debtRemaining,
+          debt_paid_off: result.hall.debtPaidOff,
+          debt_paid_by: result.hall.debtPaidBy,
+          storehouse: result.hall.storehouse,
+          completed_tiers: result.hall.completedTiers,
+          updated_at: new Date(nowMs).toISOString(),
+        })
+        .eq('guild_id', hallContext.guildId)
+      if (hallError) return json({ error: hallError.message, phase: 2 }, 500)
+    }
+    return json({
+      ok: true,
+      phase: 2,
+      action: 'command',
+      command,
+      save: result.save,
+      version: written.version,
+      rngState: rng.getState(),
+      wroteSave: true,
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Command failed.'
+    return json({ error: message, phase: 2 }, 400)
+  }
+}
+
+async function writeHostedSave(
+  admin: Client,
+  userId: string,
+  options: { expectedVersion: number; payload: unknown; rngState: number; nowMs: number },
+): Promise<{ ok: true; version: number } | { ok: false; response: Response }> {
+  const advancedTo = new Date(options.nowMs).toISOString()
+  const { data, error } = await admin
+    .from('player_saves')
+    .update({
+      payload: options.payload,
+      version: options.expectedVersion + 1,
+      advanced_to: advancedTo,
+      rng_state: options.rngState,
+      updated_at: advancedTo,
+    })
+    .eq('user_id', userId)
+    .eq('version', options.expectedVersion)
+    .select('version')
+    .maybeSingle()
+  if (error) return { ok: false, response: json({ error: error.message, phase: 2 }, 500) }
+  if (!data) {
+    return {
+      ok: false,
+      response: json({ error: 'Save version conflict. Sync and retry.', phase: 2, conflict: true }, 409),
+    }
+  }
+  return { ok: true, version: data.version as number }
+}
+
+async function insertHostedSave(
+  admin: Client,
+  userId: string,
+  options: { payload: unknown; rngState: number; nowMs: number },
+): Promise<{ ok: true; version: number } | { ok: false; response: Response }> {
+  const advancedTo = new Date(options.nowMs).toISOString()
+  const { data, error } = await admin
+    .from('player_saves')
+    .insert({
+      user_id: userId,
+      save_version: 60,
+      payload: options.payload,
+      version: 1,
+      advanced_to: advancedTo,
+      rng_state: options.rngState,
+      updated_at: advancedTo,
+    })
+    .select('version')
+    .maybeSingle()
+  if (error) return { ok: false, response: json({ error: error.message, phase: 2 }, 409) }
+  return { ok: true, version: (data?.version as number) ?? 1 }
+}
+
+type HallContext = {
+  guildId: string
+  role: string
+  hall: {
+    debtRemaining: number
+    debtPaidOff: boolean
+    debtPaidBy: Record<string, number>
+    storehouse: unknown[]
+    completedTiers: string[]
+  }
+}
+
+async function loadHallContext(admin: Client, userId: string): Promise<HallContext | null> {
+  const { data: member } = await admin
+    .from('guild_members')
+    .select('guild_id, role')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!member?.guild_id) return null
+  const { data: hall } = await admin.from('guild_halls').select('*').eq('guild_id', member.guild_id).maybeSingle()
+  if (!hall) return null
+  return {
+    guildId: member.guild_id as string,
+    role: String(member.role ?? ''),
+    hall: {
+      debtRemaining: Number(hall.debt_remaining ?? 0),
+      debtPaidOff: Boolean(hall.debt_paid_off),
+      debtPaidBy: (hall.debt_paid_by ?? {}) as Record<string, number>,
+      storehouse: Array.isArray(hall.storehouse) ? hall.storehouse : [],
+      completedTiers: Array.isArray(hall.completed_tiers)
+        ? hall.completed_tiers.map((row: unknown) => String(row))
+        : [],
+    },
+  }
+}
+
+function parseVersion(value: unknown, fallback: number): number | null {
+  if (value === undefined || value === null || value === '') return fallback
+  if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
+    return null
+  }
+  return value
 }
 
 function parseAwayMs(value: unknown): number | undefined | null {

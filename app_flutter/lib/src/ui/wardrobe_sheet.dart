@@ -38,14 +38,22 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'set_meta',
+      args: <String, Object?>{'equippedCosmetics': result.save!.cosmetics.equipped},
+    );
     setState(() => _error = null);
   }
 
   void _setAppearance(AppearanceCategory category, String optionId) {
     final next = setAppearanceOption(controller.db, controller.save, category, optionId);
     if (next == null) return;
-    controller.commit(next);
+    controller.commit(
+      next,
+      command: 'set_meta',
+      args: <String, Object?>{'appearance': next.appearance.toJson()},
+    );
   }
 
   @override

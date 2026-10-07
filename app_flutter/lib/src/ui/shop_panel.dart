@@ -170,7 +170,14 @@ class _ShopPanelState extends State<ShopPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commitLoadout(result.save!);
+    controller.commitLoadout(
+      result.save!,
+      command: 'shop_confirm',
+      args: <String, Object?>{
+        'shopId': widget.shopId,
+        'offer': ShopOffer(buys: _lines(_buys), sells: _lines(_sells)).toJson(),
+      },
+    );
     controller.noteCosmeticUnlocks(result.cosmeticsGranted);
     setState(() {
       _error = null;

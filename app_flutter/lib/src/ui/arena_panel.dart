@@ -216,7 +216,11 @@ class _ArenaPanelState extends State<ArenaPanel> {
     if (!_rankedFight || _rankedApplied) return;
     _rankedApplied = true;
     final next = applyRankedPvpResult(save, outcome == 'win', controller.session.clock());
-    controller.commit(next);
+    controller.commit(
+      next,
+      command: 'apply_ranked_pvp',
+      args: <String, Object?>{'won': outcome == 'win'},
+    );
   }
 
   Future<void> _saveEquipment() async {

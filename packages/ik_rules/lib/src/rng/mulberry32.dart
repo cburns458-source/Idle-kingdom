@@ -13,7 +13,13 @@ const double _uint32Divisor = 4294967296.0;
 class Mulberry32 {
   Mulberry32(int seed) : _state = seed & _uint32Mask;
 
+  /// Continues a hosted stream from the last persisted state.
+  Mulberry32.fromState(int state) : _state = state & _uint32Mask;
+
   int _state;
+
+  /// Current engine state. Persist this; do not persist the original seed.
+  int get state => _state;
 
   double next() {
     _state = (_state + 0x6D2B79F5) & _uint32Mask;

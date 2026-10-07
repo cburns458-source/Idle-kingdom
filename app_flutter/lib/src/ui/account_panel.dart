@@ -79,7 +79,11 @@ class _AccountPanelState extends State<AccountPanel> {
       setState(() => _nameError = reason);
       return;
     }
-    widget.controller.commit(widget.controller.save.copyWith(characterName: cleaned));
+    widget.controller.commit(
+      widget.controller.save.copyWith(characterName: cleaned),
+      command: 'set_meta',
+      args: <String, Object?>{'characterName': cleaned},
+    );
     _name.text = cleaned;
     setState(() => _nameError = null);
     if (net.isSignedIn) {
@@ -91,7 +95,11 @@ class _AccountPanelState extends State<AccountPanel> {
 
   Future<void> _saveMotto() async {
     final cleaned = normalizeMotto(_motto.text);
-    widget.controller.commit(widget.controller.save.copyWith(motto: cleaned));
+    widget.controller.commit(
+      widget.controller.save.copyWith(motto: cleaned),
+      command: 'set_meta',
+      args: <String, Object?>{'motto': cleaned},
+    );
     _motto.text = cleaned ?? '';
     if (net.isSignedIn) {
       await net.flushAccountSave(widget.controller.save);

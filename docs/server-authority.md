@@ -1,9 +1,10 @@
 # Server-authoritative backend
 
 The server owns every save. This page is the design for that, and the
-phases that get us there. Phase 1 (shadow) is live on `test-launch`. Players still upload saves;
-the server advances a copy beside those uploads and logs diffs. Phase 2
-is not started.
+phases that get us there. Phase 2 is live on `test-launch`: `sync` and
+`command` write `player_saves`, clients adopt the server copy, and
+direct client insert/update on that table is revoked. Phase 1 `shadow`
+and phase 0 `prototype` stay available.
 
 Combat and gathering still resolve on the device. That Master Prompt line
 stays until phase 4 ships.
@@ -31,8 +32,9 @@ Every hosted save gains three fields the client may not invent:
 | `advanced_to` | Server time the simulation has reached. `sync` advances from here to now. |
 | server RNG seed + counter | Loot and pool rolls come from this stream so a client cannot reroll. |
 
-Until phase 2, those columns are not required and clients still upload
-saves. Phase 1 stores the server copy on `player_save_shadows` instead.
+Phase 2 adds those columns on `player_saves`. The game function is the
+only writer. Phase 1 still stores a parallel copy on
+`player_save_shadows`.
 
 ## One `game` edge function
 
@@ -53,9 +55,9 @@ reuses migration 019's rank permissions. Each is one transaction,
 because the server holds both the save and the guild ledger. The Bazaar
 can move into this function later.
 
-`sync` and `command` answer `501` until phase 2. Do not call them from
-the client yet. A signed-in upload already calls `shadow` in the
-background, at most once every two minutes.
+A signed-in client calls `sync` about every two minutes and `command`
+for each discrete intent. The Dart rules still tick locally; the
+response replaces the local save. A snap-back is the drift detector.
 
 ## How the client behaves
 
@@ -63,8 +65,8 @@ The Dart rules still run every frame so the UI stays responsive. Every
 `game` response replaces the local save. A Dart/TS mismatch shows up as
 a visible snap-back, which is the drift detector.
 
-Signing in is required to play once phase 2 ships. The local backend
-stays as a test harness only.
+Signing in is required to play. The local backend stays as a test
+harness only.
 
 ## Quota and catch-up
 
@@ -96,16 +98,17 @@ eight-hour gathering window fits.
    client uploads and logs differences on `player_save_shadow_diffs`.
    Players see no change. Loot/gold diffs are expected until phase 2
    holds a server RNG; location, activity, and play time are the signal.
-2. **Commands live.** `sync` and `command` (including the economy
-   commands) write. Clients switch over. Direct client insert/update on
-   `player_saves` is revoked. Local-only play is removed.
+2. **Commands live (this wave).** `sync` and `command` (including the
+   economy commands) write. Clients switch over. Direct client
+   insert/update on `player_saves` is revoked. Local-only play is
+   removed.
 3. **Rankings.** Server writes `leaderboard_snapshots`, `pvp_snapshots`,
    and public profile equipment. Client writes to those tables are
    revoked.
 4. **Docs.** Replace the Master Prompt line that says combat and
    gathering stay client-side.
 
-Stop for owner review after phase 1. Do not start phase 2 until that
+Stop for owner review after phase 2. Do not start phase 3 until that
 review.
 
 ## Phase 0 contract
@@ -158,4 +161,27 @@ limit 20;
 ```
 
 Migration `20261007040000_player_save_shadow.sql` is applied to the
+**test** project with this wave. Live waits for ship.
+
+## Phase 2 contract
+
+`POST` the `game` function with a signed-in JWT.
+
+```json
+{ "action": "sync", "version": 3, "playSessionId": "…" }
+```
+
+```json
+{ "action": "command", "command": "travel", "args": { "destinationId": "LOC-0009" }, "version": 3 }
+```
+
+`sync` advances the hosted save to now with the TS rules and a server RNG.
+`command` applies one named intent the same way. Both write with a
+compare-and-swap on `version`. A bazaar write bumps `version` so the next
+command cannot overwrite it. A play-session mismatch is refused.
+
+The client adopts the returned save. Direct insert/update/delete on
+`player_saves` is revoked; `SELECT` of the caller's own row stays.
+
+Migration `20261007050000_player_save_authority.sql` is applied to the
 **test** project with this wave. Live waits for ship.

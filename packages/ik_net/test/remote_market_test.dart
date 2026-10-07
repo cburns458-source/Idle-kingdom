@@ -26,7 +26,8 @@ GameDatabase _database() => assertGameDatabaseShape(contentDatabaseJson());
 /// Stamped well before the client clock on purpose: the exchange writes the save
 /// as the server would, and a stored save stamped after the client's now looks
 /// to `pushSave` like somebody else's newer copy.
-FakeTransport _project() => FakeTransport(startIso: '2026-01-01T00:00:00.000Z');
+FakeTransport _project() =>
+    FakeTransport(startIso: '2026-01-01T00:00:00.000Z', database: _database());
 
 RemoteMultiplayerService _service(FakeTransport connection) {
   var counter = 0;
@@ -55,8 +56,8 @@ Future<RemoteMultiplayerService> _trader(
   final service = _service(FakeTransport.joining(project));
   final created = await service.signUp(email, name, 'secret');
   expect(created.ok, isTrue, reason: created.reason);
-  final pushed = await service.pushSave(db, _save(db, bag: bag, gold: gold));
-  expect(pushed.ok, isTrue, reason: pushed.reason);
+  final seeded = await seedHostedSave(service, project, _save(db, bag: bag, gold: gold));
+  expect(seeded.ok, isTrue, reason: seeded.reason);
   return service;
 }
 
@@ -836,12 +837,14 @@ void main() {
       );
 
       // A bag with every slot taken by something else has nowhere for the ore,
-      // but the refund is a number rather than a slot and still lands.
+      // but the refund is a number rather than a slot and still lands. The
+      // hosted save is what collect sees, so the full bag has to be stored.
       final full = _stored(project, buyer).copyWith(
         inventory: <InventoryStack>[
           for (var slot = 0; slot < inventorySlotLimit; slot += 1) _stack(_titaniumOre, 1),
         ],
       );
+      expect((await seedHostedSave(buyer, project, full)).ok, isTrue);
       final claimed = await buyer.collectBazaarBox(db, full);
       expect(claimed.ok, isTrue, reason: claimed.reason);
       expect(claimed.message, 'Collected 200 gold. 1 more would not fit.');

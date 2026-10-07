@@ -131,7 +131,11 @@ class _BankPanelState extends State<BankPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commitLoadout(result.save!);
+    controller.commitLoadout(
+      result.save!,
+      command: 'bank_deposit',
+      args: <String, Object?>{'inventoryIndex': index, 'quantity': quantity},
+    );
     _invalidateCaches();
     setState(() => _error = null);
   }
@@ -156,7 +160,11 @@ class _BankPanelState extends State<BankPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commitLoadout(result.save!);
+    controller.commitLoadout(
+      result.save!,
+      command: 'bank_withdraw',
+      args: <String, Object?>{'bankIndex': index, 'quantity': quantity},
+    );
     _invalidateCaches();
     setState(() => _error = null);
   }

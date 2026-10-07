@@ -78,6 +78,32 @@ class _TrackerViewState extends State<TrackerView> {
   GameController get controller => widget.controller;
   TrackerKind get kind => widget.kind;
 
+  void _commitLoot(PlayerSave next) {
+    controller.commit(
+      next,
+      command: 'set_meta',
+      args: <String, Object?>{
+        'lootTrackers': <String, Object?>{
+          for (final entry in next.lootTrackers.entries) entry.key: entry.value.toJson(),
+        },
+        'lootTrackerPausedAtMs': next.lootTrackerPausedAtMs,
+      },
+    );
+  }
+
+  void _commitXp(PlayerSave next) {
+    controller.commit(
+      next,
+      command: 'set_meta',
+      args: <String, Object?>{
+        'xpTrackers': <String, Object?>{
+          for (final entry in next.xpTrackers.entries) entry.key: entry.value.toJson(),
+        },
+        'xpTrackerPausedAtMs': next.xpTrackerPausedAtMs,
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -140,10 +166,10 @@ class _TrackerViewState extends State<TrackerView> {
             loot: true,
             paused: lootTrackersPaused(controller.save),
             onOff: () =>
-                controller.commit(pauseLootTrackers(controller.save, controller.session.clock())),
+                _commitLoot(pauseLootTrackers(controller.save, controller.session.clock())),
             onOn: () =>
-                controller.commit(resumeLootTrackers(controller.save, controller.session.clock())),
-            onResetAll: () => controller.commit(resetAllLootTrackers(controller.save)),
+                _commitLoot(resumeLootTrackers(controller.save, controller.session.clock())),
+            onResetAll: () => _commitLoot(resetAllLootTrackers(controller.save)),
           ),
         ),
         Expanded(
@@ -156,8 +182,7 @@ class _TrackerViewState extends State<TrackerView> {
                   itemBuilder: (context, index) => _LootCard(
                     entry: rows[index],
                     controller: controller,
-                    onReset: () =>
-                        controller.commit(resetLootTracker(controller.save, rows[index].key)),
+                    onReset: () => _commitLoot(resetLootTracker(controller.save, rows[index].key)),
                   ),
                 ),
         ),
@@ -176,11 +201,9 @@ class _TrackerViewState extends State<TrackerView> {
           child: _TrackerToolbar(
             loot: false,
             paused: xpTrackersPaused(controller.save),
-            onOff: () =>
-                controller.commit(pauseXpTrackers(controller.save, controller.session.clock())),
-            onOn: () =>
-                controller.commit(resumeXpTrackers(controller.save, controller.session.clock())),
-            onResetAll: () => controller.commit(resetAllXpTrackers(controller.save)),
+            onOff: () => _commitXp(pauseXpTrackers(controller.save, controller.session.clock())),
+            onOn: () => _commitXp(resumeXpTrackers(controller.save, controller.session.clock())),
+            onResetAll: () => _commitXp(resetAllXpTrackers(controller.save)),
           ),
         ),
         Expanded(
@@ -200,8 +223,7 @@ class _TrackerViewState extends State<TrackerView> {
                           : skillIconPath(_skillById(entry.skillId)),
                       nowMs: nowMs,
                       save: controller.save,
-                      onReset: () =>
-                          controller.commit(resetXpTracker(controller.save, entry.skillId)),
+                      onReset: () => _commitXp(resetXpTracker(controller.save, entry.skillId)),
                     );
                   },
                 ),

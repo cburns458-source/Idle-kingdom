@@ -59,6 +59,12 @@ abstract interface class MultiplayerService {
   /// shown that the other is newer.
   Future<CloudSyncResult> pushSave(GameDatabase db, PlayerSave save, {bool force = false});
 
+  /// Advances the hosted save to now. Local play returns the stored copy.
+  Future<CloudSyncResult> gameSync({bool force = false});
+
+  /// Applies a named intent on the hosted save. Local play is a no-op read.
+  Future<CloudSyncResult> gameCommand(String command, [Map<String, Object?> args = const {}]);
+
   Future<CloudSyncResult> pullSave();
 
   /// Uploads at a safe point, or reports that the backend's copy is newer.
@@ -415,6 +421,24 @@ class LocalMultiplayerService implements MultiplayerService {
       clearPetCosmeticId: stamped.cosmetics.equipped[petCosmeticSlotId] == null,
     );
     return CloudSyncResult.ok(stamped, CloudSyncSource.uploaded);
+  }
+
+  @override
+  Future<CloudSyncResult> gameSync({bool force = false}) async {
+    final current = session;
+    if (current == null) {
+      return const CloudSyncResult.failed('Sign in to sync cloud saves.');
+    }
+    final remote = _backend.readCloudSave(current.userId);
+    if (remote == null) {
+      return const CloudSyncResult.failed('No cloud save for this account yet.');
+    }
+    return CloudSyncResult.ok(remote.payload, CloudSyncSource.downloaded);
+  }
+
+  @override
+  Future<CloudSyncResult> gameCommand(String command, [Map<String, Object?> args = const {}]) {
+    return gameSync(force: true);
   }
 
   @override

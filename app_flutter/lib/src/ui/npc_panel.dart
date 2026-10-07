@@ -56,7 +56,11 @@ class _NpcPanelState extends State<NpcPanel> {
   void _dismissMerchant({String? thenOpenShop}) {
     final claimed = takeMerchantTip(controller.db, controller.save, conversation.npcId);
     if (claimed != null) {
-      controller.commit(claimed.save!);
+      controller.commit(
+        claimed.save!,
+        command: 'merchant_tip_claim',
+        args: <String, Object?>{'npcId': conversation.npcId},
+      );
       controller.announce(claimed.message!);
     }
     if (thenOpenShop != null) {
@@ -73,7 +77,11 @@ class _NpcPanelState extends State<NpcPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'quest_accept',
+      args: <String, Object?>{'questId': questId},
+    );
     controller.announce(result.message!);
     setState(() => _error = null);
   }
@@ -84,7 +92,11 @@ class _NpcPanelState extends State<NpcPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'quest_donate',
+      args: <String, Object?>{'questId': questId},
+    );
     controller.announce(result.message!);
     setState(() => _error = null);
   }
@@ -108,7 +120,11 @@ class _NpcPanelState extends State<NpcPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'quest_learn',
+      args: <String, Object?>{'npcId': conversation.npcId},
+    );
     controller.announce(result.message!);
     setState(() {
       _error = null;
@@ -124,7 +140,11 @@ class _NpcPanelState extends State<NpcPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'quest_talk',
+      args: <String, Object?>{'npcId': conversation.npcId},
+    );
     _announceIfPresent(result.message);
     final granted = result.save!.unlockedBookIds
         .where((id) => !beforeBooks.contains(id))
@@ -140,7 +160,11 @@ class _NpcPanelState extends State<NpcPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'quest_bribe',
+      args: <String, Object?>{'questId': quest.questId},
+    );
     controller.announce(result.message!);
     setState(() => _error = null);
   }
@@ -151,7 +175,11 @@ class _NpcPanelState extends State<NpcPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'choose_quest_combat',
+      args: <String, Object?>{'questId': quest.questId},
+    );
     controller.announce(result.message!);
     setState(() => _error = null);
     if (result.startedActivity) widget.onClose();
@@ -165,7 +193,11 @@ class _NpcPanelState extends State<NpcPanel> {
       setState(() => _error = result.reason);
       return;
     }
-    controller.commit(result.save!);
+    controller.commit(
+      result.save!,
+      command: 'quest_complete',
+      args: <String, Object?>{'questId': quest.questId},
+    );
     final spoken = questTalkLine(controller.db, quest.questId, conversation.npcId, result.save!);
     if (spoken == null) _announceIfPresent(result.message);
     final bundle = result.rewardBundle;
@@ -757,7 +789,11 @@ Future<void> showSkillXpPicker(
                           amount,
                         );
                         if (result.ok) {
-                          controller.commit(result.save!);
+                          controller.commit(
+                            result.save!,
+                            command: 'quest_assign_skill_xp',
+                            args: <String, Object?>{'skillId': skill.skillId, 'amount': amount},
+                          );
                           controller.announce(result.message!);
                         } else {
                           controller.report(result.reason);

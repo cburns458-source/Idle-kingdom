@@ -592,7 +592,11 @@ class GameController extends ChangeNotifier {
 
   void setPotionsPaused(bool value) {
     if (save.settings.potionsPaused == value) return;
-    commit(save.copyWith(settings: save.settings.copyWith(potionsPaused: value)));
+    commit(
+      save.copyWith(settings: save.settings.copyWith(potionsPaused: value)),
+      command: 'set_combat_settings',
+      args: <String, Object?>{'potionsPaused': value},
+    );
   }
 
   void togglePotionsPaused() => setPotionsPaused(!potionsPaused);
@@ -601,7 +605,11 @@ class GameController extends ChangeNotifier {
 
   void setAutoEat(bool value) {
     if (save.settings.autoEat == value) return;
-    commit(save.copyWith(settings: save.settings.copyWith(autoEat: value)));
+    commit(
+      save.copyWith(settings: save.settings.copyWith(autoEat: value)),
+      command: 'set_combat_settings',
+      args: <String, Object?>{'autoEat': value},
+    );
   }
 
   String get attackStyle => normalizeAttackStyle(save.attackStyle);
@@ -609,7 +617,11 @@ class GameController extends ChangeNotifier {
   void setAttackStyle(String style) {
     final next = normalizeAttackStyle(style);
     if (normalizeAttackStyle(save.attackStyle) == next) return;
-    commit(save.copyWith(attackStyle: next));
+    commit(
+      save.copyWith(attackStyle: next),
+      command: 'set_combat_settings',
+      args: <String, Object?>{'attackStyle': next},
+    );
   }
 
   num get eatHealthThresholdPercent =>
@@ -620,19 +632,31 @@ class GameController extends ChangeNotifier {
   void setEatHealthThresholdPercent(num value) {
     final next = clampEatHealthThresholdPercent(value);
     if (save.settings.eatHealthThresholdPercent == next) return;
-    commit(save.copyWith(settings: save.settings.copyWith(eatHealthThresholdPercent: next)));
+    commit(
+      save.copyWith(settings: save.settings.copyWith(eatHealthThresholdPercent: next)),
+      command: 'set_combat_settings',
+      args: <String, Object?>{'eatHealthThresholdPercent': next},
+    );
   }
 
   void setEatHealthThresholdAsPercent(bool value) {
     if (save.settings.eatHealthThresholdAsPercent == value) return;
-    commit(save.copyWith(settings: save.settings.copyWith(eatHealthThresholdAsPercent: value)));
+    commit(
+      save.copyWith(settings: save.settings.copyWith(eatHealthThresholdAsPercent: value)),
+      command: 'set_combat_settings',
+      args: <String, Object?>{'eatHealthThresholdAsPercent': value},
+    );
   }
 
   bool get botanyUseCompost => save.settings.botanyUseCompost;
 
   void setBotanyUseCompost(bool value) {
     if (save.settings.botanyUseCompost == value) return;
-    commit(save.copyWith(settings: save.settings.copyWith(botanyUseCompost: value)));
+    commit(
+      save.copyWith(settings: save.settings.copyWith(botanyUseCompost: value)),
+      command: 'set_combat_settings',
+      args: <String, Object?>{'botanyUseCompost': value},
+    );
   }
 
   void setEatHealthThresholdHp(num hp, num maxHp) {
@@ -647,7 +671,11 @@ class GameController extends ChangeNotifier {
         ? eatEquippedFood(db, save)
         : eatInventoryFood(db, save, inventoryIndex);
     if (!result.ok) return result.reason;
-    commit(result.save!);
+    commit(
+      result.save!,
+      command: 'eat_food',
+      args: <String, Object?>{'inventoryIndex': ?inventoryIndex},
+    );
     _healPopup = HealPopup(
       amount: result.healed,
       shownAtMs: session.clock(),
@@ -793,15 +821,34 @@ class GameController extends ChangeNotifier {
   /// Optional hook after a save lands (skill XP, combat, etc.).
   void Function(PlayerSave before, PlayerSave after)? onSaveCommitted;
 
+  /// Hosted play sends each discrete intent as a named game command.
+  Future<void> Function(String command, [Map<String, Object?> args])? submitGameCommand;
+
+  void _queueCommand(String command, [Map<String, Object?> args = const <String, Object?>{}]) {
+    submitGameCommand?.call(command, args);
+  }
+
+  /// Replaces the local save with the server copy after a command or sync.
+  void adoptHostedSave(PlayerSave incoming) {
+    if (!_alive) return;
+    session.apply(incoming);
+    notifyListeners();
+  }
+
   /// Stores the save a panel's intent produced, and repaints.
   ///
   /// Panels call the shared rules themselves and pass the result here, which is
   /// the only way a save reaches storage.
-  void commit(PlayerSave next) {
+  void commit(
+    PlayerSave next, {
+    String? command,
+    Map<String, Object?> args = const <String, Object?>{},
+  }) {
     final previous = save;
     session.apply(next);
     _queueSkillLevelUps(previous, save);
     onSaveCommitted?.call(previous, save);
+    if (command != null) _queueCommand(command, args);
     notifyListeners();
   }
 
@@ -830,7 +877,11 @@ class GameController extends ChangeNotifier {
   }
 
   /// [commit] for anything that changed the loadout, so max HP follows the gear.
-  void commitLoadout(PlayerSave next) => commit(withRecalculatedVitals(db, next));
+  void commitLoadout(
+    PlayerSave next, {
+    String? command,
+    Map<String, Object?> args = const <String, Object?>{},
+  }) => commit(withRecalculatedVitals(db, next), command: command, args: args);
 
   /// Advances the game by one frame. The shell drives this from a ticker, so it
   /// stops when the app is backgrounded. A long hide is batch-resolved like a
@@ -1039,7 +1090,7 @@ class GameController extends ChangeNotifier {
   ///
   /// When the only thing missing is a tool the bag already holds, this asks
   /// rather than refuses: [autoEquip] carries the offer until it is answered.
-  void startActivity(String activityId, {bool allowAutoEquip = true}) {
+  void startActivity(String activityId, {bool allowAutoEquip = true, bool queueCommand = true}) {
     final result = requestActivityStart(db, save, activityId, session.clock(), _random);
     if (!result.ok) {
       // Nothing is startable during a death pause, so there is nothing to offer.
@@ -1062,6 +1113,12 @@ class GameController extends ChangeNotifier {
     _activityError = null;
     _message = null;
     _clearStageFx();
+    if (queueCommand) {
+      _queueCommand('start_activity', <String, Object?>{
+        'activityId': activityId,
+        'allowAutoEquip': allowAutoEquip,
+      });
+    }
     notifyListeners();
   }
 
@@ -1075,6 +1132,7 @@ class GameController extends ChangeNotifier {
     }
     session.apply(result.save!);
     _activityError = null;
+    _queueCommand('receive_blessing');
     notifyListeners();
     return result;
   }
@@ -1094,7 +1152,8 @@ class GameController extends ChangeNotifier {
       return;
     }
     session.apply(withRecalculatedVitals(db, equipped.save!));
-    startActivity(proposal.activityId, allowAutoEquip: false);
+    startActivity(proposal.activityId, allowAutoEquip: false, queueCommand: false);
+    _queueCommand('confirm_auto_equip', <String, Object?>{'activityId': proposal.activityId});
   }
 
   /// Turns the offer down, leaving the refusal that prompted it on screen.
@@ -1110,7 +1169,7 @@ class GameController extends ChangeNotifier {
   void collectCritterHere() {
     final result = collectCritter(save, save.currentLocationId);
     if (!result.ok) return;
-    commit(result.save!);
+    commit(result.save!, command: 'collect_critter');
     announce(result.message!);
   }
 
@@ -1126,7 +1185,11 @@ class GameController extends ChangeNotifier {
       report(result.reason);
       return;
     }
-    commit(result.save!);
+    commit(
+      result.save!,
+      command: 'plant_botany',
+      args: <String, Object?>{'seedItemId': seedItemId, 'plantQuantity': plantQuantity},
+    );
     announce('Seed planted.');
   }
 
@@ -1142,7 +1205,11 @@ class GameController extends ChangeNotifier {
       report(result.reason);
       return;
     }
-    commit(result.save!);
+    commit(
+      result.save!,
+      command: 'plant_botany_selection',
+      args: <String, Object?>{'seedItemIds': seedItemIds, 'usedCompost': usedCompost},
+    );
     announce(seedItemIds.length == 1 ? 'Seed planted.' : 'Seeds planted.');
   }
 
@@ -1152,7 +1219,7 @@ class GameController extends ChangeNotifier {
       report(result.reason);
       return;
     }
-    commit(result.save!);
+    commit(result.save!, command: 'plant_best_botany');
     announce('Seed planted.');
   }
 
@@ -1168,7 +1235,11 @@ class GameController extends ChangeNotifier {
       report(result.reason);
       return;
     }
-    commit(result.save!);
+    commit(
+      result.save!,
+      command: 'place_trap',
+      args: <String, Object?>{'trapItemId': trapItemId, 'baitItemIds': baitItemIds},
+    );
     announce(trapItemId == fishingPotItemId ? 'Fishing pot placed.' : 'Trap placed.');
   }
 
@@ -1203,7 +1274,11 @@ class GameController extends ChangeNotifier {
     if (notice.rewardBundle != null) noteReward(notice.rewardBundle!);
     // Queue before commit so the shell flush sees the notice on notify.
     _pendingTimerCollects = [..._pendingTimerCollects, notice];
-    commit(next);
+    commit(
+      next,
+      command: 'collect_timer',
+      args: <String, Object?>{'locationId': locationId, 'kind': kind},
+    );
     if (announceText) {
       announce(notice.rewards.isEmpty ? 'Collected.' : 'Collected: ${notice.rewards.join(', ')}.');
     }
@@ -1279,7 +1354,11 @@ class GameController extends ChangeNotifier {
       report('Only combat and gathering can be starred.');
       return;
     }
-    commit(toggleFavoriteActivity(save, save.currentLocationId, activityId));
+    commit(
+      toggleFavoriteActivity(save, save.currentLocationId, activityId),
+      command: 'toggle_favorite',
+      args: <String, Object?>{'activityId': activityId},
+    );
   }
 
   void stopActivity() {
@@ -1292,6 +1371,7 @@ class GameController extends ChangeNotifier {
     session.apply(result.save!);
     _activityError = null;
     _clearStageFx();
+    _queueCommand('stop_activity');
     notifyListeners();
   }
 
@@ -1305,6 +1385,10 @@ class GameController extends ChangeNotifier {
         return false;
       case TravelInstant(arrival: final arrival):
         _recentRewards.clear();
+        _queueCommand('travel', <String, Object?>{
+          'destinationId': destinationId,
+          'browseMapId': browseMapId,
+        });
         _showArrival(arrival);
         _noteKingswoodsSling(claimedBefore: claimedSling, ownedBefore: ownedSling);
     }
@@ -1319,6 +1403,7 @@ class GameController extends ChangeNotifier {
         return false;
       case TravelInstant(arrival: final arrival):
         _recentRewards.clear();
+        _queueCommand('travel_guild_hall');
         _showArrival(arrival);
     }
     return true;
@@ -1338,7 +1423,7 @@ class GameController extends ChangeNotifier {
   String? changeRaceWithVesper(String raceId) {
     final result = changeRaceWithNpc(db, save, raceId, session.clock());
     if (!result.ok) return result.reason;
-    commit(result.save!);
+    commit(result.save!, command: 'change_race', args: <String, Object?>{'raceId': raceId});
     announce(result.message!);
     return null;
   }
@@ -1353,7 +1438,11 @@ class GameController extends ChangeNotifier {
     if (npc == null) return 'This person is not here.';
     final result = confirmTannerJob(db, save, npc, quantities);
     if (!result.ok) return result.reason;
-    commit(result.save!);
+    commit(
+      result.save!,
+      command: 'tanner_confirm',
+      args: <String, Object?>{'npcId': npcId, 'quantities': quantities},
+    );
     announce(result.message!);
     return null;
   }
@@ -1407,14 +1496,18 @@ class GameController extends ChangeNotifier {
 
   /// Marks a mailbox letter read. Opening the letter is what clears unread.
   void readMailboxMessage(String messageId) {
-    commit(markMailRead(save, messageId, session.clock()));
+    commit(
+      markMailRead(save, messageId, session.clock()),
+      command: 'mail_read',
+      args: <String, Object?>{'messageId': messageId},
+    );
   }
 
   /// Claims attached items into the bag, or returns why they would not fit.
   String? claimMailboxMessage(String messageId) {
     final result = claimMailAttachments(save, messageId, session.clock(), db);
     if (!result.ok) return result.reason;
-    commit(result.save!);
+    commit(result.save!, command: 'mail_claim', args: <String, Object?>{'messageId': messageId});
     return 'Items claimed.';
   }
 

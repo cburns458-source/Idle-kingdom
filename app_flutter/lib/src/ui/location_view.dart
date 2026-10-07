@@ -161,7 +161,17 @@ class _LocationViewState extends State<LocationView> {
         panel.tab == CitadelHubTab.bazaar ? 'bazaar' : 'bounties',
       );
     }
-    if (!identical(save, controller.save)) controller.commit(save);
+    if (!identical(save, controller.save) && panel is CitadelHubOpen) {
+      controller.commit(
+        save,
+        command: 'quest_inspect',
+        args: <String, Object?>{
+          'target': panel.tab == CitadelHubTab.bazaar ? 'bazaar' : 'bounties',
+        },
+      );
+    } else if (!identical(save, controller.save)) {
+      controller.commit(save);
+    }
     setState(() {
       final next = pushLocationPanel(_open, panel, nest: nest);
       _open
@@ -179,7 +189,13 @@ class _LocationViewState extends State<LocationView> {
   void _inspectProcessing() {
     if (controller.save.currentLocationId != 'LOC-0030') return;
     final save = applyQuestInspectProgress(controller.db, controller.save, 'processing');
-    if (!identical(save, controller.save)) controller.commit(save);
+    if (!identical(save, controller.save)) {
+      controller.commit(
+        save,
+        command: 'quest_inspect',
+        args: <String, Object?>{'target': 'processing'},
+      );
+    }
   }
 
   void _openWorkshop(ActivityRow activity, BuildContext buttonContext) {
@@ -247,7 +263,11 @@ class _LocationViewState extends State<LocationView> {
       controller.report(result.reason);
       return;
     }
-    controller.commit(result.save);
+    controller.commit(
+      result.save,
+      command: 'claim_location_search',
+      args: <String, Object?>{'searchId': searchId},
+    );
     controller.announce('Found a ${result.itemName}!');
   }
 
@@ -1377,6 +1397,17 @@ Future<void> _startOrComingSoon(
               ),
             ),
           ),
+          command: 'set_meta',
+          args: <String, Object?>{
+            'settings': controller.save.settings
+                .copyWith(
+                  skippedMixedCombatActivityIds: withSkippedId(
+                    controller.save.settings.skippedMixedCombatActivityIds,
+                    activity.activityId,
+                  ),
+                )
+                .toJson(),
+          },
         );
     }
   }

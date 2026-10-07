@@ -388,6 +388,10 @@ void main() {
     addTearDown(writer.dispose);
     final stored = startedCharacter(database).copyWith(characterName: 'Vari', gold: 777);
     await writer.signUp('vari@example.com', 'Vari', 'secret', stored, adopt: (save, {nowMs}) {});
+    expect(
+      (await seedHostedSave(writer.service as RemoteMultiplayerService, transport, stored)).ok,
+      isTrue,
+    );
 
     final controller = buildController(database);
     final net = buildRemoteMultiplayer(database, transport: transport);
@@ -445,10 +449,14 @@ void main() {
       stored,
       adopt: firstGame.adoptAccountSave,
     );
+    expect(
+      (await seedHostedSave(firstNet.service as RemoteMultiplayerService, transport, stored)).ok,
+      isTrue,
+    );
     firstNet.startPolling(() => firstGame.save);
 
     final secondGame = buildController(database);
-    final secondNet = buildRemoteMultiplayer(database, transport: transport);
+    final secondNet = buildRemoteMultiplayer(database, transport: FakeTransport.joining(transport));
     addTearDown(secondGame.dispose);
     addTearDown(secondNet.dispose);
     await secondNet.signIn(

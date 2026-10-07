@@ -9,6 +9,12 @@ import { resolveUnattendedProgress } from '../unattended/resolve'
 
 export { compareShadowSaves, runPhase1Shadow, SHADOW_PLAY_TIME_SLACK_MS } from './shadow'
 export type { Phase1ShadowResult, ShadowFieldDiff } from './shadow'
+export {
+  applyGameCommand,
+  createTrackedMulberry32,
+  runPhase2Sync,
+} from './authority'
+export type { GameCommandResult, Phase2SyncResult } from './authority'
 
 const MEADOW_LOCATION_ID = 'LOC-0009'
 const MEADOW_ACTIVITY_ID = 'ACT-0012'

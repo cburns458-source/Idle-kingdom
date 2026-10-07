@@ -11,7 +11,6 @@ import {
   REMOTE_SAVE_COLUMNS,
   REMOTE_SAVE_CONFLICT,
   REMOTE_TABLES,
-  saveRowFor,
   stripMissingRemoteProfileColumns,
   type RemoteRow,
 } from './remote'
@@ -75,20 +74,30 @@ export async function pushCloudSave(
   if (!options?.force && remote && isRemoteSaveNewer(remote, stamped)) {
     return { ok: false, reason: REMOTE_SAVE_CONFLICT, remote }
   }
-  const { error } = await client
-    .from(REMOTE_TABLES.saves)
-    .upsert(saveRowFor(session.userId, stamped))
-  if (error) return { ok: false, reason: error.message }
-  void client.functions.invoke(REMOTE_GAME_FUNCTION, { body: { action: 'shadow' } }).catch(() => {
-    /* Phase 1 must not fail the upload or change play. */
+  const { data: invoked, error } = await client.functions.invoke(REMOTE_GAME_FUNCTION, {
+    body: existing
+      ? { action: 'sync' }
+      : {
+          action: 'command',
+          command: 'create_character',
+          args: {
+            name: stamped.characterName,
+            raceId: stamped.raceId,
+            appearance: stamped.appearance,
+          },
+        },
   })
+  if (error) return { ok: false, reason: error.message }
+  const payload = invoked as { save?: PlayerSave; error?: string } | null
+  if (payload?.error) return { ok: false, reason: payload.error }
+  const hosted = payload?.save ?? stamped
   // Publish motto / pet onto the profile row so other players can see them
   // (RLS blocks reading another account's cloud save).
   const profileRow: RemoteRow = {
     user_id: session.userId,
-    appearance_json: stamped.appearance,
-    motto: stamped.motto ?? null,
-    pet_cosmetic_id: stamped.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
+    appearance_json: hosted.appearance,
+    motto: hosted.motto ?? null,
+    pet_cosmetic_id: hosted.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
   }
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const { error: profileError } = await client.from(REMOTE_TABLES.profiles).upsert(profileRow)
@@ -96,12 +105,12 @@ export async function pushCloudSave(
     if (!stripMissingRemoteProfileColumns(profileRow, profileError.message)) {
       await client.from(REMOTE_TABLES.profiles).upsert({
         user_id: session.userId,
-        appearance_json: stamped.appearance,
+        appearance_json: hosted.appearance,
       })
       break
     }
   }
-  return { ok: true, save: stamped, source: 'uploaded' }
+  return { ok: true, save: hosted, source: payload?.save ? 'downloaded' : 'uploaded' }
 }
 
 export async function pullCloudSave(): Promise<CloudSyncResult> {

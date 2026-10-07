@@ -43,7 +43,7 @@ void main() {
     List<InventoryStack> bag = const <InventoryStack>[],
     num gold = 0,
   }) async {
-    final project = FakeTransport(startIso: '2025-01-01T00:00:00.000Z');
+    final project = FakeTransport(startIso: '2025-01-01T00:00:00.000Z', database: database.launch);
     final net = buildRemoteMultiplayer(database, transport: project);
     addTearDown(net.dispose);
     var save = startedCharacter(database).copyWith(inventory: bag, gold: gold);
@@ -55,9 +55,9 @@ void main() {
       adopt: (adopted, {nowMs}) => save = adopted,
     );
     expect(net.isSignedIn, isTrue, reason: net.notice);
-    final pushed = await net.service.pushSave(database.launch, save);
-    expect(pushed.ok, isTrue, reason: pushed.reason);
-    return (net: net, project: project, save: pushed.save!);
+    final seeded = await seedHostedSave(net.service as RemoteMultiplayerService, project, save);
+    expect(seeded.ok, isTrue, reason: seeded.reason);
+    return (net: net, project: project, save: seeded.save!);
   }
 
   /// Another player already resting an offer on the book, so there is something
@@ -75,7 +75,7 @@ void main() {
     expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
     final stocked = startedCharacter(database)
         .copyWith(inventory: <InventoryStack>[_stack(itemId, quantity)]);
-    expect((await rival.pushSave(database.launch, stocked)).ok, isTrue);
+    expect((await seedHostedSave(rival, project, stocked)).ok, isTrue);
     final placed = await rival.placeBazaarOffer(
       database.launch,
       stocked,
@@ -227,7 +227,14 @@ void main() {
   testWidgets('says to withdraw when the item is only in the bank', (tester) async {
     final player = await hostedPlayer(tester);
     final banked = player.save.copyWith(bank: <InventoryStack>[_stack(_ironOre, 900)]);
-    expect((await player.net.service.pushSave(database.launch, banked)).ok, isTrue);
+    expect(
+      (await seedHostedSave(
+        player.net.service as RemoteMultiplayerService,
+        player.project,
+        banked,
+      )).ok,
+      isTrue,
+    );
     await pumpBazaar(tester, player.net, banked);
     await startOrder(tester, bazaarSell);
 
@@ -430,7 +437,7 @@ void main() {
     );
     expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
     final rich = startedCharacter(database).copyWith(gold: 100000);
-    expect((await rival.pushSave(database.launch, rich)).ok, isTrue);
+    expect((await seedHostedSave(rival, player.project, rich)).ok, isTrue);
     expect(
       (await rival.placeBazaarOffer(
         database.launch,

@@ -257,7 +257,11 @@ class _GuildPanelState extends State<GuildPanel> {
   /// nobody scrolls to.
   Future<String?> _foundGuild(CreateGuildInput input) {
     return net.createGuild(input, save, (goldCost) {
-      widget.controller.commit(save.copyWith(gold: (save.gold - goldCost).clamp(0, save.gold)));
+      widget.controller.commit(
+        save.copyWith(gold: (save.gold - goldCost).clamp(0, save.gold)),
+        command: 'guild_create_pay',
+        args: <String, Object?>{'name': input.name, 'tag': input.tag},
+      );
     });
   }
 

@@ -57,13 +57,24 @@ export function sellInventoryIndexes(
   save: PlayerSave,
   indexes: Iterable<number>,
 ): SellInventoryResult {
-  const unique = [
-    ...new Set(
-      [...indexes].filter(
-        (index) => Number.isInteger(index) && index >= 0 && index < save.inventory.length,
-      ),
-    ),
-  ].sort((a, b) => b - a)
+  const quantities: Record<number, number> = {}
+  for (const index of indexes) {
+    if (!Number.isInteger(index) || index < 0 || index >= save.inventory.length) continue
+    quantities[index] = save.inventory[index].quantity
+  }
+  return sellInventoryQuantities(db, save, quantities)
+}
+
+/** Sells a chosen quantity from each selected bag stack. */
+export function sellInventoryQuantities(
+  db: GameDatabase,
+  save: PlayerSave,
+  quantitiesByIndex: Record<number, number>,
+): SellInventoryResult {
+  const unique = Object.keys(quantitiesByIndex)
+    .map((key) => Number(key))
+    .filter((index) => Number.isInteger(index) && index >= 0 && index < save.inventory.length)
+    .sort((a, b) => b - a)
 
   if (unique.length === 0) {
     return { ok: false, reason: 'Select at least one item to sell.' }
@@ -71,12 +82,18 @@ export function sellInventoryIndexes(
 
   let goldEarned = 0
   let stacksSold = 0
-  const remove = new Set<number>()
+  const inventory = [...save.inventory]
   const soldAtShop: { itemId: string; quantity: number }[] = []
 
   for (const index of unique) {
-    const stack = save.inventory[index]
-    if (!stack) continue
+    const stack = inventory[index]
+    const quantity = Math.trunc(quantitiesByIndex[index] ?? 0)
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return { ok: false, reason: 'Choose how many to sell.' }
+    }
+    if (quantity > stack.quantity) {
+      return { ok: false, reason: 'You do not have that many to sell.' }
+    }
     if (isFavoriteStack(stack)) {
       return { ok: false, reason: 'Favorited items cannot be sold. Unfavorite them first.' }
     }
@@ -89,19 +106,15 @@ export function sellInventoryIndexes(
         db.Items.find((item) => item['Item ID'] === stack.itemId)?.['Display Name'] ?? 'That item'
       return { ok: false, reason: `${name} cannot be sold.` }
     }
-    goldEarned += priced.unitPrice * stack.quantity
+    goldEarned += priced.unitPrice * quantity
     stacksSold += 1
-    remove.add(index)
     if (priced.shopId) {
-      soldAtShop.push({ itemId: stack.itemId, quantity: stack.quantity })
+      soldAtShop.push({ itemId: stack.itemId, quantity })
     }
+    if (quantity >= stack.quantity) inventory.splice(index, 1)
+    else inventory[index] = { ...stack, quantity: stack.quantity - quantity }
   }
 
-  if (stacksSold === 0) {
-    return { ok: false, reason: 'Select at least one item to sell.' }
-  }
-
-  const inventory = save.inventory.filter((_, index) => !remove.has(index))
   let next: PlayerSave = {
     ...save,
     inventory,

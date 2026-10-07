@@ -90,7 +90,15 @@ class _ProjectPickerState extends State<ProjectPicker> {
     }
     final receipt = describeProjectCompletion(controller.db, detail.projectId, quantity, result);
     // Enchanting changes worn gear, so vitals are recalculated with the save.
-    controller.commitLoadout(result.save!);
+    controller.commitLoadout(
+      result.save!,
+      command: 'complete_special_project',
+      args: <String, Object?>{
+        'projectId': detail.projectId,
+        'quantity': quantity,
+        if (detail.isEnchantment) 'enchantTargetId': _enchantTargetId ?? _preferredTargetId(detail),
+      },
+    );
     controller.noteProjectCompletion(result);
     controller.announce(receipt.message);
     setState(() {

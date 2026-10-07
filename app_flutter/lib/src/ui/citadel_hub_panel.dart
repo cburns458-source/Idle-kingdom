@@ -73,7 +73,9 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
   void _syncHour() {
     final save = controller.save;
     final synced = syncBountyHour(save, nowMs);
-    if (synced.bountyHourKey != save.bountyHourKey) controller.commit(synced);
+    if (synced.bountyHourKey != save.bountyHourKey) {
+      controller.commit(synced, command: 'sync_bounty_hour');
+    }
   }
 
   Future<void> _turnIn(BountyDefinition bounty) async {

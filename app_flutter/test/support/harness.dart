@@ -172,6 +172,7 @@ MultiplayerController buildRemoteMultiplayer(
   TestClock? clock,
   bool testerAccess = true,
 }) {
+  transport.database ??= database.launch;
   final testClock = clock ?? TestClock();
   final storage = MemorySaveStorage();
   final service = RemoteMultiplayerService(

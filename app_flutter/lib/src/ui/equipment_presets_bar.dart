@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -127,6 +129,7 @@ class EquipmentPresetsBar extends StatelessWidget {
     if (target < 0 || target >= equipmentPresetCount) return;
     controller.commitLoadout(
       saveActiveEquipmentPreset(controller.save.copyWith(activeEquipmentPresetIndex: target)),
+      command: 'equipment_preset_save',
     );
     onMessage?.call('Preset saved.');
   }
@@ -137,7 +140,11 @@ class EquipmentPresetsBar extends StatelessWidget {
       onMessage?.call(result.reason ?? 'Could not apply that preset.');
       return;
     }
-    controller.commitLoadout(result.save!);
+    controller.commitLoadout(
+      result.save!,
+      command: 'equipment_preset_apply',
+      args: <String, Object?>{'presetIndex': index},
+    );
     if (result.warning != null) onMessage?.call(result.warning!);
     onSelectPreset?.call(index);
   }
@@ -175,6 +182,17 @@ class EquipmentPresetsBar extends StatelessWidget {
       next = setEquipmentPresetIcon(next, i, result[i].icon);
     }
     controller.commit(next);
+    for (var i = 0; i < result.length; i += 1) {
+      final submitted = controller.submitGameCommand?.call(
+        'equipment_preset_edit',
+        <String, Object?>{
+          'presetIndex': i,
+          'name': result[i].name,
+          'icon': result[i].icon.toJson(),
+        },
+      );
+      if (submitted != null) unawaited(submitted);
+    }
     onMessage?.call('Preset settings saved.');
   }
 
@@ -263,7 +281,15 @@ class EquipmentPresetsBar extends StatelessWidget {
     var next = renameEquipmentPreset(controller.save, index, nameController.text);
     next = setEquipmentPresetIcon(next, index, icon);
     nameController.dispose();
-    controller.commit(next);
+    controller.commit(
+      next,
+      command: 'equipment_preset_edit',
+      args: <String, Object?>{
+        'presetIndex': index,
+        'name': nameController.text,
+        'icon': icon.toJson(),
+      },
+    );
   }
 }
 

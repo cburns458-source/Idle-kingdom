@@ -122,6 +122,18 @@ void main() {
     final farm = startedCharacter(database)
         .copyWith(characterName: 'Vari', motto: 'Keep the watch.');
     await net.signUp('vari@example.com', 'Vari', 'secret', farm, adopt: (save, {nowMs}) {});
+    expect(
+      (await seedHostedSave(net.service as RemoteMultiplayerService, transport, farm)).ok,
+      isTrue,
+    );
+    expect(
+      (await (net.service as RemoteMultiplayerService).pushSave(
+        database.launch,
+        farm,
+        force: true,
+      )).ok,
+      isTrue,
+    );
     net.setNameColorDraft('#FA3');
     await net.publishRanking(farm, ignoreDebounce: true);
     await net.selectChatTab(ChatTab.global, farm.currentLocationId);

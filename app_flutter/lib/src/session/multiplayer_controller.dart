@@ -618,7 +618,56 @@ class MultiplayerController extends ChangeNotifier {
     return null;
   }
 
-  /// Queues the live save for the account. Unnamed stubs are not written.
+  /// Called when the hosted save should replace the local copy.
+  void Function(PlayerSave save)? onHostedSave;
+
+  Future<void> _commandTail = Future<void>.value();
+
+  /// Applies a named intent on the hosted save and adopts the server copy.
+  Future<CloudSyncResult> submitGameCommand(
+    String command, [
+    Map<String, Object?> args = const <String, Object?>{},
+  ]) {
+    final done = Completer<CloudSyncResult>();
+    _commandTail = _commandTail
+        .then((_) async {
+          if (!isSignedIn) {
+            done.complete(const CloudSyncResult.failed('Sign in to play.'));
+            return;
+          }
+          var result = await service.gameCommand(command, args);
+          if (!result.ok && (result.reason ?? '').contains('version conflict')) {
+            final pulled = await service.pullSave();
+            if (pulled.ok && pulled.save != null) {
+              _adoptHosted(pulled.save!);
+            }
+            result = await service.gameCommand(command, args);
+          }
+          if (result.ok && result.save != null) {
+            _adoptHosted(result.save!);
+          } else if (!result.ok && result.reason != null) {
+            _notice = result.reason;
+            notifyListeners();
+          }
+          if (!done.isCompleted) done.complete(result);
+        })
+        .catchError((Object error) {
+          final failed = CloudSyncResult.failed(error.toString());
+          if (!done.isCompleted) done.complete(failed);
+        });
+    return done.future;
+  }
+
+  void _adoptHosted(PlayerSave save) {
+    _suppressUploads = true;
+    try {
+      onHostedSave?.call(save);
+    } finally {
+      _suppressUploads = false;
+    }
+  }
+
+  /// Queues a throttled hosted sync. Unnamed stubs are not written.
   void scheduleAccountSave(PlayerSave save) {
     if (!isSignedIn || _suppressUploads || !isPlayableSave(save)) return;
     _pendingAccountSave = save;
@@ -628,14 +677,17 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
-  /// Writes the pending (or given) save to the account now.
+  /// Advances the hosted save to now. Discrete mutations go through commands.
   Future<void> flushAccountSave([PlayerSave? save]) async {
     _accountSaveTimer?.cancel();
     _accountSaveTimer = null;
     final outgoing = save ?? _pendingAccountSave;
     _pendingAccountSave = null;
     if (!isSignedIn || _suppressUploads || !isPlayableSave(outgoing)) return;
-    await service.pushSave(db, outgoing!, force: true);
+    final result = await service.pushSave(db, outgoing!, force: false);
+    if (result.ok && result.save != null && result.source == CloudSyncSource.downloaded) {
+      _adoptHosted(result.save!);
+    }
   }
 
   /// Publishes a just-created character immediately.
