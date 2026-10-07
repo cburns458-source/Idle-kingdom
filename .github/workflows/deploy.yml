@@ -51,6 +51,13 @@ jobs:
         with:
           version: latest
 
+      - name: Confirm environment
+        run: |
+          echo "branch=$GITHUB_REF"
+          echo "project_ref_set=$([ -n "$SUPABASE_PROJECT_REF" ] && echo yes || echo no)"
+          echo "access_token_set=$([ -n "$SUPABASE_ACCESS_TOKEN" ] && echo yes || echo no)"
+          echo "project_ref=$SUPABASE_PROJECT_REF"
+
       - name: Deploy
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
