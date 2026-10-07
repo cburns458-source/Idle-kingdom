@@ -64,6 +64,10 @@ void main() {
     expect((await service.claimAccountUsername('Later')).ok, isTrue);
     expect(service.session?.username, 'Hero');
 
+    expect(service.backend.upsertProfile(service.session!.userId, username: '')?.username, '');
+    expect((await service.claimAccountUsername('Hero')).ok, isTrue);
+    expect((await service.profile(service.session!.userId))?.username, 'Hero');
+
     final rival = _service(storage, idOffset: 100);
     await rival.signUp('rival@example.com', '', 'secret');
     expect((await rival.claimAccountUsername('Hero')).reason, 'That name is taken.');

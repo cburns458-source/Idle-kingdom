@@ -356,7 +356,6 @@ export class LocalMultiplayerBackend {
     const db = this.db()
     const account = db.users.find((row) => row.userId === userId)
     if (!account) return { ok: false, reason: 'Sign in required.' }
-    if (account.username.toLowerCase() === cleaned.toLowerCase()) return { ok: true }
     const existing = db.profiles.find((row) => row.userId === userId)
     const held = existing?.username ?? account.username
     if (!isUnclaimedAccountUsername(held)) return { ok: true }

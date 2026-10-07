@@ -12,6 +12,7 @@
     "parity:record": "PARITY_RECORD=1 vitest run src/parity/record.test.ts",
     "gen:dart": "node --experimental-strip-types tools/gen_dart_models.ts",
     "gen:dart:check": "node --experimental-strip-types tools/gen_dart_models.ts --check",
+    "bundle:game-edge": "bash tools/bundle_game_edge.sh",
     "deploy:staging": "npx wrangler deploy --env staging",
     "deploy:production": "npx wrangler deploy"
   },

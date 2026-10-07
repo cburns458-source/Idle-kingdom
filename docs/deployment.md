@@ -114,6 +114,12 @@ Missing `SUPABASE_ACCESS_TOKEN` or `SUPABASE_PROJECT_REF` fails the job
 (`::error` + exit 1). It also refuses a crossed wire: `test-launch` will not
 deploy to the live ref, and `main` will not deploy to the test ref.
 
+The `game` function is the phase 0 server-authority prototype. The deploy
+job runs `npm run bundle:game-edge` so `src/game` is inside the function
+before `deno check`. See [docs/server-authority.md](server-authority.md).
+Do not treat a green deploy of `game` as live `sync` / `command` — those
+still return 501.
+
 Do not redeploy the live `bazaar` function without an explicit owner OK.
 Live already has migration `025_bazaar_six_slots` applied (six-slot
 `bazaar_place_order` and `bazaar_orders_slot_check`); the hosted function

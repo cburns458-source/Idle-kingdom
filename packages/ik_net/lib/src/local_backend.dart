@@ -149,7 +149,6 @@ class LocalMultiplayerBackend {
     final accountIndex = db.users.indexWhere((row) => row.userId == userId);
     if (accountIndex < 0) return const ActionResult.failed('Sign in required.');
     final current = db.users[accountIndex].username;
-    if (current.toLowerCase() == cleaned.toLowerCase()) return const ActionResult.ok();
     final profileIndex = db.profiles.indexWhere((row) => row.userId == userId);
     final held = profileIndex >= 0 ? db.profiles[profileIndex].username : current;
     if (!isUnclaimedAccountUsername(held)) return const ActionResult.ok();

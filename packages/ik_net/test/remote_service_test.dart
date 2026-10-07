@@ -100,6 +100,51 @@ void main() {
     expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Vari');
   });
 
+  test(
+    'writes the first character name when the session already matches an empty profile',
+    () async {
+      final transport = FakeTransport();
+      final service = await _signedIn(transport, MemorySaveStorage());
+      transport.tables[RemoteTables.profiles]!.single['username'] = '';
+      expect(service.session?.username, 'Hero');
+
+      expect((await service.claimAccountUsername('Hero')).ok, isTrue);
+      expect(service.session?.username, 'Hero');
+      expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Hero');
+      expect(transport.calls, contains('updateAuthUsername:Hero'));
+    },
+  );
+
+  test('claims an email-prefix session name onto a missing profile', () async {
+    final transport = FakeTransport();
+    transport.seedAccount(email: 'vari@example.com');
+    final service = _service(transport, MemorySaveStorage());
+    expect((await service.signIn('vari@example.com', 'secret')).ok, isTrue);
+    expect(service.session?.username, 'vari');
+    expect(transport.tables[RemoteTables.profiles] ?? const <RemoteRow>[], isEmpty);
+
+    expect((await service.claimAccountUsername('vari')).ok, isTrue);
+    expect(service.session?.username, 'vari');
+    expect(transport.tables[RemoteTables.profiles]!.single['username'], 'vari');
+  });
+
+  test('the play-session seat does not claim an email prefix as the public name', () async {
+    final transport = FakeTransport();
+    transport.seedAccount(email: 'vari@example.com');
+    final service = _service(transport, MemorySaveStorage());
+    expect((await service.signIn('vari@example.com', 'secret')).ok, isTrue);
+    expect((await service.claimPlaySession()).ok, isTrue);
+    expect(service.session?.username, 'vari');
+    expect(
+      isPendingAccountUsername('${transport.tables[RemoteTables.profiles]!.single['username']}'),
+      isTrue,
+    );
+
+    expect((await service.claimAccountUsername('Hero')).ok, isTrue);
+    expect(service.session?.username, 'Hero');
+    expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Hero');
+  });
+
   test('renames a claimed username once per week when the name is free', () async {
     var nowMs = _nowMs;
     final transport = FakeTransport(nowMs: () => nowMs);

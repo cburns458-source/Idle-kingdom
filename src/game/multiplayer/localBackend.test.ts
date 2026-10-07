@@ -92,6 +92,9 @@ describe('local multiplayer backend', () => {
     expect(backend.getProfile(created.session.userId)?.username).toBe('Hero')
     expect(backend.claimAccountUsername(created.session.userId, 'Later')).toEqual({ ok: true })
     expect(backend.getProfile(created.session.userId)?.username).toBe('Hero')
+    expect(backend.upsertProfile(created.session.userId, { username: '' })?.username).toBe('')
+    expect(backend.claimAccountUsername(created.session.userId, 'Hero')).toEqual({ ok: true })
+    expect(backend.getProfile(created.session.userId)?.username).toBe('Hero')
 
     const rival = backend.signUp('rival@example.com', '', 'secret')
     expect(rival.ok).toBe(true)

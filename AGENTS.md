@@ -37,6 +37,7 @@ npm run lint
 npm run typecheck
 npm run gen:dart:check   # the Dart row models against src/game/data/types.ts
 npm test                 # also replays the committed parity fixtures
+npm run bundle:game-edge                         # src/game into the game function
 cd supabase/functions && deno check */index.ts   # only if you touched a function
 cd app_flutter && flutter analyze && flutter test && flutter build web --release --pwa-strategy=none
 ```

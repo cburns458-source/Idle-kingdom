@@ -42,6 +42,10 @@ jobs:
         with:
           deno-version: v2.x
 
+      # The game function imports a Deno bundle of src/game. Deploy would
+      # otherwise upload an empty import and the prototype would 500.
+      - run: npm run bundle:game-edge
+
       # Deploying a function that does not compile would leave the Bazaar
       # refusing every offer, and the failure would only show up as a 500 in a
       # player's face. Cheap enough to repeat here rather than trust the run on

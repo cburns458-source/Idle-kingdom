@@ -24,6 +24,11 @@ node_modules
 # Local repo backups
 *.bundle
 
+# Generated game-function bundle (npm run bundle:game-edge)
+supabase/functions/_shared/game_rules.js
+supabase/functions/_shared/game-database.json
+supabase/functions/deno.lock
+
 # Dart / Flutter
 .dart_tool/
 build/

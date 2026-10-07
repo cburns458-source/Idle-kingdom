@@ -132,8 +132,6 @@ export async function claimAccountUsername(
   if (!session) return { ok: false, reason: 'Sign in required.' }
   const cleaned = remoteUsername(name)
   if (cleaned.length < 2) return { ok: false, reason: 'Enter a name to continue.' }
-  if (session.username.toLowerCase() === cleaned.toLowerCase()) return { ok: true }
-  if (!isUnclaimedAccountUsername(session.username)) return { ok: true }
 
   if (multiplayerMode() === 'local') {
     const result = getLocalBackend().claimAccountUsername(session.userId, name)
@@ -143,6 +141,14 @@ export async function claimAccountUsername(
 
   const client = getSupabaseClient()
   if (!client) return { ok: false, reason: REMOTE_NOT_CONFIGURED }
+  const { data: profile } = await client
+    .from(REMOTE_TABLES.profiles)
+    .select('username')
+    .eq('user_id', session.userId)
+    .limit(1)
+    .maybeSingle()
+  const held = typeof profile?.username === 'string' ? profile.username : ''
+  if (!isUnclaimedAccountUsername(held)) return { ok: true }
   const taken = await client
     .from(REMOTE_TABLES.profiles)
     .select('user_id, username')

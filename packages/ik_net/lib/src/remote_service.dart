@@ -261,9 +261,6 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current == null) return const ActionResult.failed('Sign in required.');
     final cleaned = remoteUsername(name);
     if (cleaned.length < 2) return const ActionResult.failed('Enter a name to continue.');
-    if (current.username.toLowerCase() == cleaned.toLowerCase()) {
-      return const ActionResult.ok();
-    }
     final held = await _profileUsername(current.userId);
     if (held != null && !isUnclaimedAccountUsername(held)) {
       return const ActionResult.ok();
@@ -396,9 +393,14 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current == null) return const ActionResult.failed('Sign in to play.');
     final next = current.copyWith(playSessionId: current.playSessionId ?? newPlaySessionId());
     _sessions.write(next);
-    final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[
-      profilePlaySessionRow(next),
-    ]);
+    final held = await _profileUsername(next.userId);
+    // A new row needs a username. An existing row must keep whatever it has —
+    // the seat claim must not turn an email-prefix session into a public name
+    // before character create.
+    final seated = held == null
+        ? profilePlaySessionRow(next.copyWith(username: pendingAccountUsername(next.userId)))
+        : <String, Object?>{'user_id': next.userId, 'active_play_session_id': next.playSessionId};
+    final refused = await transport.upsert(RemoteTables.profiles, <RemoteRow>[seated]);
     // The column is missing until the play-session migration is applied; play
     // still works, but this device cannot kick or be kicked.
     _seatClaimedOnServer = refused == null;
