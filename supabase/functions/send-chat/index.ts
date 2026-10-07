@@ -297,16 +297,24 @@ function dmPeers(channelKey: string): string[] | null {
   return parts
 }
 
+function publicChatUsername(raw: unknown): string {
+  if (typeof raw !== 'string') return ''
+  const trimmed = raw.trim()
+  if (!trimmed || trimmed.startsWith('pending_')) return ''
+  return trimmed.slice(0, 24)
+}
+
 async function resolveUsername(
   admin: Client,
   userId: string,
   metadata: Record<string, unknown> | undefined,
 ): Promise<string> {
   const { data } = await admin.from('profiles').select('username').eq('user_id', userId).maybeSingle()
-  const fromProfile = typeof data?.username === 'string' ? data.username.trim() : ''
-  if (fromProfile) return fromProfile.slice(0, 24)
-  const fromMeta = typeof metadata?.username === 'string' ? metadata.username.trim() : ''
-  return (fromMeta || 'Adventurer').slice(0, 24)
+  return (
+    publicChatUsername(data?.username) ||
+    publicChatUsername(metadata?.username) ||
+    'Adventurer'
+  )
 }
 
 function cors(): HeadersInit {

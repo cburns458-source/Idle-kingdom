@@ -244,12 +244,6 @@ class _GuildPanelState extends State<GuildPanel> {
       maxWidth: 400,
       maxHeight: 600,
       builder: (context) => GamePopupCard(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 16,
-          bottom: 16 + MediaQuery.viewInsetsOf(context).bottom,
-        ),
         child: _CreateGuildSheet(gold: save.gold, onSubmit: _foundGuild),
       ),
     );
@@ -1128,64 +1122,56 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
   @override
   Widget build(BuildContext context) {
     final form = createGuildFormView(widget.gold, _tag.text, name: _name.text);
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: 16 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Create guild',
-              style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
-            ),
-            const SizedBox(height: 4),
-            MutedText(form.costLine),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _tag,
-              decoration: const InputDecoration(labelText: 'Tag (2–4 letters)', hintText: 'EG'),
-              onChanged: (raw) {
-                final cleaned = sanitizeGuildTagInput(raw);
-                if (cleaned != raw) {
-                  _tag.value = TextEditingValue(
-                    text: cleaned,
-                    selection: TextSelection.collapsed(offset: cleaned.length),
-                  );
-                }
-                setState(() {});
-              },
-            ),
-            const SizedBox(height: 4),
-            MutedText('Preview: ${form.tagPreview}'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _name,
-              maxLength: 28,
-              decoration: const InputDecoration(labelText: 'Name'),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 8),
-            _EmblemEditor(emblem: _emblem, onChanged: (next) => setState(() => _emblem = next)),
-            const SizedBox(height: 12),
-            // Whatever is missing is said here, above a button that always
-            // presses. A greyed-out button reads as a game that is broken, and
-            // one labelled with its own complaint still does nothing when
-            // pressed, so the complaint gets its own line.
-            if (_refused ?? form.refusal case final reason?) ...[
-              Text(reason, style: const TextStyle(color: Palette.danger)),
-              const SizedBox(height: 6),
-            ],
-            GameButton(
-              label: _sending ? 'Creating…' : form.submitLabel,
-              onPressed: _sending ? null : _submit,
-            ),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Create guild',
+            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+          ),
+          const SizedBox(height: 4),
+          MutedText(form.costLine),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _tag,
+            decoration: const InputDecoration(labelText: 'Tag (2–4 letters)', hintText: 'EG'),
+            onChanged: (raw) {
+              final cleaned = sanitizeGuildTagInput(raw);
+              if (cleaned != raw) {
+                _tag.value = TextEditingValue(
+                  text: cleaned,
+                  selection: TextSelection.collapsed(offset: cleaned.length),
+                );
+              }
+              setState(() {});
+            },
+          ),
+          const SizedBox(height: 4),
+          MutedText('Preview: ${form.tagPreview}'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _name,
+            maxLength: 28,
+            decoration: const InputDecoration(labelText: 'Name'),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 8),
+          _EmblemEditor(emblem: _emblem, onChanged: (next) => setState(() => _emblem = next)),
+          const SizedBox(height: 12),
+          // Whatever is missing is said here, above a button that always
+          // presses. A greyed-out button reads as a game that is broken, and
+          // one labelled with its own complaint still does nothing when
+          // pressed, so the complaint gets its own line.
+          if (_refused ?? form.refusal case final reason?) ...[
+            Text(reason, style: const TextStyle(color: Palette.danger)),
+            const SizedBox(height: 6),
           ],
-        ),
+          GameButton(
+            label: _sending ? 'Creating…' : form.submitLabel,
+            onPressed: _sending ? null : _submit,
+          ),
+        ],
       ),
     );
   }
@@ -1274,12 +1260,7 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: 16 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: const EdgeInsets.all(16),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

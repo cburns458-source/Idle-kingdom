@@ -61,6 +61,33 @@ void main() {
     expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Later');
   });
 
+  test('a stamped upsert on an existing profile still renames', () async {
+    final transport = FakeTransport(nowMs: () => _nowMs);
+    final service = _service(transport);
+    await service.signUp('hero@example.com', 'Hero', 'secret');
+    final userId = service.session!.userId;
+
+    expect(
+      await transport.upsert(RemoteTables.profiles, <RemoteRow>[
+        <String, Object?>{
+          'user_id': userId,
+          'username': 'Vari',
+          remoteUsernameRenamedAtColumn: '2020-01-01T00:00:00.000Z',
+        },
+      ], onConflict: 'user_id'),
+      isNull,
+    );
+    expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Vari');
+    expect(
+      transport.tables[RemoteTables.profiles]!.single[remoteUsernameRenamedAtColumn],
+      isNotNull,
+    );
+    expect(
+      transport.tables[RemoteTables.profiles]!.single[remoteUsernameRenamedAtColumn],
+      isNot('2020-01-01T00:00:00.000Z'),
+    );
+  });
+
   test('a client cannot write username_renamed_at by itself', () async {
     final transport = FakeTransport(nowMs: () => _nowMs);
     final service = _service(transport);

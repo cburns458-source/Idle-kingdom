@@ -498,6 +498,22 @@ void main() {
     expect(await service.countUnreadChat(const ChatChannel.local('LOC-0028'), null), 0);
   });
 
+  test('chat stores the public profile name and skips pending_', () async {
+    final transport = FakeTransport();
+    final service = _service(transport, MemorySaveStorage());
+    expect((await service.signUp('hero@example.com', '', 'secret')).ok, isTrue);
+    expect(isPendingAccountUsername(service.session!.username), isTrue);
+
+    final pending = await service.sendChat(const ChatChannel.global(), 'hi');
+    expect(pending.ok, isTrue, reason: pending.reason);
+    expect(pending.message!.username, 'Adventurer');
+
+    expect((await service.claimAccountUsername('Vari')).ok, isTrue);
+    final claimed = await service.sendChat(const ChatChannel.global(), 'hello');
+    expect(claimed.ok, isTrue, reason: claimed.reason);
+    expect(claimed.message!.username, 'Vari');
+  });
+
   test('sends a private message through the function and the other account reads it', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());

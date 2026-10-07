@@ -551,6 +551,13 @@ function refusalFor(error: unknown): string {
   return message || 'The Bazaar did not accept that.'
 }
 
+function publicChatUsername(raw: unknown): string {
+  if (typeof raw !== 'string') return ''
+  const trimmed = raw.trim()
+  if (!trimmed || trimmed.startsWith('pending_')) return ''
+  return trimmed.slice(0, 24)
+}
+
 async function resolveUsername(
   admin: Client,
   userId: string,
@@ -561,10 +568,11 @@ async function resolveUsername(
     .select('username')
     .eq('user_id', userId)
     .maybeSingle()
-  const fromProfile = typeof data?.username === 'string' ? data.username.trim() : ''
-  if (fromProfile) return fromProfile.slice(0, 24)
-  const fromMeta = typeof metadata?.username === 'string' ? metadata.username.trim() : ''
-  return (fromMeta || 'Adventurer').slice(0, 24)
+  return (
+    publicChatUsername(data?.username) ||
+    publicChatUsername(metadata?.username) ||
+    'Adventurer'
+  )
 }
 
 function orderJson(row: OrderRow): Record<string, unknown> {

@@ -336,12 +336,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (remaining != null) {
       return ActionResult.failed(usernameRenameCooldownReason(remaining));
     }
-    final stamp = DateTime.fromMillisecondsSinceEpoch(nowMs.round(), isUtc: true).toIso8601String();
-    final row = <String, Object?>{
-      'user_id': current.userId,
-      'username': cleaned,
-      remoteUsernameRenamedAtColumn: stamp,
-    };
+    final row = <String, Object?>{'user_id': current.userId, 'username': cleaned};
     final refused = await _upsertProfileRow(row);
     if (refused != null) {
       if (refused.toLowerCase().contains('duplicate key') ||
@@ -351,7 +346,12 @@ class RemoteMultiplayerService implements MultiplayerService {
       return ActionResult.failed(friendlyRemoteError(refused));
     }
     await transport.updateAuthUsername(cleaned);
-    _local.backend.upsertProfile(current.userId, username: cleaned, usernameRenamedAt: stamp);
+    final stamped = await profile(current.userId);
+    _local.backend.upsertProfile(
+      current.userId,
+      username: cleaned,
+      usernameRenamedAt: stamped?.usernameRenamedAt,
+    );
     _adopt(current.copyWith(username: cleaned));
     return const ActionResult.ok();
   }

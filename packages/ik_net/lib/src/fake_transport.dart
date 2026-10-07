@@ -446,9 +446,20 @@ class FakeTransport implements RemoteTransport {
       final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
       for (final row in rows) {
         final at = stored.indexWhere((existing) => key.every((k) => existing[k] == row[k]));
+        // PostgREST upsert fires BEFORE INSERT on the payload, then BEFORE
+        // UPDATE on the merge. INSERT mutations do not carry into UPDATE NEW.
+        if (table == RemoteTables.profiles) {
+          final incoming = <String, Object?>{...row};
+          final insertBlocked = _profileGuardRefusal(null, incoming);
+          if (insertBlocked != null) return insertBlocked;
+          if (at < 0) {
+            stored.add(incoming);
+            continue;
+          }
+        }
         final next = at >= 0 ? <String, Object?>{...stored[at], ...row} : <String, Object?>{...row};
         if (table == RemoteTables.profiles) {
-          final blocked = _profileGuardRefusal(at >= 0 ? stored[at] : null, next);
+          final blocked = _profileGuardRefusal(stored[at], next);
           if (blocked != null) return blocked;
         }
         if (table == RemoteTables.guilds) {
@@ -541,6 +552,24 @@ class FakeTransport implements RemoteTransport {
     return null;
   }
 
+  /// Matches send-chat: public profile name, then auth metadata, else Adventurer.
+  String _publicChatUsername(FakeAccount sender) {
+    String? publicName(Object? raw) {
+      if (raw is! String) return null;
+      final trimmed = raw.trim();
+      if (trimmed.isEmpty || isPendingAccountUsername(trimmed)) return null;
+      return remoteUsername(trimmed);
+    }
+
+    for (final profile in tables[RemoteTables.profiles] ?? const <RemoteRow>[]) {
+      if (profile['user_id'] != sender.userId) continue;
+      final named = publicName(profile['username']);
+      if (named != null) return named;
+      break;
+    }
+    return publicName(sender.username) ?? 'Adventurer';
+  }
+
   num _clockMs() => nowMs?.call() ?? DateTime.parse(startIso).millisecondsSinceEpoch;
 
   String _clockIso() =>
@@ -557,9 +586,7 @@ class FakeTransport implements RemoteTransport {
     }
 
     if (old == null) {
-      if (next[remoteUsernameRenamedAtColumn] != null) {
-        return remoteUsernameRenamedAtLocked;
-      }
+      next[remoteUsernameRenamedAtColumn] = null;
       return null;
     }
 
@@ -641,7 +668,7 @@ class FakeTransport implements RemoteTransport {
         'id': _nextId('msg'),
         'channel_key': body['channelKey'],
         'user_id': sender.userId,
-        'username': sender.username ?? 'Adventurer',
+        'username': _publicChatUsername(sender),
         'body': body['body'],
         'created_at': stamp(),
       };

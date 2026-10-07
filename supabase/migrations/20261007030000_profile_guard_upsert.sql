@@ -1,11 +1,5 @@
--- Wave A: stop a modified client spoofing a guild tag, skipping the weekly
--- rename cooldown, or rewriting username_renamed_at. Officers also cannot
--- change guilds.leader_id. Matches packages/ik_net usernameRenameCooldownMs
--- (7 days) and pending_ first-claim names.
-
--- =============================================================================
--- Profiles
--- =============================================================================
+-- Wave A follow-up: PostgREST upsert fires BEFORE INSERT first. The first
+-- guard raised on a stamped payload and the rename UPDATE never ran.
 
 create or replace function public.profiles_guard_sensitive_columns()
 returns trigger
@@ -86,57 +80,7 @@ begin
 end;
 $$;
 
-drop trigger if exists profiles_guard_sensitive_columns on public.profiles;
-create trigger profiles_guard_sensitive_columns
-  before insert or update on public.profiles
-  for each row
-  execute function public.profiles_guard_sensitive_columns();
-
 comment on function public.profiles_guard_sensitive_columns() is
   'Guild tag must match guild_members. Weekly rename cooldown is server-stamped.';
-
--- =============================================================================
--- Guilds: leader-only row updates, and freeze leader_id even if policy slips
--- =============================================================================
-
-drop policy if exists "guilds update by managers" on public.guilds;
-drop policy if exists "guilds update by leader" on public.guilds;
-create policy "guilds update by leader" on public.guilds
-  for update to authenticated
-  using ((select auth.uid()) = leader_id)
-  with check ((select auth.uid()) = leader_id);
-
-create or replace function public.guilds_guard_leader_id()
-returns trigger
-language plpgsql
-set search_path = public
-as $$
-declare
-  actor uuid := auth.uid();
-begin
-  if new.leader_id is not distinct from old.leader_id then
-    return new;
-  end if;
-
-  if actor is null and current_user in ('service_role', 'supabase_admin', 'postgres') then
-    return new;
-  end if;
-
-  if actor is not null and actor = old.leader_id then
-    return new;
-  end if;
-
-  raise exception 'Only the guild leader can change leader_id.';
-end;
-$$;
-
-drop trigger if exists guilds_guard_leader_id on public.guilds;
-create trigger guilds_guard_leader_id
-  before update on public.guilds
-  for each row
-  execute function public.guilds_guard_leader_id();
-
-comment on function public.guilds_guard_leader_id() is
-  'Officers cannot transfer leadership by writing guilds.leader_id.';
 
 notify pgrst, 'reload schema';

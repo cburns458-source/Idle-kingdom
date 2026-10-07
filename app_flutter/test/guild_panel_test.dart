@@ -98,6 +98,35 @@ void main() {
     expect(find.text('Creating a guild costs $guildCreateGoldCost gold.'), findsOne);
   });
 
+  testWidgets('the create sheet stays in its card when the keyboard opens', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: 0),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('broke@example.com', 'Broke', 'secret')).ok, isTrue);
+    await net.refresh(controller.save);
+
+    await pumpPanel(tester, guildScreen(net, controller), size: const Size(390, 844));
+    await tester.tap(find.textContaining('Create guild ('));
+    await tester.pumpAndSettle();
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 336);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pump();
+
+    final title = onTheSheet(find.text('Create guild'));
+    expect(title, findsOne);
+    final popup = tester.getRect(find.byKey(const Key('game-popup')));
+    final titleBox = tester.getRect(title);
+    expect(titleBox.top, greaterThanOrEqualTo(popup.top));
+    expect(titleBox.bottom, lessThanOrEqualTo(popup.bottom));
+    expect(onTheSheet(find.widgetWithText(TextField, 'Name')), findsOne);
+  });
+
   testWidgets('the create button presses even when the form is not ready', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(
