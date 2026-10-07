@@ -51,6 +51,11 @@ In the Restoria test project: Authentication → URL configuration.
 - Site URL: `https://test.restoriaidle.com`
 - Redirect URLs: `https://test.restoriaidle.com`, `https://test.restoriaidle.com/**`
 
+Authentication → Providers → Email: **Confirm email** off. A new project
+leaves it on. Sign-up then creates the user with no session, character
+creation hits `profiles` RLS, and `updateUser` reports "Auth session
+missing". Live already has Confirm email off.
+
 Live keeps `https://restoriaidle.com`.
 
 ## Migrations

@@ -30,6 +30,10 @@ class FakeTransport implements RemoteTransport {
   /// Optional authoritative clock for [serverNowMs], matching a hosted now().
   final num Function()? nowMs;
 
+  /// When true, [signUp] creates the account and returns no session, matching a
+  /// hosted project that still has Confirm email on.
+  bool omitSignUpSession = false;
+
   final _FakeProject _project;
 
   /// A fresh timestamp, a second later each time.
@@ -213,6 +217,13 @@ class FakeTransport implements RemoteTransport {
       username: username,
     );
     accounts[key] = account;
+    if (omitSignUpSession) {
+      _current = null;
+      signedOut = true;
+      return RemoteAuthResult.ok(
+        RemoteAccount(userId: account.userId, email: account.email, username: account.username),
+      );
+    }
     _current = account;
     signedOut = false;
     return RemoteAuthResult.ok(

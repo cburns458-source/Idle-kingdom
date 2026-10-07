@@ -217,6 +217,13 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (!result.ok || account == null) {
       return SessionResult.failed(result.reason ?? remoteSignUpFailed);
     }
+    // Confirm-email projects create the user and return no session. Adopting
+    // that user anyway puts them on the name sheet, where every profiles write
+    // fails RLS and updateUser says "Auth session missing".
+    final token = account.accessToken;
+    if (token == null || token.isEmpty) {
+      return SessionResult.failed(remoteSignUpNeedsSession);
+    }
     final chosen = username.trim().length >= 2
         ? remoteUsername(username)
         : pendingAccountUsername(account.userId);

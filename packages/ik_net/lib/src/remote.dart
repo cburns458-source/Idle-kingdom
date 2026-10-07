@@ -63,6 +63,8 @@ const String remoteBazaarMarketFunction = 'bazaar';
 
 const String remoteNotConfigured = 'Supabase is not configured.';
 const String remoteSignUpFailed = 'Sign-up failed.';
+const String remoteSignUpNeedsSession =
+    'Confirm your email, then sign in. On a new project, turn off Confirm email under Authentication → Providers → Email.';
 const String remoteSignInFailed = 'Sign-in failed.';
 const String remoteInvalidBackendUrl =
     'The Supabase project URL is wrong. Use https://YOUR_PROJECT.supabase.co with no /rest/v1.';

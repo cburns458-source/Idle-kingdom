@@ -54,6 +54,16 @@ void main() {
     expect(_service(transport, storage).session?.userId, service.session!.userId);
   });
 
+  test('refuses sign-up when the project created the user without a session', () async {
+    final transport = FakeTransport()..omitSignUpSession = true;
+    final service = _service(transport, MemorySaveStorage());
+    final created = await service.signUp('hero@example.com', 'Hero', 'secret');
+    expect(created.ok, isFalse);
+    expect(created.reason, remoteSignUpNeedsSession);
+    expect(service.session, isNull);
+    expect(transport.tables[RemoteTables.profiles], isEmpty);
+  });
+
   test('assigns a pending name on sign-up, then claims the first character name', () async {
     final transport = FakeTransport();
     final first = _service(transport, MemorySaveStorage());
