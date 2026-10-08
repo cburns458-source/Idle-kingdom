@@ -6,8 +6,9 @@ phases that get us there. Phase 2 is live on `test-launch`: `sync` and
 direct client insert/update on that table is revoked. Phase 1 `shadow`
 and phase 0 `prototype` stay available.
 
-Combat and gathering still resolve on the device. That Master Prompt line
-stays until phase 4 ships.
+Phase 4 is done. Combat and gathering still tick on the device so the UI
+stays live; the hosted save is written by `sync` and `command`. The Master
+Prompt and Game Bible say the same.
 
 ## Why
 
@@ -105,11 +106,11 @@ eight-hour gathering window fits.
 3. **Rankings (this wave).** Server writes `leaderboard_snapshots`,
    `pvp_snapshots`, and public profile equipment. Client writes to those
    tables are revoked.
-4. **Docs.** Replace the Master Prompt line that says combat and
-   gathering stay client-side.
+4. **Docs (done).** Master Prompt and Game Bible now say the hosted save
+   is server-authoritative. Combat and gathering still tick on the device
+   for the live UI.
 
-Stop for owner review after phase 3. Do not start phase 4, D, E, F, or H
-until that review.
+Do not start D, E, F, or H until the owner asks.
 
 ## Phase 0 contract
 

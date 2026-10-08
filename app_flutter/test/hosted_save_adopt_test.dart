@@ -62,6 +62,41 @@ void main() {
     expect(merged.combatEnemyId, 'ENM-0001');
   });
 
+  test('travel keeps local HP unless a new fight started', () {
+    final local = startedCharacter(database).copyWith(
+      currentLocationId: 'LOC-0001',
+      currentHp: 190,
+      lastDamagedAt: isoFromMs(testStartMs),
+      hpRegenStreak: 2,
+    );
+    final incoming = local.copyWith(
+      currentLocationId: 'LOC-0009',
+      currentHp: 150,
+      lastDamagedAt: isoFromMs(testStartMs - 10_000),
+      hpRegenStreak: 0,
+    );
+
+    final merged = mergeHostedStartSave(local, incoming, command: 'travel');
+    expect(merged.currentLocationId, 'LOC-0009');
+    expect(merged.currentHp, 190);
+    expect(merged.lastDamagedAt, local.lastDamagedAt);
+    expect(merged.hpRegenStreak, 2);
+  });
+
+  test('travel into a new fight takes the server HP', () {
+    final local = startedCharacter(database).copyWith(currentHp: 190, combatEnemyId: null);
+    final incoming = local.copyWith(
+      currentLocationId: 'LOC-0003',
+      currentHp: 150,
+      combatEnemyId: 'ENM-0001',
+      combatEnemyHp: 40,
+    );
+
+    final merged = mergeHostedStartSave(local, incoming, command: 'travel');
+    expect(merged.currentHp, 150);
+    expect(merged.combatEnemyId, 'ENM-0001');
+  });
+
   test('sell and conflict pulls take the server clocks', () {
     final local = startedCharacter(database).copyWith(
       currentActivityId: 'ACT-0021',

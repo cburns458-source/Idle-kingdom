@@ -204,6 +204,17 @@ void main() {
     expect(session.repository.read()!.currentLocationId, meadowLocationId);
   });
 
+  test('recovers from a finished death pause with no activity running', () {
+    session.boot();
+    session.apply(session.save.copyWith(currentHp: 0, deathPauseUntil: isoFromMs(now + 30000)));
+    now += 10000;
+    expect(session.tick().save.currentHp, 0);
+    now += 25000;
+    final recovered = session.tick();
+    expect(recovered.save.deathPauseUntil, isNull);
+    expect(recovered.save.currentHp, deathRecoveryHp(recovered.save.maxHp));
+  });
+
   test('refuses to travel while recovering from defeat', () {
     session.boot();
     session.apply(session.save.copyWith(deathPauseUntil: isoFromMs(now + 30000)));

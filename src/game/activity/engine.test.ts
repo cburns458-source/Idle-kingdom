@@ -339,6 +339,26 @@ describe('primary activity engine', () => {
     expect(woods.sort()).toEqual(['ACN-0014', 'ACN-0017', 'ACN-0204'])
   })
 
+  it('restores HP when starting an activity after the death pause has elapsed', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    let save = createNewSave(launch)
+    save = {
+      ...save,
+      currentHp: 0,
+      maxHp: 1000,
+      deathPauseUntil: new Date(now - 1_000).toISOString(),
+    }
+
+    const begun = beginActivitySave(save, 'ACT-0001', new Date(now).toISOString())
+    expect(begun.currentHp).toBe(500)
+    expect(begun.deathPauseUntil).toBeNull()
+
+    const generated = generateNextAction(launch, begun, 'ACT-0001', () => 0, now)
+    expect(generated).toBeTruthy()
+    expect(generated!.save.currentHp).toBeGreaterThan(0)
+  })
+
   it('refuses to stop or replace activities during death pause', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const now = Date.parse('2026-01-01T00:00:00.000Z')

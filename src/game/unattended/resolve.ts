@@ -165,19 +165,26 @@ export function resolveUnattendedProgress(
       break
     }
     steps += 1
-    if (!current.currentActivityId) break
-    // Production is batch-resolved above against the capped clock.
-    if (current.productionRecipeId) break
 
-    // Death pause: wait out remaining pause within the capped window.
+    // Death pause: wait out remaining pause, then stand up even with no activity.
     const pauseLeft = deathPauseRemainingMs(current, endMs)
     if (current.deathPauseUntil && pauseLeft > 0) {
       break
     }
-    if (current.deathPauseUntil && pauseLeft <= 0) {
-      const pauseEnded = Date.parse(current.deathPauseUntil)
-      let resumed: PlayerSave = applyDeathRecovery(db, current)
-      if (!activityStillValid(db, resumed, resumed.currentActivityId!)) {
+    if (
+      (current.deathPauseUntil && pauseLeft <= 0) ||
+      (current.currentHp <= 0 && !current.combatEnemyId)
+    ) {
+      const pauseEnded = current.deathPauseUntil ? Date.parse(current.deathPauseUntil) : endMs
+      const resumed: PlayerSave = applyDeathRecovery(db, current)
+      messages.push('Recovered from defeat while away.')
+      lastResolvedMs = Math.max(pauseEnded, anchor)
+      const activityId = resumed.currentActivityId
+      if (!activityId) {
+        current = resumed
+        break
+      }
+      if (!activityStillValid(db, resumed, activityId)) {
         current = clearActivitySave(resumed, pauseEnded)
         messages.push('Activity stopped after defeat — requirements no longer met.')
         break
@@ -185,15 +192,18 @@ export function resolveUnattendedProgress(
       const generated = generateNextAction(
         db,
         resumed,
-        resumed.currentActivityId!,
+        activityId,
         random,
         Math.max(pauseEnded, anchor),
       )
       current = generated ? generated.save : resumed
       lastResolvedMs = Math.max(pauseEnded, anchor)
-      messages.push('Recovered from defeat while away.')
       continue
     }
+
+    if (!current.currentActivityId) break
+    // Production is batch-resolved above against the capped clock.
+    if (current.productionRecipeId) break
 
     // Combat phases + inter-round eat — reuse live tick rules.
     const combatDue = nextCombatDueMs(db, current)

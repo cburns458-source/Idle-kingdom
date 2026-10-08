@@ -690,6 +690,32 @@ PlayerSave applyDeathRecovery(GameDatabase db, PlayerSave save) {
   return save.copyWith(maxHp: maxHp, currentHp: deathRecoveryHp(maxHp), deathPauseUntil: null);
 }
 
+/// Stands the player back up after a defeat once the pause is over.
+///
+/// Recovery does not need a current activity. A wiped [deathPauseUntil] with
+/// 0 HP (travel / stop used to clear the flag without healing) also stands
+/// them up. Mid-fight 0 HP is left alone so the defeat handler can run.
+PlayerSave ensureStandingAfterDefeat(GameDatabase db, PlayerSave save, num nowMs) {
+  if (isDeathPaused(save, nowMs)) return save;
+  if (isNotBlank(save.combatEnemyId)) return save;
+  if (save.currentHp > 0 && isBlank(save.deathPauseUntil)) return save;
+  return applyDeathRecovery(db, save);
+}
+
+/// Same stand-up as [ensureStandingAfterDefeat] using the stored max HP.
+///
+/// Used by begin/clear activity, which do not have the database in hand.
+PlayerSave standAfterDefeatIfDue(PlayerSave save, num nowMs) {
+  if (isDeathPaused(save, nowMs)) return save;
+  if (isNotBlank(save.combatEnemyId)) return save;
+  if (save.currentHp > 0 && isBlank(save.deathPauseUntil)) return save;
+  final maxHp = math.max(1, jsNumber(save.maxHp));
+  return save.copyWith(
+    currentHp: math.max(save.currentHp, deathRecoveryHp(maxHp)),
+    deathPauseUntil: null,
+  );
+}
+
 /// Shown whenever an action is refused because the death pause is still running.
 const String recoveringBlockedReason = 'You need to recover before you can do that.';
 

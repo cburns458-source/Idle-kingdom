@@ -49,7 +49,7 @@ Preserve these core requirements:
 - Content is data-driven rather than individually hardcoded.
 - Stable database IDs are used for relationships.
 - The experience is portrait-oriented, readable, cozy, mobile-first, and suitable for long idle sessions.
-- Social systems (presence, chat, guilds, leaderboards, bounties, bazaar, arena) are part of ordinary play. Combat and gathering stay client-resolved with soft server validation until the owner approves the server-authoritative game wave in `docs/AGENT_WORKFLOW.md`. That approved wave is allowed to move progression onto the server.
+- Social systems (presence, chat, guilds, leaderboards, bounties, bazaar, arena) are part of ordinary play. The hosted save is server-authoritative: `sync` and named commands write `player_saves`, and the client adopts that copy. Combat and gathering still tick on the device so the UI stays live; the server reruns the same rules on command and periodic sync.
 
 Do not add features simply because they are common in other RPGs.
 

@@ -243,6 +243,27 @@ describe('unattended progression', () => {
     )
   })
 
+  it('recovers from a finished death pause while idle away', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
+    const base = createNewSave(launch)
+    const resolved = resolveUnattendedProgress(
+      launch,
+      {
+        ...base,
+        currentHp: 0,
+        currentActivityId: null,
+        deathPauseUntil: new Date(startedAt + 30_000).toISOString(),
+        unattendedProgressAt: new Date(startedAt).toISOString(),
+      },
+      startedAt + 90_000,
+      () => 0,
+    )
+    expect(resolved.save.currentHp).toBeGreaterThanOrEqual(Math.floor(resolved.save.maxHp * 0.5))
+    expect(resolved.save.deathPauseUntil).toBeNull()
+    expect(resolved.messages.some((line) => line.includes('Recovered'))).toBe(true)
+  })
+
   it('regens HP while idle away and skips an unfinished combat round', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const startedAt = Date.parse('2026-01-01T00:00:00.000Z')

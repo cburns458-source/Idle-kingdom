@@ -173,6 +173,30 @@ describe('session tick', () => {
     expect(kill.save.combatEatUntil).toBeTruthy()
   })
 
+  it('recovers from a finished death pause even with no activity', () => {
+    const paused = newSave({
+      currentHp: 0,
+      deathPauseUntil: new Date(START_MS + 60_000).toISOString(),
+    })
+
+    const during = advanceSession(db, paused, START_MS + 30_000, firstOfPool)
+    expect(during.changed).toBe(false)
+    expect(during.save.currentHp).toBe(0)
+
+    const after = advanceSession(db, paused, START_MS + 61_000, firstOfPool)
+    expect(after.save.deathPauseUntil).toBeNull()
+    expect(after.save.currentHp).toBe(Math.floor(after.save.maxHp * 0.5))
+    expect(after.events.map((event) => event.kind)).toContain('recovered')
+    expect(after.save.currentActivityId).toBeNull()
+  })
+
+  it('stands a 0 HP save back up when the pause flag was already cleared', () => {
+    const stuck = newSave({ currentHp: 0, deathPauseUntil: null })
+    const after = advanceSession(db, stuck, START_MS + 1_000, firstOfPool)
+    expect(after.save.currentHp).toBe(Math.floor(after.save.maxHp * 0.5))
+    expect(after.events.map((event) => event.kind)).toContain('recovered')
+  })
+
   it('holds everything until a death pause elapses, then recovers', () => {
     const paused: PlayerSave = {
       ...gathering(),

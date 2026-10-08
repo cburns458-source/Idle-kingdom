@@ -16,8 +16,8 @@ import {
   applyCombatDefeat,
   applyCombatVictory,
   applyDeathRecovery,
-  deathPauseRemainingMs,
   getEnemy,
+  isDeathPaused,
   openCombatRoundClock,
   resolveCombatRound,
 } from '../combat/engine'
@@ -446,25 +446,34 @@ export function advanceSession(
 ): SessionTickResult {
   const out = new TickOutput(resolveActivityTransitions(db, save, nowMs, random), save)
 
-  const activityId = out.current.currentActivityId
-  if (!activityId) return out.result()
-
-  // Death pause blocks everything until it elapses, then play resumes.
-  if (out.current.deathPauseUntil) {
-    if (deathPauseRemainingMs(out.current, nowMs) > 0) return out.result()
-    const pauseEnded = Date.parse(out.current.deathPauseUntil)
+  // Death recovery does not require a running activity. Travel / stop used to
+  // wipe deathPauseUntil at 0 HP; stand those saves back up too.
+  if (
+    out.current.deathPauseUntil ||
+    (out.current.currentHp <= 0 && !out.current.combatEnemyId)
+  ) {
+    if (isDeathPaused(out.current, nowMs)) return out.result()
+    const pauseEnded = out.current.deathPauseUntil
+      ? Date.parse(out.current.deathPauseUntil)
+      : nowMs
     out.set(applyDeathRecovery(db, out.current))
-    continueActivity(
-      db,
-      out,
-      activityId,
-      pauseEnded,
-      random,
-      'Activity stopped after defeat — requirements no longer met.',
-    )
     out.emit({ kind: 'recovered' })
+    const recoveredActivityId = out.current.currentActivityId
+    if (recoveredActivityId) {
+      continueActivity(
+        db,
+        out,
+        recoveredActivityId,
+        pauseEnded,
+        random,
+        'Activity stopped after defeat — requirements no longer met.',
+      )
+    }
     return out.result()
   }
+
+  const activityId = out.current.currentActivityId
+  if (!activityId) return out.result()
 
   // Legacy inter-round eat pause (no active round clock). Mid-round eat is
   // handled below and does not block the attack.

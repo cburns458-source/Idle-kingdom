@@ -233,20 +233,26 @@ UnattendedResult resolveUnattendedProgress(
       break;
     }
     steps += 1;
-    if (isBlank(current.currentActivityId)) break;
-    // Production is batch-resolved above against the capped clock.
-    if (isNotBlank(current.productionRecipeId)) break;
 
-    // Death pause: wait out remaining pause within the capped window.
+    // Death pause: wait out remaining pause, then stand up even with no activity.
     final pauseLeft = deathPauseRemainingMs(current, endMs);
     if (isNotBlank(current.deathPauseUntil) && pauseLeft > 0) {
       break;
     }
-    if (isNotBlank(current.deathPauseUntil) && pauseLeft <= 0) {
-      final pauseEnded = jsDateParse(current.deathPauseUntil);
+    if ((isNotBlank(current.deathPauseUntil) && pauseLeft <= 0) ||
+        (current.currentHp <= 0 && isBlank(current.combatEnemyId))) {
+      final pauseEnded = isNotBlank(current.deathPauseUntil)
+          ? jsDateParse(current.deathPauseUntil)
+          : endMs;
       final resumed = applyDeathRecovery(db, current);
-      final activityId = resumed.currentActivityId!;
-      if (!activityStillValid(db, resumed, activityId)) {
+      messages.add('Recovered from defeat while away.');
+      lastResolvedMs = math.max(pauseEnded, anchor);
+      final activityId = resumed.currentActivityId;
+      if (isBlank(activityId)) {
+        current = resumed;
+        break;
+      }
+      if (!activityStillValid(db, resumed, activityId!)) {
         current = clearActivitySave(resumed, pauseEnded);
         messages.add('Activity stopped after defeat — requirements no longer met.');
         break;
@@ -255,9 +261,12 @@ UnattendedResult resolveUnattendedProgress(
       final generated = generateNextAction(db, resumed, activityId, random, resumeAt);
       current = generated != null ? generated.save : resumed;
       lastResolvedMs = resumeAt;
-      messages.add('Recovered from defeat while away.');
       continue;
     }
+
+    if (isBlank(current.currentActivityId)) break;
+    // Production is batch-resolved above against the capped clock.
+    if (isNotBlank(current.productionRecipeId)) break;
 
     // Combat phases + inter-round eat — same edges as live tick rules.
     final combatDue = _nextCombatDueMs(db, current);

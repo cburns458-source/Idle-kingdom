@@ -3,7 +3,9 @@ import {
   beginCombatSave,
   clearCombatSave,
   enemyForAction,
+  ensureStandingAfterDefeat,
   isDeathPaused,
+  standAfterDefeatIfDue,
 } from '../combat/engine'
 import { consumeFoodAfterVictory } from '../combat/food'
 import { clearProductionSave } from '../production/engine'
@@ -158,15 +160,15 @@ export function beginActivitySave(
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
   if (isDeathPaused(save, Date.parse(nowIso))) return save
+  const standing = standAfterDefeatIfDue(save, Date.parse(nowIso))
   return clearProductionSave(
     clearCombatSave({
-      ...save,
+      ...standing,
       currentActivityId: activityId,
       activityStartedAt: nowIso,
       currentActionId: null,
       actionStartedAt: null,
       actionDurationMs: null,
-      deathPauseUntil: null,
       activityTransition: null,
     }),
   )
@@ -177,15 +179,15 @@ export function clearActivitySave(
   nowMs: number = Date.now(),
 ): PlayerSave {
   if (isDeathPaused(save, nowMs)) return save
+  const standing = standAfterDefeatIfDue(save, nowMs)
   return clearProductionSave(
     clearCombatSave({
-      ...save,
+      ...standing,
       currentActivityId: null,
       activityStartedAt: null,
       currentActionId: null,
       actionStartedAt: null,
       actionDurationMs: null,
-      deathPauseUntil: null,
       activityTransition: null,
     }),
   )
@@ -198,6 +200,8 @@ export function generateNextAction(
   random: RandomFn = Math.random,
   nowMs: number = Date.now(),
 ): { save: PlayerSave; action: ActionRow; state: ActiveActionState | null } | null {
+  save = ensureStandingAfterDefeat(db, save, nowMs)
+  if (isDeathPaused(save, nowMs)) return null
   const activity = getActivity(db, activityId)
   if (!activity?.['Pool ID']) return null
 

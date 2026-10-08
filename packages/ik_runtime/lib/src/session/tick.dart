@@ -395,25 +395,32 @@ void _applyDueCombatOutcome(
 SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, RandomFn random) {
   final out = _TickOutput(resolveActivityTransitions(db, save, nowMs, random), save);
 
-  final activityId = out.current.currentActivityId;
-  if (isBlank(activityId)) return out.result();
-
-  // Death pause blocks everything until it elapses, then play resumes.
-  if (isNotBlank(out.current.deathPauseUntil)) {
-    if (deathPauseRemainingMs(out.current, nowMs) > 0) return out.result();
-    final pauseEnded = jsDateParse(out.current.deathPauseUntil);
+  // Death recovery does not require a running activity. Travel / stop used to
+  // wipe deathPauseUntil at 0 HP; stand those saves back up too.
+  if (isNotBlank(out.current.deathPauseUntil) ||
+      (out.current.currentHp <= 0 && isBlank(out.current.combatEnemyId))) {
+    if (isDeathPaused(out.current, nowMs)) return out.result();
+    final pauseEnded = isNotBlank(out.current.deathPauseUntil)
+        ? jsDateParse(out.current.deathPauseUntil)
+        : nowMs;
     out.set(applyDeathRecovery(db, out.current));
-    _continueActivity(
-      db,
-      out,
-      activityId!,
-      pauseEnded,
-      random,
-      'Activity stopped after defeat — requirements no longer met.',
-    );
     out.emit(const RecoveredEvent());
+    final recoveredActivityId = out.current.currentActivityId;
+    if (isNotBlank(recoveredActivityId)) {
+      _continueActivity(
+        db,
+        out,
+        recoveredActivityId!,
+        pauseEnded,
+        random,
+        'Activity stopped after defeat — requirements no longer met.',
+      );
+    }
     return out.result();
   }
+
+  final activityId = out.current.currentActivityId;
+  if (isBlank(activityId)) return out.result();
 
   if (isNotBlank(out.current.combatEatUntil) && isBlank(out.current.combatRoundStartedAt)) {
     final eatUntil = jsDateParse(out.current.combatEatUntil);

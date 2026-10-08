@@ -252,4 +252,32 @@ void main() {
     expect(recovered.currentHp, deathRecoveryHp(recovered.maxHp));
     expect(recovered.currentHp, greaterThan(0));
   });
+
+  test('an idle save at 0 HP stands back up after the pause', () {
+    final db = assertGameDatabaseShape(contentDatabaseJson());
+    final nowMs = 60_000;
+    final down = createNewSave(
+      db,
+      0,
+    ).copyWith(currentHp: 0, deathPauseUntil: isoFromMs(30_000), currentActivityId: null);
+    expect(ensureStandingAfterDefeat(db, down, 10_000).currentHp, 0);
+    final recovered = ensureStandingAfterDefeat(db, down, nowMs);
+    expect(recovered.currentHp, deathRecoveryHp(recovered.maxHp));
+    expect(recovered.deathPauseUntil, isNull);
+  });
+
+  test('starting an activity after a finished pause does not enter combat at 0 HP', () {
+    final db = assertGameDatabaseShape(contentDatabaseJson());
+    final nowMs = 60_000;
+    final down = createNewSave(
+      db,
+      nowMs,
+    ).copyWith(currentHp: 0, maxHp: 1000, deathPauseUntil: isoFromMs(nowMs - 1_000));
+    final begun = beginActivitySave(down, 'ACT-0001', isoFromMs(nowMs));
+    expect(begun.currentHp, 500);
+    expect(begun.deathPauseUntil, isNull);
+    final generated = generateNextAction(db, begun, 'ACT-0001', () => 0, nowMs);
+    expect(generated, isNotNull);
+    expect(generated!.save.currentHp, greaterThan(0));
+  });
 }

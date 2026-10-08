@@ -93,7 +93,7 @@ Sentence case: Player-facing Display Names use sentence case. Capitalize the fir
 - A new save is created when the account first creates a character.
 - The save contains skills and XP, inventory, bank, equipment, cosmetics, currency, quests, achievements, statistics, settings, current Location, current Activity, Activity start time, unattended-progress timestamp, and save version.
 - Saving must support versioning and migration so later demo builds can update existing saves safely.
-- Combat and gathering remain client-resolved with soft server validation. Do not make the game remotely authoritative in this demo.
+- The hosted save is server-authoritative: sync and named commands write it, and the client adopts that copy. Combat and gathering still tick on the device for the live UI.
 
 3.3 UNATTENDED PROGRESSION
 - Gathering and Combat may continue for up to 24 hours while the game is closed.
@@ -1163,7 +1163,7 @@ The live demo should feel shared. These systems are part of ordinary play, not o
 - Arena fights do not replace the ordinary world Combat loop.
 
 20.8 RESOLUTION
-- Combat and gathering stay client-resolved with soft server validation.
+- The hosted save is server-authoritative. Combat and gathering still tick on the device for the live UI; the server reruns the same rules on sync and command.
 - Shared rows (guild roster, hall, bazaar listings, chat, presence) are server-backed when the live backend is configured.
 - A build with no backend may keep shared rows on the device so tests and local development still run. That fallback is not a player-facing offline mode.
 

@@ -187,15 +187,15 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
 
 PlayerSave beginActivitySave(PlayerSave save, String activityId, String nowIso) {
   if (isDeathPaused(save, jsDateParse(nowIso))) return save;
+  final standing = standAfterDefeatIfDue(save, jsDateParse(nowIso));
   return clearProductionSave(
     clearCombatSave(
-      save.copyWith(
+      standing.copyWith(
         currentActivityId: activityId,
         activityStartedAt: nowIso,
         currentActionId: null,
         actionStartedAt: null,
         actionDurationMs: null,
-        deathPauseUntil: null,
         activityTransition: null,
       ),
     ),
@@ -204,15 +204,15 @@ PlayerSave beginActivitySave(PlayerSave save, String activityId, String nowIso) 
 
 PlayerSave clearActivitySave(PlayerSave save, num nowMs) {
   if (isDeathPaused(save, nowMs)) return save;
+  final standing = standAfterDefeatIfDue(save, nowMs);
   return clearProductionSave(
     clearCombatSave(
-      save.copyWith(
+      standing.copyWith(
         currentActivityId: null,
         activityStartedAt: null,
         currentActionId: null,
         actionStartedAt: null,
         actionDurationMs: null,
-        deathPauseUntil: null,
         activityTransition: null,
       ),
     ),
@@ -237,6 +237,8 @@ GeneratedAction? generateNextAction(
   RandomFn random,
   num nowMs,
 ) {
+  save = ensureStandingAfterDefeat(db, save, nowMs);
+  if (isDeathPaused(save, nowMs)) return null;
   final poolId = getActivity(db, activityId)?.raw['Pool ID'];
   if (poolId is! String || poolId.isEmpty) return null;
 
