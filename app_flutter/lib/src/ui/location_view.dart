@@ -1437,6 +1437,7 @@ class _ActivityCard extends StatelessWidget {
 
     final hostileLock = locationIsHostileFor(controller.db, controller.save);
     final switching = controller.switchBusy;
+    final waitingHere = controller.switchSpinner && controller.pendingSwitchTarget == activityId;
     final favorited = favoriteActivityAt(controller.save) == activityId;
     final skillIds = skillIdsForActivity(controller.db, controller.save, activityId);
     final questProgress = questActionProgressForActivity(
@@ -1487,6 +1488,7 @@ class _ActivityCard extends StatelessWidget {
               label: 'Stop',
               tone: GameButtonTone.secondary,
               compact: true,
+              waiting: waitingHere,
               onPressed: hostileLock || switching
                   ? null
                   : () {
@@ -1504,6 +1506,7 @@ class _ActivityCard extends StatelessWidget {
                   ? 'Replace'
                   : 'Start',
               compact: true,
+              waiting: waitingHere,
               onPressed: switching
                   ? null
                   : () {

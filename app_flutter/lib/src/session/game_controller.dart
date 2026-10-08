@@ -833,13 +833,22 @@ class GameController extends ChangeNotifier {
   void Function(PlayerSave before, PlayerSave after)? onSaveCommitted;
 
   /// Hosted play sends each discrete intent as a named game command.
-  Future<void> Function(String command, [Map<String, Object?> args])? submitGameCommand;
+  ///
+  /// Answers null when the server accepted it, or the sentence to show.
+  Future<String?> Function(String command, [Map<String, Object?> args])? submitGameCommand;
+
+  /// True while this device is signed in and playing the hosted save.
+  ///
+  /// Offline play applies a start or a travel on the tap. Signed-in play
+  /// waits for the server, then applies that answer.
+  bool Function()? hostedPlay;
+
+  bool get playsHosted => hostedPlay?.call() == true && submitGameCommand != null;
 
   /// Activity and travel commands still waiting on the hosted save.
   ///
   /// Start, stop, replace, production, and travel stay disabled while this is
-  /// set, so a second tap cannot queue another switch before the server
-  /// answers. That disabled moment is where a loading animation can go later.
+  /// set, so a second tap cannot queue another switch before the server answers.
   static const hostedSwitchCommands = <String>{
     'start_activity',
     'stop_activity',
@@ -849,20 +858,76 @@ class GameController extends ChangeNotifier {
     'travel_guild_hall',
   };
 
+  /// How long a switch waits before the loading circle appears, so a fast
+  /// answer does not flash one.
+  static const switchSpinnerDelay = Duration(milliseconds: 150);
+
   int _switchInFlight = 0;
+  String? _pendingSwitch;
+  String? _pendingSwitchTarget;
+  bool _switchSpinner = false;
+  Timer? _switchSpinnerTimer;
 
   bool get switchBusy => _switchInFlight > 0;
+
+  /// True once a switch has waited [switchSpinnerDelay].
+  bool get switchSpinner => _switchSpinner;
+
+  /// The switch command in flight, such as `travel` or `start_activity`.
+  String? get pendingSwitch => _pendingSwitch;
+
+  /// The activity a start, stop, or production switch is about.
+  String? get pendingSwitchTarget => _pendingSwitchTarget;
+
+  void _armSwitch(String command, {String? target}) {
+    _switchInFlight += 1;
+    _pendingSwitch = command;
+    _pendingSwitchTarget = target;
+    _switchSpinner = false;
+    _switchSpinnerTimer?.cancel();
+    _switchSpinnerTimer = Timer(switchSpinnerDelay, () {
+      if (!_alive || _switchInFlight == 0) return;
+      _switchSpinner = true;
+      notifyListeners();
+    });
+    notifyListeners();
+  }
+
+  void _disarmSwitch() {
+    if (_switchInFlight > 0) _switchInFlight -= 1;
+    if (_switchInFlight == 0) {
+      _pendingSwitch = null;
+      _pendingSwitchTarget = null;
+      _switchSpinner = false;
+      _switchSpinnerTimer?.cancel();
+      _switchSpinnerTimer = null;
+    }
+    if (_alive) notifyListeners();
+  }
+
+  /// Sends a switch and keeps the buttons quiet until it answers.
+  ///
+  /// Does not change the save. The server's answer lands through
+  /// [adoptHostedSave], and a refusal comes back as text.
+  Future<String?> _sendSwitch(String command, Map<String, Object?> args, {String? target}) async {
+    final send = submitGameCommand;
+    if (send == null) return 'Sign in to play.';
+    _armSwitch(command, target: target);
+    try {
+      return await send(command, args);
+    } finally {
+      _disarmSwitch();
+    }
+  }
 
   void _queueCommand(String command, [Map<String, Object?> args = const <String, Object?>{}]) {
     final pending = submitGameCommand?.call(command, args);
     if (pending == null || !hostedSwitchCommands.contains(command)) return;
-    _switchInFlight += 1;
-    notifyListeners();
+    _armSwitch(command, target: args['activityId'] as String?);
     unawaited(
       pending.whenComplete(() {
         if (!_alive) return;
-        if (_switchInFlight > 0) _switchInFlight -= 1;
-        notifyListeners();
+        _disarmSwitch();
       }),
     );
   }
@@ -876,9 +941,47 @@ class GameController extends ChangeNotifier {
   /// local arrival is not flashed back to the previous tile.
   void adoptHostedSave(PlayerSave incoming, {String? command}) {
     if (!_alive) return;
+    if (_deferArrival && command != null && hostedTravelCommands.contains(command)) {
+      _bufferedArrival = incoming;
+      _bufferedArrivalCommand = command;
+      return;
+    }
     if (command == null && wouldRewindCurrentLocation(save, incoming)) return;
     session.apply(mergeHostedStartSave(save, incoming, command: command));
     notifyListeners();
+  }
+
+  /// A map walk is playing, so the hosted arrival waits for [releaseArrival].
+  bool _deferArrival = false;
+  PlayerSave? _bufferedArrival;
+  String? _bufferedArrivalCommand;
+  TravelArrival? _pendingArrival;
+  void Function()? _onArrived;
+  bool _arrivalOk = false;
+  String? _arrivalReason;
+  bool _claimedSlingBefore = false;
+  bool _ownedSlingBefore = false;
+
+  /// Holds the next hosted travel until the walk animation finishes.
+  void deferArrival() {
+    _deferArrival = true;
+  }
+
+  /// Drops a hold that never started a travel.
+  void cancelArrivalDeferral() {
+    _deferArrival = false;
+    _bufferedArrival = null;
+    _bufferedArrivalCommand = null;
+  }
+
+  /// The walk finished. Arrive now if the server has answered, or as soon as it does.
+  void releaseArrival() {
+    final deferred = _deferArrival;
+    _deferArrival = false;
+    if (!deferred) return;
+    if (_switchInFlight > 0 && _arrivalReason == null && !_arrivalOk) return;
+    _finishArrival();
+    _disarmSwitch();
   }
 
   /// Stores the save a panel's intent produced, and repaints.
@@ -891,6 +994,15 @@ class GameController extends ChangeNotifier {
     Map<String, Object?> args = const <String, Object?>{},
   }) {
     if (command != null && hostedSwitchCommands.contains(command) && switchBusy) return;
+    if (command != null && hostedSwitchCommands.contains(command) && playsHosted) {
+      final target = args['activityId'] as String?;
+      unawaited(
+        _sendSwitch(command, args, target: target).then((reason) {
+          if (_alive && reason != null) report(reason);
+        }),
+      );
+      return;
+    }
     final previous = save;
     session.apply(next);
     _queueSkillLevelUps(previous, save);
@@ -1026,6 +1138,7 @@ class GameController extends ChangeNotifier {
   @override
   void dispose() {
     _alive = false;
+    _switchSpinnerTimer?.cancel();
     progress.dispose();
     secondsProgress.dispose();
     stageFx.dispose();
@@ -1156,10 +1269,21 @@ class GameController extends ChangeNotifier {
       return;
     }
     _autoEquip = null;
-    session.apply(result.save!);
     _activityError = null;
     _message = null;
     _clearStageFx();
+    if (queueCommand && playsHosted) {
+      unawaited(
+        _sendSwitch('start_activity', <String, Object?>{
+          'activityId': activityId,
+          'allowAutoEquip': allowAutoEquip,
+        }, target: activityId).then((reason) {
+          if (_alive && reason != null) report(reason);
+        }),
+      );
+      return;
+    }
+    session.apply(result.save!);
     if (queueCommand) {
       _queueCommand('start_activity', <String, Object?>{
         'activityId': activityId,
@@ -1193,6 +1317,16 @@ class GameController extends ChangeNotifier {
     final proposal = _autoEquip;
     if (proposal == null) return;
     _autoEquip = null;
+    if (playsHosted) {
+      unawaited(
+        _sendSwitch('confirm_auto_equip', <String, Object?>{
+          'activityId': proposal.activityId,
+        }, target: proposal.activityId).then((reason) {
+          if (_alive && reason != null) report(reason);
+        }),
+      );
+      return;
+    }
     final equipped = applyAutoEquipProposal(db, save, proposal);
     if (!equipped.ok) {
       _activityError = equipped.reason;
@@ -1417,18 +1551,50 @@ class GameController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    session.apply(result.save!);
+    final stopping = save.currentActivityId;
     _activityError = null;
     _clearStageFx();
+    if (playsHosted) {
+      unawaited(
+        _sendSwitch('stop_activity', const <String, Object?>{}, target: stopping).then((reason) {
+          if (_alive && reason != null) report(reason);
+        }),
+      );
+      return;
+    }
+    session.apply(result.save!);
     _queueCommand('stop_activity');
     notifyListeners();
   }
 
   /// Travels to [destinationId], reporting whether the request was accepted.
-  bool travelTo(String destinationId, String browseMapId) {
+  ///
+  /// [onArrived] runs once the location has changed: immediately offline, and
+  /// after the server answers when signed in. A walk calls [deferArrival]
+  /// first so that answer waits for [releaseArrival].
+  bool travelTo(String destinationId, String browseMapId, {void Function()? onArrived}) {
     if (switchBusy) return false;
     final claimedSling = save.claimedKingswoodsSling;
     final ownedSling = saveOwnsSling(save);
+    if (playsHosted) {
+      final plan = planTravel(db, save, destinationId, browseMapId, session.clock(), _random);
+      switch (plan) {
+        case TravelBlocked():
+          return false;
+        case TravelInstant(arrival: final arrival):
+          unawaited(
+            _hostedTravel(
+              'travel',
+              <String, Object?>{'destinationId': destinationId, 'browseMapId': browseMapId},
+              arrival,
+              onArrived: onArrived,
+              claimedSling: claimedSling,
+              ownedSling: ownedSling,
+            ),
+          );
+      }
+      return true;
+    }
     final plan = session.travelTo(destinationId, browseMapId);
     switch (plan) {
       case TravelBlocked():
@@ -1440,13 +1606,31 @@ class GameController extends ChangeNotifier {
         });
         _showArrival(arrival);
         _noteKingswoodsSling(claimedBefore: claimedSling, ownedBefore: ownedSling);
+        onArrived?.call();
     }
     return true;
   }
 
   /// Travels into the player's guild hall from the Guilds screen.
-  bool travelToGuildHall() {
+  bool travelToGuildHall({void Function()? onArrived}) {
     if (switchBusy) return false;
+    if (playsHosted) {
+      final plan = planGuildHallTravel(db, save, session.clock(), _random);
+      switch (plan) {
+        case TravelBlocked():
+          return false;
+        case TravelInstant(arrival: final arrival):
+          unawaited(
+            _hostedTravel(
+              'travel_guild_hall',
+              const <String, Object?>{},
+              arrival,
+              onArrived: onArrived,
+            ),
+          );
+      }
+      return true;
+    }
     final plan = session.travelToGuildHall();
     switch (plan) {
       case TravelBlocked():
@@ -1454,8 +1638,70 @@ class GameController extends ChangeNotifier {
       case TravelInstant(arrival: final arrival):
         _queueCommand('travel_guild_hall');
         _showArrival(arrival);
+        onArrived?.call();
     }
     return true;
+  }
+
+  /// Checks the route, asks the server, then arrives with the server's save.
+  Future<void> _hostedTravel(
+    String command,
+    Map<String, Object?> args,
+    TravelArrival arrival, {
+    void Function()? onArrived,
+    bool claimedSling = false,
+    bool ownedSling = false,
+  }) async {
+    _pendingArrival = arrival;
+    _onArrived = onArrived;
+    _arrivalOk = false;
+    _arrivalReason = null;
+    _claimedSlingBefore = claimedSling;
+    _ownedSlingBefore = ownedSling;
+    _armSwitch(command);
+    var hold = false;
+    try {
+      final reason = await submitGameCommand!(command, args);
+      _arrivalOk = reason == null;
+      _arrivalReason = reason;
+      if (_deferArrival && reason == null) {
+        hold = true;
+        return;
+      }
+      _deferArrival = false;
+      _finishArrival();
+    } finally {
+      if (!hold) _disarmSwitch();
+    }
+  }
+
+  void _finishArrival() {
+    final arrival = _pendingArrival;
+    final onArrived = _onArrived;
+    final ok = _arrivalOk;
+    final reason = _arrivalReason;
+    _pendingArrival = null;
+    _onArrived = null;
+    _arrivalOk = false;
+    _arrivalReason = null;
+    if (!ok) {
+      _bufferedArrival = null;
+      _bufferedArrivalCommand = null;
+      if (reason != null) report(reason);
+      return;
+    }
+    final buffered = _bufferedArrival;
+    final bufferedCommand = _bufferedArrivalCommand;
+    _bufferedArrival = null;
+    _bufferedArrivalCommand = null;
+    if (buffered != null) {
+      adoptHostedSave(buffered, command: bufferedCommand);
+    }
+    if (arrival != null) {
+      _showArrival(arrival);
+      _noteKingswoodsSling(claimedBefore: _claimedSlingBefore, ownedBefore: _ownedSlingBefore);
+    }
+    onArrived?.call();
   }
 
   /// Forces the habitat Critter to appear at the current location.

@@ -10,6 +10,7 @@ import 'game_popup.dart';
 import 'page_header.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
+import 'wait_mark.dart';
 
 const List<(GuildRosterSort, String)> _rosterSortOptions = [
   (GuildRosterSort.oldest, 'Join date (oldest)'),
@@ -113,7 +114,7 @@ class _GuildPanelState extends State<GuildPanel> {
   @override
   Widget build(BuildContext context) {
     final route = _routes.last;
-    return switch (route) {
+    final page = switch (route) {
       _GuildHomeRoute() => _buildHomeOrBrowser(),
       _GuildOthersRoute() => _OtherGuildsPage(
         controller: widget.controller,
@@ -130,6 +131,13 @@ class _GuildPanelState extends State<GuildPanel> {
         onClose: _popGuild,
       ),
     };
+    if (net.guildWait == null) return page;
+    return Stack(
+      children: [
+        page,
+        const Positioned.fill(child: GameWaitVeil()),
+      ],
+    );
   }
 
   Widget _buildHomeOrBrowser() {
@@ -369,24 +377,26 @@ class _GuildPanelState extends State<GuildPanel> {
               return SocialRow(
                 title: row.username,
                 subtitle: row.message,
-                trailing: Row(
-                  children: [
-                    GameIconButton(
-                      onPressed: net.busy
-                          ? null
-                          : () => net.decideApplication(row.applicationId, true, save),
-                      tooltip: 'Accept',
-                      icon: Icons.check,
-                    ),
-                    GameIconButton(
-                      onPressed: net.busy
-                          ? null
-                          : () => net.decideApplication(row.applicationId, false, save),
-                      tooltip: 'Decline',
-                      icon: Icons.close,
-                    ),
-                  ],
-                ),
+                trailing: net.guildWait == 'decide'
+                    ? const GameWaitMark()
+                    : Row(
+                        children: [
+                          GameIconButton(
+                            onPressed: net.busy
+                                ? null
+                                : () => net.decideApplication(row.applicationId, true, save),
+                            tooltip: 'Accept',
+                            icon: Icons.check,
+                          ),
+                          GameIconButton(
+                            onPressed: net.busy
+                                ? null
+                                : () => net.decideApplication(row.applicationId, false, save),
+                            tooltip: 'Decline',
+                            icon: Icons.close,
+                          ),
+                        ],
+                      ),
               );
             }
             if (i == 2 + applications.length * 2) return const SizedBox(height: 10);
@@ -510,6 +520,7 @@ class _GuildPanelState extends State<GuildPanel> {
                 child: GameButton(
                   label: 'Leave',
                   tone: GameButtonTone.secondary,
+                  waiting: net.guildWait == 'leave',
                   onPressed: net.busy
                       ? null
                       : () {
@@ -1174,7 +1185,8 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
             const SizedBox(height: 6),
           ],
           GameButton(
-            label: _sending ? 'Creating…' : form.submitLabel,
+            label: form.submitLabel,
+            waiting: _sending,
             onPressed: _sending ? null : _submit,
           ),
         ],

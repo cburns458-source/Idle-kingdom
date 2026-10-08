@@ -108,7 +108,11 @@ class _BootGateState extends State<_BootGate> {
     multiplayer.onHostedSave = game.adoptHostedSave;
     multiplayer.currentSave = () => game.save;
     multiplayer.onQuietMessage = game.announce;
-    game.submitGameCommand = multiplayer.submitGameCommand;
+    game.hostedPlay = () => multiplayer.isSignedIn;
+    game.submitGameCommand = (command, [args = const <String, Object?>{}]) async {
+      final result = await multiplayer.submitGameCommand(command, args);
+      return result.ok ? null : (result.reason ?? 'Try again.');
+    };
     repository.onWrite = multiplayer.scheduleAccountSave;
     if (multiplayer.isSignedIn) {
       await multiplayer.resumeAccount(game.save, adopt: game.adoptAccountSave);

@@ -304,9 +304,9 @@ void main() {
       clock: clock,
     );
     addTearDown(controller.dispose);
-    final gates = <Completer<void>>[];
+    final gates = <Completer<String?>>[];
     controller.submitGameCommand = (command, [args = const <String, Object?>{}]) {
-      final gate = Completer<void>();
+      final gate = Completer<String?>();
       gates.add(gate);
       return gate.future;
     };
@@ -333,5 +333,99 @@ void main() {
     expect(controller.travelTo('LOC-0009', mainMapId), isTrue);
     expect(controller.save.currentLocationId, 'LOC-0009');
     expect(controller.switchBusy, isTrue);
+  });
+
+  test('a signed-in start waits for the server, and a refusal changes nothing', () async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    final gate = Completer<String?>();
+    controller.submitGameCommand = (command, [args = const <String, Object?>{}]) => gate.future;
+
+    controller.startActivity('ACT-0021');
+    expect(controller.switchBusy, isTrue);
+    expect(controller.pendingSwitch, 'start_activity');
+    expect(controller.save.currentActivityId, isNot('ACT-0021'));
+
+    gate.complete('You cannot start that.');
+    await pumpEventQueue();
+    expect(controller.switchBusy, isFalse);
+    expect(controller.switchSpinner, isFalse);
+    expect(controller.save.currentActivityId, isNot('ACT-0021'));
+    expect(controller.activityError, 'You cannot start that.');
+  });
+
+  testWidgets('the loading circle waits out a fast answer', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    final gate = Completer<String?>();
+    controller.submitGameCommand = (command, [args = const <String, Object?>{}]) => gate.future;
+
+    controller.startActivity('ACT-0021');
+    expect(controller.switchSpinner, isFalse);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(controller.switchSpinner, isTrue);
+
+    final started = requestActivityStart(
+      controller.db,
+      controller.save,
+      'ACT-0021',
+      controller.session.clock(),
+      () => 0,
+    );
+    expect(started.ok, isTrue, reason: started.reason);
+    gate.complete(null);
+    // The adopt stands in for the server copy arriving with the command.
+    controller.adoptHostedSave(started.save!, command: 'start_activity');
+    await tester.pump();
+    expect(controller.save.currentActivityId, 'ACT-0021');
+    expect(controller.switchBusy, isFalse);
+  });
+
+  test('signed-in travel arrives when the server answers, and a walk can hold it', () async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+    );
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    final gate = Completer<String?>();
+    controller.submitGameCommand = (command, [args = const <String, Object?>{}]) async {
+      await gate.future;
+      final plan = planTravel(
+        controller.db,
+        controller.save,
+        'LOC-0009',
+        mainMapId,
+        controller.session.clock(),
+        () => 0,
+      );
+      final arrival = (plan as TravelInstant).arrival;
+      controller.adoptHostedSave(arrival.save, command: 'travel');
+      return null;
+    };
+
+    var arrived = false;
+    controller.deferArrival();
+    expect(controller.travelTo('LOC-0009', mainMapId, onArrived: () => arrived = true), isTrue);
+    expect(controller.save.currentLocationId, 'LOC-0001');
+
+    gate.complete(null);
+    await pumpEventQueue();
+    expect(controller.save.currentLocationId, 'LOC-0001', reason: 'the walk is still going');
+    expect(arrived, isFalse);
+    expect(controller.switchBusy, isTrue);
+
+    controller.releaseArrival();
+    expect(controller.save.currentLocationId, 'LOC-0009');
+    expect(arrived, isTrue);
+    expect(controller.switchBusy, isFalse);
   });
 }

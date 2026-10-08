@@ -22,6 +22,7 @@ import 'codex_view.dart';
 import 'inventory_view.dart';
 import 'library_view.dart';
 import 'location_view.dart';
+import 'wait_mark.dart';
 import 'out_of_sight.dart';
 import 'log_view.dart';
 import 'mailbox_popup.dart';
@@ -482,11 +483,15 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   }
 
   void _cancelMapWalk() {
+    final hostedWalk = _walkToId != null && controller.pendingSwitch == 'travel';
     _mapWalk?.dispose();
     _mapWalk = null;
     _walkFromId = null;
     _walkToId = null;
     _walkProgress.value = 0;
+    // Leaving the map mid-walk still has to arrive or drop the wait, or the
+    // travel buttons stay disabled.
+    if (hostedWalk) controller.releaseArrival();
   }
 
   /// Whether Local chat should use the shared Citadel room.
@@ -601,7 +606,17 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
 
   void _arrive(String locationId) {
     _cancelMapWalk();
-    if (!controller.travelTo(locationId, _browseMapId)) return;
+    controller.travelTo(
+      locationId,
+      _browseMapId,
+      onArrived: () {
+        if (!mounted) return;
+        _showArrivalScreen(locationId);
+      },
+    );
+  }
+
+  void _showArrivalScreen(String locationId) {
     final subMapId = _subMapOpenedByArrival(locationId);
     setState(() {
       _wardrobeOpen = false;
@@ -659,8 +674,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     if (controller.switchBusy) return;
     if (!await _confirmHostileTravel(locationId)) return;
     if (controller.switchBusy) return;
-    if (!controller.travelTo(locationId, mapId)) return;
-    _popToLocation();
+    controller.travelTo(
+      locationId,
+      mapId,
+      onArrived: () {
+        if (mounted) _popToLocation();
+      },
+    );
   }
 
   void _travelTo(String locationId) {
@@ -692,11 +712,52 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     }
     if (!await _confirmHostileTravel(locationId)) return;
     if (controller.switchBusy) return;
-    if (!controller.mapTravelAnimation || controller.batterySaver) {
+    final walk = controller.mapTravelAnimation && !controller.batterySaver;
+    if (controller.playsHosted && walk) {
+      _walkWhileTravelling(locationId);
+      return;
+    }
+    if (!walk) {
       _arrive(locationId);
       return;
     }
 
+    _startMapWalk(locationId, onComplete: () => _arrive(locationId));
+  }
+
+  /// Signed-in travel: the sprite walks while the server answers, and the
+  /// location changes when both are done.
+  void _walkWhileTravelling(String locationId) {
+    controller.deferArrival();
+    final accepted = controller.travelTo(
+      locationId,
+      _browseMapId,
+      onArrived: () {
+        if (!mounted) return;
+        _cancelMapWalk();
+        _showArrivalScreen(locationId);
+      },
+    );
+    if (!accepted) {
+      controller.cancelArrivalDeferral();
+      return;
+    }
+    _startMapWalk(locationId, onComplete: controller.releaseArrival);
+    void cancelIfRefused() {
+      if (!mounted || _walkToId != locationId) {
+        controller.removeListener(cancelIfRefused);
+        return;
+      }
+      if (controller.switchBusy) return;
+      if (controller.save.currentLocationId == locationId) return;
+      controller.removeListener(cancelIfRefused);
+      _cancelMapWalk();
+    }
+
+    controller.addListener(cancelIfRefused);
+  }
+
+  void _startMapWalk(String locationId, {required VoidCallback onComplete}) {
     final fromId = mapWalkStartLocationId(
       controller.db,
       controller.save.currentLocationId,
@@ -723,7 +784,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           })
           ..addStatusListener((status) {
             if (status == AnimationStatus.completed && _walkToId == locationId) {
-              _arrive(locationId);
+              onComplete();
             }
           })
           ..forward();
@@ -1159,6 +1220,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               ],
             ),
           ),
+        if (controller.switchSpinner &&
+            _walkFromId == null &&
+            (controller.pendingSwitch == 'travel' ||
+                controller.pendingSwitch == 'travel_guild_hall'))
+          const Positioned.fill(child: GameWaitVeil(label: 'Travelling…')),
         if (controller.returningFromAway)
           const ReturningOverlay()
         else if (controller.awaySummary case final summary?)
@@ -1282,8 +1348,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           onClose: _popPage,
           onTravelToHall: () {
             if (controller.rejectIfRecovering() || controller.switchBusy) return;
-            if (!controller.travelToGuildHall()) return;
-            _popToLocation();
+            controller.travelToGuildHall(
+              onArrived: () {
+                if (mounted) _popToLocation();
+              },
+            );
           },
         );
       case GameScreen.bazaar:

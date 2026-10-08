@@ -340,6 +340,7 @@ class GameButton extends StatefulWidget {
     this.tooltip,
     this.semanticLabel,
     this.symbol = false,
+    this.waiting = false,
   });
 
   final String label;
@@ -363,6 +364,9 @@ class GameButton extends StatefulWidget {
   /// Draw [label] with the system emoji font instead of Pixeloid.
   final bool symbol;
 
+  /// Shows a progress circle in place of [label] and ignores taps.
+  final bool waiting;
+
   @override
   State<GameButton> createState() => _GameButtonState();
 }
@@ -374,16 +378,16 @@ class _GameButtonState extends State<GameButton> {
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
     final primary = widget.tone == GameButtonTone.primary;
-    final down = _pressed && widget.onPressed != null;
+    final down = _pressed && widget.onPressed != null && !widget.waiting;
     final button = Semantics(
       button: true,
-      enabled: widget.onPressed != null,
+      enabled: widget.onPressed != null && !widget.waiting,
       label: widget.semanticLabel ?? widget.label,
       child: ExcludeSemantics(
         child: Opacity(
-          opacity: widget.onPressed == null ? 0.55 : 1,
+          opacity: widget.waiting || widget.onPressed != null ? 1 : 0.55,
           child: PixelInkPlate(
-            onTap: widget.onPressed,
+            onTap: widget.waiting ? null : widget.onPressed,
             onHighlightChanged: (value) {
               if (_pressed == value) return;
               setState(() => _pressed = value);
@@ -409,26 +413,32 @@ class _GameButtonState extends State<GameButton> {
                   : const BoxConstraints(minHeight: 32, minWidth: 64),
               child: Align(
                 alignment: Alignment.center,
-                child: Text(
-                  widget.label,
-                  textAlign: TextAlign.center,
-                  maxLines: widget.compact || widget.dense ? 1 : 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: widget.symbol ? null : gameFontFamily,
-                    fontFamilyFallback: widget.symbol
-                        ? const ['Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji']
-                        : null,
-                    fontSize: widget.symbol
-                        ? GameFont.m
-                        : widget.dense
-                        ? GameFont.xs
-                        : GameFont.s,
-                    fontWeight: FontWeight.w400,
-                    height: widget.symbol ? 1 : null,
-                    color: primary ? chrome.primaryLabel : chrome.secondaryLabel,
-                  ),
-                ),
+                child: widget.waiting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Palette.gold),
+                      )
+                    : Text(
+                        widget.label,
+                        textAlign: TextAlign.center,
+                        maxLines: widget.compact || widget.dense ? 1 : 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: widget.symbol ? null : gameFontFamily,
+                          fontFamilyFallback: widget.symbol
+                              ? const ['Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji']
+                              : null,
+                          fontSize: widget.symbol
+                              ? GameFont.m
+                              : widget.dense
+                              ? GameFont.xs
+                              : GameFont.s,
+                          fontWeight: FontWeight.w400,
+                          height: widget.symbol ? 1 : null,
+                          color: primary ? chrome.primaryLabel : chrome.secondaryLabel,
+                        ),
+                      ),
               ),
             ),
           ),

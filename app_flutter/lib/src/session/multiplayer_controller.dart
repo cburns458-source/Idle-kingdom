@@ -10,6 +10,19 @@ import 'hosted_save_adopt.dart';
 import 'loadout_command.dart';
 import 'tester_access.dart';
 
+/// Switches the client does not apply until the server answers.
+///
+/// Kept in step with the same set on the game controller. A refusal must not
+/// pull the hosted save over the activity still on screen.
+const _hostedSwitchCommands = <String>{
+  'start_activity',
+  'stop_activity',
+  'confirm_auto_equip',
+  'start_production',
+  'travel',
+  'travel_guild_hall',
+};
+
 /// The screen-facing half of multiplayer.
 ///
 /// Everything that decides anything lives in `ik_net`; this holds what a screen
@@ -371,9 +384,10 @@ class MultiplayerController extends ChangeNotifier {
   /// A thrown error is reported too. Without this a dropped connection or a
   /// backend that refuses in a way no result covers would leave the button
   /// pressed and the screen unchanged, which reads as the game ignoring you.
-  Future<void> run(Future<String?> Function() action) async {
+  Future<void> run(Future<String?> Function() action, {String? veil}) async {
     if (_busy) return;
     _busy = true;
+    _guildWait = veil;
     notifyListeners();
     try {
       _notice = await action();
@@ -381,9 +395,16 @@ class MultiplayerController extends ChangeNotifier {
       _notice = unexpectedSocialError(error);
     } finally {
       _busy = false;
+      _guildWait = null;
       notifyListeners();
     }
   }
+
+  /// Which guild action is waiting on the server, when the panel should dim.
+  String? _guildWait;
+
+  /// `leave`, `decide`, `kick`, and the other guild writes. Null otherwise.
+  String? get guildWait => _guildWait;
 
   // --- Accounts -------------------------------------------------------------
 
@@ -713,6 +734,9 @@ class MultiplayerController extends ChangeNotifier {
           if (!skipAdopt) _adoptHosted(result.save!, command: outgoing);
         } else if (!result.ok && outgoing == 'set_loadout') {
           await _loadoutFailed(result.reason);
+        } else if (!result.ok && _hostedSwitchCommands.contains(outgoing)) {
+          // Nothing was applied locally, and a pull would rewind the activity
+          // still running. The caller shows the reason.
         } else if (!result.ok && remoteMissingGameFunction(result.reason)) {
           await _flushAccountSave(enqueue: false);
         } else if (!result.ok) {
@@ -790,7 +814,12 @@ class MultiplayerController extends ChangeNotifier {
       final pulled = await service.pullSave();
       // A loadout retry already carries the slots the player is wearing.
       // Adopting the stale pull would throw those taps away.
-      if (command != 'set_loadout' && pulled.ok && pulled.save != null) {
+      // A switch has not been applied locally, so the stale pull would rewind
+      // the bar or the tile the player is still on. The retry carries the intent.
+      if (command != 'set_loadout' &&
+          !_hostedSwitchCommands.contains(command) &&
+          pulled.ok &&
+          pulled.save != null) {
         _adoptHostedUnlessLocationRewind(pulled.save!);
       }
       result = await service.gameCommand(command, args);
@@ -1608,7 +1637,7 @@ class MultiplayerController extends ChangeNotifier {
   ) async {
     if (_busy) return 'One thing at a time — the last request is still going.';
     var founded = false;
-    await run(() async {
+    await run(veil: 'create', () async {
       final result = await service.createGuild(input, save.gold);
       if (!result.ok) return result.reason;
       final paid = result.save;
@@ -1629,7 +1658,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> applyToGuild(String guildId, String message, PlayerSave save) {
-    return run(() async {
+    return run(veil: 'join', () async {
       final result = await service.applyToGuild(guildId, message);
       if (!result.ok) return result.reason;
       final joined = result.joined ?? false;
@@ -1639,7 +1668,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> joinAsGuest(String guildId, String message, PlayerSave save) {
-    return run(() async {
+    return run(veil: 'guest', () async {
       final result = await service.joinAsGuest(guildId, message);
       if (!result.ok) return result.reason;
       final joined = result.joined ?? false;
@@ -1649,7 +1678,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> leaveGuest(PlayerSave save) {
-    return run(() async {
+    return run(veil: 'leave-guest', () async {
       final result = await service.leaveGuest();
       if (!result.ok) return result.reason;
       await refresh(save);
@@ -1658,7 +1687,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> decideApplication(String applicationId, bool accept, PlayerSave save) {
-    return run(() async {
+    return run(veil: 'decide', () async {
       final result = await service.decideGuildApplication(applicationId, accept);
       if (!result.ok) return result.reason;
       await refresh(save);
@@ -1667,7 +1696,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> removeMember(String userId, PlayerSave save) {
-    return run(() async {
+    return run(veil: 'kick', () async {
       final guildId = _guildId;
       if (guildId == null) return 'Join a guild first.';
       final result = await service.removeGuildMember(guildId, userId);
@@ -1678,7 +1707,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> removeGuest(String userId, PlayerSave save) {
-    return run(() async {
+    return run(veil: 'remove-guest', () async {
       final guildId = _guildId;
       if (guildId == null) return 'Join a guild first.';
       final result = await service.removeGuildGuest(guildId, userId);
@@ -1856,7 +1885,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   Future<void> leaveGuild(PlayerSave save) {
-    return run(() async {
+    return run(veil: 'leave', () async {
       final result = await service.leaveGuild();
       if (!result.ok) return result.reason;
       await refresh(save);

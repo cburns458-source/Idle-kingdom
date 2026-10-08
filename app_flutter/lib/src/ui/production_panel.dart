@@ -233,6 +233,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
             Expanded(
               child: GameButton(
                 label: 'Start queue',
+                waiting: controller.switchSpinner && controller.pendingSwitch == 'start_production',
                 onPressed: ceiling < 1 || controller.switchBusy
                     ? null
                     : () {
