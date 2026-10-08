@@ -26,15 +26,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Confirm tester key secret
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error title=Test Worker deploy skipped::Set the CLOUDFLARE_API_TOKEN repository secret (Workers Scripts Edit + Zone DNS Edit) to deploy restoria-idlerpg-staging."
+            exit 1
+          fi
+          # Names only. Never print secret values.
+          list="$(npx --yes wrangler@4.148.0 secret list --env staging --json)"
+          if ! printf '%s' "$list" | grep -q '"TESTER_PASSKEY"'; then
+            echo "::error title=Missing TESTER_PASSKEY::Set a Secret named TESTER_PASSKEY on Worker restoria-idlerpg-staging in the Cloudflare dashboard. It must be a Secret, not a Variable, and not a GitHub secret."
+            exit 1
+          fi
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.47.0
           channel: stable
           cache: true
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
 
       - name: Confirm environment
         run: |
@@ -44,9 +57,17 @@ jobs:
           echo "anon_key_chars=${#SUPABASE_ANON_KEY}"
 
       - name: Deploy test-launch Worker
+        run: npx --yes wrangler@4.148.0 deploy --env staging
+
+      - name: Confirm gate is asking for the key
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::error title=Test Worker deploy skipped::Set the CLOUDFLARE_API_TOKEN repository secret (Workers Scripts Edit + Zone DNS Edit) to deploy restoria-idlerpg-staging."
+          code="$(curl -sS -o /tmp/gate.html -w '%{http_code}' https://restoria-idlerpg-staging.cburns458.workers.dev/)"
+          echo "gate_status=$code"
+          if [ "$code" = "503" ] || grep -q 'locked until' /tmp/gate.html; then
+            echo "::error title=Tester key not bound::The test site is still locked. TESTER_PASSKEY is missing from the live Worker version."
             exit 1
           fi
-          npx --yes wrangler@4.148.0 deploy --env staging
+          if [ "$code" != "401" ] || ! grep -q '__tester' /tmp/gate.html; then
+            echo "::error title=Unexpected gate status::Expected the tester key page (401), got $code."
+            exit 1
+          fi

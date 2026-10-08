@@ -71,10 +71,17 @@ it. The key is never in the repo, GitHub, or the web build. It covers both
 test.restoriaidle.com and the test workers.dev address.
 
 - Set or rotate it in the Cloudflare dashboard: Workers & Pages →
-  `restoria-idlerpg-staging` → Settings → Variables and Secrets → Secret
-  `TESTER_PASSKEY`. Rotating signs every tester out.
+  `restoria-idlerpg-staging` → Settings → Variables and Secrets →
+  **Secret** `TESTER_PASSKEY`. It must be a Secret, not a Variable: the next
+  `wrangler deploy` overwrites dashboard Variables from `wrangler.toml` and
+  would drop it. A GitHub secret never reaches the Worker.
+- The name is exact: `TESTER_PASSKEY`, on Worker `restoria-idlerpg-staging`
+  (not the live Worker). Rotating signs every tester out.
+- Adding the secret attaches it to the next deploy. The version that is
+  already live stays locked until that deploy finishes.
 - Without the secret the test site shows a locked page; it never opens.
-- `wrangler deploy` keeps existing secrets.
+- `wrangler deploy` keeps existing Secrets. The staging workflow fails if
+  the secret is missing or the live version still serves the locked page.
 - To run the gate locally, put `TESTER_PASSKEY=…` in `.dev.vars.staging`
   (git-ignored) and run `npx wrangler dev --env staging`.
 
