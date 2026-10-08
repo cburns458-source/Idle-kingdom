@@ -360,7 +360,7 @@ export function applyQuestVisitProgress(
   return applyQuestStepUnlocks(db, next)
 }
 
-/** Marks Inspect objectives (bazaar, bounties, processing). */
+/** Marks Inspect objectives (bounties, processing). */
 export function applyQuestInspectProgress(
   db: GameDatabase,
   save: PlayerSave,

@@ -11,4 +11,4 @@ Read and follow `docs/AGENT_WORKFLOW.md` and `AGENTS.md` before writing code.
 - Implement confirmed work on `test-launch` only (https://test.restoriaidle.com).
 - Do not create standalone feature branches.
 - Do not commit to or merge into `main` until the owner playtests the test site and explicitly says to ship (https://restoriaidle.com).
-- Remaining work waves are listed in `docs/AGENT_WORKFLOW.md`.
+- Migrations still owed to live are listed under "Pending on live" in `docs/deployment.md`.

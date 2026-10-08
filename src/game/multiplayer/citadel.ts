@@ -38,7 +38,7 @@ export function citadelHubTabsFor(locationId: string): CitadelHubTab[] {
   return []
 }
 
-/** The heading above those links, naming the district rather than the boards. */
+/** The heading above the bounty board link. Only the Plaza has one. */
 export function citadelHubTitleFor(_locationId: string): string {
   return 'Citadel Plaza'
 }

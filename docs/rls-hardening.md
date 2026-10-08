@@ -52,7 +52,9 @@ Migrations are **not** auto-applied. Edge functions deploy from `test-launch`.
 A copy of `026_rls_hardening.sql` is also under `/opt/cursor/artifacts/` on the
 agent for easy download.
 
-Tracked as remaining waves in `docs/AGENT_WORKFLOW.md`. Do not start them until the owner confirms that plan.
+Open items are listed below. Migrations still owed to live are under
+"Pending on live" in `docs/deployment.md`. Do not start an item until the
+owner confirms its plan.
 
 ## Follow-up changes (do not forget)
 

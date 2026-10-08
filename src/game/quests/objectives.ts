@@ -333,7 +333,6 @@ function locationDisplayName(db: GameDatabase, locationId: string): string {
 }
 
 function inspectLabel(inspectId: string): string {
-  if (inspectId === 'bazaar') return 'Inspect the Grand Bazaar'
   if (inspectId === 'bounties') return 'Inspect the Bounty Board'
   if (inspectId === 'processing') return 'Use a Processing District station'
   return `Inspect ${inspectId}`

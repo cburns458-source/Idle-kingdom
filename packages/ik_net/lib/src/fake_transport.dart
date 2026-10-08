@@ -122,7 +122,7 @@ class FakeTransport implements RemoteTransport {
   /// How many times [failNextWith] applies before it clears. Defaults to one.
   int failNextRepeats = 1;
 
-  /// Reasons keyed by the call they refuse, such as `insert:bazaar_posts`, each
+  /// Reasons keyed by the call they refuse, such as `insert:guild_members`, each
   /// used once. For making one step of a sequence fail rather than the next one.
   Map<String, String> get failOnce => _project.failOnce;
 

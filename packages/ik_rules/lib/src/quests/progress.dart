@@ -343,7 +343,7 @@ PlayerSave applyQuestVisitProgress(GameDatabase db, PlayerSave save, String loca
   return applyQuestStepUnlocks(db, next);
 }
 
-/// Marks Inspect objectives (bazaar, bounties, processing).
+/// Marks Inspect objectives (bounties, processing).
 PlayerSave applyQuestInspectProgress(GameDatabase db, PlayerSave save, String inspectId) {
   var next = save;
   for (final quest in asQuestRows(db)) {

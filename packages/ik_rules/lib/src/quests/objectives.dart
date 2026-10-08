@@ -394,7 +394,7 @@ StructuredQuestObjectives parseNotesObjectives(
 ///   Talk: NPC-x, ...
 ///   OptionalTalk: NPC-x, ...
 ///   Visit: LOC-x, ...
-///   Inspect: bazaar, bounties, processing
+///   Inspect: bounties, processing
 ///   GoldCost: N
 ///   AcceptGold: N
 ///   RewardGold: N
@@ -771,7 +771,6 @@ String _locationDisplayName(GameDatabase db, String locationId) {
 }
 
 String _inspectLabel(String inspectId) {
-  if (inspectId == 'bazaar') return 'Inspect the Grand Bazaar';
   if (inspectId == 'bounties') return 'Inspect the Bounty Board';
   if (inspectId == 'processing') return 'Use a Processing District station';
   return 'Inspect $inspectId';

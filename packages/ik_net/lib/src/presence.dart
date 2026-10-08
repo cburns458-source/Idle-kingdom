@@ -48,7 +48,7 @@ List<CitadelHubTab> citadelHubTabsFor(String locationId) {
   return const <CitadelHubTab>[];
 }
 
-/// The heading above those links, naming the district rather than the boards.
+/// The heading above the bounty board link. Only the Plaza has one.
 String citadelHubTitleFor(String locationId) => 'Citadel Plaza';
 
 /// What the Citadel tab shows above its visitor list.
