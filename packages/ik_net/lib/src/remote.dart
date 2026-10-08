@@ -248,6 +248,9 @@ bool remoteMissingUsernameRenamedAtColumn(String? reason) =>
 /// as `Failed to fetch` because the preflight never gets CORS headers.
 const String remoteGameFunctionUnavailable = 'The game function is not on this project yet.';
 
+/// The `game` function's refusal for a command it was deployed without.
+const String remoteUnknownGameCommand = 'Unknown command.';
+
 /// True when [reason] is a project that has no `game` edge function.
 bool remoteMissingGameFunction(String? reason) {
   if (reason == null || reason.isEmpty) return false;

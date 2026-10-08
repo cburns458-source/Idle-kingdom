@@ -15,10 +15,15 @@ name: Deploy
 on:
   push:
     branches: [test-launch, main]
+    # The game function bundles src/game and the content database at deploy
+    # time, so a rules-only change must redeploy it too.
     paths:
       - 'supabase/functions/**'
       - 'supabase/config.toml'
       - '.github/workflows/deploy.yml'
+      - 'src/game/**'
+      - 'content/data/game-database.json'
+      - 'tools/bundle_game_edge.sh'
   workflow_dispatch:
 
 # One deploy at a time per site. Never cancel one halfway: a function that

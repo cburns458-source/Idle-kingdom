@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/hosted_save_adopt.dart';
+import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
@@ -55,6 +56,53 @@ void main() {
     expect(sent.where((call) => call == 'game:equip_index'), isEmpty);
     expect(sent.where((call) => call == 'game:unequip_slot'), isEmpty);
     expect(sent.where((call) => call == 'game:set_loadout'), hasLength(1));
+  });
+
+  testWidgets('a server without set_loadout keeps the gear and retries', (tester) async {
+    final project = FakeTransport(database: database.launch);
+    final net = buildRemoteMultiplayer(database, transport: project);
+    addTearDown(net.dispose);
+    var save = startedCharacter(database);
+    await net.signUp(
+      testAccount.email,
+      testAccount.username,
+      testAccount.password,
+      save,
+      adopt: (adopted, {nowMs}) => save = adopted,
+    );
+    final seeded = await seedHostedSave(net.service as RemoteMultiplayerService, project, save);
+    expect(seeded.ok, isTrue, reason: seeded.reason);
+    save = seeded.save!;
+    net.currentSave = () => save;
+    net.onHostedSave = (incoming, {command}) {
+      save = mergeHostedStartSave(save, incoming, command: command);
+    };
+    final quiet = <String>[];
+    net.onQuietMessage = quiet.add;
+
+    final worn = Map<String, EquippedStack?>.from(save.equipment.slots);
+    worn[weaponToolSlotId] = const EquippedStack(itemId: 'ITEM-0102', quantity: 1);
+    save = save.copyWith(equipment: EquipmentLoadout(slots: worn));
+
+    final before = project.calls.length;
+    project.failOnce['invoke:$remoteGameFunction'] = remoteUnknownGameCommand;
+    await net.submitGameCommand('equip_index', <String, Object?>{'inventoryIndex': 0});
+    await tester.pump(MultiplayerController.loadoutCoalesceDelay);
+    for (var i = 0; i < 6; i++) {
+      await tester.pump();
+    }
+
+    expect(quiet, isEmpty);
+    expect(save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0102');
+
+    await tester.pump(MultiplayerController.loadoutRetryDelay);
+    for (var i = 0; i < 6; i++) {
+      await tester.pump();
+    }
+    final sent = project.calls.sublist(before);
+    expect(sent.where((call) => call == 'invoke:$remoteGameFunction'), hasLength(2));
+    expect(quiet, isEmpty);
+    expect(save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0102');
   });
 
   testWidgets('a following command flushes the worn gear first', (tester) async {

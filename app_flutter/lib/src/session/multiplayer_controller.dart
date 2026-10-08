@@ -643,8 +643,14 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> _commandTail = Future<void>.value();
 
+  /// Retries for a loadout the server could not take yet, spaced by
+  /// [loadoutRetryDelay] times the attempt number.
+  static const loadoutRetryLimit = 3;
+  static const loadoutRetryDelay = Duration(seconds: 2);
+
   Timer? _loadoutTimer;
   bool _loadoutDirty = false;
+  int _loadoutRetries = 0;
 
   /// Commands sitting on [_commandTail], including the one running.
   int _queuedCommands = 0;
@@ -705,10 +711,10 @@ class MultiplayerController extends ChangeNotifier {
         final skipAdopt = _queuedCommands > 1 || _loadoutDirty;
         if (result.ok && result.save != null) {
           if (!skipAdopt) _adoptHosted(result.save!, command: outgoing);
+        } else if (!result.ok && outgoing == 'set_loadout') {
+          await _loadoutFailed(result.reason);
         } else if (!result.ok && remoteMissingGameFunction(result.reason)) {
           await _flushAccountSave(enqueue: false);
-        } else if (!result.ok && outgoing == 'set_loadout') {
-          await _quietGearResync();
         } else if (!result.ok) {
           final pulled = await service.pullSave();
           if (pulled.ok && pulled.save != null) {
@@ -730,10 +736,11 @@ class MultiplayerController extends ChangeNotifier {
     return done.future;
   }
 
-  void _scheduleLoadoutFlush() {
+  void _scheduleLoadoutFlush({Duration delay = loadoutCoalesceDelay}) {
+    if (delay == loadoutCoalesceDelay) _loadoutRetries = 0;
     _loadoutDirty = true;
     _loadoutTimer?.cancel();
-    _loadoutTimer = Timer(loadoutCoalesceDelay, () {
+    _loadoutTimer = Timer(delay, () {
       if (!_alive || !_loadoutDirty) return;
       unawaited(submitGameCommand('set_loadout'));
     });
@@ -749,9 +756,32 @@ class MultiplayerController extends ChangeNotifier {
     _loadoutDirty = false;
     if (live == null) return;
     final result = await _runHostedCommand('set_loadout', loadoutCommandArgs(live));
-    if (!result.ok && !remoteMissingGameFunction(result.reason)) {
-      await _quietGearResync();
+    if (result.ok) {
+      _loadoutRetries = 0;
+    } else {
+      await _loadoutFailed(result.reason);
     }
+  }
+
+  /// Keeps the worn gear on screen unless the server truly refused it.
+  ///
+  /// An unreachable or not-yet-updated server has not said the gear is wrong,
+  /// so the same slots go again a little later. Only a real refusal, such as
+  /// a piece the server's bag does not hold, reloads the server's gear.
+  Future<void> _loadoutFailed(String? reason) async {
+    final transient = remoteMissingGameFunction(reason) || reason == remoteUnknownGameCommand;
+    if (!transient) {
+      _loadoutRetries = 0;
+      await _quietGearResync();
+      return;
+    }
+    if (_loadoutRetries >= loadoutRetryLimit) {
+      _loadoutRetries = 0;
+      if (remoteMissingGameFunction(reason)) await _flushAccountSave(enqueue: false);
+      return;
+    }
+    _loadoutRetries += 1;
+    _scheduleLoadoutFlush(delay: loadoutRetryDelay * _loadoutRetries);
   }
 
   Future<CloudSyncResult> _runHostedCommand(String command, Map<String, Object?> args) async {
