@@ -111,6 +111,7 @@ export type GameCommandName =
   | 'sync_bounty_hour'
   | 'apply_ranked_pvp'
   | 'change_race'
+  | 'guild_create'
   | 'guild_create_pay'
   | 'guild_pay_hall_debt'
   | 'guild_donate_hall_item'
@@ -553,6 +554,7 @@ function applyExistingCommand(
       if (!raceId) return failed('Missing race.')
       return unwrap(changeRaceWithNpc(db, save, raceId, nowMs))
     }
+    case 'guild_create':
     case 'guild_create_pay': {
       const refusal = createGuildRefusalFor(asString(args.name) ?? '', asString(args.tag) ?? '', save.gold)
       if (refusal) return failed(refusal)

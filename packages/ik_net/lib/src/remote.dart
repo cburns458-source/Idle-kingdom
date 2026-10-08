@@ -52,6 +52,20 @@ class RemoteRpcs {
   static const String guildPayHallDebt = 'guild_pay_hall_debt';
   static const String guildDonateHallItem = 'guild_donate_hall_item';
   static const String guildSetMemberRole = 'guild_set_member_role';
+  static const String guildJoinOpen = 'guild_join_open';
+  static const String guildJoinGuest = 'guild_join_guest';
+  static const String guildDecideApplication = 'guild_decide_application';
+  static const String guildLeave = 'guild_leave';
+  static const String guildKick = 'guild_kick';
+
+  /// Wave E: one transaction each, answering `{ok, reason}`.
+  static const Set<String> guildLifecycle = <String>{
+    guildJoinOpen,
+    guildJoinGuest,
+    guildDecideApplication,
+    guildLeave,
+    guildKick,
+  };
   static const String blockPlayer = 'block_player';
   static const String unblockPlayer = 'unblock_player';
   static const String listMyBlocks = 'list_my_blocks';

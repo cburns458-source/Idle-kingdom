@@ -28,6 +28,21 @@ void main() {
   Finder onTheSheet(Finder text) =>
       find.descendant(of: find.byKey(const Key('game-popup')), matching: text);
 
+  /// Puts the local save on the server and adopts its answers, as the app does.
+  Future<void> hostTheSave(
+    MultiplayerController net,
+    FakeTransport transport,
+    GameController controller,
+  ) async {
+    final seeded = await seedHostedSave(
+      net.service as RemoteMultiplayerService,
+      transport,
+      controller.save,
+    );
+    expect(seeded.ok, isTrue, reason: seeded.reason);
+    net.onHostedSave = controller.adoptHostedSave;
+  }
+
   /// Fills the create sheet in and presses its button.
   Future<void> fillAndSubmit(
     WidgetTester tester, {
@@ -55,6 +70,7 @@ void main() {
     addTearDown(net.dispose);
     final signed = await net.service.signUp('leader@example.com', 'Leader', 'secret');
     expect(signed.ok, isTrue, reason: signed.reason);
+    await hostTheSave(net, transport, controller);
     await net.refresh(controller.save);
 
     await pumpPanel(tester, guildScreen(net, controller));
@@ -166,9 +182,10 @@ void main() {
     final net = buildRemoteMultiplayer(database, transport: transport);
     addTearDown(net.dispose);
     expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
     await net.refresh(controller.save);
 
-    transport.failOnce['insert:${RemoteTables.guilds}'] =
+    transport.failOnce['invoke:$remoteGameFunction'] =
         'new row violates row-level security policy for table "guilds"';
 
     await pumpPanel(tester, guildScreen(net, controller));

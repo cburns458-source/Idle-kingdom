@@ -8,6 +8,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'config.dart';
+import 'guild_rules.dart';
 import 'local_backend.dart';
 import 'market.dart';
 import 'name_color.dart';
@@ -1165,9 +1166,41 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   @override
   Future<CreateGuildResult> createGuild(CreateGuildInput input, num goldAvailable) async {
-    final result = await _guilds.createGuild(input, goldAvailable);
-    if (result.ok) _noteGuild(result.guild);
-    return result;
+    final current = session;
+    if (current == null) return const CreateGuildResult.failed('Sign in to create a guild.');
+    final refusal = createGuildRefusal(input, goldAvailable);
+    if (refusal != null) return CreateGuildResult.failed(refusal);
+
+    final wanted = guildFromCreateInput(current.userId, input, isoFromMs(_nowMs()));
+    final row = guildRowForCreate(current.userId, wanted)..remove('leader_id');
+    final hosted = await gameCommand('guild_create', <String, Object?>{
+      'name': wanted.name,
+      'tag': wanted.tag,
+      'guild': row,
+    });
+    if (!hosted.ok && !_hostedGuildCreateMissing(hosted.reason)) {
+      return CreateGuildResult.failed(hosted.reason ?? remoteGuildCreateFailed);
+    }
+    if (!hosted.ok) {
+      final legacy = await _guilds.createGuild(input, goldAvailable);
+      if (legacy.ok) _noteGuild(legacy.guild);
+      return legacy;
+    }
+
+    final guildId = await _guilds.currentGuildId();
+    final founded = (guildId == null ? null : await _guilds.guildById(guildId)) ?? wanted;
+    _noteGuild(founded);
+    return CreateGuildResult.ok(founded, guildCreateGoldCost, save: hosted.save);
+  }
+
+  /// A project that has not deployed `guild_create` or applied its migration.
+  static bool _hostedGuildCreateMissing(String? reason) {
+    if (remoteMissingGameFunction(reason) || reason == remoteUnknownGameCommand) return true;
+    final lower = (reason ?? '').toLowerCase();
+    return lower.contains('guild_create_hosted') &&
+        (lower.contains('could not find') ||
+            lower.contains('schema cache') ||
+            lower.contains('does not exist'));
   }
 
   /// Keeps this device's note of which guild the player is in current.

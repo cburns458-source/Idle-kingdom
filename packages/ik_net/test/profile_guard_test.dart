@@ -1,5 +1,8 @@
+import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
+import 'package:ik_parity/ik_parity.dart';
+import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 import 'package:test/test.dart';
 
@@ -11,6 +14,13 @@ RemoteMultiplayerService _service(FakeTransport transport, {num startMs = _nowMs
     storage: MemorySaveStorage(),
     ports: LocalBackendPorts(nowMs: () => startMs, newId: (prefix) => '${prefix}_0001'),
   );
+}
+
+/// A hosted save that can pay for a guild, since founding is charged there.
+Future<void> _purse(RemoteMultiplayerService service, FakeTransport transport) async {
+  final database = assertGameDatabaseShape(contentDatabaseJson());
+  final save = createNewSave(database, _nowMs).copyWith(gold: guildCreateGoldCost);
+  expect((await seedHostedSave(service, transport, save)).ok, isTrue);
 }
 
 void main() {
@@ -108,6 +118,7 @@ void main() {
     final transport = FakeTransport(nowMs: () => _nowMs);
     final service = _service(transport);
     await service.signUp('hero@example.com', 'Hero', 'secret');
+    await _purse(service, transport);
     final userId = service.session!.userId;
 
     expect(
@@ -138,6 +149,7 @@ void main() {
     final transport = FakeTransport(nowMs: () => _nowMs);
     final leader = _service(transport);
     await leader.signUp('leader@example.com', 'Leader', 'secret');
+    await _purse(leader, transport);
     final created = await leader.createGuild(
       const CreateGuildInput(
         name: 'Iron League',

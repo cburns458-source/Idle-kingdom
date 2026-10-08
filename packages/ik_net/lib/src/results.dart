@@ -73,14 +73,19 @@ class ChatSendResult {
 }
 
 class CreateGuildResult {
-  const CreateGuildResult.ok(GuildRecord this.guild, num this.goldCost) : reason = null;
+  const CreateGuildResult.ok(GuildRecord this.guild, num this.goldCost, {this.save})
+    : reason = null;
 
-  const CreateGuildResult.failed(this.reason) : guild = null, goldCost = null;
+  const CreateGuildResult.failed(this.reason) : guild = null, goldCost = null, save = null;
 
   final GuildRecord? guild;
 
-  /// What the caller should deduct once it has recorded the guild.
+  /// What the caller should deduct once it has recorded the guild. Ignored
+  /// when [save] is set, because the server has already taken it.
   final num? goldCost;
+
+  /// The hosted save with the founding gold already paid.
+  final PlayerSave? save;
   final String? reason;
 
   bool get ok => reason == null;

@@ -114,6 +114,11 @@ class FakeTransport implements RemoteTransport {
   /// The reason the next call of any kind should fail with, used once.
   String? failNextWith;
 
+  /// False stands in for a project without the Wave E guild functions, so the
+  /// client's older direct-write path can still be exercised.
+  bool get hostsGuildLifecycleRpcs => _project.hostsGuildLifecycleRpcs;
+  set hostsGuildLifecycleRpcs(bool value) => _project.hostsGuildLifecycleRpcs = value;
+
   /// How many times [failNextWith] applies before it clears. Defaults to one.
   int failNextRepeats = 1;
 
@@ -772,6 +777,7 @@ class FakeTransport implements RemoteTransport {
     if (body['command'] == 'set_loadout') {
       _overlaySetLoadout(row, body);
     }
+    if (body['command'] == 'guild_create') return _foundGuildCommand(caller.userId, body, row);
     final hallCommand = _applyGuildHallCommand(caller.userId, body, row);
     if (hallCommand != null) return hallCommand;
     final version = ((row['version'] as num?) ?? 1).toInt() + 1;
@@ -1056,6 +1062,13 @@ class FakeTransport implements RemoteTransport {
         return RemoteInvokeResult.ok(next);
       }
 
+      if (RemoteRpcs.guildLifecycle.contains(function)) {
+        if (!hostsGuildLifecycleRpcs) return RemoteInvokeResult.failed(_missingRpc(function));
+        final me = _current?.userId;
+        if (me == null) return const RemoteInvokeResult.failed('Sign in first.');
+        return RemoteInvokeResult.ok(_guildLifecycleRpc(me, function, args));
+      }
+
       if (function == RemoteRpcs.blockPlayer || function == RemoteRpcs.unblockPlayer) {
         return _blockRpc(function, args);
       }
@@ -1069,6 +1082,313 @@ class FakeTransport implements RemoteTransport {
   }
 
   List<RemoteRow> _socialRows(String table) => tables.putIfAbsent(table, () => <RemoteRow>[]);
+
+  /// PostgREST's answer for a function the project has not created.
+  static String _missingRpc(String function) =>
+      'Could not find the function public.$function in the schema cache';
+
+  static RemoteRow _refused(String reason) => <String, Object?>{'ok': false, 'reason': reason};
+
+  /// The name, look, and level a roster row copies, as the SQL helper reads them.
+  RemoteRow _memberFacts(String userId, [String? fallbackName]) {
+    RemoteRow? profile;
+    for (final row in tables[RemoteTables.profiles]!) {
+      if (row['user_id'] == userId) profile = row;
+    }
+    num level = 1;
+    for (final row in tables[RemoteTables.leaderboard]!) {
+      if (row['user_id'] == userId && row['board_key'] == boardTotalLevel) {
+        level = _asNum(row['value']);
+      }
+    }
+    final named = profile?['username'];
+    return <String, Object?>{
+      'username': named is String && named.isNotEmpty
+          ? named
+          : (fallbackName?.isNotEmpty ?? false)
+          ? fallbackName
+          : 'Adventurer',
+      'appearance_json': profile?['appearance_json'] ?? const <String, Object?>{},
+      'total_level': level,
+    };
+  }
+
+  void _tagProfile(String userId, String? guildId) {
+    final profiles = tables[RemoteTables.profiles]!;
+    for (var i = 0; i < profiles.length; i++) {
+      if (profiles[i]['user_id'] == userId) {
+        profiles[i] = <String, Object?>{...profiles[i], 'guild_id': guildId};
+      }
+    }
+  }
+
+  int _rosterSize(String guildId) =>
+      tables[RemoteTables.guildMembers]!.where((row) => row['guild_id'] == guildId).length;
+
+  RemoteRow? _guildRow(Object? guildId) {
+    for (final row in tables[RemoteTables.guilds]!) {
+      if (row['id'] == guildId) return row;
+    }
+    return null;
+  }
+
+  /// Mirrors guild_create_hosted: every row a new guild needs, or none.
+  RemoteRow _foundGuild(String userId, RemoteRow wanted) {
+    final name = '${wanted['name'] ?? ''}'.trim();
+    final tag = '${wanted['tag'] ?? ''}'.trim().toUpperCase();
+    if (name.isEmpty || tag.isEmpty) return _refused('Enter a guild name and tag.');
+    if (_membershipFor(userId) != null) {
+      return _refused('Leave your current guild before creating another.');
+    }
+    final guilds = tables[RemoteTables.guilds]!;
+    if (guilds.any((row) => row['name'] == name || row['tag'] == tag)) {
+      return _refused(remoteGuildNameTaken);
+    }
+    final guild = <String, Object?>{
+      ..._defaults(RemoteTables.guilds),
+      ...wanted,
+      'name': name,
+      'tag': tag,
+      'leader_id': userId,
+    };
+    guilds.add(guild);
+    final id = guild['id']! as String;
+    tables[RemoteTables.guildMembers]!.add(<String, Object?>{
+      'guild_id': id,
+      'user_id': userId,
+      'role': guildRoleLeader,
+      'joined_at': stamp(),
+      ..._memberFacts(userId),
+    });
+    _tagProfile(userId, id);
+    tables[RemoteTables.guildApplications]!.removeWhere((row) => row['user_id'] == userId);
+    tables[RemoteTables.guildGuests]!.removeWhere((row) => row['user_id'] == userId);
+    tables[RemoteTables.guildHalls]!.add(guildHallRowFor(GuildHallState.fresh(id)));
+    tables[RemoteTables.guildProjects]!.add(<String, Object?>{
+      ..._defaults(RemoteTables.guildProjects),
+      'guild_id': id,
+      'name': guildStorehouseProjectName,
+      'description': guildStorehouseProjectDescription,
+      'goal_amount': guildStorehouseProjectGoal,
+      'contributed': 0,
+      'reward_label': guildStorehouseProjectReward,
+    });
+    tables[RemoteTables.guildChallenges]!.add(<String, Object?>{
+      ..._defaults(RemoteTables.guildChallenges),
+      'guild_id': id,
+      'name': guildMonsterChallengeName,
+      'board_key': boardMonstersKilled,
+      'goal_value': guildMonsterChallengeGoal,
+      'current_value': 0,
+    });
+    return <String, Object?>{'ok': true, 'guild': guild};
+  }
+
+  void _dropGuild(String guildId) {
+    tables[RemoteTables.guilds]!.removeWhere((row) => row['id'] == guildId);
+    for (final table in <String>[
+      RemoteTables.guildMembers,
+      RemoteTables.guildApplications,
+      RemoteTables.guildGuests,
+      RemoteTables.guildHalls,
+      RemoteTables.guildProjects,
+      RemoteTables.guildChallenges,
+    ]) {
+      tables[table]!.removeWhere((row) => row['guild_id'] == guildId);
+    }
+    final profiles = tables[RemoteTables.profiles]!;
+    for (var i = 0; i < profiles.length; i++) {
+      if (profiles[i]['guild_id'] == guildId) {
+        profiles[i] = <String, Object?>{...profiles[i], 'guild_id': null};
+      }
+    }
+  }
+
+  /// Mirrors the Wave E guild functions in supabase/migrations.
+  RemoteRow _guildLifecycleRpc(String me, String function, RemoteRow args) {
+    final members = tables[RemoteTables.guildMembers]!;
+    final guests = tables[RemoteTables.guildGuests]!;
+    final applications = tables[RemoteTables.guildApplications]!;
+
+    if (function == RemoteRpcs.guildJoinOpen) {
+      final guildId = args['p_guild_id'];
+      final guild = _guildRow(guildId);
+      if (guild == null) return _refused(remoteGuildMissing);
+      if (_membershipFor(me) != null) return _refused('Already in a guild.');
+      if (_rosterSize('$guildId') >= guildMaxMembers) {
+        return _refused('That guild is full ($guildMaxMembers members).');
+      }
+      if (guild['join_policy'] != guildJoinOpen) return _refused('That guild takes applications.');
+      members.add(<String, Object?>{
+        'guild_id': guildId,
+        'user_id': me,
+        'role': guildRoleRecruit,
+        'joined_at': stamp(),
+        ..._memberFacts(me),
+      });
+      applications.removeWhere((row) => row['user_id'] == me && row['guild_id'] == guildId);
+      guests.removeWhere((row) => row['user_id'] == me && row['guild_id'] == guildId);
+      _tagProfile(me, '$guildId');
+      return const <String, Object?>{'ok': true, 'joined': true};
+    }
+
+    if (function == RemoteRpcs.guildJoinGuest) {
+      final guildId = args['p_guild_id'];
+      final guild = _guildRow(guildId);
+      if (guild == null) return _refused(remoteGuildMissing);
+      if (members.any((row) => row['user_id'] == me && row['guild_id'] == guildId)) {
+        return _refused('Already a member of that guild.');
+      }
+      final visiting = guests.where((row) => row['user_id'] == me).firstOrNull;
+      if (visiting != null) {
+        return _refused(
+          visiting['guild_id'] == guildId
+              ? 'Already a guest of that guild.'
+              : 'Leave your current guest guild first.',
+        );
+      }
+      if (guild['guest_auto_accept'] != true) {
+        return _refused('That guild asks guests to request a visit.');
+      }
+      final facts = _memberFacts(me);
+      guests.add(<String, Object?>{
+        'guild_id': guildId,
+        'user_id': me,
+        'username': facts['username'],
+        'appearance_json': facts['appearance_json'],
+        'joined_at': stamp(),
+      });
+      applications.removeWhere(
+        (row) => row['user_id'] == me && row['guild_id'] == guildId && row['guest'] == true,
+      );
+      return const <String, Object?>{'ok': true, 'joined': true};
+    }
+
+    if (function == RemoteRpcs.guildDecideApplication) {
+      final application = applications
+          .where((row) => row['id'] == args['p_application_id'])
+          .firstOrNull;
+      if (application == null) return _refused('Application not found.');
+      final guildId = application['guild_id'];
+      final guild = _guildRow(guildId);
+      if (guild == null) return _refused(remoteGuildMissing);
+      final actor = members
+          .where((row) => row['user_id'] == me && row['guild_id'] == guildId)
+          .firstOrNull;
+      if (guild['leader_id'] != me && actor?['role'] != guildRoleOfficer) {
+        return _refused('Only the guild leader or an officer can decide applications.');
+      }
+      applications.remove(application);
+      if (args['p_accept'] != true) return const <String, Object?>{'ok': true};
+
+      final applicant = '${application['user_id']}';
+      final memberOf = _membershipFor(applicant)?['guild_id'];
+      final facts = _memberFacts(applicant, application['username'] as String?);
+      if (application['guest'] == true) {
+        if (guests.any((row) => row['user_id'] == applicant)) {
+          return _refused('Applicant is already a guest elsewhere.');
+        }
+        if (memberOf == guildId) return _refused('Applicant already joined that guild.');
+        guests.add(<String, Object?>{
+          'guild_id': guildId,
+          'user_id': applicant,
+          'username': facts['username'],
+          'appearance_json': facts['appearance_json'],
+          'joined_at': stamp(),
+        });
+        return const <String, Object?>{'ok': true};
+      }
+      if (memberOf != null) return _refused('Applicant already joined another guild.');
+      if (_rosterSize('$guildId') >= guildMaxMembers) {
+        return _refused('Guild is full ($guildMaxMembers members).');
+      }
+      members.add(<String, Object?>{
+        'guild_id': guildId,
+        'user_id': applicant,
+        'role': guildRoleRecruit,
+        'joined_at': stamp(),
+        ...facts,
+      });
+      guests.removeWhere((row) => row['guild_id'] == guildId && row['user_id'] == applicant);
+      _tagProfile(applicant, '$guildId');
+      return const <String, Object?>{'ok': true};
+    }
+
+    if (function == RemoteRpcs.guildLeave) {
+      final membership = _membershipFor(me);
+      if (membership == null) return _refused('Not in a guild.');
+      final guildId = '${membership['guild_id']}';
+      final guild = _guildRow(guildId);
+      if (guild != null && guild['leader_id'] == me) {
+        if (_rosterSize(guildId) > 1) {
+          return _refused('Transfer leadership or remove members before leaving.');
+        }
+        _dropGuild(guildId);
+      } else {
+        members.removeWhere((row) => row['user_id'] == me);
+      }
+      _tagProfile(me, null);
+      return const <String, Object?>{'ok': true};
+    }
+
+    // guild_kick
+    final guildId = args['p_guild_id'];
+    final target = args['p_target'];
+    final guild = _guildRow(guildId);
+    if (guild == null) return _refused(remoteGuildMissing);
+    if (guild['leader_id'] != me) return _refused('Only the leader can remove members.');
+    if (target == guild['leader_id']) return _refused('Cannot remove the leader.');
+    members.removeWhere((row) => row['guild_id'] == guildId && row['user_id'] == target);
+    final profiles = tables[RemoteTables.profiles]!;
+    for (var i = 0; i < profiles.length; i++) {
+      if (profiles[i]['user_id'] == target && profiles[i]['guild_id'] == guildId) {
+        profiles[i] = <String, Object?>{...profiles[i], 'guild_id': null};
+      }
+    }
+    return const <String, Object?>{'ok': true};
+  }
+
+  /// The game function's `guild_create`: charge the gold and found the guild together.
+  RemoteInvokeResult _foundGuildCommand(String userId, RemoteRow body, RemoteRow saveRow) {
+    if (!hostsGuildLifecycleRpcs) {
+      return RemoteInvokeResult.failed(_missingRpc('guild_create_hosted'));
+    }
+    final payload = saveRow['payload'];
+    if (payload is! Map) {
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    }
+    final save = parseSave(Map<String, Object?>.from(payload), _clockMs());
+    final args = _asMap(body['args']);
+    final refusal = createGuildRefusalFor(
+      name: '${args['name'] ?? ''}',
+      tag: '${args['tag'] ?? ''}',
+      goldAvailable: save.gold,
+    );
+    if (refusal != null) return RemoteInvokeResult.failed(refusal);
+    final founded = _foundGuild(userId, <String, Object?>{
+      ..._asMap(args['guild']),
+      'name': args['name'],
+      'tag': args['tag'],
+    });
+    if (founded['ok'] != true) {
+      return RemoteInvokeResult.failed('${founded['reason'] ?? 'The guild was not created.'}');
+    }
+    final next = save.copyWith(gold: save.gold - guildCreateGoldCost);
+    saveRow['payload'] = next.toJson();
+    final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;
+    saveRow['version'] = version;
+    saveRow['updated_at'] = stamp();
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'phase': 2,
+      'action': 'command',
+      'command': 'guild_create',
+      'save': next.toJson(),
+      'version': version,
+      'rngState': saveRow['rng_state'] ?? 1,
+      'guild': founded['guild'],
+    });
+  }
 
   RemoteInvokeResult _blockRpc(String function, RemoteRow args) {
     final me = _current?.userId;
@@ -1304,6 +1624,7 @@ class _FakeProject {
   final List<String> calls = <String>[];
   final List<String> magicLinks = <String>[];
   final Map<String, String> failOnce = <String, String>{};
+  bool hostsGuildLifecycleRpcs = true;
   final Set<String> missingColumns = <String>{};
   final Set<String> missingTables = <String>{};
   final List<String> selectedColumns = <String>[];

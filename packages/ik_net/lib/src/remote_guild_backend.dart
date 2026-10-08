@@ -290,6 +290,14 @@ class RemoteGuildBackend {
     }
 
     if (guild.joinPolicy == guildJoinOpen) {
+      final hosted = await _lifecycle(RemoteRpcs.guildJoinOpen, <String, Object?>{
+        'p_guild_id': guildId,
+      });
+      if (hosted != null) {
+        return hosted.ok
+            ? const ApplyToGuildResult.ok(joined: true)
+            : ApplyToGuildResult.failed(hosted.reason);
+      }
       final facts = await factsOf();
       final seated = await transport.insert(
         RemoteTables.guildMembers,
@@ -352,6 +360,14 @@ class RemoteGuildBackend {
     }
 
     if (guild.guestAutoAccept) {
+      final hosted = await _lifecycle(RemoteRpcs.guildJoinGuest, <String, Object?>{
+        'p_guild_id': guildId,
+      });
+      if (hosted != null) {
+        return hosted.ok
+            ? const ApplyToGuildResult.ok(joined: true)
+            : ApplyToGuildResult.failed(hosted.reason);
+      }
       final facts = await factsOf();
       final seated = await transport.insert(
         RemoteTables.guildGuests,
@@ -407,6 +423,8 @@ class RemoteGuildBackend {
   Future<ActionResult> leaveGuild() async {
     final current = sessionOf();
     if (current == null) return const ActionResult.failed('Sign in first.');
+    final hosted = await _lifecycle(RemoteRpcs.guildLeave, const <String, Object?>{});
+    if (hosted != null) return hosted;
     final membership = await _membershipOf(current.userId);
     if (membership == null) return const ActionResult.failed('Not in a guild.');
     final guild = await guildById(membership.guildId);
@@ -440,6 +458,11 @@ class RemoteGuildBackend {
   Future<ActionResult> decideGuildApplication(String applicationId, bool accept) async {
     final current = sessionOf();
     if (current == null) return const ActionResult.failed('Sign in first.');
+    final hosted = await _lifecycle(RemoteRpcs.guildDecideApplication, <String, Object?>{
+      'p_application_id': applicationId,
+      'p_accept': accept,
+    });
+    if (hosted != null) return hosted;
     final found = await transport.select(
       RemoteTables.guildApplications,
       columns: remoteGuildApplicationColumns,
@@ -533,6 +556,11 @@ class RemoteGuildBackend {
     if (guild == null) return const ActionResult.failed('Guild not found.');
     final refusal = removeGuildMemberRefusal(guild, current.userId, targetUserId);
     if (refusal != null) return ActionResult.failed(refusal);
+    final hosted = await _lifecycle(RemoteRpcs.guildKick, <String, Object?>{
+      'p_guild_id': guildId,
+      'p_target': targetUserId,
+    });
+    if (hosted != null) return hosted;
     final refused = await transport.delete(
       RemoteTables.guildMembers,
       equals: <String, Object?>{'guild_id': guildId, 'user_id': targetUserId},
@@ -588,6 +616,20 @@ class RemoteGuildBackend {
       return refused == null ? const ActionResult.ok() : ActionResult.failed(refused);
     }
     return ActionResult.failed(result.reason ?? 'Could not change role.');
+  }
+
+  /// Runs one Wave E guild function, or answers null when the project has not
+  /// applied that migration and the older multi-step writes should run instead.
+  Future<ActionResult?> _lifecycle(String function, RemoteRow args) async {
+    final result = await transport.rpc(function, args);
+    if (!result.ok) {
+      if (_looksLikeMissingRpc(result.reason)) return null;
+      return ActionResult.failed(friendlyRemoteError(result.reason ?? 'Try again.'));
+    }
+    final answer = result.data ?? const <String, Object?>{};
+    if (answer['ok'] == true) return const ActionResult.ok();
+    final reason = answer['reason'];
+    return ActionResult.failed(reason is String && reason.isNotEmpty ? reason : 'Try again.');
   }
 
   bool _looksLikeMissingRpc(String? reason) {

@@ -17,6 +17,8 @@ const CreateGuildInput _ironLeague = CreateGuildInput(
 
 GameDatabase _database() => assertGameDatabaseShape(contentDatabaseJson());
 
+final GameDatabase _founderDatabase = _database();
+
 RemoteMultiplayerService _service(FakeTransport transport, {num startMs = _nowMs}) {
   transport.database ??= _database();
   var counter = 0;
@@ -36,9 +38,14 @@ Future<RemoteMultiplayerService> _player(
   String email,
   String username,
 ) async {
-  final service = _service(FakeTransport.joining(transport));
+  final own = FakeTransport.joining(transport);
+  final service = _service(own);
   final created = await service.signUp(email, username, 'secret');
   expect(created.ok, isTrue, reason: created.reason);
+  // Founding is paid from the hosted save, so every player starts with one.
+  final purse = createNewSave(_founderDatabase, _nowMs).copyWith(gold: guildCreateGoldCost * 4);
+  final seeded = await seedHostedSave(service, own, purse);
+  expect(seeded.ok, isTrue, reason: seeded.reason);
   return service;
 }
 
@@ -427,6 +434,7 @@ void main() {
 
   test('a refused write is reported rather than swallowed', () async {
     final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
     final leader = await _player(transport, 'leader@example.com', 'Leader');
 
     transport.failOnce['insert:${RemoteTables.guilds}'] = 'permission denied for table guilds';
@@ -438,6 +446,7 @@ void main() {
 
   test('a founding that cannot seat its leader leaves no empty guild', () async {
     final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
     final leader = await _player(transport, 'leader@example.com', 'Leader');
 
     transport.failOnce['insert:${RemoteTables.guildMembers}'] = 'permission denied';
@@ -450,6 +459,7 @@ void main() {
 
   test('lists guilds when skill_milestone_settings has not been migrated yet', () async {
     final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
     final leader = await _player(transport, 'leader@example.com', 'Leader');
     expect((await leader.createGuild(_ironLeague, guildCreateGoldCost)).ok, isTrue);
 
@@ -479,5 +489,68 @@ void main() {
     );
     expect(settings.ok, isFalse);
     expect(settings.reason, remoteGuildSkillMilestonesUnavailable);
+  });
+
+  test('founding is one server request that pays and builds the whole guild', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final before = transport.calls.length;
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.save!.gold, guildCreateGoldCost * 3, reason: 'charged once, on the server');
+
+    final sent = transport.calls.sublist(before);
+    expect(sent, contains('game:guild_create'));
+    expect(sent, isNot(contains('insert:${RemoteTables.guilds}')));
+    final guildId = created.guild!.id;
+    expect(await leader.guildHall(guildId), isNotNull);
+    expect(await leader.guildProjects(guildId), hasLength(1));
+    expect(await leader.guildChallenges(guildId), hasLength(1));
+    expect(transport.tables[RemoteTables.profiles]!.first['guild_id'], guildId);
+
+    final taken = await (await _player(
+      transport,
+      'second@example.com',
+      'Second',
+    )).createGuild(_ironLeague, guildCreateGoldCost);
+    expect(taken.reason, remoteGuildNameTaken);
+  });
+
+  test('accepting tags the applicant and lists them by name; a kick clears the tag', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final hopeful = await _player(transport, 'hopeful@example.com', 'Hopeful');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+    expect((await leader.setGuildJoinPolicy(guildId, guildJoinClosed)).ok, isTrue);
+    expect((await hopeful.applyToGuild(guildId, '')).ok, isTrue);
+
+    final pending = await leader.guildApplications(guildId);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).ok, isTrue);
+
+    final userId = hopeful.session!.userId;
+    RemoteRow profileOf(String id) =>
+        transport.tables[RemoteTables.profiles]!.firstWhere((row) => row['user_id'] == id);
+    expect(profileOf(userId)['guild_id'], guildId);
+    final roster = await leader.guildMembers(guildId);
+    expect(roster.firstWhere((member) => member.userId == userId).username, 'Hopeful');
+
+    expect((await leader.removeGuildMember(guildId, userId)).ok, isTrue);
+    expect(profileOf(userId)['guild_id'], isNull);
+    expect(await hopeful.currentGuildId(), isNull);
+  });
+
+  test('a project without the Wave E functions still founds the old way', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.save, isNull, reason: 'the caller still pays on the device');
+    expect(created.goldCost, guildCreateGoldCost);
+    expect(transport.calls, contains('insert:${RemoteTables.guilds}'));
+    expect((await leader.leaveGuild()).ok, isTrue);
+    expect(transport.tables[RemoteTables.guilds], isEmpty);
   });
 }

@@ -123,6 +123,29 @@ describe('phase 2 authority', () => {
     expect(refused.ok).toBe(false)
   })
 
+  it('charges the founding gold for guild_create and refuses a short purse', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = { ...createNewSave(launch, START_MS), gold: 30 }
+    const paid = applyGameCommand(rawDatabase, {
+      command: 'guild_create',
+      args: { name: 'Iron League', tag: 'IRN' },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+    })
+    expect(paid.ok).toBe(true)
+    if (paid.ok) expect(paid.save.gold).toBe(5)
+
+    const poor = applyGameCommand(rawDatabase, {
+      command: 'guild_create',
+      args: { name: 'Iron League', tag: 'IRN' },
+      save: { ...save, gold: 24 },
+      nowMs: START_MS,
+      random: () => 0,
+    })
+    expect(poor.ok).toBe(false)
+  })
+
   it('wears the named item when loot has shifted the bag', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch, START_MS), inventory: [] as InventoryStack[] }

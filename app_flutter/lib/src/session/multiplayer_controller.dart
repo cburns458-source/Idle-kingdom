@@ -1611,7 +1611,12 @@ class MultiplayerController extends ChangeNotifier {
     await run(() async {
       final result = await service.createGuild(input, save.gold);
       if (!result.ok) return result.reason;
-      onPaid(result.goldCost!);
+      final paid = result.save;
+      if (paid != null) {
+        _adoptHosted(paid, command: 'guild_create');
+      } else {
+        onPaid(result.goldCost!);
+      }
       founded = true;
       await refresh(save);
       return 'Guild created.';

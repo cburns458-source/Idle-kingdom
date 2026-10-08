@@ -338,6 +338,12 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       guildRole: hallContext?.role,
     })
     if (!result.ok) return json({ error: result.reason, phase: 2 }, 400)
+    let foundedGuild: Record<string, unknown> | null = null
+    if (command === 'guild_create') {
+      const founded = await foundGuild(admin, userId, args)
+      if (!founded.ok) return founded.response
+      foundedGuild = founded.guild
+    }
     const written = hosted
       ? await writeHostedSave(admin, userId, {
           expectedVersion: expected,
@@ -350,7 +356,11 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
           rngState: rng.getState(),
           nowMs,
         })
-    if (!written.ok) return written.response
+    if (!written.ok) {
+      // The gold was not taken, so the guild it paid for goes back.
+      if (foundedGuild) await admin.from('guilds').delete().eq('id', foundedGuild.id)
+      return written.response
+    }
     const published = await publishPhase3Rows(admin, rawDatabase, userId, result.save, nowMs, command)
     if (!published.ok) return published.response
     if (result.hall && hallContext) {
@@ -376,11 +386,31 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       version: written.version,
       rngState: rng.getState(),
       wroteSave: true,
+      ...(foundedGuild ? { guild: foundedGuild } : {}),
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Command failed.'
     return json({ error: message, phase: 2 }, 400)
   }
+}
+
+// Writes the guild, its leader, hall, and starter goals in one transaction.
+async function foundGuild(
+  admin: Client,
+  userId: string,
+  args: Record<string, unknown>,
+): Promise<{ ok: true; guild: Record<string, unknown> } | { ok: false; response: Response }> {
+  const guild = args.guild && typeof args.guild === 'object' ? (args.guild as Record<string, unknown>) : {}
+  const { data, error } = await admin.rpc('guild_create_hosted', {
+    p_user_id: userId,
+    p_guild: { ...guild, name: args.name, tag: args.tag },
+  })
+  if (error) return { ok: false, response: json({ error: error.message, phase: 2 }, 400) }
+  const answer = (data ?? {}) as { ok?: boolean; reason?: string; guild?: Record<string, unknown> }
+  if (answer.ok !== true || !answer.guild) {
+    return { ok: false, response: json({ error: answer.reason ?? 'The guild was not created.', phase: 2 }, 400) }
+  }
+  return { ok: true, guild: answer.guild }
 }
 
 async function publishPhase3Rows(
