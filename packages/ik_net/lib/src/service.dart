@@ -96,15 +96,15 @@ abstract interface class MultiplayerService {
 
   Future<void> blockPlayer(String targetUserId);
 
-  Future<void> reportPlayer(String targetUserId, String reason);
+  Future<ActionResult> reportPlayer(String targetUserId, String reason);
 
   Future<ActionResult> sendFriendRequest(String targetUserId);
 
   Future<ActionResult> removeFriend(String targetUserId);
 
-  Future<void> ignorePlayer(String targetUserId);
+  Future<ActionResult> ignorePlayer(String targetUserId);
 
-  Future<void> unignorePlayer(String targetUserId);
+  Future<ActionResult> unignorePlayer(String targetUserId);
 
   Future<List<SocialContact>> friends();
 
@@ -556,10 +556,13 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<void> reportPlayer(String targetUserId, String reason) async {
+  Future<ActionResult> reportPlayer(String targetUserId, String reason) async {
     final current = session;
-    if (current == null) return;
-    _backend.reportUser(current.userId, targetUserId, reason);
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    final stored = reportReasonForStorage(reason);
+    if (stored == null) return const ActionResult.failed('Choose a reason.');
+    _backend.reportUser(current.userId, targetUserId, stored);
+    return const ActionResult.ok();
   }
 
   @override
@@ -577,17 +580,22 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<void> ignorePlayer(String targetUserId) async {
+  Future<ActionResult> ignorePlayer(String targetUserId) async {
     final current = session;
-    if (current == null) return;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    if (targetUserId == current.userId) {
+      return const ActionResult.failed('You cannot ignore yourself.');
+    }
     _backend.blockUser(current.userId, targetUserId);
+    return const ActionResult.ok();
   }
 
   @override
-  Future<void> unignorePlayer(String targetUserId) async {
+  Future<ActionResult> unignorePlayer(String targetUserId) async {
     final current = session;
-    if (current == null) return;
+    if (current == null) return const ActionResult.failed('Sign in required.');
     _backend.unblockUser(current.userId, targetUserId);
+    return const ActionResult.ok();
   }
 
   @override

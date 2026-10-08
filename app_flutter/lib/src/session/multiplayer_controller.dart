@@ -7,6 +7,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import 'hosted_save_adopt.dart';
+import 'loadout_command.dart';
 import 'tester_access.dart';
 
 /// The screen-facing half of multiplayer.
@@ -353,6 +354,7 @@ class MultiplayerController extends ChangeNotifier {
   void dispose() {
     _alive = false;
     _accountSaveTimer?.cancel();
+    _loadoutTimer?.cancel();
     stopPolling();
     super.dispose();
   }
@@ -412,6 +414,7 @@ class MultiplayerController extends ChangeNotifier {
       await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
       await refreshMarket();
+      await _syncHostedBlocks();
       if (claimReason != null) return claimReason;
       final accountName = service.session?.username;
       if (accountName != null && !isPendingAccountUsername(accountName)) {
@@ -456,6 +459,7 @@ class MultiplayerController extends ChangeNotifier {
       await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
       await refreshMarket();
+      await _syncHostedBlocks();
       return 'Welcome back, ${result.session!.username}.';
     });
   }
@@ -522,6 +526,7 @@ class MultiplayerController extends ChangeNotifier {
       await refresh(playable ?? localHint, includeMarket: false);
       if (playable != null) await publishRanking(playable);
       await refreshMarket();
+      await _syncHostedBlocks();
       // Closing the tab mid-create used to restore this unfinished session
       // and skip the login gate. Drop it; sign-in will ask for a name again.
       if (!isPlayableSave(playable ?? localHint)) {
@@ -629,49 +634,146 @@ class MultiplayerController extends ChangeNotifier {
   /// tile the player already reached. [pullSave] still updates the version.
   PlayerSave Function()? currentSave;
 
+  /// A line for the activity ticker. Gear refusals use this instead of [notice],
+  /// which is a blocking dialog.
+  void Function(String message)? onQuietMessage;
+
+  /// How long a burst of equips waits before one `set_loadout` goes out.
+  static const loadoutCoalesceDelay = Duration(milliseconds: 600);
+
   Future<void> _commandTail = Future<void>.value();
 
+  Timer? _loadoutTimer;
+  bool _loadoutDirty = false;
+
+  /// Commands sitting on [_commandTail], including the one running.
+  int _queuedCommands = 0;
+
   /// Applies a named intent on the hosted save and adopts the server copy.
+  ///
+  /// Equip, unequip, and preset apply do not travel on their own. They mark
+  /// the worn gear dirty and, after a short pause, send the final slots once.
+  /// Any other command flushes that loadout first so the server sees the gear
+  /// the player already has on.
   Future<CloudSyncResult> submitGameCommand(
     String command, [
     Map<String, Object?> args = const <String, Object?>{},
   ]) {
+    if (hostedLoadoutCommands.contains(command)) {
+      _scheduleLoadoutFlush();
+      final live = currentSave?.call();
+      if (live == null) {
+        return Future<CloudSyncResult>.value(const CloudSyncResult.failed('Sign in to play.'));
+      }
+      return Future<CloudSyncResult>.value(CloudSyncResult.ok(live, CloudSyncSource.unchanged));
+    }
+
     final done = Completer<CloudSyncResult>();
-    _commandTail = _commandTail
-        .then((_) async {
-          if (!isSignedIn) {
+    _queuedCommands += 1;
+    _commandTail = _commandTail.then((_) async {
+      try {
+        if (!isSignedIn) {
+          done.complete(const CloudSyncResult.failed('Sign in to play.'));
+          return;
+        }
+        final outgoing = command;
+        var outgoingArgs = args;
+        if (outgoing == 'set_loadout') {
+          if (!_loadoutDirty) {
+            final live = currentSave?.call();
+            done.complete(
+              live == null
+                  ? const CloudSyncResult.failed('Sign in to play.')
+                  : CloudSyncResult.ok(live, CloudSyncSource.unchanged),
+            );
+            return;
+          }
+          _loadoutTimer?.cancel();
+          _loadoutTimer = null;
+          final live = currentSave?.call();
+          _loadoutDirty = false;
+          if (live == null) {
             done.complete(const CloudSyncResult.failed('Sign in to play.'));
             return;
           }
-          var result = await service.gameCommand(command, args);
-          if (!result.ok && (result.reason ?? '').contains('version conflict')) {
-            final pulled = await service.pullSave();
-            if (pulled.ok && pulled.save != null) {
-              _adoptHostedUnlessLocationRewind(pulled.save!);
-            }
-            result = await service.gameCommand(command, args);
+          outgoingArgs = loadoutCommandArgs(live);
+        } else {
+          await _sendPendingLoadout();
+        }
+
+        final result = await _runHostedCommand(outgoing, outgoingArgs);
+        final skipAdopt = _queuedCommands > 1 || _loadoutDirty;
+        if (result.ok && result.save != null) {
+          if (!skipAdopt) _adoptHosted(result.save!, command: outgoing);
+        } else if (!result.ok && remoteMissingGameFunction(result.reason)) {
+          await _flushAccountSave(enqueue: false);
+        } else if (!result.ok && outgoing == 'set_loadout') {
+          await _quietGearResync();
+        } else if (!result.ok) {
+          final pulled = await service.pullSave();
+          if (pulled.ok && pulled.save != null) {
+            _adoptHostedUnlessLocationRewind(pulled.save!);
           }
-          if (result.ok && result.save != null) {
-            _adoptHosted(result.save!, command: command);
-          } else if (!result.ok && remoteMissingGameFunction(result.reason)) {
-            await _flushAccountSave(enqueue: false);
-          } else if (!result.ok) {
-            final pulled = await service.pullSave();
-            if (pulled.ok && pulled.save != null) {
-              _adoptHostedUnlessLocationRewind(pulled.save!);
-            }
-            if (result.reason != null) {
-              _notice = result.reason;
-              notifyListeners();
-            }
+          if (result.reason != null) {
+            _notice = result.reason;
+            notifyListeners();
           }
-          if (!done.isCompleted) done.complete(result);
-        })
-        .catchError((Object error) {
-          final failed = CloudSyncResult.failed(error.toString());
-          if (!done.isCompleted) done.complete(failed);
-        });
+        }
+        if (!done.isCompleted) done.complete(result);
+      } catch (error) {
+        final failed = CloudSyncResult.failed(error.toString());
+        if (!done.isCompleted) done.complete(failed);
+      } finally {
+        if (_queuedCommands > 0) _queuedCommands -= 1;
+      }
+    });
     return done.future;
+  }
+
+  void _scheduleLoadoutFlush() {
+    _loadoutDirty = true;
+    _loadoutTimer?.cancel();
+    _loadoutTimer = Timer(loadoutCoalesceDelay, () {
+      if (!_alive || !_loadoutDirty) return;
+      unawaited(submitGameCommand('set_loadout'));
+    });
+  }
+
+  /// Sends the worn gear from inside the command tail. Calling
+  /// [submitGameCommand] here would wait on the tail it is already running.
+  Future<void> _sendPendingLoadout() async {
+    if (!_loadoutDirty || !isSignedIn) return;
+    _loadoutTimer?.cancel();
+    _loadoutTimer = null;
+    final live = currentSave?.call();
+    _loadoutDirty = false;
+    if (live == null) return;
+    final result = await _runHostedCommand('set_loadout', loadoutCommandArgs(live));
+    if (!result.ok && !remoteMissingGameFunction(result.reason)) {
+      await _quietGearResync();
+    }
+  }
+
+  Future<CloudSyncResult> _runHostedCommand(String command, Map<String, Object?> args) async {
+    var result = await service.gameCommand(command, args);
+    if (!result.ok && (result.reason ?? '').contains('version conflict')) {
+      final pulled = await service.pullSave();
+      // A loadout retry already carries the slots the player is wearing.
+      // Adopting the stale pull would throw those taps away.
+      if (command != 'set_loadout' && pulled.ok && pulled.save != null) {
+        _adoptHostedUnlessLocationRewind(pulled.save!);
+      }
+      result = await service.gameCommand(command, args);
+    }
+    return result;
+  }
+
+  Future<void> _quietGearResync() async {
+    final pulled = await service.pullSave();
+    if (pulled.ok && pulled.save != null) {
+      _adoptHostedUnlessLocationRewind(pulled.save!);
+    }
+    onQuietMessage?.call('Gear resynced.');
   }
 
   void _adoptHosted(PlayerSave save, {String? command}) {
@@ -1001,7 +1103,8 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> ignorePlayer(String userId) {
     return run(() async {
-      await service.ignorePlayer(userId);
+      final result = await service.ignorePlayer(userId);
+      if (!result.ok) return result.reason;
       await _loadSocialLists();
       _peers = _peers.where((row) => row.userId != userId).toList();
       return 'Ignored.';
@@ -1010,10 +1113,31 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> unignorePlayer(String userId) {
     return run(() async {
-      await service.unignorePlayer(userId);
+      final result = await service.unignorePlayer(userId);
+      if (!result.ok) return result.reason;
       await _loadSocialLists();
       return 'No longer ignored.';
     });
+  }
+
+  Future<void> reportPlayer(String userId, String reason) {
+    return run(() async {
+      final result = await service.reportPlayer(userId, reason);
+      return result.ok ? 'Report sent.' : result.reason;
+    });
+  }
+
+  static String _blocksUploadedKey(String userId) => 'idle-kingdoms.client.blocks-uploaded.$userId';
+
+  /// Uploads this device's ignores once, then merges the account's block list.
+  Future<void> _syncHostedBlocks() async {
+    final remote = service;
+    if (remote is! RemoteMultiplayerService) return;
+    final userId = session?.userId;
+    if (userId == null) return;
+    final key = _blocksUploadedKey(userId);
+    final uploaded = await remote.syncHostedBlocks(uploadLocal: storage.getItem(key) != '1');
+    if (uploaded) storage.setItem(key, '1');
   }
 
   // --- Leaderboards ---------------------------------------------------------

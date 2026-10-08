@@ -52,6 +52,49 @@ class RemoteRpcs {
   static const String guildPayHallDebt = 'guild_pay_hall_debt';
   static const String guildDonateHallItem = 'guild_donate_hall_item';
   static const String guildSetMemberRole = 'guild_set_member_role';
+  static const String blockPlayer = 'block_player';
+  static const String unblockPlayer = 'unblock_player';
+  static const String listMyBlocks = 'list_my_blocks';
+  static const String reportPlayer = 'report_player';
+  static const String usernameAvailable = 'username_available';
+  static const String renameUsername = 'rename_username';
+}
+
+/// Report reasons a player can file. `Other` may carry a short note.
+const String reportReasonSpam = 'Spam';
+const String reportReasonHarassment = 'Harassment';
+const String reportReasonInappropriateName = 'Inappropriate name';
+const String reportReasonOther = 'Other';
+
+/// How long an Other note may be, including the `Other: ` prefix.
+const int reportReasonMaxLength = 280;
+
+/// Reports one account may file per day.
+const int reportsPerDay = 10;
+
+const List<String> reportReasons = <String>[
+  reportReasonSpam,
+  reportReasonHarassment,
+  reportReasonInappropriateName,
+  reportReasonOther,
+];
+
+/// The reason stored in `chat_reports`, or null when it is not one we accept.
+String? reportReasonForStorage(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed == reportReasonSpam ||
+      trimmed == reportReasonHarassment ||
+      trimmed == reportReasonInappropriateName ||
+      trimmed == reportReasonOther) {
+    return trimmed;
+  }
+  if (!trimmed.startsWith('Other:')) return null;
+  final note = trimmed.substring('Other:'.length).trim();
+  if (note.isEmpty) return reportReasonOther;
+  final stored = 'Other: $note';
+  return stored.length <= reportReasonMaxLength
+      ? stored
+      : stored.substring(0, reportReasonMaxLength);
 }
 
 /// The edge function that writes chat, since a client may not insert directly.

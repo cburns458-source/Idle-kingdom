@@ -325,6 +325,34 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current.username.toLowerCase() == cleaned.toLowerCase()) {
       return const ActionResult.ok();
     }
+    final renamed = await transport.rpc(RemoteRpcs.renameUsername, <String, Object?>{
+      'p_name': cleaned,
+    });
+    if (!renamed.ok) {
+      if (_looksLikeMissingRelation(renamed.reason)) return _renameAccountUsernameLegacy(cleaned);
+      return ActionResult.failed(friendlyRemoteError(renamed.reason ?? 'Could not rename.'));
+    }
+    final data = renamed.data;
+    if (data != null && data['ok'] == false) {
+      final refusal = data['reason'];
+      return ActionResult.failed(refusal is String ? refusal : 'Could not rename.');
+    }
+    await transport.updateAuthUsername(cleaned);
+    final stamped = await profile(current.userId);
+    _local.backend.upsertProfile(
+      current.userId,
+      username: cleaned,
+      usernameRenamedAt: stamped?.usernameRenamedAt,
+    );
+    _adopt(current.copyWith(username: cleaned));
+    return const ActionResult.ok();
+  }
+
+  Future<ActionResult> _renameAccountUsernameLegacy(String cleaned) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    final held = await profile(current.userId);
+    if (held == null) return const ActionResult.failed('Sign in required.');
     final listed = await _listUsernamesForRenameCheck();
     if (listed.ok) {
       final taken = (listed.rows ?? const <RemoteRow>[]).any((row) {
@@ -1042,9 +1070,21 @@ class RemoteMultiplayerService implements MultiplayerService {
     );
     if (!result.ok) return const <ChatMessage>[];
     // Newest-first from the query; UI / local filter expect chronological.
-    final messages = result.rows!.map(chatMessageFrom).toList().reversed.toList();
+    final messages = _withoutIgnored(result.rows!.map(chatMessageFrom).toList().reversed.toList());
     if (channel is! LocalChatChannel) return messages;
     return _filterLocalChat(messages);
+  }
+
+  /// Ignored accounts stay out of every tab. The viewer's own lines stay.
+  List<ChatMessage> _withoutIgnored(List<ChatMessage> messages) {
+    final me = session?.userId;
+    if (me == null) return messages;
+    final blocked = _local.backend.blockedIds(me);
+    if (blocked.isEmpty) return messages;
+    return <ChatMessage>[
+      for (final message in messages)
+        if (message.userId == me || !blocked.contains(message.userId)) message,
+    ];
   }
 
   @override
@@ -1095,8 +1135,33 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<void> blockPlayer(String targetUserId) => _local.blockPlayer(targetUserId);
 
   @override
-  Future<void> reportPlayer(String targetUserId, String reason) =>
-      _local.reportPlayer(targetUserId, reason);
+  Future<ActionResult> reportPlayer(String targetUserId, String reason) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    if (targetUserId == current.userId) {
+      return const ActionResult.failed('You cannot report yourself.');
+    }
+    final stored = reportReasonForStorage(reason);
+    if (stored == null) return const ActionResult.failed('Choose a reason.');
+    final result = await transport.rpc(RemoteRpcs.reportPlayer, <String, Object?>{
+      'p_target': targetUserId,
+      'p_reason': stored,
+    });
+    if (!result.ok) {
+      if (_looksLikeMissingRelation(result.reason)) {
+        await _local.reportPlayer(targetUserId, stored);
+        return const ActionResult.ok();
+      }
+      return ActionResult.failed(result.reason ?? 'Could not send that report.');
+    }
+    final data = result.data;
+    if (data != null && data['ok'] == false) {
+      final refusal = data['reason'];
+      return ActionResult.failed(refusal is String ? refusal : 'Could not send that report.');
+    }
+    await _local.reportPlayer(targetUserId, stored);
+    return const ActionResult.ok();
+  }
 
   @override
   Future<CreateGuildResult> createGuild(CreateGuildInput input, num goldAvailable) async {
@@ -1409,7 +1474,23 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
-  Future<void> ignorePlayer(String targetUserId) async {
+  Future<ActionResult> ignorePlayer(String targetUserId) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    if (targetUserId == current.userId) {
+      return const ActionResult.failed('You cannot ignore yourself.');
+    }
+    final blocked = await transport.rpc(RemoteRpcs.blockPlayer, <String, Object?>{
+      'p_target': targetUserId,
+    });
+    if (!blocked.ok) {
+      if (!_looksLikeMissingRelation(blocked.reason)) {
+        return ActionResult.failed(blocked.reason ?? 'Could not ignore that player.');
+      }
+    } else if (blocked.data != null && blocked.data!['ok'] == false) {
+      final refusal = blocked.data!['reason'];
+      return ActionResult.failed(refusal is String ? refusal : 'Could not ignore that player.');
+    }
     await _dropHostedRelationship(targetUserId);
     final account = await profile(targetUserId);
     if (account != null) {
@@ -1421,11 +1502,54 @@ class RemoteMultiplayerService implements MultiplayerService {
         guildName: account.guildName,
       );
     }
-    return _local.ignorePlayer(targetUserId);
+    await _local.ignorePlayer(targetUserId);
+    return const ActionResult.ok();
   }
 
   @override
-  Future<void> unignorePlayer(String targetUserId) => _local.unignorePlayer(targetUserId);
+  Future<ActionResult> unignorePlayer(String targetUserId) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    final cleared = await transport.rpc(RemoteRpcs.unblockPlayer, <String, Object?>{
+      'p_target': targetUserId,
+    });
+    if (!cleared.ok && !_looksLikeMissingRelation(cleared.reason)) {
+      return ActionResult.failed(cleared.reason ?? 'Could not stop ignoring that player.');
+    }
+    if (cleared.ok && cleared.data != null && cleared.data!['ok'] == false) {
+      final refusal = cleared.data!['reason'];
+      return ActionResult.failed(
+        refusal is String ? refusal : 'Could not stop ignoring that player.',
+      );
+    }
+    await _local.unignorePlayer(targetUserId);
+    return const ActionResult.ok();
+  }
+
+  /// Writes this device's ignores once, then copies the account block list down.
+  ///
+  /// Returns false when a call failed, so the caller retries the upload later.
+  Future<bool> syncHostedBlocks({required bool uploadLocal}) async {
+    final me = session?.userId;
+    if (me == null) return false;
+    if (uploadLocal) {
+      for (final id in _local.backend.blockedIds(me)) {
+        final result = await transport.rpc(RemoteRpcs.blockPlayer, <String, Object?>{
+          'p_target': id,
+        });
+        if (!result.ok) return false;
+        if (result.data != null && result.data!['ok'] == false) return false;
+      }
+    }
+    final listed = await transport.rpc(RemoteRpcs.listMyBlocks, const <String, Object?>{});
+    if (!listed.ok || listed.data == null) return false;
+    final ids = listed.data!['blocked_user_ids'];
+    if (ids is! List) return false;
+    for (final id in ids) {
+      if (id is String && id.isNotEmpty) _local.backend.blockUser(me, id);
+    }
+    return true;
+  }
 
   @override
   Future<List<SocialContact>> friends() async {
@@ -1904,9 +2028,15 @@ class RemoteMultiplayerService implements MultiplayerService {
     int inventoryIndex,
     num quantity,
   ) async {
+    final stack = inventoryIndex >= 0 && inventoryIndex < save.inventory.length
+        ? save.inventory[inventoryIndex]
+        : null;
     final donated = await gameCommand('guild_donate_hall_item', <String, Object?>{
       'inventoryIndex': inventoryIndex,
       'quantity': quantity,
+      if (stack != null) 'itemId': stack.itemId,
+      if (stack?.enchantmentId != null && stack!.enchantmentId!.isNotEmpty)
+        'enchantmentId': stack.enchantmentId,
     });
     if (!donated.ok) return GuildHallActionResult.failed(donated.reason ?? 'Could not donate.');
     final guildId = await currentGuildId();

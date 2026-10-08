@@ -134,7 +134,13 @@ class _BankPanelState extends State<BankPanel> {
     controller.commitLoadout(
       result.save!,
       command: 'bank_deposit',
-      args: <String, Object?>{'inventoryIndex': index, 'quantity': quantity},
+      args: <String, Object?>{
+        'inventoryIndex': index,
+        'quantity': quantity,
+        'itemId': stack.itemId,
+        if (stack.enchantmentId != null && stack.enchantmentId!.isNotEmpty)
+          'enchantmentId': stack.enchantmentId,
+      },
     );
     _invalidateCaches();
     setState(() => _error = null);
@@ -163,7 +169,13 @@ class _BankPanelState extends State<BankPanel> {
     controller.commitLoadout(
       result.save!,
       command: 'bank_withdraw',
-      args: <String, Object?>{'bankIndex': index, 'quantity': quantity},
+      args: <String, Object?>{
+        'bankIndex': index,
+        'quantity': quantity,
+        'itemId': stack.itemId,
+        if (stack.enchantmentId != null && stack.enchantmentId!.isNotEmpty)
+          'enchantmentId': stack.enchantmentId,
+      },
     );
     _invalidateCaches();
     setState(() => _error = null);

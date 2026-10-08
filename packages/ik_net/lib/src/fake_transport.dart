@@ -646,7 +646,9 @@ class FakeTransport implements RemoteTransport {
       return null;
     }
 
-    if (isPendingAccountUsername(oldName)) {
+    if (oldName.isEmpty ||
+        isPendingAccountUsername(oldName) ||
+        oldName.toLowerCase() == 'adventurer') {
       next[remoteUsernameRenamedAtColumn] = oldStamp;
       return null;
     }
@@ -693,6 +695,10 @@ class FakeTransport implements RemoteTransport {
     final caller = _current;
     if (caller == null) return const RemoteInvokeResult.failed('Not signed in.');
     final action = body['action'] as String? ?? '';
+    if (action == 'command') {
+      final commandName = body['command'];
+      if (commandName is String && commandName.isNotEmpty) calls.add('game:$commandName');
+    }
     final seated = _playSessionRefusal(<RemoteRow>[
       <String, Object?>{'user_id': caller.userId, 'play_session_id': body['playSessionId']},
     ]);
@@ -762,6 +768,9 @@ class FakeTransport implements RemoteTransport {
     }
     if (row == null) {
       return const RemoteInvokeResult.failed('No cloud save.');
+    }
+    if (body['command'] == 'set_loadout') {
+      _overlaySetLoadout(row, body);
     }
     final hallCommand = _applyGuildHallCommand(caller.userId, body, row);
     if (hallCommand != null) return hallCommand;
@@ -1047,8 +1056,193 @@ class FakeTransport implements RemoteTransport {
         return RemoteInvokeResult.ok(next);
       }
 
+      if (function == RemoteRpcs.blockPlayer || function == RemoteRpcs.unblockPlayer) {
+        return _blockRpc(function, args);
+      }
+      if (function == RemoteRpcs.listMyBlocks) return _listBlocksRpc();
+      if (function == RemoteRpcs.reportPlayer) return _reportRpc(args);
+      if (function == RemoteRpcs.usernameAvailable) return _usernameAvailableRpc(args);
+      if (function == RemoteRpcs.renameUsername) return _renameUsernameRpc(args);
+
       return RemoteInvokeResult.failed('No such function: $function');
     });
+  }
+
+  List<RemoteRow> _socialRows(String table) => tables.putIfAbsent(table, () => <RemoteRow>[]);
+
+  RemoteInvokeResult _blockRpc(String function, RemoteRow args) {
+    final me = _current?.userId;
+    if (me == null) return const RemoteInvokeResult.failed('Sign in first.');
+    final target = args['p_target'];
+    if (target is! String || target.isEmpty || target == me) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'You cannot ignore yourself.',
+      });
+    }
+    final known = tables[RemoteTables.profiles]!.any((row) => row['user_id'] == target);
+    if (!known) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'That player was not found.',
+      });
+    }
+    final rows = _socialRows('player_blocks');
+    if (function == RemoteRpcs.unblockPlayer) {
+      rows.removeWhere((row) => row['user_id'] == me && row['blocked_user_id'] == target);
+    } else if (!rows.any((row) => row['user_id'] == me && row['blocked_user_id'] == target)) {
+      rows.add(<String, Object?>{'user_id': me, 'blocked_user_id': target, 'created_at': stamp()});
+    }
+    return const RemoteInvokeResult.ok(<String, Object?>{'ok': true});
+  }
+
+  RemoteInvokeResult _listBlocksRpc() {
+    final me = _current?.userId;
+    if (me == null) return const RemoteInvokeResult.failed('Sign in first.');
+    final ids = <String>[
+      for (final row in _socialRows('player_blocks'))
+        if (row['user_id'] == me && row['blocked_user_id'] is String)
+          row['blocked_user_id'] as String,
+    ];
+    return RemoteInvokeResult.ok(<String, Object?>{'blocked_user_ids': ids});
+  }
+
+  RemoteInvokeResult _reportRpc(RemoteRow args) {
+    final me = _current?.userId;
+    if (me == null) return const RemoteInvokeResult.failed('Sign in first.');
+    final target = args['p_target'];
+    if (target is! String || target.isEmpty || target == me) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'You cannot report yourself.',
+      });
+    }
+    final stored = reportReasonForStorage('${args['p_reason'] ?? ''}');
+    if (stored == null) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'Choose a reason.',
+      });
+    }
+    final rows = _socialRows('chat_reports');
+    final cutoff = _clockMs() - const Duration(days: 1).inMilliseconds;
+    var recent = 0;
+    for (final row in rows) {
+      if (row['reporter_id'] != me) continue;
+      final at = DateTime.tryParse('${row['created_at'] ?? ''}');
+      if (at != null && at.millisecondsSinceEpoch > cutoff) recent += 1;
+    }
+    if (recent >= reportsPerDay) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'You have sent enough reports today.',
+      });
+    }
+    rows.add(<String, Object?>{
+      'id': _nextId('rpt'),
+      'reporter_id': me,
+      'target_user_id': target,
+      'reason': stored,
+      'created_at': _clockIso(),
+    });
+    return const RemoteInvokeResult.ok(<String, Object?>{'ok': true});
+  }
+
+  RemoteInvokeResult _usernameAvailableRpc(RemoteRow args) {
+    final name = remoteUsername('${args['p_name'] ?? ''}');
+    if (name.length < 2) return const RemoteInvokeResult.ok(<String, Object?>{'value': false});
+    final me = _current?.userId;
+    final taken = tables[RemoteTables.profiles]!.any((row) {
+      final username = row['username'];
+      return row['user_id'] != me &&
+          username is String &&
+          username.toLowerCase() == name.toLowerCase();
+    });
+    return RemoteInvokeResult.ok(<String, Object?>{'value': !taken});
+  }
+
+  RemoteInvokeResult _renameUsernameRpc(RemoteRow args) {
+    final me = _current;
+    if (me == null) return const RemoteInvokeResult.failed('Sign in first.');
+    final cleaned = remoteUsername('${args['p_name'] ?? ''}');
+    if (cleaned.length < 2) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'Enter a name to continue.',
+      });
+    }
+    final profiles = tables[RemoteTables.profiles]!;
+    final at = profiles.indexWhere((row) => row['user_id'] == me.userId);
+    if (at < 0) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'Sign in required.',
+      });
+    }
+    final current = profiles[at];
+    final oldName = '${current['username'] ?? ''}';
+    if (oldName.toLowerCase() == cleaned.toLowerCase()) {
+      return const RemoteInvokeResult.ok(<String, Object?>{'ok': true});
+    }
+    final taken = profiles.any((row) {
+      final username = row['username'];
+      return row['user_id'] != me.userId &&
+          username is String &&
+          username.toLowerCase() == cleaned.toLowerCase();
+    });
+    if (taken) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'That name is taken.',
+      });
+    }
+    final next = <String, Object?>{...current, 'username': cleaned};
+    final refusal = _profileGuardRefusal(current, next);
+    if (refusal != null) {
+      return RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'reason': refusal});
+    }
+    profiles[at] = next;
+    me.username = cleaned;
+    return const RemoteInvokeResult.ok(<String, Object?>{'ok': true});
+  }
+
+  void _overlaySetLoadout(RemoteRow row, RemoteRow body) {
+    final payload = row['payload'];
+    if (payload is! Map) return;
+    final args = body['args'];
+    if (args is! Map) return;
+    final next = Map<String, Object?>.from(payload);
+    final equipment = next['equipment'];
+    final equipmentMap = equipment is Map
+        ? Map<String, Object?>.from(equipment.map((key, value) => MapEntry('$key', value)))
+        : <String, Object?>{};
+    final existing = equipmentMap['slots'];
+    final worn = existing is Map
+        ? Map<String, Object?>.from(existing.map((key, value) => MapEntry('$key', value)))
+        : <String, Object?>{};
+    for (final key in worn.keys.toList()) {
+      worn[key] = null;
+    }
+    final desired = args['slots'];
+    if (desired is List) {
+      for (final entry in desired) {
+        if (entry is! Map) continue;
+        final slotId = entry['slotId'];
+        final itemId = entry['itemId'];
+        if (slotId is! String || itemId is! String) continue;
+        worn[slotId] = <String, Object?>{
+          'itemId': itemId,
+          'quantity': entry['quantity'] is num ? entry['quantity'] : 1,
+          if (entry['enchantmentId'] is String) 'enchantmentId': entry['enchantmentId'],
+          if (entry['favorite'] == true) 'favorite': true,
+        };
+      }
+    }
+    equipmentMap['slots'] = worn;
+    next['equipment'] = equipmentMap;
+    final preset = args['activeEquipmentPresetIndex'];
+    if (preset is num) next['activeEquipmentPresetIndex'] = preset;
+    row['payload'] = next;
   }
 
   RemoteRow? _membershipFor(String? userId) {

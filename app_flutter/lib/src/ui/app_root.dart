@@ -107,6 +107,7 @@ class _BootGateState extends State<_BootGate> {
     multiplayer.onAccountSaveReady = () => storage.removeItem(saveStorageKey);
     multiplayer.onHostedSave = game.adoptHostedSave;
     multiplayer.currentSave = () => game.save;
+    multiplayer.onQuietMessage = game.announce;
     game.submitGameCommand = multiplayer.submitGameCommand;
     repository.onWrite = multiplayer.scheduleAccountSave;
     if (multiplayer.isSignedIn) {

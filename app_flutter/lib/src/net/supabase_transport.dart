@@ -266,7 +266,18 @@ class SupabaseTransport implements RemoteTransport {
   String? _authErrorMessage(Object error) {
     if (error is AuthException) return error.message;
     if (error is PostgrestException) return error.message;
-    if (error is FunctionException) return '${error.details ?? error.reasonPhrase}';
+    if (error is FunctionException) return _functionErrorMessage(error);
     return error.toString();
+  }
+
+  /// The game function refuses with `{error, phase}`. Show the sentence, not the map.
+  String _functionErrorMessage(FunctionException error) {
+    final details = error.details;
+    if (details is Map) {
+      final message = details['error'] ?? details['message'];
+      if (message is String && message.isNotEmpty) return message;
+    }
+    if (details is String && details.isNotEmpty) return details;
+    return error.reasonPhrase ?? 'The server refused that.';
   }
 }

@@ -346,6 +346,15 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
   }
 
   List<Widget> _profileActions(String userId) {
+    final report = Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: GameButton(
+        label: 'Report',
+        tone: GameButtonTone.secondary,
+        compact: true,
+        onPressed: net.busy ? null : () => _report(userId),
+      ),
+    );
     if (net.isIgnored(userId)) {
       return <Widget>[
         GameButton(
@@ -354,6 +363,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
           compact: true,
           onPressed: net.busy ? null : () => net.unignorePlayer(userId),
         ),
+        report,
       ];
     }
     return <Widget>[
@@ -380,6 +390,80 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
         compact: true,
         onPressed: net.busy ? null : () => net.ignorePlayer(userId),
       ),
+      report,
     ];
+  }
+
+  Future<void> _report(String userId) async {
+    final reason = await _askReportReason();
+    if (reason == null || !mounted) return;
+    await net.reportPlayer(userId, reason);
+  }
+
+  Future<String?> _askReportReason() {
+    var selected = reportReasonSpam;
+    final note = TextEditingController();
+    return showGamePopup<String>(
+      context: context,
+      origin: popupOrigin(context),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return GamePopupCard(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Report player',
+                    style: TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final reason in reportReasons) ...[
+                    GameButton(
+                      label: reason,
+                      tone: selected == reason ? GameButtonTone.primary : GameButtonTone.secondary,
+                      compact: true,
+                      onPressed: () => setDialogState(() => selected = reason),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                  if (selected == reportReasonOther)
+                    TextField(
+                      controller: note,
+                      maxLength: 240,
+                      decoration: const InputDecoration(hintText: 'What happened?'),
+                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      GameButton(
+                        label: 'Cancel',
+                        tone: GameButtonTone.secondary,
+                        compact: true,
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GameButton(
+                          label: 'Send report',
+                          compact: true,
+                          onPressed: () {
+                            final stored = selected == reportReasonOther
+                                ? reportReasonForStorage('Other: ${note.text}')
+                                : selected;
+                            Navigator.of(context).pop(stored);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ).whenComplete(note.dispose);
   }
 }

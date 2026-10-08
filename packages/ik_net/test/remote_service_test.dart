@@ -173,7 +173,11 @@ void main() {
     );
     await first.signUp('hero@example.com', '', 'secret');
     expect((await first.claimAccountUsername('Hero')).ok, isTrue);
+    final beforeRename = transport.calls.length;
     expect((await first.renameAccountUsername('Vari')).ok, isTrue);
+    final renameCalls = transport.calls.sublist(beforeRename);
+    expect(renameCalls, contains('rpc:${RemoteRpcs.renameUsername}'));
+    expect(renameCalls, isNot(contains('select:${RemoteTables.publicProfiles}')));
     expect(first.session?.username, 'Vari');
     expect(transport.tables[RemoteTables.profiles]!.single['username'], 'Vari');
 
@@ -1091,7 +1095,8 @@ void main() {
   test('ignored hosted players keep their name on the account list', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
-    final rival = _service(transport, MemorySaveStorage());
+    final rivalTransport = FakeTransport.joining(transport);
+    final rival = _service(rivalTransport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
 
     await hero.ignorePlayer(rival.session!.userId);
@@ -1320,5 +1325,41 @@ void main() {
     final db = _database();
     expect((await seedHostedSave(hero, transport, createNewSave(db, _nowMs))).ok, isTrue);
     expect(await hero.listArenaOpponents(), isEmpty);
+  });
+
+  test('ignore writes a hosted block and hides that player in chat', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final rival = _service(FakeTransport.joining(transport), MemorySaveStorage());
+    expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+    expect((await rival.sendChat(const ChatChannel.global(), 'Hello from the road')).ok, isTrue);
+
+    expect(
+      (await hero.listChat(const ChatChannel.global())).map((row) => row.body),
+      contains('Hello from the road'),
+    );
+    final ignored = await hero.ignorePlayer(rival.session!.userId);
+    expect(ignored.ok, isTrue, reason: ignored.reason);
+    expect(transport.calls, contains('rpc:${RemoteRpcs.blockPlayer}'));
+    expect(
+      (await hero.listChat(const ChatChannel.global())).map((row) => row.body),
+      isNot(contains('Hello from the road')),
+    );
+    expect(transport.tables['player_blocks']!.single['blocked_user_id'], rival.session!.userId);
+  });
+
+  test('a report lands in chat_reports and a second rename the same week waits', () async {
+    final transport = FakeTransport();
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final rival = _service(FakeTransport.joining(transport), MemorySaveStorage());
+    expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+
+    final reported = await hero.reportPlayer(rival.session!.userId, 'Harassment');
+    expect(reported.ok, isTrue, reason: reported.reason);
+    expect(transport.calls, contains('rpc:${RemoteRpcs.reportPlayer}'));
+    expect(transport.tables['chat_reports']!.single['reason'], 'Harassment');
+
+    final vague = await hero.reportPlayer(rival.session!.userId, 'Just because');
+    expect(vague.ok, isFalse);
   });
 }

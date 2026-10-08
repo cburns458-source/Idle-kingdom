@@ -1,6 +1,6 @@
 import type { EquipmentRow, GameDatabase } from '../data/types'
 import { WEAPON_TOOL_SLOT_ID, type EquippedStack, type PlayerSave } from '../save/types'
-import { addItemToInventory } from '../activity/rewards'
+import { addItemToInventory, addItemToInventoryExact } from '../activity/rewards'
 import { getSkillProgress } from '../activity/xp'
 import { canFitItemQuantity } from '../inventory/capacity'
 import { equippedEnchantmentSuccessChanceBonusBySkill } from '../projects/enchantments'
@@ -266,6 +266,228 @@ export function unequipSlot(save: PlayerSave, slotId: string): EquipResult {
     equipped.enchantmentId ?? null,
     favorite,
   )
+  return { ok: true, save: next }
+}
+
+export type DesiredLoadoutSlot = {
+  slotId: string
+  itemId: string
+  quantity: number
+  enchantmentId?: string | null
+  favorite?: boolean
+}
+
+type OwnedPiece = {
+  itemId: string
+  enchantmentId: string | null
+  quantity: number
+  favorite: boolean
+}
+
+function pieceKey(itemId: string, enchantmentId: string | null): string {
+  return `${itemId}\0${enchantmentId ?? ''}`
+}
+
+function countPiece(
+  stacks: Array<{ itemId: string; quantity: number; enchantmentId?: string | null }>,
+  itemId: string,
+  enchantmentId: string | null,
+): number {
+  const key = pieceKey(itemId, enchantmentId)
+  let total = 0
+  for (const stack of stacks) {
+    if (pieceKey(stack.itemId, stack.enchantmentId ?? null) === key) total += stack.quantity
+  }
+  return total
+}
+
+function desiredSlotRefusal(
+  db: GameDatabase,
+  save: PlayerSave,
+  slot: DesiredLoadoutSlot,
+): string | null {
+  const equipment = db.Equipment.find((row) => row['Item ID'] === slot.itemId)
+  const natural = equipment?.['Slot ID']
+  if (!equipment || !natural) return 'That item cannot be equipped.'
+
+  const templeRefusal = templeHandsRefusal(save, slot.slotId)
+  if (templeRefusal) return templeRefusal
+
+  const requirementFailure = equipmentRequirementFailure(db, save, equipment)
+  if (requirementFailure) return requirementFailure
+
+  const spell = isSpellEquipment(equipment) || isSpellSlotId(natural)
+  if (spell) {
+    if (!isSpellSlotId(slot.slotId)) return 'That item cannot be equipped.'
+  } else if (isDaggerItem(db, slot.itemId)) {
+    if (slot.slotId !== OFFHAND_SLOT_ID) return 'That item cannot be equipped.'
+  } else if (slot.slotId !== natural) {
+    return 'That item cannot be equipped.'
+  }
+
+  if (itemStacksInEquipmentSlot(db, slot.itemId, slot.slotId)) {
+    if (slot.enchantmentId) {
+      return isPotionSlot(slot.slotId)
+        ? 'Enchanted items cannot fill the potion slot.'
+        : isFoodSlot(slot.slotId)
+          ? 'Enchanted items cannot fill the food slot.'
+          : 'Enchanted items cannot stack in this slot.'
+    }
+  } else if (slot.quantity !== 1) {
+    return 'That item cannot be equipped.'
+  }
+  return null
+}
+
+/**
+ * Wear [slots] by item identity, not bag index.
+ *
+ * Loot and earlier equips move the bag around while a burst of taps is still
+ * in flight, so the slot the client tapped is often empty by the time this
+ * runs. The items are taken from the bag and from whatever is already worn.
+ */
+export function applyDesiredLoadout(
+  db: GameDatabase,
+  save: PlayerSave,
+  slots: DesiredLoadoutSlot[],
+  activeEquipmentPresetIndex?: number | null,
+): EquipResult {
+  const seen = new Set<string>()
+  for (const slot of slots) {
+    if (!slot.slotId || !slot.itemId || slot.quantity <= 0 || !Number.isFinite(slot.quantity)) {
+      return { ok: false, reason: 'Missing item.' }
+    }
+    if (seen.has(slot.slotId)) return { ok: false, reason: 'That item cannot be equipped.' }
+    seen.add(slot.slotId)
+    const refusal = desiredSlotRefusal(db, save, slot)
+    if (refusal) return { ok: false, reason: refusal }
+  }
+
+  const weapon = slots.find((slot) => slot.slotId === WEAPON_TOOL_SLOT_ID)
+  const offhand = slots.find((slot) => slot.slotId === OFFHAND_SLOT_ID)
+  if (weapon && offhand && isTwoHandedItem(db, weapon.itemId)) {
+    return { ok: false, reason: 'That item cannot be equipped.' }
+  }
+
+  const available = new Map<string, number>()
+  const addAvailable = (itemId: string, quantity: number, enchantmentId: string | null) => {
+    const key = pieceKey(itemId, enchantmentId)
+    available.set(key, (available.get(key) ?? 0) + quantity)
+  }
+  for (const stack of save.inventory) {
+    addAvailable(stack.itemId, stack.quantity, stack.enchantmentId ?? null)
+  }
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack || stack.quantity <= 0) continue
+    addAvailable(stack.itemId, stack.quantity, stack.enchantmentId ?? null)
+  }
+  for (const slot of slots) {
+    const key = pieceKey(slot.itemId, slot.enchantmentId ?? null)
+    const have = available.get(key) ?? 0
+    if (have < slot.quantity) return { ok: false, reason: 'Item is not in inventory.' }
+    available.set(key, have - slot.quantity)
+  }
+
+  const released = new Map<string, OwnedPiece>()
+  const needed = new Map<string, OwnedPiece>()
+  const addPiece = (into: Map<string, OwnedPiece>, piece: OwnedPiece) => {
+    const key = pieceKey(piece.itemId, piece.enchantmentId)
+    const prev = into.get(key)
+    into.set(key, {
+      itemId: piece.itemId,
+      enchantmentId: piece.enchantmentId,
+      quantity: (prev?.quantity ?? 0) + piece.quantity,
+      favorite: piece.favorite || prev?.favorite === true,
+    })
+  }
+
+  for (const [slotId, current] of Object.entries(save.equipment.slots)) {
+    if (!current || current.quantity <= 0) continue
+    const desired = slots.find((slot) => slot.slotId === slotId)
+    const same =
+      desired != null &&
+      desired.itemId === current.itemId &&
+      (desired.enchantmentId ?? null) === (current.enchantmentId ?? null)
+    const kept = same ? Math.min(current.quantity, desired.quantity) : 0
+    const returning = current.quantity - kept
+    if (returning <= 0) continue
+    addPiece(released, {
+      itemId: current.itemId,
+      enchantmentId: current.enchantmentId ?? null,
+      quantity: returning,
+      favorite: current.favorite === true,
+    })
+  }
+
+  for (const desired of slots) {
+    const current = save.equipment.slots[desired.slotId]
+    const same =
+      current != null &&
+      current.itemId === desired.itemId &&
+      (current.enchantmentId ?? null) === (desired.enchantmentId ?? null)
+    const kept = same ? Math.min(current.quantity, desired.quantity) : 0
+    const need = desired.quantity - kept
+    if (need <= 0) continue
+    addPiece(needed, {
+      itemId: desired.itemId,
+      enchantmentId: desired.enchantmentId ?? null,
+      quantity: need,
+      favorite: desired.favorite === true,
+    })
+  }
+
+  for (const [key, need] of needed) {
+    const rel = released.get(key)
+    if (!rel) continue
+    const cancel = Math.min(rel.quantity, need.quantity)
+    rel.quantity -= cancel
+    need.quantity -= cancel
+    if (rel.quantity <= 0) released.delete(key)
+  }
+
+  let working: PlayerSave = { ...save, inventory: save.inventory.map((stack) => ({ ...stack })) }
+  for (const need of needed.values()) {
+    if (need.quantity <= 0) continue
+    const before = countPiece(working.inventory, need.itemId, need.enchantmentId)
+    working = removeItemQuantity(working, need.itemId, need.quantity, need.enchantmentId)
+    const after = countPiece(working.inventory, need.itemId, need.enchantmentId)
+    if (before - after < need.quantity) return { ok: false, reason: 'Item is not in inventory.' }
+  }
+  for (const rel of released.values()) {
+    if (rel.quantity <= 0) continue
+    const added = addItemToInventoryExact(
+      working,
+      rel.itemId,
+      rel.quantity,
+      rel.enchantmentId,
+      rel.favorite,
+    )
+    if (!added.ok) return { ok: false, reason: 'Not enough inventory space to unequip that item.' }
+    working = added.save
+  }
+
+  const nextSlots: Record<string, EquippedStack | null> = { ...save.equipment.slots }
+  for (const slotId of Object.keys(nextSlots)) nextSlots[slotId] = null
+  for (const slot of slots) {
+    nextSlots[slot.slotId] = {
+      itemId: slot.itemId,
+      quantity: slot.quantity,
+      ...(slot.enchantmentId ? { enchantmentId: slot.enchantmentId } : {}),
+      ...(slot.favorite ? { favorite: true } : {}),
+    }
+  }
+
+  let next: PlayerSave = {
+    ...working,
+    equipment: { ...working.equipment, slots: nextSlots },
+  }
+  if (
+    activeEquipmentPresetIndex != null &&
+    activeEquipmentPresetIndex >= 0 &&
+    activeEquipmentPresetIndex <= 3
+  ) {
+    next = { ...next, activeEquipmentPresetIndex }
+  }
   return { ok: true, save: next }
 }
 

@@ -178,6 +178,40 @@ void main() {
     );
   });
 
+  test('set_loadout keeps the running bar and the HP the player already sees', () {
+    final local = startedCharacter(database).copyWith(
+      currentActivityId: 'ACT-0021',
+      activityStartedAt: isoFromMs(testStartMs),
+      currentActionId: 'ACN-0035',
+      actionStartedAt: isoFromMs(testStartMs),
+      actionDurationMs: 12000,
+      currentHp: 190,
+    );
+    final incoming = local.copyWith(
+      gold: local.gold + 1,
+      actionStartedAt: isoFromMs(testStartMs + 1000),
+      currentActionId: 'ACN-0001',
+      actionDurationMs: 8000,
+      currentHp: 140,
+      maxHp: 200,
+    );
+
+    final merged = mergeHostedStartSave(local, incoming, command: 'set_loadout');
+    expect(merged.gold, local.gold + 1);
+    expect(merged.actionStartedAt, local.actionStartedAt);
+    expect(merged.currentActionId, 'ACN-0035');
+    expect(merged.currentHp, 190);
+    expect(merged.maxHp, 200);
+  });
+
+  test('set_loadout into a new fight takes the server HP', () {
+    final local = startedCharacter(database).copyWith(currentHp: 190);
+    final incoming = local.copyWith(currentHp: 80, combatEnemyId: 'ENM-0001', combatEnemyHp: 20);
+    final merged = mergeHostedStartSave(local, incoming, command: 'set_loadout');
+    expect(merged.currentHp, 80);
+    expect(merged.combatEnemyId, 'ENM-0001');
+  });
+
   test('a different activity adopts the server start whole', () {
     final local = startedCharacter(database).copyWith(
       currentActivityId: 'ACT-0021',

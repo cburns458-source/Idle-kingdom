@@ -16,6 +16,10 @@ const hostedTravelCommands = <String>{'travel', 'travel_guild_hall'};
 bool keepsLocalActionClock(String? command, PlayerSave local, PlayerSave incoming) {
   if (command == null) return false;
   if (hostedStartCommands.contains(command)) return true;
+  // Equipping while a bar is running must not snap that bar to the server clock.
+  if (command == 'set_loadout') {
+    return local.currentActivityId == incoming.currentActivityId;
+  }
   if (!hostedTravelCommands.contains(command)) return false;
   if (local.currentLocationId != incoming.currentLocationId) return false;
   return isNotBlank(local.currentActivityId) &&
@@ -34,7 +38,8 @@ bool wouldRewindCurrentLocation(PlayerSave local, PlayerSave incoming) {
 /// Hostile arrival that started a new fight takes the server vitals instead —
 /// that HP change is the ambush, not a stale hosted snapshot.
 bool keepsLocalVitals(String? command, PlayerSave local, PlayerSave incoming) {
-  if (command == null || !hostedTravelCommands.contains(command)) return false;
+  if (command == null) return false;
+  if (command != 'set_loadout' && !hostedTravelCommands.contains(command)) return false;
   if (isNotBlank(incoming.combatEnemyId) && incoming.combatEnemyId != local.combatEnemyId) {
     return false;
   }

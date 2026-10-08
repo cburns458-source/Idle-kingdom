@@ -669,14 +669,23 @@ class GameController extends ChangeNotifier {
 
   /// Manual eat from the bag or food slot. Returns a refusal, or null on success.
   String? eatFood({int? inventoryIndex}) {
+    final stack =
+        inventoryIndex != null && inventoryIndex >= 0 && inventoryIndex < save.inventory.length
+        ? save.inventory[inventoryIndex]
+        : null;
     final result = inventoryIndex == null
         ? eatEquippedFood(db, save)
         : eatInventoryFood(db, save, inventoryIndex);
     if (!result.ok) return result.reason;
+    final enchantment = stack?.enchantmentId;
     commit(
       result.save!,
       command: 'eat_food',
-      args: <String, Object?>{'inventoryIndex': ?inventoryIndex},
+      args: <String, Object?>{
+        'inventoryIndex': ?inventoryIndex,
+        if (stack != null) 'itemId': stack.itemId,
+        if (enchantment != null && enchantment.isNotEmpty) 'enchantmentId': enchantment,
+      },
     );
     _healPopup = HealPopup(
       amount: result.healed,

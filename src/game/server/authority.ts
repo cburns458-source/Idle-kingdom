@@ -5,7 +5,12 @@ import { eatEquippedFood, eatInventoryFood } from '../combat/food'
 import { collectCritter } from '../critters/critters'
 import { withRecalculatedVitals } from '../equipment/vitals'
 import { applyAutoEquipProposal, proposeAutoEquipForActivity } from '../equipment/autoEquip'
-import { equipInventoryIndex, unequipSlot } from '../equipment/loadout'
+import {
+  applyDesiredLoadout,
+  equipInventoryIndex,
+  unequipSlot,
+  type DesiredLoadoutSlot,
+} from '../equipment/loadout'
 import {
   applyEquipmentPreset,
   renameEquipmentPreset,
@@ -85,6 +90,7 @@ export type GameCommandName =
   | 'tanner_confirm'
   | 'equip_index'
   | 'unequip_slot'
+  | 'set_loadout'
   | 'bank_deposit'
   | 'bank_withdraw'
   | 'equipment_preset_save'
@@ -143,6 +149,64 @@ function asInt(value: unknown): number | null {
 
 function asBool(value: unknown, fallback = false): boolean {
   return typeof value === 'boolean' ? value : fallback
+}
+
+type StackIdentity = { itemId: string; enchantmentId?: string | null }
+
+/** Present enchantment argument, or undefined when the client did not send one. */
+function enchantmentArg(args: GameCommandArgs): string | null | undefined {
+  if (!Object.prototype.hasOwnProperty.call(args, 'enchantmentId')) return undefined
+  const value = args.enchantmentId
+  return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+function stackMatches(
+  stack: StackIdentity | undefined,
+  itemId: string,
+  enchantmentId: string | null | undefined,
+): boolean {
+  if (!stack || stack.itemId !== itemId) return false
+  if (enchantmentId === undefined) return true
+  return (stack.enchantmentId ?? null) === enchantmentId
+}
+
+/**
+ * Keep [index] when that stack is the named item. Otherwise find the item.
+ * Older clients omit [itemId] and keep the index they tapped.
+ */
+function resolveStackIndex(
+  stacks: StackIdentity[],
+  index: number | null,
+  itemId: string | null,
+  enchantmentId: string | null | undefined,
+): number | null {
+  if (itemId == null) return index
+  if (index != null && stackMatches(stacks[index], itemId, enchantmentId)) return index
+  const found = stacks.findIndex((stack) => stackMatches(stack, itemId, enchantmentId))
+  return found >= 0 ? found : null
+}
+
+function parseDesiredSlots(value: unknown): DesiredLoadoutSlot[] | null {
+  if (!Array.isArray(value)) return null
+  const slots: DesiredLoadoutSlot[] = []
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') return null
+    const row = entry as Record<string, unknown>
+    const slotId = asString(row.slotId)
+    const itemId = asString(row.itemId)
+    const quantity = asInt(row.quantity)
+    if (!slotId || !itemId || quantity == null || quantity <= 0) return null
+    const enchantment =
+      typeof row.enchantmentId === 'string' && row.enchantmentId.length > 0 ? row.enchantmentId : null
+    slots.push({
+      slotId,
+      itemId,
+      quantity,
+      enchantmentId: enchantment,
+      favorite: row.favorite === true,
+    })
+  }
+  return slots
 }
 
 function failed(reason: string): GameCommandResult {
@@ -292,8 +356,11 @@ function applyExistingCommand(
     }
     case 'eat_food': {
       const index = asInt(args.inventoryIndex)
-      const eaten = index == null ? eatEquippedFood(db, save) : eatInventoryFood(db, save, index)
-      return unwrap(eaten)
+      const itemId = asString(args.itemId)
+      if (index == null && itemId == null) return unwrap(eatEquippedFood(db, save))
+      const resolved = resolveStackIndex(save.inventory, index, itemId, enchantmentArg(args))
+      if (resolved == null) return failed('Nothing to eat.')
+      return unwrap(eatInventoryFood(db, save, resolved))
     }
     case 'set_combat_settings':
       return ok(applyCombatSettings(save, args))
@@ -374,17 +441,28 @@ function applyExistingCommand(
       if (!slotId) return failed('Missing slot.')
       return unwrap(unequipSlot(save, slotId))
     }
+    case 'set_loadout': {
+      const slots = parseDesiredSlots(args.slots)
+      if (slots == null) return failed('Missing loadout.')
+      const applied = applyDesiredLoadout(db, save, slots, asInt(args.activeEquipmentPresetIndex))
+      if (!applied.ok) return failed(applied.reason)
+      return ok(withRecalculatedVitals(db, applied.save))
+    }
     case 'bank_deposit': {
       const index = asInt(args.inventoryIndex)
       const quantity = asNumber(args.quantity)
       if (index == null || quantity == null) return failed('Missing deposit.')
-      return unwrap(depositToBank(save, index, quantity))
+      const resolved = resolveStackIndex(save.inventory, index, asString(args.itemId), enchantmentArg(args))
+      if (resolved == null) return failed('That stack is not there.')
+      return unwrap(depositToBank(save, resolved, quantity))
     }
     case 'bank_withdraw': {
       const index = asInt(args.bankIndex)
       const quantity = asNumber(args.quantity)
       if (index == null || quantity == null) return failed('Missing withdraw.')
-      return unwrap(withdrawFromBank(save, index, quantity))
+      const resolved = resolveStackIndex(save.bank ?? [], index, asString(args.itemId), enchantmentArg(args))
+      if (resolved == null) return failed('That stack is not there.')
+      return unwrap(withdrawFromBank(save, resolved, quantity))
     }
     case 'equipment_preset_save':
       return ok(saveActiveEquipmentPreset(save))
@@ -495,7 +573,9 @@ function applyExistingCommand(
       const index = asInt(args.inventoryIndex)
       const quantity = asNumber(args.quantity)
       if (index == null || quantity == null) return failed('Missing donation.')
-      const donated = donateToGuildHall(options.hall, save, index, quantity)
+      const resolved = resolveStackIndex(save.inventory, index, asString(args.itemId), enchantmentArg(args))
+      if (resolved == null) return failed('That stack is not there.')
+      const donated = donateToGuildHall(options.hall, save, resolved, quantity)
       return donated.ok ? ok(donated.save, { hall: donated.hall }) : failed(donated.reason)
     }
     case 'guild_withdraw_hall_item': {
@@ -506,7 +586,14 @@ function applyExistingCommand(
       const index = asInt(args.storehouseIndex)
       const quantity = asNumber(args.quantity)
       if (index == null || quantity == null) return failed('Missing withdraw.')
-      const withdrawn = withdrawFromGuildHall(options.hall, save, index, quantity)
+      const resolved = resolveStackIndex(
+        options.hall.storehouse,
+        index,
+        asString(args.itemId),
+        enchantmentArg(args),
+      )
+      if (resolved == null) return failed('That stack is not there.')
+      const withdrawn = withdrawFromGuildHall(options.hall, save, resolved, quantity)
       return withdrawn.ok ? ok(withdrawn.save, { hall: withdrawn.hall }) : failed(withdrawn.reason)
     }
     case 'submit_leaderboard':
