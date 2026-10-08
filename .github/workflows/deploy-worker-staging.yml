@@ -36,10 +36,17 @@ jobs:
             echo "::error title=Test Worker deploy skipped::Set the CLOUDFLARE_API_TOKEN repository secret (Workers Scripts Edit + Zone DNS Edit) to deploy restoria-idlerpg-staging."
             exit 1
           fi
-          # Names only. Never print secret values.
-          list="$(npx --yes wrangler@4.148.0 secret list --env staging --json)"
-          if ! printf '%s' "$list" | grep -q '"TESTER_PASSKEY"'; then
+          # wrangler secret list does not always see dashboard-added
+          # secrets. The live gate page is the check that the Worker
+          # has TESTER_PASSKEY: 401 is the key form, 503 is locked.
+          code="$(curl -sS -o /tmp/gate.html -w '%{http_code}' https://restoria-idlerpg-staging.cburns458.workers.dev/)"
+          echo "gate_status=$code"
+          if [ "$code" = "503" ] || grep -q 'locked until' /tmp/gate.html; then
             echo "::error title=Missing TESTER_PASSKEY::Set a Secret named TESTER_PASSKEY on Worker restoria-idlerpg-staging in the Cloudflare dashboard. It must be a Secret, not a Variable, and not a GitHub secret."
+            exit 1
+          fi
+          if [ "$code" != "401" ] || ! grep -q '__tester' /tmp/gate.html; then
+            echo "::error title=Unexpected gate status::Expected the tester key page (401) before deploy, got $code."
             exit 1
           fi
 

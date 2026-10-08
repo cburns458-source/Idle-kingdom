@@ -80,8 +80,8 @@ test.restoriaidle.com and the test workers.dev address.
 - Adding the secret attaches it to the next deploy. The version that is
   already live stays locked until that deploy finishes.
 - Without the secret the test site shows a locked page; it never opens.
-- `wrangler deploy` keeps existing Secrets. The staging workflow fails if
-  the secret is missing or the live version still serves the locked page.
+- `wrangler deploy` keeps existing Secrets. The staging workflow curls the
+  test Worker before and after deploy and fails if that page is still locked.
 - To run the gate locally, put `TESTER_PASSKEY=…` in `.dev.vars.staging`
   (git-ignored) and run `npx wrangler dev --env staging`.
 
