@@ -115,7 +115,7 @@ class WorldMapView extends StatelessWidget {
                       isHere: !walking && node.locationId == save.currentLocationId,
                       isSelected: node.locationId == selectedLocationId,
                       onTap: () => onSelect(node.locationId),
-                      onDoubleTap: walking
+                      onDoubleTap: walking || controller.switchBusy
                           ? null
                           : isSubMapGateway(node)
                           ? () => onTravel(node.locationId)
@@ -490,7 +490,9 @@ class _SelectionPanel extends StatelessWidget {
                 else
                   GameButton(
                     label: 'Travel',
-                    onPressed: canTravel ? () => onTravel(place.locationId) : null,
+                    onPressed: canTravel && !controller.switchBusy
+                        ? () => onTravel(place.locationId)
+                        : null,
                   ),
               ],
             ),

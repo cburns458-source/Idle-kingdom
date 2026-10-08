@@ -67,6 +67,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
   PlayerSave get save => controller.save;
 
   void _start(RecipeRow recipe, num quantity) {
+    if (controller.switchBusy) return;
     final result = requestProductionStart(
       db,
       save,
@@ -102,6 +103,13 @@ class _ProductionPickerState extends State<ProductionPicker> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => _buildPicker(context),
+    );
+  }
+
+  Widget _buildPicker(BuildContext context) {
     final known = recipesForActivity(db, save, widget.activity.activityId);
     final recipes = readyRecipesForActivity(db, save, widget.activity.activityId);
     final recipe =
@@ -225,7 +233,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
             Expanded(
               child: GameButton(
                 label: 'Start queue',
-                onPressed: ceiling < 1
+                onPressed: ceiling < 1 || controller.switchBusy
                     ? null
                     : () {
                         if (controller.rejectIfRecovering()) return;

@@ -93,6 +93,7 @@ class _TimersViewState extends State<TimersView> {
                     currentLocationId: here,
                     onTravel: _travel,
                     save: save,
+                    switchBusy: controller.switchBusy,
                   ),
                   const SizedBox(height: 12),
                   _TimerSection(
@@ -104,6 +105,7 @@ class _TimersViewState extends State<TimersView> {
                     currentLocationId: here,
                     onTravel: _travel,
                     save: save,
+                    switchBusy: controller.switchBusy,
                   ),
                 ],
               ),
@@ -133,6 +135,7 @@ class _TimerSection extends StatelessWidget {
     required this.currentLocationId,
     required this.onTravel,
     required this.save,
+    required this.switchBusy,
   });
 
   final String title;
@@ -142,6 +145,7 @@ class _TimerSection extends StatelessWidget {
   final num nowMs;
   final String currentLocationId;
   final void Function(String locationId, String mapId) onTravel;
+  final bool switchBusy;
   final PlayerSave save;
 
   @override
@@ -177,6 +181,7 @@ class _TimerSection extends StatelessWidget {
                   currentLocationId: currentLocationId,
                   onTravel: onTravel,
                   save: save,
+                  switchBusy: switchBusy,
                 ),
               ),
         ],
@@ -193,6 +198,7 @@ class _TimerRow extends StatelessWidget {
     required this.currentLocationId,
     required this.onTravel,
     required this.save,
+    required this.switchBusy,
   });
 
   final _DiscoveredSpot spot;
@@ -201,6 +207,7 @@ class _TimerRow extends StatelessWidget {
   final String currentLocationId;
   final void Function(String locationId, String mapId) onTravel;
   final PlayerSave save;
+  final bool switchBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +258,7 @@ class _TimerRow extends StatelessWidget {
           GameButton(
             label: 'Travel',
             compact: true,
-            onPressed: () => onTravel(spot.locationId, mapId),
+            onPressed: switchBusy ? null : () => onTravel(spot.locationId, mapId),
           ),
       ],
     );

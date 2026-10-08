@@ -644,7 +644,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   }
 
   Future<void> _enterGatewayAsync(String locationId) async {
+    if (controller.switchBusy) return;
     if (!await _confirmHostileTravel(locationId)) return;
+    if (controller.switchBusy) return;
     _arrive(locationId);
   }
 
@@ -654,7 +656,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   }
 
   Future<void> _travelFromTimersAsync(String locationId, String mapId) async {
+    if (controller.switchBusy) return;
     if (!await _confirmHostileTravel(locationId)) return;
+    if (controller.switchBusy) return;
     if (!controller.travelTo(locationId, mapId)) return;
     _popToLocation();
   }
@@ -665,6 +669,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   }
 
   Future<void> _travelToAsync(String locationId) async {
+    if (controller.switchBusy) return;
     if (_openMapPortal(locationId)) return;
     if (locationId == controller.save.currentLocationId) {
       _arrive(locationId);
@@ -686,6 +691,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       return;
     }
     if (!await _confirmHostileTravel(locationId)) return;
+    if (controller.switchBusy) return;
     if (!controller.mapTravelAnimation || controller.batterySaver) {
       _arrive(locationId);
       return;
@@ -1275,7 +1281,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           section: SocialTab.guilds,
           onClose: _popPage,
           onTravelToHall: () {
-            if (controller.rejectIfRecovering()) return;
+            if (controller.rejectIfRecovering() || controller.switchBusy) return;
             if (!controller.travelToGuildHall()) return;
             _popToLocation();
           },

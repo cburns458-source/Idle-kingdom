@@ -324,7 +324,9 @@ class _GuildPanelState extends State<GuildPanel> {
               label: save.currentLocationId == guildHallLocationId
                   ? 'In the hall'
                   : 'Travel to hall',
-              onPressed: widget.onTravelToHall,
+              onPressed: widget.onTravelToHall == null || widget.controller.switchBusy
+                  ? null
+                  : widget.onTravelToHall,
             );
           }
           if (index == 3) {

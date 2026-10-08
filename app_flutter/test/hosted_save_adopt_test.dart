@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/hosted_save_adopt.dart';
 import 'package:ik_content/ik_content.dart';
@@ -258,5 +260,44 @@ void main() {
 
     expect(controller.travelTo('LOC-0001', mainMapId), isTrue);
     expect(controller.recentRewards.single.id, 'kept');
+  });
+
+  test('activity and travel stay put until the hosted switch returns', () async {
+    final clock = TestClock();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0001'),
+      clock: clock,
+    );
+    addTearDown(controller.dispose);
+    final gates = <Completer<void>>[];
+    controller.submitGameCommand = (command, [args = const <String, Object?>{}]) {
+      final gate = Completer<void>();
+      gates.add(gate);
+      return gate.future;
+    };
+
+    controller.startActivity('ACT-0021');
+    expect(controller.switchBusy, isTrue);
+    expect(controller.save.currentActivityId, 'ACT-0021');
+    final startedAt = controller.save.actionStartedAt;
+    expect(gates, hasLength(1));
+
+    clock.advance(500);
+    controller.startActivity('ACT-0001');
+    controller.stopActivity();
+    expect(controller.travelTo('LOC-0009', mainMapId), isFalse);
+    expect(controller.save.currentActivityId, 'ACT-0021');
+    expect(controller.save.actionStartedAt, startedAt);
+    expect(controller.save.currentLocationId, 'LOC-0001');
+    expect(gates, hasLength(1));
+
+    gates.single.complete();
+    await pumpEventQueue();
+    expect(controller.switchBusy, isFalse);
+
+    expect(controller.travelTo('LOC-0009', mainMapId), isTrue);
+    expect(controller.save.currentLocationId, 'LOC-0009');
+    expect(controller.switchBusy, isTrue);
   });
 }

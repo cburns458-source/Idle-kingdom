@@ -488,15 +488,17 @@ class _LocationViewState extends State<LocationView> {
                               child: GameButton(
                                 label: enterSubMapLabel(controller.db, location) ?? 'Enter',
                                 compact: true,
-                                onPressed: () {
-                                  if (widget.onEnterGateway != null) {
-                                    widget.onEnterGateway!(locationId);
-                                    return;
-                                  }
-                                  widget.onOpenSubMap!(
-                                    subMapIdForGateway(controller.db, locationId)!,
-                                  );
-                                },
+                                onPressed: controller.switchBusy
+                                    ? null
+                                    : () {
+                                        if (widget.onEnterGateway != null) {
+                                          widget.onEnterGateway!(locationId);
+                                          return;
+                                        }
+                                        widget.onOpenSubMap!(
+                                          subMapIdForGateway(controller.db, locationId)!,
+                                        );
+                                      },
                               ),
                             ),
                           ),
@@ -1434,6 +1436,7 @@ class _ActivityCard extends StatelessWidget {
     final production = isStandardProductionActivity(controller.db, activity);
 
     final hostileLock = locationIsHostileFor(controller.db, controller.save);
+    final switching = controller.switchBusy;
     final favorited = favoriteActivityAt(controller.save) == activityId;
     final skillIds = skillIdsForActivity(controller.db, controller.save, activityId);
     final questProgress = questActionProgressForActivity(
@@ -1484,7 +1487,7 @@ class _ActivityCard extends StatelessWidget {
               label: 'Stop',
               tone: GameButtonTone.secondary,
               compact: true,
-              onPressed: hostileLock
+              onPressed: hostileLock || switching
                   ? null
                   : () {
                       if (controller.rejectIfRecovering()) return;
@@ -1494,20 +1497,23 @@ class _ActivityCard extends StatelessWidget {
           : GameButton(
               // Enabled even when the check failed: starting is what turns a
               // missing tool into the offer to equip one, and otherwise says why.
+              // Disabled while a switch is still on the way to the server.
               label: production
                   ? 'Recipes'
                   : controller.save.currentActivityId != null
                   ? 'Replace'
                   : 'Start',
               compact: true,
-              onPressed: () {
-                if (controller.rejectIfRecovering()) return;
-                if (production) {
-                  onOpenWorkshop(context);
-                  return;
-                }
-                _startOrComingSoon(context, controller, activity);
-              },
+              onPressed: switching
+                  ? null
+                  : () {
+                      if (controller.rejectIfRecovering()) return;
+                      if (production) {
+                        onOpenWorkshop(context);
+                        return;
+                      }
+                      _startOrComingSoon(context, controller, activity);
+                    },
             ),
     );
   }

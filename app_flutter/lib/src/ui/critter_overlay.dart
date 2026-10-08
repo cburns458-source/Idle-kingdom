@@ -95,7 +95,7 @@ class AutoEquipPrompt extends StatelessWidget {
                       GameButton(
                         label: prompt.confirmLabel,
                         compact: true,
-                        onPressed: controller.confirmAutoEquip,
+                        onPressed: controller.switchBusy ? null : controller.confirmAutoEquip,
                       ),
                     ],
                   ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -825,8 +826,36 @@ class GameController extends ChangeNotifier {
   /// Hosted play sends each discrete intent as a named game command.
   Future<void> Function(String command, [Map<String, Object?> args])? submitGameCommand;
 
+  /// Activity and travel commands still waiting on the hosted save.
+  ///
+  /// Start, stop, replace, production, and travel stay disabled while this is
+  /// set, so a second tap cannot queue another switch before the server
+  /// answers. That disabled moment is where a loading animation can go later.
+  static const hostedSwitchCommands = <String>{
+    'start_activity',
+    'stop_activity',
+    'confirm_auto_equip',
+    'start_production',
+    'travel',
+    'travel_guild_hall',
+  };
+
+  int _switchInFlight = 0;
+
+  bool get switchBusy => _switchInFlight > 0;
+
   void _queueCommand(String command, [Map<String, Object?> args = const <String, Object?>{}]) {
-    submitGameCommand?.call(command, args);
+    final pending = submitGameCommand?.call(command, args);
+    if (pending == null || !hostedSwitchCommands.contains(command)) return;
+    _switchInFlight += 1;
+    notifyListeners();
+    unawaited(
+      pending.whenComplete(() {
+        if (!_alive) return;
+        if (_switchInFlight > 0) _switchInFlight -= 1;
+        notifyListeners();
+      }),
+    );
   }
 
   /// Replaces the local save with the server copy after a command or sync.
@@ -852,6 +881,7 @@ class GameController extends ChangeNotifier {
     String? command,
     Map<String, Object?> args = const <String, Object?>{},
   }) {
+    if (command != null && hostedSwitchCommands.contains(command) && switchBusy) return;
     final previous = save;
     session.apply(next);
     _queueSkillLevelUps(previous, save);
@@ -1099,6 +1129,7 @@ class GameController extends ChangeNotifier {
   /// When the only thing missing is a tool the bag already holds, this asks
   /// rather than refuses: [autoEquip] carries the offer until it is answered.
   void startActivity(String activityId, {bool allowAutoEquip = true, bool queueCommand = true}) {
+    if (queueCommand && switchBusy) return;
     final result = requestActivityStart(db, save, activityId, session.clock(), _random);
     if (!result.ok) {
       // Nothing is startable during a death pause, so there is nothing to offer.
@@ -1149,6 +1180,7 @@ class GameController extends ChangeNotifier {
   /// The second start cannot ask again: the tool is on, and if that was not
   /// enough the player deserves the reason instead of another prompt.
   void confirmAutoEquip() {
+    if (switchBusy) return;
     final proposal = _autoEquip;
     if (proposal == null) return;
     _autoEquip = null;
@@ -1369,6 +1401,7 @@ class GameController extends ChangeNotifier {
   }
 
   void stopActivity() {
+    if (switchBusy) return;
     final result = requestActivityStop(db, save, session.clock());
     if (!result.ok) {
       _activityError = result.reason;
@@ -1384,6 +1417,7 @@ class GameController extends ChangeNotifier {
 
   /// Travels to [destinationId], reporting whether the request was accepted.
   bool travelTo(String destinationId, String browseMapId) {
+    if (switchBusy) return false;
     final claimedSling = save.claimedKingswoodsSling;
     final ownedSling = saveOwnsSling(save);
     final plan = session.travelTo(destinationId, browseMapId);
@@ -1403,6 +1437,7 @@ class GameController extends ChangeNotifier {
 
   /// Travels into the player's guild hall from the Guilds screen.
   bool travelToGuildHall() {
+    if (switchBusy) return false;
     final plan = session.travelToGuildHall();
     switch (plan) {
       case TravelBlocked():
