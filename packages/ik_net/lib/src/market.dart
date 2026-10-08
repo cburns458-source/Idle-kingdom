@@ -1,7 +1,7 @@
 /// The Bazaar exchange: offers, trades, guide prices, and the collection box.
 ///
-/// Separate from `bazaar.dart`, which is the Citadel notice board and stays what
-/// it is. Nothing in this file talks to a backend and nothing in it holds state;
+/// Separate from the retired Citadel notice board. Nothing in this file talks
+/// to a backend and nothing in it holds state;
 /// it is the shapes the exchange is read in and the handful of rules both the
 /// screen and the server have to agree on.
 ///

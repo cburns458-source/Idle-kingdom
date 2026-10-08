@@ -5,7 +5,6 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
-import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'config.dart';
 import 'guild_rules.dart';
@@ -628,10 +627,6 @@ class RemoteMultiplayerService implements MultiplayerService {
           : account.petCosmeticId,
     );
   }
-
-  @override
-  Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value) =>
-      _local.setPrivacyPublicSkills(value);
 
   @override
   Future<MultiplayerProfile?> setPrivacyPublicGear(bool value) async {
@@ -1836,40 +1831,6 @@ class RemoteMultiplayerService implements MultiplayerService {
     final winner = await _existingClaim(hourKey, bountyId);
     if (winner == null) return BountyClaimResult.failed(written.reason!);
     return BountyClaimResult.ok(winner, firstCompleter: winner.userId == current.userId);
-  }
-
-  @override
-  Future<List<BazaarPost>> bazaarPosts({int limit = remoteBazaarLimit}) async {
-    final result = await transport.select(
-      RemoteTables.bazaarPosts,
-      columns: remoteBazaarColumns,
-      orderBy: 'created_at',
-      ascending: false,
-      limit: limit,
-    );
-    if (!result.ok) return const <BazaarPost>[];
-    return bazaarPostsFrom(result.rows!);
-  }
-
-  @override
-  Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body) async {
-    final current = session;
-    if (current == null) {
-      return const BazaarPostResult.failed('Sign in to post in the Grand Bazaar.');
-    }
-    final prepared = prepareBazaarPost(kind, body);
-    if (!prepared.ok) return BazaarPostResult.failed(prepared.reason!);
-
-    final written = await transport.insert(
-      RemoteTables.bazaarPosts,
-      bazaarPostRowFor(current, kind, prepared.body!),
-      columns: remoteBazaarColumns,
-    );
-    final row = written.ok ? written.single : null;
-    if (row == null) {
-      return BazaarPostResult.failed(written.reason ?? remoteBazaarPostFailed);
-    }
-    return BazaarPostResult.ok(bazaarPostFrom(row));
   }
 
   // --- The Bazaar exchange ---------------------------------------------------

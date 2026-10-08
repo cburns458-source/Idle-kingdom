@@ -81,15 +81,14 @@ Tracked as remaining waves in `docs/AGENT_WORKFLOW.md`. Do not start them until 
 8. **Report payload includes message id / body** — so dashboard review works.
 9. **Chat disabled flag after slurs** — persist account mute server-side
    (client filter alone is bypassable).
-10. **Remove bazaar message-board UI** — `bazaar_posts` is locked; Flutter
-    Citadel “Message board” still calls it until a client PR removes it.
-11. **Drop or archive `bazaar_posts`** — after UI removal, drop table or keep
-    read-only for history.
+10. ~~**Remove bazaar message-board UI**~~ — done in Wave F.
+11. ~~**Drop or archive `bazaar_posts`**~~ — archived as `bazaar_posts_archive`,
+    read-only for `service_role`.
 
 ### Profiles / privacy cleanup
 
-12. **Remove dead `privacy_public_skills`** — column + `setPrivacyPublicSkills`
-    + local/demo paths; skills stay public for leaderboards.
+12. ~~**Remove dead `privacy_public_skills`**~~ — done in Wave F. Skills stay
+    public for leaderboards.
 13. **Stop embedding `shareLocationWithFriends` only in `appearance_json`** —
     once all clients write the real presence column, drop the JSON fallback.
 14. **Username uniqueness via RPC** — avoid listing all public usernames to

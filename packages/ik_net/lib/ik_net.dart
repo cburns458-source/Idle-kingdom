@@ -6,7 +6,6 @@
 /// fixtures, and a remote backend arrives as another [MultiplayerService].
 library;
 
-export 'src/bazaar.dart';
 export 'src/bounty_turn_in.dart';
 export 'src/cloud_save.dart';
 export 'src/config.dart';

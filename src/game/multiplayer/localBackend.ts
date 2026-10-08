@@ -11,11 +11,10 @@ import {
 } from '../save/types'
 import { pendingAccountUsername, isUnclaimedAccountUsername, remoteUsername } from './remote'
 import { totalLevel } from '../skills/totals'
-import { BAZAAR_POST_COOLDOWN_SECONDS, PRESENCE_AWAY_TTL_SECONDS } from './config'
+import { PRESENCE_AWAY_TTL_SECONDS } from './config'
 import { containsSlur, CHAT_DISABLED_NOTICE } from './moderation'
 import { buildLeaderboardSnapshot, rankLeaderboardEntries } from './snapshots'
 import type { GameDatabase } from '../data/types'
-import { prepareBazaarPost } from '../bazaar/post'
 import {
   createGuildRefusal,
   guildDescriptionFromInput,
@@ -26,7 +25,6 @@ import {
   normalizeGuildSkillMilestoneSettings,
   type GuildSkillMilestoneSettings,
 } from '../guild/skillMilestones'
-import type { BazaarPost, BazaarPostKind } from '../bazaar/types'
 import type { BountyClaimRecord } from '../bounties/types'
 import {
   boardCarriesExperience,
@@ -98,7 +96,6 @@ interface LocalDb {
   friendRequests: Array<{ fromUserId: string; toUserId: string; createdAt: string }>
   friends: Array<{ userA: string; userB: string }>
   bountyClaims: BountyClaimRecord[]
-  bazaarPosts: BazaarPost[]
   guests?: GuildGuest[]
 }
 
@@ -133,7 +130,6 @@ function emptyDb(): LocalDb {
     friendRequests: [],
     friends: [],
     bountyClaims: [],
-    bazaarPosts: [],
   }
 }
 
@@ -216,7 +212,6 @@ function loadDb(storage: Storage = localStorage): LocalDb {
       totalLevel: Number.isFinite(member.totalLevel) ? member.totalLevel : 1,
     }))
     merged.bountyClaims = Array.isArray(merged.bountyClaims) ? merged.bountyClaims : []
-    merged.bazaarPosts = Array.isArray(merged.bazaarPosts) ? merged.bazaarPosts : []
     merged.guests = Array.isArray(merged.guests) ? merged.guests : []
     merged.profiles = (merged.profiles ?? []).map((profile) => ({
       ...profile,
@@ -309,7 +304,6 @@ export class LocalMultiplayerBackend {
       appearance: defaultAppearance(),
       guildId: null,
       guildName: null,
-      privacyPublicSkills: true,
       privacyPublicGear: true,
       privacyDirectMessages: CHAT_PRIVACY_PUBLIC,
       privacyLocalChat: CHAT_PRIVACY_PUBLIC,
@@ -398,7 +392,6 @@ export class LocalMultiplayerBackend {
       appearance: defaultAppearance(),
       guildId: null,
       guildName: null,
-      privacyPublicSkills: true,
       privacyPublicGear: true,
       privacyDirectMessages: CHAT_PRIVACY_PUBLIC,
       privacyLocalChat: CHAT_PRIVACY_PUBLIC,
@@ -415,7 +408,6 @@ export class LocalMultiplayerBackend {
       Pick<
         MultiplayerProfile,
         | 'appearance'
-        | 'privacyPublicSkills'
         | 'privacyPublicGear'
         | 'privacyDirectMessages'
         | 'privacyLocalChat'
@@ -1403,7 +1395,7 @@ export class LocalMultiplayerBackend {
       username: profile.username,
       appearance: profile.appearance,
       guildName: profile.guildName,
-      publicSkills: profile.privacyPublicSkills ? skills : [],
+      publicSkills: skills,
       publicEquipment:
         profile.privacyPublicGear !== false
           ? save != null
@@ -1471,45 +1463,5 @@ export class LocalMultiplayerBackend {
     db.bountyClaims.push(claim)
     this.write(db)
     return { ok: true, claim, firstCompleter: true }
-  }
-
-  listBazaarPosts(limit = 40): BazaarPost[] {
-    return this.db()
-      .bazaarPosts.slice()
-      .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))
-      .slice(-limit)
-  }
-
-  postBazaar(
-    session: MultiplayerSession,
-    kind: BazaarPostKind,
-    body: string,
-  ): { ok: true; post: BazaarPost } | { ok: false; reason: string } {
-    const prepared = prepareBazaarPost(kind, body)
-    if (!prepared.ok) return prepared
-    const db = this.db()
-    const cooldownKey = `${session.userId}:bazaar`
-    const last = db.lastChatAt[cooldownKey]
-    if (last && this.now() - Date.parse(last) < BAZAAR_POST_COOLDOWN_SECONDS * 1000) {
-      const wait = Math.ceil(
-        (BAZAAR_POST_COOLDOWN_SECONDS * 1000 - (this.now() - Date.parse(last))) / 1000,
-      )
-      return { ok: false, reason: `Wait ${wait}s before posting again.` }
-    }
-    const post: BazaarPost = {
-      id: this.newId('bzr'),
-      kind,
-      userId: session.userId,
-      username: session.username,
-      body: prepared.body,
-      createdAt: this.nowIso(),
-    }
-    db.bazaarPosts.push(post)
-    if (db.bazaarPosts.length > 200) {
-      db.bazaarPosts = db.bazaarPosts.slice(-200)
-    }
-    db.lastChatAt[cooldownKey] = post.createdAt
-    this.write(db)
-    return { ok: true, post }
   }
 }

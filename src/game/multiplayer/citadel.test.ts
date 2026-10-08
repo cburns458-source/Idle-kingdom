@@ -27,13 +27,12 @@ describe('citadel hub', () => {
     expect(summary.visitorCount).toBe(3)
   })
 
-  it('keeps one board per district', () => {
+  it('keeps the bounty board on the plaza', () => {
     expect(citadelHubTabsFor(CITADEL_PLAZA_ID)).toEqual(['bounties'])
-    expect(citadelHubTabsFor(CITADEL_MARKET_ID)).toEqual(['bazaar'])
+    expect(citadelHubTabsFor(CITADEL_MARKET_ID)).toEqual([])
     expect(citadelHubTabsFor('LOC-0001')).toEqual([])
     expect(citadelHubTitleFor(CITADEL_PLAZA_ID)).toBe('Citadel Plaza')
-    expect(citadelHubTitleFor(CITADEL_MARKET_ID)).toBe('Message board')
+    expect(citadelHubTitleFor(CITADEL_MARKET_ID)).toBe('Citadel Plaza')
     expect(CITADEL_HUB_TAB_LABELS.bounties).toBe('Hourly Bounties')
-    expect(CITADEL_HUB_TAB_LABELS.bazaar).toBe('Message board')
   })
 })

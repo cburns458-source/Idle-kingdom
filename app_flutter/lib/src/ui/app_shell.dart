@@ -877,7 +877,6 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
         onOpenMap: _showMap,
         onOpenSubMap: _browseSubMap,
         onEnterGateway: _enterGateway,
-        onOpenGuilds: () => _selectScreen(GameScreen.guilds),
       ),
       builder: (context, locationChild) {
         return UiChromeScope(

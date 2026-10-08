@@ -8,9 +8,6 @@ class ChatCooldownSeconds {
   static const num dm = 0;
 }
 
-/// Bazaar board posts still wait this many seconds between listings.
-const num bazaarPostCooldownSeconds = 10;
-
 /// Heartbeat window: a presence row newer than this is Online.
 const num presenceTtlSeconds = 120;
 

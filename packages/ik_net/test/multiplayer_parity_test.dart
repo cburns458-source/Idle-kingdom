@@ -117,14 +117,10 @@ void main() {
         final unknown = harness.backend.signIn('nobody@example.com', 'secret');
         final profile = harness.backend.getProfile('usr_0001');
         harness.advance(60000);
-        final renamed = harness.backend.upsertProfile(
-          'usr_0001',
-          username: 'Renamed',
-          privacyPublicSkills: false,
-        );
+        final renamed = harness.backend.upsertProfile('usr_0001', username: 'Renamed');
         final missing = harness.backend.upsertProfile('usr_9999', username: 'Ghost');
         final adopted = harness.backend.registerProfile('usr_remote', 'Rowan');
-        harness.backend.upsertProfile('usr_remote', privacyPublicSkills: false);
+        harness.backend.upsertProfile('usr_remote', username: 'Rowan');
         final readopted = harness.backend.registerProfile('usr_remote', 'Renamed');
         expect(
           checkParity(fixture, <String, Object?>{
@@ -487,40 +483,6 @@ void main() {
     }
   });
 
-  group('bazaar parity', () {
-    for (final fixture in loadParityFixtures('multiplayer/bazaar')) {
-      test(fixture.name, () {
-        final harness = BackendHarness(startMs: fixture.inputField<num>('nowMs'));
-        final hero = harness.signUp('hero@example.com', 'Hero');
-        final rival = harness.signUp('rival@example.com', 'Rival');
-        final posted = harness.backend.postBazaar(hero, bazaarPostTrade, '  Selling copper ore  ');
-        final tooSoon = harness.backend.postBazaar(hero, bazaarPostMessage, 'Also this');
-        final empty = harness.backend.postBazaar(rival, bazaarPostMessage, '  ');
-        final unknownKind = harness.backend.postBazaar(rival, 'auction', 'Bid now');
-        final otherPlayer = harness.backend.postBazaar(
-          rival,
-          bazaarPostRecruit,
-          'Guild needs members',
-        );
-        harness.advance(10000);
-        final afterCooldown = harness.backend.postBazaar(hero, bazaarPostMessage, 'what the shit');
-        expect(
-          checkParity(fixture, <String, Object?>{
-            'posted': posted.toJson(),
-            'tooSoon': tooSoon.toJson(),
-            'empty': empty.toJson(),
-            'unknownKind': unknownKind.toJson(),
-            'otherPlayer': otherPlayer.toJson(),
-            'afterCooldown': afterCooldown.toJson(),
-            'all': harness.backend.listBazaarPosts().map((row) => row.toJson()).toList(),
-            'limited': harness.backend.listBazaarPosts(2).map((row) => row.toJson()).toList(),
-          }),
-          isNull,
-        );
-      });
-    }
-  });
-
   group('local db parity', () {
     for (final fixture in loadParityFixtures('multiplayer/local-db')) {
       test(fixture.name, () {
@@ -557,7 +519,6 @@ void main() {
         harness.backend.writeCloudSave(hero.userId, save);
         harness.backend.writeCloudSave(shy.userId, save);
         harness.backend.writeCloudSave(cloak.userId, save);
-        harness.backend.upsertProfile(shy.userId, privacyPublicSkills: false);
         harness.backend.upsertProfile(cloak.userId, privacyPublicGear: false);
         final friendRequest = harness.backend.sendFriendRequest(hero.userId, shy.userId);
         final duplicateRequest = harness.backend.sendFriendRequest(hero.userId, shy.userId);
@@ -611,7 +572,6 @@ void main() {
                 'leaderboardEntries': RemoteTables.leaderboardEntries,
                 'chat': RemoteTables.chat,
                 'bountyClaims': RemoteTables.bountyClaims,
-                'bazaarPosts': RemoteTables.bazaarPosts,
                 'guilds': RemoteTables.guilds,
                 'guildMembers': RemoteTables.guildMembers,
               },
@@ -621,9 +581,7 @@ void main() {
               'leaderboardColumns': remoteLeaderboardColumns,
               'leaderboardConflict': remoteLeaderboardConflict,
               'bountyClaimColumns': remoteBountyClaimColumns,
-              'bazaarColumns': remoteBazaarColumns,
               'chatLimit': remoteChatLimit,
-              'bazaarLimit': remoteBazaarLimit,
               'usernameMaxLength': remoteUsernameMaxLength,
             },
             'messages': <String, Object?>{
@@ -632,7 +590,6 @@ void main() {
               'signInFailed': remoteSignInFailed,
               'magicLinkUnavailable': remoteMagicLinkUnavailable,
               'chatSendFailed': remoteChatSendFailed,
-              'bazaarPostFailed': remoteBazaarPostFailed,
               'saveConflict': remoteSaveConflict,
             },
             'usernames': <String>['  Rowan  ', 'a' * 40, ''].map(remoteUsername).toList(),
@@ -691,16 +648,6 @@ void main() {
             ],
             'claimRow': bountyClaimRowFor(_remoteSession, '2026-08-12T21', 'BNT-0001'),
             'claims': rowsOf('claimRows').map((row) => bountyClaimFrom(row).toJson()).toList(),
-            'bazaarRow': bazaarPostRowFor(_remoteSession, bazaarPostTrade, 'Selling copper ore'),
-            'bazaarPosts': bazaarPostsFrom(rowsOf('bazaarRows'))
-                .map((post) => post.toJson())
-                .toList(),
-            'preparedPosts': <Object?>[
-              prepareBazaarPost(bazaarPostMessage, '  Hello there  ').toJson(),
-              prepareBazaarPost(bazaarPostMessage, '   ').toJson(),
-              prepareBazaarPost(bazaarPostTrade, 'fuck ${'a' * 400}').toJson(),
-              prepareBazaarPost('shouting', 'Hello').toJson(),
-            ],
             'defaultAppearance': defaultPlayerAppearance.toJson(),
           }),
           isNull,

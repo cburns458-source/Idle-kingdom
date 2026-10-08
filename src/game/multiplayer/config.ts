@@ -18,9 +18,6 @@ export const CHAT_COOLDOWN_SECONDS = {
   dm: 0,
 } as const
 
-/** Bazaar board posts still wait this many seconds between listings. */
-export const BAZAAR_POST_COOLDOWN_SECONDS = 10
-
 /** Heartbeat window: a presence row newer than this is Online. */
 export const PRESENCE_TTL_SECONDS = 120
 

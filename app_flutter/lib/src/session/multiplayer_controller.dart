@@ -205,7 +205,6 @@ class MultiplayerController extends ChangeNotifier {
   MultiplayerProfile? _ownProfile;
   List<ChatMessage> _messages = const <ChatMessage>[];
   List<BountyClaimRecord> _bountyClaims = const <BountyClaimRecord>[];
-  List<BazaarPost> _bazaarPosts = const <BazaarPost>[];
   MarketSnapshot _market = MarketSnapshot.empty;
   bool _marketReady = false;
   ChatTab _chatTab = ChatTab.global;
@@ -288,7 +287,6 @@ class MultiplayerController extends ChangeNotifier {
 
   /// Who claimed each of this hour's bounties first, as far as the last read saw.
   List<BountyClaimRecord> get bountyClaims => _bountyClaims;
-  List<BazaarPost> get bazaarPosts => _bazaarPosts;
   ChatTab get chatTab => _chatTab;
   int get unreadDms => _unreadDms;
 
@@ -580,7 +578,6 @@ class MultiplayerController extends ChangeNotifier {
     _openDmPeerIds.clear();
     _dmPeerNames.clear();
     _bountyClaims = const <BountyClaimRecord>[];
-    _bazaarPosts = const <BazaarPost>[];
     _market = MarketSnapshot.empty;
     _marketReady = false;
     _unreadDms = 0;
@@ -1785,21 +1782,6 @@ class MultiplayerController extends ChangeNotifier {
       onPaid(result.save!);
       await refreshBountyClaims(result.claim!.hourKey);
       return bountyClaimedNotice(result.goldGained!, result.firstCompleter!);
-    });
-  }
-
-  Future<void> refreshBazaar() async {
-    _bazaarPosts = isSignedIn ? await service.bazaarPosts() : const <BazaarPost>[];
-    notifyListeners();
-  }
-
-  /// Posts to the Bazaar and shows the board again, or says why it was refused.
-  Future<void> postToBazaar(BazaarPostKind kind, String body) {
-    return run(() async {
-      final result = await service.postBazaar(kind, body);
-      if (!result.ok) return result.reason;
-      await refreshBazaar();
-      return bazaarPostedNotice;
     });
   }
 

@@ -90,12 +90,11 @@ describe('remote identity', () => {
     })
   })
 
-  it('opts a new account into public skills', () => {
+  it('opts a new account into public gear', () => {
     const session = sessionFromSignUp('usr-1', 'a@b.co', 'Rowan', null)
     expect(profileRowForSignUp(session)).toEqual({
       user_id: 'usr-1',
       username: 'Rowan',
-      privacy_public_skills: true,
       privacy_public_gear: true,
     })
   })

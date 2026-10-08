@@ -9,11 +9,10 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
 
-/// The Citadel's two boards, opened from a location the way a shop is.
+/// The Citadel bounty board, opened from a location the way a shop is.
 ///
-/// Both need the clock second by second — the bounty board rotates on the hour
-/// and the Bazaar is read as others post — so this ticks while it is on screen
-/// and stops as soon as it closes.
+/// It ticks while it is on screen so the hour's rotation stays current, and
+/// stops as soon as it closes.
 class CitadelHubPanel extends StatefulWidget {
   const CitadelHubPanel({
     super.key,
@@ -21,7 +20,6 @@ class CitadelHubPanel extends StatefulWidget {
     required this.controller,
     required this.multiplayer,
     required this.onClose,
-    this.onOpenGuilds,
   });
 
   final CitadelHubTab tab;
@@ -29,17 +27,12 @@ class CitadelHubPanel extends StatefulWidget {
   final MultiplayerController multiplayer;
   final VoidCallback onClose;
 
-  /// Offered next to a recruitment post, since that is what it is for.
-  final VoidCallback? onOpenGuilds;
-
   @override
   State<CitadelHubPanel> createState() => _CitadelHubPanelState();
 }
 
 class _CitadelHubPanelState extends State<CitadelHubPanel> {
   Timer? _ticker;
-  BazaarPostKind _kind = bazaarPostMessage;
-  final TextEditingController _body = TextEditingController();
 
   GameController get controller => widget.controller;
   MultiplayerController get net => widget.multiplayer;
@@ -54,18 +47,13 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
       // Whatever another panel last said is not about this board.
       net.announce(null);
       _syncHour();
-      if (widget.tab == CitadelHubTab.bounties) {
-        net.refreshBountyClaims(hourlyBountyBoard(nowMs).hourKey);
-      } else {
-        net.refreshBazaar();
-      }
+      net.refreshBountyClaims(hourlyBountyBoard(nowMs).hourKey);
     });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
-    _body.dispose();
     super.dispose();
   }
 
@@ -82,20 +70,9 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
     await net.turnIn(bounty, controller.save, nowMs, controller.commit);
   }
 
-  Future<void> _post() async {
-    final body = _body.text;
-    await net.postToBazaar(_kind, body);
-    if (!mounted) return;
-    if (net.notice == bazaarPostedNotice) _body.clear();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: net,
-      builder: (context, _) =>
-          widget.tab == CitadelHubTab.bounties ? _buildBounties() : _buildBazaar(),
-    );
+    return ListenableBuilder(listenable: net, builder: (context, _) => _buildBounties());
   }
 
   Widget _buildBounties() {
@@ -104,7 +81,7 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
     final save = syncBountyHour(controller.save, nowMs);
     final rows = bountyRows(save, board, net.bountyClaims, net.isSignedIn, nowMs);
     return _frame(
-      title: citadelHubTabLabels[CitadelHubTab.bounties]!,
+      title: citadelHubTabLabels[widget.tab]!,
       subtitle: bountyRotationLine(formatDurationMs(remainingMs)),
       children: [
         if (!net.isSignedIn) ...[const MutedText(bountySignInNotice), const SizedBox(height: 8)],
@@ -112,35 +89,6 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
           if (index > 0) const SizedBox(height: 8),
           _BountyCard(row: row, busy: net.busy, onTurnIn: () => _turnIn(board.bounties[index])),
         ],
-      ],
-    );
-  }
-
-  Widget _buildBazaar() {
-    final rows = bazaarRows(net.bazaarPosts);
-    return _frame(
-      title: citadelHubTabLabels[CitadelHubTab.bazaar]!,
-      subtitle: bazaarBlurb,
-      children: [
-        if (!net.isSignedIn)
-          const MutedText(bazaarSignInNotice)
-        else
-          _Compose(
-            kind: _kind,
-            body: _body,
-            busy: net.busy,
-            onKind: (kind) => setState(() => _kind = kind),
-            onPost: _post,
-            onOpenGuilds: _kind == bazaarPostRecruit ? widget.onOpenGuilds : null,
-          ),
-        const SizedBox(height: 10),
-        if (rows.isEmpty)
-          const _PostCard(heading: bazaarEmptyHeading, body: bazaarEmptyBody)
-        else
-          for (final (index, row) in rows.indexed) ...[
-            if (index > 0) const SizedBox(height: 8),
-            _PostCard(heading: row.heading, body: row.body),
-          ],
       ],
     );
   }
@@ -212,95 +160,6 @@ class _BountyCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PostCard extends StatelessWidget {
-  const _PostCard({required this.heading, required this.body});
-
-  final String heading;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return GamePanel(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(heading, style: const TextStyle(fontWeight: FontWeight.w400)),
-          MutedText(body),
-        ],
-      ),
-    );
-  }
-}
-
-/// The compose row: what kind of notice, what it says, and where it goes.
-class _Compose extends StatelessWidget {
-  const _Compose({
-    required this.kind,
-    required this.body,
-    required this.busy,
-    required this.onKind,
-    required this.onPost,
-    this.onOpenGuilds,
-  });
-
-  final BazaarPostKind kind;
-  final TextEditingController body;
-  final bool busy;
-  final ValueChanged<BazaarPostKind> onKind;
-  final VoidCallback onPost;
-  final VoidCallback? onOpenGuilds;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Wrap(
-          spacing: 8,
-          children: [
-            for (final option in bazaarKindOptions())
-              GameButton(
-                label: option.label,
-                compact: true,
-                selected: option.kind == kind,
-                tone: option.kind == kind ? GameButtonTone.primary : GameButtonTone.secondary,
-                onPressed: () => onKind(option.kind),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: body,
-          maxLength: bazaarBodyMaxLength,
-          decoration: const InputDecoration(hintText: bazaarPlaceholder),
-          onSubmitted: (_) => onPost(),
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: GameButton(
-                key: const Key('bazaar-post'),
-                label: 'Post',
-                onPressed: busy ? null : onPost,
-              ),
-            ),
-            if (onOpenGuilds case final openGuilds?) ...[
-              const SizedBox(width: 8),
-              GameButton(
-                label: 'Open Guilds',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                onPressed: openGuilds,
-              ),
-            ],
-          ],
-        ),
-      ],
     );
   }
 }

@@ -19,18 +19,6 @@ import {
   bountyRows,
 } from '../../game/bounties/views'
 import {
-  BAZAAR_BLURB,
-  BAZAAR_BODY_MAX_LENGTH,
-  BAZAAR_EMPTY_BODY,
-  BAZAAR_EMPTY_HEADING,
-  BAZAAR_PLACEHOLDER,
-  BAZAAR_POSTED_NOTICE,
-  BAZAAR_SIGN_IN_NOTICE,
-  bazaarKindOptions,
-  bazaarRows,
-} from '../../game/bazaar/views'
-import type { BazaarPost } from '../../game/bazaar/types'
-import {
   CITADEL_HUB_TAB_LABELS,
   citadelHubTabsFor,
   citadelHubTitleFor,
@@ -119,33 +107,6 @@ function boardClaims() {
     },
   ]
 }
-
-const BAZAAR_POSTS: BazaarPost[] = [
-  {
-    id: 'baz_0001',
-    kind: 'message',
-    userId: 'usr_0001',
-    username: 'Rowan',
-    body: 'Anyone seen the smith?',
-    createdAt: '2026-08-12T20:00:00.000Z',
-  },
-  {
-    id: 'baz_0002',
-    kind: 'recruit',
-    userId: 'usr_0002',
-    username: 'Bryn',
-    body: 'Iron League is hiring',
-    createdAt: '2026-08-12T20:30:00.000Z',
-  },
-  {
-    id: 'baz_0003',
-    kind: 'trade',
-    userId: 'usr_0003',
-    username: 'Wren',
-    body: 'Selling copper ore, 20 each',
-    createdAt: '2026-08-12T20:45:00.000Z',
-  },
-]
 
 const HUB_LOCATION_IDS = [CITADEL_PLAZA_ID, CITADEL_MARKET_ID, 'LOC-0002', 'not-a-location']
 
@@ -253,25 +214,6 @@ export const bountyScenarios: ParityScenario[] = [
         signInNotice: BOUNTY_SIGN_IN_NOTICE,
       } as unknown as JsonValue
     },
-  ),
-
-  scenario(
-    'bazaar/views',
-    'board',
-    { source: 'raw', posts: BAZAAR_POSTS as unknown as JsonValue },
-    () =>
-      ({
-        rows: bazaarRows(BAZAAR_POSTS),
-        empty: bazaarRows([]),
-        kinds: bazaarKindOptions(),
-        blurb: BAZAAR_BLURB,
-        placeholder: BAZAAR_PLACEHOLDER,
-        maxLength: BAZAAR_BODY_MAX_LENGTH,
-        signInNotice: BAZAAR_SIGN_IN_NOTICE,
-        emptyHeading: BAZAAR_EMPTY_HEADING,
-        emptyBody: BAZAAR_EMPTY_BODY,
-        postedNotice: BAZAAR_POSTED_NOTICE,
-      }) as unknown as JsonValue,
   ),
 
   scenario(

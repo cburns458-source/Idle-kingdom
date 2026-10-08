@@ -165,7 +165,7 @@ describe('local multiplayer backend', () => {
     expect(chat.message.guildTag).toBeUndefined()
   })
 
-  it('supports bounty first-completer claims and bazaar posts', () => {
+  it('supports bounty first-completer claims', () => {
     const backend = new LocalMultiplayerBackend()
     const a = backend.signUp('a@example.com', 'Alpha', 'secret')
     const b = backend.signUp('b@example.com', 'Beta', 'secret')
@@ -182,10 +182,6 @@ describe('local multiplayer backend', () => {
     if (!second.ok) return
     expect(second.firstCompleter).toBe(false)
     expect(second.claim.username).toBe('Alpha')
-
-    const post = backend.postBazaar(a.session, 'trade', 'Selling copper ore')
-    expect(post.ok).toBe(true)
-    expect(backend.listBazaarPosts()).toHaveLength(1)
   })
 
   it('supports guild search fields, open join, closed apps, ranks, and create cost', () => {

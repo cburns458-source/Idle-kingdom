@@ -99,7 +99,6 @@ export interface MultiplayerProfile {
   appearance: PlayerAppearance
   guildId: string | null
   guildName: string | null
-  privacyPublicSkills: boolean
   privacyPublicGear: boolean
   privacyDirectMessages: string
   privacyLocalChat: string

@@ -848,24 +848,6 @@ void main() {
     expect(await hero.setChatPrivacy(directMessages: chatPrivacyFriends), isNotNull);
   });
 
-  test('still shows snapshot skills when the dead privacy_public_skills flag is false', () async {
-    final transport = FakeTransport();
-    final hero = await _signedIn(transport, MemorySaveStorage());
-    final db = _database();
-    final save = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
-    await _rank(hero, transport, db, save);
-    transport.tables[RemoteTables.profiles]!.firstWhere(
-      (row) => row['user_id'] == hero.session!.userId,
-    )['privacy_public_skills'] = false;
-
-    final rival = _service(transport, MemorySaveStorage());
-    await rival.signUp('rival@example.com', 'Rival', 'secret');
-    final profile = await rival.publicProfile(hero.session!.userId, db: db);
-    expect(profile, isNotNull);
-    expect(profile!.publicSkills, isNotEmpty);
-    expect(profile.totalLevel, totalLevel(save));
-  });
-
   test('publishes equipped gear on a ranking submit so other players can see it', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
@@ -892,7 +874,6 @@ void main() {
       'user_id': 'usr_hero',
       'username': 'Hero',
       'appearance_json': defaultPlayerAppearance.toJson(),
-      'privacy_public_skills': true,
       'privacy_public_gear': true,
       'equipment_json': '[{"slotId":"$weaponToolSlotId","itemId":"ITEM-0110","quantity":1}]',
       'updated_at': '2026-01-01T00:00:00.000Z',
@@ -1195,49 +1176,13 @@ void main() {
     expect(await hero.bountyClaims('2026-08-12T23'), isEmpty);
   });
 
-  test('posts a Bazaar notice and reads the board oldest first', () async {
-    final transport = FakeTransport();
-    final hero = await _signedIn(transport, MemorySaveStorage());
-
-    final posted = await hero.postBazaar(bazaarPostTrade, '  Selling copper ore  ');
-    expect(posted.ok, isTrue, reason: posted.reason);
-    expect(posted.post!.body, 'Selling copper ore');
-    expect(posted.post!.kind, bazaarPostTrade);
-    expect(posted.post!.username, 'Hero');
-    expect(posted.post!.id, isNotEmpty);
-
-    await hero.postBazaar(bazaarPostMessage, 'Anyone hiring?');
-
-    final board = await hero.bazaarPosts();
-    expect(board.map((post) => post.body), <String>['Selling copper ore', 'Anyone hiring?']);
-  });
-
-  test('refuses a Bazaar notice the shared rules reject, before the wire', () async {
-    final transport = FakeTransport();
-    final hero = await _signedIn(transport, MemorySaveStorage());
-
-    expect((await hero.postBazaar(bazaarPostMessage, '   ')).reason, bazaarEmptyPost);
-    expect((await hero.postBazaar('shouting', 'Hello')).reason, bazaarUnknownKind);
-    expect(transport.tables[RemoteTables.bazaarPosts], isEmpty);
-
-    // What it does accept is masked and cut to length the same way either backend
-    // would have done it.
-    final long = await hero.postBazaar(bazaarPostMessage, 'fuck ${'a' * 400}');
-    expect(long.post!.body.startsWith('****'), isTrue);
-    expect(long.post!.body.length, bazaarPostMaxLength);
-  });
-
-  test('needs an account before it will touch either Citadel board', () async {
+  test('needs an account before it will touch the bounty board', () async {
     final transport = FakeTransport();
     final service = _service(transport, MemorySaveStorage());
 
     expect(
       (await service.claimBounty('2026-08-13T00', 'BNT-0001')).reason,
       'Sign in to claim bounties.',
-    );
-    expect(
-      (await service.postBazaar(bazaarPostMessage, 'Hello')).reason,
-      'Sign in to post in the Grand Bazaar.',
     );
     expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
   });

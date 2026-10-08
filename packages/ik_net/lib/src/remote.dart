@@ -11,7 +11,6 @@ import 'dart:math';
 
 import 'package:ik_rules/ik_rules.dart';
 
-import 'bazaar.dart';
 import 'name_color.dart';
 import 'snapshots.dart';
 import 'types.dart';
@@ -29,7 +28,6 @@ class RemoteTables {
   static const String leaderboardEntries = 'leaderboard_entries';
   static const String chat = 'chat_messages';
   static const String bountyClaims = 'bounty_claims';
-  static const String bazaarPosts = 'bazaar_posts';
   static const String guilds = 'guilds';
   static const String guildMembers = 'guild_members';
   static const String guildApplications = 'guild_applications';
@@ -337,7 +335,6 @@ const String remoteChatColumns =
     'guild_tag, rank_icon, guest';
 const String remoteLeaderboardColumns = 'user_id, board_key, value, value_secondary, profiles';
 const String remoteBountyClaimColumns = 'hour_key, bounty_id, user_id, username, claimed_at';
-const String remoteBazaarColumns = 'id, kind, user_id, username, body, created_at';
 const String remotePresenceColumns =
     'user_id, username, appearance_json, guild_name, location_id, '
     'current_activity_id, skill_id, skill_level, outfit_cosmetic_id, '
@@ -354,8 +351,7 @@ const String remotePublicProfileBaseColumns =
     'user_id, username, appearance_json, guild_id, updated_at';
 
 /// Owner-only profile columns (base `profiles` table after migration 026).
-const String remoteOwnerProfileExtraColumns =
-    'privacy_public_skills, username_renamed_at, active_play_session_id';
+const String remoteOwnerProfileExtraColumns = 'username_renamed_at, active_play_session_id';
 
 /// Chat-privacy columns from migration 011. Hosted projects that have not
 /// applied it still answer profile reads; these stay off the required select.
@@ -413,9 +409,6 @@ const String remoteFriendshipColumns = 'user_a, user_b, created_at';
 const String remotePvpSnapshotColumns =
     'user_id, username, combat_level, total_level, appearance_json, payload, updated_at';
 const String remotePvpSnapshotConflict = 'user_id';
-
-/// How many Bazaar notices a read asks for.
-const int remoteBazaarLimit = 40;
 
 /// The conflict target that makes a submit an update rather than a duplicate.
 const String remoteLeaderboardConflict = 'user_id,board_key';
@@ -508,7 +501,6 @@ String newPlaySessionId([Random? random]) {
 RemoteRow profileRowForSignUp(MultiplayerSession session) => <String, Object?>{
   'user_id': session.userId,
   'username': session.username,
-  'privacy_public_skills': true,
   'privacy_public_gear': true,
 };
 
@@ -660,9 +652,6 @@ ChatMessage? chatMessageFromFunction(RemoteRow? data) {
 /// What a send is refused with when the function answered with nothing usable.
 const String remoteChatSendFailed = 'The chat message was not accepted.';
 
-/// The same, for a Bazaar notice the board did not hand back.
-const String remoteBazaarPostFailed = 'The notice was not accepted.';
-
 /// The exchange wrote a save this build cannot parse.
 ///
 /// Not a fault the player can do anything about, but it has to be said out loud:
@@ -746,30 +735,6 @@ BountyClaimRecord bountyClaimFrom(RemoteRow row) => BountyClaimRecord(
   username: _str(row['username']),
   claimedAt: _str(row['claimed_at']),
 );
-
-RemoteRow bazaarPostRowFor(MultiplayerSession session, BazaarPostKind kind, String body) =>
-    <String, Object?>{
-      'kind': kind,
-      'user_id': session.userId,
-      'username': session.username,
-      'body': body,
-    };
-
-BazaarPost bazaarPostFrom(RemoteRow row) => BazaarPost(
-  id: _str(row['id']),
-  kind: _str(row['kind']),
-  userId: _str(row['user_id']),
-  username: _str(row['username']),
-  body: _str(row['body']),
-  createdAt: _str(row['created_at']),
-);
-
-/// The Bazaar newest-last, the way a chat log reads.
-///
-/// A backend hands the newest first, because that is the only way to ask for the
-/// most recent forty, so the order is turned round once they arrive.
-List<BazaarPost> bazaarPostsFrom(List<RemoteRow> rows) =>
-    rows.reversed.map(bazaarPostFrom).toList();
 
 /// The snapshot one account publishes so Nearby can list them without reading
 /// another player's save.
@@ -874,7 +839,6 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
     raceId: raceIdFromRemote(row['appearance_json']),
     guildId: _optStr(row['guild_id']),
     guildName: _optStr(row['guild_name']),
-    privacyPublicSkills: row['privacy_public_skills'] != false,
     privacyPublicGear: row['privacy_public_gear'] != false,
     publishedEquipment: _equipmentFromRemote(row['equipment_json']),
     privacyDirectMessages: normalizeChatPrivacy(_optStr(row['privacy_direct_messages'])),

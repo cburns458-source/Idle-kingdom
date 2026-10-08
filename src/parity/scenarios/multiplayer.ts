@@ -13,12 +13,8 @@ import {
 import { LocalMultiplayerBackend } from '../../game/multiplayer/localBackend'
 import { filterProfanity } from '../../game/multiplayer/moderation'
 import { boardLabel, launchBoardKeys } from '../../game/multiplayer/leaderboards'
-import { prepareBazaarPost } from '../../game/bazaar/post'
-import type { BazaarPostKind } from '../../game/bazaar/types'
 import { presenceInputFromSave } from '../../game/multiplayer/presence'
 import {
-  bazaarPostRowFor,
-  bazaarPostsFrom,
   bountyClaimFrom,
   bountyClaimRowFor,
   chatMessageFrom,
@@ -33,9 +29,6 @@ import {
   saveRowFor,
   sessionFromSignIn,
   sessionFromSignUp,
-  REMOTE_BAZAAR_COLUMNS,
-  REMOTE_BAZAAR_LIMIT,
-  REMOTE_BAZAAR_POST_FAILED,
   REMOTE_BOUNTY_CLAIM_COLUMNS,
   REMOTE_CHAT_COLUMNS,
   REMOTE_CHAT_LIMIT,
@@ -260,25 +253,6 @@ const REMOTE_CLAIM_ROWS: RemoteRow[] = [
   {},
 ]
 
-const REMOTE_BAZAAR_ROWS: RemoteRow[] = [
-  {
-    id: 'bzr_2',
-    kind: 'trade',
-    user_id: 'usr_0002',
-    username: 'Rival',
-    body: 'Selling ore',
-    created_at: '2026-08-12T21:00:02.000Z',
-  },
-  {
-    id: 'bzr_1',
-    kind: 'message',
-    user_id: 'usr_0001',
-    username: 'Hero',
-    body: 'Hello',
-    created_at: '2026-08-12T21:00:01.000Z',
-  },
-]
-
 /**
  * A document an older build wrote: emoji emblems, no tag, no join policy, and
  * members without the appearance or level the roster now shows.
@@ -402,7 +376,6 @@ export const multiplayerScenarios: ParityScenario[] = [
     harness.advance(60_000)
     const renamed = harness.backend.upsertProfile('usr_0001', {
       username: 'Renamed',
-      privacyPublicSkills: false,
     })
     const missing = harness.backend.upsertProfile('usr_9999', {
       username: 'Ghost',
@@ -410,7 +383,7 @@ export const multiplayerScenarios: ParityScenario[] = [
     // An account a remote backend authenticated, which has no row here yet.
     const adopted = harness.backend.registerProfile('usr_remote', 'Rowan')
     // Signing in again must not undo what the first row learned.
-    harness.backend.upsertProfile('usr_remote', { privacyPublicSkills: false })
+    harness.backend.upsertProfile('usr_remote', { username: 'Rowan' })
     const readopted = harness.backend.registerProfile('usr_remote', 'Renamed')
     return {
       refusals,
@@ -927,29 +900,6 @@ export const multiplayerScenarios: ParityScenario[] = [
     } as unknown as JsonValue
   }),
 
-  scenario('multiplayer/bazaar', 'posts', { nowMs: NOW_MS }, () => {
-    const harness = new Harness()
-    const hero = harness.signUp('hero@example.com', 'Hero')
-    const rival = harness.signUp('rival@example.com', 'Rival')
-    const posted = harness.backend.postBazaar(hero, 'trade', '  Selling copper ore  ')
-    const tooSoon = harness.backend.postBazaar(hero, 'message', 'Also this')
-    const empty = harness.backend.postBazaar(rival, 'message', '  ')
-    const unknownKind = harness.backend.postBazaar(rival, 'auction' as 'trade', 'Bid now')
-    const otherPlayer = harness.backend.postBazaar(rival, 'recruit', 'Guild needs members')
-    harness.advance(10_000)
-    const afterCooldown = harness.backend.postBazaar(hero, 'message', 'what the shit')
-    return {
-      posted,
-      tooSoon,
-      empty,
-      unknownKind,
-      otherPlayer,
-      afterCooldown,
-      all: harness.backend.listBazaarPosts(),
-      limited: harness.backend.listBazaarPosts(2),
-    } as unknown as JsonValue
-  }),
-
   scenario('multiplayer/local-db', 'legacy-document', { nowMs: NOW_MS, seed: LEGACY_DOC }, () => {
     const harness = new Harness(NOW_MS, LEGACY_DOC)
     return {
@@ -976,7 +926,6 @@ export const multiplayerScenarios: ParityScenario[] = [
       harness.backend.writeCloudSave(hero.userId, save)
       harness.backend.writeCloudSave(shy.userId, save)
       harness.backend.writeCloudSave(cloak.userId, save)
-      harness.backend.upsertProfile(shy.userId, { privacyPublicSkills: false })
       harness.backend.upsertProfile(cloak.userId, { privacyPublicGear: false })
       const friendRequest = harness.backend.sendFriendRequest(hero.userId, shy.userId)
       const duplicateRequest = harness.backend.sendFriendRequest(hero.userId, shy.userId)
@@ -1013,7 +962,6 @@ export const multiplayerScenarios: ParityScenario[] = [
       boardRows: REMOTE_BOARD_ROWS as unknown as JsonValue,
       chatRows: REMOTE_CHAT_ROWS as unknown as JsonValue,
       claimRows: REMOTE_CLAIM_ROWS as unknown as JsonValue,
-      bazaarRows: REMOTE_BAZAAR_ROWS as unknown as JsonValue,
     },
     () => {
       const save = pinnedSave()
@@ -1028,9 +976,7 @@ export const multiplayerScenarios: ParityScenario[] = [
           leaderboardColumns: REMOTE_LEADERBOARD_COLUMNS,
           leaderboardConflict: REMOTE_LEADERBOARD_CONFLICT,
           bountyClaimColumns: REMOTE_BOUNTY_CLAIM_COLUMNS,
-          bazaarColumns: REMOTE_BAZAAR_COLUMNS,
           chatLimit: REMOTE_CHAT_LIMIT,
-          bazaarLimit: REMOTE_BAZAAR_LIMIT,
           usernameMaxLength: REMOTE_USERNAME_MAX_LENGTH,
         },
         messages: {
@@ -1039,7 +985,6 @@ export const multiplayerScenarios: ParityScenario[] = [
           signInFailed: REMOTE_SIGN_IN_FAILED,
           magicLinkUnavailable: REMOTE_MAGIC_LINK_UNAVAILABLE,
           chatSendFailed: REMOTE_CHAT_SEND_FAILED,
-          bazaarPostFailed: REMOTE_BAZAAR_POST_FAILED,
           saveConflict: REMOTE_SAVE_CONFLICT,
         },
         usernames: ['  Rowan  ', 'a'.repeat(40), ''].map(remoteUsername),
@@ -1075,14 +1020,6 @@ export const multiplayerScenarios: ParityScenario[] = [
         ],
         claimRow: bountyClaimRowFor(REMOTE_SESSION, '2026-08-12T21', 'BNT-0001'),
         claims: REMOTE_CLAIM_ROWS.map(bountyClaimFrom),
-        bazaarRow: bazaarPostRowFor(REMOTE_SESSION, 'trade', 'Selling copper ore'),
-        bazaarPosts: bazaarPostsFrom(REMOTE_BAZAAR_ROWS),
-        preparedPosts: [
-          prepareBazaarPost('message', '  Hello there  '),
-          prepareBazaarPost('message', '   '),
-          prepareBazaarPost('trade', `fuck ${'a'.repeat(400)}`),
-          prepareBazaarPost('shouting' as BazaarPostKind, 'Hello'),
-        ],
         defaultAppearance: DEFAULT_PLAYER_APPEARANCE,
       } as unknown as JsonValue
     },

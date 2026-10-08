@@ -117,7 +117,6 @@ class MultiplayerProfile {
     this.raceId,
     required this.guildId,
     required this.guildName,
-    required this.privacyPublicSkills,
     this.privacyPublicGear = true,
     this.privacyDirectMessages = chatPrivacyPublic,
     this.privacyLocalChat = chatPrivacyPublic,
@@ -136,7 +135,6 @@ class MultiplayerProfile {
     raceId: json['raceId'] as String? ?? raceIdFromRemote(json['appearance']),
     guildId: json['guildId'] as String?,
     guildName: json['guildName'] as String?,
-    privacyPublicSkills: json['privacyPublicSkills'] as bool? ?? true,
     privacyPublicGear: json['privacyPublicGear'] as bool? ?? true,
     privacyDirectMessages: normalizeChatPrivacy(json['privacyDirectMessages'] as String?),
     privacyLocalChat: normalizeChatPrivacy(json['privacyLocalChat'] as String?),
@@ -154,7 +152,6 @@ class MultiplayerProfile {
   final String? raceId;
   final String? guildId;
   final String? guildName;
-  final bool privacyPublicSkills;
   final bool privacyPublicGear;
   final String privacyDirectMessages;
   final String privacyLocalChat;
@@ -179,7 +176,6 @@ class MultiplayerProfile {
     String? raceId,
     String? guildId,
     String? guildName,
-    bool? privacyPublicSkills,
     bool? privacyPublicGear,
     String? privacyDirectMessages,
     String? privacyLocalChat,
@@ -201,7 +197,6 @@ class MultiplayerProfile {
     raceId: raceId ?? this.raceId,
     guildId: clearGuild ? null : (guildId ?? this.guildId),
     guildName: clearGuild ? null : (guildName ?? this.guildName),
-    privacyPublicSkills: privacyPublicSkills ?? this.privacyPublicSkills,
     privacyPublicGear: privacyPublicGear ?? this.privacyPublicGear,
     privacyDirectMessages: privacyDirectMessages ?? this.privacyDirectMessages,
     privacyLocalChat: privacyLocalChat ?? this.privacyLocalChat,
@@ -222,7 +217,6 @@ class MultiplayerProfile {
     if (raceId != null) 'raceId': raceId,
     'guildId': guildId,
     'guildName': guildName,
-    'privacyPublicSkills': privacyPublicSkills,
     'privacyPublicGear': privacyPublicGear,
     'privacyDirectMessages': privacyDirectMessages,
     'privacyLocalChat': privacyLocalChat,

@@ -94,6 +94,7 @@ profiles, and guild rows directly, and these files lock those writes down.
 | `20261007060000_player_save_rankings.sql` | The `game` function becomes the only writer of leaderboard rows, PvP snapshots, and `profiles.equipment_json` |
 | `20261008043100_social_controls.sql` | Ignore, report, and rename RPCs; must follow the profile guard, since it replaces that function |
 | `20261008113000_guild_lifecycle_rpcs.sql` | Guild create/join/accept/leave/kick RPCs; drops direct inserts on `guilds`, `guild_members`, `guild_guests` |
+| `20261008140000_wave_f_cleanup.sql` | Archives `bazaar_posts` as `bazaar_posts_archive` (read-only for `service_role`) and drops `profiles.privacy_public_skills`. Apply after the live Worker is on this revision: the previous client selected that column by name. |
 
 Remove a row once it is applied to live.
 

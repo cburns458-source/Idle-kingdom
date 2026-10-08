@@ -302,7 +302,6 @@ void _upsertAccount(
     raceId: raceId,
     guildId: demoGuildId,
     guildName: demoGuildName,
-    privacyPublicSkills: true,
     updatedAt: nowIso,
   );
   if (index < 0) {

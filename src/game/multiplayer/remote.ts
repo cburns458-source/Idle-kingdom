@@ -1,4 +1,3 @@
-import type { BazaarPost, BazaarPostKind } from '../bazaar/types'
 import type { BountyClaimRecord } from '../bounties/types'
 import type { PlayerSave } from '../save/types'
 import type { LeaderboardSnapshotValues } from './snapshots'
@@ -30,7 +29,6 @@ export const REMOTE_TABLES = {
   leaderboardEntries: 'leaderboard_entries',
   chat: 'chat_messages',
   bountyClaims: 'bounty_claims',
-  bazaarPosts: 'bazaar_posts',
   guilds: 'guilds',
   guildMembers: 'guild_members',
 } as const
@@ -60,10 +58,6 @@ export const REMOTE_CHAT_COLUMNS =
 export const REMOTE_LEADERBOARD_COLUMNS =
   'user_id, board_key, value, value_secondary, profiles'
 export const REMOTE_BOUNTY_CLAIM_COLUMNS = 'hour_key, bounty_id, user_id, username, claimed_at'
-export const REMOTE_BAZAAR_COLUMNS = 'id, kind, user_id, username, body, created_at'
-
-/** How many Bazaar notices a read asks for. */
-export const REMOTE_BAZAAR_LIMIT = 40
 
 export type RemoteRow = Record<string, unknown>
 
@@ -180,7 +174,6 @@ export function profileRowForSignUp(session: MultiplayerSession): RemoteRow {
   return {
     user_id: session.userId,
     username: session.username,
-    privacy_public_skills: true,
     privacy_public_gear: true,
   }
 }
@@ -287,9 +280,6 @@ export function chatMessageFromFunction(data: RemoteRow | null): ChatMessage | n
 /** What a send is refused with when the function answered with nothing usable. */
 export const REMOTE_CHAT_SEND_FAILED = 'The chat message was not accepted.'
 
-/** The same, for a Bazaar notice the board did not hand back. */
-export const REMOTE_BAZAAR_POST_FAILED = 'The notice was not accepted.'
-
 /** Why an upload stops: the account has a newer save than the one being sent. */
 export const REMOTE_SAVE_CONFLICT = 'A newer cloud save exists.'
 
@@ -367,38 +357,4 @@ export function bountyClaimFrom(row: RemoteRow): BountyClaimRecord {
     username: str(row.username),
     claimedAt: str(row.claimed_at),
   }
-}
-
-export function bazaarPostRowFor(
-  session: MultiplayerSession,
-  kind: BazaarPostKind,
-  body: string,
-): RemoteRow {
-  return {
-    kind,
-    user_id: session.userId,
-    username: session.username,
-    body,
-  }
-}
-
-export function bazaarPostFrom(row: RemoteRow): BazaarPost {
-  return {
-    id: str(row.id),
-    kind: str(row.kind) as BazaarPostKind,
-    userId: str(row.user_id),
-    username: str(row.username),
-    body: str(row.body),
-    createdAt: str(row.created_at),
-  }
-}
-
-/**
- * The Bazaar newest-last, the way a chat log reads.
- *
- * A backend hands the newest first, because that is the only way to ask for the
- * most recent forty, so the order is turned round once they arrive.
- */
-export function bazaarPostsFrom(rows: RemoteRow[]): BazaarPost[] {
-  return [...rows].reverse().map(bazaarPostFrom)
 }

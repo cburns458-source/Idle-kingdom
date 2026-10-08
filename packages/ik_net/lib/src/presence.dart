@@ -30,29 +30,26 @@ String citadelLocationId() => citadelLocationIdValue;
 
 String citadelLocalChannelKey() => chatChannelKey(const ChatChannel.local(citadelChatLocationId));
 
-/// The two boards the Citadel keeps, each opened the way a shop is.
-enum CitadelHubTab { bounties, bazaar }
+/// The Citadel bounty board, opened the way a shop is.
+enum CitadelHubTab { bounties }
 
 const Map<CitadelHubTab, String> citadelHubTabLabels = <CitadelHubTab, String>{
   CitadelHubTab.bounties: 'Hourly Bounties',
-  CitadelHubTab.bazaar: 'Message board',
 };
 
 /// Which boards stand at [locationId].
 ///
-/// The Plaza holds the notice board and the Market District holds the Bazaar, so
-/// each district has its own reason to be walked to. Anywhere else has neither.
+/// The Plaza holds the hourly bounty board. The Market District is the
+/// exchange, not a notice board. Anywhere else has neither.
 List<CitadelHubTab> citadelHubTabsFor(String locationId) {
   if (locationId == citadelPlazaId || locationId == citadelLocationIdValue) {
     return const <CitadelHubTab>[CitadelHubTab.bounties];
   }
-  if (locationId == citadelMarketId) return const <CitadelHubTab>[CitadelHubTab.bazaar];
   return const <CitadelHubTab>[];
 }
 
 /// The heading above those links, naming the district rather than the boards.
-String citadelHubTitleFor(String locationId) =>
-    locationId == citadelMarketId ? 'Message board' : 'Citadel Plaza';
+String citadelHubTitleFor(String locationId) => 'Citadel Plaza';
 
 /// What the Citadel tab shows above its visitor list.
 class CitadelHubSummary {

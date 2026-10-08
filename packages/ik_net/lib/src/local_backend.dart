@@ -6,7 +6,6 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
-import 'bazaar.dart';
 import 'config.dart';
 import 'demo_world.dart';
 import 'guild_rules.dart';
@@ -124,7 +123,6 @@ class LocalMultiplayerBackend {
         appearance: defaultPlayerAppearance,
         guildId: null,
         guildName: null,
-        privacyPublicSkills: true,
         updatedAt: _nowIso(),
       ),
     );
@@ -267,7 +265,6 @@ class LocalMultiplayerBackend {
       appearance: defaultPlayerAppearance,
       guildId: null,
       guildName: null,
-      privacyPublicSkills: true,
       updatedAt: _nowIso(),
     );
     db.profiles.add(profile);
@@ -297,7 +294,6 @@ class LocalMultiplayerBackend {
         raceId: raceId,
         guildId: null,
         guildName: guildName,
-        privacyPublicSkills: true,
         updatedAt: _nowIso(),
       ),
     );
@@ -308,7 +304,6 @@ class LocalMultiplayerBackend {
     String userId, {
     PlayerAppearance? appearance,
     String? raceId,
-    bool? privacyPublicSkills,
     bool? privacyPublicGear,
     String? privacyDirectMessages,
     String? privacyLocalChat,
@@ -328,7 +323,6 @@ class LocalMultiplayerBackend {
     db.profiles[index] = db.profiles[index].copyWith(
       appearance: appearance,
       raceId: raceId,
-      privacyPublicSkills: privacyPublicSkills,
       privacyPublicGear: privacyPublicGear,
       privacyDirectMessages: privacyDirectMessages,
       privacyLocalChat: privacyLocalChat,
@@ -1610,7 +1604,7 @@ class LocalMultiplayerBackend {
       appearance: profile.appearance,
       raceId: save?.raceId ?? profile.raceId,
       guildName: profile.guildName,
-      publicSkills: profile.privacyPublicSkills ? skills : const <PublicSkillLine>[],
+      publicSkills: skills,
       publicEquipment: !profile.privacyPublicGear
           ? null
           : save != null
@@ -1659,46 +1653,6 @@ class LocalMultiplayerBackend {
     db.bountyClaims.add(claim);
     _write(db);
     return BountyClaimResult.ok(claim, firstCompleter: true);
-  }
-
-  // --- Grand Bazaar ---------------------------------------------------------
-
-  List<BazaarPost> listBazaarPosts([int limit = 40]) {
-    final rows = _db().bazaarPosts.toList();
-    mergeSort(
-      rows,
-      compare: (a, b) =>
-          jsCompareThen(jsDateParse(a.createdAt) - jsDateParse(b.createdAt), () => 0),
-    );
-    return _lastN(rows, limit);
-  }
-
-  BazaarPostResult postBazaar(MultiplayerSession session, BazaarPostKind kind, String body) {
-    final prepared = prepareBazaarPost(kind, body);
-    if (!prepared.ok) return BazaarPostResult.failed(prepared.reason!);
-    final db = _db();
-    final cooldownKey = '${session.userId}:bazaar';
-    final last = db.lastChatAt[cooldownKey];
-    if (isNotBlank(last) && _now() - jsDateParse(last) < bazaarPostCooldownSeconds * 1000) {
-      final wait = ((bazaarPostCooldownSeconds * 1000 - (_now() - jsDateParse(last))) / 1000)
-          .ceil();
-      return BazaarPostResult.failed('Wait ${wait}s before posting again.');
-    }
-    final post = BazaarPost(
-      id: _newId('bzr'),
-      kind: kind,
-      userId: session.userId,
-      username: session.username,
-      body: prepared.body!,
-      createdAt: _nowIso(),
-    );
-    db.bazaarPosts.add(post);
-    if (db.bazaarPosts.length > 200) {
-      db.bazaarPosts = _lastN(db.bazaarPosts, 200);
-    }
-    db.lastChatAt[cooldownKey] = post.createdAt;
-    _write(db);
-    return BazaarPostResult.ok(post);
   }
 
   /// Puts The Watch and its three static members on this device.

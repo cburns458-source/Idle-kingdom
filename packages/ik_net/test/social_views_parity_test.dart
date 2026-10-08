@@ -611,32 +611,6 @@ void main() {
     }
   });
 
-  group('bazaar view parity', () {
-    for (final fixture in loadParityFixtures('bazaar/views')) {
-      test(fixture.name, () {
-        final posts = fixture
-            .inputField<List<Object?>>('posts')
-            .map((value) => BazaarPost.fromJson(asJsonMap(value)))
-            .toList();
-        expect(
-          checkParity(fixture, <String, Object?>{
-            'rows': bazaarRows(posts).map((row) => row.toJson()).toList(),
-            'empty': bazaarRows(const <BazaarPost>[]).map((row) => row.toJson()).toList(),
-            'kinds': bazaarKindOptions().map((option) => option.toJson()).toList(),
-            'blurb': bazaarBlurb,
-            'placeholder': bazaarPlaceholder,
-            'maxLength': bazaarBodyMaxLength,
-            'signInNotice': bazaarSignInNotice,
-            'emptyHeading': bazaarEmptyHeading,
-            'emptyBody': bazaarEmptyBody,
-            'postedNotice': bazaarPostedNotice,
-          }),
-          isNull,
-        );
-      });
-    }
-  });
-
   group('citadel hub parity', () {
     for (final fixture in loadParityFixtures('citadel/hub')) {
       test(fixture.name, () {

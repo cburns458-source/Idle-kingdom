@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:ik_content/ik_content.dart';
-import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import 'support/harness.dart';
@@ -48,15 +47,15 @@ void main() {
     expect(find.text('Grand Bazaar'), findsNothing);
   });
 
-  testWidgets('the market district offers the bazaar and not the bounty board', (tester) async {
+  testWidgets('the market district offers the exchange and not the bounty board', (tester) async {
     final controller = buildController(database, seed: atDistrict(citadelMarketId));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
 
-    await selectLocationBandTab(tester, 'Other');
-    expect(find.text('Message board'), findsWidgets);
+    expect(find.text('Message board'), findsNothing);
     expect(find.text('Grand Bazaar'), findsWidgets);
     expect(find.text('Hourly Bounties'), findsNothing);
+    expect(find.text('Other'), findsNothing);
   });
 
   testWidgets('an unsigned player cannot open the bounty board', (tester) async {
@@ -93,31 +92,5 @@ void main() {
     expect(controller.save.gold, greaterThan(goldBefore));
     expect(find.textContaining('First completer! +'), findsOne);
     expect(find.text('Claimed'), findsOne);
-  });
-
-  testWidgets('a bazaar post appears on the board it was written to', (tester) async {
-    final controller = buildController(database, seed: atDistrict(citadelMarketId));
-    addTearDown(controller.dispose);
-    final net = await signedIn(buildMultiplayer(database));
-    addTearDown(net.dispose);
-    await pumpShell(tester, controller, multiplayer: net, size: const Size(900, 2400));
-
-    await selectLocationBandTab(tester, 'Other');
-    await tapVisible(tester, find.byTooltip('Expand list'));
-    await tapVisible(tester, find.text('Post').first);
-    await tester.pump();
-
-    expect(find.text(bazaarEmptyHeading), findsOne);
-
-    await tester.enterText(find.byType(TextField), 'Selling copper ore');
-    await tester.tap(find.byKey(const Key('bazaar-post')));
-    await tester.pump();
-    await tester.pump();
-
-    expect(find.text('Hero · message'), findsOne);
-    expect(find.text('Selling copper ore'), findsOne);
-    expect(find.text(bazaarPostedNotice), findsOne);
-    await tester.tap(find.text('OK'));
-    await tester.pump();
   });
 }

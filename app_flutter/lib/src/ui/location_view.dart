@@ -68,7 +68,7 @@ class TannerOpen extends LocationPanel {
   final NpcRow npc;
 }
 
-/// One of the Citadel's boards: hourly bounties or the Grand Bazaar.
+/// The Citadel bounty board.
 class CitadelHubOpen extends LocationPanel {
   const CitadelHubOpen(this.tab);
 
@@ -102,7 +102,6 @@ class LocationView extends StatefulWidget {
     required this.onOpenMap,
     this.onOpenSubMap,
     this.onEnterGateway,
-    this.onOpenGuilds,
   });
 
   final GameController controller;
@@ -117,8 +116,6 @@ class LocationView extends StatefulWidget {
 
   /// Travels from a gateway into its landing node.
   final ValueChanged<String>? onEnterGateway;
-
-  final VoidCallback? onOpenGuilds;
 
   @override
   State<LocationView> createState() => _LocationViewState();
@@ -155,19 +152,13 @@ class _LocationViewState extends State<LocationView> {
   void _openPanel(LocationPanel panel, {bool nest = false}) {
     var save = controller.save;
     if (panel is CitadelHubOpen) {
-      save = applyQuestInspectProgress(
-        controller.db,
-        save,
-        panel.tab == CitadelHubTab.bazaar ? 'bazaar' : 'bounties',
-      );
+      save = applyQuestInspectProgress(controller.db, save, 'bounties');
     }
     if (!identical(save, controller.save) && panel is CitadelHubOpen) {
       controller.commit(
         save,
         command: 'quest_inspect',
-        args: <String, Object?>{
-          'target': panel.tab == CitadelHubTab.bazaar ? 'bazaar' : 'bounties',
-        },
+        args: const <String, Object?>{'target': 'bounties'},
       );
     } else if (!identical(save, controller.save)) {
       controller.commit(save);
@@ -676,7 +667,6 @@ class _LocationViewState extends State<LocationView> {
           controller: controller,
           multiplayer: widget.multiplayer,
           onClose: _closePanel,
-          onOpenGuilds: widget.onOpenGuilds,
         );
     }
   }
@@ -732,7 +722,7 @@ class _LocationViewState extends State<LocationView> {
           padding: const EdgeInsets.only(bottom: 8),
           child: _InteractionCard(
             title: citadelHubTabLabels[tab]!,
-            actionLabel: tab == CitadelHubTab.bazaar ? 'Post' : 'Open',
+            actionLabel: 'Open',
             tone: GameButtonTone.primary,
             onPressed: () => _openPanel(CitadelHubOpen(tab)),
           ),

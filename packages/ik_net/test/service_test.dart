@@ -108,10 +108,6 @@ void main() {
     expect(await service.listChat(const ChatChannel.global()), isEmpty);
     expect(await service.currentGuildId(), isNull);
     expect(await service.publishPresence(presenceFromSave(save)), isNull);
-    expect(
-      (await service.postBazaar(bazaarPostTrade, 'Selling')).reason,
-      'Sign in to post in the Grand Bazaar.',
-    );
   });
 
   test('pushes a save, then hands it back on pull', () async {

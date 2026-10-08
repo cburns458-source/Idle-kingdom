@@ -203,7 +203,6 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.leaderboard: <String>['user_id', 'board_key'],
     RemoteTables.chat: <String>['id'],
     RemoteTables.bountyClaims: <String>['hour_key', 'bounty_id'],
-    RemoteTables.bazaarPosts: <String>['id'],
     RemoteTables.guilds: <String>['id'],
     RemoteTables.guildMembers: <String>['guild_id', 'user_id'],
     RemoteTables.guildApplications: <String>['guild_id', 'user_id'],
@@ -225,7 +224,6 @@ class FakeTransport implements RemoteTransport {
   /// The columns a table fills in for itself, the way a default does.
   RemoteRow _defaults(String table) => switch (table) {
     RemoteTables.bountyClaims => <String, Object?>{'claimed_at': stamp()},
-    RemoteTables.bazaarPosts => <String, Object?>{'id': _nextId('bzr'), 'created_at': stamp()},
     RemoteTables.guilds => <String, Object?>{'id': _nextId('gld'), 'created_at': stamp()},
     RemoteTables.guildMembers => <String, Object?>{'joined_at': stamp()},
     RemoteTables.guildApplications => <String, Object?>{
@@ -1606,7 +1604,6 @@ class _FakeProject {
     RemoteTables.leaderboard: <RemoteRow>[],
     RemoteTables.chat: <RemoteRow>[],
     RemoteTables.bountyClaims: <RemoteRow>[],
-    RemoteTables.bazaarPosts: <RemoteRow>[],
     RemoteTables.guilds: <RemoteRow>[],
     RemoteTables.guildMembers: <RemoteRow>[],
     RemoteTables.guildApplications: <RemoteRow>[],

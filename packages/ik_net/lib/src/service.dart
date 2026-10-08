@@ -2,7 +2,6 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
-import 'bazaar.dart';
 import 'cloud_save.dart';
 import 'local_backend.dart';
 import 'market.dart';
@@ -46,8 +45,6 @@ abstract interface class MultiplayerService {
   Future<String?> activePlaySessionId();
 
   Future<MultiplayerProfile?> profile(String userId);
-
-  Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value);
 
   Future<MultiplayerProfile?> setPrivacyPublicGear(bool value);
 
@@ -191,10 +188,6 @@ abstract interface class MultiplayerService {
   Future<List<BountyClaimRecord>> bountyClaims(String hourKey);
 
   Future<BountyClaimResult> claimBounty(String hourKey, String bountyId);
-
-  Future<List<BazaarPost>> bazaarPosts({int limit = 40});
-
-  Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body);
 
   /// The exchange as the signed-in player sees it, with depth for [itemId].
   ///
@@ -368,13 +361,6 @@ class LocalMultiplayerService implements MultiplayerService {
 
   @override
   Future<MultiplayerProfile?> profile(String userId) async => _backend.getProfile(userId);
-
-  @override
-  Future<MultiplayerProfile?> setPrivacyPublicSkills(bool value) async {
-    final current = session;
-    if (current == null) return null;
-    return _backend.upsertProfile(current.userId, privacyPublicSkills: value);
-  }
 
   @override
   Future<MultiplayerProfile?> setPrivacyPublicGear(bool value) async {
@@ -858,18 +844,6 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return const BountyClaimResult.failed('Sign in to claim bounties.');
     return _backend.claimBounty(current, hourKey, bountyId);
-  }
-
-  @override
-  Future<List<BazaarPost>> bazaarPosts({int limit = 40}) async => _backend.listBazaarPosts(limit);
-
-  @override
-  Future<BazaarPostResult> postBazaar(BazaarPostKind kind, String body) async {
-    final current = session;
-    if (current == null) {
-      return const BazaarPostResult.failed('Sign in to post in the Grand Bazaar.');
-    }
-    return _backend.postBazaar(current, kind, body);
   }
 
   /// An empty book, always.

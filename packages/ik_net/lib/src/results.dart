@@ -1,6 +1,5 @@
 import 'package:ik_rules/ik_rules.dart';
 
-import 'bazaar.dart';
 import 'types.dart';
 
 /// Every backend call answers the same way: it worked, or here is the line to
@@ -177,20 +176,5 @@ class BountyClaimResult {
 
   Map<String, Object?> toJson() => ok
       ? <String, Object?>{'ok': true, 'claim': claim!.toJson(), 'firstCompleter': firstCompleter}
-      : <String, Object?>{'ok': false, 'reason': reason};
-}
-
-class BazaarPostResult {
-  const BazaarPostResult.ok(BazaarPost this.post) : reason = null;
-
-  const BazaarPostResult.failed(this.reason) : post = null;
-
-  final BazaarPost? post;
-  final String? reason;
-
-  bool get ok => reason == null;
-
-  Map<String, Object?> toJson() => ok
-      ? <String, Object?>{'ok': true, 'post': post!.toJson()}
       : <String, Object?>{'ok': false, 'reason': reason};
 }

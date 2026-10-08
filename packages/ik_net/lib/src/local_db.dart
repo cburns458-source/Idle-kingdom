@@ -1,6 +1,5 @@
 import 'package:ik_rules/ik_rules.dart';
 
-import 'bazaar.dart';
 import 'types.dart';
 
 /// A muted or blocked pairing: the viewer and whoever they silenced.
@@ -179,7 +178,6 @@ class LocalDb {
     required this.friendRequests,
     required this.friends,
     required this.bountyClaims,
-    required this.bazaarPosts,
     required this.guests,
     required this.halls,
     required this.playSessions,
@@ -205,7 +203,6 @@ class LocalDb {
       friendRequests = <FriendRequest>[],
       friends = <Friendship>[],
       bountyClaims = <BountyClaimRecord>[],
-      bazaarPosts = <BazaarPost>[],
       guests = <GuildGuest>[],
       halls = <GuildHallState>[],
       playSessions = <String, String>{},
@@ -246,7 +243,6 @@ class LocalDb {
     db.friendRequests.addAll(rows('friendRequests').map(FriendRequest.fromJson));
     db.friends.addAll(rows('friends').map(Friendship.fromJson));
     db.bountyClaims.addAll(rows('bountyClaims').map(BountyClaimRecord.fromJson));
-    db.bazaarPosts.addAll(rows('bazaarPosts').map(BazaarPost.fromJson));
     db.guests.addAll(rows('guests').map(GuildGuest.fromJson));
     db.halls.addAll(rows('halls').map(GuildHallState.fromJson));
     db.pvpSnapshots.addAll(rows('pvpSnapshots').map(CloudSaveRecord.fromJson));
@@ -278,7 +274,6 @@ class LocalDb {
   List<FriendRequest> friendRequests;
   List<Friendship> friends;
   List<BountyClaimRecord> bountyClaims;
-  List<BazaarPost> bazaarPosts;
   List<GuildGuest> guests;
   List<GuildHallState> halls;
   Map<String, String> playSessions;
@@ -303,7 +298,6 @@ class LocalDb {
     'friendRequests': friendRequests.map((row) => row.toJson()).toList(),
     'friends': friends.map((row) => row.toJson()).toList(),
     'bountyClaims': bountyClaims.map((row) => row.toJson()).toList(),
-    'bazaarPosts': bazaarPosts.map((row) => row.toJson()).toList(),
     if (guests.isNotEmpty) 'guests': guests.map((row) => row.toJson()).toList(),
     if (halls.isNotEmpty) 'halls': halls.map((row) => row.toJson()).toList(),
     if (playSessions.isNotEmpty) 'playSessions': <String, Object?>{...playSessions},
