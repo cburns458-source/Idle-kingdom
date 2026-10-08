@@ -62,6 +62,24 @@ name again.
 
 Live keeps `https://restoriaidle.com`.
 
+## Tester gate (test site only)
+
+`restoria-idlerpg-staging` runs `src/worker/staging.ts` in front of its
+assets. A visitor sees a key page until they enter the value of the Worker
+secret `TESTER_PASSKEY`; the Worker then sets an HttpOnly cookie derived from
+it. The key is never in the repo, GitHub, or the web build. It covers both
+test.restoriaidle.com and the test workers.dev address.
+
+- Set or rotate it in the Cloudflare dashboard: Workers & Pages →
+  `restoria-idlerpg-staging` → Settings → Variables and Secrets → Secret
+  `TESTER_PASSKEY`. Rotating signs every tester out.
+- Without the secret the test site shows a locked page; it never opens.
+- `wrangler deploy` keeps existing secrets.
+- To run the gate locally, put `TESTER_PASSKEY=…` in `.dev.vars.staging`
+  (git-ignored) and run `npx wrangler dev --env staging`.
+
+The live Worker has no script, so it has no gate.
+
 ## Migrations
 
 Apply files under `supabase/migrations/` in **filename order** (the two `011_`

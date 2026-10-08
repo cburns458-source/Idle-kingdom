@@ -10,6 +10,10 @@ lerna-debug.log*
 node_modules
 *.local
 
+# Wrangler local state and secrets
+.wrangler/
+.dev.vars*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
