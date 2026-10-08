@@ -8,7 +8,6 @@ import 'package:ik_runtime/ik_runtime.dart';
 
 import 'hosted_save_adopt.dart';
 import 'loadout_command.dart';
-import 'tester_access.dart';
 
 /// Switches the client does not apply until the server answers.
 ///
@@ -141,18 +140,6 @@ class MultiplayerController extends ChangeNotifier {
       _ownProfile = await service.setPrivacyPublicGear(value);
       return null;
     });
-  }
-
-  /// True when this device may see sign-in. An empty [testerPasskey] leaves
-  /// the gate off.
-  bool get hasTesterAccess => !testerPasskeyRequired(storage.getItem(testerAccessStorageKey));
-
-  /// Accepts the shared tester key and remembers it on this device.
-  bool unlockTesterAccess(String raw) {
-    if (!matchesTesterPasskey(raw)) return false;
-    storage.setItem(testerAccessStorageKey, testerPasskey);
-    notifyListeners();
-    return true;
   }
 
   /// When on, Guilds, Leaderboards, Chat, and Nearby open without an account.

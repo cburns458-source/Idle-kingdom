@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/quest_log_sort_pref.dart';
-import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:ik_content/ik_content.dart';
@@ -111,7 +110,6 @@ MultiplayerController buildMultiplayer(
   LoadedDatabase database, {
   TestClock? clock,
   bool signedIn = true,
-  bool testerAccess = true,
   bool cloudUnavailable = false,
   TestAccount account = testAccount,
 }) {
@@ -137,7 +135,6 @@ MultiplayerController buildMultiplayer(
     clock: testClock.read,
     cloudUnavailable: cloudUnavailable,
   );
-  if (testerAccess) net.unlockTesterAccess(testerPasskey);
   return net;
 }
 
@@ -170,7 +167,6 @@ MultiplayerController buildRemoteMultiplayer(
   LoadedDatabase database, {
   required FakeTransport transport,
   TestClock? clock,
-  bool testerAccess = true,
 }) {
   transport.database ??= database.launch;
   final testClock = clock ?? TestClock();
@@ -187,7 +183,6 @@ MultiplayerController buildRemoteMultiplayer(
     storage: storage,
     clock: testClock.read,
   );
-  if (testerAccess) net.unlockTesterAccess(testerPasskey);
   return net;
 }
 

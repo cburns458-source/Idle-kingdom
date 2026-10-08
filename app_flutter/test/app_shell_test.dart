@@ -8,7 +8,6 @@ import 'package:idle_kingdoms/src/content/asset_paths.dart';
 import 'package:idle_kingdoms/src/session/battery_saver_pref.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
-import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/desktop_side_chrome.dart';
@@ -32,13 +31,6 @@ void main() {
 
   setUpAll(() {
     database = loadDatabaseFromRepo();
-  });
-
-  test('the tester passkey is case-insensitive and remembered as the current key', () {
-    expect(testerPasskeyRequired(null), isTrue);
-    expect(testerPasskeyRequired(testerPasskey), isFalse);
-    expect(matchesTesterPasskey('  RESTORIA-TESTERS  '), isTrue);
-    expect(matchesTesterPasskey('nope'), isFalse);
   });
 
   test('resume drops a named cloud save that still needs a race', () async {
@@ -283,45 +275,17 @@ void main() {
     expect(net.isSignedIn, isTrue);
   });
 
-  testWidgets('a typed URL on a fresh device asks for the tester passkey', (tester) async {
+  testWidgets('a typed URL on a fresh device opens sign-in', (tester) async {
     final controller = buildController(database);
-    final net = buildMultiplayer(database, signedIn: false, testerAccess: false);
+    final net = buildMultiplayer(database, signedIn: false);
     addTearDown(controller.dispose);
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net);
-
-    expect(find.text('Test launch'), findsOne);
-    expect(find.text('Enter the tester passkey to create an account or sign in.'), findsOne);
-    expect(find.byKey(const Key('tester-passkey')), findsOne);
-    expect(find.text('Sign in to play'), findsNothing);
-    expect(find.byKey(const Key('auth-email')), findsNothing);
-  });
-
-  testWidgets('the tester passkey opens sign-in and stays on this device', (tester) async {
-    final controller = buildController(database);
-    final net = buildMultiplayer(database, signedIn: false, testerAccess: false);
-    addTearDown(controller.dispose);
-    addTearDown(net.dispose);
-    await pumpShell(tester, controller, multiplayer: net);
-
-    expect(find.text('Test launch'), findsOne);
-    expect(find.text('Sign in to play'), findsNothing);
-    expect(find.byKey(const Key('auth-email')), findsNothing);
-
-    await tester.enterText(find.byKey(const Key('tester-passkey')), 'wrong-key');
-    await tester.tap(find.text('Continue'));
-    await tester.pump();
-    expect(find.text('That passkey is not right.'), findsOne);
-    expect(find.text('Sign in to play'), findsNothing);
-
-    await tester.enterText(find.byKey(const Key('tester-passkey')), testerPasskey);
-    await tester.tap(find.text('Continue'));
-    await tester.pump();
 
     expect(find.text('Test launch'), findsNothing);
+    expect(find.byKey(const Key('tester-passkey')), findsNothing);
     expect(find.text('Sign in to play'), findsOne);
     expect(find.byKey(const Key('auth-email')), findsOne);
-    expect(net.hasTesterAccess, isTrue);
   });
 
   testWidgets('a local build does not claim the cloud is unavailable', (tester) async {

@@ -86,7 +86,8 @@ Sentence case: Player-facing Display Names use sentence case. Capitalize the fir
 - Signing in loads that account's save and signs the other device out.
 - The first character name is also the account name other players see.
 - Character creation chooses a name, a Race, and a starting appearance. Appearance can later be changed from the wardrobe.
-- Closed-test builds may also require a tester passkey before sign-in.
+- The test site is gated by a Worker secret before any game file is served.
+  Live has no passkey.
 
 3.2 SAVE
 - The account save is the source of truth. The client writes it back automatically; there is no sync button.

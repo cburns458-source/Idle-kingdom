@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
-import 'package:idle_kingdoms/src/session/tester_access.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/chat_sheet.dart';
 import 'package:ik_content/ik_content.dart';
@@ -37,7 +36,6 @@ void main() {
       storage: storage,
       clock: clock.read,
     );
-    net.unlockTesterAccess(testerPasskey);
     return (net: net, service: service, clock: clock);
   }
 

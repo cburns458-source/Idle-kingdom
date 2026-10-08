@@ -85,7 +85,8 @@ test.restoriaidle.com and the test workers.dev address.
 - To run the gate locally, put `TESTER_PASSKEY=…` in `.dev.vars.staging`
   (git-ignored) and run `npx wrangler dev --env staging`.
 
-The live Worker has no script, so it has no gate.
+The live Worker has no script, so it has no gate. The Flutter app has no
+passkey of its own; `restoria-testers` is gone from the client.
 
 ## Migrations
 
