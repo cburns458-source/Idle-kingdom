@@ -296,6 +296,7 @@ Widget _groundedSceneArt(GameController controller) {
     final recipeId = save.productionRecipeId;
     final recipe = recipeId == null ? null : getRecipe(controller.db, recipeId);
     return _Portrait(
+      key: ValueKey<String>('${save.currentLocationId}:${save.currentActivityId}'),
       assetPath: workstationAssetPath(recipe?.facilityId, db: controller.db),
       semanticsLabel: recipe?.displayName ?? 'Workstation',
       height: _actionArtHeight,
@@ -309,6 +310,7 @@ Widget _groundedSceneArt(GameController controller) {
       : controller.indexes.actionsById[save.currentActionId!];
   if (action == null) return SizedBox(height: slotHeight);
   return _Portrait(
+    key: ValueKey<String>('${save.currentLocationId}:${save.currentActivityId}'),
     assetPath: actionAssetPath(action.actionId, db: controller.db),
     semanticsLabel: action.displayName,
     height: _actionArtHeight,
@@ -596,6 +598,7 @@ class _TwoPortraits extends StatelessWidget {
 
 class _Portrait extends StatelessWidget {
   const _Portrait({
+    super.key,
     required this.assetPath,
     required this.semanticsLabel,
     required this.alignment,

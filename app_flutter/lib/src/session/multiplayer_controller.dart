@@ -6,6 +6,7 @@ import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import 'hosted_save_adopt.dart';
 import 'tester_access.dart';
 
 /// The screen-facing half of multiplayer.
@@ -624,6 +625,10 @@ class MultiplayerController extends ChangeNotifier {
   /// can keep the local start clocks. Pulls after a conflict or failure omit it.
   void Function(PlayerSave save, {String? command})? onHostedSave;
 
+  /// Live local save, used so a conflict or failure pull does not rewind a
+  /// tile the player already reached. [pullSave] still updates the version.
+  PlayerSave Function()? currentSave;
+
   Future<void> _commandTail = Future<void>.value();
 
   /// Applies a named intent on the hosted save and adopts the server copy.
@@ -642,7 +647,7 @@ class MultiplayerController extends ChangeNotifier {
           if (!result.ok && (result.reason ?? '').contains('version conflict')) {
             final pulled = await service.pullSave();
             if (pulled.ok && pulled.save != null) {
-              _adoptHosted(pulled.save!);
+              _adoptHostedUnlessLocationRewind(pulled.save!);
             }
             result = await service.gameCommand(command, args);
           }
@@ -653,7 +658,7 @@ class MultiplayerController extends ChangeNotifier {
           } else if (!result.ok) {
             final pulled = await service.pullSave();
             if (pulled.ok && pulled.save != null) {
-              _adoptHosted(pulled.save!);
+              _adoptHostedUnlessLocationRewind(pulled.save!);
             }
             if (result.reason != null) {
               _notice = result.reason;
@@ -676,6 +681,14 @@ class MultiplayerController extends ChangeNotifier {
     } finally {
       _suppressUploads = false;
     }
+  }
+
+  /// [pullSave] already refreshed the hosted version. Skip the UI adopt when
+  /// that snapshot is still on a tile the player has left.
+  void _adoptHostedUnlessLocationRewind(PlayerSave incoming) {
+    final local = currentSave?.call();
+    if (local != null && wouldRewindCurrentLocation(local, incoming)) return;
+    _adoptHosted(incoming);
   }
 
   /// Queues a throttled hosted sync. Unnamed stubs are not written.

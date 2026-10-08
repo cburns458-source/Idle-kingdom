@@ -604,6 +604,7 @@ class _LocationViewState extends State<LocationView> {
     final square = _squarePlates.contains(locationId);
     return GameImage(
       locationAssetPath(locationId, db: controller.db),
+      key: ValueKey<String>(locationId),
       fit: BoxFit.cover,
       alignment: square ? Alignment.topCenter : Alignment.bottomCenter,
       filterQuality: square ? FilterQuality.none : FilterQuality.medium,

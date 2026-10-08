@@ -831,11 +831,14 @@ class GameController extends ChangeNotifier {
 
   /// Replaces the local save with the server copy after a command or sync.
   ///
-  /// Start-command results keep the local action / combat clocks when the
-  /// activity matches, so the first bar does not snap back to the server's
-  /// later `nowMs`. Conflict and failure pulls omit [command] and adopt whole.
+  /// Start-command and matching travel results keep the local action / combat
+  /// clocks when the activity matches, so the first bar does not snap back to
+  /// the server's later `nowMs`. Conflict and failure pulls omit [command]; a
+  /// pull that would rewind [PlayerSave.currentLocationId] is ignored so a
+  /// local arrival is not flashed back to the previous tile.
   void adoptHostedSave(PlayerSave incoming, {String? command}) {
     if (!_alive) return;
+    if (command == null && wouldRewindCurrentLocation(save, incoming)) return;
     session.apply(mergeHostedStartSave(save, incoming, command: command));
     notifyListeners();
   }
@@ -1114,7 +1117,6 @@ class GameController extends ChangeNotifier {
     }
     _autoEquip = null;
     session.apply(result.save!);
-    _recentRewards.clear();
     _activityError = null;
     _message = null;
     _clearStageFx();
@@ -1389,7 +1391,6 @@ class GameController extends ChangeNotifier {
       case TravelBlocked():
         return false;
       case TravelInstant(arrival: final arrival):
-        _recentRewards.clear();
         _queueCommand('travel', <String, Object?>{
           'destinationId': destinationId,
           'browseMapId': browseMapId,
@@ -1407,7 +1408,6 @@ class GameController extends ChangeNotifier {
       case TravelBlocked():
         return false;
       case TravelInstant(arrival: final arrival):
-        _recentRewards.clear();
         _queueCommand('travel_guild_hall');
         _showArrival(arrival);
     }

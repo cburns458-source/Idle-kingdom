@@ -83,6 +83,64 @@ void main() {
     expect(merged.hpRegenStreak, 2);
   });
 
+  test('travel keeps local action clocks when destination and activity match', () {
+    final local = startedCharacter(database).copyWith(
+      currentLocationId: 'LOC-0009',
+      currentActivityId: 'ACT-0021',
+      activityStartedAt: isoFromMs(testStartMs),
+      currentActionId: 'ACN-0035',
+      actionStartedAt: isoFromMs(testStartMs),
+      actionDurationMs: 12000,
+      combatRoundStartedAt: isoFromMs(testStartMs),
+    );
+    final incoming = local.copyWith(
+      gold: local.gold + 4,
+      activityStartedAt: isoFromMs(testStartMs + 1000),
+      actionStartedAt: isoFromMs(testStartMs + 1000),
+      currentActionId: 'ACN-9999',
+      actionDurationMs: 8000,
+      combatRoundStartedAt: isoFromMs(testStartMs + 1000),
+    );
+
+    final merged = mergeHostedStartSave(local, incoming, command: 'travel');
+
+    expect(merged.gold, local.gold + 4);
+    expect(merged.currentLocationId, 'LOC-0009');
+    expect(merged.currentActivityId, 'ACT-0021');
+    expect(merged.activityStartedAt, local.activityStartedAt);
+    expect(merged.currentActionId, 'ACN-0035');
+    expect(merged.actionStartedAt, local.actionStartedAt);
+    expect(merged.actionDurationMs, 12000);
+    expect(merged.combatRoundStartedAt, local.combatRoundStartedAt);
+  });
+
+  test('travel takes server clocks when the destination or activity differs', () {
+    final local = startedCharacter(database).copyWith(
+      currentLocationId: 'LOC-0009',
+      currentActivityId: 'ACT-0021',
+      actionStartedAt: isoFromMs(testStartMs),
+      currentActionId: 'ACN-0035',
+    );
+    final otherTile = local.copyWith(
+      currentLocationId: 'LOC-0001',
+      actionStartedAt: isoFromMs(testStartMs + 1000),
+    );
+    final otherActivity = local.copyWith(
+      currentActivityId: 'ACT-0012',
+      actionStartedAt: isoFromMs(testStartMs + 1000),
+      currentActionId: 'ACN-0001',
+    );
+
+    expect(
+      mergeHostedStartSave(local, otherTile, command: 'travel').actionStartedAt,
+      otherTile.actionStartedAt,
+    );
+    expect(
+      mergeHostedStartSave(local, otherActivity, command: 'travel').currentActionId,
+      'ACN-0001',
+    );
+  });
+
   test('travel into a new fight takes the server HP', () {
     final local = startedCharacter(database).copyWith(currentHp: 190, combatEnemyId: null);
     final incoming = local.copyWith(
@@ -159,5 +217,46 @@ void main() {
 
     expect(controller.save.actionStartedAt, localStartedAt);
     expect(actionProgressAt(controller.save, clock.read()), progressBefore);
+  });
+
+  test('a conflict pull does not rewind a local arrival', () {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    controller.setMapTravelAnimation(false);
+    expect(controller.travelTo('LOC-0001', mainMapId), isTrue);
+    expect(controller.save.currentLocationId, 'LOC-0001');
+
+    final stale = controller.save.copyWith(currentLocationId: 'LOC-0009');
+    controller.adoptHostedSave(stale);
+
+    expect(controller.save.currentLocationId, 'LOC-0001');
+    expect(wouldRewindCurrentLocation(controller.save, stale), isTrue);
+  });
+
+  test('startActivity and travel keep the reward strip', () {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0009'),
+    );
+    addTearDown(controller.dispose);
+    controller.setMapTravelAnimation(false);
+    controller.noteReward(
+      const ActionRewardBundle(
+        id: 'kept',
+        xpRewards: [],
+        loot: [LootGrant(itemId: 'ITEM-0025', quantity: 1, displayName: 'Potato')],
+        goldGained: 0,
+      ),
+    );
+    expect(controller.recentRewards.single.id, 'kept');
+
+    controller.startActivity('ACT-0021');
+    expect(controller.recentRewards.single.id, 'kept');
+
+    expect(controller.travelTo('LOC-0001', mainMapId), isTrue);
+    expect(controller.recentRewards.single.id, 'kept');
   });
 }
