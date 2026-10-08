@@ -78,6 +78,25 @@ Do not use `supabase db push` against either hosted project. Live's migration
 history was empty when the test project was created (SQL had been pasted in
 the editor), so a push would try to replay from `001`.
 
+### Pending on live
+
+Applied to the test project, not yet to live. Apply in this order at the next
+ship to `main`, after the live Worker and functions are on that revision. They
+are not applied ahead of the ship: the live client still writes saves,
+profiles, and guild rows directly, and these files lock those writes down.
+
+| File | What it changes on live |
+| --- | --- |
+| `20261007020000_profile_guard.sql` | Profile guild tag must match membership; weekly rename cooldown; only the leader changes `leader_id` |
+| `20261007030000_profile_guard_upsert.sql` | Profile guard tolerates upserts |
+| `20261007040000_player_save_shadow.sql` | `player_save_shadows` / `player_save_shadow_diffs` |
+| `20261007050000_player_save_authority.sql` | The `game` function becomes the only writer of `player_saves`, plus the version bump trigger (live has only the columns, from `player_save_authority_columns_only`) |
+| `20261007060000_player_save_rankings.sql` | The `game` function becomes the only writer of leaderboard rows, PvP snapshots, and `profiles.equipment_json` |
+| `20261008043100_social_controls.sql` | Ignore, report, and rename RPCs; must follow the profile guard, since it replaces that function |
+| `20261008113000_guild_lifecycle_rpcs.sql` | Guild create/join/accept/leave/kick RPCs; drops direct inserts on `guilds`, `guild_members`, `guild_guests` |
+
+Remove a row once it is applied to live.
+
 A one-time copy of a live tester save into the test project is
 `scripts/copy-save-to-test.sh`.
 
@@ -107,7 +126,7 @@ local-only preview bundle.
 | --- | --- | --- |
 | `deploy-worker-staging.yml` | Push to `test-launch`, or **Run workflow** | `restoria-idlerpg-staging` only |
 | `deploy-worker-production.yml` | Push to `main`, or **Run workflow** | `restoria-idlerpg` only |
-| `deploy.yml` | Push to `test-launch` or `main` (functions paths) | Edge functions to that branch's project |
+| `deploy.yml` | Push to `test-launch` or `main` touching `supabase/functions`, `src/game`, or the content database | Edge functions to that branch's project |
 
 `deploy.yml` uses the same GitHub environments as the Worker workflows.
 Missing `SUPABASE_ACCESS_TOKEN` or `SUPABASE_PROJECT_REF` fails the job
