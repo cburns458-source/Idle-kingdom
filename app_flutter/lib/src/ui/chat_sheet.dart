@@ -338,9 +338,9 @@ class _ChatSheetState extends State<ChatSheet> {
                   style: TextStyle(
                     fontFamily: gameFontFamily,
                     fontSize: GameFont.m,
-                    color: segment.known ? Palette.gold : Palette.muted,
+                    color: segment.known ? Palette.chatItemLink : Palette.muted,
                     decoration: segment.known ? TextDecoration.underline : TextDecoration.none,
-                    decorationColor: Palette.gold,
+                    decorationColor: Palette.chatItemLink,
                   ),
                 ),
               ),

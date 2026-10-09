@@ -9,33 +9,31 @@ import '../spells/spells.dart';
 import 'loadout.dart';
 import 'tooltips.dart';
 
-/// How a compared value moved relative to the currently equipped gear.
+/// How one side of a compared stat sits relative to the other item.
 enum EquipCompareDeltaKind { improved, reduced, unchanged, special }
 
-/// One labeled difference between the candidate and what it would replace.
-class EquipCompareLine {
-  const EquipCompareLine({
+/// One labeled stat with a value for the equipped item and the candidate.
+class EquipCompareStatRow {
+  const EquipCompareStatRow({
     required this.label,
-    required this.kind,
-    required this.detail,
-    this.before,
-    this.after,
+    required this.equippedText,
+    required this.candidateText,
+    required this.equippedKind,
+    required this.candidateKind,
   });
 
   final String label;
-  final EquipCompareDeltaKind kind;
-
-  /// Human-readable summary, e.g. `+20` or `clears off-hand`.
-  final String detail;
-  final String? before;
-  final String? after;
+  final String equippedText;
+  final String candidateText;
+  final EquipCompareDeltaKind equippedKind;
+  final EquipCompareDeltaKind candidateKind;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'label': label,
-    'kind': kind.name,
-    'detail': detail,
-    if (before != null) 'before': before,
-    if (after != null) 'after': after,
+    'equippedText': equippedText,
+    'candidateText': candidateText,
+    'equippedKind': equippedKind.name,
+    'candidateKind': candidateKind.name,
   };
 }
 
@@ -51,7 +49,8 @@ class EquipmentCompareResult {
     required this.equippedName,
     required this.equippedEnchantmentId,
     required this.displaced,
-    required this.lines,
+    required this.stats,
+    required this.notes,
     this.reason,
   });
 
@@ -67,7 +66,8 @@ class EquipmentCompareResult {
 
   /// Extra slots cleared by two-handed / off-hand rules (not the primary replace).
   final List<({String slotId, String? itemId, String? name})> displaced;
-  final List<EquipCompareLine> lines;
+  final List<EquipCompareStatRow> stats;
+  final List<String> notes;
 
   bool get slotEmpty => equippedItemId == null;
 
@@ -85,7 +85,8 @@ class EquipmentCompareResult {
       for (final row in displaced)
         <String, Object?>{'slotId': row.slotId, 'itemId': row.itemId, 'name': row.name},
     ],
-    'lines': lines.map((line) => line.toJson()).toList(),
+    'stats': stats.map((row) => row.toJson()).toList(),
+    'notes': notes,
   };
 }
 
@@ -177,176 +178,212 @@ PlayerSave previewEquippedSave(
   return _overlaySlot(next, slotId, stack);
 }
 
-EquipCompareDeltaKind _kindForSigned(num delta) {
-  if (delta > 0) return EquipCompareDeltaKind.improved;
-  if (delta < 0) return EquipCompareDeltaKind.reduced;
-  return EquipCompareDeltaKind.unchanged;
-}
-
 String _fmtNum(num value) => jsNumberToString(value);
 
-String _fmtRange(DamageRange range) => '${_fmtNum(range.min)}–${_fmtNum(range.max)}';
+class _CombatBits {
+  const _CombatBits({
+    required this.minDamage,
+    required this.maxDamage,
+    required this.offMin,
+    required this.offMax,
+    required this.health,
+    required this.damageReduction,
+  });
 
-String _signed(num delta) {
-  if (delta > 0) return '+${_fmtNum(delta)}';
-  if (delta < 0) return _fmtNum(delta);
-  return '0';
+  final num minDamage;
+  final num maxDamage;
+  final num offMin;
+  final num offMax;
+  final num health;
+  final num damageReduction;
+
+  _CombatBits minus(_CombatBits other) {
+    return _CombatBits(
+      minDamage: minDamage - other.minDamage,
+      maxDamage: maxDamage - other.maxDamage,
+      offMin: offMin - other.offMin,
+      offMax: offMax - other.offMax,
+      health: health - other.health,
+      damageReduction: damageReduction - other.damageReduction,
+    );
+  }
 }
 
-List<EquipCompareLine> _diffCombatTotals(GameDatabase db, PlayerSave before, PlayerSave after) {
-  final lines = <EquipCompareLine>[];
-  final dmgBefore = playerDamageRange(db, before);
-  final dmgAfter = playerDamageRange(db, after);
-  final dmgMin = dmgAfter.min - dmgBefore.min;
-  final dmgMax = dmgAfter.max - dmgBefore.max;
-  final dmgKind = dmgMin == 0 && dmgMax == 0
-      ? EquipCompareDeltaKind.unchanged
-      : (dmgMin + dmgMax) >= 0
-      ? (dmgMin < 0 || dmgMax < 0 ? EquipCompareDeltaKind.special : EquipCompareDeltaKind.improved)
-      : EquipCompareDeltaKind.reduced;
-  lines.add(
-    EquipCompareLine(
-      label: 'Attack damage',
-      kind: dmgKind,
-      detail: dmgKind == EquipCompareDeltaKind.unchanged
-          ? 'unchanged'
-          : '${_signed(dmgMin)} / ${_signed(dmgMax)}',
-      before: _fmtRange(dmgBefore),
-      after: _fmtRange(dmgAfter),
-    ),
+_CombatBits _combatBits(GameDatabase db, PlayerSave save) {
+  final damage = playerDamageRange(db, save);
+  final offhand = playerOffhandDamageRange(db, save);
+  return _CombatBits(
+    minDamage: damage.min,
+    maxDamage: damage.max,
+    offMin: offhand?.min ?? 0,
+    offMax: offhand?.max ?? 0,
+    health: playerMaxHp(db, save),
+    damageReduction: playerDamageReduction(db, save),
   );
+}
 
-  final offBefore = playerOffhandDamageRange(db, before);
-  final offAfter = playerOffhandDamageRange(db, after);
-  if (offBefore != null || offAfter != null) {
-    final beforeLabel = offBefore == null ? 'none' : _fmtRange(offBefore);
-    final afterLabel = offAfter == null ? 'none' : _fmtRange(offAfter);
-    final kind = beforeLabel == afterLabel
-        ? EquipCompareDeltaKind.unchanged
-        : offAfter == null
-        ? EquipCompareDeltaKind.reduced
-        : offBefore == null
-        ? EquipCompareDeltaKind.improved
-        : (offAfter.min + offAfter.max) >= (offBefore.min + offBefore.max)
-        ? EquipCompareDeltaKind.improved
-        : EquipCompareDeltaKind.reduced;
-    lines.add(
-      EquipCompareLine(
-        label: 'Off-hand damage',
-        kind: kind,
-        detail: kind == EquipCompareDeltaKind.unchanged
-            ? 'unchanged'
-            : '$beforeLabel → $afterLabel',
-        before: beforeLabel,
-        after: afterLabel,
+/// What [save] gains from the item in [slotId] versus leaving that slot empty.
+///
+/// Might, Vitality, race, and already-worn blanket enchantments stay on both
+/// sides, so only this item's own stats and any *new* blanket it brings remain.
+_CombatBits _itemCombatContribution(GameDatabase db, PlayerSave save, String slotId) {
+  final without = _overlaySlot(save, slotId, null);
+  return _combatBits(db, save).minus(_combatBits(db, without));
+}
+
+bool _itemHasOwnDamage(EquipmentRow? row) {
+  final min = row?.raw['Min Damage'];
+  final max = row?.raw['Max Damage'];
+  return min is num || max is num;
+}
+
+/// Displayed combat numbers for one worn item.
+///
+/// Weapons and daggers list their own scaled damage (starting value × Might and
+/// any percent bonuses while that item is on). Health and damage reduction are
+/// always the amount that item adds versus an empty slot, so a new HP%
+/// enchantment includes the blanket on the rest of the player's health.
+_CombatBits _itemDisplayBits(GameDatabase db, PlayerSave wornSave, String slotId, String? itemId) {
+  if (itemId == null || itemId.isEmpty) {
+    return const _CombatBits(
+      minDamage: 0,
+      maxDamage: 0,
+      offMin: 0,
+      offMax: 0,
+      health: 0,
+      damageReduction: 0,
+    );
+  }
+  final added = _itemCombatContribution(db, wornSave, slotId);
+  final full = _combatBits(db, wornSave);
+  final primaryWeapon =
+      _itemHasOwnDamage(equipmentForItemId(db, itemId)) && slotId == weaponToolSlotId;
+  final dagger = isDaggerItem(db, itemId);
+  return _CombatBits(
+    minDamage: primaryWeapon ? full.minDamage : added.minDamage,
+    maxDamage: primaryWeapon ? full.maxDamage : added.maxDamage,
+    offMin: dagger ? full.offMin : added.offMin,
+    offMax: dagger ? full.offMax : added.offMax,
+    health: added.health,
+    damageReduction: added.damageReduction,
+  );
+}
+
+({EquipCompareDeltaKind equipped, EquipCompareDeltaKind candidate}) _kindsForValues(
+  num? equipped,
+  num? candidate, {
+  required bool equippedPresent,
+}) {
+  if (!equippedPresent) {
+    return (equipped: EquipCompareDeltaKind.unchanged, candidate: EquipCompareDeltaKind.improved);
+  }
+  final left = equipped ?? 0;
+  final right = candidate ?? 0;
+  if (left == right) {
+    return (equipped: EquipCompareDeltaKind.unchanged, candidate: EquipCompareDeltaKind.unchanged);
+  }
+  if (right > left) {
+    return (equipped: EquipCompareDeltaKind.reduced, candidate: EquipCompareDeltaKind.improved);
+  }
+  return (equipped: EquipCompareDeltaKind.improved, candidate: EquipCompareDeltaKind.reduced);
+}
+
+EquipCompareStatRow _statRow({
+  required String label,
+  required bool equippedPresent,
+  required num equippedValue,
+  required num candidateValue,
+}) {
+  final kinds = _kindsForValues(
+    equippedPresent ? equippedValue : null,
+    candidateValue,
+    equippedPresent: equippedPresent,
+  );
+  return EquipCompareStatRow(
+    label: label,
+    equippedText: equippedPresent ? _fmtNum(equippedValue) : '—',
+    candidateText: _fmtNum(candidateValue),
+    equippedKind: kinds.equipped,
+    candidateKind: kinds.candidate,
+  );
+}
+
+List<EquipCompareStatRow> _combatStatRows({
+  required bool equippedPresent,
+  required _CombatBits equipped,
+  required _CombatBits candidate,
+}) {
+  final rows = <EquipCompareStatRow>[];
+  void add(String label, num left, num right) {
+    if (!equippedPresent && right == 0) return;
+    if (equippedPresent && left == 0 && right == 0) return;
+    rows.add(
+      _statRow(
+        label: label,
+        equippedPresent: equippedPresent,
+        equippedValue: left,
+        candidateValue: right,
       ),
     );
   }
 
-  final hpBefore = playerMaxHp(db, before);
-  final hpAfter = playerMaxHp(db, after);
-  final hpDelta = hpAfter - hpBefore;
-  lines.add(
-    EquipCompareLine(
-      label: 'Health',
-      kind: _kindForSigned(hpDelta),
-      detail: hpDelta == 0 ? 'unchanged' : _signed(hpDelta),
-      before: _fmtNum(hpBefore),
-      after: _fmtNum(hpAfter),
-    ),
-  );
-
-  final drBefore = playerDamageReduction(db, before);
-  final drAfter = playerDamageReduction(db, after);
-  final drDelta = drAfter - drBefore;
-  lines.add(
-    EquipCompareLine(
-      label: 'Damage reduction',
-      kind: _kindForSigned(drDelta),
-      detail: drDelta == 0 ? 'unchanged' : _signed(drDelta),
-      before: _fmtNum(drBefore),
-      after: _fmtNum(drAfter),
-    ),
-  );
-
-  return lines;
+  add('Min damage', equipped.minDamage, candidate.minDamage);
+  add('Max damage', equipped.maxDamage, candidate.maxDamage);
+  add('Off-hand min damage', equipped.offMin, candidate.offMin);
+  add('Off-hand max damage', equipped.offMax, candidate.offMax);
+  add('Health', equipped.health, candidate.health);
+  add('Damage reduction', equipped.damageReduction, candidate.damageReduction);
+  return rows;
 }
 
-List<EquipCompareLine> _diffItemLines(
-  GameDatabase db,
-  String candidateItemId,
-  String? candidateEnchantmentId,
-  String? equippedItemId,
-  String? equippedEnchantmentId,
-) {
-  final lines = <EquipCompareLine>[];
-  final candidateStats = equipmentTooltipStatLines(equipmentForItemId(db, candidateItemId), db);
-  final equippedStats = equippedItemId == null
-      ? const <String>[]
-      : equipmentTooltipStatLines(equipmentForItemId(db, equippedItemId), db);
+num? _rowNumber(EquipmentRow? row, String key) {
+  final value = row?.raw[key];
+  return value is num && value != 0 ? value : null;
+}
 
-  final candidateSet = candidateStats.toSet();
-  final equippedSet = equippedStats.toSet();
-  for (final line in candidateStats) {
-    if (equippedSet.contains(line)) {
-      lines.add(
-        EquipCompareLine(label: line, kind: EquipCompareDeltaKind.unchanged, detail: 'unchanged'),
-      );
-    } else {
-      lines.add(
-        EquipCompareLine(label: line, kind: EquipCompareDeltaKind.improved, detail: 'gained'),
-      );
-    }
-  }
-  for (final line in equippedStats) {
-    if (!candidateSet.contains(line)) {
-      lines.add(EquipCompareLine(label: line, kind: EquipCompareDeltaKind.reduced, detail: 'lost'));
-    }
-  }
-
-  final candEnch = enchantmentTooltipLines(db, candidateEnchantmentId);
-  final eqEnch = enchantmentTooltipLines(db, equippedEnchantmentId);
-  for (final line in candEnch) {
-    lines.add(
-      EquipCompareLine(
-        label: line,
-        kind: EquipCompareDeltaKind.special,
-        detail: 'candidate enchantment',
+List<EquipCompareStatRow> _extraStatRows({
+  required bool equippedPresent,
+  required EquipmentRow? equippedRow,
+  required EquipmentRow? candidateRow,
+}) {
+  final rows = <EquipCompareStatRow>[];
+  void add(String label, String key) {
+    final left = _rowNumber(equippedRow, key);
+    final right = _rowNumber(candidateRow, key);
+    if (left == null && right == null) return;
+    final kinds = _kindsForValues(left ?? 0, right ?? 0, equippedPresent: equippedPresent);
+    rows.add(
+      EquipCompareStatRow(
+        label: label,
+        equippedText: equippedPresent && left != null ? _fmtNum(left) : '—',
+        candidateText: right != null ? _fmtNum(right) : '—',
+        equippedKind: kinds.equipped,
+        candidateKind: kinds.candidate,
       ),
     );
   }
-  for (final line in eqEnch) {
-    if (!candEnch.contains(line)) {
-      lines.add(
-        EquipCompareLine(
-          label: line,
-          kind: EquipCompareDeltaKind.special,
-          detail: 'equipped enchantment',
-        ),
-      );
-    }
-  }
 
-  if (isSpellItem(db, candidateItemId)) {
-    final spellLines = spellTooltipLines(
-      db,
-      db.items.firstWhereOrNull((row) => row.itemId == candidateItemId),
-      candidateItemId,
-    );
-    for (final line in spellLines) {
-      lines.add(
-        EquipCompareLine(label: line, kind: EquipCompareDeltaKind.special, detail: 'spell'),
-      );
-    }
-  }
+  add('Healing', 'Healing Amount');
+  add('Success chance %', 'Action Time Reduction %');
+  return rows;
+}
 
-  return lines;
+List<String> _itemNotes(GameDatabase db, String? itemId, String? enchantmentId) {
+  if (itemId == null || itemId.isEmpty) return const [];
+  final notes = <String>[
+    ...enchantmentTooltipLines(db, enchantmentId),
+    if (isSpellItem(db, itemId))
+      ...spellTooltipLines(db, db.items.firstWhereOrNull((row) => row.itemId == itemId), itemId),
+  ];
+  return notes;
 }
 
 /// Compares equipping [itemId] against the gear it would replace.
 ///
-/// Uses [playerDamageRange], [playerMaxHp], and [playerDamageReduction] on a
-/// preview loadout. Never mutates [save] and never moves inventory stacks.
+/// Each column is what that item *adds* after Might, Vitality, race, and
+/// enchantments — not the player's full totals. A new blanket percent on the
+/// candidate (for example +5% maximum HP) is included in that item's Health
+/// number; a blanket already worn on another piece is not counted again.
 EquipmentCompareResult compareEquipmentCandidate(
   GameDatabase db,
   PlayerSave save, {
@@ -368,7 +405,8 @@ EquipmentCompareResult compareEquipmentCandidate(
       equippedName: null,
       equippedEnchantmentId: null,
       displaced: const [],
-      lines: const [],
+      stats: const [],
+      notes: const [],
     );
   }
 
@@ -396,25 +434,28 @@ EquipmentCompareResult compareEquipmentCandidate(
     enchantmentId: enchantmentId,
   );
 
-  final lines = <EquipCompareLine>[
-    EquipCompareLine(
-      label: 'Slot',
-      kind: EquipCompareDeltaKind.special,
-      detail: _slotName(db, slotId),
+  final equippedPresent = current != null;
+  final equippedBits = _itemDisplayBits(db, save, slotId, current?.itemId);
+  final candidateBits = _itemDisplayBits(db, preview, slotId, itemId);
+
+  final stats = <EquipCompareStatRow>[
+    ..._combatStatRows(
+      equippedPresent: equippedPresent,
+      equipped: equippedBits,
+      candidate: candidateBits,
     ),
-    ..._diffCombatTotals(db, save, preview),
-    ..._diffItemLines(db, itemId, enchantmentId, current?.itemId, current?.enchantmentId),
+    ..._extraStatRows(
+      equippedPresent: equippedPresent,
+      equippedRow: current == null ? null : equipmentForItemId(db, current.itemId),
+      candidateRow: equipmentForItemId(db, itemId),
+    ),
   ];
 
-  for (final row in displaced) {
-    lines.add(
-      EquipCompareLine(
-        label: 'Also clears ${_slotName(db, row.slotId)}',
-        kind: EquipCompareDeltaKind.special,
-        detail: row.name ?? 'Empty',
-      ),
-    );
-  }
+  final notes = <String>[
+    for (final row in displaced) 'Also clears ${_slotName(db, row.slotId)}: ${row.name ?? 'Empty'}',
+    ..._itemNotes(db, current?.itemId, current?.enchantmentId).map((line) => 'Equipped: $line'),
+    ..._itemNotes(db, itemId, enchantmentId).map((line) => 'This item: $line'),
+  ];
 
   return EquipmentCompareResult(
     ok: true,
@@ -426,6 +467,7 @@ EquipmentCompareResult compareEquipmentCandidate(
     equippedName: current == null ? null : _itemName(db, current.itemId),
     equippedEnchantmentId: current?.enchantmentId,
     displaced: displaced,
-    lines: lines,
+    stats: stats,
+    notes: notes,
   );
 }

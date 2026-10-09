@@ -36,8 +36,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Hide compare'), findsOneWidget);
-    expect(find.textContaining('Currently equipped: Wooden Sword'), findsOneWidget);
-    expect(find.textContaining('Attack damage:'), findsOneWidget);
+    expect(find.text('Equipped'), findsOneWidget);
+    expect(find.text('This item'), findsOneWidget);
+    expect(find.text('Min damage'), findsOneWidget);
+    expect(find.textContaining('Attack damage'), findsNothing);
     expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0124');
   });
 

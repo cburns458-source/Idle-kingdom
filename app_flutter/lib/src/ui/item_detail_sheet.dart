@@ -293,53 +293,83 @@ class _EquipmentComparePanel extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              ItemIcon(item: candidateItem, size: 28),
+              Expanded(
+                child: Row(
+                  children: [
+                    ItemIcon(item: equippedItem, size: 28),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        result.slotEmpty ? 'Empty' : (result.equippedName ?? 'Empty'),
+                        style: const TextStyle(fontSize: GameFont.m),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(result.candidateName, style: const TextStyle(fontSize: GameFont.m)),
+                child: Row(
+                  children: [
+                    ItemIcon(item: candidateItem, size: 28),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        result.candidateName,
+                        style: const TextStyle(fontSize: GameFont.m),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          MutedText(
-            result.slotEmpty
-                ? 'Currently equipped: none'
-                : 'Currently equipped: ${result.equippedName}',
+          const Row(
+            children: [
+              Expanded(child: MutedText('Equipped')),
+              SizedBox(width: 8),
+              Expanded(child: MutedText('This item')),
+            ],
           ),
-          if (!result.slotEmpty) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                ItemIcon(item: equippedItem, size: 28),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    result.equippedName ?? 'Empty',
-                    style: const TextStyle(fontSize: GameFont.m),
+          const SizedBox(height: 8),
+          for (final row in result.stats) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(row.label, style: const TextStyle(fontSize: GameFont.s)),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      row.equippedText,
+                      style: TextStyle(fontSize: GameFont.m, color: _lineColor(row.equippedKind)),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      row.candidateText,
+                      style: TextStyle(fontSize: GameFont.m, color: _lineColor(row.candidateKind)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
-          const SizedBox(height: 8),
-          for (final line in result.lines)
+          for (final note in result.notes)
             Padding(
               padding: const EdgeInsets.only(bottom: 3),
               child: Text(
-                _lineText(line),
-                style: TextStyle(fontSize: GameFont.s, color: _lineColor(line.kind)),
+                note,
+                style: const TextStyle(fontSize: GameFont.s, color: Palette.gold),
               ),
             ),
         ],
       ),
     );
-  }
-
-  String _lineText(EquipCompareLine line) {
-    if (line.before != null && line.after != null) {
-      return '${line.label}: ${line.before} → ${line.after} (${line.detail})';
-    }
-    return '${line.label}: ${line.detail}';
   }
 
   Color _lineColor(EquipCompareDeltaKind kind) {
