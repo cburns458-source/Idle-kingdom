@@ -120,12 +120,73 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Equip'), findsOne);
-    expect(find.text('Favorite'), findsOne);
+    expect(find.byTooltip('Favorite'), findsOne);
     await tester.tap(find.text('Equip'));
     await tester.pumpAndSettle();
 
     expect(controller.save.equipment.slots[slotId]?.itemId, gear.itemId);
     expect(find.text('Equip'), findsNothing);
+  });
+
+  testWidgets('item popup puts favorite and close top-right and actions on one row', (
+    tester,
+  ) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: [const InventoryStack(itemId: 'ITEM-0110', quantity: 1)],
+    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller, onOpenCodexItem: (_) {}));
+    await tester.longPress(find.byTooltip('Copper Hatchet'));
+    await tester.pumpAndSettle();
+
+    final popup = find.byKey(const Key('game-popup'));
+    final close = tester.getRect(find.descendant(of: popup, matching: find.byTooltip('Close')));
+    final heart = tester.getRect(find.descendant(of: popup, matching: find.byTooltip('Favorite')));
+    final equip = tester.getRect(find.descendant(of: popup, matching: find.text('Equip')));
+    final compare = tester.getRect(find.descendant(of: popup, matching: find.text('Compare')));
+    final codex = tester.getRect(find.descendant(of: popup, matching: find.text('Codex')));
+
+    expect(find.text('🤍'), findsOne);
+    expect(heart.right, lessThanOrEqualTo(close.left));
+    expect((heart.center.dy - close.center.dy).abs(), lessThan(4));
+    expect(close.bottom, lessThan(equip.top));
+    expect((equip.center.dy - compare.center.dy).abs(), lessThan(2));
+    expect((compare.center.dy - codex.center.dy).abs(), lessThan(2));
+    expect(equip.left, lessThan(compare.left));
+    expect(compare.left, lessThan(codex.left));
+    expect(find.descendant(of: popup, matching: find.text('Close')), findsNothing);
+  });
+
+  testWidgets('worn gear can compare against a bag piece for the same slot', (tester) async {
+    final seed = unequippedCharacter().copyWith(
+      inventory: [
+        const InventoryStack(itemId: 'ITEM-0110', quantity: 1),
+        const InventoryStack(itemId: 'ITEM-0124', quantity: 1),
+      ],
+    );
+    final controller = buildController(database, seed: seed);
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, InventoryView(controller: controller));
+    await tester.longPress(find.byTooltip('Copper Hatchet'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Equip'));
+    await tester.pumpAndSettle();
+    expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0110');
+
+    await tester.longPress(find.byTooltip('Copper Hatchet').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Compare'), findsOne);
+    await tester.tap(find.text('Compare'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Equipped'), findsOne);
+    expect(find.text('From bag'), findsOne);
+    expect(find.text('Wooden Sword'), findsWidgets);
+    expect(find.textContaining('Woodcutting success chance %: 3'), findsOne);
+    expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0110');
   });
 
   testWidgets('the detail sheet names a tool skill bonus and equips it', (tester) async {
@@ -149,16 +210,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Woodcutting: +3% success chance'), findsOne);
     expect(find.text('Equip'), findsNothing);
-    expect(find.text('Favorite'), findsOne);
-    await tester.tap(find.text('Favorite'));
+    expect(find.byTooltip('Favorite'), findsOne);
+    await tester.tap(find.byTooltip('Favorite'));
     await tester.pumpAndSettle();
     expect(isFavoriteEquipped(controller.save.equipment.slots[weaponToolSlotId]), isTrue);
     expect(find.byIcon(Icons.favorite), findsOne);
 
     await tester.longPress(find.byTooltip('Copper Hatchet').first);
     await tester.pumpAndSettle();
-    expect(find.text('Unfavorite'), findsOne);
-    await tester.tap(find.text('Unfavorite'));
+    expect(find.text('❤️'), findsOne);
+    await tester.tap(find.byTooltip('Unfavorite'));
     await tester.pumpAndSettle();
     expect(isFavoriteEquipped(controller.save.equipment.slots[weaponToolSlotId]), isFalse);
     expect(find.byIcon(Icons.favorite), findsNothing);
@@ -471,8 +532,8 @@ void main() {
     await tester.longPress(find.byTooltip('Clay'));
     await tester.pumpAndSettle();
     final popup = find.byKey(const Key('game-popup'));
-    expect(find.descendant(of: popup, matching: find.text('Unfavorite')), findsOne);
-    await tester.tap(find.text('Unfavorite'));
+    expect(find.descendant(of: popup, matching: find.byTooltip('Unfavorite')), findsOne);
+    await tester.tap(find.descendant(of: popup, matching: find.byTooltip('Unfavorite')));
     await tester.pumpAndSettle();
     expect(isFavoriteStack(controller.save.inventory.single), isFalse);
     expect(find.byIcon(Icons.favorite), findsNothing);
@@ -480,11 +541,9 @@ void main() {
 
     await tester.longPress(find.byTooltip('Clay'));
     await tester.pumpAndSettle();
-    expect(
-      find.descendant(of: find.byKey(const Key('game-popup')), matching: find.text('Favorite')),
-      findsOne,
-    );
-    await tester.tap(find.text('Favorite'));
+    final reopened = find.byKey(const Key('game-popup'));
+    expect(find.descendant(of: reopened, matching: find.byTooltip('Favorite')), findsOne);
+    await tester.tap(find.descendant(of: reopened, matching: find.byTooltip('Favorite')));
     await tester.pumpAndSettle();
     expect(isFavoriteStack(controller.save.inventory.single), isTrue);
     expect(find.byIcon(Icons.favorite), findsOne);

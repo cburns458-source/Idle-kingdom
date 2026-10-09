@@ -186,6 +186,46 @@ void main() {
     expect(slotItemId(save, weaponToolSlotId), 'ITEM-0124');
   });
 
+  test('success chance rows name the skill and split hatchet from pickaxe', () {
+    var save = createNewSave(db, 0);
+    save = wear(save, weaponToolSlotId, 'ITEM-0110');
+    const copperPickaxe = 'ITEM-0111';
+    final result = compareEquipmentCandidate(db, save, itemId: copperPickaxe);
+    expect(result.ok, isTrue, reason: result.reason);
+
+    final woodcutting = stat(result, 'Woodcutting success chance %');
+    expect(woodcutting.equippedText, '3');
+    expect(woodcutting.candidateText, '—');
+    expect(woodcutting.equippedKind, EquipCompareDeltaKind.improved);
+
+    final mining = stat(result, 'Mining success chance %');
+    expect(mining.equippedText, '—');
+    expect(mining.candidateKind, EquipCompareDeltaKind.improved);
+  });
+
+  test('targetSlotId compares a bag piece against a worn slot', () {
+    var save = createNewSave(db, 0);
+    save = wear(save, weaponToolSlotId, 'ITEM-0110');
+    save = save.copyWith(
+      inventory: [
+        ...save.inventory,
+        const InventoryStack(itemId: 'ITEM-0124', quantity: 1),
+      ],
+    );
+    final candidates = compareCandidatesForSlot(db, save, weaponToolSlotId);
+    expect(candidates.map((row) => row.itemId), contains('ITEM-0124'));
+
+    final result = compareEquipmentCandidate(
+      db,
+      save,
+      itemId: 'ITEM-0124',
+      targetSlotId: weaponToolSlotId,
+    );
+    expect(result.ok, isTrue, reason: result.reason);
+    expect(result.equippedItemId, 'ITEM-0110');
+    expect(result.slotId, weaponToolSlotId);
+  });
+
   test('daggers resolve to the off-hand slot', () {
     final save = createNewSave(db, 0);
     final resolved = resolveCompareSlot(db, save, 'ITEM-0125');

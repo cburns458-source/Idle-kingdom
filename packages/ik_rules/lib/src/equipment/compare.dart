@@ -108,11 +108,15 @@ PlayerSave _overlaySlot(PlayerSave save, String slotId, EquippedStack? stack) {
 }
 
 /// Resolves which slot [itemId] would occupy, mirroring [equipInventoryIndex].
+///
+/// [targetSlotId] pins the comparison to one worn slot (used when comparing
+/// from an equipped item), as long as the item fits there.
 ({String? slotId, String? reason}) resolveCompareSlot(
   GameDatabase db,
   PlayerSave save,
   String itemId, {
   String? preferredSlotId,
+  String? targetSlotId,
 }) {
   final equipment = equipmentForItemId(db, itemId);
   final equipmentSlotId = equipment?.raw['Slot ID'];
@@ -125,6 +129,13 @@ PlayerSave _overlaySlot(PlayerSave save, String slotId, EquippedStack? stack) {
 
   final requirementFailure = equipmentRequirementFailure(db, save, equipment);
   if (requirementFailure != null) return (slotId: null, reason: requirementFailure);
+
+  if (targetSlotId != null) {
+    if (!itemFitsEquipmentSlot(db, itemId, targetSlotId)) {
+      return (slotId: null, reason: 'That item does not fit this slot.');
+    }
+    return (slotId: targetSlotId, reason: null);
+  }
 
   var slotId = equipmentSlotId;
   if (isSpellEquipment(equipment) || isSpellSlotId(slotId)) {
@@ -341,31 +352,87 @@ num? _rowNumber(EquipmentRow? row, String key) {
   return value is num && value != 0 ? value : null;
 }
 
-List<EquipCompareStatRow> _extraStatRows({
+String? _skillName(GameDatabase db, Object? skillId) {
+  if (skillId is! String || skillId.isEmpty) return null;
+  final name = db.skills
+      .firstWhereOrNull((row) => row.raw['Skill ID'] == skillId)
+      ?.raw['Display Name'];
+  return name is String && name.isNotEmpty ? name : skillId;
+}
+
+/// `Woodcutting success chance %` → value, so a hatchet and a pickaxe sharing
+/// the Weapon/Tool slot land on separate rows.
+Map<String, num> _successChanceBySkill(GameDatabase db, EquipmentRow? row) {
+  final value = _rowNumber(row, 'Action Time Reduction %');
+  if (value == null || value <= 0) return const {};
+  final skills = <String>[
+    for (final id in [row?.raw['Required Skill ID'], row?.raw['Secondary Required Skill ID']])
+      ?_skillName(db, id),
+  ];
+  final label = skills.isEmpty ? 'Success chance %' : '${skills.join(', ')} success chance %';
+  return {label: value};
+}
+
+EquipCompareStatRow _optionalRow(
+  String label,
+  num? left,
+  num? right, {
+  required bool equippedPresent,
+}) {
+  final kinds = _kindsForValues(left ?? 0, right ?? 0, equippedPresent: equippedPresent);
+  return EquipCompareStatRow(
+    label: label,
+    equippedText: equippedPresent && left != null ? _fmtNum(left) : '—',
+    candidateText: right != null ? _fmtNum(right) : '—',
+    equippedKind: kinds.equipped,
+    candidateKind: kinds.candidate,
+  );
+}
+
+List<EquipCompareStatRow> _extraStatRows(
+  GameDatabase db, {
   required bool equippedPresent,
   required EquipmentRow? equippedRow,
   required EquipmentRow? candidateRow,
 }) {
   final rows = <EquipCompareStatRow>[];
-  void add(String label, String key) {
-    final left = _rowNumber(equippedRow, key);
-    final right = _rowNumber(candidateRow, key);
-    if (left == null && right == null) return;
-    final kinds = _kindsForValues(left ?? 0, right ?? 0, equippedPresent: equippedPresent);
+  final leftHealing = _rowNumber(equippedRow, 'Healing Amount');
+  final rightHealing = _rowNumber(candidateRow, 'Healing Amount');
+  if (leftHealing != null || rightHealing != null) {
+    rows.add(_optionalRow('Healing', leftHealing, rightHealing, equippedPresent: equippedPresent));
+  }
+
+  final leftSuccess = _successChanceBySkill(db, equippedRow);
+  final rightSuccess = _successChanceBySkill(db, candidateRow);
+  for (final label in <String>{...leftSuccess.keys, ...rightSuccess.keys}) {
     rows.add(
-      EquipCompareStatRow(
-        label: label,
-        equippedText: equippedPresent && left != null ? _fmtNum(left) : '—',
-        candidateText: right != null ? _fmtNum(right) : '—',
-        equippedKind: kinds.equipped,
-        candidateKind: kinds.candidate,
+      _optionalRow(
+        label,
+        leftSuccess[label],
+        rightSuccess[label],
+        equippedPresent: equippedPresent,
       ),
     );
   }
-
-  add('Healing', 'Healing Amount');
-  add('Success chance %', 'Action Time Reduction %');
   return rows;
+}
+
+/// Distinct bag stacks that could replace what is worn in [slotId].
+List<({String itemId, String? enchantmentId})> compareCandidatesForSlot(
+  GameDatabase db,
+  PlayerSave save,
+  String slotId,
+) {
+  if (isFoodSlot(slotId) || isPotionSlot(slotId)) return const [];
+  final seen = <String>{};
+  final out = <({String itemId, String? enchantmentId})>[];
+  for (final stack in save.inventory) {
+    if (!itemFitsEquipmentSlot(db, stack.itemId, slotId)) continue;
+    final key = '${stack.itemId}|${stack.enchantmentId ?? ''}';
+    if (!seen.add(key)) continue;
+    out.add((itemId: stack.itemId, enchantmentId: stack.enchantmentId));
+  }
+  return out;
 }
 
 List<String> _itemNotes(GameDatabase db, String? itemId, String? enchantmentId) {
@@ -390,9 +457,16 @@ EquipmentCompareResult compareEquipmentCandidate(
   required String itemId,
   String? enchantmentId,
   String? preferredSlotId,
+  String? targetSlotId,
 }) {
   final name = _itemName(db, itemId);
-  final resolved = resolveCompareSlot(db, save, itemId, preferredSlotId: preferredSlotId);
+  final resolved = resolveCompareSlot(
+    db,
+    save,
+    itemId,
+    preferredSlotId: preferredSlotId,
+    targetSlotId: targetSlotId,
+  );
   if (resolved.slotId == null) {
     return EquipmentCompareResult(
       ok: false,
@@ -445,6 +519,7 @@ EquipmentCompareResult compareEquipmentCandidate(
       candidate: candidateBits,
     ),
     ..._extraStatRows(
+      db,
       equippedPresent: equippedPresent,
       equippedRow: current == null ? null : equipmentForItemId(db, current.itemId),
       candidateRow: equipmentForItemId(db, itemId),

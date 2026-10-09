@@ -35,10 +35,13 @@ void main() {
     await tester.tap(find.text('Compare'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Hide compare'), findsOneWidget);
+    expect(find.text('Hide'), findsOneWidget);
     expect(find.text('Equipped'), findsOneWidget);
     expect(find.text('This item'), findsOneWidget);
-    expect(find.text('Min damage'), findsOneWidget);
+    expect(find.textContaining('Min damage:'), findsNWidgets(2));
+    final equippedLabel = tester.getRect(find.text('Equipped'));
+    final candidateLabel = tester.getRect(find.text('This item'));
+    expect(candidateLabel.top, greaterThan(equippedLabel.bottom));
     expect(find.textContaining('Attack damage'), findsNothing);
     expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0124');
   });
