@@ -180,14 +180,14 @@ void main() {
 
     final scout = codex.enemy('ENM-0003')!;
     expect(scout.combatLevel, 17);
-    expect(scout.maximumHp, 264);
+    expect(scout.maximumHp, 257);
     expect(scout.minDamage, 33);
     expect(scout.maxDamage, 67);
 
     final rat = codex.enemy('ENM-0025')!;
     expect(rat.displayName, 'Giant Rat');
     expect(rat.combatLevel, 8);
-    expect(rat.maximumHp, 126);
+    expect(rat.maximumHp, 129);
     expect(rat.drops, isEmpty);
     expect(rat.tables, isEmpty);
     expect(rat.locations.map((row) => row.displayName), contains('Deep Mines'));

@@ -240,7 +240,16 @@ class _ItemDetailSheetState extends State<ItemDetailSheet> {
               if (_wornMode && wornCandidates.isEmpty)
                 const MutedText('No other gear for this slot in your bag.')
               else ...[
+                if (compare != null)
+                  _EquipmentComparePanel(
+                    result: compare,
+                    controller: controller,
+                    candidateHeading: _wornMode ? 'From bag' : 'This item',
+                  ),
                 if (_wornMode && wornCandidates.length > 1) ...[
+                  const SizedBox(height: 8),
+                  const MutedText('Compare with'),
+                  const SizedBox(height: 4),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
@@ -258,14 +267,7 @@ class _ItemDetailSheetState extends State<ItemDetailSheet> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 8),
                 ],
-                if (compare != null)
-                  _EquipmentComparePanel(
-                    result: compare,
-                    controller: controller,
-                    candidateHeading: _wornMode ? 'From bag' : 'This item',
-                  ),
               ],
             ],
             if (actions.isNotEmpty) ...[
@@ -311,31 +313,12 @@ class _FavoriteHeartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = favorite ? 'Unfavorite' : 'Favorite';
-    return Tooltip(
-      message: label,
-      child: Semantics(
-        button: true,
-        label: label,
-        child: PixelInkPlate(
-          onTap: onPressed,
-          step: PixelChrome.stepTight,
-          fillColor: UiChrome.of(context).iconButtonFill,
-          material: PixelPlateMaterial.grain,
-          strokeWidth: 1.5,
-          shadow: false,
-          child: SizedBox.square(
-            dimension: 32,
-            child: Center(
-              child: Text(
-                favorite ? '❤️' : '🤍',
-                key: const Key('item-favorite-heart'),
-                style: const TextStyle(fontSize: GameFont.m, height: 1),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return GameIconButton(
+      key: const Key('item-favorite-heart'),
+      icon: favorite ? Icons.favorite : Icons.favorite_border,
+      tooltip: favorite ? 'Unfavorite' : 'Favorite',
+      iconColor: favorite ? Palette.danger : null,
+      onPressed: onPressed,
     );
   }
 }

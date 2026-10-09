@@ -54,8 +54,8 @@ describe('dragon boss', () => {
       expect(result.enemyAsleep).toBe(true)
       expect(result.enemyHit).toBeNull()
       expect(result.playerHp).toBe(save.currentHp)
-      // Unarmed min 10 → sleep halves to 5 → Dragon DR 10 floors at 1.
-      expect(result.playerHit).toBe(1)
+      // Unarmed min 10 → sleep halves to 5 → Dragon DR% (sheet+vit) → 3.
+      expect(result.playerHit).toBe(3)
       save = {
         ...save,
         combatEnemyHp: result.enemyHp,
@@ -76,17 +76,17 @@ describe('dragon boss', () => {
     const dragon = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0006')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0092')!
     const started = beginCombatSave(launch, saveAtQueen(launch), action, dragon)
-    // Scaled Dragon HP is 18_500; wake threshold is half (9_250).
+    // Scaled Dragon HP is 12_709; wake threshold is half (6_354.5).
     const crossing = resolveCombatRound(
       launch,
       { ...started, combatBossSleepRoundsRemaining: 3 },
       dragon,
-      9_255,
+      6_360,
       () => 0.999,
     )
     expect(crossing.enemyAsleep).toBe(true)
     expect(crossing.enemyHit).toBeNull()
-    expect(crossing.enemyHp).toBeLessThanOrEqual(9_250)
+    expect(crossing.enemyHp).toBeLessThanOrEqual(6_354.5)
     expect(crossing.bossSleepRoundsRemaining).toBe(0)
 
     const next = resolveCombatRound(
@@ -109,19 +109,19 @@ describe('dragon boss', () => {
     const dragon = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0006')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0092')!
     const started = beginCombatSave(launch, saveAtQueen(launch), action, dragon)
-    // Rampage at 25% of scaled max HP (18_500 → 4_625).
+    // Rampage at 25% of scaled max HP (12_709 → 3_177.25).
     const calm = resolveCombatRound(
       launch,
       { ...started, combatBossSleepRoundsRemaining: 0 },
       dragon,
-      10_000,
+      6_000,
       () => 0,
     )
     const rage = resolveCombatRound(
       launch,
       { ...started, combatBossSleepRoundsRemaining: 0 },
       dragon,
-      4_000,
+      3_000,
       () => 0,
     )
     expect(calm.enemyRampage).toBe(false)

@@ -148,7 +148,7 @@ void main() {
     final compare = tester.getRect(find.descendant(of: popup, matching: find.text('Compare')));
     final codex = tester.getRect(find.descendant(of: popup, matching: find.text('Codex')));
 
-    expect(find.text('🤍'), findsOne);
+    expect(find.byIcon(Icons.favorite_border), findsOne);
     expect(heart.right, lessThanOrEqualTo(close.left));
     expect((heart.center.dy - close.center.dy).abs(), lessThan(4));
     expect(close.bottom, lessThan(equip.top));
@@ -218,7 +218,7 @@ void main() {
 
     await tester.longPress(find.byTooltip('Copper Hatchet').first);
     await tester.pumpAndSettle();
-    expect(find.text('❤️'), findsOne);
+    expect(find.byIcon(Icons.favorite), findsWidgets);
     await tester.tap(find.byTooltip('Unfavorite'));
     await tester.pumpAndSettle();
     expect(isFavoriteEquipped(controller.save.equipment.slots[weaponToolSlotId]), isFalse);

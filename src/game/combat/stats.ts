@@ -25,15 +25,17 @@ import {
 
 /** Might — weapons and damage scaling. Formerly Combat (`SKL-0001`). */
 export const MIGHT_SKILL_ID = 'SKL-0001'
-/** Vitality — armor/shields and max HP scaling. */
+/** Vitality — armor/shields and damage-resistance percent. */
 export const VITALITY_SKILL_ID = 'SKL-0016'
 /** @deprecated Use MIGHT_SKILL_ID. Kept for transitional call sites. */
 export const COMBAT_SKILL_ID = MIGHT_SKILL_ID
 
-/** Level bonuses (Might→damage, Vitality→HP) begin at this level (inclusive). */
+/** Level bonuses (Might→damage, Combat Level→HP) begin at this level (inclusive). */
 export const COMBAT_LEVEL_BONUS_START = 5
-/** Each contributing skill level grants this percent once the bonus is active. */
+/** Each contributing skill / combat level grants this percent once the bonus is active. */
 export const COMBAT_LEVEL_BONUS_PERCENT_PER_LEVEL = 1
+/** Vitality damage-resistance percent added per Vitality level. */
+export const VITALITY_DAMAGE_REDUCTION_PERCENT_PER_LEVEL = 0.25
 
 export const ATTACK_STYLES = ['offensive', 'defensive', 'balanced'] as const
 
@@ -78,26 +80,34 @@ export function enemyCombatLevel(enemy: EnemyRow): number {
   return combatLevelFromSkills(enemyMightLevel(enemy), enemyVitalityLevel(enemy))
 }
 
-/** Encounter HP from table base × Vitality bonus. Boss player-base overrides sit elsewhere. */
+/** Encounter HP from table base × Combat Level bonus. Boss player-base overrides sit elsewhere. */
 export function enemyScaledMaxHp(enemy: EnemyRow): number {
   return Math.max(
     1,
-    scaleStat(Number(enemy['Maximum HP'] ?? 0), skillLevelBonusMultiplier(enemyVitalityLevel(enemy))),
+    scaleStat(Number(enemy['Maximum HP'] ?? 0), skillLevelBonusMultiplier(enemyCombatLevel(enemy))),
   )
 }
 
-/** Kill XP = floor(true Vitality-scaled HP / 2). */
-export function enemyCombatXp(enemy: EnemyRow): number {
-  return Math.floor(enemyScaledMaxHp(enemy) / 2)
+/** Sheet DR% + Vitality × 0.25%. Same units as playerDamageReduction. */
+export function enemyDamageResistance(enemy: EnemyRow): number {
+  const sheet = Math.max(0, Number(enemy['Damage Resistance'] ?? 0))
+  return sheet + enemyVitalityLevel(enemy) * VITALITY_DAMAGE_REDUCTION_PERCENT_PER_LEVEL
 }
 
-/** Enemy DR points from the sheet; blank / null means 0. Same units as player gear DR. */
-export function enemyDamageResistance(enemy: EnemyRow): number {
-  return Math.max(0, Number(enemy['Damage Resistance'] ?? 0))
+/** HP felt through DR%: scaledMaxHp / (1 − DR%). Used for kill XP. */
+export function enemyEffectiveMaxHp(enemy: EnemyRow): number {
+  const scaled = enemyScaledMaxHp(enemy)
+  const pct = Math.min(99, Math.max(0, enemyDamageResistance(enemy)))
+  return Math.max(1, Math.floor(scaled / (1 - pct / 100)))
+}
+
+/** Kill XP = floor(effective HP / 2). */
+export function enemyCombatXp(enemy: EnemyRow): number {
+  return Math.floor(enemyEffectiveMaxHp(enemy) / 2)
 }
 
 /**
- * Apply enemy DR to a positive hit. Zero-damage swings stay zero so the damage
+ * Apply enemy DR% to a positive hit. Zero-damage swings stay zero so the damage
  * floor does not invent a 1-damage tick on a whiff / lockpick.
  */
 export function applyEnemyDamageResistance(
@@ -126,8 +136,19 @@ export function mightDamageMultiplier(save: PlayerSave): number {
   return skillLevelBonusMultiplier(getSkillProgress(save, MIGHT_SKILL_ID).level)
 }
 
+/** Max-HP multiplier from Combat Level (1% per level from level 5). */
+export function combatLevelHpMultiplier(save: PlayerSave): number {
+  return skillLevelBonusMultiplier(combatLevelOf(save))
+}
+
+/** Vitality contribution to damage resistance percent (0.25% per level). */
+export function vitalityDamageReductionPercent(save: PlayerSave): number {
+  return getSkillProgress(save, VITALITY_SKILL_ID).level * VITALITY_DAMAGE_REDUCTION_PERCENT_PER_LEVEL
+}
+
+/** @deprecated Use combatLevelHpMultiplier. HP scales from Combat Level now. */
 export function vitalityHpMultiplier(save: PlayerSave): number {
-  return skillLevelBonusMultiplier(getSkillProgress(save, VITALITY_SKILL_ID).level)
+  return combatLevelHpMultiplier(save)
 }
 
 /** Flat style damage bonus percent (0 for balanced). */
@@ -286,19 +307,25 @@ export function playerOffhandDamageRange(
   )
 }
 
+/** Total damage-resistance percent: gear + stance + spells + Vitality. */
 export function playerDamageReduction(db: GameDatabase, save: PlayerSave): number {
   const gear = equippedRows(db, save).reduce(
     (sum, row) => sum + Number(row['Damage Reduction'] ?? 0),
     0,
   )
   const spellDr = activeSpellDamageReductionPercent(db, save)
-  return gear + attackStyleDamageReduction(normalizeAttackStyle(save.attackStyle)) + spellDr
+  return (
+    gear +
+    attackStyleDamageReduction(normalizeAttackStyle(save.attackStyle)) +
+    spellDr +
+    vitalityDamageReductionPercent(save)
+  )
 }
 
 export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
   const base = configNumber(db, 'starting_max_hp', 1000)
   const bonus = equippedRows(db, save).reduce((sum, row) => sum + Number(row['HP Bonus'] ?? 0), 0)
-  const levelMult = vitalityHpMultiplier(save)
+  const levelMult = combatLevelHpMultiplier(save)
   const raceMult = raceMaxHpMultiplier(db, save)
   const enchantHpMult = 1 + equippedEnchantmentMaxHpBonusPercent(db, save) / 100
   return Math.max(1, scaleStat(base + bonus, levelMult * raceMult * enchantHpMult))
@@ -306,7 +333,7 @@ export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
 
 export function playerBaseMaxHp(db: GameDatabase, save: PlayerSave): number {
   const base = configNumber(db, 'starting_max_hp', 1000)
-  const levelMult = vitalityHpMultiplier(save)
+  const levelMult = combatLevelHpMultiplier(save)
   const raceMult = raceMaxHpMultiplier(db, save)
   return Math.max(1, scaleStat(base, levelMult * raceMult))
 }
@@ -317,15 +344,22 @@ export function rollDamage(min: number, max: number, random: () => number = Math
   return lo + Math.floor(random() * (hi - lo + 1))
 }
 
+/**
+ * Apply reduction as a percent of rawDamage, floored, not below damageFloor.
+ * Gear DR, stance, spells, and Vitality all add into one percent before this runs.
+ */
 export function applyMitigation(
   rawDamage: number,
   reduction: number,
   damageFloor: number,
 ): number {
-  return Math.max(damageFloor, rawDamage - Math.max(0, reduction))
+  if (rawDamage <= 0) return 0
+  const pct = Math.min(100, Math.max(0, reduction))
+  const mitigated = Math.floor(rawDamage * (1 - pct / 100))
+  return Math.max(damageFloor, mitigated)
 }
 
-/** @deprecated Use mightDamageMultiplier / vitalityHpMultiplier. */
+/** @deprecated Use mightDamageMultiplier / combatLevelHpMultiplier. */
 export function combatLevelBonusMultiplier(save: PlayerSave): number {
   return mightDamageMultiplier(save)
 }

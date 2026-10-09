@@ -227,7 +227,7 @@ void main() {
     expect(find.text('Level 8'), findsOne);
     expect(find.textContaining('Might 5'), findsOne);
     expect(find.textContaining('Vitality 5'), findsOne);
-    expect(find.textContaining('Health 126'), findsOne);
+    expect(find.textContaining('Health 129'), findsOne);
     expect(find.textContaining('Damage 12–27'), findsOne);
     expect(find.textContaining('Combat XP'), findsOne);
     expect(find.text('No item drops.'), findsOne);

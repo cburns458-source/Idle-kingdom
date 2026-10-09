@@ -6,9 +6,11 @@ import { createNewSave } from '../save/saveStore'
 import { enemyEncounterDamageRange, enemyEncounterMaxHp } from './boss'
 import {
   combatLevelFromSkills,
+  combatLevelHpMultiplier,
   combatLevelOf,
   enemyCombatLevel,
   enemyCombatXp,
+  enemyEffectiveMaxHp,
   enemyMightLevel,
   enemyScaledDamageRange,
   enemyScaledMaxHp,
@@ -19,7 +21,7 @@ import {
   playerDamageReduction,
   playerMaxHp,
   splitCombatVictoryXp,
-  vitalityHpMultiplier,
+  vitalityDamageReductionPercent,
 } from './stats'
 
 const rawDatabase = JSON.parse(
@@ -77,7 +79,7 @@ describe('might / vitality combat stats', () => {
     expect(combatLevelOf(withSkillLevels(save, { 'SKL-0001': 10, 'SKL-0016': 3 }))).toBe(10)
   })
 
-  it('scales existing enemy HP/XP from Vitality and damage from Might', () => {
+  it('scales existing enemy HP/XP from Combat Level and damage from Might', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     const cow = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
@@ -86,17 +88,17 @@ describe('might / vitality combat stats', () => {
     expect(enemyVitalityLevel(cow)).toBe(5)
     expect(enemyCombatLevel(cow)).toBe(5)
     expect(enemyScaledMaxHp(cow)).toBe(105)
-    expect(enemyCombatXp(cow)).toBe(52)
+    expect(enemyCombatXp(cow)).toBe(53)
     expect(enemyEncounterMaxHp(launch, save, cow)).toBe(105)
     expect(enemyEncounterDamageRange(launch, save, cow)).toEqual({ min: 10, max: 20 })
 
     expect(enemyMightLevel(scout)).toBe(12)
     expect(enemyVitalityLevel(scout)).toBe(10)
     expect(enemyCombatLevel(scout)).toBe(17)
-    expect(enemyScaledMaxHp(scout)).toBe(264)
-    expect(enemyCombatXp(scout)).toBe(132)
+    expect(enemyScaledMaxHp(scout)).toBe(257)
+    expect(enemyCombatXp(scout)).toBe(131)
     expect(enemyScaledDamageRange(scout)).toEqual({ min: 33, max: 67 })
-    expect(enemyEncounterMaxHp(launch, save, scout)).toBe(264)
+    expect(enemyEncounterMaxHp(launch, save, scout)).toBe(257)
     expect(enemyEncounterDamageRange(launch, save, scout)).toEqual({ min: 33, max: 67 })
   })
 
@@ -104,20 +106,20 @@ describe('might / vitality combat stats', () => {
     const { launch, source } = prepareDatabase(rawDatabase)
     // id, name, might, vitality, baseHp, minDmg, maxDmg, combatXp, locationId
     const launchEnemies = [
-      ['ENM-0025', 'Giant Rat', 5, 5, 120, 12, 26, 63, 'LOC-0011'],
-      ['ENM-0026', 'Bandit', 15, 6, 200, 16, 40, 106, 'LOC-0052'],
-      ['ENM-0027', 'Cave Bat', 14, 8, 200, 37, 73, 108, 'LOC-0046'],
-      ['ENM-0029', 'Bandit Captain', 26, 16, 450, 55, 108, 261, 'LOC-0052'],
-      ['ENM-0030', 'Harpy', 70, 40, 1200, 152, 268, 840, 'LOC-0047'],
-      ['ENM-0031', 'Giant', 60, 50, 1500, 164, 288, 1125, 'LOC-0049'],
-      ['ENM-0033', 'Wyvern', 85, 60, 2200, 236, 404, 1760, 'LOC-0047'],
-      ['ENM-0034', 'Cyclops', 75, 70, 1900, 260, 440, 1615, 'LOC-0049'],
+      ['ENM-0025', 'Giant Rat', 5, 5, 120, 12, 26, 65, 'LOC-0011'],
+      ['ENM-0026', 'Bandit', 15, 6, 180, 16, 40, 107, 'LOC-0052'],
+      ['ENM-0027', 'Cave Bat', 14, 8, 180, 37, 73, 107, 'LOC-0046'],
+      ['ENM-0029', 'Bandit Captain', 26, 16, 360, 55, 108, 260, 'LOC-0052'],
+      ['ENM-0030', 'Harpy', 70, 40, 830, 152, 268, 843, 'LOC-0047'],
+      ['ENM-0031', 'Giant', 60, 50, 1010, 164, 288, 1120, 'LOC-0049'],
+      ['ENM-0033', 'Wyvern', 85, 60, 1430, 236, 404, 1757, 'LOC-0047'],
+      ['ENM-0034', 'Cyclops', 75, 70, 1200, 260, 440, 1618, 'LOC-0049'],
     ] as const
     const expansionEnemies = [
-      ['ENM-0028', 'Mage Apprentice', 25, 12, 250, 45, 90, 140, null],
-      ['ENM-0032', 'Gargoyle', 65, 60, 1750, 192, 338, 1400, null],
-      ['ENM-0035', 'Demon', 90, 65, 2500, 475, 745, 2062, null],
-      ['ENM-0036', 'Greater Gargoyle', 90, 75, 3500, 555, 860, 3062, null],
+      ['ENM-0028', 'Mage Apprentice', 25, 12, 210, 45, 90, 138, null],
+      ['ENM-0032', 'Gargoyle', 65, 60, 1080, 192, 338, 1396, null],
+      ['ENM-0035', 'Demon', 90, 65, 1500, 475, 745, 2066, null],
+      ['ENM-0036', 'Greater Gargoyle', 90, 75, 2220, 555, 860, 3059, null],
     ] as const
     const placeholderIds = new Set<string>([
       ...launchEnemies.map(([id]) => id),
@@ -209,16 +211,16 @@ describe('might / vitality combat stats', () => {
     ).toBe(false)
   })
 
-  it('keeps every enemy Combat XP column in sync with floor(scaledMaxHp / 2)', () => {
+  it('keeps every enemy Combat XP column in sync with floor(effectiveMaxHp / 2)', () => {
     const { launch, source } = prepareDatabase(rawDatabase)
     for (const enemy of source.Enemies) {
       if (typeof enemy['Maximum HP'] !== 'number') continue
-      const expected = Math.floor(enemyScaledMaxHp(enemy) / 2)
+      const expected = Math.floor(enemyEffectiveMaxHp(enemy) / 2)
       expect(enemy['Combat XP'], enemy['Enemy ID']).toBe(expected)
       expect(enemyCombatXp(enemy), enemy['Enemy ID']).toBe(expected)
     }
     for (const enemy of launch.Enemies) {
-      const expected = Math.floor(enemyScaledMaxHp(enemy) / 2)
+      const expected = Math.floor(enemyEffectiveMaxHp(enemy) / 2)
       expect(enemy['Combat XP'], enemy['Enemy ID']).toBe(expected)
       expect(enemyCombatXp(enemy), enemy['Enemy ID']).toBe(expected)
     }
@@ -228,15 +230,18 @@ describe('might / vitality combat stats', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     expect(mightDamageMultiplier(save)).toBe(1)
-    expect(vitalityHpMultiplier(save)).toBe(1)
+    expect(combatLevelHpMultiplier(save)).toBe(1)
     expect(playerMaxHp(launch, save)).toBe(1000)
+    expect(vitalityDamageReductionPercent(save)).toBe(0.25)
     const level5 = withSkillLevels(save, { 'SKL-0001': 5, 'SKL-0016': 5 })
     expect(mightDamageMultiplier(level5)).toBeCloseTo(1.05)
-    expect(vitalityHpMultiplier(level5)).toBeCloseTo(1.05)
-    expect(playerMaxHp(launch, level5)).toBe(1050)
+    expect(combatLevelOf(level5)).toBe(8)
+    expect(combatLevelHpMultiplier(level5)).toBeCloseTo(1.08)
+    expect(playerMaxHp(launch, level5)).toBe(1080)
+    expect(vitalityDamageReductionPercent(level5)).toBeCloseTo(1.25)
   })
 
-  it('scales damage from Might and HP from Vitality', () => {
+  it('scales damage from Might and HP from Combat Level', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = withSkillLevels(createNewSave(launch), {
       'SKL-0001': 10,
@@ -252,8 +257,9 @@ describe('might / vitality combat stats', () => {
       },
     }
     expect(mightDamageMultiplier(unarmed)).toBeCloseTo(1.1)
-    expect(vitalityHpMultiplier(unarmed)).toBeCloseTo(1.2)
-    expect(playerMaxHp(launch, unarmed)).toBe(1200)
+    expect(combatLevelOf(unarmed)).toBe(23)
+    expect(combatLevelHpMultiplier(unarmed)).toBeCloseTo(1.23)
+    expect(playerMaxHp(launch, unarmed)).toBe(1230)
     expect(playerDamageRange(launch, unarmed)).toEqual({ min: 11, max: 33 })
   })
 
@@ -269,8 +275,9 @@ describe('might / vitality combat stats', () => {
   it('applies offensive damage and defensive DR stance bonuses; balanced gets none', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
-    expect(playerDamageReduction(launch, { ...base, attackStyle: 'balanced' })).toBe(0)
-    expect(playerDamageReduction(launch, { ...base, attackStyle: 'defensive' })).toBe(1)
+    const vitalityDr = vitalityDamageReductionPercent(base)
+    expect(playerDamageReduction(launch, { ...base, attackStyle: 'balanced' })).toBe(vitalityDr)
+    expect(playerDamageReduction(launch, { ...base, attackStyle: 'defensive' })).toBe(1 + vitalityDr)
 
     const unarmed = {
       ...base,

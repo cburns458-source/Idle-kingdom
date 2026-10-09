@@ -130,19 +130,19 @@
       "Key": "spell_cycle_duration",
       "Value": 3600,
       "Unit": "seconds",
-      "Notes": "Deprecated — equipped spells are always active. Kept for older clients; unused by current runtime."
+      "Notes": "Deprecated \u2014 equipped spells are always active. Kept for older clients; unused by current runtime."
     },
     {
       "Key": "copy.merchant_tip",
       "Value": "Last I heard, Quill was nearby.",
       "Unit": null,
-      "Notes": "Unused fallback. The general-store merchant names Quill’s stop in code."
+      "Notes": "Unused fallback. The general-store merchant names Quill\u2019s stop in code."
     },
     {
       "Key": "copy.merchant_tip_spent",
       "Value": "Last I heard, Quill was nearby.",
       "Unit": null,
-      "Notes": "Unused fallback. The general-store merchant names Quill’s stop in code."
+      "Notes": "Unused fallback. The general-store merchant names Quill\u2019s stop in code."
     },
     {
       "Key": "copy.quill_known",
@@ -152,9 +152,9 @@
     },
     {
       "Key": "copy.quill_teach",
-      "Value": "A bow's only half the work — you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
+      "Value": "A bow's only half the work \u2014 you'll want a quiver too. I can show you how to make both. Hunt with a bow and you pick up combat experience as well. The animals fight back; might as well learn from it.",
       "Unit": null,
-      "Notes": "Quill’s hunting lesson, spoken the first time the player asks."
+      "Notes": "Quill\u2019s hunting lesson, spoken the first time the player asks."
     },
     {
       "Key": "copy.default_merchant_line",
@@ -3992,7 +3992,7 @@
       "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "chromium_bar",
-      "Notes": "Metallurgy Proficiency 80. Renamed from Ancient Alloy.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Metallurgy Proficiency 80. Renamed from Ancient Alloy.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Base Sell Value": 2200,
       "Stackable": null
     },
@@ -5724,7 +5724,7 @@
       "Functional / Source Tags": "alchemy_potion_output_boost",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "While crafting potions, output rolls 2–3 instead of 1–3. No extra experience. Not yet obtainable.",
+      "Description": "While crafting potions, output rolls 2\u20133 instead of 1\u20133. No extra experience. Not yet obtainable.",
       "Icon Asset Key": "alchemist_goggles",
       "Notes": "Output-only specialist. Stub content; no acquisition path yet.",
       "Base Sell Value": 69,
@@ -6748,7 +6748,7 @@
       "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "chromium_ore",
-      "Notes": "Mining Proficiency 80.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Mining Proficiency 80.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Base Sell Value": 134,
       "Stackable": null
     },
@@ -6765,7 +6765,7 @@
       "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "vanadium_ore",
-      "Notes": "Mining Proficiency 90.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Mining Proficiency 90.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Base Sell Value": 198,
       "Stackable": null
     },
@@ -6782,7 +6782,7 @@
       "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "vanadium_bar",
-      "Notes": "Metallurgy Proficiency 90.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Metallurgy Proficiency 90.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Base Sell Value": 2800,
       "Stackable": null
     },
@@ -6816,7 +6816,7 @@
       "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "cinnamon_log",
-      "Notes": "Retired gather drop; cinnamon trees drop Cinnamon Bark.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Retired gather drop; cinnamon trees drop Cinnamon Bark.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Base Sell Value": 3,
       "Stackable": null
     },
@@ -6867,7 +6867,7 @@
       "Release Phase": "Expansion",
       "Description": "Fragrant bark stripped from a cinnamon tree.",
       "Icon Asset Key": "cinnamon_bark",
-      "Notes": "Primary cinnamon woodcutting drop.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Primary cinnamon woodcutting drop.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Base Sell Value": 1,
       "Stackable": null
     },
@@ -6952,7 +6952,7 @@
       "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "raw_swordfish",
-      "Notes": "Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Future expansion \u2014 hidden from Launch until wired into the world.",
       "Base Sell Value": 106,
       "Stackable": null
     },
@@ -6969,7 +6969,7 @@
       "Release Phase": "Expansion",
       "Description": null,
       "Icon Asset Key": "cooked_swordfish",
-      "Notes": "Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Future expansion \u2014 hidden from Launch until wired into the world.",
       "Base Sell Value": 198,
       "Stackable": null
     },
@@ -7171,7 +7171,7 @@
       "Functional / Source Tags": "quest_item",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A bundle laid at the groves to regain the forest’s trust.",
+      "Description": "A bundle laid at the groves to regain the forest\u2019s trust.",
       "Icon Asset Key": "forest_offering",
       "Notes": "Consumed when placed at Ancient Forest nodes during Through the Thicket.",
       "Base Sell Value": 0,
@@ -7188,7 +7188,7 @@
       "Functional / Source Tags": "combat_weapon; woodcutting_tool; combat_usable; hatchet",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A woodcutter’s blade. Better than a steel sword, and it clears vines faster.",
+      "Description": "A woodcutter\u2019s blade. Better than a steel sword, and it clears vines faster.",
       "Icon Asset Key": "machete",
       "Notes": "Might 40 and Woodcutting 40. Vine chops use 24% action time reduction.",
       "Base Sell Value": 198,
@@ -9028,7 +9028,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "artisanry_output; special_effect; +15% relative Drop Chance",
       "Status": "Planned",
-      "Notes": "Special-effect jewelry — not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
+      "Notes": "Special-effect jewelry \u2014 not Arcana-enchantable. +15% relative drop chance (stacks additively with luck potions)."
     },
     {
       "Equipment ID": "EQP-0105",
@@ -10324,7 +10324,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0005; damage_range_bonus_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0177",
@@ -10342,7 +10342,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0007; item_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016). Stacks additively with other Abundance spells."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016). Stacks additively with other Abundance spells."
     },
     {
       "Equipment ID": "EQP-0178",
@@ -10576,7 +10576,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0009; extra_food_per_round:1; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0191",
@@ -10666,7 +10666,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "alchemy_potion_output_boost",
       "Status": "Planned",
-      "Notes": "Potion crafts roll 2–3 output. No XP change. Not obtainable yet."
+      "Notes": "Potion crafts roll 2\u20133 output. No XP change. Not obtainable yet."
     },
     {
       "Equipment ID": "EQP-0197",
@@ -10921,7 +10921,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0023; gold_double_chance_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0211",
@@ -10939,7 +10939,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0024; damage_reduction_percent:5; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0212",
@@ -10957,7 +10957,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0025; damage_range_bonus_percent:5; lifesteal_percent:5; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0213",
@@ -10975,7 +10975,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0026; damage_range_bonus_percent:15; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0214",
@@ -10993,7 +10993,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0027; production_duration_reduction_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0215",
@@ -11011,7 +11011,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "spell; spell_effect:ENCH-0028; gathering_duration_reduction_percent:10; spell_stacks",
       "Status": "Confirmed",
-      "Notes": "May be equipped to any Spell slot (SLOT-0013–SLOT-0016)."
+      "Notes": "May be equipped to any Spell slot (SLOT-0013\u2013SLOT-0016)."
     },
     {
       "Equipment ID": "EQP-0216",
@@ -11225,11 +11225,11 @@
       "Internal Key": "critical_strike_chance",
       "Display Name": "Critical Strike Chance",
       "Valid Target": "Eligible weapon or jewelry",
-      "Effect": "+10% Critical Strike Chance (1.5× damage on crit)",
+      "Effect": "+10% Critical Strike Chance (1.5\u00d7 damage on crit)",
       "Required Materials": "Enchanting Tablet; Rabbit's Foot; Steel Dagger; Essence",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5× rolled damage."
+      "Notes": "Crit chances from multiple enchanted equipped items add together. Multiplier is 1.5\u00d7 rolled damage."
     },
     {
       "Enchantment ID": "ENCH-0009",
@@ -12086,7 +12086,7 @@
       "Node ID": "NODE-0032",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight — arrival is peaceful.",
+      "Description": "Training grounds for Castle Guard combat practice. Challenge the guards when you want a fight \u2014 arrival is peaceful.",
       "Danger / Hostility": null,
       "Background Asset Key": "locations/loc_citadel_combat.webp",
       "Map Node Name": null,
@@ -12445,7 +12445,7 @@
       "Node ID": "NODE-0052",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "The road between farm and town — bandits prey on travelers here. The river offers fishing, and abandoned merchant chests invite thievery.",
+      "Description": "The road between farm and town \u2014 bandits prey on travelers here. The river offers fishing, and abandoned merchant chests invite thievery.",
       "Danger / Hostility": "Danger warning: approximately Combat Level 9.",
       "Background Asset Key": "locations/loc_forest_path.webp",
       "Parent Location ID": null,
@@ -12602,7 +12602,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Town square to Rose’s Apothecary"
+      "Notes": "Town square to Rose\u2019s Apothecary"
     },
     {
       "Connection ID": "TRV-0012",
@@ -12818,7 +12818,7 @@
       "Required Mount / Status": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Shallows ↔ Kelp Forest"
+      "Notes": "Shallows \u2194 Kelp Forest"
     },
     {
       "Connection ID": "TRV-0030",
@@ -13136,7 +13136,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Bronze and iron swords, helmets, chestplates, and platelegs.",
-      "Notes": "Shop only. Buys back at the normal 1× general-store rate."
+      "Notes": "Shop only. Buys back at the normal 1\u00d7 general-store rate."
     },
     {
       "Facility ID": "FAC-0018",
@@ -13285,7 +13285,7 @@
       "Internal Key": "fish_river_coast",
       "Contextual Name": "Fish the river and coast",
       "Location ID": "LOC-0004",
-      "Description": "Fish the docks for man of war, shark, and marlin — seagulls sometimes dive the line.",
+      "Description": "Fish the docks for man of war, shark, and marlin \u2014 seagulls sometimes dive the line.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0004",
       "Pool Internal Key": "dock_fishing",
@@ -13311,7 +13311,7 @@
       "Internal Key": "prospect_mountain_side",
       "Contextual Name": "Prospect the mountain side",
       "Location ID": "LOC-0046",
-      "Description": "Prospect the slopes for ore — cave bats nest in the cuts.",
+      "Description": "Prospect the slopes for ore \u2014 cave bats nest in the cuts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0006",
       "Pool Internal Key": "mountain_slopes_pool",
@@ -13363,7 +13363,7 @@
       "Internal Key": "gather_woodland_supplies",
       "Contextual Name": "Gather woodland supplies",
       "Location ID": "LOC-0008",
-      "Description": "Gather woodland supplies — and watch for boars.",
+      "Description": "Gather woodland supplies \u2014 and watch for boars.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0010",
       "Pool Internal Key": "kingswoods_harvest",
@@ -13663,7 +13663,7 @@
       "Internal Key": "train_citadel_grounds",
       "Contextual Name": "Challenge the guards",
       "Location ID": "LOC-0032",
-      "Description": "Face Castle Guard training encounters. Optional — the grounds stay peaceful until you start this.",
+      "Description": "Face Castle Guard training encounters. Optional \u2014 the grounds stay peaceful until you start this.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0024",
       "Pool Internal Key": "citadel_guards",
@@ -13767,7 +13767,7 @@
       "Internal Key": "enter_the_catacombs",
       "Contextual Name": "Enter the catacombs",
       "Location ID": "LOC-0037",
-      "Description": "Dungeons coming soon…",
+      "Description": "Dungeons coming soon\u2026",
       "Danger Warning Combat Level": null,
       "Pool ID": null,
       "Pool Internal Key": null,
@@ -14106,7 +14106,7 @@
       "Internal Key": "challenge_the_peak",
       "Contextual Name": "Scout the peak",
       "Location ID": "LOC-0047",
-      "Description": "Gather bleeding tooth on the high roost — harpies still nest here.",
+      "Description": "Gather bleeding tooth on the high roost \u2014 harpies still nest here.",
       "Danger Warning Combat Level": 72,
       "Pool ID": "POOL-0050",
       "Pool Internal Key": "the_peak_mixed",
@@ -14119,7 +14119,7 @@
       "Internal Key": "prospect_the_badlands",
       "Contextual Name": "Prospect the badlands",
       "Location ID": "LOC-0048",
-      "Description": "Prospect the badlands for ore — rock trolls haunt the cuts.",
+      "Description": "Prospect the badlands for ore \u2014 rock trolls haunt the cuts.",
       "Danger Warning Combat Level": null,
       "Pool ID": "POOL-0051",
       "Pool Internal Key": "badlands_mining",
@@ -14262,7 +14262,7 @@
       "Internal Key": "craft_forest_offering",
       "Contextual Name": "Craft forest offerings",
       "Location ID": "LOC-0040",
-      "Description": "Craft offerings to regain the forest’s trust.",
+      "Description": "Craft offerings to regain the forest\u2019s trust.",
       "Danger Warning Combat Level": null,
       "Pool ID": null,
       "Pool Internal Key": null,
@@ -14476,7 +14476,7 @@
       "Internal Key": "cut_badlands",
       "Contextual Name": "Cut ironwood in the badlands",
       "Location ID": "LOC-0048",
-      "Description": "Cut ironwood stands in the badlands — giants sometimes lumber through."
+      "Description": "Cut ironwood stands in the badlands \u2014 giants sometimes lumber through."
     },
     {
       "Activity ID": "ACT-0097",
@@ -14725,7 +14725,7 @@
       "Action ID": "ACN-0048",
       "Weight": 60,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts — poplar, 60%."
+      "Notes": "Citadel Gathering Outskirts \u2014 poplar, 60%."
     },
     {
       "Pool Entry ID": "PEN-0062",
@@ -14733,7 +14733,7 @@
       "Action ID": "ACN-0009",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Citadel Combat Training Grounds — castle guard only."
+      "Notes": "Citadel Combat Training Grounds \u2014 castle guard only."
     },
     {
       "Pool Entry ID": "PEN-0063",
@@ -14741,7 +14741,7 @@
       "Action ID": "ACN-0171",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "QST-0003 Pressure the Guards — nervous guard only."
+      "Notes": "QST-0003 Pressure the Guards \u2014 nervous guard only."
     },
     {
       "Pool Entry ID": "PEN-0064",
@@ -14749,7 +14749,7 @@
       "Action ID": "ACN-0172",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Temple — Monk only."
+      "Notes": "Temple \u2014 Monk only."
     },
     {
       "Pool Entry ID": "PEN-0075",
@@ -14757,7 +14757,7 @@
       "Action ID": "ACN-0176",
       "Weight": 90,
       "Status": "Planned",
-      "Notes": "Fight ghost — 90% of fending off the old spirits."
+      "Notes": "Fight ghost \u2014 90% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0076",
@@ -14765,7 +14765,7 @@
       "Action ID": "ACN-0006",
       "Weight": 10,
       "Status": "Planned",
-      "Notes": "Fight skeleton — 10% of fending off the old spirits."
+      "Notes": "Fight skeleton \u2014 10% of fending off the old spirits."
     },
     {
       "Pool Entry ID": "PEN-0077",
@@ -14773,7 +14773,7 @@
       "Action ID": "ACN-0047",
       "Weight": 40,
       "Status": "Planned",
-      "Notes": "Citadel Gathering Outskirts — oak, 40%."
+      "Notes": "Citadel Gathering Outskirts \u2014 oak, 40%."
     },
     {
       "Pool Entry ID": "PEN-0078",
@@ -14861,7 +14861,7 @@
       "Action ID": "ACN-0017",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts — pheasant only."
+      "Notes": "Gathering Outskirts \u2014 pheasant only."
     },
     {
       "Pool Entry ID": "PEN-0091",
@@ -14869,7 +14869,7 @@
       "Action ID": "ACN-0105",
       "Weight": 100,
       "Status": "Planned",
-      "Notes": "Gathering Outskirts — wild roots only."
+      "Notes": "Gathering Outskirts \u2014 wild roots only."
     },
     {
       "Pool Entry ID": "PEN-0094",
@@ -15731,7 +15731,7 @@
       "Target ID": "ENM-0001",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 52,
+      "XP Reward": 53,
       "Guaranteed Gold": null,
       "Drop Chance": 40,
       "Reward Table ID": "RWT-0001",
@@ -15771,7 +15771,7 @@
       "Target ID": "ENM-0003",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 132,
+      "XP Reward": 131,
       "Guaranteed Gold": null,
       "Drop Chance": 25,
       "Reward Table ID": "RWT-0003",
@@ -15791,7 +15791,7 @@
       "Target ID": "ENM-0004",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 480,
+      "XP Reward": 481,
       "Guaranteed Gold": null,
       "Drop Chance": 30,
       "Reward Table ID": "RWT-0005",
@@ -15811,7 +15811,7 @@
       "Target ID": "ENM-0007",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 1275,
+      "XP Reward": 1269,
       "Guaranteed Gold": null,
       "Drop Chance": 32,
       "Reward Table ID": "RWT-0012",
@@ -15851,7 +15851,7 @@
       "Target ID": "ENM-0009",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 303,
+      "XP Reward": 301,
       "Guaranteed Gold": null,
       "Drop Chance": 15,
       "Reward Table ID": "RWT-0009",
@@ -15871,7 +15871,7 @@
       "Target ID": "ENM-0010",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 210,
+      "XP Reward": 208,
       "Guaranteed Gold": null,
       "Drop Chance": 36,
       "Reward Table ID": "RWT-0007",
@@ -15891,7 +15891,7 @@
       "Target ID": "ENM-0011",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 840,
+      "XP Reward": 843,
       "Guaranteed Gold": null,
       "Drop Chance": 24,
       "Reward Table ID": "RWT-0010",
@@ -15911,7 +15911,7 @@
       "Target ID": "ENM-0012",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 2160,
+      "XP Reward": 2164,
       "Guaranteed Gold": null,
       "Drop Chance": 36,
       "Reward Table ID": "RWT-0013",
@@ -15931,7 +15931,7 @@
       "Target ID": "ENM-0013",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 2312,
+      "XP Reward": 2319,
       "Guaranteed Gold": null,
       "Drop Chance": 30,
       "Reward Table ID": "RWT-0014",
@@ -15951,7 +15951,7 @@
       "Target ID": "ENM-0014",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 2775,
+      "XP Reward": 2774,
       "Guaranteed Gold": null,
       "Drop Chance": 40,
       "Reward Table ID": "RWT-0015",
@@ -16422,7 +16422,7 @@
       "Target ID": "ENM-0005",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 675,
+      "XP Reward": 671,
       "Guaranteed Gold": null,
       "Drop Chance": 36,
       "Reward Table ID": "RWT-0011",
@@ -16442,7 +16442,7 @@
       "Target ID": "ENM-0006",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 9250,
+      "XP Reward": 9242,
       "Guaranteed Gold": null,
       "Drop Chance": 40,
       "Reward Table ID": "RWT-0018",
@@ -16462,7 +16462,7 @@
       "Target ID": "ENM-0016",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 174,
+      "XP Reward": 173,
       "Guaranteed Gold": null,
       "Drop Chance": 20,
       "Reward Table ID": "RWT-0004",
@@ -16482,7 +16482,7 @@
       "Target ID": "ENM-0018",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 4750,
+      "XP Reward": 4742,
       "Guaranteed Gold": null,
       "Drop Chance": 36,
       "Reward Table ID": "RWT-0016",
@@ -17334,7 +17334,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion — hidden from Launch until wired into the world."
+      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion \u2014 hidden from Launch until wired into the world."
     },
     {
       "Action ID": "ACN-0138",
@@ -17911,7 +17911,7 @@
       "Target ID": "ENM-0019",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 103,
+      "XP Reward": 104,
       "Guaranteed Gold": null,
       "Drop Chance": 80,
       "Reward Table ID": "RWT-0117",
@@ -17931,7 +17931,7 @@
       "Target ID": "ENM-0020",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 157,
+      "XP Reward": 155,
       "Guaranteed Gold": null,
       "Drop Chance": 0,
       "Reward Table ID": null,
@@ -17991,7 +17991,7 @@
       "Target ID": "ENM-0022",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 281,
+      "XP Reward": 278,
       "Guaranteed Gold": null,
       "Drop Chance": 0,
       "Reward Table ID": null,
@@ -18034,7 +18034,7 @@
       "Target ID": "ENM-0023",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 2136,
+      "XP Reward": 2129,
       "Guaranteed Gold": null,
       "Drop Chance": 36,
       "Reward Table ID": "RWT-0012",
@@ -18148,7 +18148,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Legacy cook action placeholder; use Dried Kelp recipe.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Legacy cook action placeholder; use Dried Kelp recipe.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_harvest_potato.webp"
     },
     {
@@ -18519,7 +18519,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Primary Cinnamon Bark only. No generic bark secondary.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Primary Cinnamon Bark only. No generic bark secondary.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_cut_maple.webp"
     },
     {
@@ -18561,7 +18561,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Skill menu / codex only. Heartwood was Corrupted Heartwood.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Skill menu / codex only. Heartwood was Corrupted Heartwood.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_cut_ancient.webp"
     },
     {
@@ -18651,7 +18651,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_hunt_pheasant.webp"
     },
     {
@@ -18695,7 +18695,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_hunt_great_stag.webp"
     },
     {
@@ -18716,7 +18716,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Skill menu / codex only. No item drops. Not in activity pools.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_hunt_great_stag.webp"
     },
     {
@@ -18758,7 +18758,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Skill menu / codex only.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Skill menu / codex only.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_mine_titanium.webp"
     },
     {
@@ -18779,7 +18779,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Skill menu / codex only.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Skill menu / codex only.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_mine_titanium.webp"
     },
     {
@@ -18800,7 +18800,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion — hidden from Launch until wired into the world."
+      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion \u2014 hidden from Launch until wired into the world."
     },
     {
       "Action ID": "ACN-0215",
@@ -18862,7 +18862,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Skill menu / codex only.. Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Skill menu / codex only.. Future expansion \u2014 hidden from Launch until wired into the world.",
       "Sprite Asset Key": "actions/acn_catch_baby_giant_squid.webp"
     },
     {
@@ -18883,7 +18883,7 @@
       "Secondary Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion — hidden from Launch until wired into the world."
+      "Notes": "Production is hard-gated by Proficiency Level.. Future expansion \u2014 hidden from Launch until wired into the world."
     },
     {
       "Action ID": "ACN-0219",
@@ -18895,7 +18895,7 @@
       "Target ID": "ENM-0030",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 840,
+      "XP Reward": 843,
       "Guaranteed Gold": null,
       "Drop Chance": 25,
       "Reward Table ID": "RWT-0188",
@@ -18915,7 +18915,7 @@
       "Target ID": "ENM-0033",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 1760,
+      "XP Reward": 1757,
       "Guaranteed Gold": null,
       "Drop Chance": 25,
       "Reward Table ID": "RWT-0189",
@@ -18935,7 +18935,7 @@
       "Target ID": "ENM-0031",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 1125,
+      "XP Reward": 1120,
       "Guaranteed Gold": null,
       "Drop Chance": 20,
       "Reward Table ID": "RWT-0190",
@@ -18955,7 +18955,7 @@
       "Target ID": "ENM-0034",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 1615,
+      "XP Reward": 1618,
       "Guaranteed Gold": null,
       "Drop Chance": 10,
       "Reward Table ID": "RWT-0187",
@@ -19225,12 +19225,12 @@
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
       "Target ID": "ENM-0026",
-      "XP Reward": 106,
+      "XP Reward": 107,
       "Drop Chance": 0,
       "Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "No item drops. Enemy gold 1–2."
+      "Notes": "No item drops. Enemy gold 1\u20132."
     },
     {
       "Action ID": "ACN-0236",
@@ -19240,12 +19240,12 @@
       "Relevant Skill ID": "SKL-0001",
       "Target Type": "Enemy",
       "Target ID": "ENM-0029",
-      "XP Reward": 261,
+      "XP Reward": 260,
       "Drop Chance": 0,
       "Reward Table ID": null,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "No item drops. Enemy gold 5–6."
+      "Notes": "No item drops. Enemy gold 5\u20136."
     },
     {
       "Action ID": "ACN-0237",
@@ -19277,7 +19277,7 @@
       "Target ID": "ENM-0027",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 108,
+      "XP Reward": 107,
       "Guaranteed Gold": null,
       "Drop Chance": 25,
       "Reward Table ID": "RWT-0186",
@@ -19298,7 +19298,7 @@
       "Target ID": "ENM-0025",
       "Proficiency Level": null,
       "Base Duration Seconds": null,
-      "XP Reward": 63,
+      "XP Reward": 65,
       "Guaranteed Gold": null,
       "Drop Chance": 0,
       "Reward Table ID": null,
@@ -20644,7 +20644,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks — empty Weapon or Tool."
+      "Notes": "Train with the monks \u2014 empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0105",
@@ -20657,7 +20657,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Train with the monks — empty Shield or Off-hand."
+      "Notes": "Train with the monks \u2014 empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0106",
@@ -20696,7 +20696,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds — empty Weapon or Tool."
+      "Notes": "Pick weeds \u2014 empty Weapon or Tool."
     },
     {
       "Requirement ID": "REQ-0109",
@@ -20709,7 +20709,7 @@
       "Operator": null,
       "Required Value": null,
       "Status": "Planned",
-      "Notes": "Pick weeds — empty Shield or Off-hand."
+      "Notes": "Pick weeds \u2014 empty Shield or Off-hand."
     },
     {
       "Requirement ID": "REQ-0110",
@@ -21713,7 +21713,7 @@
       "Min Damage": 10,
       "Max Damage": 20,
       "Damage Resistance": null,
-      "Combat XP": 52,
+      "Combat XP": 53,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 40,
@@ -21731,7 +21731,7 @@
       "Might Level": 8,
       "Vitality Level": 6,
       "Combat Level": 11,
-      "Maximum HP": 250,
+      "Maximum HP": 230,
       "Min Damage": 20,
       "Max Damage": 50,
       "Damage Resistance": 2,
@@ -21753,11 +21753,11 @@
       "Might Level": 12,
       "Vitality Level": 10,
       "Combat Level": 17,
-      "Maximum HP": 240,
+      "Maximum HP": 220,
       "Min Damage": 30,
       "Max Damage": 60,
       "Damage Resistance": null,
-      "Combat XP": 132,
+      "Combat XP": 131,
       "Minimum Gold": 1,
       "Maximum Gold": 3,
       "Drop Chance": 25,
@@ -21775,11 +21775,11 @@
       "Might Level": 36,
       "Vitality Level": 28,
       "Combat Level": 48,
-      "Maximum HP": 750,
+      "Maximum HP": 540,
       "Min Damage": 120,
       "Max Damage": 220,
       "Damage Resistance": 10,
-      "Combat XP": 480,
+      "Combat XP": 481,
       "Minimum Gold": 25,
       "Maximum Gold": 50,
       "Drop Chance": 30,
@@ -21797,11 +21797,11 @@
       "Might Level": 55,
       "Vitality Level": 35,
       "Combat Level": 68,
-      "Maximum HP": 1000,
+      "Maximum HP": 690,
       "Min Damage": 160,
       "Max Damage": 280,
       "Damage Resistance": 5,
-      "Combat XP": 675,
+      "Combat XP": 671,
       "Minimum Gold": 25,
       "Maximum Gold": 50,
       "Drop Chance": 36,
@@ -21819,11 +21819,11 @@
       "Might Level": 99,
       "Vitality Level": 85,
       "Combat Level": 138,
-      "Maximum HP": 10000,
+      "Maximum HP": 5340,
       "Min Damage": 600,
       "Max Damage": 950,
       "Damage Resistance": 10,
-      "Combat XP": 9250,
+      "Combat XP": 9242,
       "Minimum Gold": 500,
       "Maximum Gold": 1000,
       "Drop Chance": 40,
@@ -21841,11 +21841,11 @@
       "Might Level": 45,
       "Vitality Level": 70,
       "Combat Level": 87,
-      "Maximum HP": 1500,
+      "Maximum HP": 1120,
       "Min Damage": 180,
       "Max Damage": 320,
       "Damage Resistance": null,
-      "Combat XP": 1275,
+      "Combat XP": 1269,
       "Minimum Gold": 30,
       "Maximum Gold": 65,
       "Drop Chance": 32,
@@ -21863,7 +21863,7 @@
       "Might Level": 25,
       "Vitality Level": 25,
       "Combat Level": 38,
-      "Maximum HP": 400,
+      "Maximum HP": 340,
       "Min Damage": 70,
       "Max Damage": 130,
       "Damage Resistance": null,
@@ -21885,11 +21885,11 @@
       "Might Level": 25,
       "Vitality Level": 35,
       "Combat Level": 45,
-      "Maximum HP": 450,
+      "Maximum HP": 380,
       "Min Damage": 80,
       "Max Damage": 160,
       "Damage Resistance": null,
-      "Combat XP": 303,
+      "Combat XP": 301,
       "Minimum Gold": 8,
       "Maximum Gold": 16,
       "Drop Chance": 15,
@@ -21907,11 +21907,11 @@
       "Might Level": 25,
       "Vitality Level": 20,
       "Combat Level": 34,
-      "Maximum HP": 350,
+      "Maximum HP": 290,
       "Min Damage": 50,
       "Max Damage": 100,
       "Damage Resistance": 2,
-      "Combat XP": 210,
+      "Combat XP": 208,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 36,
@@ -21929,11 +21929,11 @@
       "Might Level": 35,
       "Vitality Level": 40,
       "Combat Level": 57,
-      "Maximum HP": 1200,
+      "Maximum HP": 860,
       "Min Damage": 140,
       "Max Damage": 250,
       "Damage Resistance": 10,
-      "Combat XP": 840,
+      "Combat XP": 843,
       "Minimum Gold": 18,
       "Maximum Gold": 35,
       "Drop Chance": 24,
@@ -21951,11 +21951,11 @@
       "Might Level": 65,
       "Vitality Level": 80,
       "Combat Level": 109,
-      "Maximum HP": 2400,
+      "Maximum HP": 1450,
       "Min Damage": 220,
       "Max Damage": 380,
       "Damage Resistance": 10,
-      "Combat XP": 2160,
+      "Combat XP": 2164,
       "Minimum Gold": 45,
       "Maximum Gold": 90,
       "Drop Chance": 36,
@@ -21973,11 +21973,11 @@
       "Might Level": 70,
       "Vitality Level": 85,
       "Combat Level": 117,
-      "Maximum HP": 2500,
+      "Maximum HP": 1470,
       "Min Damage": 300,
       "Max Damage": 500,
       "Damage Resistance": 10,
-      "Combat XP": 2312,
+      "Combat XP": 2319,
       "Minimum Gold": 90,
       "Maximum Gold": 180,
       "Drop Chance": 30,
@@ -21995,11 +21995,11 @@
       "Might Level": 75,
       "Vitality Level": 85,
       "Combat Level": 120,
-      "Maximum HP": 3000,
+      "Maximum HP": 1860,
       "Min Damage": 550,
       "Max Damage": 850,
       "Damage Resistance": 5,
-      "Combat XP": 2775,
+      "Combat XP": 2774,
       "Minimum Gold": 200,
       "Maximum Gold": 400,
       "Drop Chance": 40,
@@ -22017,11 +22017,11 @@
       "Might Level": 18,
       "Vitality Level": 16,
       "Combat Level": 26,
-      "Maximum HP": 300,
+      "Maximum HP": 250,
       "Min Damage": 40,
       "Max Damage": 80,
       "Damage Resistance": 5,
-      "Combat XP": 174,
+      "Combat XP": 173,
       "Minimum Gold": 3,
       "Maximum Gold": 6,
       "Drop Chance": 20,
@@ -22039,11 +22039,11 @@
       "Might Level": 80,
       "Vitality Level": 90,
       "Combat Level": 128,
-      "Maximum HP": 5000,
+      "Maximum HP": 2600,
       "Min Damage": 500,
       "Max Damage": 780,
       "Damage Resistance": 15,
-      "Combat XP": 4750,
+      "Combat XP": 4742,
       "Minimum Gold": 300,
       "Maximum Gold": 600,
       "Drop Chance": 36,
@@ -22061,11 +22061,11 @@
       "Might Level": 10,
       "Vitality Level": 15,
       "Combat Level": 19,
-      "Maximum HP": 180,
+      "Maximum HP": 160,
       "Min Damage": 12,
       "Max Damage": 28,
       "Damage Resistance": 5,
-      "Combat XP": 103,
+      "Combat XP": 104,
       "Minimum Gold": 1,
       "Maximum Gold": 2,
       "Drop Chance": 80,
@@ -22083,11 +22083,11 @@
       "Might Level": 25,
       "Vitality Level": 5,
       "Combat Level": 23,
-      "Maximum HP": 300,
+      "Maximum HP": 250,
       "Min Damage": 11,
       "Max Damage": 33,
       "Damage Resistance": null,
-      "Combat XP": 157,
+      "Combat XP": 155,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 0,
@@ -22127,11 +22127,11 @@
       "Might Level": 35,
       "Vitality Level": 25,
       "Combat Level": 45,
-      "Maximum HP": 450,
+      "Maximum HP": 360,
       "Min Damage": 80,
       "Max Damage": 160,
       "Damage Resistance": null,
-      "Combat XP": 281,
+      "Combat XP": 278,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 0,
@@ -22149,11 +22149,11 @@
       "Might Level": 78,
       "Vitality Level": 78,
       "Combat Level": 117,
-      "Maximum HP": 2400,
+      "Maximum HP": 1580,
       "Min Damage": 80,
       "Max Damage": 120,
       "Damage Resistance": null,
-      "Combat XP": 2136,
+      "Combat XP": 2129,
       "Minimum Gold": 60,
       "Maximum Gold": 120,
       "Drop Chance": 36,
@@ -22171,11 +22171,11 @@
       "Might Level": 34,
       "Vitality Level": 34,
       "Combat Level": 51,
-      "Maximum HP": 900,
+      "Maximum HP": 730,
       "Min Damage": 80,
       "Max Damage": 160,
       "Damage Resistance": null,
-      "Combat XP": 603,
+      "Combat XP": 602,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 0,
@@ -22197,7 +22197,7 @@
       "Min Damage": 12,
       "Max Damage": 26,
       "Damage Resistance": null,
-      "Combat XP": 63,
+      "Combat XP": 65,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 0,
@@ -22215,11 +22215,11 @@
       "Might Level": 15,
       "Vitality Level": 6,
       "Combat Level": 16,
-      "Maximum HP": 200,
+      "Maximum HP": 180,
       "Min Damage": 16,
       "Max Damage": 40,
       "Damage Resistance": 2,
-      "Combat XP": 106,
+      "Combat XP": 107,
       "Minimum Gold": 1,
       "Maximum Gold": 2,
       "Drop Chance": 0,
@@ -22227,7 +22227,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_pirate.webp",
-      "Notes": "No item drops. Enemy gold 1–2."
+      "Notes": "No item drops. Enemy gold 1\u20132."
     },
     {
       "Enemy ID": "ENM-0027",
@@ -22237,11 +22237,11 @@
       "Might Level": 14,
       "Vitality Level": 8,
       "Combat Level": 17,
-      "Maximum HP": 200,
+      "Maximum HP": 180,
       "Min Damage": 37,
       "Max Damage": 73,
       "Damage Resistance": null,
-      "Combat XP": 108,
+      "Combat XP": 107,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 25,
@@ -22259,11 +22259,11 @@
       "Might Level": 25,
       "Vitality Level": 12,
       "Combat Level": 28,
-      "Maximum HP": 250,
+      "Maximum HP": 210,
       "Min Damage": 45,
       "Max Damage": 90,
       "Damage Resistance": null,
-      "Combat XP": 140,
+      "Combat XP": 138,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 0,
@@ -22271,7 +22271,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Sprite Asset Key": "enemies/enm_monk.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion — hidden from Launch until wired into the world."
+      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion \u2014 hidden from Launch until wired into the world."
     },
     {
       "Enemy ID": "ENM-0029",
@@ -22281,11 +22281,11 @@
       "Might Level": 26,
       "Vitality Level": 16,
       "Combat Level": 32,
-      "Maximum HP": 450,
+      "Maximum HP": 360,
       "Min Damage": 55,
       "Max Damage": 108,
       "Damage Resistance": 5,
-      "Combat XP": 261,
+      "Combat XP": 260,
       "Minimum Gold": 5,
       "Maximum Gold": 6,
       "Drop Chance": 0,
@@ -22293,7 +22293,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Sprite Asset Key": "enemies/enm_pirate.webp",
-      "Notes": "No item drops. Enemy gold 5–6."
+      "Notes": "No item drops. Enemy gold 5\u20136."
     },
     {
       "Enemy ID": "ENM-0030",
@@ -22303,11 +22303,11 @@
       "Might Level": 70,
       "Vitality Level": 40,
       "Combat Level": 83,
-      "Maximum HP": 1200,
+      "Maximum HP": 830,
       "Min Damage": 152,
       "Max Damage": 268,
       "Damage Resistance": null,
-      "Combat XP": 840,
+      "Combat XP": 843,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 25,
@@ -22325,11 +22325,11 @@
       "Might Level": 60,
       "Vitality Level": 50,
       "Combat Level": 83,
-      "Maximum HP": 1500,
+      "Maximum HP": 1010,
       "Min Damage": 164,
       "Max Damage": 288,
       "Damage Resistance": 5,
-      "Combat XP": 1125,
+      "Combat XP": 1120,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 20,
@@ -22347,11 +22347,11 @@
       "Might Level": 65,
       "Vitality Level": 60,
       "Combat Level": 94,
-      "Maximum HP": 1750,
+      "Maximum HP": 1080,
       "Min Damage": 192,
       "Max Damage": 338,
       "Damage Resistance": 10,
-      "Combat XP": 1400,
+      "Combat XP": 1396,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 0,
@@ -22359,7 +22359,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Sprite Asset Key": "enemies/enm_rock_troll.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion — hidden from Launch until wired into the world."
+      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion \u2014 hidden from Launch until wired into the world."
     },
     {
       "Enemy ID": "ENM-0033",
@@ -22369,11 +22369,11 @@
       "Might Level": 85,
       "Vitality Level": 60,
       "Combat Level": 109,
-      "Maximum HP": 2200,
+      "Maximum HP": 1430,
       "Min Damage": 236,
       "Max Damage": 404,
       "Damage Resistance": null,
-      "Combat XP": 1760,
+      "Combat XP": 1757,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 25,
@@ -22391,11 +22391,11 @@
       "Might Level": 75,
       "Vitality Level": 70,
       "Combat Level": 109,
-      "Maximum HP": 1900,
+      "Maximum HP": 1200,
       "Min Damage": 260,
       "Max Damage": 440,
       "Damage Resistance": 5,
-      "Combat XP": 1615,
+      "Combat XP": 1618,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 10,
@@ -22413,11 +22413,11 @@
       "Might Level": 90,
       "Vitality Level": 65,
       "Combat Level": 117,
-      "Maximum HP": 2500,
+      "Maximum HP": 1500,
       "Min Damage": 475,
       "Max Damage": 745,
       "Damage Resistance": 5,
-      "Combat XP": 2062,
+      "Combat XP": 2066,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 0,
@@ -22425,7 +22425,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Sprite Asset Key": "enemies/enm_corrupted_ent.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion — hidden from Launch until wired into the world."
+      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion \u2014 hidden from Launch until wired into the world."
     },
     {
       "Enemy ID": "ENM-0036",
@@ -22435,11 +22435,11 @@
       "Might Level": 90,
       "Vitality Level": 75,
       "Combat Level": 124,
-      "Maximum HP": 3500,
+      "Maximum HP": 2220,
       "Min Damage": 555,
       "Max Damage": 860,
       "Damage Resistance": null,
-      "Combat XP": 3062,
+      "Combat XP": 3059,
       "Minimum Gold": 0,
       "Maximum Gold": 0,
       "Drop Chance": 0,
@@ -22447,7 +22447,7 @@
       "Status": "Planned",
       "Release Phase": "Expansion",
       "Sprite Asset Key": "enemies/enm_elder_rock_troll.webp",
-      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion — hidden from Launch until wired into the world."
+      "Notes": "Placeholder art. Not assigned to a location or drop pool.. Future expansion \u2014 hidden from Launch until wired into the world."
     }
   ],
   "RewardEntries": [
@@ -22994,7 +22994,7 @@
     {
       "Reward Entry ID": "RWE-0100",
       "Reward Table ID": "RWT-0058",
-      "Reward Table Name": "Secondary Gems — Sapphire Only",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Only",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -23009,7 +23009,7 @@
     {
       "Reward Entry ID": "RWE-0101",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -23024,7 +23024,7 @@
     {
       "Reward Entry ID": "RWE-0102",
       "Reward Table ID": "RWT-0059",
-      "Reward Table Name": "Secondary Gems — Sapphire Emerald",
+      "Reward Table Name": "Secondary Gems \u2014 Sapphire Emerald",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -23039,7 +23039,7 @@
     {
       "Reward Entry ID": "RWE-0103",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0012",
@@ -23054,7 +23054,7 @@
     {
       "Reward Entry ID": "RWE-0104",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0013",
@@ -23069,7 +23069,7 @@
     {
       "Reward Entry ID": "RWE-0105",
       "Reward Table ID": "RWT-0060",
-      "Reward Table Name": "Secondary Gems — All Gems",
+      "Reward Table Name": "Secondary Gems \u2014 All Gems",
       "Purpose": "Independent Mining gem drop",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0014",
@@ -27033,7 +27033,7 @@
       "Action ID": "ACN-0137",
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Future expansion \u2014 hidden from Launch until wired into the world.",
       "Ingredient 1 Item ID": "ITEM-0380",
       "Ingredient 1 Quantity": 2,
       "Ingredient 2 Item ID": null,
@@ -27608,7 +27608,7 @@
       "Action ID": "ACN-0214",
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Future expansion \u2014 hidden from Launch until wired into the world.",
       "Ingredient 1 Item ID": "ITEM-0381",
       "Ingredient 1 Quantity": 2,
       "Ingredient 2 Item ID": null,
@@ -27633,7 +27633,7 @@
       "Action ID": "ACN-0218",
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Notes": "Future expansion — hidden from Launch until wired into the world.",
+      "Notes": "Future expansion \u2014 hidden from Launch until wired into the world.",
       "Ingredient 1 Item ID": "ITEM-0392",
       "Ingredient 1 Quantity": 1,
       "Ingredient 2 Item ID": null,
@@ -32899,7 +32899,7 @@
       "Role": "Wizard",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A traveling wizard who can rewrite the shape of a person — for a price, and not too often.",
+      "Description": "A traveling wizard who can rewrite the shape of a person \u2014 for a price, and not too often.",
       "Notes": "RequiresTotalLevel:500",
       "Sprite Asset Key": "npc/npc_wizard_shopkeeper.png"
     },
@@ -32949,7 +32949,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Buys and sells ordinary items. Stocks starter tools.",
-      "Notes": "Sells all level-1 tools. Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Sells all level-1 tools. Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33050,7 +33050,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells improved pickaxes and pays better prices for ores.",
-      "Notes": "Access requires Mining Level 40. Player buy price = 2× Base Sell Value. Buys ores at 1.5× Base Sell Value.",
+      "Notes": "Access requires Mining Level 40. Player buy price = 2\u00d7 Base Sell Value. Buys ores at 1.5\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0111",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33146,7 +33146,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells Essence at a premium so Harness essence remains the primary efficient source.",
-      "Notes": "Essence buy price = 100× Base Sell Value. Other stock buy price = 2× Base Sell Value.",
+      "Notes": "Essence buy price = 100\u00d7 Base Sell Value. Other stock buy price = 2\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0011",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33238,7 +33238,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Citadel market hall stocking everyday tools and supplies.",
-      "Notes": "Player buy price = 2× Base Sell Value. Buys ordinary items at Base Sell Value.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys ordinary items at Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0100",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33339,7 +33339,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "A compact stall with food, potions, and starter tools for travelers.",
-      "Notes": "Player buy price = 2× Base Sell Value.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value.",
       "Entry 1 Item ID": "ITEM-0058",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33434,7 +33434,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells outfits, specialist hats, leather armor, oven mitts, and a scythe.",
-      "Notes": "Player buy price = 2× Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, leather armor, Oven Mitts, and the Scythe are wearable gear.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Mostly wardrobe cosmetics; Chef's Hat, Wizard's Hat, leather armor, Oven Mitts, and the Scythe are wearable gear.",
       "Entry 1 Item ID": "ITEM-0296",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33535,7 +33535,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells bronze, iron, tungsten, and titanium swords, helmets, chestplates, and platelegs.",
-      "Notes": "Player buy price = 2× Base Sell Value. Buyback uses the normal 1× general-store rate. No boots or gloves. Titanium costs more than tungsten.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buyback uses the normal 1\u00d7 general-store rate. No boots or gloves. Titanium costs more than tungsten.",
       "Entry 1 Item ID": "ITEM-0224",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33642,7 +33642,7 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Description": "Sells common ores and buys finished smithing work.",
-      "Notes": "Player buy price = 2× Base Sell Value. Buys smithing project outputs at 1×. Does not buy ore.",
+      "Notes": "Player buy price = 2\u00d7 Base Sell Value. Buys smithing project outputs at 1\u00d7. Does not buy ore.",
       "Entry 1 Item ID": "ITEM-0003",
       "Entry 1 Mode": "Sell",
       "Entry 1 Price": null,
@@ -33901,7 +33901,7 @@
       "Display Name": "Help the aspiring apothecary",
       "NPC ID": "NPC-0005",
       "Summary": "A kitchen worker wants out of the kitchens.",
-      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street — I keep thinking about the alchemy shop I've always wanted.",
+      "Pitch": "I'm tired of working in the kitchen. There's a lot for sale down the street \u2014 I keep thinking about the alchemy shop I've always wanted.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Deliver: ITEM-0038 x5, ITEM-0031 x5, ITEM-0028 x5, ITEM-0042 x5; GoldCost: 1000; UnlockLocation: LOC-0026",
@@ -33913,7 +33913,7 @@
       "Reward XP Amount": 11000,
       "Reward Item ID": "ITEM-0165",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose’s Apothecary"
+      "Possible Rewards": "11,000 Alchemy XP; Chef's Hat x1; unlocks Rose\u2019s Apothecary"
     },
     {
       "Quest ID": "QST-0003",
@@ -33921,7 +33921,7 @@
       "Display Name": "Lowly Beggar",
       "NPC ID": "NPC-0011",
       "Summary": "A beggar was asking for help in the town.",
-      "Pitch": "Please, traveler… someone took my coin purse in the night, I have nothing left.",
+      "Pitch": "Please, traveler\u2026 someone took my coin purse in the night, I have nothing left.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Talk: NPC-0012; OptionalTalk: NPC-0007; Deliver: ITEM-0299 x1; AcceptGold: 25; RewardGold: 500; RewardCosmetic: COS-0002; BribeGold: 200; ChoiceNpc: NPC-0012; BranchSkillXp: 25000",
@@ -34033,15 +34033,15 @@
       "Reward XP Amount": 100000,
       "Reward Item ID": "ITEM-0313",
       "Reward Item Quantity": 1,
-      "Possible Rewards": "Mining XP, Abandoned Mineshaft, Excavator’s Pickaxe"
+      "Possible Rewards": "Mining XP, Abandoned Mineshaft, Excavator\u2019s Pickaxe"
     },
     {
       "Quest ID": "QST-0009",
       "Internal Key": "a_change_of_skin",
       "Display Name": "A Change of Skin",
       "NPC ID": "NPC-0016",
-      "Summary": "Vesper in the castle hall can rewrite the blood you wear — once a week, for a price.",
-      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you — the weave needs time to settle.",
+      "Summary": "Vesper in the castle hall can rewrite the blood you wear \u2014 once a week, for a price.",
+      "Pitch": "You've grown into yourself, haven't you? I can change the blood you wear, if you still want a different kind of life. Bring what I ask. Once a week, mind you \u2014 the weave needs time to settle.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Miniquest; HideFromQuestLog; Repeatable:7d; RequiresTotalLevel:500",
@@ -34101,7 +34101,7 @@
       "Dialogue ID": "QDL-0001",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0007",
-      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool…",
+      "Line": "A beggar lost a purse? The guards at the barracks were laughing about some poor fool\u2026",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -34110,7 +34110,7 @@
       "Dialogue ID": "QDL-0002",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free — or you can try your luck another way.",
+      "Line": "What do you want? I don't keep gossip for travelers. If you're going to stand there, my time isn't free \u2014 or you can try your luck another way.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -34128,7 +34128,7 @@
       "Dialogue ID": "QDL-0004",
       "Quest ID": "QST-0004",
       "NPC ID": "NPC-0006",
-      "Line": "New around here? Browse all you like — no obligation to buy.",
+      "Line": "New around here? Browse all you like \u2014 no obligation to buy.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -34155,7 +34155,7 @@
       "Dialogue ID": "QDL-0008",
       "Quest ID": "QST-0002",
       "NPC ID": "NPC-0005",
-      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails — five of each — and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
+      "Line": "If I'm going to open that shop I need a few things first. Rabbit's feet, fernleaf, wild berries, weasel tails \u2014 five of each \u2014 and a thousand gold for the lease. Help me gather those and I can finally leave this kitchen.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -34164,7 +34164,7 @@
       "Dialogue ID": "QDL-0009",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0011",
-      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen — a shopkeeper, a passerby. Please, I have nothing else.",
+      "Line": "Someone around town must have seen what happened. Ask anyone who'll listen \u2014 a shopkeeper, a passerby. Please, I have nothing else.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -34173,7 +34173,7 @@
       "Dialogue ID": "QDL-0010",
       "Quest ID": "QST-0003",
       "NPC ID": "NPC-0012",
-      "Line": "So someone talked. A purse? Maybe I saw something. Of course, my memory gets expensive… or you could try taking it.",
+      "Line": "So someone talked. A purse? Maybe I saw something. Of course, my memory gets expensive\u2026 or you could try taking it.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresTalk: NPC-0007"
@@ -34182,7 +34182,7 @@
       "Dialogue ID": "QDL-0011",
       "Quest ID": "QST-0005",
       "NPC ID": "NPC-0009",
-      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain — go introduce yourself.",
+      "Line": "He's downstairs more than he's in the shop. The halls under the tower are his domain \u2014 go introduce yourself.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -34272,7 +34272,7 @@
       "Dialogue ID": "QDL-0021",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "It looks like you've found something special, let me take a look… Hmm that will grow into a mighty plant one day. Let me show you how, you can use one of my seeds to get practice. But first step to a successful harvest is to gather some compost.",
+      "Line": "It looks like you've found something special, let me take a look\u2026 Hmm that will grow into a mighty plant one day. Let me show you how, you can use one of my seeds to get practice. But first step to a successful harvest is to gather some compost.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0023"
@@ -34299,7 +34299,7 @@
       "Dialogue ID": "QDL-0024",
       "Quest ID": "QST-0001",
       "NPC ID": "NPC-0001",
-      "Line": "The kitchens will sing again — and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
+      "Line": "The kitchens will sing again \u2014 and for your work, the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "When: completed; unlocks Courtyard Botany plot."
@@ -34317,7 +34317,7 @@
       "Dialogue ID": "QDL-0026",
       "Quest ID": "QST-0010",
       "NPC ID": "NPC-0017",
-      "Line": "We used to tend this slowly. Cut so much at once and the forest will retreat. Craft four offerings at the stone here — a poplar sapling, compost, mosstole, and essence — then place one at each inner grove.",
+      "Line": "We used to tend this slowly. Cut so much at once and the forest will retreat. Craft four offerings at the stone here \u2014 a poplar sapling, compost, mosstole, and essence \u2014 then place one at each inner grove.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0030"
@@ -34786,7 +34786,7 @@
       "Release Phase": "Launch",
       "Reward": null,
       "Target Skill ID": null,
-      "Notes": "Harvest bleeding tooth. Action is unplaced — incomplete until placed."
+      "Notes": "Harvest bleeding tooth. Action is unplaced \u2014 incomplete until placed."
     }
   ],
   "CosmeticSlots": [
@@ -35174,7 +35174,7 @@
       "Race ID": "RACE-0005",
       "Internal Key": "goblin",
       "Display Name": "Goblin",
-      "Description": "Small and green — welcome among the camps of their kin.",
+      "Description": "Small and green \u2014 welcome among the camps of their kin.",
       "Sort Order": 5,
       "Portrait Asset Key": null,
       "Hostility Immunity Location IDs": "LOC-0003",
@@ -36553,7 +36553,7 @@
       "Book ID": "BOOK-0001",
       "Internal Key": "newcomers_guide",
       "Display Name": "Newcomer's Guide",
-      "Body": "Welcome to Restoria. The land does not rush you, but it does reward those who learn its rhythm.\n\nOpen the map, choose a location, and travel there. Once you arrive, look over the activities on offer. Gathering, crafting, cooking, combat, and other work all live in these lists. Each activity draws from its own pool of rewards, so what you earn depends on where you stand and what you choose to do.\n\nMaterials gather in your bag. Bring them to a workshop, a forge, a kitchen, or a workbench and shape them into tools, food, and gear. Better equipment shortens your labors and steadies your hand in a fight.\n\nWhen you want a longer chase, open the Log. Deeds, milestones, and quests wait there to mark what you have done and what still calls. When you want the kingdom’s records of items, enemies, and recipes, open the Codex.\n\nGood luck adventurer!",
+      "Body": "Welcome to Restoria. The land does not rush you, but it does reward those who learn its rhythm.\n\nOpen the map, choose a location, and travel there. Once you arrive, look over the activities on offer. Gathering, crafting, cooking, combat, and other work all live in these lists. Each activity draws from its own pool of rewards, so what you earn depends on where you stand and what you choose to do.\n\nMaterials gather in your bag. Bring them to a workshop, a forge, a kitchen, or a workbench and shape them into tools, food, and gear. Better equipment shortens your labors and steadies your hand in a fight.\n\nWhen you want a longer chase, open the Log. Deeds, milestones, and quests wait there to mark what you have done and what still calls. When you want the kingdom\u2019s records of items, enemies, and recipes, open the Codex.\n\nGood luck adventurer!",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Granted by Getting Started (QST-0006)."

@@ -19,8 +19,9 @@ export const MAIL_UPDATE_2026_10_06_CATALOG_ID = 'mail-update-2026-10-06'
 
 const MAIL_UPDATE_2026_10_06_BODY = `Update October 5th
 
-- Might and Vitality HP and damage bonuses now start at Combat level 5 for players and enemies
-- Kill Combat XP is half the foe's HP
+- Max HP scales from Combat Level; Vitality adds 0.25% damage resistance per level
+- Damage resistance from gear, stance, spells, and Vitality adds into one percent
+- Kill Combat XP is half the foe's effective HP after their damage resistance
 - Enemy HP retuned (mostly reduced), some foes now have damage resistance
 - When you return after being away, the summary only lists finished fights, not every hit mid-battle
 

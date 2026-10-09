@@ -142,15 +142,28 @@ void main() {
     expect(stat(result, 'Damage reduction').candidateKind, EquipCompareDeltaKind.improved);
   });
 
-  test('two-handed weapon notes clearing the off-hand', () {
+  test('two-handed weapon compares against main-hand and off-hand together', () {
     var save = createNewSave(db, 0);
+    save = withSkill(save, mightSkillId, 35);
+    save = withSkill(save, vitalitySkillId, 35);
     save = withSkill(save, 'SKL-0008', 35);
+    save = wear(save, weaponToolSlotId, 'ITEM-0124');
     save = wear(save, offhandSlotId, 'ITEM-0145');
     final result = compareEquipmentCandidate(db, save, itemId: 'ITEM-0123');
     expect(result.ok, isTrue, reason: result.reason);
     expect(result.displaced, isNotEmpty);
     expect(result.displaced.single.slotId, offhandSlotId);
+    expect(result.equippedName, 'Wooden Sword + Wooden Shield');
     expect(result.notes.any((line) => line.startsWith('Also clears')), isTrue);
+
+    final withoutHands = save.copyWith(
+      equipment: EquipmentLoadout(
+        slots: {...save.equipment.slots, weaponToolSlotId: null, offhandSlotId: null},
+      ),
+    );
+    final combinedHealth = playerMaxHp(db, save) - playerMaxHp(db, withoutHands);
+    expect(stat(result, 'Health').equippedText, jsNumberToString(combinedHealth));
+    expect(stat(result, 'Damage reduction').equippedText, isNot('—'));
   });
 
   test('off-hand item notes clearing a worn two-hander', () {

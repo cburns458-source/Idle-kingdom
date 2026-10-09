@@ -322,12 +322,12 @@ List<CombatStatContribution> _healthBreakdown(GameDatabase db, PlayerSave save) 
     lines.add(CombatStatContribution(label: _itemName(db, stack.itemId), detail: _signed(bonus)));
   }
 
-  final vitalityLevel = getSkillProgress(save, vitalitySkillId).level;
-  final levelMult = vitalityHpMultiplier(save);
+  final combatLevel = combatLevelOf(save);
+  final levelMult = combatLevelHpMultiplier(save);
   if (levelMult != 1) {
     lines.add(
       CombatStatContribution(
-        label: 'Vitality ${jsNumberToString(vitalityLevel)}',
+        label: 'Combat Level ${jsNumberToString(combatLevel)}',
         detail: _multiplier(levelMult),
       ),
     );
@@ -367,6 +367,16 @@ List<CombatStatContribution> _reductionBreakdown(GameDatabase db, PlayerSave sav
   final styleDr = attackStyleDamageReduction(style);
   if (styleDr > 0) {
     lines.add(CombatStatContribution(label: 'Defensive stance', detail: jsNumberToString(styleDr)));
+  }
+  final vitalityDr = vitalityDamageReductionPercent(save);
+  if (vitalityDr > 0) {
+    final vitalityLevel = getSkillProgress(save, vitalitySkillId).level;
+    lines.add(
+      CombatStatContribution(
+        label: 'Vitality ${jsNumberToString(vitalityLevel)}',
+        detail: jsNumberToString(vitalityDr),
+      ),
+    );
   }
   lines.add(
     CombatStatContribution(

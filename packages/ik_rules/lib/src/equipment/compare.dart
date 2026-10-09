@@ -280,6 +280,60 @@ _CombatBits _itemDisplayBits(GameDatabase db, PlayerSave wornSave, String slotId
   );
 }
 
+/// Main-hand + off-hand as one equipped side when a two-hander would replace both.
+({_CombatBits bits, String? itemId, String? name, String? enchantmentId, bool present})
+_handsEquippedSide(GameDatabase db, PlayerSave save) {
+  final main = slotStack(save, weaponToolSlotId);
+  final off = slotStack(save, offhandSlotId);
+  final present = main != null || off != null;
+  if (!present) {
+    return (
+      bits: const _CombatBits(
+        minDamage: 0,
+        maxDamage: 0,
+        offMin: 0,
+        offMax: 0,
+        health: 0,
+        damageReduction: 0,
+      ),
+      itemId: null,
+      name: null,
+      enchantmentId: null,
+      present: false,
+    );
+  }
+
+  final withoutBoth = _overlaySlot(_overlaySlot(save, weaponToolSlotId, null), offhandSlotId, null);
+  final added = _combatBits(db, save).minus(_combatBits(db, withoutBoth));
+  final full = _combatBits(db, save);
+  final mainId = main?.itemId;
+  final primaryWeapon = mainId != null && _itemHasOwnDamage(equipmentForItemId(db, mainId));
+  final dagger = off != null && isDaggerItem(db, off.itemId);
+
+  final mainName = main == null ? null : _itemName(db, main.itemId);
+  final offName = off == null ? null : _itemName(db, off.itemId);
+  final name = mainName == null
+      ? offName
+      : offName == null
+      ? mainName
+      : '$mainName + $offName';
+
+  return (
+    bits: _CombatBits(
+      minDamage: primaryWeapon ? full.minDamage : added.minDamage,
+      maxDamage: primaryWeapon ? full.maxDamage : added.maxDamage,
+      offMin: dagger ? full.offMin : added.offMin,
+      offMax: dagger ? full.offMax : added.offMax,
+      health: added.health,
+      damageReduction: added.damageReduction,
+    ),
+    itemId: main?.itemId ?? off?.itemId,
+    name: name,
+    enchantmentId: main?.enchantmentId ?? off?.enchantmentId,
+    present: true,
+  );
+}
+
 ({EquipCompareDeltaKind equipped, EquipCompareDeltaKind candidate}) _kindsForValues(
   num? equipped,
   num? candidate, {
@@ -392,17 +446,26 @@ EquipCompareStatRow _optionalRow(
 List<EquipCompareStatRow> _extraStatRows(
   GameDatabase db, {
   required bool equippedPresent,
-  required EquipmentRow? equippedRow,
+  required List<EquipmentRow?> equippedRows,
   required EquipmentRow? candidateRow,
 }) {
   final rows = <EquipCompareStatRow>[];
-  final leftHealing = _rowNumber(equippedRow, 'Healing Amount');
+  num? leftHealing;
+  for (final row in equippedRows) {
+    final value = _rowNumber(row, 'Healing Amount');
+    if (value != null) leftHealing = (leftHealing ?? 0) + value;
+  }
   final rightHealing = _rowNumber(candidateRow, 'Healing Amount');
   if (leftHealing != null || rightHealing != null) {
     rows.add(_optionalRow('Healing', leftHealing, rightHealing, equippedPresent: equippedPresent));
   }
 
-  final leftSuccess = _successChanceBySkill(db, equippedRow);
+  final leftSuccess = <String, num>{};
+  for (final row in equippedRows) {
+    for (final entry in _successChanceBySkill(db, row).entries) {
+      leftSuccess[entry.key] = (leftSuccess[entry.key] ?? 0) + entry.value;
+    }
+  }
   final rightSuccess = _successChanceBySkill(db, candidateRow);
   for (final label in <String>{...leftSuccess.keys, ...rightSuccess.keys}) {
     rows.add(
@@ -508,9 +571,21 @@ EquipmentCompareResult compareEquipmentCandidate(
     enchantmentId: enchantmentId,
   );
 
-  final equippedPresent = current != null;
-  final equippedBits = _itemDisplayBits(db, save, slotId, current?.itemId);
+  final againstBothHands = isTwoHandedItem(db, itemId) && slotId == weaponToolSlotId;
+  final hands = againstBothHands ? _handsEquippedSide(db, save) : null;
+  final equippedPresent = againstBothHands ? hands!.present : current != null;
+  final equippedBits = againstBothHands
+      ? hands!.bits
+      : _itemDisplayBits(db, save, slotId, current?.itemId);
   final candidateBits = _itemDisplayBits(db, preview, slotId, itemId);
+
+  final equippedRows = againstBothHands
+      ? <EquipmentRow?>[
+          if (slotStack(save, weaponToolSlotId) case final main?)
+            equipmentForItemId(db, main.itemId),
+          if (slotStack(save, offhandSlotId) case final off?) equipmentForItemId(db, off.itemId),
+        ]
+      : <EquipmentRow?>[if (current != null) equipmentForItemId(db, current.itemId)];
 
   final stats = <EquipCompareStatRow>[
     ..._combatStatRows(
@@ -521,14 +596,27 @@ EquipmentCompareResult compareEquipmentCandidate(
     ..._extraStatRows(
       db,
       equippedPresent: equippedPresent,
-      equippedRow: current == null ? null : equipmentForItemId(db, current.itemId),
+      equippedRows: equippedRows,
       candidateRow: equipmentForItemId(db, itemId),
     ),
   ];
 
+  final equippedItemId = againstBothHands ? hands!.itemId : current?.itemId;
+  final equippedName = againstBothHands
+      ? hands!.name
+      : current == null
+      ? null
+      : _itemName(db, current.itemId);
+  final equippedEnchantmentId = againstBothHands ? hands!.enchantmentId : current?.enchantmentId;
+
   final notes = <String>[
     for (final row in displaced) 'Also clears ${_slotName(db, row.slotId)}: ${row.name ?? 'Empty'}',
-    ..._itemNotes(db, current?.itemId, current?.enchantmentId).map((line) => 'Equipped: $line'),
+    if (againstBothHands) ...[
+      for (final stack in [slotStack(save, weaponToolSlotId), slotStack(save, offhandSlotId)])
+        if (stack != null)
+          ..._itemNotes(db, stack.itemId, stack.enchantmentId).map((line) => 'Equipped: $line'),
+    ] else
+      ..._itemNotes(db, current?.itemId, current?.enchantmentId).map((line) => 'Equipped: $line'),
     ..._itemNotes(db, itemId, enchantmentId).map((line) => 'This item: $line'),
   ];
 
@@ -538,9 +626,9 @@ EquipmentCompareResult compareEquipmentCandidate(
     candidateItemId: itemId,
     candidateName: name,
     candidateEnchantmentId: enchantmentId,
-    equippedItemId: current?.itemId,
-    equippedName: current == null ? null : _itemName(db, current.itemId),
-    equippedEnchantmentId: current?.enchantmentId,
+    equippedItemId: equippedItemId,
+    equippedName: equippedName,
+    equippedEnchantmentId: equippedEnchantmentId,
     displaced: displaced,
     stats: stats,
     notes: notes,
