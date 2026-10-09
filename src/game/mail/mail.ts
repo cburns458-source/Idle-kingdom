@@ -19,10 +19,12 @@ export const MAIL_UPDATE_2026_10_06_CATALOG_ID = 'mail-update-2026-10-06'
 
 const MAIL_UPDATE_2026_10_06_BODY = `Update October 5th
 
-- Max HP scales from Combat Level; Vitality adds 0.25% damage resistance per level
+- Might: +1% damage every 2 levels from 2 (50% at 100)
+- Vitality: +1% damage resistance every 4 levels from 4 (25% at 100)
+- Combat Level: +3% max HP every 3 levels from 3 (150% at 150)
 - Damage resistance from gear, stance, spells, and Vitality adds into one percent
 - Kill Combat XP is half the foe's effective HP after their damage resistance
-- Enemy HP retuned (mostly reduced), some foes now have damage resistance
+- Enemy HP retuned for the new Combat Level steps
 - When you return after being away, the summary only lists finished fights, not every hit mid-battle
 
 - actions use a 12 second base duration, XP/hr adjusted to stay the same

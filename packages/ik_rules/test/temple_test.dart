@@ -91,13 +91,13 @@ void main() {
     expect(enemy.raw['Maximum HP'], 250);
     expect(enemy.raw['Min Damage'], 11);
     expect(enemy.raw['Max Damage'], 33);
-    expect(enemy.raw['Combat XP'], 155);
+    expect(enemy.raw['Combat XP'], 152);
     expect(enemy.raw['Drop Chance'], 0);
     expect(enemy.raw['Reward Table ID'], isNull);
 
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0172');
     expect(action.raw['Display Name'], 'Monk');
-    expect(action.raw['XP Reward'], 155);
+    expect(action.raw['XP Reward'], 152);
     expect(action.raw['Target ID'], 'ENM-0020');
   });
 
@@ -114,7 +114,7 @@ void main() {
     expect(save.currentActivityId, 'ACT-0035');
     expect(save.currentActionId, 'ACN-0172');
     expect(save.combatEnemyId, 'ENM-0020');
-    expect(save.combatEnemyHp, 307);
+    expect(save.combatEnemyHp, 302);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0100'), isTrue);
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0145'), isTrue);
   });

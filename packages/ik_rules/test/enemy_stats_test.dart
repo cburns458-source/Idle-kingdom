@@ -12,12 +12,12 @@ void main() {
     db = _db();
   });
 
-  test('player Might and Combat Level HP bonuses start at level 5', () {
+  test('player Might, Vitality, and Combat Level use stepped whole-percent bonuses', () {
     final save = createNewSave(db, 0);
     expect(mightDamageMultiplier(save), 1);
     expect(combatLevelHpMultiplier(save), 1);
     expect(playerMaxHp(db, save), 1000);
-    expect(vitalityDamageReductionPercent(save), 0.25);
+    expect(vitalityDamageReductionPercent(save), 0);
     final level5 = save.copyWith(
       skills: save.skills
           .map(
@@ -27,12 +27,12 @@ void main() {
           )
           .toList(),
     );
-    expect(mightDamageMultiplier(level5), closeTo(1.05, 0.0001));
-    // Might 5 + Vitality 5 → Combat Level 8 → +8% HP.
+    // Might 5 → floor(5/2)=2%. Vit 5 → floor(5/4)=1%. CL 8 → floor(8/3)*3=6% HP.
+    expect(mightDamageMultiplier(level5), closeTo(1.02, 0.0001));
     expect(combatLevelOf(level5), 8);
-    expect(combatLevelHpMultiplier(level5), closeTo(1.08, 0.0001));
-    expect(playerMaxHp(db, level5), 1080);
-    expect(vitalityDamageReductionPercent(level5), closeTo(1.25, 0.0001));
+    expect(combatLevelHpMultiplier(level5), closeTo(1.06, 0.0001));
+    expect(playerMaxHp(db, level5), 1060);
+    expect(vitalityDamageReductionPercent(level5), 1);
   });
 
   test('existing enemies keep table HP/damage as bases and scale from Combat Level / Might', () {
@@ -43,39 +43,39 @@ void main() {
     expect(enemyMightLevel(cow), 1);
     expect(enemyVitalityLevel(cow), 5);
     expect(enemyCombatLevel(cow), 5);
-    expect(enemyScaledMaxHp(cow), 105);
-    expect(enemyCombatXp(cow), 53);
-    expect(enemyEncounterMaxHp(db, save, cow), 105);
+    expect(enemyScaledMaxHp(cow), 103);
+    expect(enemyCombatXp(cow), 52);
+    expect(enemyEncounterMaxHp(db, save, cow), 103);
     expect(enemyEncounterDamageRange(db, save, cow).toJson(), {'min': 10, 'max': 20});
 
     expect(enemyMightLevel(scout), 12);
     expect(enemyVitalityLevel(scout), 10);
     expect(enemyCombatLevel(scout), 17);
-    expect(enemyScaledMaxHp(scout), 257);
-    expect(enemyCombatXp(scout), 131);
-    expect(enemyScaledDamageRange(scout).toJson(), {'min': 33, 'max': 67});
-    expect(enemyEncounterMaxHp(db, save, scout), 257);
-    expect(enemyEncounterDamageRange(db, save, scout).toJson(), {'min': 33, 'max': 67});
+    expect(enemyScaledMaxHp(scout), 252);
+    expect(enemyCombatXp(scout), 128);
+    expect(enemyScaledDamageRange(scout).toJson(), {'min': 31, 'max': 63});
+    expect(enemyEncounterMaxHp(db, save, scout), 252);
+    expect(enemyEncounterDamageRange(db, save, scout).toJson(), {'min': 31, 'max': 63});
   });
 
   test('new enemies keep placeholder stats; mountain roosts have locations', () {
     final source = assertGameDatabaseShape(contentDatabaseJson());
     // id, name, might, vitality, baseHp, minDmg, maxDmg, combatXp, locationId
     const launchEnemies = <(String, String, num, num, num, num, num, num, String?)>[
-      ('ENM-0025', 'Giant Rat', 5, 5, 120, 12, 26, 65, 'LOC-0011'),
-      ('ENM-0026', 'Bandit', 15, 6, 180, 16, 40, 107, 'LOC-0052'),
-      ('ENM-0027', 'Cave Bat', 14, 8, 180, 37, 73, 107, 'LOC-0046'),
-      ('ENM-0029', 'Bandit Captain', 26, 16, 360, 55, 108, 260, 'LOC-0052'),
-      ('ENM-0030', 'Harpy', 70, 40, 830, 152, 268, 843, 'LOC-0047'),
-      ('ENM-0031', 'Giant', 60, 50, 1010, 164, 288, 1120, 'LOC-0049'),
-      ('ENM-0033', 'Wyvern', 85, 60, 1430, 236, 404, 1757, 'LOC-0047'),
-      ('ENM-0034', 'Cyclops', 75, 70, 1200, 260, 440, 1618, 'LOC-0049'),
+      ('ENM-0025', 'Giant Rat', 5, 5, 120, 12, 26, 64, 'LOC-0011'),
+      ('ENM-0026', 'Bandit', 15, 6, 180, 16, 40, 106, 'LOC-0052'),
+      ('ENM-0027', 'Cave Bat', 14, 8, 180, 37, 73, 105, 'LOC-0046'),
+      ('ENM-0029', 'Bandit Captain', 26, 16, 370, 55, 108, 264, 'LOC-0052'),
+      ('ENM-0030', 'Harpy', 70, 40, 840, 152, 268, 844, 'LOC-0047'),
+      ('ENM-0031', 'Giant', 60, 50, 1020, 164, 288, 1112, 'LOC-0049'),
+      ('ENM-0033', 'Wyvern', 85, 60, 1440, 236, 404, 1761, 'LOC-0047'),
+      ('ENM-0034', 'Cyclops', 75, 70, 1210, 260, 440, 1612, 'LOC-0049'),
     ];
     const expansionEnemies = <(String, String, num, num, num, num, num, num, String?)>[
-      ('ENM-0028', 'Mage Apprentice', 25, 12, 210, 45, 90, 138, null),
-      ('ENM-0032', 'Gargoyle', 65, 60, 1080, 192, 338, 1396, null),
-      ('ENM-0035', 'Demon', 90, 65, 1500, 475, 745, 2066, null),
-      ('ENM-0036', 'Greater Gargoyle', 90, 75, 2220, 555, 860, 3059, null),
+      ('ENM-0028', 'Mage Apprentice', 25, 12, 210, 45, 90, 137, null),
+      ('ENM-0032', 'Gargoyle', 65, 60, 1090, 192, 338, 1402, null),
+      ('ENM-0035', 'Demon', 90, 65, 1500, 475, 745, 2060, null),
+      ('ENM-0036', 'Greater Gargoyle', 90, 75, 2230, 555, 860, 3031, null),
     ];
     final placeholderIds = {
       for (final row in launchEnemies) row.$1,

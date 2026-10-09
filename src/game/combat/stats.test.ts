@@ -87,39 +87,39 @@ describe('might / vitality combat stats', () => {
     expect(enemyMightLevel(cow)).toBe(1)
     expect(enemyVitalityLevel(cow)).toBe(5)
     expect(enemyCombatLevel(cow)).toBe(5)
-    expect(enemyScaledMaxHp(cow)).toBe(105)
-    expect(enemyCombatXp(cow)).toBe(53)
-    expect(enemyEncounterMaxHp(launch, save, cow)).toBe(105)
+    expect(enemyScaledMaxHp(cow)).toBe(103)
+    expect(enemyCombatXp(cow)).toBe(52)
+    expect(enemyEncounterMaxHp(launch, save, cow)).toBe(103)
     expect(enemyEncounterDamageRange(launch, save, cow)).toEqual({ min: 10, max: 20 })
 
     expect(enemyMightLevel(scout)).toBe(12)
     expect(enemyVitalityLevel(scout)).toBe(10)
     expect(enemyCombatLevel(scout)).toBe(17)
-    expect(enemyScaledMaxHp(scout)).toBe(257)
-    expect(enemyCombatXp(scout)).toBe(131)
-    expect(enemyScaledDamageRange(scout)).toEqual({ min: 33, max: 67 })
-    expect(enemyEncounterMaxHp(launch, save, scout)).toBe(257)
-    expect(enemyEncounterDamageRange(launch, save, scout)).toEqual({ min: 33, max: 67 })
+    expect(enemyScaledMaxHp(scout)).toBe(252)
+    expect(enemyCombatXp(scout)).toBe(128)
+    expect(enemyScaledDamageRange(scout)).toEqual({ min: 31, max: 63 })
+    expect(enemyEncounterMaxHp(launch, save, scout)).toBe(252)
+    expect(enemyEncounterDamageRange(launch, save, scout)).toEqual({ min: 31, max: 63 })
   })
 
   it('keeps placeholder stats; mountain roosts have locations', () => {
     const { launch, source } = prepareDatabase(rawDatabase)
     // id, name, might, vitality, baseHp, minDmg, maxDmg, combatXp, locationId
     const launchEnemies = [
-      ['ENM-0025', 'Giant Rat', 5, 5, 120, 12, 26, 65, 'LOC-0011'],
-      ['ENM-0026', 'Bandit', 15, 6, 180, 16, 40, 107, 'LOC-0052'],
-      ['ENM-0027', 'Cave Bat', 14, 8, 180, 37, 73, 107, 'LOC-0046'],
-      ['ENM-0029', 'Bandit Captain', 26, 16, 360, 55, 108, 260, 'LOC-0052'],
-      ['ENM-0030', 'Harpy', 70, 40, 830, 152, 268, 843, 'LOC-0047'],
-      ['ENM-0031', 'Giant', 60, 50, 1010, 164, 288, 1120, 'LOC-0049'],
-      ['ENM-0033', 'Wyvern', 85, 60, 1430, 236, 404, 1757, 'LOC-0047'],
-      ['ENM-0034', 'Cyclops', 75, 70, 1200, 260, 440, 1618, 'LOC-0049'],
+      ['ENM-0025', 'Giant Rat', 5, 5, 120, 12, 26, 64, 'LOC-0011'],
+      ['ENM-0026', 'Bandit', 15, 6, 180, 16, 40, 106, 'LOC-0052'],
+      ['ENM-0027', 'Cave Bat', 14, 8, 180, 37, 73, 105, 'LOC-0046'],
+      ['ENM-0029', 'Bandit Captain', 26, 16, 370, 55, 108, 264, 'LOC-0052'],
+      ['ENM-0030', 'Harpy', 70, 40, 840, 152, 268, 844, 'LOC-0047'],
+      ['ENM-0031', 'Giant', 60, 50, 1020, 164, 288, 1112, 'LOC-0049'],
+      ['ENM-0033', 'Wyvern', 85, 60, 1440, 236, 404, 1761, 'LOC-0047'],
+      ['ENM-0034', 'Cyclops', 75, 70, 1210, 260, 440, 1612, 'LOC-0049'],
     ] as const
     const expansionEnemies = [
-      ['ENM-0028', 'Mage Apprentice', 25, 12, 210, 45, 90, 138, null],
-      ['ENM-0032', 'Gargoyle', 65, 60, 1080, 192, 338, 1396, null],
-      ['ENM-0035', 'Demon', 90, 65, 1500, 475, 745, 2066, null],
-      ['ENM-0036', 'Greater Gargoyle', 90, 75, 2220, 555, 860, 3059, null],
+      ['ENM-0028', 'Mage Apprentice', 25, 12, 210, 45, 90, 137, null],
+      ['ENM-0032', 'Gargoyle', 65, 60, 1090, 192, 338, 1402, null],
+      ['ENM-0035', 'Demon', 90, 65, 1500, 475, 745, 2060, null],
+      ['ENM-0036', 'Greater Gargoyle', 90, 75, 2230, 555, 860, 3031, null],
     ] as const
     const placeholderIds = new Set<string>([
       ...launchEnemies.map(([id]) => id),
@@ -226,19 +226,19 @@ describe('might / vitality combat stats', () => {
     }
   })
 
-  it('gives no level bonus below skill level 5', () => {
+  it('uses stepped whole-percent Might, Vitality, and Combat Level bonuses', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = createNewSave(launch)
     expect(mightDamageMultiplier(save)).toBe(1)
     expect(combatLevelHpMultiplier(save)).toBe(1)
     expect(playerMaxHp(launch, save)).toBe(1000)
-    expect(vitalityDamageReductionPercent(save)).toBe(0.25)
+    expect(vitalityDamageReductionPercent(save)).toBe(0)
     const level5 = withSkillLevels(save, { 'SKL-0001': 5, 'SKL-0016': 5 })
-    expect(mightDamageMultiplier(level5)).toBeCloseTo(1.05)
+    expect(mightDamageMultiplier(level5)).toBeCloseTo(1.02)
     expect(combatLevelOf(level5)).toBe(8)
-    expect(combatLevelHpMultiplier(level5)).toBeCloseTo(1.08)
-    expect(playerMaxHp(launch, level5)).toBe(1080)
-    expect(vitalityDamageReductionPercent(level5)).toBeCloseTo(1.25)
+    expect(combatLevelHpMultiplier(level5)).toBeCloseTo(1.06)
+    expect(playerMaxHp(launch, level5)).toBe(1060)
+    expect(vitalityDamageReductionPercent(level5)).toBe(1)
   })
 
   it('scales damage from Might and HP from Combat Level', () => {
@@ -256,11 +256,11 @@ describe('might / vitality combat stats', () => {
         },
       },
     }
-    expect(mightDamageMultiplier(unarmed)).toBeCloseTo(1.1)
+    expect(mightDamageMultiplier(unarmed)).toBeCloseTo(1.05)
     expect(combatLevelOf(unarmed)).toBe(23)
-    expect(combatLevelHpMultiplier(unarmed)).toBeCloseTo(1.23)
-    expect(playerMaxHp(launch, unarmed)).toBe(1230)
-    expect(playerDamageRange(launch, unarmed)).toEqual({ min: 11, max: 33 })
+    expect(combatLevelHpMultiplier(unarmed)).toBeCloseTo(1.21)
+    expect(playerMaxHp(launch, unarmed)).toBe(1210)
+    expect(playerDamageRange(launch, unarmed)).toEqual({ min: 10, max: 31 })
   })
 
   it('defaults a missing stance to offensive and keeps a stored balanced choice', () => {
@@ -319,8 +319,8 @@ describe('might / vitality combat stats', () => {
         },
       },
     }
-    // 60–90 × might-40 (1.40) × arcana-50 (1.50), floored once.
-    expect(playerDamageRange(launch, power)).toEqual({ min: 125, max: 188 })
+    // 60–90 × might-40 (1.20) × arcana-50 (1.50), floored once.
+    expect(playerDamageRange(launch, power)).toEqual({ min: 107, max: 161 })
 
     const sparks = {
       ...power,
@@ -331,6 +331,6 @@ describe('might / vitality combat stats', () => {
         },
       },
     }
-    expect(playerDamageRange(launch, sparks)).toEqual({ min: 42, max: 84 })
+    expect(playerDamageRange(launch, sparks)).toEqual({ min: 36, max: 72 })
   })
 })

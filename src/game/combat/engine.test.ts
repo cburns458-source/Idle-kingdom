@@ -36,8 +36,8 @@ describe('combat engine', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const cow = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const bull = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0002')!
-    expect(enemyDamageResistance(cow)).toBe(1.25) // Vitality 5 × 0.25%
-    expect(enemyDamageResistance(bull)).toBe(3.5) // sheet 2 + Vitality 6 × 0.25%
+    expect(enemyDamageResistance(cow)).toBe(1) // Vitality 5 → floor(5/4)%
+    expect(enemyDamageResistance(bull)).toBe(3) // sheet 2 + Vitality 6 → floor(6/4)%
     expect(applyEnemyDamageResistance(20, bull, 1)).toBe(19)
     expect(applyEnemyDamageResistance(0, bull, 1)).toBe(0)
 
@@ -52,7 +52,7 @@ describe('combat engine', () => {
       },
     }
     const round = resolveCombatRound(launch, save, bull, bull['Maximum HP'], () => 0)
-    expect(round.playerHit).toBe(9) // floor(10 × (1 - 3.5%))
+    expect(round.playerHit).toBe(9) // floor(10 × (1 - 3%))
     expect(round.enemyHp).toBe(bull['Maximum HP'] - 9)
   })
 
@@ -111,8 +111,8 @@ describe('combat engine', () => {
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
     const victory = applyCombatVictory(launch, save, action, enemy, () => 0)
-    expect(victory.xpGained).toBe(53)
-    expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(27)
+    expect(victory.xpGained).toBe(52)
+    expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp).toBe(26)
     expect(victory.save.skills.find((skill) => skill.skillId === 'SKL-0016')?.xp).toBe(26)
     expect(victory.goldGained).toBe(0)
     expect(victory.foodConsumed).toBe(false)
@@ -156,8 +156,8 @@ describe('combat engine', () => {
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     // Both rolls land at their minimum: player hits for 10 (unarmed), enemy rolls 10 raw.
     const round = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], () => 0)
-    expect(round.playerHit).toBe(9) // floor(10 × (1 - cow 1.25% DR))
-    expect(round.enemyHit).toBe(9) // floor(10 × (1 - gear 1% - Vitality 0.25%))
+    expect(round.playerHit).toBe(9) // floor(10 × (1 - cow 1% DR))
+    expect(round.enemyHit).toBe(9) // floor(10 × (1 - gear 1%))
     expect(round.thornsHit).toBe(1) // 10% of 9, rounded.
     // 100 max HP - 9 (player hit) - 1 (Thorns) = 90.
     expect(round.enemyHp).toBe(90)
@@ -169,7 +169,7 @@ describe('combat engine', () => {
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const round = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], () => 0)
     expect(round.thornsHit).toBe(0)
-    expect(round.enemyHp).toBe(91) // 100 - floor(10 × 0.9875)
+    expect(round.enemyHp).toBe(91) // 100 - floor(10 × 0.99)
   })
 
   it('rolls a separate off-hand dagger hit with full damage and no crit', () => {
@@ -213,7 +213,7 @@ describe('combat engine', () => {
     // damage roll → 0 (min 10), crit roll → 0 (< 20% succeeds); cow DR% after crit.
     const critRound = resolveCombatRound(launch, save, enemy, enemy['Maximum HP'], () => 0)
     expect(critRound.playerCrit).toBe(true)
-    expect(critRound.playerHit).toBe(14) // floor(floor(10 * 1.5) × 0.9875)
+    expect(critRound.playerHit).toBe(14) // floor(floor(10 * 1.5) × 0.99)
 
     // Fail the crit roll with a high second random value.
     let calls = 0
@@ -246,7 +246,7 @@ describe('combat engine', () => {
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const round = resolveCombatRound(launch, save, enemy, 200, () => 0)
     expect(round.playerHit).toBeGreaterThan(0)
-    expect(round.staffHit).toBe(26) // floor(27 × cow 1.25% DR)
+    expect(round.staffHit).toBe(26) // floor(27 × cow 1% DR)
     expect(round.offhandHit).toBeNull()
     expect(round.enemyHp).toBe(200 - round.playerHit - 26)
   })

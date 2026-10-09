@@ -213,6 +213,9 @@ export function resolveUnattendedProgress(
       for (const event of tick.events) {
         if (event.kind === 'enemy-defeated') combatVictories += 1
         if (event.kind === 'player-defeated') combatDeaths += 1
+        if (event.kind === 'critter-spawned') {
+          pushCritterSpawn({ displayName: event.displayName })
+        }
         if (
           event.kind === 'message' &&
           !isIncompleteCombatAwayLine(event.text, event.topic)

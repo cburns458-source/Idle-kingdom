@@ -60,18 +60,18 @@ void main() {
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Might 25'));
     expect(
       summary.mainhandBreakdown.firstWhere((line) => line.label == 'Might 25').detail,
-      '×1.25',
+      '×1.12',
     );
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Spell'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Potion'));
-    expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '138–277');
+    expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '124–248');
 
     final offhand = playerOffhandDamageRange(db, save);
     if (offhand != null) {
       expect(summary.offhandBreakdown.map((line) => line.label), contains('Might 25'));
       expect(
         summary.offhandBreakdown.firstWhere((line) => line.label == 'Might 25').detail,
-        '×1.25',
+        '×1.12',
       );
       expect(summary.offhandBreakdown.last.label, 'Total');
     } else {

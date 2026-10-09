@@ -100,8 +100,11 @@ void main() {
         final db = databaseOf(fixture);
         final nowMs = fixture.inputField<num>('nowMs');
         final seed = fixture.inputField<num>('seed').toInt();
-        final you = createNewSave(db, nowMs);
-        final them = _withCombatLevel(createNewSave(db, nowMs), 18);
+        final you = createNewSave(db, nowMs).copyWith(attackStyle: 'balanced');
+        final them = _withCombatLevel(
+          createNewSave(db, nowMs).copyWith(attackStyle: 'balanced'),
+          18,
+        );
         final fight = simulatePvpFight(db, you, them, Mulberry32(seed).asFunction);
         expect(
           checkParity(fixture, {
