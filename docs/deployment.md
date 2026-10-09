@@ -38,7 +38,12 @@ the live bindings.
 
 Each Worker build compiles `SUPABASE_URL` and `SUPABASE_ANON_KEY` from its
 GitHub environment via `scripts/cf-build.sh`. Do not put those values in
-Wrangler `vars`.
+Wrangler `vars`. `SUPABASE_URL` must be exactly the API origin
+(`https://fxcovagwwbptqaavispl.supabase.co` on production,
+`https://xlbwmxxtzrqjujvgqcuf.supabase.co` on staging). A value of
+`https://` compiles into the client as `https: //`; sign-in then POSTs to
+the Worker and players see "empty response with status code 405". The
+build now fails on that.
 
 Free projects pause after about seven days of inactivity. Resume from the
 dashboard or `restore_project`. That is expected for the test project if

@@ -35,6 +35,13 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Confirm environment
+        run: |
+          echo "supabase_url_set=$([ -n "$SUPABASE_URL" ] && echo yes || echo no)"
+          echo "anon_key_set=$([ -n "$SUPABASE_ANON_KEY" ] && echo yes || echo no)"
+          echo "supabase_url_chars=${#SUPABASE_URL}"
+          echo "anon_key_chars=${#SUPABASE_ANON_KEY}"
+
       - name: Deploy main Worker
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then

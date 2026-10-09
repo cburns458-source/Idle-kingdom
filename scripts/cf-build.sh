@@ -40,6 +40,12 @@ SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\r'*}"
 SUPABASE_ANON_KEY="$(printf '%s' "$SUPABASE_ANON_KEY" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
 
 if [[ -n "${SUPABASE_URL:-}" && -n "${SUPABASE_ANON_KEY:-}" ]]; then
+  if ! printf '%s' "$SUPABASE_URL" | grep -Eq '^https://[a-z0-9]{20}\.supabase\.co$'; then
+    echo "SUPABASE_URL must be exactly https://<20-char-ref>.supabase.co (no path, slash, quotes, or spaces)." >&2
+    echo "url_chars=${#SUPABASE_URL}" >&2
+    echo "url_mask=$(printf '%s' "$SUPABASE_URL" | sed 's/[a-z]/L/g;s/[0-9]/D/g;s/[^A-Za-z0-9]/./g')" >&2
+    exit 1
+  fi
   flutter build web --release --pwa-strategy=none \
     --dart-define="SUPABASE_URL=$SUPABASE_URL" \
     --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
@@ -52,6 +58,21 @@ if [[ ! -f "$OUT/index.html" ]]; then
   echo "Flutter build finished but $OUT/index.html is missing." >&2
   ls -la "$ROOT/app_flutter/build" >&2 || true
   exit 1
+fi
+
+# A URL of "https://" compiles as "https: //" and sign-in POSTs to the
+# Worker, which answers 405. Fail before that bundle is published.
+if [[ -n "${SUPABASE_URL:-}" ]]; then
+  ref="${SUPABASE_URL#https://}"
+  ref="${ref%.supabase.co}"
+  if ! grep -q "$ref" "$OUT/main.dart.js"; then
+    echo "Web build is missing the Supabase project ref; sign-in would return 405." >&2
+    exit 1
+  fi
+  if grep -q '"https: //"' "$OUT/main.dart.js"; then
+    echo "Web build compiled a broken Supabase URL (https: //)." >&2
+    exit 1
+  fi
 fi
 
 # `pwa-strategy=none` must not leave testers on the old caching worker. Put
