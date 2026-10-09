@@ -7,6 +7,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 
 import 'cloud_save.dart';
 import 'config.dart';
+import 'dev_commands.dart';
 import 'guild_rules.dart';
 import 'local_backend.dart';
 import 'market.dart';
@@ -739,6 +740,79 @@ class RemoteMultiplayerService implements MultiplayerService {
     return _invokeGame(<String, Object?>{'action': 'command', 'command': command, 'args': args});
   }
 
+  @override
+  Future<bool> isDeveloperAccount() async {
+    if (session == null) return false;
+    try {
+      final invoked = await transport.invoke(remoteGameFunction, <String, Object?>{
+        'action': 'dev_status',
+        'playSessionId': session?.playSessionId,
+      });
+      if (!invoked.ok) return false;
+      final data = invoked.data ?? const <String, Object?>{};
+      return data['developer'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<DevCommandInvokeResult> gameDevCommand(String command, List<String> tokens) async {
+    if (session == null) {
+      return const DevCommandInvokeResult.failed('Sign in to use developer commands.');
+    }
+    final done = Completer<DevCommandInvokeResult>();
+    _gameTail = _gameTail
+        .then((_) async {
+          final result = await _invokeDevCommandUnlocked(command, tokens);
+          if (!done.isCompleted) done.complete(result);
+        })
+        .catchError((Object error) {
+          if (!done.isCompleted) done.complete(DevCommandInvokeResult.failed(error.toString()));
+        });
+    return done.future;
+  }
+
+  Future<DevCommandInvokeResult> _invokeDevCommandUnlocked(
+    String command,
+    List<String> tokens,
+  ) async {
+    try {
+      final invoked = await transport.invoke(remoteGameFunction, <String, Object?>{
+        'action': 'dev_command',
+        'command': command,
+        'tokens': tokens,
+        'version': _hostedSaveVersion,
+        'playSessionId': session?.playSessionId,
+      });
+      if (!invoked.ok) {
+        return DevCommandInvokeResult.failed(invoked.reason ?? 'Developer command failed.');
+      }
+      final data = invoked.data ?? const <String, Object?>{};
+      if (data['error'] is String) {
+        return DevCommandInvokeResult.failed(data['error']! as String);
+      }
+      final rawSave = data['save'];
+      if (rawSave is! Map) {
+        return const DevCommandInvokeResult.failed('Game function returned no save.');
+      }
+      final save = parseSave(Map<String, Object?>.from(rawSave), _nowMs());
+      final validation = softValidateSave(save);
+      if (!validation.ok) return DevCommandInvokeResult.failed(validation.reason!);
+      final version = data['version'];
+      if (version is num) _hostedSaveVersion = version.toInt();
+      final rngState = data['rngState'];
+      if (rngState is num) _hostedRngState = rngState.toInt();
+      final message = data['message'];
+      return DevCommandInvokeResult.ok(
+        save: save,
+        message: message is String && message.isNotEmpty ? message : 'Done.',
+      );
+    } catch (error) {
+      return DevCommandInvokeResult.failed(error.toString());
+    }
+  }
+
   /// Compare-and-swap token from the last hosted read or write.
   int get hostedSaveVersion => _hostedSaveVersion;
 
@@ -1281,6 +1355,17 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<ActionResult> setGuildEmblem(String guildId, GuildEmblem emblem) =>
       _guilds.setGuildEmblem(guildId, emblem);
+
+  @override
+  Future<ActionResult> setGuildMotto(String guildId, String motto) =>
+      _guilds.setGuildMotto(guildId, motto);
+
+  @override
+  Future<ActionResult> setGuildPrivateMessage(String guildId, String body) =>
+      _guilds.setGuildPrivateMessage(guildId, body);
+
+  @override
+  Future<String?> guildPrivateMessage(String guildId) => _guilds.guildPrivateMessage(guildId);
 
   @override
   Future<ActionResult> leaveGuild() async {

@@ -34350,6 +34350,75 @@
       "Notes": "RequiresStep: QSTP-0035"
     }
   ],
+  "Dialogues": [
+    {
+      "Dialogue ID": "DLG-0001",
+      "Internal Key": "citadel_welcome",
+      "Display Name": "Citadel Guide",
+      "NPC ID": "NPC-0013",
+      "Start Node ID": "DNODE-0001",
+      "Repeatable": false,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Proof standalone dialogue. One-time welcome tip."
+    }
+  ],
+  "DialogueNodes": [
+    {
+      "Node ID": "DNODE-0001",
+      "Dialogue ID": "DLG-0001",
+      "Line": "Welcome to the Citadel. Need a tip for the road?",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Node ID": "DNODE-0002",
+      "Dialogue ID": "DLG-0001",
+      "Line": "Take this spare baked potato. Eat when you are hurt.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    }
+  ],
+  "DialogueChoices": [
+    {
+      "Choice ID": "DCH-0001",
+      "Node ID": "DNODE-0001",
+      "Label": "Yes, please.",
+      "Next Node ID": "DNODE-0002",
+      "Condition": null,
+      "Action": "grant_item:ITEM-0058:1",
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Choice ID": "DCH-0002",
+      "Node ID": "DNODE-0001",
+      "Label": "Not today.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Choice ID": "DCH-0003",
+      "Node ID": "DNODE-0002",
+      "Label": "Thanks.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    }
+  ],
   "Achievements": [
     {
       "Achievement ID": "ACH-0028",

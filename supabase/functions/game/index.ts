@@ -8,9 +8,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 import {
+  applyDevCommand,
   applyGameCommand,
   createTrackedMulberry32,
   overlayPublishedPvpSnapshot,
+  parseSave,
   prepareDatabase,
   pvpSnapshotRowForSave,
   rankingBoardRowsFor,
@@ -28,6 +30,7 @@ type GameBody = {
   save?: unknown
   command?: unknown
   args?: unknown
+  tokens?: unknown
   version?: unknown
   playSessionId?: unknown
 }
@@ -70,7 +73,7 @@ Deno.serve(async (req) => {
   const action = typeof payload.action === 'string' ? payload.action.trim() : ''
   const admin = connect(supabaseUrl, serviceKey)
 
-  if (action === 'sync' || action === 'command') {
+  if (action === 'sync' || action === 'command' || action === 'dev_command') {
     const seated = await refuseOtherPlaySession(admin, user.id, payload)
     if (seated) return seated
   }
@@ -79,6 +82,12 @@ Deno.serve(async (req) => {
   }
   if (action === 'command') {
     return handleCommand(admin, user.id, payload)
+  }
+  if (action === 'dev_status') {
+    return handleDevStatus(admin, user.id)
+  }
+  if (action === 'dev_command') {
+    return handleDevCommand(admin, user.id, payload)
   }
   if (action === 'shadow') {
     return handleShadow(admin, user.id)
@@ -392,6 +401,98 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     const message = error instanceof Error ? error.message : 'Command failed.'
     return json({ error: message, phase: 2 }, 400)
   }
+}
+
+async function handleDevStatus(admin: Client, userId: string): Promise<Response> {
+  const { data, error } = await admin
+    .from('developer_accounts')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error) return json({ error: error.message, phase: 2 }, 500)
+  return json({ ok: true, phase: 2, action: 'dev_status', developer: Boolean(data?.user_id) })
+}
+
+async function handleDevCommand(admin: Client, userId: string, payload: GameBody): Promise<Response> {
+  const command = typeof payload.command === 'string' ? payload.command.trim().toLowerCase() : ''
+  if (!command) return json({ error: 'Missing command.', phase: 2 }, 400)
+  const tokens = Array.isArray(payload.tokens)
+    ? payload.tokens.filter((part): part is string => typeof part === 'string')
+    : []
+
+  const { data: allow, error: allowError } = await admin
+    .from('developer_accounts')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (allowError) return json({ error: allowError.message, phase: 2 }, 500)
+  if (!allow?.user_id) {
+    await admin.from('developer_audit_log').insert({
+      user_id: userId,
+      command,
+      args: { tokens },
+      ok: false,
+      reason: 'Not a developer account.',
+    })
+    return json({ error: 'Not a developer account.', phase: 2, action: 'dev_command' }, 403)
+  }
+
+  const nowMs = Date.now()
+  const hosted = await loadHostedRow(admin, userId)
+  if (!hosted) return json({ error: 'No cloud save.', phase: 2 }, 400)
+  const expected = parseVersion(payload.version, hosted.version)
+  if (expected === null) return json({ error: 'version must be a whole number.', phase: 2 }, 400)
+
+  const { launch } = prepareDatabase(rawDatabase)
+  let result
+  try {
+    const playerSave = parseSave(hosted.payload, nowMs)
+    result = applyDevCommand(launch, playerSave, command, tokens, nowMs)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Command failed.'
+    await admin.from('developer_audit_log').insert({
+      user_id: userId,
+      command,
+      args: { tokens },
+      ok: false,
+      reason: message,
+    })
+    return json({ error: message, phase: 2, action: 'dev_command' }, 400)
+  }
+
+  await admin.from('developer_audit_log').insert({
+    user_id: userId,
+    command,
+    args: { tokens },
+    ok: result.ok,
+    reason: result.ok ? result.message : result.reason,
+  })
+
+  if (!result.ok) {
+    return json({ error: result.reason, phase: 2, action: 'dev_command', message: result.reason }, 400)
+  }
+
+  const rng = createTrackedMulberry32(hosted.rng_state ?? ((nowMs ^ userId.length) >>> 0))
+  const written = await writeHostedSave(admin, userId, {
+    expectedVersion: expected,
+    payload: result.save,
+    rngState: rng.getState(),
+    nowMs,
+  })
+  if (!written.ok) return written.response
+  const published = await publishPhase3Rows(admin, rawDatabase, userId, result.save, nowMs, `dev:${command}`)
+  if (!published.ok) return published.response
+  return json({
+    ok: true,
+    phase: 2,
+    action: 'dev_command',
+    command,
+    message: result.message,
+    save: result.save,
+    version: written.version,
+    rngState: rng.getState(),
+    wroteSave: true,
+  })
 }
 
 // Writes the guild, its leader, hall, and starter goals in one transaction.

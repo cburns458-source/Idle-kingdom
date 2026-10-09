@@ -7,9 +7,11 @@
 library;
 
 export 'src/bounty_turn_in.dart';
+export 'src/chat_refs.dart';
 export 'src/cloud_save.dart';
 export 'src/config.dart';
 export 'src/demo_world.dart';
+export 'src/dev_commands.dart';
 export 'src/emblems.dart';
 export 'src/guild_rules.dart';
 export 'src/local_backend.dart';

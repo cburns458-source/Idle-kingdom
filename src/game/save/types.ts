@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 60
+export const SAVE_VERSION = 61
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -377,6 +377,8 @@ export interface PlayerSave {
   shopPurchasesToday: Record<string, number>
   /** Merchant tip rewards already claimed (one-time dialogue grants). */
   claimedMerchantTipIds: string[]
+  /** Standalone dialogue IDs finished once (non-repeatable conversations). */
+  completedDialogueIds: string[]
   /** One-time Kingswoods Sling grant. Existing saves keep false until they visit. */
   claimedKingswoodsSling: boolean
   /** Critter collection counts (unlocked entries in the Log). */

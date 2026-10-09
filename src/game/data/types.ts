@@ -232,6 +232,43 @@ export interface QuestDialogueRow {
   Notes: string | null
 }
 
+/** Standalone conversation graph (not quest-tied). */
+export interface DialogueRow {
+  'Dialogue ID': string
+  'Internal Key': string
+  'Display Name': string
+  'NPC ID': string
+  'Start Node ID': string
+  Repeatable: boolean
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export interface DialogueNodeRow {
+  'Node ID': string
+  'Dialogue ID': string
+  Line: string
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export interface DialogueChoiceRow {
+  'Choice ID': string
+  'Node ID': string
+  Label: string
+  'Next Node ID': string | null
+  /** Typed condition string, or null when always available. */
+  Condition: string | null
+  /** Typed action string applied when the choice is taken, or null. */
+  Action: string | null
+  'Sort Order': number
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
 export interface QuestStepRow {
   'Step ID': string
   'Quest ID': string
@@ -401,6 +438,9 @@ export interface GameDatabase {
   Quests: Record<string, unknown>[]
   QuestSteps: QuestStepRow[]
   QuestDialogue: QuestDialogueRow[]
+  Dialogues: DialogueRow[]
+  DialogueNodes: DialogueNodeRow[]
+  DialogueChoices: DialogueChoiceRow[]
   Achievements: Record<string, unknown>[]
   CosmeticSlots: CosmeticSlotRow[]
   Cosmetics: CosmeticRow[]
@@ -438,6 +478,9 @@ export const DATABASE_TABLES = [
   'Quests',
   'QuestSteps',
   'QuestDialogue',
+  'Dialogues',
+  'DialogueNodes',
+  'DialogueChoices',
   'Achievements',
   'CosmeticSlots',
   'Cosmetics',

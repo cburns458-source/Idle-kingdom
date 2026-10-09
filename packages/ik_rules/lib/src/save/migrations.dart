@@ -948,6 +948,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 60,
+    toVersion: 61,
+    migrate: (save, _) {
+      final next = _bumped(save, 61);
+      next['completedDialogueIds'] = arrayOrEmpty(save, 'completedDialogueIds');
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

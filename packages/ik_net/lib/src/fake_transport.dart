@@ -210,6 +210,7 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.guildHalls: <String>['guild_id'],
     RemoteTables.guildProjects: <String>['id'],
     RemoteTables.guildChallenges: <String>['id'],
+    RemoteTables.guildPrivateMessages: <String>['guild_id'],
     RemoteTables.activityPresence: <String>['user_id'],
     RemoteTables.friendRequests: <String>['from_user_id', 'to_user_id'],
     RemoteTables.friendships: <String>['user_a', 'user_b'],
@@ -366,6 +367,14 @@ class FakeTransport implements RemoteTransport {
 
       if (table == RemoteTables.publicProfiles) {
         rows = [for (final row in rows) _publicProfileRow(row)];
+      }
+      if (table == RemoteTables.guildPrivateMessages) {
+        final me = _current?.userId;
+        final membership = me == null ? null : _membershipFor(me);
+        rows = [
+          for (final row in rows)
+            if (membership != null && membership['guild_id'] == row['guild_id']) row,
+        ];
       }
       if (table == RemoteTables.guildHallTiers) {
         rows = [
@@ -974,6 +983,76 @@ class FakeTransport implements RemoteTransport {
       final reason = _takeFailure('rpc:$function');
       if (reason != null) return RemoteInvokeResult.failed(reason);
 
+      if (function == RemoteRpcs.guildSetMotto) {
+        final guildId = args['p_guild'];
+        final motto = guildMottoFromInput('${args['p_motto'] ?? ''}');
+        final me = _current?.userId;
+        if (me == null) {
+          return RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'reason': 'Sign in first.'});
+        }
+        final guilds = tables[RemoteTables.guilds]!;
+        final at = guilds.indexWhere((row) => row['id'] == guildId);
+        if (at < 0) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': 'That guild could not be found.',
+          });
+        }
+        final membership = _membershipFor(me);
+        final role = '${membership?['role'] ?? ''}';
+        final leaderId = '${guilds[at]['leader_id']}';
+        final manager = me == leaderId || role == guildRoleOfficer;
+        if (!manager || membership?['guild_id'] != guildId) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': 'Only the guild leader or an officer can edit the motto.',
+          });
+        }
+        guilds[at] = <String, Object?>{...guilds[at], 'description': motto};
+        return RemoteInvokeResult.ok(<String, Object?>{'ok': true, 'motto': motto});
+      }
+
+      if (function == RemoteRpcs.guildSetMessage) {
+        final guildId = args['p_guild'];
+        final body = guildPrivateMessageFromInput('${args['p_body'] ?? ''}');
+        final me = _current?.userId;
+        if (me == null) {
+          return RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'reason': 'Sign in first.'});
+        }
+        final membership = _membershipFor(me);
+        final role = '${membership?['role'] ?? ''}';
+        final guilds = tables[RemoteTables.guilds]!;
+        RemoteRow? guild;
+        for (final row in guilds) {
+          if (row['id'] == guildId) {
+            guild = row;
+            break;
+          }
+        }
+        final leaderId = '${guild?['leader_id'] ?? ''}';
+        final manager = me == leaderId || role == guildRoleOfficer;
+        if (!manager || membership?['guild_id'] != guildId) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': 'Only the guild leader or an officer can edit the guild message.',
+          });
+        }
+        final stored = tables.putIfAbsent(RemoteTables.guildPrivateMessages, () => <RemoteRow>[]);
+        final at = stored.indexWhere((row) => row['guild_id'] == guildId);
+        final row = <String, Object?>{
+          'guild_id': guildId,
+          'body': body,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_by': me,
+        };
+        if (at < 0) {
+          stored.add(row);
+        } else {
+          stored[at] = row;
+        }
+        return RemoteInvokeResult.ok(<String, Object?>{'ok': true, 'body': body});
+      }
+
       if (function == RemoteRpcs.guildContributeProject) {
         final projectId = args['p_project_id'];
         final amount = _asNum(args['p_amount']);
@@ -1179,6 +1258,9 @@ class FakeTransport implements RemoteTransport {
       'goal_value': guildMonsterChallengeGoal,
       'current_value': 0,
     });
+    tables.putIfAbsent(RemoteTables.guildPrivateMessages, () => <RemoteRow>[]).add(
+      <String, Object?>{'guild_id': id, 'body': '', 'updated_at': stamp(), 'updated_by': null},
+    );
     return <String, Object?>{'ok': true, 'guild': guild};
   }
 
@@ -1191,6 +1273,7 @@ class FakeTransport implements RemoteTransport {
       RemoteTables.guildHalls,
       RemoteTables.guildProjects,
       RemoteTables.guildChallenges,
+      RemoteTables.guildPrivateMessages,
     ]) {
       tables[table]!.removeWhere((row) => row['guild_id'] == guildId);
     }
@@ -1611,6 +1694,7 @@ class _FakeProject {
     RemoteTables.guildHalls: <RemoteRow>[],
     RemoteTables.guildProjects: <RemoteRow>[],
     RemoteTables.guildChallenges: <RemoteRow>[],
+    RemoteTables.guildPrivateMessages: <RemoteRow>[],
     RemoteTables.activityPresence: <RemoteRow>[],
     RemoteTables.friendRequests: <RemoteRow>[],
     RemoteTables.friendships: <RemoteRow>[],

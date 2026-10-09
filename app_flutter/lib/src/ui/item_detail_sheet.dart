@@ -12,7 +12,7 @@ import 'item_icon.dart';
 /// Stands in for the React client's hold-to-reveal tooltip, which does not
 /// translate to a phone. Opened for a bag stack, a worn stack, or an empty slot,
 /// whichever the caller passes.
-class ItemDetailSheet extends StatelessWidget {
+class ItemDetailSheet extends StatefulWidget {
   const ItemDetailSheet({
     super.key,
     required this.controller,
@@ -26,6 +26,7 @@ class ItemDetailSheet extends StatelessWidget {
     this.onOpenCodex,
     this.onToggleFavorite,
     this.favorite = false,
+    this.allowCompare = false,
   });
 
   final GameController controller;
@@ -55,25 +56,49 @@ class ItemDetailSheet extends StatelessWidget {
   /// Whether this bag or worn stack is already pinned.
   final bool favorite;
 
+  /// True for bag stacks that can be equipped. Worn gear and empty slots stay off.
+  final bool allowCompare;
+
+  @override
+  State<ItemDetailSheet> createState() => _ItemDetailSheetState();
+}
+
+class _ItemDetailSheetState extends State<ItemDetailSheet> {
+  bool _comparing = false;
+
   @override
   Widget build(BuildContext context) {
+    final controller = widget.controller;
     final db = controller.db;
-    final id = itemId;
+    final id = widget.itemId;
     final item = id == null ? null : controller.indexes.itemsById[id];
-    final slot = slotId == null
+    final slot = widget.slotId == null
         ? null
-        : db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
+        : db.equipmentSlots.where((row) => row.slotId == widget.slotId).firstOrNull;
 
     final lines = <String>[
       if (id != null) ...equipmentTooltipStatLines(equipmentForItemId(db, id), db),
-      ...enchantmentTooltipLines(db, enchantmentId),
+      ...enchantmentTooltipLines(db, widget.enchantmentId),
       if (id != null && isSpellItem(db, id)) ...spellTooltipLines(db, item, id),
-      if (id == null && slotId != null && isSpellSlotId(slotId!))
+      if (id == null && widget.slotId != null && isSpellSlotId(widget.slotId!))
         'Equip a spell from your bag. Spells are always active.',
     ];
 
     final description = id != null && isBotanySeedItem(db, id) ? null : item?.description;
     final priced = id == null ? null : sellPriceAtLocation(db, controller.save, id);
+    final compareItemId = id;
+    final canCompare =
+        widget.allowCompare &&
+        compareItemId != null &&
+        equipmentForItemId(db, compareItemId) != null;
+    final compare = canCompare && _comparing
+        ? compareEquipmentCandidate(
+            db,
+            controller.save,
+            itemId: compareItemId,
+            enchantmentId: widget.enchantmentId,
+          )
+        : null;
 
     return GamePopupCard(
       child: GamePanel(
@@ -84,8 +109,8 @@ class ItemDetailSheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                if (id == null && slotId != null)
-                  SlotGlyph(slotId: slotId!, size: 38)
+                if (id == null && widget.slotId != null)
+                  SlotGlyph(slotId: widget.slotId!, size: 38)
                 else
                   ItemIcon(item: item, size: 38),
                 const SizedBox(width: 10),
@@ -97,7 +122,7 @@ class ItemDetailSheet extends StatelessWidget {
                         item?.displayName ?? slot?.displayName ?? id ?? 'Empty slot',
                         style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                       ),
-                      if (quantity > 1) MutedText('×${formatThousands(quantity)}'),
+                      if (widget.quantity > 1) MutedText('×${formatThousands(widget.quantity)}'),
                       if (id != null && slot != null) MutedText('Worn: ${slot.displayName}'),
                     ],
                   ),
@@ -131,70 +156,64 @@ class ItemDetailSheet extends StatelessWidget {
                 ],
               ),
             ],
+            if (compare != null) ...[
+              const SizedBox(height: 10),
+              _EquipmentComparePanel(result: compare, controller: controller),
+            ],
             const SizedBox(height: 10),
-            if (onToggleFavorite != null) ...[
+            if (widget.onToggleFavorite != null) ...[
               GameButton(
-                label: favorite ? 'Unfavorite' : 'Favorite',
+                label: widget.favorite ? 'Unfavorite' : 'Favorite',
                 compact: true,
                 tone: GameButtonTone.secondary,
                 onPressed: () {
                   Navigator.of(context).pop();
-                  onToggleFavorite!();
+                  widget.onToggleFavorite!();
                 },
               ),
               const SizedBox(height: 6),
             ],
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                if (onEat != null) ...[
-                  Expanded(
-                    child: GameButton(
-                      label: 'Eat',
-                      compact: true,
-                      onPressed: eatEnabled
-                          ? () {
-                              Navigator.of(context).pop();
-                              onEat!();
-                            }
-                          : null,
-                    ),
+                if (widget.onEat != null)
+                  _ActionChip(
+                    label: 'Eat',
+                    onPressed: widget.eatEnabled
+                        ? () {
+                            Navigator.of(context).pop();
+                            widget.onEat!();
+                          }
+                        : null,
                   ),
-                  const SizedBox(width: 6),
-                ],
-                if (onEquip != null) ...[
-                  Expanded(
-                    child: GameButton(
-                      label: 'Equip',
-                      compact: true,
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        onEquip!();
-                      },
-                    ),
+                if (widget.onEquip != null)
+                  _ActionChip(
+                    label: 'Equip',
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      widget.onEquip!();
+                    },
                   ),
-                  const SizedBox(width: 6),
-                ],
-                if (onOpenCodex != null) ...[
-                  Expanded(
-                    child: GameButton(
-                      label: 'Codex',
-                      compact: true,
-                      tone: GameButtonTone.secondary,
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        onOpenCodex!();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Expanded(
-                  child: GameButton(
-                    label: 'Close',
-                    compact: true,
+                if (canCompare)
+                  _ActionChip(
+                    label: _comparing ? 'Hide compare' : 'Compare',
                     tone: GameButtonTone.secondary,
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => setState(() => _comparing = !_comparing),
                   ),
+                if (widget.onOpenCodex != null)
+                  _ActionChip(
+                    label: 'Codex',
+                    tone: GameButtonTone.secondary,
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      widget.onOpenCodex!();
+                    },
+                  ),
+                _ActionChip(
+                  label: 'Close',
+                  tone: GameButtonTone.secondary,
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
@@ -202,5 +221,133 @@ class ItemDetailSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  const _ActionChip({
+    required this.label,
+    required this.onPressed,
+    this.tone = GameButtonTone.primary,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final GameButtonTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 96,
+      child: GameButton(label: label, compact: true, tone: tone, onPressed: onPressed),
+    );
+  }
+}
+
+class _EquipmentComparePanel extends StatelessWidget {
+  const _EquipmentComparePanel({required this.result, required this.controller});
+
+  final EquipmentCompareResult result;
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!result.ok) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Palette.edge),
+          color: const Color(0x332A1C12),
+        ),
+        child: Text(
+          result.reason ?? 'Cannot compare that item.',
+          style: const TextStyle(fontSize: GameFont.m, color: Palette.warning),
+        ),
+      );
+    }
+
+    final equippedItem = result.equippedItemId == null
+        ? null
+        : controller.indexes.itemsById[result.equippedItemId!];
+    final candidateItem = controller.indexes.itemsById[result.candidateItemId];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Palette.edge),
+        color: const Color(0x332A1C12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Compare',
+            style: TextStyle(
+              fontSize: GameFont.m,
+              fontWeight: FontWeight.w400,
+              color: Palette.gold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              ItemIcon(item: candidateItem, size: 28),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(result.candidateName, style: const TextStyle(fontSize: GameFont.m)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          MutedText(
+            result.slotEmpty
+                ? 'Currently equipped: none'
+                : 'Currently equipped: ${result.equippedName}',
+          ),
+          if (!result.slotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                ItemIcon(item: equippedItem, size: 28),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    result.equippedName ?? 'Empty',
+                    style: const TextStyle(fontSize: GameFont.m),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 8),
+          for (final line in result.lines)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Text(
+                _lineText(line),
+                style: TextStyle(fontSize: GameFont.s, color: _lineColor(line.kind)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _lineText(EquipCompareLine line) {
+    if (line.before != null && line.after != null) {
+      return '${line.label}: ${line.before} → ${line.after} (${line.detail})';
+    }
+    return '${line.label}: ${line.detail}';
+  }
+
+  Color _lineColor(EquipCompareDeltaKind kind) {
+    return switch (kind) {
+      EquipCompareDeltaKind.improved => Palette.softGreen,
+      EquipCompareDeltaKind.reduced => Palette.danger,
+      EquipCompareDeltaKind.unchanged => Palette.muted,
+      EquipCompareDeltaKind.special => Palette.gold,
+    };
   }
 }

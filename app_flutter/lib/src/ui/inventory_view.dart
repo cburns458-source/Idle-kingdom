@@ -322,6 +322,7 @@ class _InventoryViewState extends State<InventoryView> {
         enchantmentId: stack?.enchantmentId ?? equipped?.enchantmentId,
         slotId: slotId,
         eatEnabled: !isInCombat(save),
+        allowCompare: canEquip,
         onEat: canEat
             ? () {
                 if (!mounted) return;

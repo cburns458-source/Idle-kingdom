@@ -1009,6 +1009,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                                           multiplayer: multiplayer,
                                           locationId: controller.save.currentLocationId,
                                           citadelHub: _inCitadel,
+                                          onOpenCodexItem: _openCodexItem,
                                         );
                                       },
                                     ),
@@ -1211,6 +1212,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                           locationId: save.currentLocationId,
                           citadelHub: _inCitadel,
                           onClose: _closeChat,
+                          onOpenCodexItem: (itemId) {
+                            _closeChat();
+                            _openCodexItem(itemId);
+                          },
                         ),
                       ),
                     ),

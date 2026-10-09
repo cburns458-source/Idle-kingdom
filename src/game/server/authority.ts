@@ -61,6 +61,7 @@ import { syncBountyHour } from '../bounties/progress'
 import { applyRankedPvpResult } from '../pvp/matchmaking'
 import { GUILD_CREATE_GOLD_COST } from '../multiplayer/types'
 import { createGuildRefusalFor } from '../guild/rules'
+import { chooseDialogue } from '../dialogue/engine'
 
 export { createTrackedMulberry32 }
 
@@ -104,6 +105,7 @@ export type GameCommandName =
   | 'quest_complete'
   | 'quest_assign_skill_xp'
   | 'merchant_tip_claim'
+  | 'dialogue_choose'
   | 'quest_inspect'
   | 'complete_special_project'
   | 'mail_read'
@@ -521,6 +523,14 @@ function applyExistingCommand(
       if (!npcId) return failed('Missing merchant.')
       const claimed = takeMerchantTip(db, save, npcId)
       return claimed ? ok(claimed.save) : ok(save)
+    }
+    case 'dialogue_choose': {
+      const dialogueId = asString(args.dialogueId)
+      const nodeId = asString(args.nodeId)
+      const choiceId = asString(args.choiceId)
+      if (!dialogueId || !nodeId || !choiceId) return failed('Missing dialogue choice.')
+      const chosen = chooseDialogue(db, save, dialogueId, nodeId, choiceId)
+      return chosen.ok ? ok(chosen.save) : failed(chosen.reason)
     }
     case 'quest_inspect': {
       const target = asString(args.target)

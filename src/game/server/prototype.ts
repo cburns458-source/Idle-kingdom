@@ -16,12 +16,19 @@ export {
 } from './authority'
 export type { GameCommandResult, Phase2SyncResult } from './authority'
 export {
+  applyDevCommand,
+  DEV_COMMAND_HELP,
+  parseDevCommandLine,
+} from './devCommands'
+export type { DevCommandHelpLine, DevCommandResult } from './devCommands'
+export {
   overlayPublishedPvpSnapshot,
   pvpSnapshotRowForSave,
   rankingBoardRowsFor,
   rankingProfilePatch,
 } from './rankings'
 export { prepareDatabase } from '../data/loadDatabase'
+export { parseSave } from '../save/saveStore'
 
 const MEADOW_LOCATION_ID = 'LOC-0009'
 const MEADOW_ACTIVITY_ID = 'ACT-0012'

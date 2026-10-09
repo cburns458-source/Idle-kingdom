@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -92,6 +93,7 @@ class ChatSheet extends StatefulWidget {
     required this.citadelHub,
     required this.onClose,
     this.embedded = false,
+    this.onOpenCodexItem,
   });
 
   final GameController controller;
@@ -103,6 +105,9 @@ class ChatSheet extends StatefulWidget {
   /// Side-docked chat stays open; the close control is hidden.
   final bool embedded;
 
+  /// Opens a Codex item when a chat reference is tapped.
+  final ValueChanged<String>? onOpenCodexItem;
+
   @override
   State<ChatSheet> createState() => _ChatSheetState();
 }
@@ -111,12 +116,16 @@ class _ChatSheetState extends State<ChatSheet> {
   final TextEditingController _body = TextEditingController();
   final FocusNode _composerFocus = FocusNode();
   final ScrollController _scroll = ScrollController();
+  late final CodexIndex _codex = CodexIndex(widget.controller.db);
   ChatTab? _pinnedTab;
   String? _pinnedDm;
   int _pinnedCount = -1;
   double _pinnedInset = -1;
   List<ChatLineView>? _cachedLines;
   Object? _linesCacheKey;
+  List<CodexItemEntry> _suggestions = const [];
+  int _highlight = 0;
+  String? _mentionQuery;
 
   MultiplayerController get net => widget.multiplayer;
   PlayerSave get save => widget.controller.save;
@@ -124,6 +133,7 @@ class _ChatSheetState extends State<ChatSheet> {
   @override
   void initState() {
     super.initState();
+    _body.addListener(_onComposerChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _pinToLatest(force: true);
       if (widget.embedded && net.canSeeSocialPages) {
@@ -134,10 +144,84 @@ class _ChatSheetState extends State<ChatSheet> {
 
   @override
   void dispose() {
+    _body.removeListener(_onComposerChanged);
     _composerFocus.dispose();
     _body.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  void _onComposerChanged() {
+    final text = _body.text;
+    final cursor = _body.selection.baseOffset;
+    if (cursor < 0 || cursor > text.length) {
+      _clearSuggestions();
+      return;
+    }
+    final before = text.substring(0, cursor);
+    final at = before.lastIndexOf('@');
+    if (at < 0) {
+      _clearSuggestions();
+      return;
+    }
+    final fragment = before.substring(at + 1);
+    if (fragment.contains(']') || fragment.contains('\n')) {
+      _clearSuggestions();
+      return;
+    }
+    // Do not reopen after a completed `@[ITEM-…]` token.
+    if (fragment.startsWith('[')) {
+      _clearSuggestions();
+      return;
+    }
+    final rows = chatItemAutocomplete(_codex, fragment);
+    setState(() {
+      _mentionQuery = fragment;
+      _suggestions = rows;
+      _highlight = 0;
+    });
+  }
+
+  void _clearSuggestions() {
+    if (_suggestions.isEmpty && _mentionQuery == null) return;
+    setState(() {
+      _suggestions = const [];
+      _mentionQuery = null;
+      _highlight = 0;
+    });
+  }
+
+  void _insertSuggestion(CodexItemEntry entry) {
+    final cursor = _body.selection.baseOffset.clamp(0, _body.text.length);
+    final next = insertChatItemRef(_body.text, cursor, entry.itemId);
+    _body.value = TextEditingValue(
+      text: next.text,
+      selection: TextSelection.collapsed(offset: next.cursor),
+    );
+    _clearSuggestions();
+    _composerFocus.requestFocus();
+  }
+
+  KeyEventResult _onComposerKey(FocusNode node, KeyEvent event) {
+    if (_suggestions.isEmpty || event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      setState(() => _highlight = (_highlight + 1) % _suggestions.length);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      setState(() => _highlight = (_highlight - 1 + _suggestions.length) % _suggestions.length);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      _insertSuggestion(_suggestions[_highlight]);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      _clearSuggestions();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   void _pinToLatest({required bool force, int attempt = 0}) {
@@ -177,9 +261,30 @@ class _ChatSheetState extends State<ChatSheet> {
 
   Future<void> _send() async {
     if (_body.text.trim().isEmpty) return;
-    final sent = _body.text;
-    await net.sendChat(sent, widget.locationId, citadelHub: widget.citadelHub);
-    if (mounted && net.notice == null) _body.clear();
+    if (_suggestions.isNotEmpty) {
+      _insertSuggestion(_suggestions[_highlight]);
+      return;
+    }
+    final raw = _body.text.trim();
+    if (net.isDeveloper && raw.startsWith('/')) {
+      final message = await net.runDevCommand(raw);
+      if (!mounted) return;
+      _body.clear();
+      _clearSuggestions();
+      if (message != null && message.isNotEmpty) {
+        // Shown via multiplayer notice; keep composer free of command text.
+      }
+      return;
+    }
+    final db = widget.controller.db;
+    final materialized = materializeAllItemMentions(db, _body.text);
+    final sanitized = sanitizeChatItemRefsWithDb(db, materialized).trim();
+    if (sanitized.isEmpty) return;
+    await net.sendChat(sanitized, widget.locationId, citadelHub: widget.citadelHub);
+    if (mounted && net.notice == null) {
+      _body.clear();
+      _clearSuggestions();
+    }
   }
 
   List<ChatLineView> _chatLines(List<ChatMessage> source) {
@@ -202,6 +307,46 @@ class _ChatSheetState extends State<ChatSheet> {
       hideGuildMilestones: !net.showGuildMilestones,
     );
     return _cachedLines!;
+  }
+
+  InlineSpan _bodySpans(String body) {
+    final style = const TextStyle(
+      fontFamily: gameFontFamily,
+      fontSize: GameFont.m,
+      color: Palette.parchmentText,
+    );
+    final segments = parseChatBodyWithDb(widget.controller.db, body);
+    if (segments.length == 1 && segments.single is ChatTextSegment) {
+      return TextSpan(text: body, style: style);
+    }
+    return TextSpan(
+      style: style,
+      children: [
+        for (final segment in segments)
+          if (segment is ChatTextSegment)
+            TextSpan(text: segment.text)
+          else if (segment is ChatItemRefSegment)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.baseline,
+              baseline: TextBaseline.alphabetic,
+              child: GestureDetector(
+                onTap: !segment.known || widget.onOpenCodexItem == null
+                    ? null
+                    : () => widget.onOpenCodexItem!(segment.itemId),
+                child: Text(
+                  chatItemRefLabel(segment),
+                  style: TextStyle(
+                    fontFamily: gameFontFamily,
+                    fontSize: GameFont.m,
+                    color: segment.known ? Palette.gold : Palette.muted,
+                    decoration: segment.known ? TextDecoration.underline : TextDecoration.none,
+                    decorationColor: Palette.gold,
+                  ),
+                ),
+              ),
+            ),
+      ],
+    );
   }
 
   @override
@@ -311,7 +456,7 @@ class _ChatSheetState extends State<ChatSheet> {
                                             ),
                                           ),
                                         ),
-                                      TextSpan(text: line.body),
+                                      _bodySpans(line.body),
                                     ],
                                   ),
                                 ),
@@ -323,18 +468,25 @@ class _ChatSheetState extends State<ChatSheet> {
                       },
                     ),
             ),
-            if (showComposer)
+            if (showComposer) ...[
+              if (_suggestions.isNotEmpty) _suggestionList(),
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
                     Expanded(
-                      child: TextField(
-                        controller: _body,
-                        focusNode: _composerFocus,
-                        maxLength: 240,
-                        decoration: const InputDecoration(hintText: 'Message…', counterText: ''),
-                        onSubmitted: (_) => _send(),
+                      child: Focus(
+                        onKeyEvent: _onComposerKey,
+                        child: TextField(
+                          controller: _body,
+                          focusNode: _composerFocus,
+                          maxLength: 240,
+                          decoration: const InputDecoration(
+                            hintText: 'Message… (@item)',
+                            counterText: '',
+                          ),
+                          onSubmitted: (_) => _send(),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -345,12 +497,44 @@ class _ChatSheetState extends State<ChatSheet> {
                     ),
                   ],
                 ),
-              )
-            else if (net.chatTab == ChatTab.dm)
+              ),
+            ] else if (net.chatTab == ChatTab.dm)
               const SizedBox(height: 8),
           ],
         );
       },
+    );
+  }
+
+  Widget _suggestionList() {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 160),
+      child: Material(
+        color: const Color(0xEE2A1C12),
+        child: ListView.builder(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          itemCount: _suggestions.length,
+          itemBuilder: (context, index) {
+            final row = _suggestions[index];
+            final selected = index == _highlight;
+            return InkWell(
+              onTap: () => _insertSuggestion(row),
+              child: Container(
+                color: selected ? const Color(0x44546E3E) : null,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Text(
+                  row.displayName,
+                  style: TextStyle(
+                    fontSize: GameFont.m,
+                    color: selected ? Palette.gold : Palette.parchmentText,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 

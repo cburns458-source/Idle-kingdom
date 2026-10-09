@@ -18,6 +18,13 @@ const int guildApplicationMessageMaxLength = 120;
 
 const int guildNameMaxLength = 28;
 const int guildDescriptionMaxLength = 160;
+const int guildPrivateMessageMaxLength = 500;
+
+/// Public guild motto (stored as [GuildRecord.description]).
+String guildMottoFromInput(String raw) => _cut(raw.trim(), guildDescriptionMaxLength);
+
+/// Private guild announcement for members only.
+String guildPrivateMessageFromInput(String raw) => _cut(raw.trim(), guildPrivateMessageMaxLength);
 
 const String guildHallFinishedRefusal = 'The hall is finished.';
 const String guildHallUnneededRefusal = 'The storehouse only takes what this step still needs.';

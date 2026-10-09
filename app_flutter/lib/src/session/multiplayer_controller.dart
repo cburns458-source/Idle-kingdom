@@ -575,6 +575,8 @@ class MultiplayerController extends ChangeNotifier {
     _socialRefreshCompleted = false;
     _deferredPresenceSave = null;
     _deferDirectMessageInbox = false;
+    _guildPrivateMessage = null;
+    _isDeveloper = false;
   }
 
   // --- Account saves --------------------------------------------------------
@@ -991,11 +993,13 @@ class MultiplayerController extends ChangeNotifier {
       _members = const <GuildMember>[];
       _guests = const <GuildGuest>[];
       _applications = const <GuildApplication>[];
+      _guildPrivateMessage = null;
     } else {
       _guild = await service.guild(guildId);
       _members = await service.guildMembers(guildId);
       _guests = await service.guildGuests(guildId);
       _applications = await service.guildApplications(guildId);
+      _guildPrivateMessage = await service.guildPrivateMessage(guildId);
     }
     final guestId = _guestGuildId;
     _guestGuild = guestId == null ? null : await service.guild(guestId);
@@ -1004,6 +1008,7 @@ class MultiplayerController extends ChangeNotifier {
     _presence = await service.presenceRecords();
     await _refreshUnread(save);
     await _loadSocialLists();
+    _isDeveloper = await service.isDeveloperAccount();
     notifyListeners();
   }
 
@@ -1710,6 +1715,71 @@ class MultiplayerController extends ChangeNotifier {
       await refresh(save);
       return null;
     });
+  }
+
+  /// Saves the public guild motto (description).
+  Future<void> saveGuildMotto(String motto, PlayerSave save) {
+    return run(() async {
+      final guildId = _guildId;
+      if (guildId == null) return 'Join a guild first.';
+      final result = await service.setGuildMotto(guildId, motto);
+      if (!result.ok) return result.reason;
+      await refresh(save);
+      return 'Motto saved.';
+    });
+  }
+
+  /// Saves the private guild announcement for members.
+  Future<void> saveGuildPrivateMessage(String body, PlayerSave save) {
+    return run(() async {
+      final guildId = _guildId;
+      if (guildId == null) return 'Join a guild first.';
+      final result = await service.setGuildPrivateMessage(guildId, body);
+      if (!result.ok) return result.reason;
+      _guildPrivateMessage = guildPrivateMessageFromInput(body);
+      notifyListeners();
+      return 'Guild message saved.';
+    });
+  }
+
+  /// Loads the private guild message when the viewer is a member.
+  Future<void> refreshGuildPrivateMessage() async {
+    final guildId = _guildId;
+    if (guildId == null || !isSignedIn) {
+      _guildPrivateMessage = null;
+      notifyListeners();
+      return;
+    }
+    _guildPrivateMessage = await service.guildPrivateMessage(guildId);
+    notifyListeners();
+  }
+
+  String? _guildPrivateMessage;
+
+  /// Private guild announcement for the signed-in member, or null when hidden.
+  String? get guildPrivateMessage => _guildPrivateMessage;
+
+  bool _isDeveloper = false;
+
+  /// Hint from the server: this account may use `/` developer commands in chat.
+  bool get isDeveloper => _isDeveloper;
+
+  /// Runs a slash developer command on the hosted save. Never posts to chat.
+  Future<String?> runDevCommand(String line) async {
+    final parsed = parseDevCommandLine(line);
+    if (parsed == null) return 'Not a command.';
+    if (!isSignedIn) return 'Sign in first.';
+    if (!_isDeveloper) return 'Not a developer account.';
+    final result = await service.gameDevCommand(parsed.command, parsed.tokens);
+    if (result.ok && result.save != null) {
+      _adoptHosted(result.save!, command: 'dev:${parsed.command}');
+      _notice = result.message;
+      notifyListeners();
+      return result.message;
+    }
+    _notice = result.reason;
+    notifyListeners();
+    return result.reason;
   }
 
   /// Saves the guild settings sheet fields, stopping at the first no.
