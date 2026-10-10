@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { beginActivitySave, generateNextAction } from '../activity/engine'
 import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import type { InventoryStack } from '../save/types'
-import { applyGameCommand, runPhase2Sync } from './authority'
+import { applyGameCommand, CATCHING_UP_REASON, runPhase2Sync } from './authority'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -229,5 +230,71 @@ describe('phase 2 authority', () => {
     expect(deposited.save.bank?.find((stack) => stack.itemId === 'ITEM-0005')?.quantity).toBe(2)
     expect(deposited.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(1)
     expect(deposited.save.inventory.find((stack) => stack.itemId === 'ITEM-0005')?.quantity).toBe(2)
+  })
+
+  describe('long absences', () => {
+    function gatheringAway(hours: number) {
+      const { launch } = prepareDatabase(rawDatabase)
+      let save = { ...createNewSave(launch, START_MS), currentLocationId: 'LOC-0009' }
+      save = beginActivitySave(save, 'ACT-0012', new Date(START_MS).toISOString())
+      const generated = generateNextAction(launch, save, 'ACT-0012', () => 0, START_MS)
+      return {
+        save: { ...generated!.save, unattendedProgressAt: new Date(START_MS).toISOString() },
+        nowMs: START_MS + hours * 3_600_000,
+      }
+    }
+
+    it('returns a partial sync instead of running past the budget', () => {
+      const { save, nowMs } = gatheringAway(13)
+      const first = runPhase2Sync(rawDatabase, { save, nowMs, rngState: 1, budgetMs: 0 })
+      expect(first.caughtUp).toBe(false)
+      expect(Date.parse(first.save.unattendedProgressAt!)).toBeLessThan(nowMs)
+
+      let current = first.save
+      let rngState = first.rngState
+      for (let calls = 0; calls < 200; calls += 1) {
+        const next = runPhase2Sync(rawDatabase, {
+          save: current,
+          nowMs,
+          rngState,
+          budgetMs: 20,
+          windowStartMs: START_MS,
+        })
+        current = next.save
+        rngState = next.rngState
+        if (next.caughtUp) break
+      }
+      expect(current.unattendedProgressAt).toBe(new Date(nowMs).toISOString())
+    }, 60_000)
+
+    it('holds a command until the hosted save has caught up', () => {
+      const { save, nowMs } = gatheringAway(13)
+      const held = applyGameCommand(rawDatabase, {
+        command: 'stop_activity',
+        save,
+        nowMs,
+        random: () => 0,
+        budgetMs: 0,
+        windowStartMs: START_MS,
+      })
+      expect(held.ok).toBe(false)
+      if (held.ok || !('catchingUp' in held)) throw new Error('expected a catch-up refusal')
+      expect(held.reason).toBe(CATCHING_UP_REASON)
+      expect(held.save.currentActivityId).toBe('ACT-0012')
+      expect(Date.parse(held.save.unattendedProgressAt!)).toBeLessThan(nowMs)
+    })
+
+    it('applies a command once the catch-up fits in the budget', () => {
+      const { save } = gatheringAway(0)
+      const stopped = applyGameCommand(rawDatabase, {
+        command: 'stop_activity',
+        save,
+        nowMs: START_MS + 60_000,
+        random: () => 0,
+      })
+      expect(stopped.ok).toBe(true)
+      if (!stopped.ok) return
+      expect(stopped.save.currentActivityId).toBeNull()
+    })
   })
 })

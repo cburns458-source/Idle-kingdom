@@ -805,17 +805,27 @@ class RemoteMultiplayerService implements MultiplayerService {
         now - _lastGameSyncMs < remoteGameSyncMinIntervalMs) {
       return pullSave();
     }
-    final request = <String, Object?>{
-      ...body,
-      'version': _hostedSaveVersion,
-      'playSessionId': session?.playSessionId,
-    };
     try {
-      final invoked = await transport.invoke(remoteGameFunction, request);
-      if (!invoked.ok) {
-        return CloudSyncResult.failed(invoked.reason ?? 'Game sync failed.');
+      var data = const <String, Object?>{};
+      // A long absence is replayed a slice per call. Each slice is written and
+      // bumps the version, so the next call carries it and continues.
+      for (var attempt = 1; ; attempt++) {
+        final invoked = await transport.invoke(remoteGameFunction, <String, Object?>{
+          ...body,
+          'version': _hostedSaveVersion,
+          'playSessionId': session?.playSessionId,
+        });
+        if (!invoked.ok) {
+          return CloudSyncResult.failed(invoked.reason ?? 'Game sync failed.');
+        }
+        data = invoked.data ?? const <String, Object?>{};
+        final version = data['version'];
+        if (version is num) _hostedSaveVersion = version.toInt();
+        final rngState = data['rngState'];
+        if (rngState is num) _hostedRngState = rngState.toInt();
+        final catchingUp = data['catchingUp'] == true || data['caughtUp'] == false;
+        if (!catchingUp || attempt >= remoteGameCatchUpAttempts) break;
       }
-      final data = invoked.data ?? const <String, Object?>{};
       if (data['error'] is String) {
         return CloudSyncResult.failed(data['error']! as String);
       }
@@ -826,10 +836,6 @@ class RemoteMultiplayerService implements MultiplayerService {
       final save = parseSave(Map<String, Object?>.from(rawSave), _nowMs());
       final validation = softValidateSave(save);
       if (!validation.ok) return CloudSyncResult.failed(validation.reason!);
-      final version = data['version'];
-      if (version is num) _hostedSaveVersion = version.toInt();
-      final rngState = data['rngState'];
-      if (rngState is num) _hostedRngState = rngState.toInt();
       if (body['action'] == 'sync') _lastGameSyncMs = now;
       return CloudSyncResult.ok(
         save,

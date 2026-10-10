@@ -254,6 +254,20 @@ async function loadHostedRow(admin: Client, userId: string): Promise<HostedSaveR
   }
 }
 
+/**
+ * `advanced_to` moves to now only when a catch-up finishes. While one is still
+ * in chunks it stays at the start of the away window, so each chunk measures
+ * the unattended cap from the same place.
+ */
+function catchUpWindowStartMs(row: HostedSaveRow): number | undefined {
+  const advancedTo = row.advanced_to ? Date.parse(row.advanced_to) : Number.NaN
+  if (Number.isFinite(advancedTo)) return advancedTo
+  const payload = row.payload as { unattendedProgressAt?: unknown } | null
+  const anchor =
+    typeof payload?.unattendedProgressAt === 'string' ? Date.parse(payload.unattendedProgressAt) : Number.NaN
+  return Number.isFinite(anchor) ? anchor : undefined
+}
+
 async function loadHostedSaveCopy(admin: Client, userId: string): Promise<unknown> {
   const row = await loadHostedRow(admin, userId)
   return row?.payload
@@ -284,21 +298,26 @@ async function handleSync(admin: Client, userId: string, payload: GameBody): Pro
   const expected = parseVersion(payload.version, hosted.version)
   if (expected === null) return json({ error: 'version must be a whole number.', phase: 2 }, 400)
   const nowMs = Date.now()
+  const windowStartMs = catchUpWindowStartMs(hosted)
   try {
     const result = runPhase2Sync(rawDatabase, {
       save: hosted.payload,
       nowMs,
       rngState: hosted.rng_state,
+      windowStartMs,
     })
     const written = await writeHostedSave(admin, userId, {
       expectedVersion: expected,
       payload: result.save,
       rngState: result.rngState,
       nowMs,
+      advancedToMs: result.caughtUp ? nowMs : windowStartMs,
     })
     if (!written.ok) return written.response
-    const published = await publishPhase3Rows(admin, rawDatabase, userId, result.save, nowMs)
-    if (!published.ok) return published.response
+    if (result.caughtUp) {
+      const published = await publishPhase3Rows(admin, rawDatabase, userId, result.save, nowMs)
+      if (!published.ok) return published.response
+    }
     return json({
       ok: true,
       phase: 2,
@@ -307,6 +326,7 @@ async function handleSync(admin: Client, userId: string, payload: GameBody): Pro
       version: written.version,
       rngState: result.rngState,
       gatheringActions: result.gatheringActions,
+      caughtUp: result.caughtUp,
       wroteSave: true,
     })
   } catch (error) {
@@ -326,6 +346,7 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
 
   const hallContext = await loadHallContext(admin, userId)
   const rng = createTrackedMulberry32(hosted?.rng_state ?? ((nowMs ^ userId.length) >>> 0))
+  const windowStartMs = hosted ? catchUpWindowStartMs(hosted) : undefined
   try {
     const result = applyGameCommand(rawDatabase, {
       command,
@@ -336,7 +357,31 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       hall: hallContext?.hall,
       userId,
       guildRole: hallContext?.role,
+      windowStartMs,
     })
+    if (!result.ok && 'catchingUp' in result && hosted) {
+      // Keep the chunk that was simulated; the client retries the intent.
+      const partial = await writeHostedSave(admin, userId, {
+        expectedVersion: expected,
+        payload: result.save,
+        rngState: rng.getState(),
+        nowMs,
+        advancedToMs: windowStartMs,
+      })
+      if (!partial.ok) return partial.response
+      return json(
+        {
+          error: result.reason,
+          catchingUp: true,
+          phase: 2,
+          save: result.save,
+          version: partial.version,
+          rngState: rng.getState(),
+          wroteSave: true,
+        },
+        202,
+      )
+    }
     if (!result.ok) return json({ error: result.reason, phase: 2 }, 400)
     let foundedGuild: Record<string, unknown> | null = null
     if (command === 'guild_create') {
@@ -470,9 +515,17 @@ async function refreshPublishedPvp(
 async function writeHostedSave(
   admin: Client,
   userId: string,
-  options: { expectedVersion: number; payload: unknown; rngState: number; nowMs: number },
+  options: {
+    expectedVersion: number
+    payload: unknown
+    rngState: number
+    nowMs: number
+    /** A catch-up that stopped early keeps the window start so the cap holds. */
+    advancedToMs?: number
+  },
 ): Promise<{ ok: true; version: number } | { ok: false; response: Response }> {
-  const advancedTo = new Date(options.nowMs).toISOString()
+  const writtenAt = new Date(options.nowMs).toISOString()
+  const advancedTo = new Date(options.advancedToMs ?? options.nowMs).toISOString()
   const { data, error } = await admin
     .from('player_saves')
     .update({
@@ -480,7 +533,7 @@ async function writeHostedSave(
       version: options.expectedVersion + 1,
       advanced_to: advancedTo,
       rng_state: options.rngState,
-      updated_at: advancedTo,
+      updated_at: writtenAt,
     })
     .eq('user_id', userId)
     .eq('version', options.expectedVersion)

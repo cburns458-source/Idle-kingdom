@@ -76,9 +76,24 @@ hours offline is one `sync`. Call `sync` on player actions and roughly
 every few minutes. The free plan allows about 500k function calls a
 month.
 
-Edge-function CPU is about two seconds per request. A long catch-up may
-have to run in chunks. Phase 0 timings exist so we can see whether an
-eight-hour gathering window fits.
+Edge-function CPU is about two seconds per request. A function killed at that
+limit answers HTTP 546 ("not having enough compute resources") and writes
+nothing, so the next call starts from the same point with more to do. A
+level-98 woodcutter away for half a day on 12-second elder yew hit exactly that.
+
+So a hosted catch-up runs in slices. `resolveUnattendedProgress` takes a
+`budgetMs` (`HOSTED_CATCH_UP_BUDGET_MS`, 600 ms of wall clock) and stops early
+once it is spent, stamping `unattendedProgressAt` only as far as it simulated
+and crediting play time for that span alone.
+
+- `sync` writes the slice and answers `caughtUp: false`.
+- `command` writes the slice, does not apply the intent, and answers 202 with
+  `catchingUp: true`, the slice's save, and its new `version`.
+- The client repeats the same call with that version, up to
+  `remoteGameCatchUpAttempts` times.
+- `advanced_to` only moves to now when a catch-up finishes. While slices are
+  pending it stays at the start of the away window, and each slice passes it
+  as `windowStartMs`, so splitting a 48-hour absence still simulates 24 hours.
 
 ## Risks
 

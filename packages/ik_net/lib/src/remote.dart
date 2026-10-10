@@ -122,6 +122,13 @@ const String remoteGameFunction = 'game';
 /// How often a signed-in device asks the server to advance time.
 const num remoteGameSyncMinIntervalMs = 120000;
 
+/// Back-to-back `game` calls while the server replays a long absence in chunks.
+/// Each call simulates a slice and writes it, so a stop here loses nothing.
+const int remoteGameCatchUpAttempts = 30;
+
+/// The edge runtime ran out of CPU before the function answered.
+const String remoteServerCatchingUp = 'Still catching up your time away. Try again in a moment.';
+
 const String remoteNotConfigured = 'Supabase is not configured.';
 const String remoteSignUpFailed = 'Sign-up failed.';
 const String remoteSignUpNeedsSession =
@@ -162,9 +169,19 @@ bool isUnreachableRemoteError(String? message) {
       lower.contains('socketexception');
 }
 
+/// True when the edge runtime killed the function for CPU or memory (HTTP 546).
+bool isEdgeResourceLimitError(String? message) {
+  if (message == null || message.isEmpty) return false;
+  final lower = message.toLowerCase();
+  return lower.contains('compute resources') ||
+      lower.contains('worker_limit') ||
+      lower.contains('cpu time exceeded');
+}
+
 String friendlyRemoteError(String message) {
   if (isExpiredAuthError(message)) return remoteSignInAgain;
   if (isUnreachableRemoteError(message)) return remoteUnreachable;
+  if (isEdgeResourceLimitError(message)) return remoteServerCatchingUp;
   if (message.toLowerCase().contains('invalid path specified')) {
     return remoteInvalidBackendUrl;
   }

@@ -306,6 +306,56 @@ void main() {
     expect(transport.calls.where((call) => call == 'invoke:$remoteGameFunction').length, 3);
   });
 
+  test('keeps syncing while the server replays a long absence in slices', () async {
+    final transport = _SlicedCatchUpTransport(database: _database());
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final save = createNewSave(_database(), _nowMs).copyWith(characterName: 'Hero');
+    expect((await seedHostedSave(service, transport, save)).ok, isTrue);
+
+    transport.slices = 3;
+    final synced = await service.gameSync(force: true);
+    expect(synced.ok, isTrue, reason: synced.reason);
+    expect(transport.slicedVersions, <Object?>[1, 2, 3]);
+    expect(service.hostedSaveVersion, 5);
+  });
+
+  test('retries a command until the server has caught up', () async {
+    final transport = _SlicedCatchUpTransport(database: _database());
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final save = createNewSave(_database(), _nowMs).copyWith(characterName: 'Hero');
+    expect((await seedHostedSave(service, transport, save)).ok, isTrue);
+
+    transport.slices = 2;
+    final done = await service.gameCommand('set_meta', <String, Object?>{});
+    expect(done.ok, isTrue, reason: done.reason);
+    expect(transport.slicedVersions, <Object?>[1, 2]);
+    expect(transport.calls.where((call) => call == 'game:set_meta').length, 1);
+  });
+
+  test('gives up after a bounded number of slices with the catching-up reason', () async {
+    final transport = _SlicedCatchUpTransport(database: _database());
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final save = createNewSave(_database(), _nowMs).copyWith(characterName: 'Hero');
+    expect((await seedHostedSave(service, transport, save)).ok, isTrue);
+
+    transport.slices = remoteGameCatchUpAttempts + 5;
+    final refused = await service.gameCommand('set_meta', <String, Object?>{});
+    expect(refused.ok, isFalse);
+    expect(refused.reason, remoteServerCatchingUp);
+    expect(transport.slicedVersions.length, remoteGameCatchUpAttempts);
+  });
+
+  test('names an edge CPU kill instead of showing the platform text', () {
+    expect(
+      friendlyRemoteError(
+        'Function failed due to not having enough compute resources (please check logs)',
+      ),
+      remoteServerCatchingUp,
+    );
+    expect(isEdgeResourceLimitError('WORKER_LIMIT'), isTrue);
+    expect(isEdgeResourceLimitError('Invalid login credentials'), isFalse);
+  });
+
   test('save upload repairs a missing profile with its required username', () async {
     final transport = FakeTransport(database: _database());
     final service = await _signedIn(transport, MemorySaveStorage());
@@ -1307,4 +1357,34 @@ void main() {
     final vague = await hero.reportPlayer(rival.session!.userId, 'Just because');
     expect(vague.ok, isFalse);
   });
+}
+
+/// Answers the next [slices] `game` calls the way the function does when a
+/// long absence is only partly replayed: the slice is written and the version
+/// moves, but a sync is not caught up and a command is not applied yet.
+class _SlicedCatchUpTransport extends FakeTransport {
+  _SlicedCatchUpTransport({super.database});
+
+  int slices = 0;
+  final List<Object?> slicedVersions = <Object?>[];
+
+  @override
+  Future<RemoteInvokeResult> invoke(String function, RemoteRow body) async {
+    if (function != remoteGameFunction || slices <= 0) return super.invoke(function, body);
+    slices -= 1;
+    slicedVersions.add(body['version']);
+    final row = tables[RemoteTables.saves]!.single;
+    final version = ((row['version'] as num?) ?? 1).toInt() + 1;
+    row['version'] = version;
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'save': row['payload'],
+      'version': version,
+      'rngState': 1,
+      if (body['action'] == 'sync') 'caughtUp': false,
+      if (body['action'] == 'command') ...<String, Object?>{
+        'error': remoteServerCatchingUp,
+        'catchingUp': true,
+      },
+    });
+  }
 }

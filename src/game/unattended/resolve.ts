@@ -69,6 +69,22 @@ export interface UnattendedResult {
   combatDeaths: number
   crittersSpawned: number
   effectiveElapsedMs: number
+  /** False when a step or time budget stopped the catch-up before `nowMs`. */
+  caughtUp: boolean
+}
+
+export interface UnattendedOptions {
+  /**
+   * Wall-clock milliseconds the catch-up loop may spend. Edge functions are
+   * killed past about two seconds of CPU, which writes nothing; stopping early
+   * keeps the work done so far and the next call resumes from it.
+   */
+  budgetMs?: number
+  /**
+   * Where the unattended cap window starts. A resumed catch-up passes the
+   * original start so chunks cannot stretch past the cap.
+   */
+  windowStartMs?: number
 }
 
 export function unattendedCapMs(db: GameDatabase): number {
@@ -85,10 +101,22 @@ export function stampUnattendedProgressAt(
   }
 }
 
-function effectiveEndMs(save: PlayerSave, nowMs: number, capMs: number): number {
+function effectiveEndMs(
+  save: PlayerSave,
+  nowMs: number,
+  capMs: number,
+  windowStartMs?: number,
+): number {
   const anchorRaw = save.unattendedProgressAt ? Date.parse(save.unattendedProgressAt) : NaN
   const anchor = Number.isFinite(anchorRaw) ? anchorRaw : nowMs
-  return Math.min(nowMs, anchor + capMs)
+  const windowStart =
+    windowStartMs != null &&
+    Number.isFinite(windowStartMs) &&
+    windowStartMs <= anchor &&
+    windowStartMs + capMs > anchor
+      ? windowStartMs
+      : anchor
+  return Math.min(nowMs, windowStart + capMs)
 }
 
 /**
@@ -100,9 +128,12 @@ export function resolveUnattendedProgress(
   save: PlayerSave,
   nowMs: number = Date.now(),
   random: RandomFn = Math.random,
+  options: UnattendedOptions = {},
 ): UnattendedResult {
   const capMs = unattendedCapMs(db)
-  const endMs = effectiveEndMs(save, nowMs, capMs)
+  const endMs = effectiveEndMs(save, nowMs, capMs, options.windowStartMs)
+  const budgetMs = options.budgetMs
+  const budgetStarted = budgetMs != null ? performance.now() : 0
   const anchorRaw = save.unattendedProgressAt ? Date.parse(save.unattendedProgressAt) : NaN
   const anchor = Number.isFinite(anchorRaw) ? anchorRaw : nowMs
   const effectiveElapsedMs = Math.max(0, endMs - anchor)
@@ -161,6 +192,10 @@ export function resolveUnattendedProgress(
 
   while (true) {
     if (steps >= maxSteps) {
+      hitStepLimit = true
+      break
+    }
+    if (budgetMs != null && steps > 0 && performance.now() - budgetStarted >= budgetMs) {
       hitStepLimit = true
       break
     }
@@ -322,10 +357,14 @@ export function resolveUnattendedProgress(
   // advance the anchor as far as the simulation actually got — the
   // remainder will be caught up on the next load instead of being lost.
   // Regen runs even mid-combat once the 60s no-damage gate has passed.
-  current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs, endMs).save
+  // A partial run only credits the time it simulated; the next run owns the rest.
+  if (!hitStepLimit) {
+    current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs, endMs).save
+  }
 
   const stampAt = hitStepLimit ? Math.min(nowMs, lastResolvedMs) : nowMs
-  const stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), effectiveElapsedMs)
+  const creditedMs = hitStepLimit ? Math.max(0, stampAt - anchor) : effectiveElapsedMs
+  const stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), creditedMs)
   const changed =
     stamped !== save &&
     (gatheringActions > 0 ||
@@ -355,6 +394,7 @@ export function resolveUnattendedProgress(
     combatVictories,
     combatDeaths,
     crittersSpawned,
-    effectiveElapsedMs,
+    effectiveElapsedMs: creditedMs,
+    caughtUp: !hitStepLimit,
   }
 }
