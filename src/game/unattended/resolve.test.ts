@@ -7,6 +7,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { beginProductionQueue } from '../production/engine'
 import { addItemToInventory } from '../activity/rewards'
 import { createNewSave } from '../save/saveStore'
+import type { PlayerSave } from '../save/types'
 import { resolveUnattendedProgress, unattendedCapMs } from './resolve'
 
 const rawDatabase = JSON.parse(
@@ -338,5 +339,96 @@ describe('unattended progression', () => {
     expect(
       resolved.messages.some((line) => /Defeated/.test(line) || /Recovered from defeat/.test(line)),
     ).toBe(true)
+  })
+
+  describe('chunked catch-up', () => {
+    const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
+
+    function meadowSave(): { launch: ReturnType<typeof prepareDatabase>['launch']; save: PlayerSave } {
+      const { launch } = prepareDatabase(rawDatabase)
+      let save = { ...createNewSave(launch), currentLocationId: 'LOC-0009', playTimeMs: 0 }
+      save = beginActivitySave(save, 'ACT-0012', new Date(startedAt).toISOString())
+      const generated = generateNextAction(launch, save, 'ACT-0012', () => 0, startedAt)
+      return { launch, save: { ...generated!.save, unattendedProgressAt: new Date(startedAt).toISOString() } }
+    }
+
+    function chunked(nowMs: number) {
+      const { launch, save } = meadowSave()
+      let current = save
+      let gatheringActions = 0
+      let calls = 0
+      for (;;) {
+        calls += 1
+        const slice = resolveUnattendedProgress(launch, current, nowMs, () => 0, {
+          budgetMs: 0,
+          windowStartMs: startedAt,
+        })
+        gatheringActions += slice.gatheringActions
+        current = slice.save
+        if (slice.caughtUp) break
+        expect(Date.parse(current.unattendedProgressAt!)).toBeLessThanOrEqual(nowMs)
+        expect(calls).toBeLessThan(5_000)
+      }
+      return { save: current, gatheringActions, calls }
+    }
+
+    it('stops early on a time budget and stamps only what it simulated', () => {
+      const { launch, save } = meadowSave()
+      const now = startedAt + 2 * 3_600_000
+      const slice = resolveUnattendedProgress(launch, save, now, () => 0, { budgetMs: 0 })
+      expect(slice.caughtUp).toBe(false)
+      expect(slice.gatheringActions).toBeLessThanOrEqual(1)
+      const stamped = Date.parse(slice.save.unattendedProgressAt!)
+      expect(stamped).toBeGreaterThanOrEqual(startedAt)
+      expect(stamped).toBeLessThan(now)
+      expect(slice.save.playTimeMs).toBe(stamped - startedAt)
+    })
+
+    it('reaches the same place in slices as in one pass', () => {
+      const now = startedAt + 2 * 3_600_000
+      const { launch, save } = meadowSave()
+      const whole = resolveUnattendedProgress(launch, save, now, () => 0)
+      const sliced = chunked(now)
+      expect(sliced.calls).toBeGreaterThan(1)
+      expect(sliced.gatheringActions).toBe(whole.gatheringActions)
+      expect(sliced.save.unattendedProgressAt).toBe(whole.save.unattendedProgressAt)
+      expect(sliced.save.playTimeMs).toBe(whole.save.playTimeMs)
+      expect(sliced.save.inventory).toEqual(whole.save.inventory)
+      expect(sliced.save.skills).toEqual(whole.save.skills)
+    }, 60_000)
+
+    it('keeps the unattended cap when a long absence is split', () => {
+      const now = startedAt + 30 * 3_600_000
+      const { launch, save } = meadowSave()
+      const whole = resolveUnattendedProgress(launch, save, now, () => 0)
+      const sliced = (() => {
+        let current = save
+        let gatheringActions = 0
+        for (let calls = 0; calls < 500; calls += 1) {
+          const slice = resolveUnattendedProgress(launch, current, now, () => 0, {
+            budgetMs: 25,
+            windowStartMs: startedAt,
+          })
+          gatheringActions += slice.gatheringActions
+          current = slice.save
+          if (slice.caughtUp) break
+        }
+        return { save: current, gatheringActions }
+      })()
+      expect(sliced.gatheringActions).toBe(whole.gatheringActions)
+      expect(sliced.save.playTimeMs).toBe(24 * 3_600_000)
+      expect(sliced.save.unattendedProgressAt).toBe(new Date(now).toISOString())
+    }, 120_000)
+
+    it('ignores a window start that no longer contains the save anchor', () => {
+      const { launch, save } = meadowSave()
+      const now = startedAt + 3_600_000
+      const stale = resolveUnattendedProgress(launch, save, now, () => 0, {
+        windowStartMs: startedAt - 48 * 3_600_000,
+      })
+      const plain = resolveUnattendedProgress(launch, save, now, () => 0)
+      expect(stale.gatheringActions).toBe(plain.gatheringActions)
+      expect(stale.caughtUp).toBe(true)
+    })
   })
 })

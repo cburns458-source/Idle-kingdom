@@ -126,6 +126,7 @@ export type GameCommandArgs = Record<string, unknown>
 export type GameCommandResult =
   | { ok: true; save: PlayerSave; hall?: GuildHallState; goldCost?: number }
   | { ok: false; reason: string }
+  | { ok: false; reason: string; catchingUp: true; save: PlayerSave }
 
 export type Phase2SyncResult = {
   save: PlayerSave
@@ -135,6 +136,22 @@ export type Phase2SyncResult = {
   combatVictories: number
   combatDeaths: number
   effectiveElapsedMs: number
+  caughtUp: boolean
+}
+
+/**
+ * Wall-clock share of one `game` request the catch-up loop may spend. The edge
+ * runtime kills a request at about two seconds of CPU and writes nothing, so
+ * the loop stops well short and leaves room to load and write the save.
+ */
+export const HOSTED_CATCH_UP_BUDGET_MS = 600
+
+export const CATCHING_UP_REASON = 'Still catching up your time away. Try again in a moment.'
+
+export type HostedCatchUpOptions = {
+  /** Start of the unattended cap window when a previous request stopped early. */
+  windowStartMs?: number
+  budgetMs?: number
 }
 
 function asString(value: unknown): string | null {
@@ -228,21 +245,27 @@ function unwrap<T extends { ok: true; save: PlayerSave } | { ok: false; reason: 
 
 export function runPhase2Sync(
   rawDatabase: unknown,
-  options: { save: unknown; nowMs: number; rngState: number },
+  options: { save: unknown; nowMs: number; rngState: number } & HostedCatchUpOptions,
 ): Phase2SyncResult {
   const { launch: db } = prepareDatabase(rawDatabase)
   const tracked = createTrackedMulberry32(options.rngState)
   const current = parseSave(options.save, options.nowMs)
-  const unattended = resolveUnattendedProgress(db, current, options.nowMs, tracked.random)
-  const advanced = advanceSession(db, unattended.save, options.nowMs, tracked.random)
+  const unattended = resolveUnattendedProgress(db, current, options.nowMs, tracked.random, {
+    budgetMs: options.budgetMs ?? HOSTED_CATCH_UP_BUDGET_MS,
+    windowStartMs: options.windowStartMs,
+  })
+  const save = unattended.caughtUp
+    ? advanceSession(db, unattended.save, options.nowMs, tracked.random).save
+    : unattended.save
   return {
-    save: advanced.save,
+    save,
     rngState: tracked.getState(),
     gatheringActions: unattended.gatheringActions,
     craftsCompleted: unattended.craftsCompleted,
     combatVictories: unattended.combatVictories,
     combatDeaths: unattended.combatDeaths,
     effectiveElapsedMs: unattended.effectiveElapsedMs,
+    caughtUp: unattended.caughtUp,
   }
 }
 
@@ -257,7 +280,7 @@ export function applyGameCommand(
     hall?: GuildHallState
     userId?: string
     guildRole?: string
-  },
+  } & HostedCatchUpOptions,
 ): GameCommandResult {
   const { launch: db } = prepareDatabase(rawDatabase)
   const args = options.args ?? {}
@@ -297,14 +320,22 @@ function applyExistingCommand(
     hall?: GuildHallState
     userId?: string
     guildRole?: string
-  },
+  } & HostedCatchUpOptions,
 ): GameCommandResult {
   const nowMs = options.nowMs
   const random = options.random
   // Catch the hosted copy up before the intent so a sell/bank sees loot the
   // client already gathered, and the returned action clock is "now".
-  save = advanceSession(db, resolveUnattendedProgress(db, save, nowMs, random).save, nowMs, random)
-    .save
+  const unattended = resolveUnattendedProgress(db, save, nowMs, random, {
+    budgetMs: options.budgetMs ?? HOSTED_CATCH_UP_BUDGET_MS,
+    windowStartMs: options.windowStartMs,
+  })
+  // An intent on a half-caught-up save would act on the wrong bag and clock.
+  // The partial progress is still written so the retry continues from it.
+  if (!unattended.caughtUp) {
+    return { ok: false, reason: CATCHING_UP_REASON, catchingUp: true, save: unattended.save }
+  }
+  save = advanceSession(db, unattended.save, nowMs, random).save
 
   switch (command) {
     case 'set_meta':
