@@ -12,4 +12,5 @@ export 'src/db_row.dart';
 export 'src/generated/rows.dart';
 export 'src/indexes.dart';
 export 'src/load_database.dart';
+export 'src/tradeability.dart';
 export 'src/validate.dart';
