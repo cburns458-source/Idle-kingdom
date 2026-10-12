@@ -45,6 +45,15 @@ export type ShopTransactionResult =
     }
   | { ok: false; reason: string }
 
+/**
+ * A shop offer quantity must be a positive safe integer. Rejects non-numbers,
+ * NaN, Infinity, fractions, 0, negatives and values above MAX_SAFE_INTEGER.
+ * Mirrors `isValidOfferQuantity` in ik_rules (Dart).
+ */
+export function isValidOfferQuantity(quantity: unknown): quantity is number {
+  return typeof quantity === 'number' && Number.isSafeInteger(quantity) && quantity >= 1
+}
+
 function lineTotal(
   lines: ShopOfferLine[],
   unitPrice: (itemId: string) => number | null,
@@ -74,10 +83,23 @@ export function confirmShopOffer(
   const access = canAccessShop(db, save, shop)
   if (!access.ok) return access
 
-  const buys = offer.buys ?? []
-  const sells = offer.sells ?? []
+  const rawBuys: unknown = offer?.buys ?? []
+  const rawSells: unknown = offer?.sells ?? []
+  if (!Array.isArray(rawBuys) || !Array.isArray(rawSells)) {
+    return { ok: false, reason: 'Add items to the offer first.' }
+  }
+  const buys = rawBuys as ShopOfferLine[]
+  const sells = rawSells as ShopOfferLine[]
   if (buys.length === 0 && sells.length === 0) {
     return { ok: false, reason: 'Add items to the offer first.' }
+  }
+  for (const line of [...buys, ...sells]) {
+    if (!line || typeof line !== 'object' || typeof line.itemId !== 'string') {
+      return { ok: false, reason: 'That item cannot be traded here.' }
+    }
+    if (!isValidOfferQuantity(line.quantity)) {
+      return { ok: false, reason: 'Offer quantities must be at least 1.' }
+    }
   }
 
   let next = syncShopPurchaseDay(save, nowMs)
