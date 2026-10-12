@@ -111,16 +111,42 @@ the editor), so a push would try to replay from `001`.
 
 ### Pending on live
 
-- `20261012170000_bazaar_cancel_untradeable_orders.sql` (BUG-02). Cancels open
-  Bazaar orders for the four untradeable items through `bazaar_cancel_order`.
-  On each project, apply it only after the `bazaar` function that refuses those
-  items has deployed there (test: after the PR lands on `test-launch`; live:
-  after Conor merges to `main`). Safe to re-run.
-- `20261012200000_bazaar_cancel_warhammer_orders.sql` (BUG-02). Cancels open
-  Bazaar orders for the Dwarven Warhammer (ITEM-0123) through
-  `bazaar_cancel_order`. Apply after #314 deploys: Economy runs it on test once
-  the PR lands on `test-launch`; live only after Conor approves and merges to
-  `main`. Safe to re-run.
+`.github/workflows/deploy.yml` deploys edge functions only; it never applies
+migrations. Each file below is run by hand on each project (test
+`xlbwmxxtzrqjujvgqcuf`, live `fxcovagwwbptqaavispl`) and recorded in
+`supabase_migrations.schema_migrations` under the file's exact version (for
+example `20261012170000`), never a new timestamp.
+
+On live:
+
+1. Run them only after Conor approves, the change is merged to `main`, and the
+   live deploy carrying the server code (the `bazaar` function refusing
+   untradeable items) has finished.
+2. Before each cleanup, Economy saves a list of the open orders it will cancel,
+   so QA can check each refund in `bazaar_collect` (reason `'cancelled'`).
+3. Run them in the order listed.
+4. Afterwards, confirm both versions appear in `schema_migrations` and zero open
+   orders remain for the affected items.
+
+Checklist, in order:
+
+1. [ ] `20261012170000_bazaar_cancel_untradeable_orders.sql` (BUG-02). Cancels
+   open Bazaar orders for the four untradeable items (ITEM-0406, ITEM-0313,
+   ITEM-0299, ITEM-0300) through `bazaar_cancel_order`. On each project, apply
+   it only after the `bazaar` function that refuses those items has deployed
+   there (test: after the PR lands on `test-launch`; live: after Conor merges
+   to `main`). Safe to re-run.
+   Status: applied on test Oct 12 2026 (0 orders cancelled); live pending.
+2. [ ] `20261012200000_bazaar_cancel_warhammer_orders.sql` (BUG-02). Cancels
+   open Bazaar orders for the Dwarven Warhammer (ITEM-0123) through
+   `bazaar_cancel_order`. Apply after #314 deploys: Economy runs it on test
+   once the PR lands on `test-launch`; live only after Conor approves and
+   merges to `main`. Safe to re-run.
+   Status: applied on test Oct 12 2026 (0 orders cancelled); live pending.
+
+Open item: `revoke_hall_economy_rpcs` is applied on test but has no file in
+`supabase/migrations/`. Ops & Security is checking it and will add the file;
+after that it joins this list.
 
 The eight files before that (profile guard through Wave F cleanup) were applied
 to live when `efbda080` shipped to `main`.
