@@ -1,0 +1,1 @@
+{"case":"content","input":{"source":"content"},"module":"dialogue/validate","output":{"issues":[{"id":"DCH-0001","message":"A once-only grant must set a gift flag that its Condition rejects (set_flag:gift:… with !flag:gift:…), be gated by !dialogue_done:, complete a quest, or mark the choice Repeatable","severity":"warning","table":"DialogueChoices"}]}}
