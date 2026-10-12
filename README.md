@@ -27,8 +27,8 @@ npm install
 npm test                    # The reference rules, and the fixture drift check
 
 # Cloudflare Workers (see docs/deployment.md)
-npx wrangler deploy --env staging   # test-launch → test.restoriaidle.com
-npx wrangler deploy                 # main → restoriaidle.com
+npx wrangler deploy --env staging      # test-launch → test.restoriaidle.com
+npx wrangler deploy --env production   # main → restoriaidle.com
 ```
 
 ## Notes
