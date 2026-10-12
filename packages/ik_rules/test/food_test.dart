@@ -80,7 +80,7 @@ void main() {
     expect(duck.raw['XP Reward'], 240);
     expect(duck.raw['Ingredient 1 Item ID'], 'ITEM-0193');
     expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0243').proficiencyLevel, 11);
-    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0424').raw['Base Sell Value'], 2);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0424').raw['Base Sell Value'], 1);
     expect(
       db.items.firstWhere((row) => row.itemId == 'ITEM-0424').raw['Icon Asset Key'],
       'cooked_duck',
@@ -95,7 +95,7 @@ void main() {
     expect(boar.raw['XP Reward'], 300);
     expect(boar.raw['Ingredient 1 Item ID'], 'ITEM-0194');
     expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0244').proficiencyLevel, 26);
-    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0425').raw['Base Sell Value'], 12);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0425').raw['Base Sell Value'], 6);
     expect(
       db.items.firstWhere((row) => row.itemId == 'ITEM-0425').raw['Icon Asset Key'],
       'cooked_boar_meat',

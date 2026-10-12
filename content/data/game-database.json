@@ -2004,7 +2004,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_trout",
       "Notes": null,
-      "Base Sell Value": 2,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2021,7 +2021,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_salmon",
       "Notes": null,
-      "Base Sell Value": 12,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -2038,7 +2038,7 @@
       "Description": "A cooked bass that restores health.",
       "Icon Asset Key": "cooked_bass",
       "Notes": null,
-      "Base Sell Value": 58,
+      "Base Sell Value": 29,
       "Stackable": null
     },
     {
@@ -2055,7 +2055,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_shark",
       "Notes": null,
-      "Base Sell Value": 602,
+      "Base Sell Value": 301,
       "Stackable": null
     },
     {
@@ -2072,7 +2072,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_rabbit",
       "Notes": null,
-      "Base Sell Value": 3,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -2089,7 +2089,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_pheasant",
       "Notes": null,
-      "Base Sell Value": 14,
+      "Base Sell Value": 7,
       "Stackable": null
     },
     {
@@ -2106,7 +2106,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_beef",
       "Notes": null,
-      "Base Sell Value": 4,
+      "Base Sell Value": 2,
       "Stackable": null
     },
     {
@@ -2123,7 +2123,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_venison",
       "Notes": null,
-      "Base Sell Value": 58,
+      "Base Sell Value": 29,
       "Stackable": null
     },
     {
@@ -2140,7 +2140,7 @@
       "Description": null,
       "Icon Asset Key": "pheasant_stew",
       "Notes": null,
-      "Base Sell Value": 39,
+      "Base Sell Value": 19,
       "Stackable": null
     },
     {
@@ -2157,7 +2157,7 @@
       "Description": null,
       "Icon Asset Key": "venison_stew",
       "Notes": null,
-      "Base Sell Value": 216,
+      "Base Sell Value": 108,
       "Stackable": null
     },
     {
@@ -5472,7 +5472,7 @@
       "Description": "A rich bowl of baby giant squid, potatoes, and carrots.",
       "Icon Asset Key": "squid_noodle_soup",
       "Notes": "Heals 1,100. Level 66 kitchen recipe.",
-      "Base Sell Value": 830,
+      "Base Sell Value": 415,
       "Stackable": null
     },
     {
@@ -6375,7 +6375,7 @@
       "Description": null,
       "Icon Asset Key": "crawfish_stew",
       "Notes": null,
-      "Base Sell Value": 3,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -6392,7 +6392,7 @@
       "Description": null,
       "Icon Asset Key": "red_crab_stew",
       "Notes": null,
-      "Base Sell Value": 24,
+      "Base Sell Value": 12,
       "Stackable": null
     },
     {
@@ -6409,7 +6409,7 @@
       "Description": null,
       "Icon Asset Key": "dungeness_stew",
       "Notes": null,
-      "Base Sell Value": 106,
+      "Base Sell Value": 53,
       "Stackable": null
     },
     {
@@ -6426,7 +6426,7 @@
       "Description": null,
       "Icon Asset Key": "lobster_stew",
       "Notes": null,
-      "Base Sell Value": 406,
+      "Base Sell Value": 203,
       "Stackable": null
     },
     {
@@ -6443,7 +6443,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_catfish",
       "Notes": null,
-      "Base Sell Value": 9,
+      "Base Sell Value": 4,
       "Stackable": null
     },
     {
@@ -6936,7 +6936,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_marlin",
       "Notes": null,
-      "Base Sell Value": 106,
+      "Base Sell Value": 53,
       "Stackable": null
     },
     {
@@ -6970,7 +6970,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_swordfish",
       "Notes": "Future expansion \u2014 hidden from Launch until wired into the world.",
-      "Base Sell Value": 198,
+      "Base Sell Value": 99,
       "Stackable": null
     },
     {
@@ -7497,7 +7497,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_duck",
       "Notes": "Placeholder art: cooked pheasant.",
-      "Base Sell Value": 2,
+      "Base Sell Value": 1,
       "Stackable": null
     },
     {
@@ -7514,7 +7514,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_boar_meat",
       "Notes": "Placeholder art: cooked beef.",
-      "Base Sell Value": 12,
+      "Base Sell Value": 6,
       "Stackable": null
     },
     {
@@ -26224,7 +26224,7 @@
       "Display Name": "Baked Potato",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0058",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 1,
       "Base Duration Seconds": 12,
@@ -26249,7 +26249,7 @@
       "Display Name": "Cooked Perch",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0059",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 1,
       "Base Duration Seconds": 12,
@@ -26274,7 +26274,7 @@
       "Display Name": "Cooked Trout",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0060",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 10,
       "Base Duration Seconds": 12,
@@ -26299,7 +26299,7 @@
       "Display Name": "Cooked Salmon",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0061",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 25,
       "Base Duration Seconds": 12,
@@ -26324,7 +26324,7 @@
       "Display Name": "Cooked Bass",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0062",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 40,
       "Base Duration Seconds": 12,
@@ -26349,7 +26349,7 @@
       "Display Name": "Cooked Shark",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0063",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 55,
       "Base Duration Seconds": 12,
@@ -26374,7 +26374,7 @@
       "Display Name": "Cooked Rabbit",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0064",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 6,
       "Base Duration Seconds": 12,
@@ -26399,7 +26399,7 @@
       "Display Name": "Cooked Pheasant",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0065",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 17,
       "Base Duration Seconds": 12,
@@ -26424,7 +26424,7 @@
       "Display Name": "Cooked Beef",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0066",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 1,
       "Base Duration Seconds": 12,
@@ -26449,7 +26449,7 @@
       "Display Name": "Cooked Venison",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0067",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 36,
       "Base Duration Seconds": 12,
@@ -26474,7 +26474,7 @@
       "Display Name": "Pheasant Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0068",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 26,
       "Base Duration Seconds": 12,
@@ -26499,7 +26499,7 @@
       "Display Name": "Venison Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0069",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 46,
       "Base Duration Seconds": 12,
@@ -26999,7 +26999,7 @@
       "Display Name": "Cooked Marlin",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0391",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 70,
       "Base Duration Seconds": 12,
@@ -27374,7 +27374,7 @@
       "Display Name": "Squid Noodle Soup",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0302",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 66,
       "Base Duration Seconds": 12,
@@ -27449,7 +27449,7 @@
       "Display Name": "Crawfish Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0358",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 16,
       "Base Duration Seconds": 12,
@@ -27474,7 +27474,7 @@
       "Display Name": "Red Crab Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0359",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 36,
       "Base Duration Seconds": 12,
@@ -27499,7 +27499,7 @@
       "Display Name": "Dungeness Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0360",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 56,
       "Base Duration Seconds": 12,
@@ -27524,7 +27524,7 @@
       "Display Name": "Lobster Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0361",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 76,
       "Base Duration Seconds": 12,
@@ -27549,7 +27549,7 @@
       "Display Name": "Cooked Catfish",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0362",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 48,
       "Base Duration Seconds": 12,
@@ -27624,7 +27624,7 @@
       "Display Name": "Cooked Swordfish",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0393",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 85,
       "Base Duration Seconds": 12,
@@ -27774,7 +27774,7 @@
       "Display Name": "Cooked Duck",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0424",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 11,
       "Base Duration Seconds": 12,
@@ -27799,7 +27799,7 @@
       "Display Name": "Cooked Boar Meat",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0425",
-      "Output Quantity": 1,
+      "Output Quantity": 2,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 26,
       "Base Duration Seconds": 12,

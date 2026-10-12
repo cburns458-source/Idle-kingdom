@@ -104,7 +104,7 @@ describe('cooked beef and tablet recipes', () => {
     expect(duckRecipe['Ingredient 1 Item ID']).toBe('ITEM-0193')
     expect(duckAction['Proficiency Level']).toBe(11)
     expect(duckAction['XP Reward']).toBe(240)
-    expect(duckItem['Base Sell Value']).toBe(2)
+    expect(duckItem['Base Sell Value']).toBe(1)
     expect(duckItem['Icon Asset Key']).toBe('cooked_duck')
     expect(duckEquipment['Healing Amount']).toBe(90)
 
@@ -117,7 +117,7 @@ describe('cooked beef and tablet recipes', () => {
     expect(boarRecipe['Ingredient 1 Item ID']).toBe('ITEM-0194')
     expect(boarAction['Proficiency Level']).toBe(26)
     expect(boarAction['XP Reward']).toBe(300)
-    expect(boarItem['Base Sell Value']).toBe(12)
+    expect(boarItem['Base Sell Value']).toBe(6)
     expect(boarItem['Icon Asset Key']).toBe('cooked_boar_meat')
     expect(boarEquipment['Healing Amount']).toBe(160)
 
