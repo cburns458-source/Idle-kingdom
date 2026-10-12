@@ -9,7 +9,7 @@ Work directly from the supplied repository plus these two source files:
 
 Your job is to build the playable demo in controlled steps without inventing game design, balance, content, or requirements.
 
-Also follow `docs/AGENT_WORKFLOW.md` and `AGENTS.md` on every prompt: share a plan, wait for the owner to confirm, implement only on `test-launch` (https://test.restoriaidle.com), and do not touch `main` (https://restoriaidle.com) until the owner confirms the test-launch playtest. Do not create standalone feature branches.
+Also follow `docs/AGENT_WORKFLOW.md` and `AGENTS.md` on every prompt: share a plan, wait for the owner to confirm, branch from the latest `test-launch` and open a pull request targeting `test-launch` (https://test.restoriaidle.com), and never commit or push to `main` (https://restoriaidle.com). Only Conor promotes `test-launch` to `main` by manually merging a PR.
 
 ## 1. SOURCE AUTHORITY
 
@@ -111,7 +111,7 @@ Do not create unnecessary questions just to satisfy this section.
 
 STOP after this report and wait for the owner's approval or answers before Step 1.
 
-Implementation of an approved step goes on `test-launch` only. Do not open a standalone branch. Do not update `main` until the owner has playtested test-launch and said to ship.
+Implementation of an approved step goes on a new branch from the latest `origin/test-launch`, with a pull request targeting `test-launch`. Never commit or push to `main`. Only Conor promotes `test-launch` to `main` by manually merging a PR.
 
 ## 5. REQUIRED WORKING METHOD FOR EVERY STEP
 
@@ -196,12 +196,12 @@ At the end of every implementation step:
 
 End with:
 
-`Please playtest and verify Step [N] on test-launch. I will not move to Step [N+1], and I will not ship to main, until you approve this checkpoint.`
+`Please playtest and verify Step [N] on test-launch. I will not move to Step [N+1], and I will not commit or push to main, until you approve this checkpoint.`
 
 Then STOP.
 
 Never continue automatically into the next step.
-Never merge to `main` from this checkpoint. Shipping to `main` is a separate owner-approved step after test-launch is confirmed.
+Never commit, push, or merge to `main` from this checkpoint. Only Conor promotes `test-launch` to `main` by manually merging a PR.
 
 ## 6. IMAGE GENERATION RULES
 
