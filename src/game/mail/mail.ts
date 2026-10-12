@@ -17,6 +17,32 @@ export const MAIL_UPDATE_2026_09_29_PART2_CATALOG_ID = 'mail-update-2026-09-29-2
 
 export const MAIL_UPDATE_2026_10_06_CATALOG_ID = 'mail-update-2026-10-06'
 
+export const MAIL_UPDATE_2026_10_12_CATALOG_ID = 'mail-update-2026-10-12'
+
+const MAIL_UPDATE_2026_10_12_BODY = `Update October 12th
+
+- Important progress is saved on the server; starting an activity or traveling may show a short loading moment while the game confirms
+
+- Compare gear before you equip: see how a candidate stacks up against what you wear, with health, damage reduction, weapon damage, Might, and Vitality; green and red mark better or worse stats
+- Open compare from items in your bag or from worn slots
+
+- Type item names in chat to link them; item links use a readable blue color
+- Guild leaders can set a motto and a members-only private message on the guild home
+- Citadel message board removed
+
+- Citadel Guide dialogue at the Citadel
+- Fixed quests sometimes jumping back to an earlier step after you had finished a step, including Getting Started hold objectives
+
+- Enchanted gear can be sold from your bag and at the Wizard's Shop and general merchants; Bazaar rules unchanged
+- Steel and Reinforced Steel smithing timber use maple
+- Hunt fox main drop chance shown at 30%
+
+- Fixed a Bola discovery line appearing when traveling to the guild hall instead of Kingswoods
+
+- Minor UI tweaks
+
+Vari`
+
 const MAIL_UPDATE_2026_10_06_BODY = `Update October 5th
 
 - Might: +1% damage every 2 levels from 2 (50% at 100)
@@ -223,6 +249,13 @@ export const SYSTEM_MAIL_CATALOG: readonly SystemMailCatalogEntry[] = [
     subject: 'Update October 5th',
     body: MAIL_UPDATE_2026_10_06_BODY,
     sentAt: '2026-10-06T00:00:00.000Z',
+    attachments: [],
+  },
+  {
+    id: MAIL_UPDATE_2026_10_12_CATALOG_ID,
+    subject: 'Update October 12th',
+    body: MAIL_UPDATE_2026_10_12_BODY,
+    sentAt: '2026-10-12T00:00:00.000Z',
     attachments: [],
   },
 ]
