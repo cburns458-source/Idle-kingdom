@@ -160,6 +160,50 @@ void main() {
     }
   });
 
+  group('quest step latch parity (BUG-01)', () {
+    PlayerSave setItemCount(PlayerSave save, String itemId, num quantity) {
+      final cleared = save.copyWith(
+        inventory: save.inventory.where((stack) => stack.itemId != itemId).toList(),
+      );
+      return quantity > 0 ? addItemToInventory(cleared, itemId, quantity) : cleared;
+    }
+
+    for (final fixture in loadParityFixtures('quests/step-latch')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final quest = getQuest(db, 'QST-0006')!;
+        final stages = <Object?>[];
+        void record(String label, PlayerSave save) => stages.add(<String, Object?>{
+          'label': label,
+          'stepIndex': getCurrentStepIndex(db, save, quest),
+          'progress': getQuestProgress(save, 'QST-0006').toJson(),
+        });
+        final base = saveOf(fixture);
+        var save = base.copyWith(
+          quests: [
+            ...base.quests.where((row) => row.questId != 'QST-0006'),
+            const QuestProgress(questId: 'QST-0006', status: 'active', progress: 0, counters: {}),
+          ],
+        );
+        save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0025', 5));
+        record('hold', save);
+        save = applyQuestTalkProgress(db, save, 'NPC-0014');
+        record('show', save);
+        save = applyQuestVisitProgress(db, save, 'LOC-0023');
+        for (var cooked = 1; cooked <= 5; cooked++) {
+          save = setItemCount(setItemCount(save, 'ITEM-0025', 5 - cooked), 'ITEM-0058', cooked);
+          save = applyQuestProcessProgress(db, save, 'RCP-0001');
+          record('cook-$cooked', save);
+        }
+        save = applyQuestTalkProgress(db, save, 'NPC-0014');
+        record('deliver', save);
+        save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0058', 0));
+        record('sold', save);
+        expect(checkParity(fixture, {'stages': stages, 'save': save.toJson()}), isNull);
+      });
+    }
+  });
+
   group('submap topology parity', () {
     for (final fixture in loadParityFixtures('world/submaps')) {
       test(fixture.name, () {

@@ -151,6 +151,9 @@ export function isStepComplete(
   notes: string,
   stepId?: string,
 ): boolean {
+  if (stepId && Number(getQuestProgress(save, questId).counters?.[stepCompleteKey(stepId)] ?? 0) >= 1) {
+    return true
+  }
   if (isAskAroundSkipped(db, save, questId, notes)) return true
   const lines = stepProgressLines(db, save, questId, notes, stepId)
   if (lines.length === 0) return true
@@ -181,25 +184,62 @@ export function getCurrentStepId(
   return steps[index]?.['Step ID'] ?? null
 }
 
-/** Unlocks locations listed on completed steps (`UnlockLocation` in step Notes). */
+/** Counter key that latches a quest step as done (BUG-01). */
+export function stepCompleteKey(stepId: string): string {
+  return `step:${stepId}`
+}
+
+function latchStep(save: PlayerSave, questId: string, stepId: string): PlayerSave {
+  const key = stepCompleteKey(stepId)
+  const progress = getQuestProgress(save, questId)
+  if (Number(progress.counters?.[key] ?? 0) >= 1) return save
+  const counters = { ...(progress.counters ?? {}), [key]: 1 }
+  return {
+    ...save,
+    quests: [
+      ...save.quests.filter((row) => row.questId !== questId),
+      {
+        ...progress,
+        counters,
+        progress: Object.values(counters).reduce((sum, value) => sum + Number(value), 0),
+      },
+    ],
+  }
+}
+
+/**
+ * Latches completed steps and unlocks locations listed on completed steps
+ * (`UnlockLocation` in step Notes).
+ *
+ * Steps are latched in order: the first time every step up to and including a
+ * step is complete, a `step:<stepId>` = 1 counter is stored so live checks such
+ * as `Hold:` cannot regress the quest later (e.g. cooking raw potatoes).
+ */
 export function applyQuestStepUnlocks(db: GameDatabase, save: PlayerSave): PlayerSave {
+  let next = save
   let unlocked = save.unlockedLocationIds ?? []
   let changed = false
   for (const quest of asQuestRows(db)) {
-    if (getQuestProgress(save, quest['Quest ID']).status !== 'active') continue
     const questId = quest['Quest ID']
+    if (getQuestProgress(next, questId).status !== 'active') continue
+    let latching = true
     for (const step of getQuestSteps(db, questId)) {
-      if (!isStepComplete(db, save, questId, step.Notes ?? '', step['Step ID'])) continue
+      const stepId = step['Step ID']
+      if (!isStepComplete(db, next, questId, step.Notes ?? '', stepId)) {
+        latching = false
+        continue
+      }
+      if (latching && stepId) next = latchStep(next, questId, stepId)
       for (const locationId of parseNotesObjectives(step.Notes ?? '').unlockLocationIds) {
-        const next = unlockLocation({ unlockedLocationIds: unlocked }, locationId)
-        if (next !== unlocked) {
-          unlocked = next
+        const updated = unlockLocation({ unlockedLocationIds: unlocked }, locationId)
+        if (updated !== unlocked) {
+          unlocked = updated
           changed = true
         }
       }
     }
   }
-  return changed ? { ...save, unlockedLocationIds: unlocked } : save
+  return changed ? { ...next, unlockedLocationIds: unlocked } : next
 }
 
 export function currentStepTalkKey(

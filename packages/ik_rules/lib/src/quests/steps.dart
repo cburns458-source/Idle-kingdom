@@ -134,9 +134,10 @@ bool _isStepComplete(
   String notes, [
   String? stepId,
 ]) {
+  final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
+  if (stepId != null && (counters[stepCompleteKey(stepId)] ?? 0) >= 1) return true;
   if (_isAskAroundSkipped(db, save, questId, notes)) return true;
   final structured = parseNotesObjectives(notes);
-  final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
   final progress = objectiveProgressFromStructured(db, save, structured, counters);
   final lines = _scopedTalkLines(db, questId, progress.progressLines, counters, stepId);
   if (lines.isEmpty) return true;
@@ -160,25 +161,60 @@ String? getCurrentStepId(GameDatabase db, PlayerSave save, QuestRow quest) {
   return steps[index].stepId;
 }
 
-/// Unlocks locations listed on completed steps (`UnlockLocation` in step Notes).
+/// Counter key that latches a quest step as done (BUG-01).
+String stepCompleteKey(String stepId) => 'step:$stepId';
+
+/// Latches completed steps and unlocks locations listed on completed steps
+/// (`UnlockLocation` in step Notes).
+///
+/// Steps are latched in order: the first time every step up to and including
+/// a step is complete, a `step:<stepId>` = 1 counter is stored so live checks
+/// such as `Hold:` cannot regress the quest later (e.g. cooking raw potatoes).
 PlayerSave applyQuestStepUnlocks(GameDatabase db, PlayerSave save) {
+  var next = save;
   var unlocked = [...save.unlockedLocationIds];
   var changed = false;
   for (final quest in asQuestRows(db)) {
     final questId = jsString(quest['Quest ID']);
-    if (getQuestProgress(save, questId).status != 'active') continue;
+    if (getQuestProgress(next, questId).status != 'active') continue;
+    var latching = true;
     for (final step in getQuestSteps(db, questId)) {
-      if (!_isStepComplete(db, save, questId, step.notes ?? '', step.stepId)) continue;
+      final stepId = step.stepId;
+      if (!_isStepComplete(db, next, questId, step.notes ?? '', stepId)) {
+        latching = false;
+        continue;
+      }
+      if (latching && stepId.isNotEmpty) {
+        next = _latchStep(next, questId, stepId);
+      }
       for (final locationId in parseNotesObjectives(step.notes ?? '').unlockLocationIds) {
-        final next = unlockLocation(unlocked, locationId);
-        if (next.length != unlocked.length) {
-          unlocked = next;
+        final updated = unlockLocation(unlocked, locationId);
+        if (updated.length != unlocked.length) {
+          unlocked = updated;
           changed = true;
         }
       }
     }
   }
-  return changed ? save.copyWith(unlockedLocationIds: unlocked) : save;
+  return changed ? next.copyWith(unlockedLocationIds: unlocked) : next;
+}
+
+PlayerSave _latchStep(PlayerSave save, String questId, String stepId) {
+  final key = stepCompleteKey(stepId);
+  final progress = getQuestProgress(save, questId);
+  if ((progress.counters?[key] ?? 0) >= 1) return save;
+  final counters = <String, num>{...?progress.counters, key: 1};
+  return save.copyWith(
+    quests: [
+      ...save.quests.where((row) => row.questId != questId),
+      QuestProgress(
+        questId: progress.questId,
+        status: progress.status,
+        counters: counters,
+        progress: counters.values.fold<num>(0, (sum, value) => sum + value),
+      ),
+    ],
+  );
 }
 
 String currentStepTalkKey(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
