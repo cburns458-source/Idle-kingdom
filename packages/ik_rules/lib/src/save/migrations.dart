@@ -957,6 +957,21 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 61,
+    toVersion: 62,
+    migrate: (save, _) {
+      final next = _bumped(save, 62);
+      final raw = save['dialogueFlags'];
+      final flags = <String>{
+        if (raw is List)
+          for (final flag in raw)
+            if (flag is String && flag.isNotEmpty) flag,
+      }.toList()..sort();
+      next['dialogueFlags'] = flags;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.
