@@ -34317,7 +34317,7 @@
       "Repeatable": false,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Proof standalone dialogue. One-time welcome tip."
+      "Notes": "Proof standalone dialogue. One-time welcome tip. The potato is a one-time gift guarded by gift:DLG-0001:potato, so closing mid-conversation cannot claim it twice."
     },
     {
       "Dialogue ID": "DLG-0002",
@@ -34327,8 +34327,8 @@
       "Start Node ID": "DNODE-0003",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Getting Started F1 (QSTP-0013). Reminder only; no actions. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Getting Started F1 (QSTP-0013). Reminder only; no actions.",
       "Priority": 10,
       "Condition": "quest_step:QST-0006:QSTP-0013"
     },
@@ -34340,8 +34340,8 @@
       "Start Node ID": "DNODE-0004",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Getting Started F2 (QSTP-0014). Checks the raw potatoes; takes nothing. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Getting Started F2 (QSTP-0014, Show ITEM-0025 x5). Checks the raw potatoes; takes nothing.",
       "Priority": 10,
       "Condition": "quest_step:QST-0006:QSTP-0014"
     },
@@ -34353,8 +34353,8 @@
       "Start Node ID": "DNODE-0006",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Getting Started F3 (QSTP-0015). Reminder only; no actions. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Getting Started F3 (QSTP-0015). Reminder only; no actions.",
       "Priority": 10,
       "Condition": "quest_step:QST-0006:QSTP-0015"
     },
@@ -34366,8 +34366,8 @@
       "Start Node ID": "DNODE-0007",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Getting Started F4 (QSTP-0016). Only checks the baked potatoes (has_item); never takes them. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Getting Started F4 (QSTP-0016, Show ITEM-0058 x5). Checks the baked potatoes; takes nothing.",
       "Priority": 10,
       "Condition": "quest_step:QST-0006:QSTP-0016"
     },
@@ -34379,8 +34379,8 @@
       "Start Node ID": "DNODE-0009",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Getting Started completion (QSTP-0022). Completing QST-0006 grants BOOK-0001 once through the quest RewardBook; the SYS-01 grammar has no book token and books are Library unlocks, not inventory. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Getting Started completion (QSTP-0022). The farewell choice completes QST-0006, and quest completion grants BOOK-0001 once (RewardBook).",
       "Priority": 10,
       "Condition": "quest_step:QST-0006:QSTP-0022"
     },
@@ -34392,8 +34392,8 @@
       "Start Node ID": "DNODE-0011",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Green Thumb G1 (QSTP-0023). One-time grant of ITEM-0324 x1, guarded by flag qst0011_g1_seed. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Green Thumb G1 (QSTP-0023). The only source of the starting Potato Seed: ITEM-0324 x1, once, guarded by gift:QST-0011:seed and only while QSTP-0023 is the current step.",
       "Priority": 10,
       "Condition": "quest_step:QST-0011:QSTP-0023"
     },
@@ -34405,8 +34405,8 @@
       "Start Node ID": "DNODE-0013",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Green Thumb G2 (QSTP-0024). talk_flag re-checks the compost gather server-side. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Green Thumb G2 (QSTP-0024). The choice needs Compost (ITEM-0377) in hand; talk_flag does not re-check the gather counter.",
       "Priority": 10,
       "Condition": "quest_step:QST-0011:QSTP-0024"
     },
@@ -34418,8 +34418,8 @@
       "Start Node ID": "DNODE-0015",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Green Thumb planting step (QSTP-0034). Reminder only; no actions. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Green Thumb planting step (QSTP-0034). Reminder only; no actions.",
       "Priority": 10,
       "Condition": "quest_step:QST-0011:QSTP-0034"
     },
@@ -34431,8 +34431,8 @@
       "Start Node ID": "DNODE-0016",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Green Thumb G3 (QSTP-0035). One-time grant of ITEM-0324 x3 and ITEM-0339 x3, guarded by flag qst0011_g3_reward. Completing QST-0011 grants BOOK-0002 once through the quest RewardBook; the SYS-01 grammar has no book token. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Green Thumb G3 (QSTP-0035). The choice only completes QST-0011; quest completion pays ITEM-0324 x3, ITEM-0339 x3 and BOOK-0002 once (RewardItem / RewardBook).",
       "Priority": 10,
       "Condition": "quest_step:QST-0011:QSTP-0035"
     },
@@ -34444,10 +34444,10 @@
       "Start Node ID": "DNODE-0018",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Grand Feast K1 pitch and K2 brief. start_quest goes through the quest_accept path. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
+      "Release Phase": "Launch",
+      "Notes": "Grand Feast K1 pitch and K2 brief (QSTP-0001). start_quest goes through the quest_accept path; players who accepted under the old panel but never talked finish QSTP-0001 here.",
       "Priority": 10,
-      "Condition": "!quest_active:QST-0001;!quest_done:QST-0001"
+      "Condition": "!quest_done:QST-0001"
     },
     {
       "Dialogue ID": "DLG-0012",
@@ -34457,10 +34457,10 @@
       "Start Node ID": "DNODE-0020",
       "Repeatable": true,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Grand Feast K3 hand-in (QSTP-0002). Takes ITEM-0058 x10 and ITEM-0059 x10, then grants ITEM-0026 x1 once (guarded by flag qst0001_k3_feast). Golden Spud stays tradeable. Dormant until the SYS-01 engine ships: Release Phase is unset so filterLaunchContent drops it. Set Release Phase to Launch with the engine PR.",
-      "Priority": 10,
-      "Condition": "quest_step:QST-0001:QSTP-0002"
+      "Release Phase": "Launch",
+      "Notes": "Grand Feast K3 hand-in (QSTP-0002, HandIn ITEM-0058 x10 + ITEM-0059 x10, any number of visits). A separate choice completes QST-0001 once the step is done; quest completion pays 10,000 Cooking XP, ITEM-0026 x1 (stays tradeable) and the Courtyard Botany unlock. Priority 11 so it opens ahead of the pitch.",
+      "Priority": 11,
+      "Condition": "quest_active:QST-0001;!quest_step:QST-0001:QSTP-0001"
     }
   ],
   "DialogueNodes": [
@@ -34485,7 +34485,7 @@
       "Dialogue ID": "DLG-0002",
       "Line": "Morning! The field's thick with potatoes this year. Dig up five and bring them here. No need to wash them.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34493,7 +34493,7 @@
       "Dialogue ID": "DLG-0003",
       "Line": "Back already? Let's see what the field gave you.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34501,7 +34501,7 @@
       "Dialogue ID": "DLG-0003",
       "Line": "Those will do nicely. Keep them, and take them to the kitchen in town. Come back when they're baked.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34509,7 +34509,7 @@
       "Dialogue ID": "DLG-0004",
       "Line": "The kitchen is in town. Bake all five, and mind the oven. A burnt potato feeds nobody.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34517,7 +34517,7 @@
       "Dialogue ID": "DLG-0005",
       "Line": "Is that baked potato I smell? Let me have a look.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34525,7 +34525,7 @@
       "Dialogue ID": "DLG-0005",
       "Line": "Golden all the way through. Keep them; you earned them. Equip your sword and shield, and keep potatoes in your food slot when you fight the cows here. Or if you want other skills first: the copper mine has fishing and mining, the meadow has hunting, and the kingswoods have woodcutting.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34533,7 +34533,7 @@
       "Dialogue ID": "DLG-0006",
       "Line": "Before you go, take my old Newcomer's Guide. It kept me right when I was new to Restoria.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34541,7 +34541,7 @@
       "Dialogue ID": "DLG-0006",
       "Line": "Good luck on your adventure!",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34549,7 +34549,7 @@
       "Dialogue ID": "DLG-0007",
       "Line": "Oh, you've found a seed! Let me take a look... That will grow into a mighty plant one day. Practise on one of mine first.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34557,7 +34557,7 @@
       "Dialogue ID": "DLG-0007",
       "Line": "Here, a potato seed. But every good harvest starts with compost. Gather some from the patch and come back to me.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34565,7 +34565,7 @@
       "Dialogue ID": "DLG-0008",
       "Line": "Did you find the compost? Let me have a sniff.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34573,7 +34573,7 @@
       "Dialogue ID": "DLG-0008",
       "Line": "Smells great! Now go to the farming patch here, pick the potato seed, and remember to use compost.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34581,7 +34581,7 @@
       "Dialogue ID": "DLG-0009",
       "Line": "The patch is right there. Pick the potato seed and work your compost in. The earth won't bite.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34589,7 +34589,7 @@
       "Dialogue ID": "DLG-0010",
       "Line": "Well done! Come back in a few hours to see how your crops have done. I'll do my best to keep an eye on them.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34597,7 +34597,7 @@
       "Dialogue ID": "DLG-0010",
       "Line": "Take these seeds for your own beds, and my Botanist's Guide besides. Tend the timers, and plant again!",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34605,15 +34605,15 @@
       "Dialogue ID": "DLG-0011",
       "Line": "My cooks have fled before the grand feast. If you know your way around a hearth, perhaps you can help.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
       "Node ID": "DNODE-0019",
       "Dialogue ID": "DLG-0011",
-      "Line": "Splendid! Ten baked potatoes, golden and crisp, and ten cooked perch besides. Use the Main Hall kitchen, and bring them here when they are ready.",
+      "Line": "Splendid! Ten baked potatoes, golden and crisp, and ten cooked perch besides. Use the Main Hall kitchen, and bring them to me as they are ready. A few at a time will do.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34621,7 +34621,7 @@
       "Dialogue ID": "DLG-0012",
       "Line": "Ah, my cook returns! Tell me the feast is ready.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34629,7 +34629,15 @@
       "Dialogue ID": "DLG-0012",
       "Line": "The kitchens will sing again! Take this Golden Spud with my thanks, and the Courtyard plot is yours. Plant what you find beyond these walls, and let Restoria grow with you.",
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Node ID": "DNODE-0022",
+      "Dialogue ID": "DLG-0012",
+      "Line": "Into the kitchens they go! Is that everything?",
+      "Status": "Planned",
+      "Release Phase": "Launch",
       "Notes": null
     }
   ],
@@ -34639,12 +34647,12 @@
       "Node ID": "DNODE-0001",
       "Label": "Yes, please.",
       "Next Node ID": "DNODE-0002",
-      "Condition": null,
-      "Action": "grant_item:ITEM-0058:1",
+      "Condition": "!flag:gift:DLG-0001:potato",
+      "Action": "grant_item:ITEM-0058:1;set_flag:gift:DLG-0001:potato",
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": null
+      "Notes": "One-time gift. The flag stops a second claim after closing mid-conversation."
     },
     {
       "Choice ID": "DCH-0002",
@@ -34679,7 +34687,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34687,12 +34695,12 @@
       "Node ID": "DNODE-0004",
       "Label": "Here, five potatoes.",
       "Next Node ID": "DNODE-0005",
-      "Condition": "has_item:ITEM-0025:5",
-      "Action": "talk_flag:QST-0006:QSTP-0014",
+      "Condition": "step_ready:QST-0006:QSTP-0014",
+      "Action": "show_items:QST-0006:QSTP-0014",
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": null
+      "Release Phase": "Launch",
+      "Notes": "Show step. Nothing is taken."
     },
     {
       "Choice ID": "DCH-0006",
@@ -34703,7 +34711,7 @@
       "Action": null,
       "Sort Order": 2,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34715,7 +34723,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34727,7 +34735,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34735,12 +34743,12 @@
       "Node ID": "DNODE-0007",
       "Label": "Five baked potatoes, as promised.",
       "Next Node ID": "DNODE-0008",
-      "Condition": "has_item:ITEM-0058:5",
-      "Action": "talk_flag:QST-0006:QSTP-0016",
+      "Condition": "step_ready:QST-0006:QSTP-0016",
+      "Action": "show_items:QST-0006:QSTP-0016",
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Check only. The potatoes stay in the pack."
+      "Release Phase": "Launch",
+      "Notes": "Show step. Nothing is taken."
     },
     {
       "Choice ID": "DCH-0010",
@@ -34751,7 +34759,7 @@
       "Action": null,
       "Sort Order": 2,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34763,7 +34771,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34772,11 +34780,11 @@
       "Label": "Thank you, Fennel.",
       "Next Node ID": "DNODE-0010",
       "Condition": null,
-      "Action": "talk_flag:QST-0006:QSTP-0022",
+      "Action": "talk_flag:QST-0006:QSTP-0022;complete_quest:QST-0006",
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "Completes QST-0006 (AutoCompleteOnTalk), which grants BOOK-0001 once."
+      "Release Phase": "Launch",
+      "Notes": "Completes QST-0006; quest completion grants BOOK-0001 once."
     },
     {
       "Choice ID": "DCH-0013",
@@ -34787,7 +34795,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34795,12 +34803,12 @@
       "Node ID": "DNODE-0011",
       "Label": "I'd like that.",
       "Next Node ID": "DNODE-0012",
-      "Condition": "!flag:qst0011_g1_seed",
-      "Action": "grant_item:ITEM-0324:1;set_flag:qst0011_g1_seed;talk_flag:QST-0011:QSTP-0023",
+      "Condition": "!flag:gift:QST-0011:seed;!quest_done:QST-0011;quest_step:QST-0011:QSTP-0023",
+      "Action": "grant_item:ITEM-0324:1;set_flag:gift:QST-0011:seed;talk_flag:QST-0011:QSTP-0023",
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "One-time grant."
+      "Release Phase": "Launch",
+      "Notes": "One-time gift. Players whose QSTP-0023 is already done (the old GiveOnTalk seed) never see it again."
     },
     {
       "Choice ID": "DCH-0015",
@@ -34811,7 +34819,7 @@
       "Action": null,
       "Sort Order": 2,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34823,7 +34831,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34831,11 +34839,11 @@
       "Node ID": "DNODE-0013",
       "Label": "Here's the compost.",
       "Next Node ID": "DNODE-0014",
-      "Condition": null,
+      "Condition": "has_item:ITEM-0377",
       "Action": "talk_flag:QST-0011:QSTP-0024",
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34847,7 +34855,7 @@
       "Action": null,
       "Sort Order": 2,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34859,7 +34867,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34871,7 +34879,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34879,12 +34887,12 @@
       "Node ID": "DNODE-0016",
       "Label": "Thanks for the lesson, Fennel.",
       "Next Node ID": "DNODE-0017",
-      "Condition": "!flag:qst0011_g3_reward",
-      "Action": "grant_item:ITEM-0324:3;grant_item:ITEM-0339:3;set_flag:qst0011_g3_reward;talk_flag:QST-0011:QSTP-0035",
+      "Condition": null,
+      "Action": "talk_flag:QST-0011:QSTP-0035;complete_quest:QST-0011",
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "One-time grant. talk_flag completes QST-0011, which grants BOOK-0002 once."
+      "Release Phase": "Launch",
+      "Notes": "Only completes QST-0011; quest completion pays the seeds and BOOK-0002 once."
     },
     {
       "Choice ID": "DCH-0022",
@@ -34895,7 +34903,7 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34903,12 +34911,26 @@
       "Node ID": "DNODE-0018",
       "Label": "I'll cook for the feast.",
       "Next Node ID": "DNODE-0019",
-      "Condition": null,
-      "Action": "start_quest:QST-0001",
+      "Condition": "!quest_active:QST-0001",
+      "Action": "start_quest:QST-0001;talk_flag:QST-0001:QSTP-0001",
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": null
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Hidden": true
+    },
+    {
+      "Choice ID": "DCH-0029",
+      "Node ID": "DNODE-0018",
+      "Label": "What does the feast need?",
+      "Next Node ID": "DNODE-0019",
+      "Condition": "quest_step:QST-0001:QSTP-0001",
+      "Action": "talk_flag:QST-0001:QSTP-0001",
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "For players who accepted the quest before the King moved to dialogue.",
+      "Hidden": true
     },
     {
       "Choice ID": "DCH-0024",
@@ -34917,9 +34939,9 @@
       "Next Node ID": null,
       "Condition": null,
       "Action": null,
-      "Sort Order": 2,
+      "Sort Order": 3,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34931,20 +34953,34 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
       "Choice ID": "DCH-0026",
       "Node ID": "DNODE-0020",
-      "Label": "Ten baked potatoes and ten cooked perch.",
-      "Next Node ID": "DNODE-0021",
-      "Condition": "has_item:ITEM-0058:10;has_item:ITEM-0059:10;!flag:qst0001_k3_feast",
-      "Action": "take_item:ITEM-0058:10;take_item:ITEM-0059:10;grant_item:ITEM-0026:1;set_flag:qst0001_k3_feast",
+      "Label": "Here is food for the feast.",
+      "Next Node ID": "DNODE-0022",
+      "Condition": "quest_step:QST-0001:QSTP-0002",
+      "Action": "hand_in:QST-0001:QSTP-0002",
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
-      "Notes": "One-time grant. All-or-nothing: nothing is taken if the pack cannot hold the Golden Spud."
+      "Release Phase": "Launch",
+      "Notes": "Hands in what the King still needs; progress is kept between visits.",
+      "Hidden": true
+    },
+    {
+      "Choice ID": "DCH-0030",
+      "Node ID": "DNODE-0020",
+      "Label": "The feast is ready.",
+      "Next Node ID": "DNODE-0021",
+      "Condition": "quest_active:QST-0001;!quest_step:QST-0001:QSTP-0002",
+      "Action": "complete_quest:QST-0001",
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Completes QST-0001 once the hand-in is done; quest completion pays the reward.",
+      "Hidden": true
     },
     {
       "Choice ID": "DCH-0027",
@@ -34953,9 +34989,9 @@
       "Next Node ID": null,
       "Condition": null,
       "Action": null,
-      "Sort Order": 2,
+      "Sort Order": 3,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
     },
     {
@@ -34967,8 +35003,34 @@
       "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
-      "Release Phase": null,
+      "Release Phase": "Launch",
       "Notes": null
+    },
+    {
+      "Choice ID": "DCH-0031",
+      "Node ID": "DNODE-0022",
+      "Label": "That's everything. The feast is ready.",
+      "Next Node ID": "DNODE-0021",
+      "Condition": "quest_active:QST-0001;!quest_step:QST-0001:QSTP-0002",
+      "Action": "complete_quest:QST-0001",
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Completes QST-0001; quest completion pays the reward.",
+      "Hidden": true
+    },
+    {
+      "Choice ID": "DCH-0032",
+      "Node ID": "DNODE-0022",
+      "Label": "I'll bring the rest soon.",
+      "Next Node ID": null,
+      "Condition": "quest_step:QST-0001:QSTP-0002",
+      "Action": null,
+      "Sort Order": 2,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Hidden": true
     }
   ],
   "Achievements": [
@@ -36274,6 +36336,9 @@
       "Step Order": 1,
       "Journal Label": "Hear what the King needs",
       "Notes": "Talk: NPC-0001",
+      "Step Type": "Talk",
+      "Step Items": null,
+      "Step NPC": "NPC-0001",
       "Status": "Planned",
       "Release Phase": "Launch"
     },
@@ -36282,7 +36347,10 @@
       "Quest ID": "QST-0001",
       "Step Order": 2,
       "Journal Label": "Prepare food for the feast",
-      "Notes": "Deliver: ITEM-0058 x10, ITEM-0059 x10",
+      "Notes": null,
+      "Step Type": "HandIn",
+      "Step Items": "ITEM-0058:10;ITEM-0059:10",
+      "Step NPC": "NPC-0001",
       "Status": "Planned",
       "Release Phase": "Launch"
     },
@@ -36382,6 +36450,9 @@
       "Step Order": 2,
       "Journal Label": "Show Fennel five potatoes",
       "Notes": "Hold: ITEM-0025 x5; Talk: NPC-0014",
+      "Step Type": "Show",
+      "Step Items": "ITEM-0025:5",
+      "Step NPC": "NPC-0014",
       "Status": "Planned",
       "Release Phase": "Launch"
     },
@@ -36400,6 +36471,9 @@
       "Step Order": 4,
       "Journal Label": "Bring Fennel the cooked potatoes",
       "Notes": "Hold: ITEM-0058 x5; Talk: NPC-0014; Hint: LOC-0001",
+      "Step Type": "Show",
+      "Step Items": "ITEM-0058:5",
+      "Step NPC": "NPC-0014",
       "Status": "Planned",
       "Release Phase": "Launch"
     },
@@ -36454,6 +36528,9 @@
       "Step Order": 5,
       "Journal Label": "Hear Fennel's farewell",
       "Notes": "Talk: NPC-0014; Hint: LOC-0001",
+      "Step Type": "Talk",
+      "Step Items": null,
+      "Step NPC": "NPC-0014",
       "Status": "Planned",
       "Release Phase": "Launch"
     },
@@ -36462,7 +36539,10 @@
       "Quest ID": "QST-0011",
       "Step Order": 1,
       "Journal Label": "Speak with Fennel at the farm",
-      "Notes": "Talk: NPC-0014; GiveOnTalk: ITEM-0324 x1",
+      "Notes": "Talk: NPC-0014",
+      "Step Type": "Talk",
+      "Step Items": null,
+      "Step NPC": "NPC-0014",
       "Status": "Confirmed",
       "Release Phase": "Launch"
     },
@@ -36472,6 +36552,9 @@
       "Step Order": 2,
       "Journal Label": "Gather compost and speak with Fennel",
       "Notes": "Action: ACN-0199 x1; Talk: NPC-0014",
+      "Step Type": "Talk",
+      "Step Items": null,
+      "Step NPC": "NPC-0014",
       "Status": "Confirmed",
       "Release Phase": "Launch"
     },
@@ -36571,6 +36654,9 @@
       "Step Order": 4,
       "Journal Label": "Return to Fennel",
       "Notes": "Talk: NPC-0014",
+      "Step Type": "Talk",
+      "Step Items": null,
+      "Step NPC": "NPC-0014",
       "Status": "Confirmed",
       "Release Phase": "Launch"
     }
