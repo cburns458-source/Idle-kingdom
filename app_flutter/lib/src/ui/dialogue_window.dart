@@ -3,6 +3,8 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'dialogue_text.dart';
+import 'game_popup.dart';
 import 'social_bits.dart';
 
 /// Reusable standalone dialogue card (extracted look from NPC talk).
@@ -10,20 +12,31 @@ class DialogueWindow extends StatelessWidget {
   const DialogueWindow({
     super.key,
     required this.view,
+    required this.text,
     required this.onChoose,
     required this.onClose,
+    this.progress,
     this.message,
     this.error,
   });
 
   final DialogueView view;
+  final DialogueText text;
   final void Function(String choiceId) onChoose;
   final VoidCallback onClose;
+
+  /// Show / HandIn lines to list; defaults to the view's own.
+  final List<StepProgressGroup>? progress;
   final String? message;
   final String? error;
 
   @override
   Widget build(BuildContext context) {
+    final groups = progress ?? view.stepProgress;
+    final choices = [
+      for (final choice in view.choices)
+        if (!(choice.hidden && !choice.enabled)) choice,
+    ];
     return GamePanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -43,6 +56,11 @@ class DialogueWindow extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(view.line, style: const TextStyle(fontSize: GameFont.m)),
+          for (final group in groups)
+            for (final line in group.items) ...[
+              const SizedBox(height: 4),
+              Text(text.progressLine(group, line), style: const TextStyle(fontSize: GameFont.s)),
+            ],
           if (message case final notice?) ...[const SizedBox(height: 4), MutedText(notice)],
           if (error case final err?) ...[
             const SizedBox(height: 6),
@@ -57,9 +75,12 @@ class DialogueWindow extends StatelessWidget {
             runSpacing: 8,
             alignment: WrapAlignment.end,
             children: [
-              for (final choice in view.choices)
-                GameButton(label: choice.label, onPressed: () => onChoose(choice.choiceId)),
-              if (view.choices.isEmpty) GameButton(label: 'Close', onPressed: onClose),
+              for (final choice in choices)
+                GameButton(
+                  label: text.choiceLabel(choice, view.stepProgress) ?? choice.label,
+                  onPressed: choice.enabled ? () => onChoose(choice.choiceId) : null,
+                ),
+              if (choices.isEmpty) GameButton(label: 'Close', onPressed: onClose),
             ],
           ),
         ],
@@ -68,6 +89,13 @@ class DialogueWindow extends StatelessWidget {
   }
 }
 
+/// Sends one choice. [useFavourites] is the player's yes for this request only.
+typedef DialogueRequest = Future<DialogueResult> Function(
+  DialogueView view,
+  String choiceId, {
+  required bool useFavourites,
+});
+
 /// Controller-backed host that starts and advances a standalone dialogue.
 class StandaloneDialogueHost extends StatefulWidget {
   const StandaloneDialogueHost({
@@ -75,11 +103,15 @@ class StandaloneDialogueHost extends StatefulWidget {
     required this.controller,
     required this.dialogueId,
     required this.onClose,
+    this.request,
   });
 
   final GameController controller;
   final String dialogueId;
   final VoidCallback onClose;
+
+  /// Defaults to the local engine plus a `dialogue_choose` commit.
+  final DialogueRequest? request;
 
   @override
   State<StandaloneDialogueHost> createState() => _StandaloneDialogueHostState();
@@ -90,6 +122,15 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
   String? _error;
   String? _message;
 
+  /// Progress the last choice touched, kept on screen after the node moves on.
+  List<StepProgressGroup> _touched = const <StepProgressGroup>[];
+
+  /// One choice in flight at a time, held until the next frame so a double tap
+  /// on the same button is dropped.
+  bool _busy = false;
+
+  late final DialogueText _text = DialogueText(controller.db);
+
   GameController get controller => widget.controller;
 
   @override
@@ -97,45 +138,104 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
     super.initState();
     final started = startDialogue(controller.db, controller.save, widget.dialogueId);
     if (!started.ok || started.view == null) {
-      _error = started.reason;
+      _error = _text.startFailure(started.code);
     } else {
       _view = started.view;
     }
   }
 
-  void _choose(String choiceId) {
-    final view = _view;
-    if (view == null) return;
+  Future<DialogueResult> _send(
+    DialogueView view,
+    String choiceId, {
+    required bool useFavourites,
+  }) async {
+    final request = widget.request;
+    if (request != null) return request(view, choiceId, useFavourites: useFavourites);
     final result = chooseDialogue(
       controller.db,
       controller.save,
       view.dialogueId,
       view.nodeId,
       choiceId,
+      useFavourites: useFavourites,
     );
-    if (!result.ok) {
-      setState(() => _error = result.reason);
+    if (result.ok) {
+      controller.commit(
+        result.save,
+        command: 'dialogue_choose',
+        args: <String, Object?>{
+          'dialogueId': view.dialogueId,
+          'nodeId': view.nodeId,
+          'choiceId': choiceId,
+          if (useFavourites) 'useFavourites': true,
+        },
+      );
+    }
+    return result;
+  }
+
+  Future<void> _choose(String choiceId) async {
+    final view = _view;
+    if (view == null || _busy) return;
+    _busy = true;
+    try {
+      final before = controller.save;
+      var result = await _send(view, choiceId, useFavourites: false);
+      if (!mounted) return;
+      if (result.code == 'confirm_favourites') {
+        if (!await _confirmFavourites(result.favourites) || !mounted) return;
+        result = await _send(view, choiceId, useFavourites: true);
+        if (!mounted) return;
+      }
+      await _settle(before, result);
+    } finally {
+      _releaseNextFrame();
+    }
+  }
+
+  void _releaseNextFrame() {
+    if (!mounted) {
+      _busy = false;
       return;
     }
-    controller.commit(
-      result.save,
-      command: 'dialogue_choose',
-      args: <String, Object?>{
-        'dialogueId': view.dialogueId,
-        'nodeId': view.nodeId,
-        'choiceId': choiceId,
-      },
+    WidgetsBinding.instance.addPostFrameCallback((_) => _busy = false);
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  Future<bool> _confirmFavourites(List<DialogueItemDelta> favourites) {
+    return showGameAlert(
+      context: context,
+      message: '${DialogueText.favouritesPrompt}\n\n${_text.favouritesList(favourites)}',
+      confirmLabel: 'Yes',
+      cancelLabel: 'No',
     );
-    if (result.message != null) controller.announce(result.message!);
-    if (result.completed || result.view == null) {
-      widget.onClose();
+  }
+
+  Future<void> _settle(PlayerSave before, DialogueResult result) async {
+    if (result.ok) {
+      final notice = _text.notice(before, result);
+      if (notice != null) controller.announce(notice);
+      if (result.completed || result.view == null) {
+        widget.onClose();
+        return;
+      }
+      setState(() {
+        _view = result.view;
+        _error = null;
+        _message = notice;
+        _touched = result.stepProgress;
+      });
       return;
     }
-    setState(() {
-      _view = result.view;
-      _error = null;
-      _message = result.message;
-    });
+    if (result.code == 'no_room') {
+      setState(() => _error = null);
+      await showGameAlert(
+        context: context,
+        message: DialogueText.bagFull(result.noRoom?.slotsNeeded ?? 1),
+      );
+      return;
+    }
+    setState(() => _error = _text.failure(result));
   }
 
   @override
@@ -146,10 +246,7 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              _error ?? 'That conversation could not be started.',
-              style: const TextStyle(color: Palette.danger),
-            ),
+            Text(_error ?? _text.startFailure(null), style: const TextStyle(color: Palette.danger)),
             const SizedBox(height: 10),
             Align(
               alignment: Alignment.centerRight,
@@ -159,8 +256,15 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
         ),
       );
     }
+    final shown = {for (final group in view.stepProgress) (group.questId, group.stepId)};
     return DialogueWindow(
       view: view,
+      text: _text,
+      progress: [
+        ...view.stepProgress,
+        for (final group in _touched)
+          if (!shown.contains((group.questId, group.stepId))) group,
+      ],
       onChoose: _choose,
       onClose: widget.onClose,
       message: _message,
