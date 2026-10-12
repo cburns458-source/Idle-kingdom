@@ -3,6 +3,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import 'cloud_save.dart';
+import 'dev_commands.dart';
 import 'local_backend.dart';
 import 'market.dart';
 import 'presence.dart';
@@ -61,6 +62,12 @@ abstract interface class MultiplayerService {
 
   /// Applies a named intent on the hosted save. Local play is a no-op read.
   Future<CloudSyncResult> gameCommand(String command, [Map<String, Object?> args = const {}]);
+
+  /// Whether the signed-in account is on the developer allowlist.
+  Future<bool> isDeveloperAccount();
+
+  /// Runs a self-only developer command on the hosted save.
+  Future<DevCommandInvokeResult> gameDevCommand(String command, List<String> tokens);
 
   Future<CloudSyncResult> pullSave();
 
@@ -153,6 +160,15 @@ abstract interface class MultiplayerService {
   Future<ActionResult> setGuildRankLabels(String guildId, Map<GuildRankKey, String> rankLabels);
 
   Future<ActionResult> setGuildEmblem(String guildId, GuildEmblem emblem);
+
+  /// Sets the public guild motto (`guilds.description`).
+  Future<ActionResult> setGuildMotto(String guildId, String motto);
+
+  /// Sets the private guild announcement for members.
+  Future<ActionResult> setGuildPrivateMessage(String guildId, String body);
+
+  /// Reads the private guild announcement, or null when the viewer may not.
+  Future<String?> guildPrivateMessage(String guildId);
 
   Future<ActionResult> leaveGuild();
 
@@ -425,6 +441,14 @@ class LocalMultiplayerService implements MultiplayerService {
   @override
   Future<CloudSyncResult> gameCommand(String command, [Map<String, Object?> args = const {}]) {
     return gameSync(force: true);
+  }
+
+  @override
+  Future<bool> isDeveloperAccount() async => false;
+
+  @override
+  Future<DevCommandInvokeResult> gameDevCommand(String command, List<String> tokens) async {
+    return const DevCommandInvokeResult.failed('Developer commands need a hosted sign-in.');
   }
 
   @override
@@ -747,6 +771,27 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return const ActionResult.failed('Sign in required.');
     return _backend.setGuildEmblem(current.userId, guildId, emblem);
+  }
+
+  @override
+  Future<ActionResult> setGuildMotto(String guildId, String motto) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.setGuildMotto(current.userId, guildId, motto);
+  }
+
+  @override
+  Future<ActionResult> setGuildPrivateMessage(String guildId, String body) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.setGuildPrivateMessage(current.userId, guildId, body);
+  }
+
+  @override
+  Future<String?> guildPrivateMessage(String guildId) async {
+    final current = session;
+    if (current == null) return null;
+    return _backend.guildPrivateMessage(current.userId, guildId);
   }
 
   @override

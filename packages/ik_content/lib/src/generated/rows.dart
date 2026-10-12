@@ -168,6 +168,71 @@ class CosmeticSlotRow extends DbRow {
   String? get notes => stringOrNull('Notes');
 }
 
+class DialogueChoiceRow extends DbRow {
+  const DialogueChoiceRow(super.raw);
+
+  String get choiceId => stringValue('Choice ID');
+
+  String get nodeId => stringValue('Node ID');
+
+  String get label => stringValue('Label');
+
+  String? get nextNodeId => stringOrNull('Next Node ID');
+
+  /// Typed condition string, or null when always available.
+  String? get condition => stringOrNull('Condition');
+
+  /// Typed action string applied when the choice is taken, or null.
+  String? get action => stringOrNull('Action');
+
+  num get sortOrder => numberValue('Sort Order');
+
+  String get status => stringValue('Status');
+
+  String get releasePhase => stringValue('Release Phase');
+
+  String? get notes => stringOrNull('Notes');
+}
+
+class DialogueNodeRow extends DbRow {
+  const DialogueNodeRow(super.raw);
+
+  String get nodeId => stringValue('Node ID');
+
+  String get dialogueId => stringValue('Dialogue ID');
+
+  String get line => stringValue('Line');
+
+  String get status => stringValue('Status');
+
+  String get releasePhase => stringValue('Release Phase');
+
+  String? get notes => stringOrNull('Notes');
+}
+
+/// Standalone conversation graph (not quest-tied).
+class DialogueRow extends DbRow {
+  const DialogueRow(super.raw);
+
+  String get dialogueId => stringValue('Dialogue ID');
+
+  String get internalKey => stringValue('Internal Key');
+
+  String get displayName => stringValue('Display Name');
+
+  String get npcId => stringValue('NPC ID');
+
+  String get startNodeId => stringValue('Start Node ID');
+
+  bool get repeatable => boolValue('Repeatable');
+
+  String get status => stringValue('Status');
+
+  String get releasePhase => stringValue('Release Phase');
+
+  String? get notes => stringOrNull('Notes');
+}
+
 class EnchantmentRow extends DbRow {
   const EnchantmentRow(super.raw);
 
@@ -845,6 +910,9 @@ const List<String> databaseTables = <String>[
   'Quests',
   'QuestSteps',
   'QuestDialogue',
+  'Dialogues',
+  'DialogueNodes',
+  'DialogueChoices',
   'Achievements',
   'CosmeticSlots',
   'Cosmetics',
@@ -929,6 +997,20 @@ class GameDatabase {
     raw,
     'QuestDialogue',
     QuestDialogueRow.new,
+  );
+
+  late final List<DialogueRow> dialogues = typedRows(raw, 'Dialogues', DialogueRow.new);
+
+  late final List<DialogueNodeRow> dialogueNodes = typedRows(
+    raw,
+    'DialogueNodes',
+    DialogueNodeRow.new,
+  );
+
+  late final List<DialogueChoiceRow> dialogueChoices = typedRows(
+    raw,
+    'DialogueChoices',
+    DialogueChoiceRow.new,
   );
 
   late final List<Map<String, Object?>> achievements = untypedRows(raw, 'Achievements');

@@ -129,6 +129,8 @@ class GuildHomeHeader {
     required this.canManageApplications,
     required this.canRemoveGuests,
     required this.canRemoveMembers,
+    this.canEditMotto = false,
+    this.canEditPrivateMessage = false,
   });
 
   final String title;
@@ -148,6 +150,12 @@ class GuildHomeHeader {
   /// True when the viewer may remove roster members.
   final bool canRemoveMembers;
 
+  /// True when the viewer may edit the public guild motto.
+  final bool canEditMotto;
+
+  /// True when the viewer may edit the private guild message.
+  final bool canEditPrivateMessage;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'title': title,
     'subtitle': subtitle,
@@ -157,6 +165,8 @@ class GuildHomeHeader {
     'canManageApplications': canManageApplications,
     'canRemoveGuests': canRemoveGuests,
     'canRemoveMembers': canRemoveMembers,
+    'canEditMotto': canEditMotto,
+    'canEditPrivateMessage': canEditPrivateMessage,
   };
 }
 
@@ -186,6 +196,8 @@ GuildHomeHeader guildHomeHeader(
     canManageApplications: officerOrLeader,
     canRemoveGuests: officerOrLeader,
     canRemoveMembers: role == guildRoleLeader,
+    canEditMotto: officerOrLeader,
+    canEditPrivateMessage: officerOrLeader,
   );
 }
 

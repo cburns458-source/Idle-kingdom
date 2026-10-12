@@ -1,8 +1,25 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 
 const MAX_BODY = 240
 const COOLDOWN_MS = 2000
 const SLURS = /\b(nigger|faggot)\b/i
+const ITEM_REF = /@\[(ITEM-\d+)\]/g
+
+const VALID_ITEM_IDS: Set<string> = (() => {
+  const items = (rawDatabase as { Items?: Array<Record<string, unknown>> }).Items ?? []
+  const ids = new Set<string>()
+  for (const row of items) {
+    const id = row['Item ID']
+    if (typeof id === 'string' && /^ITEM-\d+$/.test(id)) ids.add(id)
+  }
+  return ids
+})()
+
+/** Drops forged `@[ITEM-…]` tokens that are not in the game database. */
+function sanitizeItemRefs(body: string): string {
+  return body.replace(ITEM_REF, (full, itemId: string) => (VALID_ITEM_IDS.has(itemId) ? full : ''))
+}
 
 type SendBody = {
   channelKey?: unknown
@@ -59,7 +76,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Unknown chat channel.' }, 400)
   }
 
-  const trimmed = String(payload.body ?? '')
+  const trimmed = sanitizeItemRefs(String(payload.body ?? ''))
     .trim()
     .slice(0, MAX_BODY)
   if (!trimmed) {

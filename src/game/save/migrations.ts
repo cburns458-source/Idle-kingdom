@@ -991,6 +991,21 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 60,
     }),
   },
+  {
+    fromVersion: 60,
+    toVersion: 61,
+    migrate: (save) => ({
+      ...save,
+      completedDialogueIds: Array.isArray(
+        (save as PlayerSave & { completedDialogueIds?: unknown }).completedDialogueIds,
+      )
+        ? (save as PlayerSave & { completedDialogueIds: string[] }).completedDialogueIds.filter(
+            (id): id is string => typeof id === 'string',
+          )
+        : [],
+      saveVersion: 61,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

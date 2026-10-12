@@ -145,8 +145,8 @@ actions, elapsed ms). It does **not** return a save to adopt, and it
 does **not** write `player_saves`.
 
 Apply no migration for phase 0. The test project receives the function
-on the next `test-launch` deploy. Live does not, until this revision is
-shipped to `main`.
+on the next `test-launch` deploy. Live does not, until Conor merges
+`test-launch` into `main`.
 
 ## Phase 1 contract
 
@@ -177,7 +177,8 @@ limit 20;
 ```
 
 Migration `20261007040000_player_save_shadow.sql` is applied to the
-**test** project with this wave. Live waits for ship.
+**test** project with this wave. Live waits until Conor merges
+`test-launch` into `main`.
 
 ## Phase 2 contract
 
@@ -207,7 +208,8 @@ items back. Direct insert/update/delete on `player_saves` is revoked; `SELECT`
 of the caller's own row stays.
 
 Migration `20261007050000_player_save_authority.sql` is applied to the
-**test** project with this wave. Live waits for ship.
+**test** project with this wave. Live waits until Conor merges
+`test-launch` into `main`.
 
 ## Phase 3 contract
 
@@ -231,4 +233,5 @@ rows stay signed-in readable). A trigger refuses authenticated writes to
 ```
 
 Migration `20261007060000_player_save_rankings.sql` is applied to the
-**test** project with this wave. Live waits for ship.
+**test** project with this wave. Live waits until Conor merges
+`test-launch` into `main`.

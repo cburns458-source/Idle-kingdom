@@ -122,6 +122,10 @@ export interface GuildHomeHeader {
   canRemoveGuests: boolean
   /** True when the viewer may remove roster members. */
   canRemoveMembers: boolean
+  /** True when the viewer may edit the public guild motto. */
+  canEditMotto: boolean
+  /** True when the viewer may edit the private guild message. */
+  canEditPrivateMessage: boolean
 }
 
 export function guildViewerRole(
@@ -151,6 +155,8 @@ export function guildHomeHeader(
     canManageApplications: officerOrLeader,
     canRemoveGuests: officerOrLeader,
     canRemoveMembers: role === 'leader',
+    canEditMotto: officerOrLeader,
+    canEditPrivateMessage: officerOrLeader,
   }
 }
 

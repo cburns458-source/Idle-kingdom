@@ -553,4 +553,33 @@ void main() {
     expect((await leader.leaveGuild()).ok, isTrue);
     expect(transport.tables[RemoteTables.guilds], isEmpty);
   });
+
+  test('leaders and officers edit the motto and private guild message', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final officer = await _player(transport, 'officer@example.com', 'Officer');
+    final recruit = await _player(transport, 'recruit@example.com', 'Recruit');
+    final outsider = await _player(transport, 'outsider@example.com', 'Outsider');
+
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+    expect((await officer.applyToGuild(guildId, '')).ok, isTrue);
+    expect((await recruit.applyToGuild(guildId, '')).ok, isTrue);
+    expect(
+      (await leader.setGuildMemberRole(guildId, officer.session!.userId, guildRoleOfficer)).ok,
+      isTrue,
+    );
+
+    expect((await leader.setGuildMotto(guildId, '  For the forge  ')).ok, isTrue);
+    expect((await leader.guild(guildId))!.description, 'For the forge');
+
+    expect((await officer.setGuildPrivateMessage(guildId, 'Meet at dusk.')).ok, isTrue);
+    expect(await leader.guildPrivateMessage(guildId), 'Meet at dusk.');
+    expect(await officer.guildPrivateMessage(guildId), 'Meet at dusk.');
+    expect(await recruit.guildPrivateMessage(guildId), 'Meet at dusk.');
+    expect(await outsider.guildPrivateMessage(guildId), isNull);
+
+    expect((await recruit.setGuildMotto(guildId, 'Nope')).ok, isFalse);
+    expect((await recruit.setGuildPrivateMessage(guildId, 'Nope')).ok, isFalse);
+    expect((await outsider.setGuildPrivateMessage(guildId, 'Nope')).ok, isFalse);
+  });
 }

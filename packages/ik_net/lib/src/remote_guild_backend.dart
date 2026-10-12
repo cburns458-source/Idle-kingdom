@@ -709,6 +709,48 @@ class RemoteGuildBackend {
     refusal: 'Only the leader can edit the banner.',
   );
 
+  Future<ActionResult> setGuildMotto(String guildId, String motto) async {
+    final current = sessionOf();
+    if (current == null) return const ActionResult.failed('Sign in first.');
+    final result = await transport.rpc(RemoteRpcs.guildSetMotto, <String, Object?>{
+      'p_guild': guildId,
+      'p_motto': guildMottoFromInput(motto),
+    });
+    if (!result.ok) return ActionResult.failed(result.reason ?? 'Try again.');
+    final answer = result.data ?? const <String, Object?>{};
+    if (answer['ok'] == true) return const ActionResult.ok();
+    final reason = answer['reason'];
+    return ActionResult.failed(reason is String && reason.isNotEmpty ? reason : 'Try again.');
+  }
+
+  Future<ActionResult> setGuildPrivateMessage(String guildId, String body) async {
+    final current = sessionOf();
+    if (current == null) return const ActionResult.failed('Sign in first.');
+    final result = await transport.rpc(RemoteRpcs.guildSetMessage, <String, Object?>{
+      'p_guild': guildId,
+      'p_body': guildPrivateMessageFromInput(body),
+    });
+    if (!result.ok) return ActionResult.failed(result.reason ?? 'Try again.');
+    final answer = result.data ?? const <String, Object?>{};
+    if (answer['ok'] == true) return const ActionResult.ok();
+    final reason = answer['reason'];
+    return ActionResult.failed(reason is String && reason.isNotEmpty ? reason : 'Try again.');
+  }
+
+  Future<String?> guildPrivateMessage(String guildId) async {
+    final current = sessionOf();
+    if (current == null) return null;
+    final result = await transport.select(
+      RemoteTables.guildPrivateMessages,
+      columns: 'body',
+      equals: <String, Object?>{'guild_id': guildId},
+      limit: 1,
+    );
+    if (!result.ok || result.rows == null || result.rows!.isEmpty) return null;
+    final body = result.rows!.first['body'];
+    return body is String ? body : '';
+  }
+
   // --- Projects and challenges ----------------------------------------------
 
   Future<List<GuildProject>> guildProjects(String guildId) async {

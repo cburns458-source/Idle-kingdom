@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -11,8 +10,6 @@ import '../session/multiplayer_controller.dart';
 import '../session/pick_local_png.dart';
 import '../theme.dart';
 import 'account_panel.dart';
-import 'catalog_popup.dart';
-import 'quest_reset_popup.dart';
 import 'page_header.dart';
 import 'player_sprite.dart';
 
@@ -42,29 +39,9 @@ class _MenuViewState extends State<MenuView> {
   String? _artNotice;
   bool _artError = false;
   bool _picking = false;
-  String? _toolNotice;
-  late String _raceId;
-  late String _skillId;
-  String _itemId = 'ITEM-0025';
   _SettingsTab _tab = _SettingsTab.general;
-  late final List<SkillRow> _sortedSkills;
-  late final List<ItemRow> _sortedItems;
 
   GameController get controller => widget.controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _raceId = controller.save.raceId ?? races(controller.db).first.raceId;
-    _skillId = controller.db.skills.first.skillId;
-    _sortedSkills = [...controller.db.skills]
-      ..sort((a, b) => a.displayName.compareTo(b.displayName));
-    _sortedItems = [...controller.db.items]..sort((a, b) => a.displayName.compareTo(b.displayName));
-  }
-
-  void _runTool(String? Function() action) {
-    setState(() => _toolNotice = action());
-  }
 
   Future<void> _usePng() async {
     if (_picking) return;
@@ -373,14 +350,7 @@ class _MenuViewState extends State<MenuView> {
               ],
             ),
             const SizedBox(height: 10),
-            _SettingsFold(
-              heading: 'Testing',
-              children: [
-                _buildTestingTools(),
-                const SizedBox(height: 16),
-                _buildPlayerSprite(save, hasOverride),
-              ],
-            ),
+            _SettingsFold(heading: 'Appearance', children: [_buildPlayerSprite(save, hasOverride)]),
           ],
         ],
       ),
@@ -485,153 +455,6 @@ class _MenuViewState extends State<MenuView> {
                 color: _artError ? Palette.warning : Palette.gold,
                 fontSize: GameFont.s,
               ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTestingTools() {
-    final raceRows = races(controller.db);
-    final skillRows = _sortedSkills;
-    final itemRows = _sortedItems;
-    final selectedSkill = getSkillProgress(controller.save, _skillId);
-    return GamePanel(
-      framed: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Testing tools',
-            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
-          ),
-          const MutedText('Local debug grants. They are not a live economy.'),
-          const SizedBox(height: 10),
-          GameButton(
-            label: 'Spawn critter',
-            onPressed: () => _runTool(controller.debugSpawnCritter),
-          ),
-          const SizedBox(height: 12),
-          GameSelectField(
-            label: 'Race',
-            value:
-                raceRows
-                    .where((row) => row.raceId == _raceId)
-                    .map((row) => row.displayName)
-                    .firstOrNull ??
-                'Choose',
-            onPressed: () async {
-              final chosen = await showGameCatalogPopup(
-                context: context,
-                eyebrow: 'Race',
-                title: 'Change race',
-                selectable: true,
-                entries: [
-                  for (final row in raceRows)
-                    CatalogPopupEntry(title: row.displayName, emphasized: row.raceId == _raceId),
-                ],
-              );
-              if (chosen == null || !mounted) return;
-              setState(() => _raceId = raceRows[chosen].raceId);
-            },
-          ),
-          const SizedBox(height: 8),
-          GameButton(
-            label: 'Change race',
-            onPressed: () => _runTool(() => controller.debugChangeRace(_raceId)),
-          ),
-          const SizedBox(height: 12),
-          Autocomplete<ItemRow>(
-            displayStringForOption: (item) => item.displayName,
-            optionsBuilder: (text) {
-              final query = text.text.trim().toLowerCase();
-              if (query.isEmpty) return itemRows.take(40);
-              return itemRows.where((item) => item.displayName.toLowerCase().contains(query));
-            },
-            onSelected: (item) => setState(() => _itemId = item.itemId),
-            fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
-              return TextField(
-                controller: textController,
-                focusNode: focusNode,
-                decoration: const InputDecoration(labelText: 'Item', hintText: 'Search…'),
-                onSubmitted: (_) => onFieldSubmitted(),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final qty in const [1, 10, 100])
-                GameTextButton(
-                  label: 'Add $qty',
-                  onPressed: () => _runTool(() => controller.debugGrantItem(_itemId, qty)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          GameSelectField(
-            label: 'Skill · Lv ${selectedSkill.level}',
-            value:
-                skillRows
-                    .where((row) => row.skillId == _skillId)
-                    .map((row) => row.displayName)
-                    .firstOrNull ??
-                'Choose',
-            onPressed: () async {
-              final chosen = await showGameCatalogPopup(
-                context: context,
-                eyebrow: 'Skill',
-                title: 'Testing tools',
-                selectable: true,
-                entries: [
-                  for (final row in skillRows)
-                    CatalogPopupEntry(title: row.displayName, emphasized: row.skillId == _skillId),
-                ],
-              );
-              if (chosen == null || !mounted) return;
-              setState(() => _skillId = skillRows[chosen].skillId);
-            },
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              GameTextButton(
-                label: 'Add 1 level',
-                onPressed: () => _runTool(() => controller.debugAddSkillLevels(_skillId, 1)),
-              ),
-              GameTextButton(
-                label: 'Add 10 levels',
-                onPressed: () => _runTool(() => controller.debugAddSkillLevels(_skillId, 10)),
-              ),
-              GameTextButton(
-                label: 'Remove 1 level',
-                onPressed: () => _runTool(() => controller.debugRemoveSkillLevels(_skillId, 1)),
-              ),
-              GameTextButton(
-                label: 'Reset all skills',
-                onPressed: () => _runTool(controller.debugResetAllSkills),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          GameButton(
-            label: 'Reset quests…',
-            onPressed: () => showQuestResetPopup(
-              context: context,
-              controller: controller,
-              onRan: (notice) => setState(() => _toolNotice = notice),
-            ),
-          ),
-          if (_toolNotice case final notice?) ...[
-            const SizedBox(height: 8),
-            Text(
-              notice,
-              style: const TextStyle(color: Palette.gold, fontSize: GameFont.s),
             ),
           ],
         ],

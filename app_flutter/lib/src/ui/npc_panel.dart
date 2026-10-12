@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'dialogue_window.dart';
 import 'format.dart';
 import 'game_popup.dart';
 import 'social_bits.dart';
@@ -42,6 +43,7 @@ class _NpcPanelState extends State<NpcPanel> {
   String? _error;
   String? _selectedRaceId;
   bool _pickingRace = false;
+  String? _standaloneDialogueId;
 
   GameController get controller => widget.controller;
 
@@ -229,6 +231,14 @@ class _NpcPanelState extends State<NpcPanel> {
   Widget build(BuildContext context) {
     final conversation = this.conversation;
 
+    if (_standaloneDialogueId case final dialogueId?) {
+      return StandaloneDialogueHost(
+        controller: controller,
+        dialogueId: dialogueId,
+        onClose: () => setState(() => _standaloneDialogueId = null),
+      );
+    }
+
     if (_whereaboutsLine case final whereaboutsLine?) {
       return _playerDialogue(
         name: conversation.name,
@@ -248,6 +258,20 @@ class _NpcPanelState extends State<NpcPanel> {
     }
 
     return _openingDialogue(conversation);
+  }
+
+  List<Widget> _withStandalone(List<Widget> actions) {
+    final ids = dialoguesForNpc(controller.db, controller.save, widget.npc.npcId);
+    if (ids.isEmpty) return actions;
+    return [
+      GameButton(
+        label: 'Something else…',
+        tone: GameButtonTone.secondary,
+        compact: true,
+        onPressed: () => setState(() => _standaloneDialogueId = ids.first),
+      ),
+      ...actions,
+    ];
   }
 
   Widget _openingDialogue(NpcConversation conversation) {
@@ -389,7 +413,7 @@ class _NpcPanelState extends State<NpcPanel> {
               compact: true,
               onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
             ),
-          GameButton(label: 'Done', onPressed: _close),
+          ..._withStandalone([GameButton(label: 'Done', onPressed: _close)]),
         ],
       );
     }
@@ -399,7 +423,7 @@ class _NpcPanelState extends State<NpcPanel> {
         name: conversation.name,
         line: mentor.known ? mentor.knownNote : conversation.description,
         error: _error,
-        actions: [
+        actions: _withStandalone([
           if (conversation.whereabouts case final whereabouts?)
             GameButton(
               label: whereabouts.label,
@@ -409,7 +433,7 @@ class _NpcPanelState extends State<NpcPanel> {
             ),
           if (!mentor.known) GameButton(label: mentor.learnLabel, onPressed: _learn),
           GameButton(label: 'Done', onPressed: _close),
-        ],
+        ]),
       );
     }
 
@@ -418,7 +442,7 @@ class _NpcPanelState extends State<NpcPanel> {
         name: conversation.name,
         line: conversation.description,
         error: _error,
-        actions: [
+        actions: _withStandalone([
           GameButton(
             label: whereabouts.label,
             tone: GameButtonTone.secondary,
@@ -426,7 +450,7 @@ class _NpcPanelState extends State<NpcPanel> {
             onPressed: () => setState(() => _whereaboutsLine = whereabouts.line),
           ),
           GameButton(label: 'Done', onPressed: _close),
-        ],
+        ]),
       );
     }
 
@@ -435,7 +459,7 @@ class _NpcPanelState extends State<NpcPanel> {
         name: conversation.name,
         line: conversation.description,
         error: _error,
-        actions: [
+        actions: _withStandalone([
           GameButton(
             label: 'Done',
             tone: GameButtonTone.secondary,
@@ -449,7 +473,7 @@ class _NpcPanelState extends State<NpcPanel> {
               widget.onOpenTanner?.call();
             },
           ),
-        ],
+        ]),
       );
     }
 
@@ -462,7 +486,7 @@ class _NpcPanelState extends State<NpcPanel> {
       name: conversation.name,
       line: completed?.completedNote ?? conversation.description,
       error: _error,
-      actions: [GameButton(label: 'Done', onPressed: _close)],
+      actions: _withStandalone([GameButton(label: 'Done', onPressed: _close)]),
     );
   }
 

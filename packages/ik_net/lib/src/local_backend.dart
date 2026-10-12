@@ -959,6 +959,7 @@ class LocalMultiplayerBackend {
       ),
     );
     db.halls.add(GuildHallState.fresh(guild.id));
+    db.guildPrivateMessages[guild.id] = '';
     _write(db);
     return CreateGuildResult.ok(guild, guildCreateGoldCost);
   }
@@ -1332,6 +1333,53 @@ class LocalMultiplayerBackend {
     );
     _write(db);
     return const ActionResult.ok();
+  }
+
+  ActionResult setGuildMotto(String actorId, String guildId, String motto) {
+    final guild = getGuild(guildId);
+    if (guild == null) return const ActionResult.failed('That guild could not be found.');
+    final role = guildMembers(guildId)
+        .where((row) => row.userId == actorId)
+        .map((row) => row.role)
+        .firstOrNull;
+    if (!isGuildOfficerOrLeader(guild, actorId, role)) {
+      return const ActionResult.failed('Only the guild leader or an officer can edit the motto.');
+    }
+    final db = _db();
+    final index = db.guilds.indexWhere((row) => row.id == guildId);
+    if (index < 0) return const ActionResult.failed('That guild could not be found.');
+    db.guilds[index] = db.guilds[index].copyWith(description: guildMottoFromInput(motto));
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  ActionResult setGuildPrivateMessage(String actorId, String guildId, String body) {
+    final guild = getGuild(guildId);
+    if (guild == null) return const ActionResult.failed('That guild could not be found.');
+    final role = guildMembers(guildId)
+        .where((row) => row.userId == actorId)
+        .map((row) => row.role)
+        .firstOrNull;
+    if (!isGuildOfficerOrLeader(guild, actorId, role)) {
+      return const ActionResult.failed(
+        'Only the guild leader or an officer can edit the guild message.',
+      );
+    }
+    final db = _db();
+    if (!db.members.any((row) => row.guildId == guildId && row.userId == actorId)) {
+      return const ActionResult.failed('Join the guild to edit its message.');
+    }
+    db.guildPrivateMessages[guildId] = guildPrivateMessageFromInput(body);
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  String? guildPrivateMessage(String actorId, String guildId) {
+    final db = _db();
+    if (!db.members.any((row) => row.guildId == guildId && row.userId == actorId)) {
+      return null;
+    }
+    return db.guildPrivateMessages[guildId] ?? '';
   }
 
   ActionResult setGuildEmblem(String actorId, String guildId, GuildEmblem emblem) {

@@ -68,6 +68,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     shopPurchaseDayKey: null,
     shopPurchasesToday: const <String, num>{},
     claimedMerchantTipIds: const <String>[],
+    completedDialogueIds: const <String>[],
     claimedKingswoodsSling: false,
     critterCollections: const <CritterCollectionEntry>[],
     activeCritterSpawns: const <CritterSpawn>[],

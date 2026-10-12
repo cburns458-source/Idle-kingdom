@@ -298,7 +298,7 @@ class _GuildPanelState extends State<GuildPanel> {
     final rosterCount = rows.length * 2;
     final guestListCount = rosterGuests.isNotEmpty ? 3 + rosterGuests.length * 2 : 0;
     final footerStart =
-        4 +
+        8 +
         (guestGuild != null ? 2 : 0) +
         (showApplications ? 3 + applications.length * 2 : 0) +
         2 +
@@ -328,6 +328,26 @@ class _GuildPanelState extends State<GuildPanel> {
           }
           if (index == 1) return const SizedBox(height: 10);
           if (index == 2) {
+            return _GuildTextBlock(
+              title: 'Motto',
+              body: guild.description.trim().isEmpty ? 'No motto yet.' : guild.description,
+              canEdit: header.canEditMotto,
+              onEdit: () => _editGuildMotto(guild),
+            );
+          }
+          if (index == 3) return const SizedBox(height: 10);
+          if (index == 4) {
+            final message = net.guildPrivateMessage?.trim() ?? '';
+            return _GuildTextBlock(
+              title: 'Guild message',
+              body: message.isEmpty ? 'No private message yet.' : message,
+              canEdit: header.canEditPrivateMessage,
+              onEdit: () => _editGuildPrivateMessage(message),
+              privateHint: 'Members only',
+            );
+          }
+          if (index == 5) return const SizedBox(height: 10);
+          if (index == 6) {
             return GameButton(
               label: save.currentLocationId == guildHallLocationId
                   ? 'In the hall'
@@ -337,7 +357,7 @@ class _GuildPanelState extends State<GuildPanel> {
                   : widget.onTravelToHall,
             );
           }
-          if (index == 3) {
+          if (index == 7) {
             return const Padding(
               padding: EdgeInsets.only(top: 4, bottom: 10),
               child: MutedText(
@@ -345,7 +365,7 @@ class _GuildPanelState extends State<GuildPanel> {
               ),
             );
           }
-          var i = index - 4;
+          var i = index - 8;
           if (guestGuild != null) {
             if (i == 0) {
               return SocialRow(
@@ -554,6 +574,126 @@ class _GuildPanelState extends State<GuildPanel> {
       save: save,
     );
   }
+
+  Future<void> _editGuildMotto(GuildRecord guild) async {
+    final next = await _askGuildText(
+      title: 'Guild motto',
+      hint: 'Shown on the guild page',
+      initial: guild.description,
+      maxLength: guildDescriptionMaxLength,
+    );
+    if (next == null || !mounted) return;
+    await net.saveGuildMotto(next, save);
+  }
+
+  Future<void> _editGuildPrivateMessage(String current) async {
+    final next = await _askGuildText(
+      title: 'Guild message',
+      hint: 'Private note for members',
+      initial: current,
+      maxLength: guildPrivateMessageMaxLength,
+    );
+    if (next == null || !mounted) return;
+    await net.saveGuildPrivateMessage(next, save);
+  }
+
+  Future<String?> _askGuildText({
+    required String title,
+    required String hint,
+    required String initial,
+    required int maxLength,
+  }) {
+    final field = TextEditingController(text: initial);
+    return showGamePopup<String>(
+      context: context,
+      maxWidth: 360,
+      builder: (context) {
+        return GamePopupCard(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: field,
+                  maxLength: maxLength,
+                  maxLines: 4,
+                  decoration: InputDecoration(hintText: hint),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    GameButton(
+                      label: 'Cancel',
+                      tone: GameButtonTone.secondary,
+                      compact: true,
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GameButton(
+                        label: 'Save',
+                        compact: true,
+                        onPressed: () => Navigator.of(context).pop(field.text),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ).whenComplete(field.dispose);
+  }
+}
+
+/// Motto or private message block on the guild home.
+class _GuildTextBlock extends StatelessWidget {
+  const _GuildTextBlock({
+    required this.title,
+    required this.body,
+    required this.canEdit,
+    required this.onEdit,
+    this.privateHint,
+  });
+
+  final String title;
+  final String body;
+  final bool canEdit;
+  final VoidCallback onEdit;
+  final String? privateHint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
+                  if (privateHint != null) ...[const SizedBox(width: 8), MutedText(privateHint!)],
+                ],
+              ),
+            ),
+            if (canEdit)
+              GameIconButton(onPressed: onEdit, tooltip: 'Edit $title', icon: Icons.edit),
+          ],
+        ),
+        const SizedBox(height: 4),
+        MutedText(body),
+      ],
+    );
+  }
 }
 
 /// How a guild detail page treats Join / Guest actions.
@@ -742,7 +882,10 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
               );
         final browse = widget.browseRow;
         final showBrowseActions = browse != null && widget.mode != _GuildDetailMode.own;
-        final prefixCount = 1 + (_error != null ? 2 : 0) + (showBrowseActions ? 2 : 0) + 3;
+        final motto = guild.description.trim();
+        final showMotto = motto.isNotEmpty;
+        final prefixCount =
+            1 + (_error != null ? 2 : 0) + (showMotto ? 2 : 0) + (showBrowseActions ? 2 : 0) + 3;
         final rosterCount = rows.isEmpty ? 1 : rows.length * 2;
         final guestListCount = guests.isNotEmpty ? 3 + guests.length * 2 : 0;
         final itemCount = prefixCount + rosterCount + guestListCount;
@@ -771,6 +914,11 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             if (i == 1) {
                               return Text(_error!, style: const TextStyle(color: Palette.danger));
                             }
+                            i -= 2;
+                          }
+                          if (showMotto) {
+                            if (i == 0) return const SizedBox(height: 8);
+                            if (i == 1) return MutedText(motto);
                             i -= 2;
                           }
                           if (showBrowseActions) {

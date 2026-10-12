@@ -60,18 +60,18 @@ void main() {
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Might 25'));
     expect(
       summary.mainhandBreakdown.firstWhere((line) => line.label == 'Might 25').detail,
-      '×1.25',
+      '×1.12',
     );
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Spell'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Potion'));
-    expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '138–277');
+    expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '124–248');
 
     final offhand = playerOffhandDamageRange(db, save);
     if (offhand != null) {
       expect(summary.offhandBreakdown.map((line) => line.label), contains('Might 25'));
       expect(
         summary.offhandBreakdown.firstWhere((line) => line.label == 'Might 25').detail,
-        '×1.25',
+        '×1.12',
       );
       expect(summary.offhandBreakdown.last.label, 'Total');
     } else {
@@ -80,12 +80,16 @@ void main() {
 
     expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('Base')));
     expect(summary.healthBreakdown.map((line) => line.label), contains('Steel Helmet'));
-    expect(summary.healthBreakdown.map((line) => line.label), contains('Vitality 25'));
+    expect(summary.healthBreakdown.map((line) => line.label), contains('Combat Level 38'));
     expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('High Elf')));
     expect(summary.healthBreakdown.last.detail, jsNumberToString(playerMaxHp(db, save)));
 
     expect(summary.reductionBreakdown.map((line) => line.label), contains('Steel Helmet'));
-    expect(summary.reductionBreakdown.last.detail, '1');
+    expect(summary.reductionBreakdown.map((line) => line.label), contains('Vitality 25'));
+    expect(
+      summary.reductionBreakdown.last.detail,
+      jsNumberToString(playerDamageReduction(db, save)),
+    );
   });
 
   test('lists success chance on the tool\'s own skill', () {

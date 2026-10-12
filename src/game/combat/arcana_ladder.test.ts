@@ -155,11 +155,11 @@ describe('arcana ladder runtime', () => {
         const next = values.shift()
         return next ?? 0.5
       }
-    // Main hit min, Double Shot procs, second hit min → 30+30.
+    // Main hit min, Double Shot procs, second hit min → 29+29 after scout DR%.
     const withProc = resolveCombatRound(launch, save, enemy, 50_000, seq(0, 0, 0))
-    // Main hit min, Double Shot misses → 30.
+    // Main hit min, Double Shot misses → 29.
     const withoutProc = resolveCombatRound(launch, save, enemy, 50_000, seq(0, 0.9))
-    expect(withProc.playerHit).toBe(60)
-    expect(withoutProc.playerHit).toBe(30)
+    expect(withProc.playerHit).toBe(58)
+    expect(withoutProc.playerHit).toBe(29)
   })
 })

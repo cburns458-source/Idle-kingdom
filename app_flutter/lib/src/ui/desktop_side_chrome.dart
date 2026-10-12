@@ -126,12 +126,14 @@ class DesktopChatRail extends StatelessWidget {
     required this.multiplayer,
     required this.locationId,
     required this.citadelHub,
+    this.onOpenCodexItem,
   });
 
   final GameController controller;
   final MultiplayerController multiplayer;
   final String locationId;
   final bool citadelHub;
+  final ValueChanged<String>? onOpenCodexItem;
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +150,7 @@ class DesktopChatRail extends StatelessWidget {
           citadelHub: citadelHub,
           embedded: true,
           onClose: () {},
+          onOpenCodexItem: onOpenCodexItem,
         ),
       ),
     );

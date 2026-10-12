@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'pixel_chrome.dart';
@@ -14,11 +16,35 @@ Color? colorFromHexRgb(String? hex) {
   return Color(0xFF000000 | value);
 }
 
+double _linearizeSrgb(double channel) {
+  return channel <= 0.04045 ? channel / 12.92 : math.pow((channel + 0.055) / 1.055, 2.4).toDouble();
+}
+
+/// WCAG relative luminance for an sRGB [color].
+double relativeLuminance(Color color) {
+  return 0.2126 * _linearizeSrgb(color.r) +
+      0.7152 * _linearizeSrgb(color.g) +
+      0.0722 * _linearizeSrgb(color.b);
+}
+
+/// WCAG contrast ratio between two colors. 1 is none; 21 is black on white.
+double contrastRatio(Color a, Color b) {
+  final first = relativeLuminance(a);
+  final second = relativeLuminance(b);
+  final light = first > second ? first : second;
+  final dark = first > second ? second : first;
+  return (light + 0.05) / (dark + 0.05);
+}
+
 /// The palette the game is drawn in: wood boards, tan panels, dull gold.
 abstract final class Palette {
   static const parchmentText = Color(0xFFF4E7C8);
   static const parchment = Color(0xFF5C4027);
   static const parchmentDeep = Color(0xFF3D2A1A);
+
+  /// Item links in chat. Light sky blue — readable on wood and stone boards,
+  /// and distinct from parchment body text and default gold names.
+  static const chatItemLink = Color(0xFF7CC8F0);
 
   /// Mid gold between antique brass and bright jewelry — rims, amounts, emboss.
   static const gold = Color(0xFFA7872D);

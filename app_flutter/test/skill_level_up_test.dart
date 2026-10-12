@@ -19,7 +19,9 @@ void main() {
     await pumpShell(tester, controller);
     await tester.pump();
 
-    expect(controller.debugAddSkillLevels('SKL-0009', 9), 'Crafting is now level 10.');
+    final crafting = raiseSkillToMinimumLevel(controller.save, controller.db, 'SKL-0009', 10);
+    expect(crafting.raised, isTrue);
+    controller.commit(crafting.save);
     await tester.pump();
     await tester.pump();
 
@@ -36,7 +38,9 @@ void main() {
     await pumpShell(tester, controller);
     await tester.pump();
 
-    expect(controller.debugAddSkillLevels(mightSkillId, 10), 'Might is now level 11.');
+    final might = raiseSkillToMinimumLevel(controller.save, controller.db, mightSkillId, 11);
+    expect(might.raised, isTrue);
+    controller.commit(might.save);
     await tester.pump();
     await tester.pump();
 
@@ -54,7 +58,9 @@ void main() {
     controller.setUiChromePack(UiChromePack.stone);
     await tester.pump();
 
-    expect(controller.debugAddSkillLevels('SKL-0009', 9), 'Crafting is now level 10.');
+    final crafting = raiseSkillToMinimumLevel(controller.save, controller.db, 'SKL-0009', 10);
+    expect(crafting.raised, isTrue);
+    controller.commit(crafting.save);
     await tester.pump();
     await tester.pump();
 

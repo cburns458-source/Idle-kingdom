@@ -181,8 +181,10 @@ class LocalDb {
     required this.guests,
     required this.halls,
     required this.playSessions,
+    Map<String, String>? guildPrivateMessages,
     List<CloudSaveRecord>? pvpSnapshots,
-  }) : pvpSnapshots = pvpSnapshots ?? <CloudSaveRecord>[];
+  }) : guildPrivateMessages = guildPrivateMessages ?? <String, String>{},
+       pvpSnapshots = pvpSnapshots ?? <CloudSaveRecord>[];
 
   LocalDb.empty()
     : users = <LocalAccount>[],
@@ -206,6 +208,7 @@ class LocalDb {
       guests = <GuildGuest>[],
       halls = <GuildHallState>[],
       playSessions = <String, String>{},
+      guildPrivateMessages = <String, String>{},
       pvpSnapshots = <CloudSaveRecord>[];
 
   /// Reads whatever a previous version wrote, filling in anything it lacks.
@@ -253,6 +256,13 @@ class LocalDb {
         if (value is String) db.playSessions[entry.key] = value;
       }
     }
+    final privateMessages = raw['guildPrivateMessages'];
+    if (privateMessages is Map<String, Object?>) {
+      for (final entry in privateMessages.entries) {
+        final value = entry.value;
+        if (value is String) db.guildPrivateMessages[entry.key] = value;
+      }
+    }
     return db;
   }
 
@@ -277,6 +287,7 @@ class LocalDb {
   List<GuildGuest> guests;
   List<GuildHallState> halls;
   Map<String, String> playSessions;
+  Map<String, String> guildPrivateMessages;
   List<CloudSaveRecord> pvpSnapshots;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -301,6 +312,8 @@ class LocalDb {
     if (guests.isNotEmpty) 'guests': guests.map((row) => row.toJson()).toList(),
     if (halls.isNotEmpty) 'halls': halls.map((row) => row.toJson()).toList(),
     if (playSessions.isNotEmpty) 'playSessions': <String, Object?>{...playSessions},
+    if (guildPrivateMessages.isNotEmpty)
+      'guildPrivateMessages': <String, Object?>{...guildPrivateMessages},
     if (pvpSnapshots.isNotEmpty) 'pvpSnapshots': pvpSnapshots.map((row) => row.toJson()).toList(),
   };
 }

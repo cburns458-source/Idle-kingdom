@@ -12,7 +12,12 @@ import {
 } from './boss'
 import { summarizeXpReward } from '../activity/rewardSummary'
 import { applyCombatVictory, beginCombatSave, resolveCombatRound } from './engine'
-import { fishingCombatDamageRange, playerBaseMaxHp } from './stats'
+import { configNumber } from '../activity/gathering'
+import {
+  applyEnemyDamageResistance,
+  fishingCombatDamageRange,
+  playerBaseMaxHp,
+} from './stats'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -81,7 +86,9 @@ describe('mother squid boss', () => {
     const half = maxHp * 0.5
 
     const range = fishingCombatDamageRange(launch, save)
-    const triggerHp = half + range.min
+    const floor = configNumber(launch, 'damage_floor', 1)
+    const hit = applyEnemyDamageResistance(range.min, squid, floor)
+    const triggerHp = half + hit
     const trigger = resolveCombatRound(launch, save, squid, triggerHp, () => 0)
     expect(trigger.bossAddsTriggered).toBe(true)
     expect(trigger.bossPendingHp).toBeLessThanOrEqual(half)
@@ -211,7 +218,8 @@ describe('mother squid boss', () => {
     expect(enemyEncounterDamageRange(launch, save, squidling)).toEqual({ min: 40, max: 60 })
 
     const fishing = fishingCombatDamageRange(launch, save)
+    const floor = configNumber(launch, 'damage_floor', 1)
     const round = resolveCombatRound(launch, save, squidling, squidling['Maximum HP'], () => 0)
-    expect(round.playerHit).toBe(fishing.min)
+    expect(round.playerHit).toBe(applyEnemyDamageResistance(fishing.min, squidling, floor))
   })
 })

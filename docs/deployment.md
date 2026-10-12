@@ -12,9 +12,10 @@ own workflow; this page is the Worker, branch, DNS, and project layout.
 | `test-launch` | https://test.restoriaidle.com | `restoria-idlerpg-staging` | Push to `test-launch`, or `npx wrangler deploy --env staging` |
 | `main` | https://restoriaidle.com and https://www.restoriaidle.com | `restoria-idlerpg` | Push to `main`, or `npx wrangler deploy` (no `--env`) |
 
-Going forward: implement and playtest on `test-launch` (the test site). After
-the owner confirms that build, ship the same revision to `main` so the live
-site updates.
+Going forward: implement on a branch from latest `test-launch` and playtest
+the test site. Never commit or push to `main`. Only Conor promotes
+`test-launch` to `main` by manually merging a PR, which publishes the live
+site.
 
 The two sites are different Workers. Deploying `test-launch` cannot overwrite
 `restoria-idlerpg` or the apex/www custom domains.
@@ -102,8 +103,7 @@ files are alphabetical: `011_chat_privacy` then `011_leaderboard_profile_fk`;
 The agent does this through the Supabase connection (`apply_migration`):
 
 1. Test project, when the migration lands on `test-launch`.
-2. Live project, only at ship, when that same revision is fast-forwarded to
-   `main`.
+2. Live project, only after Conor merges `test-launch` into `main`.
 
 Do not use `supabase db push` against either hosted project. Live's migration
 history was empty when the test project was created (SQL had been pasted in
@@ -159,8 +159,8 @@ still return 501.
 Do not redeploy the live `bazaar` function without an explicit owner OK.
 Live already has migration `025_bazaar_six_slots` applied (six-slot
 `bazaar_place_order` and `bazaar_orders_slot_check`); the hosted function
-build is still the September three-slot client. Shipping `main` after that
-OK is what updates it.
+build is still the September three-slot client. Conor merging `test-launch`
+into `main` after that OK is what updates it.
 
 ### Environment secrets
 
