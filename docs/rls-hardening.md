@@ -65,9 +65,12 @@ owner confirms its plan.
    server should run or validate progression, not only store blobs.
 2. **Save writes with expected `updated_at`** — tighten client upserts to the
    same equality check the Bazaar RPCs use (026 only blocks older stamps).
-3. **Guild hall donations that debit the cloud save in one transaction** —
-   today the RPC adds storehouse stock while the client removes bag items;
-   a modified client can donate without paying.
+3. ~~**Guild hall donations that debit the cloud save in one transaction**~~ —
+   done. The `game` function's `guild_donate_hall_item` / `guild_pay_hall_debt`
+   commands debit the hosted save and write the hall together. Clients lost
+   execute on the old ledger-only RPCs in
+   `20261007045115_revoke_hall_economy_rpcs.sql` (same revokes as the tail of
+   `20261007050000_player_save_authority.sql`).
 4. **Guild hall tier settlement on the server** — completing tiers / spending
    storehouse materials must not be client-decided.
 5. **Guild hall withdrawals** — role-gated RPC once leader permission settings
