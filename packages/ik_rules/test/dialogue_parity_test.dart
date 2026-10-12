@@ -42,6 +42,7 @@ Map<String, Object?> _digest(PlayerSave save) {
   return <String, Object?>{
     'gold': save.gold,
     'inventory': [for (final stack in save.inventory) stack.toJson()],
+    'bank': [for (final stack in save.bank) stack.toJson()],
     'quests': [for (final row in quests) row.toJson()],
     'dialogueFlags': save.dialogueFlags,
     'unlockedBookIds': save.unlockedBookIds,
@@ -87,6 +88,13 @@ Map<String, Object?> _runScript(GameDatabase db, PlayerSave initial, List<Object
         if (result.ok) save = result.save;
       case 'setItem':
         save = _setItemCount(save, str('itemId'), op['quantity']! as num);
+      case 'setBank':
+        final itemId = str('itemId');
+        final quantity = op['quantity']! as num;
+        final bank = save.bank.where((stack) => stack.itemId != itemId).toList();
+        save = save.copyWith(
+          bank: quantity > 0 ? [...bank, InventoryStack(itemId: itemId, quantity: quantity)] : bank,
+        );
       case 'fillBag':
         save = _fillBag(save, (op['free']! as num).toInt());
       case 'clearFillers':

@@ -247,6 +247,14 @@ export const DIALOGUE_PATCH: Patch = {
     ),
     choice('DCH-9027', 'DNODE-9021', 7, null, 'mystery_action:QST-9001'),
     choice(
+      'DCH-9028',
+      'DNODE-9021',
+      8,
+      'quest_active:QST-9001',
+      `hand_in:QST-9001:QSTP-9002;grant_item:${GOLDEN_SPUD}:1`,
+      { Repeatable: true },
+    ),
+    choice(
       'DCH-9031',
       'DNODE-9031',
       1,
@@ -297,6 +305,7 @@ function digest(save: PlayerSave): JsonValue {
   return {
     gold: save.gold,
     inventory: json(save.inventory),
+    bank: json(save.bank ?? []),
     quests: json([...save.quests].sort((a, b) => (a.questId < b.questId ? -1 : a.questId > b.questId ? 1 : 0))),
     dialogueFlags: save.dialogueFlags,
     unlockedBookIds: save.unlockedBookIds ?? [],
@@ -350,6 +359,13 @@ export function runDialogueScript(db: GameDatabase, initial: PlayerSave, ops: Op
       case 'setItem':
         save = setItemCount(save, str(op, 'itemId'), Number(op.quantity))
         break
+      case 'setBank': {
+        const itemId = str(op, 'itemId')
+        const quantity = Number(op.quantity)
+        const bank = (save.bank ?? []).filter((stack) => stack.itemId !== itemId)
+        save = { ...save, bank: quantity > 0 ? [...bank, { itemId, quantity }] : bank }
+        break
+      }
       case 'fillBag':
         save = fillBag(save, Number(op.free))
         break
@@ -554,6 +570,38 @@ const SCRIPTS: Record<string, Op[]> = {
     GIFTS('DCH-9022'),
     GIFTS('DCH-9021'),
     KING('DCH-9001'),
+    feastProgress,
+  ],
+
+  // QA follow-up: items only in the bank count as 0; Show and HandIn refuse them.
+  'bank-only': [
+    FENNEL('DCH-9011'),
+    KING('DCH-9001'),
+    setItem(BAKED_POTATO, 0),
+    setItem(COOKED_PERCH, 0),
+    { op: 'setBank', itemId: BAKED_POTATO, quantity: 20 },
+    { op: 'setBank', itemId: COOKED_PERCH, quantity: 20 },
+    { op: 'progress', questId: 'QST-9002', stepId: 'QSTP-9011' },
+    feastProgress,
+    {
+      op: 'conditions',
+      tokens: [`has_item:${BAKED_POTATO}`, 'step_ready:QST-9002:QSTP-9011', 'step_ready:QST-9001:QSTP-9002'],
+    },
+    FENNEL('DCH-9012'),
+    KING('DCH-9002'),
+    KING('DCH-9006'),
+    { op: 'view', dialogueId: 'DLG-9001', nodeId: 'DNODE-9001' },
+  ],
+
+  // QA follow-up: hand_in succeeds, then grant_item hits no_room; nothing sticks.
+  'mid-chain-rollback': [
+    KING('DCH-9001'),
+    setItem(BAKED_POTATO, 15),
+    { op: 'fillBag', free: 0 },
+    GIFTS('DCH-9028'),
+    feastProgress,
+    { op: 'clearFillers' },
+    GIFTS('DCH-9028'),
     feastProgress,
   ],
 
