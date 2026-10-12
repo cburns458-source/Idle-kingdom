@@ -392,6 +392,17 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       )
     }
     if (!result.ok) return json({ error: result.reason, phase: 2 }, 400)
+    if (command === 'dialogue_view') {
+      return json({
+        ok: true,
+        phase: 2,
+        action: 'command',
+        command,
+        view: result.view ?? null,
+        version: hosted?.version ?? 0,
+        wroteSave: false,
+      })
+    }
     let foundedGuild: Record<string, unknown> | null = null
     if (command === 'guild_create') {
       const founded = await foundGuild(admin, userId, args)

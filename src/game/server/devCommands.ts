@@ -10,7 +10,7 @@ import { addItemsToInventory } from '../activity/rewards'
 import { spawnCritterAtLocation } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
 import { assignRace } from '../races/assignRace'
-import { resetIntroFlags, resetQuestProgress } from '../quests/quests'
+import { cheatAbandonQuest, getQuest, resetIntroFlags, resetQuestProgress } from '../quests/quests'
 import type { PlayerSave, SkillProgress } from '../save/types'
 import { withRecalculatedVitals } from '../equipment/vitals'
 
@@ -34,6 +34,11 @@ export const DEV_COMMAND_HELP: DevCommandHelpLine[] = [
     name: 'resetquests',
     usage: '/resetquests <quest|fennel|wardrobe>… confirm',
     summary: 'Clear quest progress (requires confirm).',
+  },
+  {
+    name: 'abandonquest',
+    usage: '/abandonquest <quest> confirm',
+    summary: 'Abandon an active quest: deletes handed-in items and resets its gifts (requires confirm).',
   },
   {
     name: 'resetskills',
@@ -248,6 +253,25 @@ export function applyDevCommand(
       let next = resetQuestProgress(save, questIds)
       next = resetIntroFlags(next, { fennel, wardrobe })
       return ok(next, 'Quest progress reset.')
+    }
+    case 'abandonquest': {
+      if (!tokens.map((part) => part.toLowerCase()).includes('confirm')) {
+        return failed(save, 'Add confirm to abandon the quest.')
+      }
+      const parts = tokens.filter((part) => part.toLowerCase() !== 'confirm')
+      if (parts.length !== 1) return failed(save, 'Pick one quest id.')
+      const questId = parts[0]!.toUpperCase()
+      const quest = getQuest(db, questId)
+      if (!quest) return failed(save, `Unknown quest: ${parts[0]}`)
+      const abandoned = cheatAbandonQuest(save, questId)
+      if (!abandoned.ok) return failed(save, abandoned.reason)
+      const held = abandoned.deletedHandIns.reduce((sum, line) => sum + line.quantity, 0)
+      return ok(
+        abandoned.save,
+        held > 0
+          ? `Abandoned ${quest['Display Name']}. ${held} handed-in item${held === 1 ? '' : 's'} deleted.`
+          : `Abandoned ${quest['Display Name']}.`,
+      )
     }
     case 'resetskills': {
       if (!tokens.map((part) => part.toLowerCase()).includes('confirm')) {
