@@ -123,6 +123,10 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
   Future<void> _deposit(int index, InventoryStack stack) async {
     final hall = _hall;
     if (hall == null) return;
+    if (bazaarItemBound(controller.db, stack.itemId)) {
+      await showGameAlert(context: context, message: bazaarBoundItem);
+      return;
+    }
     final remaining = guildHallDonationCap(hall.completedTiers, hall.storehouse, stack.itemId);
     if (remaining <= 0) {
       setState(

@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'cloud_save.dart';
 import 'fake_exchange.dart';
 import 'guild_rules.dart';
+import 'market.dart';
 import 'remote.dart';
 import 'remote_guilds.dart';
 import 'remote_transport.dart';
@@ -912,12 +913,13 @@ class FakeTransport implements RemoteTransport {
     if (command == 'guild_pay_hall_debt') {
       result = payGuildHallDebt(hall, userId, save, _asNum(args['amount']));
     } else if (command == 'guild_donate_hall_item') {
-      result = donateToGuildHall(
-        hall,
-        save,
-        _asNum(args['inventoryIndex']).toInt(),
-        _asNum(args['quantity']),
-      );
+      final index = _asNum(args['inventoryIndex']).toInt();
+      final itemId = index >= 0 && index < save.inventory.length
+          ? save.inventory[index].itemId
+          : null;
+      result = itemId != null && bazaarItemBound(database, itemId)
+          ? const GuildHallActionResult.failed(bazaarBoundItem)
+          : donateToGuildHall(hall, save, index, _asNum(args['quantity']));
     } else {
       result = const GuildHallActionResult.failed('Withdraw is not available in this stand-in.');
     }

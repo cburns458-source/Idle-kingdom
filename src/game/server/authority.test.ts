@@ -6,7 +6,13 @@ import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import type { InventoryStack } from '../save/types'
-import { applyGameCommand, CATCHING_UP_REASON, runPhase2Sync } from './authority'
+import {
+  applyGameCommand,
+  CATCHING_UP_REASON,
+  isItemTradeable,
+  runPhase2Sync,
+  UNTRADEABLE_ITEM_REFUSAL,
+} from './authority'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -145,6 +151,51 @@ describe('phase 2 authority', () => {
       random: () => 0,
     })
     expect(poor.ok).toBe(false)
+  })
+
+  it('refuses to donate an untradeable item to the guild storehouse', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = {
+      debtRemaining: 0,
+      debtPaidOff: true,
+      debtPaidBy: {},
+      storehouse: [],
+      completedTiers: [],
+    }
+    const save = {
+      ...createNewSave(launch, START_MS),
+      inventory: [
+        { itemId: 'ITEM-0406', quantity: 1 },
+        { itemId: 'ITEM-0015', quantity: 10 },
+      ],
+    }
+    const donate = (inventoryIndex: number, itemId: string) =>
+      applyGameCommand(rawDatabase, {
+        command: 'guild_donate_hall_item',
+        args: { inventoryIndex, itemId, quantity: 1 },
+        save,
+        nowMs: START_MS,
+        random: () => 0,
+        hall,
+        userId: 'u1',
+        guildRole: 'member',
+      })
+
+    const machete = donate(0, 'ITEM-0406')
+    expect(machete).toEqual({ ok: false, reason: UNTRADEABLE_ITEM_REFUSAL })
+    expect(UNTRADEABLE_ITEM_REFUSAL).toBe("That stays with you; it can't be traded.")
+
+    const cedar = donate(1, 'ITEM-0015')
+    expect(cedar.ok).toBe(true)
+    if (cedar.ok) expect(cedar.hall?.storehouse).toEqual([{ itemId: 'ITEM-0015', quantity: 1 }])
+  })
+
+  it('reads the Tradeable column, with missing meaning true', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(isItemTradeable(launch, 'ITEM-0406')).toBe(false)
+    expect(isItemTradeable(launch, 'ITEM-0313')).toBe(false)
+    expect(isItemTradeable(launch, 'ITEM-0026')).toBe(true)
+    expect(isItemTradeable(launch, 'ITEM-9999')).toBe(true)
   })
 
   it('wears the named item when loot has shifted the bag', () => {
