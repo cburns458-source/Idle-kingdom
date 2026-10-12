@@ -14,7 +14,7 @@
     "gen:dart:check": "node --experimental-strip-types tools/gen_dart_models.ts --check",
     "bundle:game-edge": "bash tools/bundle_game_edge.sh",
     "deploy:staging": "npx wrangler deploy --env staging",
-    "deploy:production": "npx wrangler deploy"
+    "deploy:production": "npx wrangler deploy --env production"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.112.3",
