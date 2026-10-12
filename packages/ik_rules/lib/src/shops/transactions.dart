@@ -101,6 +101,19 @@ _LineTotal _lineTotal(List<ShopOfferLine> lines, num? Function(String itemId) un
 }
 
 /// Confirms a buy/sell offer against a shop.
+/// Largest integer JS can represent exactly (Number.MAX_SAFE_INTEGER).
+const int kMaxSafeOfferQuantity = 9007199254740991;
+
+/// A shop offer quantity must be a positive safe integer. Rejects NaN,
+/// Infinity, fractions, 0, negatives and values above MAX_SAFE_INTEGER.
+/// Mirrors `isValidOfferQuantity` in src/game/shops/transactions.ts.
+bool isValidOfferQuantity(Object? quantity) {
+  if (quantity is! num) return false;
+  if (quantity.isNaN || quantity.isInfinite) return false;
+  if (quantity != quantity.truncate()) return false;
+  return quantity >= 1 && quantity <= kMaxSafeOfferQuantity;
+}
+
 ShopTransactionResult confirmShopOffer(
   GameDatabase db,
   PlayerSave save,
@@ -116,6 +129,11 @@ ShopTransactionResult confirmShopOffer(
 
   if (offer.buys.isEmpty && offer.sells.isEmpty) {
     return const ShopTransactionResult.failed('Add items to the offer first.');
+  }
+  for (final line in [...offer.buys, ...offer.sells]) {
+    if (!isValidOfferQuantity(line.quantity)) {
+      return const ShopTransactionResult.failed('Offer quantities must be at least 1.');
+    }
   }
 
   final clock = nowMs;
