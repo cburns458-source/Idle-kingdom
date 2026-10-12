@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:ik_content/ik_content.dart';
 import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
@@ -238,5 +239,22 @@ void main() {
         expect(checkParity(fixture, {'bySkill': bySkill}), isNull);
       });
     }
+  });
+
+  group('untradeable items at the shops', () {
+    // `Tradeable` false keeps an item off the Bazaar only; shops buy it as before.
+    final db = assertGameDatabaseShape(contentDatabaseJson());
+    final general = db.shops.firstWhere(isGeneralMerchantShop);
+    final wizards = db.shops.firstWhere(isWizardsShop);
+
+    test('a general merchant still buys a Machete for 198 and an Excavator\'s Pickaxe for 69', () {
+      expect(playerSellPrice(db, general, 'ITEM-0406'), 198);
+      expect(playerSellPrice(db, general, 'ITEM-0313'), 69);
+    });
+
+    test('enchanted gear still sells where it did', () {
+      expect(playerSellPrice(db, general, 'ITEM-0406', enchanted: true), 198);
+      expect(playerSellPrice(db, wizards, 'ITEM-0406', enchanted: true), 396);
+    });
   });
 }

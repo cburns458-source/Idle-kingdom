@@ -18,6 +18,8 @@ import 'package:test/test.dart';
 const num _nowMs = 1786568400000;
 const String _ironOre = 'ITEM-0005';
 const String _titaniumOre = 'ITEM-0009';
+const String _machete = 'ITEM-0406';
+const String _goldenSpud = 'ITEM-0026';
 
 GameDatabase _database() => assertGameDatabaseShape(contentDatabaseJson());
 
@@ -306,6 +308,68 @@ void main() {
       );
       expect(extra.reason, bazaarNoSlots);
       expect((await buyer.bazaarMarket()).slotsFree, 0);
+    });
+
+    test('refuses to list or bid on a Machete, and moves nothing', () async {
+      final project = _project();
+      final db = _database();
+      final trader = await _trader(
+        project,
+        db,
+        'trader@example.com',
+        'Trader',
+        bag: <InventoryStack>[_stack(_machete, 1), _stack(_goldenSpud, 2)],
+        gold: 5000,
+      );
+      final before = _stored(project, trader);
+
+      // The service asks the exchange without checking first, so this is the
+      // same request a forged client would send.
+      for (final side in <BazaarSide>[bazaarSell, bazaarBuy]) {
+        final refused = await trader.placeBazaarOffer(
+          db,
+          _stored(project, trader),
+          side: side,
+          itemId: _machete,
+          unitPrice: 200,
+          quantity: 1,
+        );
+        expect(refused.ok, isFalse, reason: side);
+        expect(refused.reason, bazaarBoundItem, reason: side);
+      }
+      final after = _stored(project, trader);
+      expect(after.gold, before.gold);
+      expect(
+        after.inventory.map((stack) => stack.toJson()),
+        before.inventory.map((s) => s.toJson()),
+      );
+      expect(project.exchange.orders, isEmpty);
+
+      final spud = await trader.placeBazaarOffer(
+        db,
+        _stored(project, trader),
+        side: bazaarSell,
+        itemId: _goldenSpud,
+        unitPrice: 1200,
+        quantity: 1,
+      );
+      expect(spud.ok, isTrue, reason: spud.reason);
+    });
+
+    test('refuses an item no shop would price, as the hosted function now does', () async {
+      final project = _project();
+      final db = _database();
+      final buyer = await _trader(project, db, 'buyer@example.com', 'Buyer', gold: 5000);
+      final refused = await buyer.placeBazaarOffer(
+        db,
+        _stored(project, buyer),
+        side: bazaarBuy,
+        itemId: 'ITEM-9999',
+        unitPrice: 10,
+        quantity: 1,
+      );
+      expect(refused.reason, bazaarUntradableItem);
+      expect(_stored(project, buyer).gold, 5000);
     });
 
     test('does not trade with itself, so a slot cannot be used to move gold', () async {

@@ -160,8 +160,11 @@ class FakeTransport implements RemoteTransport {
 
   /// The Bazaar exchange, which is a function call rather than a set of tables
   /// because its tables are closed to clients.
-  FakeExchange get exchange =>
-      _project.exchange ??= FakeExchange(saves: tables[RemoteTables.saves]!, stamp: stamp);
+  FakeExchange get exchange => _project.exchange ??= FakeExchange(
+    saves: tables[RemoteTables.saves]!,
+    stamp: stamp,
+    database: () => database,
+  );
 
   bool signedOut = false;
   FakeAccount? _current;

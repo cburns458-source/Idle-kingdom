@@ -61,26 +61,49 @@ bool bazaarTaxApplies(num unitPrice) => unitPrice.floor() > bazaarTaxThreshold;
 /// Gold is the currency rather than a good. An enchanted item is one of a kind
 /// and would lose that in a pile. A favourite is the flag a player sets on the
 /// things they do not want sold, and the exchange honours it the way the shops
-/// already do. The server checks all six again against its own copy of the
-/// save; this is so the screen does not offer what would only be refused.
+/// already do. An item marked `Tradeable` false in the database stays with
+/// whoever earned it. The server checks all of these again against its own copy
+/// of the save; this is so the screen does not offer what would only be refused.
 String? bazaarStackRefusal(InventoryStack stack, [GameDatabase? db]) {
   if (isGoldCurrencyItem(stack.itemId, db)) return bazaarGoldNotTraded;
   if (isNotBlank(stack.enchantmentId)) return bazaarEnchantedNotTraded;
   if (isFavoriteStack(stack)) return bazaarFavoriteNotTraded;
+  if (bazaarItemBound(db, stack.itemId)) return bazaarBoundItem;
   if (stack.quantity < 1) return bazaarNothingToSell;
   return null;
 }
 
 /// True when [itemId] is something the exchange will carry at all.
 ///
-/// Derived rather than declared: an item the shops price is an item the players
-/// can price. There is no tradable column in the game database, and adding one
-/// would mean every new item having to remember to set it.
+/// An item the shops price is an item the players can price, unless its
+/// `Tradeable` column says otherwise. That column defaults to true, so a new
+/// item only has to set it when it is a quest-only reward.
 bool bazaarItemTradable(GameDatabase db, String itemId) {
   if (isGoldCurrencyItem(itemId, db)) return false;
   final item = db.items.firstWhereOrNull((row) => row.itemId == itemId);
+  if (item != null && !item.isTradeable) return false;
   final value = baseSellValue(item);
   return value != null && value > 0;
+}
+
+/// True when the database marks [itemId] `Tradeable` false.
+///
+/// Without a database nothing is bound, which keeps callers that have none (and
+/// the stacks they look at) behaving as they did before the column existed.
+bool bazaarItemBound(GameDatabase? db, String itemId) {
+  if (db == null) return false;
+  final item = db.items.firstWhereOrNull((row) => row.itemId == itemId);
+  return item != null && !item.isTradeable;
+}
+
+/// Why the exchange will not take [itemId] on either side, or null when it will.
+///
+/// What the server answers a buy or a sell order for an item it does not carry,
+/// before it touches the save.
+String? bazaarItemRefusal(GameDatabase db, String itemId) {
+  if (bazaarItemBound(db, itemId)) return bazaarBoundItem;
+  if (!bazaarItemTradable(db, itemId)) return bazaarUntradableItem;
+  return null;
 }
 
 const String bazaarGoldNotTraded = 'Gold is what you trade with, not what you trade.';
@@ -88,6 +111,7 @@ const String bazaarEnchantedNotTraded = 'Enchanted items cannot be listed.';
 const String bazaarFavoriteNotTraded = 'Unfavourite the stack to sell it.';
 const String bazaarNothingToSell = 'There is nothing there to sell.';
 const String bazaarUntradableItem = 'Nobody at the Bazaar deals in that.';
+const String bazaarBoundItem = "That stays with you; it can't be traded.";
 
 /// Local play has no other players in it, so there is no book to read.
 const String bazaarHostedOnly = 'The Bazaar opens once you are playing on an account.';
