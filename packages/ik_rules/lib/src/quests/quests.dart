@@ -9,10 +9,10 @@ import '../activity/xp.dart';
 import '../combat/stats.dart';
 import '../cosmetics/cosmetics.dart';
 import '../inventory/add_items.dart';
+import '../inventory/bag.dart';
+import '../inventory/fit.dart';
 import '../js_compat.dart';
 import '../library/books.dart';
-import '../production/inventory.dart';
-import '../production/recipes.dart';
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
 import '../world/submaps.dart';
@@ -57,13 +57,17 @@ bool isQuestRepeatable(QuestRow quest) {
 
 /// Either the updated save or the reason the change was refused.
 class QuestActionResult {
-  const QuestActionResult.ok(this.save) : reason = null;
+  const QuestActionResult.ok(this.save) : reason = null, code = null, noRoom = null;
 
-  const QuestActionResult.failed(this.reason) : save = null;
+  const QuestActionResult.failed(this.reason, {this.code, this.noRoom}) : save = null;
 
   bool get ok => reason == null;
   final PlayerSave? save;
   final String? reason;
+
+  /// `no_room` when the change was refused for a full bag, otherwise null.
+  final String? code;
+  final NoRoom? noRoom;
 }
 
 class QuestBookGrant {
@@ -203,16 +207,25 @@ class QuestCompletion {
     this.pendingSkillXp = 0,
     this.rewardBundle,
     this.booksGranted = const <QuestBookGrant>[],
-  }) : reason = null;
+  }) : reason = null,
+       code = null,
+       noRoom = null,
+       favourites = const <DialogueItemDelta>[];
 
-  const QuestCompletion.failed(this.reason)
-    : save = null,
-      message = null,
-      questName = null,
-      rewards = const <String>[],
-      pendingSkillXp = 0,
-      rewardBundle = null,
-      booksGranted = const <QuestBookGrant>[];
+  /// Nothing in the save changed. [code] is `no_room` or `confirm_favourites`
+  /// when the refusal carries data for a prompt.
+  const QuestCompletion.failed(
+    this.reason, {
+    this.code,
+    this.noRoom,
+    this.favourites = const <DialogueItemDelta>[],
+  }) : save = null,
+       message = null,
+       questName = null,
+       rewards = const <String>[],
+       pendingSkillXp = 0,
+       rewardBundle = null,
+       booksGranted = const <QuestBookGrant>[];
 
   bool get ok => reason == null;
   final PlayerSave? save;
@@ -227,6 +240,37 @@ class QuestCompletion {
   final ActionRewardBundle? rewardBundle;
   final List<QuestBookGrant> booksGranted;
   final String? reason;
+  final String? code;
+  final NoRoom? noRoom;
+
+  /// For `confirm_favourites`: how many of each item would come out of hearted stacks.
+  final List<DialogueItemDelta> favourites;
+
+  /// The refusal as the TypeScript rules return it; only set fields appear.
+  Map<String, Object?> failureJson() => <String, Object?>{
+    'ok': false,
+    'reason': reason,
+    if (code != null) 'code': code,
+    if (noRoom != null) 'noRoom': noRoom!.toJson(),
+    if (code == 'confirm_favourites') 'favourites': [for (final line in favourites) line.toJson()],
+  };
+}
+
+QuestCompletion _noRoomFailure(NoRoom noRoom) =>
+    QuestCompletion.failed(noRoomReason(noRoom), code: 'no_room', noRoom: noRoom);
+
+/// Legacy item rewards [quest] pays on completion, gold-currency items included.
+List<ItemGrant> _legacyRewardItems(QuestRow quest, StructuredQuestObjectives parsed) {
+  final grants = <ItemGrant>[];
+  final rewardItemId = quest['Reward Item ID'];
+  final rewardQty = quest['Reward Item Quantity'];
+  if (rewardItemId is String && rewardItemId.isNotEmpty && rewardQty is num && rewardQty > 0) {
+    grants.add(ItemGrant(itemId: rewardItemId, quantity: rewardQty));
+  }
+  for (final grant in parsed.rewardItems) {
+    if (grant.quantity > 0) grants.add(ItemGrant(itemId: grant.targetId, quantity: grant.quantity));
+  }
+  return grants;
 }
 
 String _skillName(GameDatabase db, String skillId) {
@@ -238,11 +282,17 @@ String _skillName(GameDatabase db, String skillId) {
 
 final RegExp _objectiveVerb = RegExp(r'^(Deliver|Defeat|Craft|Learn)\s+', caseSensitive: false);
 
+/// Turns a quest in. Delivered items come from bag stacks only (never the
+/// bank), unhearted stacks first. Refused, with the save untouched, when the
+/// reward items do not all fit (`no_room`), or when hearted stacks would be used
+/// without [useFavourites] (`confirm_favourites`). A full bag is reported before
+/// the favourites prompt. [useFavourites] is for this one call only.
 QuestCompletion completeQuest(
   GameDatabase db,
   PlayerSave save,
   String questId, {
   bool ignoreLocation = false,
+  bool useFavourites = false,
 }) {
   final quest = getQuest(db, questId);
   if (quest == null) return const QuestCompletion.failed('Quest not found.');
@@ -294,16 +344,17 @@ QuestCompletion completeQuest(
   }
 
   var next = save;
+  final favourites = <String, num>{};
   final deliverItems = questUsesSteps(db, questId) ? stepDelivers : parsed.delivers;
-  if (deliverItems.isNotEmpty) {
-    final removed = removeIngredients(
-      next,
-      deliverItems
-          .map((line) => RecipeIngredient(itemId: line.targetId, quantity: line.quantity))
-          .toList(),
+  for (final line in deliverItems) {
+    final taken = takeFromBag(next, line.targetId, line.quantity);
+    if (taken == null) return const QuestCompletion.failed('Missing required items.');
+    addFavouriteLine(
+      favourites,
+      line.targetId,
+      favouritesNeeded(next, line.targetId, line.quantity),
     );
-    if (removed == null) return const QuestCompletion.failed('Missing required items.');
-    next = removed;
+    next = taken;
   }
 
   if (parsed.goldCost > 0) {
@@ -313,12 +364,27 @@ QuestCompletion completeQuest(
     next = next.copyWith(gold: next.gold - parsed.goldCost);
   }
 
+  final paysRewards = questRewardMode(quest) == 'legacy';
+  final rewardItems = paysRewards ? _legacyRewardItems(quest, parsed) : const <ItemGrant>[];
+  // Checked after the delivery is taken, which can free a slot.
+  final fit = rewardsFit(db, next, rewardItems);
+  if (!fit.fits) return _noRoomFailure(fit.noRoom);
+  if (favourites.isNotEmpty && !useFavourites) {
+    return QuestCompletion.failed(
+      confirmFavouritesPrompt,
+      code: 'confirm_favourites',
+      favourites: [
+        for (final entry in favourites.entries)
+          DialogueItemDelta(itemId: entry.key, qty: entry.value),
+      ],
+    );
+  }
+
   final rewards = <String>[];
   final xpRewards = <ActionXpRewardSummary>[];
   final loot = <LootGrant>[];
   var goldGained = 0.0;
   num pendingSkillXp = 0;
-  final paysRewards = questRewardMode(quest) == 'legacy';
   final bribed = hasQuestFlag(save, questId, 'choice:bribe');
   final xpGrants = paysRewards ? _questXpGrants(quest, parsed) : const <QuestCounterTarget>[];
   if (paysRewards && bribed && parsed.branchSkillXp > 0) {
@@ -347,31 +413,16 @@ QuestCompletion completeQuest(
     rewards.add('${jsLocaleNumber(parsed.rewardGold)} gold');
   }
 
-  final rewardItemId = quest['Reward Item ID'];
-  final rewardQty = quest['Reward Item Quantity'];
-  if (paysRewards &&
-      rewardItemId is String &&
-      rewardItemId.isNotEmpty &&
-      rewardQty is num &&
-      rewardQty > 0) {
-    next = addItemToInventory(next, rewardItemId, rewardQty);
+  for (final grant in rewardItems) {
+    final added = addItemsToInventory(next, grant.itemId, grant.quantity, null, false, db);
+    if (added.added < grant.quantity.floor()) return _noRoomFailure(fit.noRoom);
+    next = added.save;
     final itemName = db.items
-        .firstWhereOrNull((item) => item.raw['Item ID'] == rewardItemId)
-        ?.raw['Display Name'];
-    final displayName = itemName is String ? itemName : 'item';
-    rewards.add('${jsNumberToString(rewardQty)}× $displayName');
-    loot.add(LootGrant(itemId: rewardItemId, quantity: rewardQty, displayName: displayName));
-  }
-
-  for (final grant in paysRewards ? parsed.rewardItems : const <QuestCounterTarget>[]) {
-    if (grant.quantity <= 0) continue;
-    next = addItemToInventory(next, grant.targetId, grant.quantity);
-    final itemName = db.items
-        .firstWhereOrNull((item) => item.raw['Item ID'] == grant.targetId)
+        .firstWhereOrNull((item) => item.raw['Item ID'] == grant.itemId)
         ?.raw['Display Name'];
     final displayName = itemName is String ? itemName : 'item';
     rewards.add('${jsNumberToString(grant.quantity)}× $displayName');
-    loot.add(LootGrant(itemId: grant.targetId, quantity: grant.quantity, displayName: displayName));
+    loot.add(LootGrant(itemId: grant.itemId, quantity: grant.quantity, displayName: displayName));
   }
 
   var unlocked = next.unlockedLocationIds;
@@ -629,6 +680,7 @@ QuestActionResult applyQuestBranchSkillXp(
 }
 
 /// Pays a quest bribe: gold out, a stolen purse in, and the bribe flag.
+/// Refused with `no_room` when the purse cannot fit.
 QuestActionResult bribeQuestNpc(GameDatabase db, PlayerSave save, String questId) {
   final quest = getQuest(db, questId);
   if (quest == null) return const QuestActionResult.failed('Quest not found.');
@@ -643,11 +695,18 @@ QuestActionResult bribeQuestNpc(GameDatabase db, PlayerSave save, String questId
   if (save.gold < parsed.bribeGold) {
     return QuestActionResult.failed('Need ${jsLocaleNumber(parsed.bribeGold)} gold.');
   }
+  final purse = parsed.delivers.firstOrNull;
+  final purseGrants = [
+    if (purse != null) ItemGrant(itemId: purse.targetId, quantity: purse.quantity),
+  ];
+  final fit = rewardsFit(db, save, purseGrants);
+  if (!fit.fits) {
+    return QuestActionResult.failed(noRoomReason(fit.noRoom), code: 'no_room', noRoom: fit.noRoom);
+  }
   var next = save.copyWith(gold: save.gold - parsed.bribeGold);
   next = setQuestFlag(next, questId, 'choice:bribe');
-  if (parsed.delivers.isNotEmpty) {
-    final purse = parsed.delivers.first;
-    next = addItemToInventory(next, purse.targetId, purse.quantity);
+  for (final grant in purseGrants) {
+    next = addItemsToInventory(next, grant.itemId, grant.quantity, null, false, db).save;
   }
   return QuestActionResult.ok(next);
 }

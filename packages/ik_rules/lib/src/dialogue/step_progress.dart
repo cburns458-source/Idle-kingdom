@@ -10,10 +10,12 @@ import 'dart:math' as math;
 
 import 'package:ik_content/ik_content.dart';
 
-import '../js_compat.dart';
+import '../inventory/bag.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
+
+export '../inventory/bag.dart' show bagCount, takeFromBag, unfavouriteCount;
 
 class StepProgressLine {
   const StepProgressLine({
@@ -69,47 +71,6 @@ class StepProgressGroup {
     'done': done,
     'items': [for (final item in items) item.toJson()],
   };
-}
-
-/// Unenchanted bag quantity of [itemId].
-num bagCount(PlayerSave save, String itemId) {
-  num total = 0;
-  for (final stack in save.inventory) {
-    if (stack.itemId == itemId && isBlank(stack.enchantmentId)) total += stack.quantity;
-  }
-  return total;
-}
-
-/// Unenchanted bag quantity of [itemId] outside hearted (favourited) stacks.
-num unfavouriteCount(PlayerSave save, String itemId) {
-  num total = 0;
-  for (final stack in save.inventory) {
-    if (stack.itemId == itemId && isBlank(stack.enchantmentId) && stack.favorite != true) {
-      total += stack.quantity;
-    }
-  }
-  return total;
-}
-
-/// Removes [quantity] unenchanted [itemId] from the bag, unhearted stacks first.
-/// Returns null when the bag holds fewer.
-PlayerSave? takeFromBag(PlayerSave save, String itemId, num quantity) {
-  if (quantity <= 0) return save;
-  if (bagCount(save, itemId) < quantity) return null;
-  final inventory = [...save.inventory];
-  var remaining = quantity;
-  for (final favoritePass in const <bool>[false, true]) {
-    for (var index = 0; index < inventory.length; index++) {
-      if (remaining <= 0) break;
-      final stack = inventory[index];
-      if (stack.itemId != itemId || isNotBlank(stack.enchantmentId)) continue;
-      if ((stack.favorite == true) != favoritePass) continue;
-      final taken = math.min(stack.quantity, remaining);
-      inventory[index] = stack.copyWith(quantity: stack.quantity - taken);
-      remaining -= taken;
-    }
-  }
-  return save.copyWith(inventory: inventory.where((stack) => stack.quantity > 0).toList());
 }
 
 /// Per-item lines for a Show or HandIn step; empty for any other step.

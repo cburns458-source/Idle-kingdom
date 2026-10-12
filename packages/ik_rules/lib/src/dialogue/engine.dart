@@ -14,8 +14,9 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
 import '../inventory/add_items.dart';
+import '../inventory/bag.dart';
 import '../inventory/capacity.dart';
-import '../inventory/gold.dart';
+import '../inventory/fit.dart';
 import '../js_compat.dart';
 import '../library/books.dart';
 import '../quests/quests.dart';
@@ -23,6 +24,9 @@ import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
 import '../skills/totals.dart';
 import 'step_progress.dart';
+
+export '../inventory/bag.dart' show DialogueItemDelta, confirmFavouritesPrompt;
+export '../inventory/fit.dart' show NoRoom;
 
 class DialogueToken {
   const DialogueToken({
@@ -357,29 +361,7 @@ class DialogueView {
   };
 }
 
-class DialogueItemDelta {
-  const DialogueItemDelta({required this.itemId, required this.qty});
-
-  final String itemId;
-
-  /// Positive when granted, negative when taken or handed in.
-  final num qty;
-
-  Map<String, Object?> toJson() => <String, Object?>{'itemId': itemId, 'qty': qty};
-}
-
-class DialogueNoRoom {
-  const DialogueNoRoom({required this.slotsNeeded, required this.slotsFree});
-
-  /// New bag slots the remaining grants need; stacks already in the bag cost none.
-  final int slotsNeeded;
-  final int slotsFree;
-
-  Map<String, Object?> toJson() => <String, Object?>{
-    'slotsNeeded': slotsNeeded,
-    'slotsFree': slotsFree,
-  };
-}
+typedef DialogueNoRoom = NoRoom;
 
 class DialogueMissingItem {
   const DialogueMissingItem({required this.itemId, required this.have, required this.need});
@@ -390,9 +372,6 @@ class DialogueMissingItem {
 
   Map<String, Object?> toJson() => <String, Object?>{'itemId': itemId, 'have': have, 'need': need};
 }
-
-/// Player-facing text for `confirm_favourites`; the UI asks Yes / No with it.
-const String confirmFavouritesPrompt = 'Some items are favourited. Do you still want to use them?';
 
 class DialogueResult {
   const DialogueResult({
@@ -660,24 +639,16 @@ class _Working {
 
   /// Records how much of taking [quantity] from [from] would come out of hearted stacks.
   void noteFavourites(PlayerSave from, String itemId, num quantity) {
-    final fromFavourites = math.max(0, quantity - unfavouriteCount(from, itemId));
-    if (fromFavourites <= 0) return;
-    favourites[itemId] = (favourites[itemId] ?? 0) + fromFavourites;
+    addFavouriteLine(favourites, itemId, favouritesNeeded(from, itemId, quantity));
   }
 }
 
 /// New bag slots every grant in [tokens] needs against [save].
 int _slotsNeededForGrants(GameDatabase db, PlayerSave save, List<DialogueToken> tokens) {
-  final seen = <String>{};
-  var needed = 0;
-  for (final token in tokens) {
-    if (token.name != 'grant_item' || !isKnownDialogueAction(token)) continue;
-    final itemId = token.args[0];
-    if (isGoldCurrencyItem(itemId, db) || !seen.add(itemId)) continue;
-    if (mergeableStackIndex(save.inventory, itemId) >= 0) continue;
-    needed += 1;
-  }
-  return needed;
+  return slotsNeededForItems(db, save, [
+    for (final token in tokens)
+      if (token.name == 'grant_item' && isKnownDialogueAction(token)) token.args[0],
+  ]);
 }
 
 /// Checks the quest is active, the step belongs to it with [type], and is current.
@@ -739,14 +710,11 @@ _ActionFailure? _applyAction(
       }
       final added = addItemsToInventory(save, a, qty, null, false, db);
       if (added.added < qty) {
-        final slotsNeeded = math.max(1, _slotsNeededForGrants(db, work.original, tokens));
-        final slotsFree = inventorySlotsFree(work.original);
-        final short = math.max(1, slotsNeeded - slotsFree);
-        return _ActionFailure(
-          'no_room',
-          'No room in your bag. Free $short slot${short == 1 ? '' : 's'} and try again.',
-          noRoom: DialogueNoRoom(slotsNeeded: slotsNeeded, slotsFree: slotsFree),
+        final noRoom = NoRoom(
+          slotsNeeded: math.max(1, _slotsNeededForGrants(db, work.original, tokens)),
+          slotsFree: inventorySlotsFree(work.original),
         );
+        return _ActionFailure('no_room', noRoomReason(noRoom), noRoom: noRoom);
       }
       work.save = added.save;
       work.itemDeltas.add(DialogueItemDelta(itemId: a, qty: qty));
@@ -841,8 +809,20 @@ _ActionFailure? _applyAction(
       work.stepProgress.addAll(_progressFor(db, next, [(a, b)]));
       return null;
     case 'complete_quest':
-      final completed = completeQuest(db, save, a);
-      if (!completed.ok) return _ActionFailure('action_failed', completed.reason!);
+      // Hearted delivery stacks join this choice's own favourites prompt.
+      var completed = completeQuest(db, save, a);
+      if (!completed.ok && completed.code == 'confirm_favourites') {
+        for (final line in completed.favourites) {
+          addFavouriteLine(work.favourites, line.itemId, line.qty);
+        }
+        completed = completeQuest(db, save, a, useFavourites: true);
+      }
+      if (!completed.ok) {
+        if (completed.code == 'no_room') {
+          return _ActionFailure('no_room', completed.reason!, noRoom: completed.noRoom);
+        }
+        return _ActionFailure('action_failed', completed.reason!);
+      }
       work.itemDeltas.addAll(_bagDiff(save, completed.save!));
       work.bookDeltas.addAll(completed.booksGranted.map((grant) => grant.bookId));
       work.save = completed.save!;

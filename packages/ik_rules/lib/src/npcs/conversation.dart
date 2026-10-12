@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../config.dart';
+import '../inventory/fit.dart';
 import '../js_compat.dart';
 import '../quests/miniquests.dart';
 import '../quests/objectives.dart';
@@ -567,9 +568,14 @@ class NpcActionResult {
     required this.save,
     required this.message,
     this.startedActivity = false,
-  }) : reason = null;
+  }) : reason = null,
+       code = null,
+       noRoom = null;
 
-  const NpcActionResult.failed(this.reason) : save = null, message = null, startedActivity = false;
+  const NpcActionResult.failed(this.reason, {this.code, this.noRoom})
+    : save = null,
+      message = null,
+      startedActivity = false;
 
   bool get ok => reason == null;
   final PlayerSave? save;
@@ -579,6 +585,10 @@ class NpcActionResult {
   final String? reason;
   final bool startedActivity;
 
+  /// `no_room` when the action was refused for a full bag, otherwise null.
+  final String? code;
+  final NoRoom? noRoom;
+
   Map<String, Object?> toJson() => ok
       ? <String, Object?>{
           'ok': true,
@@ -586,7 +596,12 @@ class NpcActionResult {
           'save': save!.toJson(),
           'startedActivity': startedActivity,
         }
-      : <String, Object?>{'ok': false, 'reason': reason};
+      : <String, Object?>{
+          'ok': false,
+          'reason': reason,
+          if (code != null) 'code': code,
+          if (noRoom != null) 'noRoom': noRoom!.toJson(),
+        };
 }
 
 /// Learns a mentor's projects, with the line to announce it.
@@ -676,7 +691,9 @@ NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId)
 
 NpcActionResult bribeForQuest(GameDatabase db, PlayerSave save, String questId) {
   final result = bribeQuestNpc(db, save, questId);
-  if (!result.ok) return NpcActionResult.failed(result.reason!);
+  if (!result.ok) {
+    return NpcActionResult.failed(result.reason!, code: result.code, noRoom: result.noRoom);
+  }
   return NpcActionResult.ok(save: result.save!, message: 'The purse changes hands.');
 }
 

@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../inventory/bag.dart';
 import '../js_compat.dart';
 import '../production/recipes.dart';
 import '../recipes/knowledge.dart';
@@ -582,7 +583,7 @@ QuestObjectiveStatus objectiveProgressFromStructured(
     return QuestDeliverLine(
       itemId: line.targetId,
       name: displayName is String ? displayName : line.targetId,
-      owned: inventoryCount(save, line.targetId),
+      owned: bagCount(save, line.targetId),
       required: line.quantity,
     );
   }).toList();
