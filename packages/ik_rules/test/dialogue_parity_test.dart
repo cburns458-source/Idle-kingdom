@@ -168,6 +168,36 @@ Map<String, Object?> _runScript(GameDatabase db, PlayerSave initial, List<Object
         if (result.ok) save = result.save!;
       case 'reload':
         save = parseSave(jsonDecode(jsonEncode(save.toJson())), nowMs);
+      case 'setLocation':
+        save = save.copyWith(currentLocationId: str('locationId'));
+      case 'setQuest':
+        final questId = str('questId');
+        final counters = op['counters'] as Map<String, Object?>?;
+        save = save.copyWith(
+          quests: [
+            ...save.quests.where((quest) => quest.questId != questId),
+            QuestProgress(
+              questId: questId,
+              status: str('status'),
+              progress: op['progress'] as num? ?? 0,
+              counters: counters == null
+                  ? null
+                  : {for (final entry in counters.entries) entry.key: entry.value! as num},
+            ),
+          ],
+        );
+      case 'autoStartOnSeed':
+        save = applyQuestAutoStartOnSeed(db, save);
+      case 'panelTalk':
+        save = applyQuestTalkProgress(db, save, str('npcId'));
+      case 'gather':
+        save = applyQuestActionProgress(db, save, str('actionId'), op['amount'] as num? ?? 1);
+      case 'plant':
+        save = applyQuestPlantProgress(db, save, [
+          str('itemId'),
+        ], usedCompost: op['compost'] == true);
+      case 'skill':
+        out = getSkillProgress(save, str('skillId')).toJson();
       default:
         throw StateError('Unknown dialogue script op: ${op['op']}');
     }
@@ -182,6 +212,20 @@ void main() {
       test(fixture.name, () {
         final output = _runScript(
           _patchedDatabase(fixture),
+          saveOf(fixture),
+          fixture.inputField<List<Object?>>('ops'),
+          fixture.inputField<num>('nowMs'),
+        );
+        expect(checkParity(fixture, output), isNull);
+      });
+    }
+  });
+
+  group('Fennel and King content parity (launch view)', () {
+    for (final fixture in loadParityFixtures('dialogue/content')) {
+      test(fixture.name, () {
+        final output = _runScript(
+          filterLaunchContent(databaseOf(fixture)),
           saveOf(fixture),
           fixture.inputField<List<Object?>>('ops'),
           fixture.inputField<num>('nowMs'),
@@ -225,8 +269,6 @@ void main() {
     }
   });
 
-  // Rows without Release Phase Launch never load, so the dormant SYS-01 rows
-  // waiting for the content PR are checked by the recorded validate fixture only.
   test('the shipped content has no dialogue validation errors', () {
     final issues = validateDialogueContent(
       filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson())),

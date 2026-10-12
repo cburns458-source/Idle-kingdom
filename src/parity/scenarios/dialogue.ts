@@ -21,10 +21,18 @@ import { stepProgressView } from '../../game/dialogue/stepProgress'
 import { validateDialogueContent } from '../../game/dialogue/validate'
 import { addItemToInventory } from '../../game/activity/rewards'
 import { INVENTORY_SLOT_LIMIT } from '../../game/inventory/capacity'
+import { getSkillProgress } from '../../game/activity/xp'
+import { filterLaunchContent } from '../../game/data/validate'
+import {
+  applyQuestActionProgress,
+  applyQuestAutoStartOnSeed,
+  applyQuestPlantProgress,
+  applyQuestTalkProgress,
+} from '../../game/quests/progress'
 import { cheatAbandonQuest, completeQuest } from '../../game/quests/quests'
 import { migrateSave } from '../../game/save/migrations'
 import { parseSave } from '../../game/save/saveStore'
-import type { PlayerSave } from '../../game/save/types'
+import type { PlayerSave, QuestProgress } from '../../game/save/types'
 import { canonicalJson } from '../canonicalJson'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
@@ -309,6 +317,15 @@ function startingSave(): PlayerSave {
   return { ...baseSave(contentDatabase()), currentLocationId: LOCATION }
 }
 
+/** What players load: rows without Release Phase Launch dropped. */
+function launchDatabase(): GameDatabase {
+  return filterLaunchContent(contentDatabase())
+}
+
+function launchStartingSave(): PlayerSave {
+  return baseSave(launchDatabase())
+}
+
 function digest(save: PlayerSave): JsonValue {
   return {
     gold: save.gold,
@@ -417,6 +434,35 @@ export function runDialogueScript(db: GameDatabase, initial: PlayerSave, ops: Op
       }
       case 'reload':
         save = parseSave(JSON.parse(JSON.stringify(save)), FIXED_TIMESTAMP_MS)
+        break
+      case 'setLocation':
+        save = { ...save, currentLocationId: str(op, 'locationId') }
+        break
+      case 'setQuest': {
+        const questId = str(op, 'questId')
+        const row: QuestProgress = {
+          questId,
+          status: str(op, 'status') as QuestProgress['status'],
+          progress: Number(op.progress ?? 0),
+          ...(op.counters ? { counters: op.counters as Record<string, number> } : {}),
+        }
+        save = { ...save, quests: [...save.quests.filter((quest) => quest.questId !== questId), row] }
+        break
+      }
+      case 'autoStartOnSeed':
+        save = applyQuestAutoStartOnSeed(db, save)
+        break
+      case 'panelTalk':
+        save = applyQuestTalkProgress(db, save, str(op, 'npcId'))
+        break
+      case 'gather':
+        save = applyQuestActionProgress(db, save, str(op, 'actionId'), Number(op.amount ?? 1))
+        break
+      case 'plant':
+        save = applyQuestPlantProgress(db, save, [str(op, 'itemId')], op.compost === true)
+        break
+      case 'skill':
+        out = json(getSkillProgress(save, str(op, 'skillId')))
         break
       default:
         throw new Error(`Unknown dialogue script op: ${String(op.op)}`)
@@ -818,6 +864,246 @@ const LEGACY_SCRIPTS: Record<string, Op[]> = {
   ],
 }
 
+const FENNEL_FARM = 'LOC-0001'
+const THRONE_ROOM = 'LOC-0016'
+const CITADEL_PLAZA = 'LOC-0028'
+const POTATO_SEED = 'ITEM-0324'
+const CARROT_SEED = 'ITEM-0339'
+const COMPOST = 'ITEM-0377'
+const COOKING = 'SKL-0007'
+
+const at = (locationId: string): Op => ({ op: 'setLocation', locationId })
+const npcList = (npcId: string): Op => ({ op: 'npc', npcId })
+const questRow = (questId: string, status: string, counters?: Record<string, number>): Op => ({
+  op: 'setQuest',
+  questId,
+  status,
+  ...(counters ? { counters } : {}),
+})
+const guide = (nodeId: string, choiceId: string) => choose('DLG-0001', nodeId, choiceId)
+const feastPitch = (choiceId: string) => choose('DLG-0011', 'DNODE-0018', choiceId)
+const feastHandIn = (choiceId: string) => choose('DLG-0012', 'DNODE-0020', choiceId)
+const feastAfter = (choiceId: string) => choose('DLG-0012', 'DNODE-0022', choiceId)
+const realFeastProgress: Op = { op: 'progress', questId: 'QST-0001', stepId: 'QSTP-0002' }
+const seedGift = choose('DLG-0007', 'DNODE-0011', 'DCH-0014')
+const compostTalk = choose('DLG-0008', 'DNODE-0013', 'DCH-0017')
+const greenThumbEnd = choose('DLG-0010', 'DNODE-0016', 'DCH-0021')
+const plantSeed: Op = { op: 'plant', itemId: POTATO_SEED, compost: true }
+const gatherCompost: Op[] = [setItem(COMPOST, 1), { op: 'gather', actionId: 'ACN-0199' }]
+/** Getting Started done and a found seed in the bag, which auto-starts Green Thumb. */
+const greenThumbStartWith = (foundSeed: string): Op[] => [
+  at(FENNEL_FARM),
+  questRow('QST-0006', 'completed'),
+  setItem(foundSeed, 1),
+  { op: 'autoStartOnSeed' },
+]
+const greenThumbStart = greenThumbStartWith(POTATO_SEED)
+
+/** Fennel (NPC-0014) and the King (NPC-0001) on the real launch content. */
+const CONTENT_SCRIPTS: Record<string, Op[]> = {
+  // Citadel Guide potato: once, even after closing mid-conversation; a full bag keeps it claimable.
+  'citadel-guide-potato': [
+    at(CITADEL_PLAZA),
+    { op: 'fillBag', free: 0 },
+    { op: 'start', dialogueId: 'DLG-0001' },
+    guide('DNODE-0001', 'DCH-0001'),
+    { op: 'clearFillers' },
+    guide('DNODE-0001', 'DCH-0001'),
+    { op: 'reload' },
+    { op: 'start', dialogueId: 'DLG-0001' },
+    guide('DNODE-0001', 'DCH-0001'),
+    guide('DNODE-0001', 'DCH-0002'),
+    npcList('NPC-0013'),
+  ],
+
+  // Getting Started: both Show steps take nothing; the panel talk alone no longer advances them.
+  'getting-started': [
+    at(FENNEL_FARM),
+    questRow('QST-0006', 'active', {}),
+    npcList('NPC-0014'),
+    setItem(POTATO, 4),
+    npcList('NPC-0014'),
+    { op: 'view', dialogueId: 'DLG-0003', nodeId: 'DNODE-0004' },
+    choose('DLG-0003', 'DNODE-0004', 'DCH-0005'),
+    setItem(POTATO, 5),
+    { op: 'panelTalk', npcId: 'NPC-0014' },
+    { op: 'conditions', tokens: ['quest_step:QST-0006:QSTP-0014'] },
+    choose('DLG-0003', 'DNODE-0004', 'DCH-0005'),
+    choose('DLG-0003', 'DNODE-0004', 'DCH-0005'),
+    npcList('NPC-0014'),
+    setItem(POTATO, 0),
+    questRow('QST-0006', 'active', {
+      'step:QSTP-0013': 1,
+      'step:QSTP-0014': 1,
+      'visit:LOC-0023': 1,
+      'process:RCP-0001': 5,
+    }),
+    setItem(BAKED_POTATO, 5),
+    npcList('NPC-0014'),
+    choose('DLG-0005', 'DNODE-0007', 'DCH-0009'),
+    setItem(BAKED_POTATO, 0),
+    { op: 'reload' },
+    npcList('NPC-0014'),
+    choose('DLG-0006', 'DNODE-0009', 'DCH-0012'),
+    choose('DLG-0006', 'DNODE-0009', 'DCH-0012'),
+    npcList('NPC-0014'),
+  ],
+
+  // A Fennel step finished under the old talk flow (latched) stays done.
+  'getting-started-latched': [
+    at(FENNEL_FARM),
+    questRow('QST-0006', 'active', {
+      'talk:NPC-0014': 1,
+      'talk:NPC-0014:QSTP-0014': 1,
+      'step:QSTP-0013': 1,
+      'step:QSTP-0014': 1,
+    }),
+    { op: 'conditions', tokens: ['quest_step:QST-0006:QSTP-0015', 'quest_step:QST-0006:QSTP-0014'] },
+    npcList('NPC-0014'),
+    questRow('QST-0006', 'active', {
+      'talk:NPC-0014': 1,
+      'talk:NPC-0014:QSTP-0014': 1,
+      'talk:NPC-0014:QSTP-0016': 1,
+      'step:QSTP-0013': 1,
+      'step:QSTP-0014': 1,
+      'step:QSTP-0015': 1,
+      'step:QSTP-0016': 1,
+    }),
+    { op: 'reload' },
+    npcList('NPC-0014'),
+    choose('DLG-0006', 'DNODE-0009', 'DCH-0012'),
+  ],
+
+  // Green Thumb end to end: 1 gifted seed + quest completion (3 + 3 + Guide), each once.
+  'green-thumb': [
+    ...greenThumbStart,
+    npcList('NPC-0014'),
+    { op: 'start', dialogueId: 'DLG-0007' },
+    seedGift,
+    seedGift,
+    npcList('NPC-0014'),
+    { op: 'reload' },
+    seedGift,
+    compostTalk,
+    ...gatherCompost,
+    compostTalk,
+    plantSeed,
+    npcList('NPC-0014'),
+    greenThumbEnd,
+    greenThumbEnd,
+    seedGift,
+    npcList('NPC-0014'),
+  ],
+
+  // A full bag refuses the seed without setting the gift flag or advancing the step.
+  // The found seed is a carrot, so the gifted potato seed needs a new slot.
+  'green-thumb-full-bag': [
+    ...greenThumbStartWith(CARROT_SEED),
+    { op: 'fillBag', free: 0 },
+    seedGift,
+    { op: 'view', dialogueId: 'DLG-0007', nodeId: 'DNODE-0011' },
+    { op: 'clearFillers' },
+    seedGift,
+  ],
+
+  // Midway under the old flow: QSTP-0023 done with the GiveOnTalk seed, so no second seed.
+  'green-thumb-old-seed': [
+    at(FENNEL_FARM),
+    questRow('QST-0006', 'completed'),
+    questRow('QST-0011', 'active', {
+      'give:ITEM-0324': 1,
+      'talk:NPC-0014': 1,
+      'talk:NPC-0014:QSTP-0023': 1,
+      'step:QSTP-0023': 1,
+    }),
+    setItem(POTATO_SEED, 2),
+    npcList('NPC-0014'),
+    seedGift,
+    ...gatherCompost,
+    compostTalk,
+    plantSeed,
+    greenThumbEnd,
+    seedGift,
+  ],
+
+  // Players who already finished get nothing new.
+  'already-done': [
+    at(FENNEL_FARM),
+    questRow('QST-0006', 'completed'),
+    questRow('QST-0011', 'completed'),
+    setItem(POTATO_SEED, 3),
+    { op: 'autoStartOnSeed' },
+    npcList('NPC-0014'),
+    seedGift,
+    greenThumbEnd,
+    at(THRONE_ROOM),
+    questRow('QST-0001', 'completed'),
+    setItem(BAKED_POTATO, 10),
+    setItem(COOKED_PERCH, 10),
+    npcList('NPC-0001'),
+    feastPitch('DCH-0023'),
+    feastHandIn('DCH-0026'),
+    feastHandIn('DCH-0030'),
+  ],
+
+  // /abandonquest clears Green Thumb's gift flag, so the seed can be claimed once more.
+  'green-thumb-abandon': [
+    ...greenThumbStart,
+    seedGift,
+    { op: 'cheatAbandon', questId: 'QST-0011' },
+    { op: 'autoStartOnSeed' },
+    seedGift,
+    seedGift,
+  ],
+
+  // Grand Feast: hand in over several visits, then the quest pays once.
+  'grand-feast': [
+    at(THRONE_ROOM),
+    npcList('NPC-0001'),
+    { op: 'start', dialogueId: 'DLG-0011' },
+    feastPitch('DCH-0023'),
+    npcList('NPC-0001'),
+    { op: 'start', dialogueId: 'DLG-0012' },
+    feastHandIn('DCH-0026'),
+    setItem(BAKED_POTATO, 6),
+    feastHandIn('DCH-0026'),
+    feastAfter('DCH-0032'),
+    { op: 'reload' },
+    realFeastProgress,
+    setItem(BAKED_POTATO, 9),
+    setItem(COOKED_PERCH, 4),
+    feastHandIn('DCH-0026'),
+    realFeastProgress,
+    setItem(COOKED_PERCH, 12),
+    feastHandIn('DCH-0026'),
+    { op: 'skill', skillId: COOKING },
+    npcList('NPC-0001'),
+    { op: 'start', dialogueId: 'DLG-0012' },
+    feastHandIn('DCH-0030'),
+    { op: 'skill', skillId: COOKING },
+    feastHandIn('DCH-0030'),
+    feastAfter('DCH-0031'),
+    npcList('NPC-0001'),
+  ],
+
+  // Midway through the old feast: King heard (latched), food in the bag, never turned in.
+  'grand-feast-old-save': [
+    at(THRONE_ROOM),
+    questRow('QST-0001', 'active', { 'talk:NPC-0001': 1, 'talk:NPC-0001:QSTP-0001': 1, 'step:QSTP-0001': 1 }),
+    setItem(BAKED_POTATO, 10),
+    setItem(COOKED_PERCH, 10),
+    npcList('NPC-0001'),
+    feastHandIn('DCH-0026'),
+    feastAfter('DCH-0031'),
+    { op: 'skill', skillId: COOKING },
+    questRow('QST-0001', 'active', {}),
+    npcList('NPC-0001'),
+    { op: 'view', dialogueId: 'DLG-0011', nodeId: 'DNODE-0018' },
+    feastPitch('DCH-0029'),
+    npcList('NPC-0001'),
+  ],
+}
+
 /** 10. A v61 save as it was stored: no dialogueFlags, mid-quest and completed rows. */
 function v61Save(): JsonValue {
   const save = asJson({
@@ -903,6 +1189,15 @@ export const dialogueScenarios: ParityScenario[] = [
         ops: ops as JsonValue,
       },
       () => runDialogueScript(patchedDatabase(LEGACY_PATCH), startingSave(), ops),
+    ),
+  ),
+
+  ...Object.entries(CONTENT_SCRIPTS).map(([name, ops]) =>
+    scenario(
+      'dialogue/content',
+      name,
+      { source: 'content', launch: true, nowMs: FIXED_TIMESTAMP_MS, save: asJson(launchStartingSave()), ops: ops as JsonValue },
+      () => runDialogueScript(launchDatabase(), launchStartingSave(), ops),
     ),
   ),
 
