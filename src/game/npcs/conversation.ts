@@ -572,8 +572,8 @@ export function talkWithQuestNpc(
     ]),
   )
   let next = applyQuestTalkProgress(db, save, npcId)
-  if (farmBotanyUnlocked(next)) {
-    next = discoverTimerSpotsForLocation(next, FARM_LOCATION_ID)
+  if (farmBotanyUnlocked(db, next)) {
+    next = discoverTimerSpotsForLocation(db, next, FARM_LOCATION_ID)
   }
   for (const quest of questsTouchingNpc(db, next, npcId)) {
     const parsed = parseStructuredObjectives(quest)

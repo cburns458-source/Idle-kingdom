@@ -796,7 +796,7 @@ describe('quest tours', () => {
     save = applyQuestAutoStartOnSeed(launch, save)
     expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
     expect(questLog(launch, save).some((row) => row.questId === 'QST-0011')).toBe(false)
-    expect(farmBotanyUnlocked(save)).toBe(false)
+    expect(farmBotanyUnlocked(launch, save)).toBe(false)
     expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
     expect(miniQuestLog(launch, save).some((row) => row.questId === 'QST-0011')).toBe(true)
     expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.talkLine).toMatch(
@@ -809,7 +809,7 @@ describe('quest tours', () => {
     expect(firstTalk.message).toBe('')
     save = firstTalk.save
     expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0324')?.quantity).toBe(2)
-    expect(farmBotanyUnlocked(save)).toBe(true)
+    expect(farmBotanyUnlocked(launch, save)).toBe(true)
     expect(hasQuestFlag(save, 'QST-0011', 'talk:NPC-0014')).toBe(true)
     expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.canTalk).toBe(
       false,

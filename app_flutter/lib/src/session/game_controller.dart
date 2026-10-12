@@ -1791,7 +1791,7 @@ class GameController extends ChangeNotifier {
   /// Discovers timer spots at the destination and auto-collects ready timers.
   void _discoverAndCollectArrivalTimers() {
     final destinationId = save.currentLocationId;
-    final discovered = discoverTimerSpotsForLocation(save, destinationId);
+    final discovered = discoverTimerSpotsForLocation(db, save, destinationId);
     if (!identical(discovered, save)) {
       session.apply(discovered);
     }

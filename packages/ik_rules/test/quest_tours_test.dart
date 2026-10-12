@@ -492,7 +492,7 @@ void main() {
     expect(getQuestProgress(save, 'QST-0011').status, 'active');
     expect(questLog(db, save).any((row) => row.questId == 'QST-0011'), isFalse);
     expect(miniQuestLog(db, save, 0).any((row) => row.questId == 'QST-0011'), isTrue);
-    expect(farmBotanyUnlocked(save), isFalse);
+    expect(farmBotanyUnlocked(db, save), isFalse);
 
     final fennel = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0014');
     NpcQuestBlock greenThumb(PlayerSave next) => npcConversation(
@@ -508,7 +508,7 @@ void main() {
     expect(firstTalk.message, '');
     save = firstTalk.save!;
     expect(inventoryCount(save, 'ITEM-0324'), 2);
-    expect(farmBotanyUnlocked(save), isTrue);
+    expect(farmBotanyUnlocked(db, save), isTrue);
     expect(greenThumb(save).canTalk, isFalse);
     expect(greenThumb(save).talkLine, isNull);
     expect(greenThumb(save).idlePrompt, '');

@@ -668,8 +668,8 @@ NpcActionResult talkWithQuestNpc(GameDatabase db, PlayerSave save, String npcId)
       jsString(quest['Quest ID']): questTalkLine(db, jsString(quest['Quest ID']), npcId, save),
   };
   var next = applyQuestTalkProgress(db, save, npcId);
-  if (farmBotanyUnlocked(next)) {
-    next = discoverTimerSpotsForLocation(next, farmLocationId);
+  if (farmBotanyUnlocked(db, next)) {
+    next = discoverTimerSpotsForLocation(db, next, farmLocationId);
   }
   for (final quest in questsTouchingNpc(db, next, npcId)) {
     final parsed = parseStructuredObjectives(quest);

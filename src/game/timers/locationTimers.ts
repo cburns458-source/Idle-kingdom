@@ -8,6 +8,7 @@ import type { GameDatabase, ItemRow } from '../data/types'
 import { removeIngredients } from '../production/inventory'
 import { applyQuestAutoStartOnSeed, applyQuestPlantProgress, questPlantRequiresCompost } from '../quests/progress'
 import { applyQuestAutoCompleteOnPlant, getQuestProgress } from '../quests/quests'
+import { dialogueStepType, getQuestSteps, isStepComplete } from '../quests/steps'
 import type { LocationTimer, PlayerSave } from '../save/types'
 
 export const BOTANY_SKILL_ID = 'SKL-0014'
@@ -354,6 +355,7 @@ export function parseTimerSpotKey(
  * location supports them. Safe to call on plant, place, or travel arrival.
  */
 export function discoverTimerSpotsForLocation(
+  db: GameDatabase,
   save: PlayerSave,
   locationId: string,
 ): PlayerSave {
@@ -365,7 +367,7 @@ export function discoverTimerSpotsForLocation(
     discovered.add(key)
     changed = true
   }
-  if (BOTANY_PATCH_LOCATIONS.has(locationId) && botanyPatchUnlocked(save, locationId)) {
+  if (BOTANY_PATCH_LOCATIONS.has(locationId) && botanyPatchUnlocked(db, save, locationId)) {
     add('botany')
   }
   if (FISHING_POT_LOCATIONS.has(locationId)) add('fishing_pot')
@@ -390,17 +392,26 @@ export function courtyardBotanyUnlocked(save: PlayerSave): boolean {
   return getQuestProgress(save, GRAND_FEAST_QUEST_ID).status === 'completed'
 }
 
-export function farmBotanyUnlocked(save: PlayerSave): boolean {
+/** Green Thumb finished, Fennel heard through the panel, or a Green Thumb dialogue Talk step with Fennel done. */
+export function farmBotanyUnlocked(db: GameDatabase, save: PlayerSave): boolean {
   const progress = getQuestProgress(save, FIRST_PLANTING_QUEST_ID)
   if (progress.status === 'completed') return true
   const counters = progress.counters ?? {}
-  return Object.keys(counters).some(
+  const heard = Object.keys(counters).some(
     (key) => key === `talk:${FENNEL_NPC_ID}` || key.startsWith(`talk:${FENNEL_NPC_ID}:`),
+  )
+  if (heard) return true
+  if (progress.status !== 'active') return false
+  return getQuestSteps(db, FIRST_PLANTING_QUEST_ID).some(
+    (step) =>
+      dialogueStepType(step) === 'Talk' &&
+      step['Step NPC'] === FENNEL_NPC_ID &&
+      isStepComplete(db, save, FIRST_PLANTING_QUEST_ID, step.Notes ?? '', step['Step ID']),
   )
 }
 
-export function botanyPatchUnlocked(save: PlayerSave, locationId: string): boolean {
-  if (locationId === FARM_LOCATION_ID) return farmBotanyUnlocked(save)
+export function botanyPatchUnlocked(db: GameDatabase, save: PlayerSave, locationId: string): boolean {
+  if (locationId === FARM_LOCATION_ID) return farmBotanyUnlocked(db, save)
   return true
 }
 
@@ -425,7 +436,7 @@ export function canPlantBotanySeed(
       reason: 'Complete The Grand Feast to unlock the Courtyard plot.',
     }
   }
-  if (!botanyPatchUnlocked(save, locationId)) {
+  if (!botanyPatchUnlocked(db, save, locationId)) {
     return { ok: false, quantity: 0, reason: 'Speak with Fennel before using this plot.' }
   }
   if (timerAtLocationKind(save, locationId, 'botany')) {
@@ -558,6 +569,7 @@ export function plantBotanySelection(
     usedCompost: usedCompost || undefined,
   }
   let next = discoverTimerSpotsForLocation(
+    db,
     {
       ...removed,
       locationTimers: [
@@ -750,7 +762,7 @@ export function placeTrap(
   }
   return {
     ok: true,
-    save: discoverTimerSpotsForLocation(next, locationId),
+    save: discoverTimerSpotsForLocation(db, next, locationId),
   }
 }
 
