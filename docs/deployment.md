@@ -111,8 +111,14 @@ the editor), so a push would try to replay from `001`.
 
 ### Pending on live
 
-None. The eight files that were waiting (profile guard through Wave F
-cleanup) were applied to live when `efbda080` shipped to `main`.
+- `20261012170000_bazaar_cancel_untradeable_orders.sql` (BUG-02). Cancels open
+  Bazaar orders for the four untradeable items through `bazaar_cancel_order`.
+  On each project, apply it only after the `bazaar` function that refuses those
+  items has deployed there (test: after the PR lands on `test-launch`; live:
+  after Conor merges to `main`). Safe to re-run.
+
+The eight files before that (profile guard through Wave F cleanup) were applied
+to live when `efbda080` shipped to `main`.
 
 A one-time copy of a live tester save into the test project is
 `scripts/copy-save-to-test.sh`.

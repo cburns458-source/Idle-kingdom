@@ -53,6 +53,12 @@ export interface ItemRow {
   'Associated Skill ID': string | null
   'Equipment Slot ID': string | null
   'Base Sell Value': number | null
+  /**
+   * False keeps the item off the Bazaar (no sell or buy orders). Shops still
+   * buy it. Missing or null means true. Quest-only rewards are false, and
+   * `validateTradeability` in ik_content fails the build when one is not.
+   */
+  Tradeable?: boolean | null
   'Icon Asset Key': string | null
   Description: string | null
   'Functional / Source Tags': string | null

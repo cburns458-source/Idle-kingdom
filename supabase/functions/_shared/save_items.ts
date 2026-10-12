@@ -39,6 +39,64 @@ export function isItemId(value: unknown): value is string {
   return typeof value === 'string' && ITEM_ID_PATTERN.test(value)
 }
 
+/**
+ * What the exchange needs to know about the items it may carry, built once
+ * from the game database the function bundles.
+ *
+ * Mirrors `bazaarItemTradable` in `packages/ik_net/lib/src/market.dart`: an item
+ * is carried when the runtime would load it (Launch rows only), a shop prices
+ * it above 0, and its `Tradeable` column is not false. A missing or blank
+ * `Tradeable` means true.
+ */
+export type ItemCatalog = {
+  /** Base Sell Value by item id, for every Launch item. */
+  sellValues: ReadonlyMap<string, number | null>
+  /** Ids marked `Tradeable` false. */
+  untradeable: ReadonlySet<string>
+}
+
+export const BOUND_ITEM_REFUSAL = "That stays with you; it can't be traded."
+export const UNTRADABLE_ITEM_REFUSAL = 'Nobody at the Bazaar deals in that.'
+
+export function itemCatalog(database: unknown): ItemCatalog {
+  const rows =
+    database && typeof database === 'object' && Array.isArray((database as { Items?: unknown }).Items)
+      ? ((database as { Items: unknown[] }).Items as unknown[])
+      : []
+  const sellValues = new Map<string, number | null>()
+  const untradeable = new Set<string>()
+  for (const entry of rows) {
+    if (!entry || typeof entry !== 'object') continue
+    const row = entry as Record<string, unknown>
+    const id = row['Item ID']
+    if (typeof id !== 'string') continue
+    if ('Release Phase' in row && row['Release Phase'] !== 'Launch') continue
+    const value = row['Base Sell Value']
+    sellValues.set(id, typeof value === 'number' && Number.isFinite(value) ? value : null)
+    if (row.Tradeable === false) untradeable.add(id)
+  }
+  return { sellValues, untradeable }
+}
+
+/** True unless the database marks [itemId] `Tradeable` false. */
+export function isTradableItem(itemId: string, catalog?: ItemCatalog): boolean {
+  return catalog == null || !catalog.untradeable.has(itemId)
+}
+
+/**
+ * Why the exchange will not take [itemId] on either side, or null when it will.
+ *
+ * Checked before any escrow, for sell and buy orders alike, so a forged request
+ * for a bound item moves no gold and no items.
+ */
+export function itemRefusal(itemId: string, catalog: ItemCatalog): string | null {
+  if (!isTradableItem(itemId, catalog)) return BOUND_ITEM_REFUSAL
+  if (itemId === GOLD_ITEM_ID) return UNTRADABLE_ITEM_REFUSAL
+  const value = catalog.sellValues.get(itemId)
+  if (value == null || value <= 0) return UNTRADABLE_ITEM_REFUSAL
+  return null
+}
+
 export function inventoryOf(payload: SavePayload): Stack[] {
   const raw = Array.isArray(payload.inventory) ? payload.inventory : []
   const stacks: Stack[] = []
@@ -69,20 +127,28 @@ export function goldOf(payload: SavePayload): number {
  * Gold is the currency rather than a good; an enchanted item is one of a kind
  * and would lose that in a pile; a favourited stack is the flag a player sets
  * on the things they do not want sold, and the exchange honours it the same way
- * the shops do.
+ * the shops do. An item marked `Tradeable` false in [catalog] stays with
+ * whoever earned it.
  */
-export function isTradableStack(stack: Stack): boolean {
+export function isTradableStack(stack: Stack, catalog?: ItemCatalog): boolean {
   if (stack.itemId === GOLD_ITEM_ID) return false
+  if (!isTradableItem(stack.itemId, catalog)) return false
   if (typeof stack.enchantmentId === 'string' && stack.enchantmentId.trim() !== '') return false
   if (stack.favorite === true) return false
   return stack.quantity > 0
 }
 
 /** How much of [itemId] the bag holds in stacks that may be listed. */
-export function tradableQuantity(payload: SavePayload, itemId: string): number {
+export function tradableQuantity(
+  payload: SavePayload,
+  itemId: string,
+  catalog?: ItemCatalog,
+): number {
   let total = 0
   for (const stack of inventoryOf(payload)) {
-    if (stack.itemId === itemId && isTradableStack(stack)) total += Math.floor(stack.quantity)
+    if (stack.itemId === itemId && isTradableStack(stack, catalog)) {
+      total += Math.floor(stack.quantity)
+    }
   }
   return total
 }
@@ -109,16 +175,17 @@ export function takeItems(
   payload: SavePayload,
   itemId: string,
   quantity: number,
+  catalog?: ItemCatalog,
 ): SavePayload | null {
   const want = Math.floor(quantity)
   if (want <= 0) return null
-  if (tradableQuantity(payload, itemId) < want) return null
+  if (tradableQuantity(payload, itemId, catalog) < want) return null
 
   const inventory = inventoryOf(payload)
   let left = want
   const kept: Stack[] = []
   for (const stack of inventory) {
-    if (left <= 0 || stack.itemId !== itemId || !isTradableStack(stack)) {
+    if (left <= 0 || stack.itemId !== itemId || !isTradableStack(stack, catalog)) {
       kept.push(stack)
       continue
     }

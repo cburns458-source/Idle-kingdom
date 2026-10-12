@@ -38,4 +38,8 @@ run -c "set request.jwt.claims = '{\"role\":\"service_role\"}';" \
     -f supabase/tests/bazaar_play_session_test.sql
 
 echo
+echo "=== BUG-02: open orders for untradeable items are cancelled ==="
+run -f supabase/tests/bazaar_untradeable_migration_test.sql
+
+echo
 echo "All Bazaar SQL checks passed."

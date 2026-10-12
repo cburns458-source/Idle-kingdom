@@ -320,6 +320,29 @@ void main() {
     expect(afterPayment.debtPaidBy[member.session!.userId], 400);
   });
 
+  test('the hall refuses an untradeable item, since officers can withdraw', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final database = _database();
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    final guildId = created.guild!.id;
+
+    final donor = createNewSave(database, _nowMs).copyWith(
+      inventory: const <InventoryStack>[
+        InventoryStack(itemId: 'ITEM-0406', quantity: 1),
+        InventoryStack(itemId: 'ITEM-0015', quantity: 10),
+      ],
+    );
+    expect((await seedHostedSave(leader, transport, donor)).ok, isTrue);
+    final refused = await leader.contributeHallItem(donor, 0, 1);
+    expect(refused.ok, isFalse);
+    expect(refused.reason, bazaarBoundItem);
+    expect((await leader.guildHall(guildId))!.storehouse, isEmpty);
+
+    final cedar = await leader.contributeHallItem(donor, 1, 10);
+    expect(cedar.ok, isTrue, reason: cedar.reason);
+  });
+
   test('a new guild starts with the same first project and challenge as offline', () async {
     final transport = FakeTransport();
     final leader = await _player(transport, 'leader@example.com', 'Leader');

@@ -1,5 +1,6 @@
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_net/testing.dart';
 import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
@@ -7,6 +8,11 @@ import 'package:test/test.dart';
 const num _nowMs = 1786568400000;
 const String _ironOre = 'ITEM-0005';
 const String _gold = 'ITEM-0001';
+const String _machete = 'ITEM-0406';
+const String _excavatorsPickaxe = 'ITEM-0313';
+const String _goldenSpud = 'ITEM-0026';
+const String _chefsHat = 'ITEM-0165';
+const String _pirateInsignia = 'ITEM-0288';
 
 GameDatabase _database() => assertGameDatabaseShape(contentDatabaseJson());
 
@@ -81,6 +87,60 @@ void main() {
       expect(bazaarItemTradable(db, 'ITEM-0377'), isTrue);
       expect(bazaarItemTradable(db, _gold), isFalse);
       expect(bazaarItemTradable(db, 'ITEM-9999'), isFalse);
+    });
+
+    test('keeps quest-only rewards off the exchange, on both sides', () {
+      final db = _database();
+      expect(bazaarItemTradable(db, _machete), isFalse);
+      expect(bazaarItemTradable(db, _excavatorsPickaxe), isFalse);
+      expect(bazaarItemRefusal(db, _machete), bazaarBoundItem);
+      expect(bazaarItemRefusal(db, _excavatorsPickaxe), bazaarBoundItem);
+      // Quest rewards that can also be harvested, bought, or dropped.
+      expect(bazaarItemTradable(db, _goldenSpud), isTrue);
+      expect(bazaarItemTradable(db, _chefsHat), isTrue);
+      expect(bazaarItemTradable(db, _pirateInsignia), isTrue);
+      expect(bazaarItemRefusal(db, _goldenSpud), isNull);
+      expect(bazaarItemRefusal(db, _gold), bazaarUntradableItem);
+    });
+
+    test('says a bound stack stays with you, after the older reasons', () {
+      final db = _database();
+      expect(bazaarStackRefusal(_stack(_machete, 1), db), bazaarBoundItem);
+      expect(bazaarStackRefusal(_stack(_excavatorsPickaxe, 1), db), bazaarBoundItem);
+      expect(bazaarBoundItem, "That stays with you; it can't be traded.");
+      // Gold, enchanted, and favourite keep their own copy.
+      expect(bazaarStackRefusal(_stack(_gold, 500), db), bazaarGoldNotTraded);
+      expect(
+        bazaarStackRefusal(_stack(_machete, 1, enchantmentId: 'ENCH-0001'), db),
+        bazaarEnchantedNotTraded,
+      );
+      expect(bazaarStackRefusal(_stack(_machete, 1, favorite: true), db), bazaarFavoriteNotTraded);
+      expect(bazaarStackRefusal(_stack(_goldenSpud, 1), db), isNull);
+      // Without a database there is nothing to say an item is bound.
+      expect(bazaarStackRefusal(_stack(_machete, 1)), isNull);
+    });
+
+    test('counts no bound items as on hand, so none can be escrowed', () {
+      final db = _database();
+      final save = _save(db, bag: <InventoryStack>[_stack(_machete, 1)]);
+      expect(bazaarTradableOnHand(save, _machete, db), 0);
+      expect(bazaarTakeItems(save, _machete, 1, db), isNull);
+    });
+  });
+
+  group('the stand-in exchange', () {
+    test('will not take a stack of an untradeable item', () {
+      final untradeable = fakeExchangeUntradeableIds(_database());
+      expect(untradeable, <String>{_machete, _excavatorsPickaxe, 'ITEM-0299', 'ITEM-0300'});
+      final machete = <String, Object?>{'itemId': _machete, 'quantity': 1};
+      final spud = <String, Object?>{'itemId': _goldenSpud, 'quantity': 1};
+      expect(fakeExchangeTradableStack(machete, untradeable: untradeable), isFalse);
+      expect(fakeExchangeTradableStack(spud, untradeable: untradeable), isTrue);
+      final payload = <String, Object?>{
+        'inventory': <Object?>[machete, spud],
+      };
+      expect(fakeExchangeTakeItems(payload, _machete, 1, untradeable: untradeable), isNull);
+      expect(fakeExchangeTakeItems(payload, _goldenSpud, 1, untradeable: untradeable), isNotNull);
     });
   });
 

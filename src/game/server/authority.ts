@@ -148,6 +148,14 @@ export const HOSTED_CATCH_UP_BUDGET_MS = 600
 
 export const CATCHING_UP_REASON = 'Still catching up your time away. Try again in a moment.'
 
+/** Same copy as `bazaarBoundItem` in `packages/ik_net/lib/src/market.dart`. */
+export const UNTRADEABLE_ITEM_REFUSAL = "That stays with you; it can't be traded."
+
+/** False when the Items `Tradeable` column is false. Missing or blank means true. */
+export function isItemTradeable(db: GameDatabase, itemId: string): boolean {
+  return db.Items.find((row) => row['Item ID'] === itemId)?.Tradeable !== false
+}
+
 export type HostedCatchUpOptions = {
   /** Start of the unattended cap window when a previous request stopped early. */
   windowStartMs?: number
@@ -618,6 +626,8 @@ function applyExistingCommand(
       if (index == null || quantity == null) return failed('Missing donation.')
       const resolved = resolveStackIndex(save.inventory, index, asString(args.itemId), enchantmentArg(args))
       if (resolved == null) return failed('That stack is not there.')
+      // Officers can withdraw from the storehouse, so a donation can reach another player.
+      if (!isItemTradeable(db, save.inventory[resolved].itemId)) return failed(UNTRADEABLE_ITEM_REFUSAL)
       const donated = donateToGuildHall(options.hall, save, resolved, quantity)
       return donated.ok ? ok(donated.save, { hall: donated.hall }) : failed(donated.reason)
     }

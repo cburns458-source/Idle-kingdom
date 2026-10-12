@@ -129,6 +129,10 @@ class _BazaarViewState extends State<BazaarView> {
     });
   }
 
+  Future<void> _refuseBoundListing() async {
+    await showGameAlert(context: context, message: bazaarBoundItem);
+  }
+
   /// Closes one step: the picker or the compose page first, the screen last.
   void _close() {
     if (_route != null) {
@@ -446,8 +450,15 @@ class _BazaarViewState extends State<BazaarView> {
     final query = _search.text.trim().toLowerCase();
     final held = <String, num>{};
     final blocked = <String, String>{};
+    final bound = <String>{};
     for (final stack in save.inventory) {
       final refusal = bazaarStackRefusal(stack, controller.db);
+      // Untradeable items are listed like any other; the refusal comes on tap.
+      if (refusal == bazaarBoundItem) {
+        bound.add(stack.itemId);
+        held[stack.itemId] = (held[stack.itemId] ?? 0) + stack.quantity;
+        continue;
+      }
       if (refusal != null) {
         if (!isGoldCurrencyItem(stack.itemId, controller.db)) {
           blocked.putIfAbsent(stack.itemId, () => refusal);
@@ -492,7 +503,9 @@ class _BazaarViewState extends State<BazaarView> {
             item: _item(itemId),
             title: _name(itemId),
             lines: <String>['Carrying ${formatThousands(held[itemId]!)}', _priceLine(itemId)],
-            onTap: () => _compose(bazaarSell, itemId),
+            onTap: bound.contains(itemId)
+                ? _refuseBoundListing
+                : () => _compose(bazaarSell, itemId),
           );
         }
         final i = index - ids.length;

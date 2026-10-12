@@ -1,3 +1,5 @@
+import 'package:ik_content/ik_content.dart';
+
 import 'market.dart';
 import 'remote.dart';
 import 'remote_transport.dart';
@@ -17,7 +19,7 @@ import 'remote_transport.dart';
 /// the whole point of the exchange: an offer costs the copy of the save the
 /// backend holds, not the one the device is holding.
 class FakeExchange {
-  FakeExchange({required this.saves, required this.stamp});
+  FakeExchange({required this.saves, required this.stamp, this.database});
 
   /// The transport's `player_saves` rows, held by reference so an offer taken
   /// out of a save is visible to the next read the way the real one would be.
@@ -25,6 +27,11 @@ class FakeExchange {
 
   /// A fresh timestamp, so `order by created_at` means something.
   final String Function() stamp;
+
+  /// The game database the hosted function bundles, read when an offer is
+  /// placed. Without one the exchange carries any item id, as it did before
+  /// the `Tradeable` column.
+  final GameDatabase? Function()? database;
 
   final List<FakeExchangeOrder> orders = <FakeExchangeOrder>[];
   final List<FakeExchangeFill> fills = <FakeExchangeFill>[];
@@ -161,6 +168,12 @@ class FakeExchange {
     if (itemId is! String || !fakeExchangeItemId.hasMatch(itemId)) {
       return _refused('That is not a tradable item.');
     }
+    final db = database?.call();
+    if (db != null) {
+      final refusal = bazaarItemRefusal(db, itemId);
+      if (refusal != null) return _refused(refusal);
+    }
+    final untradeable = fakeExchangeUntradeableIds(db);
     final unitPrice = _whole(body['unitPrice']);
     final quantity = _whole(body['quantity']);
     if (unitPrice == null || unitPrice < 1) {
@@ -181,9 +194,9 @@ class FakeExchange {
 
     final Map<String, Object?>? escrowed;
     if (side == bazaarSell) {
-      escrowed = fakeExchangeTakeItems(stored, itemId, quantity);
+      escrowed = fakeExchangeTakeItems(stored, itemId, quantity, untradeable: untradeable);
       if (escrowed == null) {
-        final held = fakeExchangeTradable(stored, itemId);
+        final held = fakeExchangeTradable(stored, itemId, untradeable: untradeable);
         return _refused('You are carrying $held of those. Withdraw more from the bank first.');
       }
     } else {
@@ -687,19 +700,36 @@ int fakeExchangeGold(Map<String, Object?> payload) {
   return gold is num && gold.isFinite ? gold.floor() : 0;
 }
 
-/// Whether a stack may be listed: not gold, not enchanted, not favourited.
-bool fakeExchangeTradableStack(Map<String, Object?> stack) {
+/// Item ids the database marks `Tradeable` false, the same set the server
+/// builds from its copy of the database.
+Set<String> fakeExchangeUntradeableIds(GameDatabase? db) => <String>{
+  if (db != null)
+    for (final item in db.items)
+      if (!item.isTradeable) item.itemId,
+};
+
+/// Whether a stack may be listed: not gold, not enchanted, not favourited, and
+/// not an item in [untradeable].
+bool fakeExchangeTradableStack(
+  Map<String, Object?> stack, {
+  Set<String> untradeable = const <String>{},
+}) {
   if (stack['itemId'] == _fakeGoldItemId) return false;
+  if (untradeable.contains(stack['itemId'])) return false;
   final enchantment = stack['enchantmentId'];
   if (enchantment is String && enchantment.trim().isNotEmpty) return false;
   if (stack['favorite'] == true) return false;
   return (stack['quantity']! as num) > 0;
 }
 
-int fakeExchangeTradable(Map<String, Object?> payload, String itemId) {
+int fakeExchangeTradable(
+  Map<String, Object?> payload,
+  String itemId, {
+  Set<String> untradeable = const <String>{},
+}) {
   var total = 0;
   for (final stack in fakeExchangeInventory(payload)) {
-    if (stack['itemId'] == itemId && fakeExchangeTradableStack(stack)) {
+    if (stack['itemId'] == itemId && fakeExchangeTradableStack(stack, untradeable: untradeable)) {
       total += (stack['quantity']! as num).floor();
     }
   }
@@ -709,15 +739,18 @@ int fakeExchangeTradable(Map<String, Object?> payload, String itemId) {
 Map<String, Object?>? fakeExchangeTakeItems(
   Map<String, Object?> payload,
   String itemId,
-  int quantity,
-) {
+  int quantity, {
+  Set<String> untradeable = const <String>{},
+}) {
   if (quantity <= 0) return null;
-  if (fakeExchangeTradable(payload, itemId) < quantity) return null;
+  if (fakeExchangeTradable(payload, itemId, untradeable: untradeable) < quantity) return null;
 
   var left = quantity;
   final kept = <Map<String, Object?>>[];
   for (final stack in fakeExchangeInventory(payload)) {
-    if (left <= 0 || stack['itemId'] != itemId || !fakeExchangeTradableStack(stack)) {
+    if (left <= 0 ||
+        stack['itemId'] != itemId ||
+        !fakeExchangeTradableStack(stack, untradeable: untradeable)) {
       kept.add(stack);
       continue;
     }

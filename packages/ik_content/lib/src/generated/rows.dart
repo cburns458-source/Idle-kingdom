@@ -403,6 +403,11 @@ class ItemRow extends DbRow {
 
   num? get baseSellValue => numberOrNull('Base Sell Value');
 
+  /// False keeps the item off the Bazaar (no sell or buy orders). Shops still
+  /// buy it. Missing or null means true. Quest-only rewards are false, and
+  /// `validateTradeability` in ik_content fails the build when one is not.
+  bool? get tradeable => boolOrNull('Tradeable');
+
   String? get iconAssetKey => stringOrNull('Icon Asset Key');
 
   String? get description => stringOrNull('Description');

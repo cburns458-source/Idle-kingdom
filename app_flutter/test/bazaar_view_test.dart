@@ -24,6 +24,7 @@ import 'support/harness.dart';
 const String _ironOre = 'ITEM-0005';
 const String _titaniumOre = 'ITEM-0009';
 const String _gold = 'ITEM-0001';
+const String _machete = 'ITEM-0406';
 
 InventoryStack _stack(String itemId, num quantity, {String? enchantmentId, bool? favorite}) =>
     InventoryStack(
@@ -222,6 +223,45 @@ void main() {
     expect(find.text('Staying with you'), findsOne);
     expect(find.text('Titanium Ore — $bazaarFavoriteNotTraded'), findsOne);
     expect(find.textContaining('Gold —'), findsNothing);
+  });
+
+  testWidgets('lists an untradeable item like any other and refuses it with a popup', (
+    tester,
+  ) async {
+    final player = await hostedPlayer(
+      tester,
+      bag: <InventoryStack>[_stack(_machete, 1), _stack(_ironOre, 40)],
+      gold: 100,
+    );
+    await pumpBazaar(tester, player.net, player.save);
+    await startOrder(tester, bazaarSell);
+
+    // Same row as Iron Ore: name, what is carried, and a price line. No section,
+    // no marker, and no refusal text until the player tries to list it.
+    expect(find.text('Machete'), findsOne);
+    expect(find.textContaining('Carrying 1'), findsOne);
+    expect(find.textContaining('Carrying 40'), findsOne);
+    expect(find.text('Staying with you'), findsNothing);
+    expect(find.textContaining(bazaarBoundItem), findsNothing);
+
+    int bazaarCalls() => player.project.calls.where((call) => call.contains('bazaar')).length;
+    final callsBefore = bazaarCalls();
+    await tester.tap(find.text('Machete'));
+    await tester.pump();
+    await tester.pump();
+
+    final popup = find.byType(GamePopupCard);
+    expect(popup, findsOne);
+    expect(find.descendant(of: popup, matching: find.text(bazaarBoundItem)), findsOne);
+    await tester.tap(find.descendant(of: popup, matching: find.widgetWithText(GameButton, 'OK')));
+    await tester.pump();
+    await tester.pump();
+
+    // Still on the sell list, with nothing composed and nothing sent.
+    expect(find.byType(GamePopupCard), findsNothing);
+    expect(find.text('Quantity'), findsNothing);
+    expect(bazaarCalls(), callsBefore);
+    expect(player.project.exchange.orders, isEmpty);
   });
 
   testWidgets('says to withdraw when the item is only in the bank', (tester) async {
