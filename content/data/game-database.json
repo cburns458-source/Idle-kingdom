@@ -5724,9 +5724,9 @@
       "Functional / Source Tags": "alchemy_potion_output_boost",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "While crafting potions, output rolls 2\u20133 instead of 1\u20133. No extra experience. Not yet obtainable.",
+      "Description": "While crafting potions, output rolls 2\u20133 instead of 1\u20133. No extra experience.",
       "Icon Asset Key": "alchemist_goggles",
-      "Notes": "Output-only specialist. Stub content; no acquisition path yet.",
+      "Notes": "Output-only specialist. Apothecary (SHP-0010), 1 per day. Alchemy 30.",
       "Base Sell Value": 69,
       "Stackable": null
     },
@@ -10655,7 +10655,7 @@
       "Item ID": "ITEM-0318",
       "Slot ID": "SLOT-0003",
       "Required Skill ID": "SKL-0010",
-      "Required Level": 1,
+      "Required Level": 30,
       "Secondary Required Skill ID": null,
       "Secondary Required Level": null,
       "Min Damage": null,
@@ -10666,7 +10666,7 @@
       "Action Time Reduction %": null,
       "Capabilities / Effects": "alchemy_potion_output_boost",
       "Status": "Planned",
-      "Notes": "Potion crafts roll 2\u20133 output. No XP change. Not obtainable yet."
+      "Notes": "Potion crafts roll 2\u20133 output. No XP change. Sold at the Apothecary (SHP-0010)."
     },
     {
       "Equipment ID": "EQP-0197",
@@ -33871,7 +33871,12 @@
       "Entry 5 Mode": "Sell",
       "Entry 5 Price": null,
       "Entry 5 Currency ID": "CUR-0001",
-      "Entry 5 Daily Limit": null
+      "Entry 5 Daily Limit": null,
+      "Entry 6 Item ID": "ITEM-0318",
+      "Entry 6 Mode": "Sell",
+      "Entry 6 Price": null,
+      "Entry 6 Currency ID": "CUR-0001",
+      "Entry 6 Daily Limit": 1
     }
   ],
   "Quests": [
