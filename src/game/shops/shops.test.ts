@@ -346,4 +346,41 @@ describe('shops', () => {
     if (!nextDay.ok) return
     expect(nextDay.save.shopPurchasesToday['SHP-0001:ITEM-0100']).toBe(1)
   })
+
+  it('sells Alchemist Goggles at the Apothecary for 138 gold, one per day', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0010')!
+    const goggles = 'ITEM-0318'
+    const entry = shopStockEntries(shop).find((row) => row.itemId === goggles)
+    expect(entry).toEqual({ itemId: goggles, slot: 6, dailyLimit: 1, mode: 'Sell' })
+    expect(launch.Items.find((row) => row['Item ID'] === goggles)!['Base Sell Value']).toBe(69)
+    expect(playerBuyPrice(launch, shop, goggles)).toBe(138)
+    expect(playerSellPrice(launch, shop, goggles)).toBe(69)
+
+    const day = Date.UTC(2026, 8, 2, 12)
+    let save = { ...createNewSave(launch), currentLocationId: shop['Location ID']!, gold: 1_000 }
+    const offer = { buys: [{ itemId: goggles, quantity: 1 }], sells: [] }
+    const bought = confirmShopOffer(launch, save, 'SHP-0010', offer, day)
+    expect(bought.ok).toBe(true)
+    if (!bought.ok) return
+    save = bought.save
+    expect(save.gold).toBe(1_000 - 138)
+    expect(save.inventory.find((stack) => stack.itemId === goggles)?.quantity).toBe(1)
+
+    const again = confirmShopOffer(launch, save, 'SHP-0010', offer, day)
+    expect(again.ok).toBe(false)
+    if (!again.ok) expect(again.reason).toMatch(/sold out/i)
+
+    const twoAtOnce = confirmShopOffer(
+      launch,
+      { ...createNewSave(launch), currentLocationId: shop['Location ID']!, gold: 1_000 },
+      'SHP-0010',
+      { buys: [{ itemId: goggles, quantity: 2 }], sells: [] },
+      day,
+    )
+    expect(twoAtOnce.ok).toBe(false)
+
+    const nextDay = confirmShopOffer(launch, save, 'SHP-0010', offer, day + 24 * 60 * 60 * 1000)
+    expect(nextDay.ok).toBe(true)
+  })
 })

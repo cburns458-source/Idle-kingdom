@@ -8,6 +8,7 @@ import { completeProductionCraft, beginProductionQueue } from '../production/eng
 import { completeSpecialProject } from '../projects/engine'
 import { encodeEnchantTarget } from '../projects/enchantments'
 import { createNewSave } from '../save/saveStore'
+import { equipItemFromInventory } from './loadout'
 import {
   ALCHEMIST_GOGGLES_ITEM_ID,
   CHEF_HAT_ITEM_ID,
@@ -220,5 +221,36 @@ describe('specialist hats and quiver', () => {
     const goggled = completeProductionCraft(launch, withGoggles, Date.now(), rolls(0, 0.9))
     expect(goggled?.outputQty).toBe(1)
     expect(goggled?.xpGained).toBe(480)
+  })
+
+  it('requires Alchemy 30 to wear the Alchemist Goggles', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const row = launch.Equipment.find((entry) => entry['Equipment ID'] === 'EQP-0196')!
+    expect(row['Item ID']).toBe(ALCHEMIST_GOGGLES_ITEM_ID)
+    expect(row['Required Skill ID']).toBe('SKL-0010')
+    expect(row['Required Level']).toBe(30)
+
+    const atLevel = (level: number) => {
+      const save = createNewSave(launch)
+      return addItemToInventory(
+        {
+          ...save,
+          skills: save.skills.map((skill) =>
+            skill.skillId === 'SKL-0010' ? { ...skill, level } : skill,
+          ),
+        },
+        ALCHEMIST_GOGGLES_ITEM_ID,
+        1,
+      )
+    }
+
+    const tooLow = equipItemFromInventory(launch, atLevel(29), ALCHEMIST_GOGGLES_ITEM_ID)
+    expect(tooLow.ok).toBe(false)
+    if (!tooLow.ok) expect(tooLow.reason).toBe('Requires Alchemy level 30')
+
+    const enough = equipItemFromInventory(launch, atLevel(30), ALCHEMIST_GOGGLES_ITEM_ID)
+    expect(enough.ok).toBe(true)
+    if (!enough.ok) return
+    expect(enough.save.equipment.slots['SLOT-0003']?.itemId).toBe(ALCHEMIST_GOGGLES_ITEM_ID)
   })
 })
