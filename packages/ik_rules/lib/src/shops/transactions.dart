@@ -142,14 +142,17 @@ ShopTransactionResult confirmShopOffer(
   if (!buyCost.ok) return ShopTransactionResult.failed(buyCost.reason);
   final enchantedMode = shopEnchantedSellMode(shop);
   final sellCredit = _lineTotal(offer.sells, (itemId) {
-    // Wizard's counter only prices enchanted gear; generals use the plain rate
-    // for both (enchanted and plain share Base Sell Value there).
-    return playerSellPrice(
-      db,
-      shop,
-      itemId,
-      enchanted: enchantedMode == ShopEnchantedSellMode.enchantedOnly,
-    );
+    // Wizard's counter only prices enchanted gear, and only when the bag has it.
+    // Generals use the plain rate for both (same Base Sell Value either way).
+    if (enchantedMode == ShopEnchantedSellMode.enchantedOnly) {
+      final hasEnchanted = next.inventory.any(
+        (stack) =>
+            stack.itemId == itemId && !isFavoriteStack(stack) && isNotBlank(stack.enchantmentId),
+      );
+      if (!hasEnchanted) return null;
+      return playerSellPrice(db, shop, itemId, enchanted: true);
+    }
+    return playerSellPrice(db, shop, itemId);
   });
   if (!sellCredit.ok) return ShopTransactionResult.failed(sellCredit.reason);
 

@@ -135,12 +135,7 @@ SellInventoryResult sellInventoryQuantities(
         'Favorited items cannot be sold. Unfavorite them first.',
       );
     }
-    final priced = sellPriceAtLocation(
-      db,
-      save,
-      stack.itemId,
-      enchantmentId: stack.enchantmentId,
-    );
+    final priced = sellPriceAtLocation(db, save, stack.itemId, enchantmentId: stack.enchantmentId);
     if (priced == null) {
       final name = db.items
           .firstWhereOrNull((item) => item.raw['Item ID'] == stack.itemId)

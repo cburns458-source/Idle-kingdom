@@ -219,12 +219,7 @@ class _InventoryViewState extends State<InventoryView> {
       });
       return;
     }
-    final priced = sellPriceAtLocation(
-      db,
-      save,
-      stack.itemId,
-      enchantmentId: stack.enchantmentId,
-    );
+    final priced = sellPriceAtLocation(db, save, stack.itemId, enchantmentId: stack.enchantmentId);
     if (priced == null) {
       setState(() => _message = 'That item cannot be sold.');
       return;

@@ -61,29 +61,26 @@ void main() {
       enchantmentId: enchantmentId,
     );
 
-    final atWizard = createNewSave(db, 0).copyWith(
-      currentLocationId: 'LOC-0007',
-      gold: 0,
-      inventory: <InventoryStack>[enchanted],
-    );
+    final atWizard = createNewSave(
+      db,
+      0,
+    ).copyWith(currentLocationId: 'LOC-0007', gold: 0, inventory: <InventoryStack>[enchanted]);
     final wizardSale = sellInventoryIndexes(db, atWizard, const <num>[0]);
     expect(wizardSale.ok, isTrue);
     expect(wizardSale.goldEarned, base * 2);
 
-    final atGeneral = createNewSave(db, 0).copyWith(
-      currentLocationId: 'LOC-0024',
-      gold: 0,
-      inventory: <InventoryStack>[enchanted],
-    );
+    final atGeneral = createNewSave(
+      db,
+      0,
+    ).copyWith(currentLocationId: 'LOC-0024', gold: 0, inventory: <InventoryStack>[enchanted]);
     final generalSale = sellInventoryIndexes(db, atGeneral, const <num>[0]);
     expect(generalSale.ok, isTrue);
     expect(generalSale.goldEarned, base);
 
-    final inField = createNewSave(db, 0).copyWith(
-      currentLocationId: 'LOC-0009',
-      gold: 0,
-      inventory: <InventoryStack>[enchanted],
-    );
+    final inField = createNewSave(
+      db,
+      0,
+    ).copyWith(currentLocationId: 'LOC-0009', gold: 0, inventory: <InventoryStack>[enchanted]);
     final fieldSale = sellInventoryIndexes(db, inField, const <num>[0]);
     expect(fieldSale.ok, isTrue);
     expect(fieldSale.goldEarned, fieldSellPrice(db, sword));

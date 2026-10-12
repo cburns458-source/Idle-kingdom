@@ -106,13 +106,21 @@ export function confirmShopOffer(
   const buyCost = lineTotal(buys, (itemId) => playerBuyPrice(db, shop, itemId))
   if (!buyCost.ok) return buyCost
   const enchantedMode = shopEnchantedSellMode(shop)
-  const sellCredit = lineTotal(sells, (itemId) =>
-    // Wizard's counter only prices enchanted gear; generals use the plain rate
-    // for both (enchanted and plain share Base Sell Value there).
-    playerSellPrice(db, shop, itemId, {
-      enchanted: enchantedMode === 'enchantedOnly',
-    }),
-  )
+  const sellCredit = lineTotal(sells, (itemId) => {
+    // Wizard's counter only prices enchanted gear, and only when the bag has it.
+    // Generals use the plain rate for both (same Base Sell Value either way).
+    if (enchantedMode === 'enchantedOnly') {
+      const hasEnchanted = next.inventory.some(
+        (stack) =>
+          stack.itemId === itemId &&
+          !isFavoriteStack(stack) &&
+          Boolean(stack.enchantmentId && String(stack.enchantmentId).trim()),
+      )
+      if (!hasEnchanted) return null
+      return playerSellPrice(db, shop, itemId, { enchanted: true })
+    }
+    return playerSellPrice(db, shop, itemId)
+  })
   if (!sellCredit.ok) return sellCredit
 
   const goldDelta = sellCredit.total - buyCost.total

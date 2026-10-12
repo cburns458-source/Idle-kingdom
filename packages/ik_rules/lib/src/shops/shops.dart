@@ -34,8 +34,7 @@ bool isGeneralMerchantShop(ShopRow shop) {
 }
 
 /// Wizard's Shop and the three general merchants accept enchanted bag sales.
-bool shopAcceptsEnchantedSales(ShopRow shop) =>
-    isWizardsShop(shop) || isGeneralMerchantShop(shop);
+bool shopAcceptsEnchantedSales(ShopRow shop) => isWizardsShop(shop) || isGeneralMerchantShop(shop);
 
 /// How a shop treats enchanted stacks when the player sells to its counter.
 enum ShopEnchantedSellMode {
@@ -234,12 +233,7 @@ bool isOreItem(ItemRow item) {
 /// [enchanted] is for a bag stack with an enchantment. Only the Wizard's Shop
 /// (2×) and the three general merchants (1×) buy those; every other counter
 /// refuses them. The Bazaar is separate and still blocks enchanted listings.
-num? playerSellPrice(
-  GameDatabase db,
-  ShopRow shop,
-  String itemId, {
-  bool enchanted = false,
-}) {
+num? playerSellPrice(GameDatabase db, ShopRow shop, String itemId, {bool enchanted = false}) {
   if (itemId == currencyItemId(db)) return null;
   final item = _item(db, itemId);
   final base = baseSellValue(item);
