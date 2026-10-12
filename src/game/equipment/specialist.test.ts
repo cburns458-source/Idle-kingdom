@@ -56,8 +56,8 @@ describe('specialist hats and quiver', () => {
     if (!queued.ok) return
     const missed = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0.5))
     const hit = completeProductionCraft(launch, queued.save, Date.now(), rolls(0, 0))
-    expect(missed?.outputQty).toBe(1)
-    expect(hit?.outputQty).toBe(2)
+    expect(missed?.outputQty).toBe(2)
+    expect(hit?.outputQty).toBe(4)
     expect(missed?.xpGained).toBe(hit?.xpGained)
   })
 

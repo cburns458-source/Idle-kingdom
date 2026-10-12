@@ -16,7 +16,8 @@ class AwaySummarySheet extends StatelessWidget {
     final lines = <String>[
       if (summary.gatheringActions > 0)
         '${formatThousands(summary.gatheringActions)} actions completed',
-      if (summary.craftsCompleted > 0) '${formatThousands(summary.craftsCompleted)} items crafted',
+      if (summary.craftsCompleted > 0)
+        '${formatThousands(summary.craftsCompleted)} crafts completed',
       if (summary.combatVictories > 0)
         '${formatThousands(summary.combatVictories)} enemies defeated',
       if (summary.combatDeaths > 0) '${formatThousands(summary.combatDeaths)} defeats',
