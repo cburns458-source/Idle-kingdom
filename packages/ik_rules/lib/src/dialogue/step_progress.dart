@@ -93,7 +93,7 @@ StepProgressGroup? stepProgressGroup(
   final type = dialogueStepType(step);
   if (type != 'Show' && type != 'HandIn') return null;
   final mode = type == 'Show' ? 'show' : 'handIn';
-  final done = isStepLatched(save, questId, stepId);
+  final done = isStepLatched(save, questId, stepId) || isStepPassed(db, save, questId, stepId);
   final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
   final items = [
     for (final need in parseStepItems(step?.raw['Step Items']))

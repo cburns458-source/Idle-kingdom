@@ -14,6 +14,7 @@ import {
   getQuestStep,
   handInCounterKey,
   isStepLatched,
+  isStepPassed,
   parseStepItems,
 } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
@@ -61,7 +62,7 @@ export function stepProgressGroup(
   const type = dialogueStepType(step)
   if (type !== 'Show' && type !== 'HandIn') return null
   const mode: StepProgressMode = type === 'Show' ? 'show' : 'handIn'
-  const done = isStepLatched(save, questId, stepId)
+  const done = isStepLatched(save, questId, stepId) || isStepPassed(db, save, questId, stepId)
   const counters = getQuestProgress(save, questId).counters ?? {}
   const items = parseStepItems(step?.['Step Items']).map((need) => {
     const kept = Number(counters[handInCounterKey(stepId, need.itemId)] ?? 0)
