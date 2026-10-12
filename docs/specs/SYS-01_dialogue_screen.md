@@ -1,6 +1,6 @@
-# SYS-01 Dialogue Screen — UI Spec (draft, for Conor's review)
+# SYS-01 Dialogue Screen — UI Spec
 
-Status: proposal only. No repo changes. Reuses existing `Palette`, `GameFont`, `GamePanel`, `GameButton`, `chromeSlotFill`, `ItemIcon` and PixelChrome. **No new colours or fonts** (colour rules paused).
+Status: **approved; first UI pass built** (see §8). §1–§5 are the full design; §8 says which parts are in the game now and which are still to come. Reuses existing `Palette`, `GameFont`, `GamePanel`, `GameButton`, `chromeSlotFill`, `ItemIcon` and PixelChrome. **No new colours or fonts** (colour rules paused).
 Source read: `cburns458-source/Idle-kingdom` @ `4f5abbc` (Oct 12 2026).
 
 ## 1. Current state
@@ -66,10 +66,13 @@ Source read: `cburns458-source/Idle-kingdom` @ `4f5abbc` (Oct 12 2026).
 10. No new `Color(...)` or font definitions added; only `Palette`/`GameFont`/PixelChrome used.
 11. Widget tests for locked/hidden/quest/item-chip/empty/error states.
 
-## 6. Engine contract (confirmed by Game Systems, SYS-01 engine spec)
-- Each choice carries `enabled`, `reason` (first unmet condition, e.g. "Needs Thievery 25") and `questMarked` (auto when the choice starts/advances a quest; content may also set it).
-- `hidden` choices the player can't pick are omitted from the view.
-- Each result carries `itemDeltas: [{itemId, qty}]` (+ given, − taken). The UI never parses `message`.
+## 6. Engine contract (confirmed by Game Systems, SYS-01 engine spec, merged in PR #315)
+- Each choice carries `enabled`, `reason`, `hidden` and `questMarked` (auto when the choice starts/advances a quest; content may also set it).
+- `hidden` choices the player can't pick are omitted from the view. A `hidden` choice that is still in the view is pickable and is drawn like any other; the UI also drops any `hidden` choice that is not `enabled`.
+- The view carries `stepProgress`: one group per Show / HandIn step its choices check or act on, `{questId, stepId, mode, done, items: [{itemId, have, handedIn, need, mode}]}` (`stepProgressView` returns the `items`). `have` is the bag only, favourited stacks included.
+- Each result carries `itemDeltas: [{itemId, qty}]` (+ given, − taken), `bookDeltas`, `stepProgress` (the steps the choice touched) and, on failure, a `code`: `no_room` (with `noRoom: {slotsNeeded, slotsFree}`), `missing_items` (with `missing: [{itemId, have, need}]`), `nothing_to_hand_in`, `not_available`, `invalid`, `action_failed`, `not_found`, `confirm_favourites` (with `favourites: [{itemId, count}]`, sent as `{itemId, qty}`).
+- `chooseDialogue(..., useFavourites: true)` / the `dialogue_choose` arg `useFavourites: true` is the player's yes to taking from favourited stacks, for that one request only. It is never written to the save.
+- The engine's `reason`, `message` and prompt strings are placeholders. **The UI never shows or parses them**; every string is built from codes, counts and content names (§8).
 - TS engine and Dart twin produce these identically; shared test cases cover them.
 
 ## 7. Defaults and open questions
@@ -78,3 +81,42 @@ Proposed defaults apply unless Conor objects: reveal ~40 chars/s, on by default,
 Open for Conor: none. (Quest glyph decided: wait for the asset pack, no placeholder.)
 
 Minor follow-ups (non-blocking): spoiler-hiding of locked reasons; NpcPanel "Something else…" listing all available dialogues instead of `ids.first`.
+
+## 8. Built: first UI pass (hand-in, show, full bag, favourites)
+Files: `app_flutter/lib/src/ui/dialogue_window.dart` (`DialogueWindow`, `StandaloneDialogueHost`), `app_flutter/lib/src/ui/dialogue_text.dart` (`DialogueText`, every player-facing dialogue string), `app_flutter/test/dialogue_window_test.dart`. UI only: no quest rules, content data, save format or SQL changed.
+
+### Text (built from codes and counts; item names from `Items`)
+| Where | When | Text |
+|---|---|---|
+| Progress line | HandIn step, per item | `Baked Potato 6/10 handed in` (`handedIn`/`need`) |
+| Progress line | Show step, not done | `Baked Potato: you have 3/5` (`have`/`need`) |
+| Progress line | Show step, done | `Baked Potato: Shown ✓` |
+| Choice label | `hand_in` choice, some still wanted in the bag | `Hand in 4 Baked Potato` — per item `min(have, need − handedIn)`; several items joined with "and" |
+| Choice label | `hand_in` choice, none of the still-wanted items in the bag | `Bring Baked Potato (6/10 handed in)` |
+| Choice label | `hand_in` choice, step done | `Handed in ✓` |
+| Choice label | `show_items` choice | `Show 5 Baked Potato` (`need`), then `Shown ✓` once the step is done |
+| Popup (OK) | `no_room` | `Your bag is full. Make room for N more items and try again.` N = `slotsNeeded` (new slots only; stacks already in the bag cost none). "1 more item" when N = 1. |
+| Popup (Yes / No) | `confirm_favourites` | `Some items are favourited. Do you still want to use them?` then every `favourites` entry: `Baked Potato x4, Cooked Perch x2` |
+| Under the line | `missing_items` | `You need 5 Baked Potato (you have 3).` per missing item |
+| Under the line | `nothing_to_hand_in` | `You have no Baked Potato to hand in.` (items still wanted) |
+| Under the line | `not_available` | `That isn’t available right now.` |
+| Under the line | `action_failed` | `That can’t be done right now.` |
+| Under the line | `invalid`, `not_found`, other | `That conversation can’t go on right now.` |
+| Start failure | `not_available` / other | `They have nothing to say right now.` / `That conversation could not be started.` |
+| Announcement | success | Built from `stepProgress`, `itemDeltas`, `bookDeltas`, gold and quest status changes, e.g. `Shown ✓`, `Baked Potato 10/10 handed in. Received 1 Golden Spud.`, `Quest started: …` |
+
+Other choices keep their content `Label`. No dialogue string mentions the bank; only the bag counts.
+
+### Behaviour
+- Disabled choices (`enabled: false`) are greyed out (`GameButton(onPressed: null)`); no reason text is drawn, because `reason` is engine placeholder text. Hidden choices are not drawn (§6).
+- Favourites never grey out, relabel or hint a hand-in / take-item choice. Counts include favourited stacks.
+- One request at a time: a choice is ignored while one is in flight, and until the next frame after it settles, so a double tap sends one request.
+- `confirm_favourites`: **No** closes the prompt and does nothing. **Yes** resends the same choice once with `useFavourites: true` (the local engine call and the `dialogue_choose` command arg). The flag is not stored; the next choice asks again. If the resend fails (for example `no_room`), that failure is shown; the favourites prompt is never reopened for the same tap.
+- `no_room`: popup only; the dialogue stays on the same node with no inline error.
+- Progress the last choice touched stays listed on the next node when that node does not reference the step, so `Shown ✓` / the new hand-in count stays visible.
+
+### Still to come (not in this pass)
+Shared `DialoguePanel` replacing `_DialogueCard` in `npc_panel.dart`, item chips, text reveal, tap-to-advance, fixed panel height, stacked full-width / 44 px choices, locked-reason text (needs non-placeholder engine wording or UI wording per condition), quest glyph (waits for the asset pack).
+
+### Tests (`app_flutter/test/dialogue_window_test.dart`, content + the SYS-01 parity patch)
+Hand-in progress and label; "Bring …" with none in the bag (bank stock ignored); hand-in commit; Show progress, label, missing-items text and `Shown ✓`; bag-only counts; disabled greyed and hidden not drawn; favourites never grey out or hint; double tap sends one request (pending request and local engine); full-bag popup counts new slots only; `confirm_favourites` lists every entry, No does nothing, Yes resends once with `useFavourites` and is not remembered; full bag after Yes shows the bag popup without reopening the prompt; each failure code worded by the UI; no dialogue UI string contains "bank".
