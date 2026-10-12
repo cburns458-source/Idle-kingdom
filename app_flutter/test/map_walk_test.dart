@@ -25,8 +25,8 @@ void main() {
   });
 
   test('a walk onto a district starts at that map\'s landing', () {
-    expect(mapWalkStartLocationId(database.launch, 'LOC-0009', townMapId), townGeneralStoreId);
-    expect(mapWalkStartLocationId(database.launch, 'LOC-0009', caveMapId), caveMiningStoreId);
+    expect(mapWalkStartLocationId(database.launch, 'LOC-0009', townMapId), townSquareId);
+    expect(mapWalkStartLocationId(database.launch, 'LOC-0009', caveMapId), caveMouthId);
     expect(mapWalkStartLocationId(database.launch, 'LOC-0009', castleMapId), castleCourtyardId);
     expect(mapWalkStartLocationId(database.launch, 'LOC-0009', citadelMapId), citadelPlazaId);
   });

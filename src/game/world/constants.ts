@@ -14,6 +14,8 @@ export const MOUNTAINS_MAP_ID = 'MAP-0010'
 
 export const CAVE_ENTRANCE_ID = 'LOC-0010'
 export const CAVE_MINING_STORE_ID = 'LOC-0012'
+/** Landing for world-map travel to Cave Entrance (MAP-0002). */
+export const CAVE_MOUTH_ID = 'LOC-0055'
 export const CASTLE_GATEWAY_ID = 'LOC-0013'
 export const CASTLE_COURTYARD_ID = 'LOC-0014'
 export const TOWN_GATEWAY_ID = 'LOC-0002'
@@ -31,6 +33,8 @@ export const TOWN_GENERAL_STORE_ID = 'LOC-0024'
 export const TOWN_FOUNDRY_ID = 'LOC-0025'
 export const TOWN_APOTHECARY_ID = 'LOC-0026'
 export const TOWN_BANK_ID = 'LOC-0034'
+/** Landing for world-map travel to The Town. */
+export const TOWN_SQUARE_ID = 'LOC-0054'
 
 /** Citadel hub nodes (MAP-0007). */
 export const CITADEL_PLAZA_ID = 'LOC-0028'

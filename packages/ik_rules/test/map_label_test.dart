@@ -66,11 +66,11 @@ void main() {
   test('world-map travel to a gateway lands on the written child-map node', () {
     expect(
       landingLocationIdFor(db.locations.firstWhere((row) => row.locationId == townGatewayId)),
-      townGeneralStoreId,
+      townSquareId,
     );
     expect(
       landingLocationIdFor(db.locations.firstWhere((row) => row.locationId == caveEntranceId)),
-      caveMiningStoreId,
+      caveMouthId,
     );
     expect(
       landingLocationIdFor(db.locations.firstWhere((row) => row.locationId == castleGatewayId)),
@@ -80,10 +80,8 @@ void main() {
       landingLocationIdFor(db.locations.firstWhere((row) => row.locationId == citadelGatewayId)),
       citadelPlazaId,
     );
-    expect(
-      resolveSubMapTravelDestination(db, townGatewayId, mainMapId, 'LOC-0009'),
-      townGeneralStoreId,
-    );
+    expect(resolveSubMapTravelDestination(db, townGatewayId, mainMapId, 'LOC-0009'), townSquareId);
+    expect(resolveSubMapTravelDestination(db, caveEntranceId, mainMapId, 'LOC-0009'), caveMouthId);
     expect(
       resolveSubMapTravelDestination(db, townGeneralStoreId, townMapId, townKitchenId),
       townGeneralStoreId,

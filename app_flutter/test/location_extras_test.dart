@@ -422,7 +422,7 @@ void main() {
     });
   });
 
-  testWidgets('travelling to Town from the world map opens the town map at the store', (
+  testWidgets('travelling to Town from the world map opens the town map at Town Square', (
     tester,
   ) async {
     final controller = buildController(
@@ -442,8 +442,12 @@ void main() {
     await tester.tap(find.text('Travel'));
     await tester.pump();
 
-    expect(controller.save.currentLocationId, townGeneralStoreId);
+    expect(controller.save.currentLocationId, townSquareId);
     expect(find.byType(WorldMapView), findsOne);
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('Town Square')),
+      findsWidgets,
+    );
     expect(
       find.descendant(of: find.byType(WorldMapView), matching: find.text('Kitchen')),
       findsWidgets,
@@ -532,8 +536,12 @@ void main() {
     await tester.tap(find.text('Enter Town'));
     await tester.pump();
 
-    expect(controller.save.currentLocationId, townGeneralStoreId);
+    expect(controller.save.currentLocationId, townSquareId);
     expect(find.byType(WorldMapView), findsOne);
+    expect(
+      find.descendant(of: find.byType(WorldMapView), matching: find.text('Town Square')),
+      findsWidgets,
+    );
     expect(
       find.descendant(of: find.byType(WorldMapView), matching: find.text('General Store')),
       findsWidgets,

@@ -17,7 +17,7 @@ import {
   MAIN_MAP_ID,
   CASTLE_MAP_ID,
   CAVE_MAP_ID,
-  CAVE_MINING_STORE_ID,
+  CAVE_MOUTH_ID,
   CITADEL_MAP_ID,
   CITADEL_GATEWAY_ID,
   CITADEL_PLAZA_ID,
@@ -38,6 +38,7 @@ import {
   TOWN_GENERAL_STORE_ID,
   TOWN_KITCHEN_ID,
   TOWN_MAP_ID,
+  TOWN_SQUARE_ID,
 } from './constants'
 import { FISHING_SKILL_ID } from '../skills/skillActions'
 import { mapNodeLabel } from './mapLabel'
@@ -278,8 +279,8 @@ describe('travel rules', () => {
     const cave = launch.Locations.find((row) => row['Location ID'] === 'LOC-0010')!
     const castle = launch.Locations.find((row) => row['Location ID'] === CASTLE_GATEWAY_ID)!
     const citadel = launch.Locations.find((row) => row['Location ID'] === CITADEL_GATEWAY_ID)!
-    expect(landingLocationIdFor(town)).toBe(TOWN_GENERAL_STORE_ID)
-    expect(landingLocationIdFor(cave)).toBe(CAVE_MINING_STORE_ID)
+    expect(landingLocationIdFor(town)).toBe(TOWN_SQUARE_ID)
+    expect(landingLocationIdFor(cave)).toBe(CAVE_MOUTH_ID)
     expect(landingLocationIdFor(castle)).toBe(CASTLE_COURTYARD_ID)
     expect(landingLocationIdFor(citadel)).toBe(CITADEL_PLAZA_ID)
     const forest = launch.Locations.find((row) => row['Location ID'] === FOREST_GATEWAY_ID)!
@@ -287,7 +288,10 @@ describe('travel rules', () => {
     expect(landingLocationIdFor(forest)).toBe(FOREST_PATH_ID)
     expect(landingLocationIdFor(depths)).toBe(THE_SHALLOWS_ID)
     expect(resolveSubMapTravelDestination(launch, TOWN_GATEWAY_ID, MAIN_MAP_ID, 'LOC-0009')).toBe(
-      TOWN_GENERAL_STORE_ID,
+      TOWN_SQUARE_ID,
+    )
+    expect(resolveSubMapTravelDestination(launch, 'LOC-0010', MAIN_MAP_ID, 'LOC-0009')).toBe(
+      CAVE_MOUTH_ID,
     )
     expect(
       resolveSubMapTravelDestination(launch, TOWN_GENERAL_STORE_ID, TOWN_MAP_ID, TOWN_KITCHEN_ID),
@@ -301,13 +305,44 @@ describe('travel rules', () => {
     const toTown = planTravel(launch, fromMeadow, TOWN_GATEWAY_ID, MAIN_MAP_ID, now)
     expect(toTown.kind).toBe('instant')
     if (toTown.kind !== 'instant') return
-    expect(toTown.arrival.save.currentLocationId).toBe(TOWN_GENERAL_STORE_ID)
+    expect(toTown.arrival.save.currentLocationId).toBe(TOWN_SQUARE_ID)
 
     const onGateway = { ...createNewSave(launch), currentLocationId: TOWN_GATEWAY_ID }
     const enter = planTravel(launch, onGateway, TOWN_GATEWAY_ID, MAIN_MAP_ID, now)
     expect(enter.kind).toBe('instant')
     if (enter.kind !== 'instant') return
-    expect(enter.arrival.save.currentLocationId).toBe(TOWN_GENERAL_STORE_ID)
+    expect(enter.arrival.save.currentLocationId).toBe(TOWN_SQUARE_ID)
+
+    const toCave = planTravel(launch, fromMeadow, 'LOC-0010', MAIN_MAP_ID, now)
+    expect(toCave.kind).toBe('instant')
+    if (toCave.kind !== 'instant') return
+    expect(toCave.arrival.save.currentLocationId).toBe(CAVE_MOUTH_ID)
+  })
+
+  it('reaches every open node from the Town Square and Cave Mouth landings', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    for (const [mapId, landingId] of [
+      [TOWN_MAP_ID, TOWN_SQUARE_ID],
+      [CAVE_MAP_ID, CAVE_MOUTH_ID],
+    ] as const) {
+      const open = locationsForMapView(launch, mapId).map((row) => row['Location ID'])
+      expect(open).toContain(landingId)
+      for (const id of open) {
+        if (id === landingId) continue
+        expect(canTravelTo(launch, landingId, id, mapId)).toBe(true)
+      }
+    }
+    // Quest-gated nodes stay locked until their quest unlocks them.
+    for (const [mapId, landingId, gatedId] of [
+      [TOWN_MAP_ID, TOWN_SQUARE_ID, 'LOC-0026'],
+      [CAVE_MAP_ID, CAVE_MOUTH_ID, 'LOC-0022'],
+      [CAVE_MAP_ID, CAVE_MOUTH_ID, 'LOC-0038'],
+    ] as const) {
+      expect(canTravelTo(launch, landingId, gatedId, mapId)).toBe(false)
+      expect(
+        canTravelTo(launch, landingId, gatedId, mapId, { unlockedLocationIds: [gatedId] }),
+      ).toBe(true)
+    }
   })
 
   it('opens the Ancient Forest and The Depths from their world-map gates', () => {
