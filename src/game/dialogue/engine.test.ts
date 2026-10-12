@@ -51,8 +51,10 @@ describe('standalone dialogue engine', () => {
     expect(result.save.completedDialogueIds).toContain('DLG-0001')
   })
 
+  // Rows without Release Phase Launch never load, so the dormant SYS-01 rows
+  // waiting for the content PR are checked by the recorded validate fixture only.
   it('ships dialogue content without validation errors', () => {
-    const issues = validateDialogueContent(rawDatabase)
+    const issues = validateDialogueContent(db)
     expect(issues.filter((issue) => issue.severity === 'error')).toEqual([])
   })
 })

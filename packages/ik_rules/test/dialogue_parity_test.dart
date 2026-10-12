@@ -220,8 +220,12 @@ void main() {
     }
   });
 
+  // Rows without Release Phase Launch never load, so the dormant SYS-01 rows
+  // waiting for the content PR are checked by the recorded validate fixture only.
   test('the shipped content has no dialogue validation errors', () {
-    final issues = validateDialogueContent(assertGameDatabaseShape(contentDatabaseJson()));
+    final issues = validateDialogueContent(
+      filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson())),
+    );
     expect(issues.where((issue) => issue.isError), isEmpty);
   });
 }
