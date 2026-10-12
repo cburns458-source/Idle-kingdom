@@ -26,6 +26,7 @@
 // neither is told to try again instead of quietly losing an offer.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 
 import {
   GOLD_CAP,
@@ -35,12 +36,17 @@ import {
   inventoryOf,
   isItemId,
   isTradableStack,
+  itemCatalog,
+  itemRefusal,
   stamped,
   takeGold,
   takeItems,
   tradableQuantity,
   type SavePayload,
 } from '../_shared/save_items.ts'
+
+/** What the exchange carries, from the database bundled at deploy. */
+const CATALOG = itemCatalog(rawDatabase)
 
 /** Offers open at once, per account. */
 const OFFER_SLOTS = 6
@@ -278,6 +284,8 @@ async function place(
   if (side == null) return refused('Choose to buy or to sell.')
   if (!isItemId(request.itemId)) return refused('That is not a tradable item.')
   const itemId = request.itemId
+  const notCarried = itemRefusal(itemId, CATALOG)
+  if (notCarried != null) return refused(notCarried)
 
   const unitPrice = wholeNumber(request.unitPrice)
   const quantity = wholeNumber(request.quantity)
@@ -308,10 +316,10 @@ async function place(
     if (heldEnchantedOrFavorited(stored.payload, itemId, quantity)) {
       return refused('Enchanted and favourited stacks stay with you. Unfavourite it to sell it.')
     }
-    next = takeItems(stored.payload, itemId, quantity)
+    next = takeItems(stored.payload, itemId, quantity, CATALOG)
     if (next == null) {
       return refused(
-        `You are carrying ${tradableQuantity(stored.payload, itemId)} of those. ` +
+        `You are carrying ${tradableQuantity(stored.payload, itemId, CATALOG)} of those. ` +
           'Withdraw more from the bank first.',
       )
     }
@@ -493,13 +501,13 @@ function heldEnchantedOrFavorited(
   itemId: string,
   quantity: number,
 ): boolean {
-  if (tradableQuantity(payload, itemId) >= quantity) return false
+  if (tradableQuantity(payload, itemId, CATALOG) >= quantity) return false
   let total = 0
   let blocked = false
   for (const stack of inventoryOf(payload)) {
     if (stack.itemId !== itemId) continue
     total += Math.floor(stack.quantity)
-    if (!isTradableStack(stack)) blocked = true
+    if (!isTradableStack(stack, CATALOG)) blocked = true
   }
   return blocked && total >= quantity
 }

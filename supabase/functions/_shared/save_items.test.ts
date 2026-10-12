@@ -8,15 +8,21 @@
 
 import { describe, expect, it } from 'vitest'
 
+import database from '../../../content/data/game-database.json' with { type: 'json' }
 import {
+  BOUND_ITEM_REFUSAL,
   GOLD_CAP,
   GOLD_ITEM_ID,
   INVENTORY_SLOT_LIMIT,
+  UNTRADABLE_ITEM_REFUSAL,
   giveGold,
   giveItems,
   goldOf,
   isItemId,
+  isTradableItem,
   isTradableStack,
+  itemCatalog,
+  itemRefusal,
   stamped,
   takeGold,
   takeItems,
@@ -24,6 +30,19 @@ import {
   type SavePayload,
   type Stack,
 } from './save_items.ts'
+
+// The same file `tools/bundle_game_edge.sh` copies to `_shared/game-database.json`
+// for the deployed function.
+const CATALOG = itemCatalog(database)
+
+const MACHETE = 'ITEM-0406'
+const EXCAVATORS_PICKAXE = 'ITEM-0313'
+const STOLEN_COIN_PURSE = 'ITEM-0299'
+const BEGGARS_HOOD = 'ITEM-0300'
+const GOLDEN_SPUD = 'ITEM-0026'
+const CHEFS_HAT = 'ITEM-0165'
+const PIRATE_INSIGNIA = 'ITEM-0288'
+const IRON_ORE = 'ITEM-0005'
 
 function save(inventory: Stack[], gold = 0): SavePayload {
   return { saveVersion: 7, updatedAt: '2026-01-01T00:00:00.000Z', gold, inventory }
@@ -64,6 +83,74 @@ describe('what may be listed', () => {
     expect(isItemId('ITEM-1')).toBe(false)
     expect(isItemId('SHOP-0001')).toBe(false)
     expect(isItemId(null)).toBe(false)
+  })
+})
+
+describe('items the exchange will not carry', () => {
+  it('reads the four quest-only rewards as untradeable from the database', () => {
+    expect([...CATALOG.untradeable].sort()).toEqual(
+      [EXCAVATORS_PICKAXE, MACHETE, STOLEN_COIN_PURSE, BEGGARS_HOOD].sort(),
+    )
+    expect(isTradableItem(MACHETE, CATALOG)).toBe(false)
+    expect(isTradableItem(GOLDEN_SPUD, CATALOG)).toBe(true)
+    // Without a catalog nothing is bound, as before the column existed.
+    expect(isTradableItem(MACHETE)).toBe(true)
+  })
+
+  it('refuses a stack of an untradeable item', () => {
+    expect(isTradableStack({ itemId: MACHETE, quantity: 1 }, CATALOG)).toBe(false)
+    expect(isTradableStack({ itemId: EXCAVATORS_PICKAXE, quantity: 1 }, CATALOG)).toBe(false)
+    expect(isTradableStack({ itemId: STOLEN_COIN_PURSE, quantity: 1 }, CATALOG)).toBe(false)
+    expect(isTradableStack({ itemId: BEGGARS_HOOD, quantity: 1 }, CATALOG)).toBe(false)
+    expect(isTradableStack({ itemId: GOLDEN_SPUD, quantity: 1 }, CATALOG)).toBe(true)
+  })
+
+  it('refuses sell and buy orders for Machete and Excavator’s Pickaxe with the bound copy', () => {
+    // The refusal is side-independent and runs before the save is read, so a
+    // buy order is turned away exactly like a sell order.
+    expect(itemRefusal(MACHETE, CATALOG)).toBe(BOUND_ITEM_REFUSAL)
+    expect(itemRefusal(EXCAVATORS_PICKAXE, CATALOG)).toBe(BOUND_ITEM_REFUSAL)
+    expect(BOUND_ITEM_REFUSAL).toBe("That stays with you; it can't be traded.")
+  })
+
+  it('keeps Golden Spud, Chef’s Hat, and Pirate Insignia on the exchange', () => {
+    expect(itemRefusal(GOLDEN_SPUD, CATALOG)).toBeNull()
+    expect(itemRefusal(CHEFS_HAT, CATALOG)).toBeNull()
+    expect(itemRefusal(PIRATE_INSIGNIA, CATALOG)).toBeNull()
+    expect(itemRefusal(IRON_ORE, CATALOG)).toBeNull()
+  })
+
+  it('checks Base Sell Value the way the client does', () => {
+    expect(itemRefusal(GOLD_ITEM_ID, CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-9999', CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
+    // The Undying: a starter title worth nothing, so a shop would not price it.
+    expect(itemRefusal('ITEM-0301', CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
+    const catalog = itemCatalog({
+      Items: [
+        { 'Item ID': 'ITEM-0100', 'Base Sell Value': 0, 'Release Phase': 'Launch' },
+        { 'Item ID': 'ITEM-0101', 'Base Sell Value': null, 'Release Phase': 'Launch' },
+        { 'Item ID': 'ITEM-0102', 'Base Sell Value': 5, 'Release Phase': 'Post-Launch' },
+        { 'Item ID': 'ITEM-0103', 'Base Sell Value': 5, 'Release Phase': 'Launch' },
+        { 'Item ID': 'ITEM-0104', 'Base Sell Value': 5, 'Release Phase': 'Launch', Tradeable: '' },
+        { 'Item ID': 'ITEM-0105', 'Base Sell Value': 5, 'Release Phase': 'Launch', Tradeable: null },
+      ],
+    })
+    expect(itemRefusal('ITEM-0100', catalog)).toBe(UNTRADABLE_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-0101', catalog)).toBe(UNTRADABLE_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-0102', catalog)).toBe(UNTRADABLE_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-0103', catalog)).toBeNull()
+    expect(itemRefusal('ITEM-0104', catalog)).toBeNull()
+    expect(itemRefusal('ITEM-0105', catalog)).toBeNull()
+  })
+
+  it('takes nothing out of the bag for a forged Machete listing', () => {
+    // A request that skipped the client check still reaches escrow only through
+    // these, and they leave the stored save alone.
+    const payload = save([{ itemId: MACHETE, quantity: 1 }], 500)
+    expect(tradableQuantity(payload, MACHETE, CATALOG)).toBe(0)
+    expect(takeItems(payload, MACHETE, 1, CATALOG)).toBeNull()
+    expect(payload.inventory).toEqual([{ itemId: MACHETE, quantity: 1 }])
+    expect(payload.gold).toBe(500)
   })
 })
 
