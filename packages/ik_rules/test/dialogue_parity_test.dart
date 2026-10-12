@@ -156,10 +156,15 @@ Map<String, Object?> _runScript(GameDatabase db, PlayerSave initial, List<Object
             : <String, Object?>{'ok': false, 'reason': result.reason};
         if (result.ok) save = result.save!;
       case 'completeQuest':
-        final result = completeQuest(db, save, str('questId'));
+        final result = completeQuest(
+          db,
+          save,
+          str('questId'),
+          useFavourites: op['useFavourites'] == true,
+        );
         out = result.ok
             ? <String, Object?>{'ok': true, 'rewards': result.rewards}
-            : <String, Object?>{'ok': false, 'reason': result.reason};
+            : result.failureJson();
         if (result.ok) save = result.save!;
       case 'reload':
         save = parseSave(jsonDecode(jsonEncode(save.toJson())), nowMs);

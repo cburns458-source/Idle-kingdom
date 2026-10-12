@@ -410,8 +410,8 @@ export function runDialogueScript(db: GameDatabase, initial: PlayerSave, ops: Op
         break
       }
       case 'completeQuest': {
-        const result = completeQuest(db, save, str(op, 'questId'))
-        out = result.ok ? { ok: true, rewards: result.rewards.map((line) => line.label) } : result
+        const result = completeQuest(db, save, str(op, 'questId'), { useFavourites: op.useFavourites === true })
+        out = result.ok ? { ok: true, rewards: result.rewards.map((line) => line.label) } : json(result)
         if (result.ok) save = result.save
         break
       }
@@ -713,6 +713,109 @@ const SCRIPTS: Record<string, Op[]> = {
     { op: 'clearFillers' },
     KING('DCH-9003'),
   ],
+
+  // 14. A favourited hand-in with a full bag reports no_room, not the favourites prompt, yes or no.
+  'favourite-hand-in-full-bag': [
+    KING('DCH-9001'),
+    stacks(BAKED_POTATO, [12, true]),
+    stacks(COOKED_PERCH, [12, true]),
+    { op: 'fillBag', free: 0 },
+    GIFTS('DCH-9030'),
+    confirmed(GIFTS('DCH-9030')),
+    feastProgress,
+    { op: 'clearFillers' },
+    GIFTS('DCH-9030'),
+    confirmed(GIFTS('DCH-9030')),
+    feastProgress,
+  ],
+
+  // 15. A legacy quest completed by dialogue with a full bag reports no_room and stays active.
+  'legacy-dialogue-complete-full-bag': [
+    { op: 'fillBag', free: 0 },
+    choose('DLG-9004', 'DNODE-9031', 'DCH-9031'),
+    { op: 'clearFillers' },
+    choose('DLG-9004', 'DNODE-9031', 'DCH-9031'),
+  ],
+}
+
+const completeOp = (questId: string, useFavourites = false): Op =>
+  useFavourites ? { op: 'completeQuest', questId, useFavourites } : { op: 'completeQuest', questId }
+const LEGACY = (choiceId: string) => choose('DLG-9004', 'DNODE-9031', choiceId)
+
+/**
+ * Legacy quest turn-ins: QST-9005 delivers 5 Baked Potato for a Golden Spud and
+ * 100 gold; QST-9006 pays two item stacks after one Talk step.
+ */
+const LEGACY_PATCH: Patch = {
+  ...DIALOGUE_PATCH,
+  Quests: [
+    ...DIALOGUE_PATCH.Quests!,
+    quest('QST-9005', 'Test Legacy Deliver', 'NPC-9001', {
+      Notes: `Deliver: ${BAKED_POTATO} x5; RewardGold: 100`,
+      'Reward Item ID': GOLDEN_SPUD,
+      'Reward Item Quantity': 1,
+    }),
+    quest('QST-9006', 'Test Legacy Seeds', 'NPC-9001', { Notes: `RewardItem: ${POTATO} x3, ${COOKED_PERCH} x2` }),
+  ],
+  QuestSteps: [...DIALOGUE_PATCH.QuestSteps!, step('QSTP-9061', 'QST-9006', 1, 'Talk', null, 'NPC-9001')],
+  DialogueChoices: [
+    ...DIALOGUE_PATCH.DialogueChoices!,
+    choice('DCH-9051', 'DNODE-9031', 3, '!quest_active:QST-9005;!quest_done:QST-9005', 'start_quest:QST-9005'),
+    choice('DCH-9052', 'DNODE-9031', 4, 'quest_active:QST-9005', 'complete_quest:QST-9005'),
+    choice(
+      'DCH-9061',
+      'DNODE-9031',
+      5,
+      '!quest_active:QST-9006;!quest_done:QST-9006',
+      'start_quest:QST-9006;talk_flag:QST-9006:QSTP-9061',
+    ),
+  ],
+}
+
+const LEGACY_SCRIPTS: Record<string, Op[]> = {
+  // A full bag refuses the turn-in untouched, ahead of the favourites prompt; a delivery that empties a stack frees its slot.
+  'legacy-turn-in-full-bag': [
+    LEGACY('DCH-9051'),
+    stacks(BAKED_POTATO, [7, false]),
+    { op: 'fillBag', free: 0 },
+    completeOp('QST-9005'),
+    completeOp('QST-9005', true),
+    stacks(BAKED_POTATO, [7, true]),
+    completeOp('QST-9005'),
+    completeOp('QST-9005', true),
+    { op: 'clearFillers' },
+    stacks(BAKED_POTATO, [5, false]),
+    { op: 'fillBag', free: 0 },
+    completeOp('QST-9005'),
+  ],
+
+  // Bag stacks only (the bank never counts), unhearted first; hearted stacks need a per-request yes.
+  'legacy-turn-in-favourites': [
+    LEGACY('DCH-9051'),
+    { op: 'setBank', itemId: BAKED_POTATO, quantity: 50 },
+    completeOp('QST-9005'),
+    stacks(BAKED_POTATO, [3, true], [4, false]),
+    completeOp('QST-9005'),
+    completeOp('QST-9005', true),
+  ],
+
+  // complete_quest in a dialogue folds the quest's hearted delivery into the choice's prompt.
+  'legacy-dialogue-complete-favourites': [
+    LEGACY('DCH-9051'),
+    stacks(BAKED_POTATO, [6, true]),
+    LEGACY('DCH-9052'),
+    confirmed(LEGACY('DCH-9052')),
+  ],
+
+  // Two reward stacks with one free slot: nothing is granted, then both arrive once there is room.
+  'legacy-multi-item-full-bag': [
+    LEGACY('DCH-9061'),
+    { op: 'fillBag', free: 1 },
+    completeOp('QST-9006'),
+    { op: 'clearFillers' },
+    { op: 'fillBag', free: 2 },
+    completeOp('QST-9006'),
+  ],
 }
 
 /** 10. A v61 save as it was stored: no dialogueFlags, mid-quest and completed rows. */
@@ -786,6 +889,20 @@ export const dialogueScenarios: ParityScenario[] = [
         ops: ops as JsonValue,
       },
       () => runDialogueScript(patchedDatabase(DIALOGUE_PATCH), startingSave(), ops),
+    ),
+  ),
+  ...Object.entries(LEGACY_SCRIPTS).map(([name, ops]) =>
+    scenario(
+      'dialogue/engine',
+      name,
+      {
+        source: 'content',
+        nowMs: FIXED_TIMESTAMP_MS,
+        patch: LEGACY_PATCH as unknown as JsonValue,
+        save: asJson(startingSave()),
+        ops: ops as JsonValue,
+      },
+      () => runDialogueScript(patchedDatabase(LEGACY_PATCH), startingSave(), ops),
     ),
   ),
 
