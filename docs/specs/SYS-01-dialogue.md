@@ -111,3 +111,43 @@ Tests: `dialogue_engine_test.dart`, `engine.test.ts`, `save_parity_test.dart`, n
 - Grand Feast hand-in takes 10 Baked Potato and 10 Cooked Perch.
 - Getting Started end: Fennel only checks for the cooked potatoes and takes nothing.
 - The quest marker icon waits for the asset pack. `questMarked` still ships in the engine output, and the UI can ignore it until then.
+- **Whatever completes the quest (and shows the reward popup) grants the rewards.** A dialogue choice that ends a quest runs `complete_quest` and grants nothing itself; the quest's own reward columns pay once, on completion. Both quests below stay `Reward Mode` legacy.
+
+## Fennel and King content (launch)
+Every Fennel (NPC-0014) and King (NPC-0001) row in Dialogues, DialogueNodes and DialogueChoices is `Release Phase: Launch`. `validateDialogueContent` reports no errors on the launch view (TS and Dart).
+
+### Quest steps
+| Step | Quest | Step Type | Step Items |
+|---|---|---|---|
+| QSTP-0001 Hear what the King needs | QST-0001 | Talk | |
+| QSTP-0002 Prepare food for the feast | QST-0001 | HandIn | ITEM-0058:10;ITEM-0059:10 |
+| QSTP-0014 Show Fennel five potatoes | QST-0006 | Show | ITEM-0025:5 |
+| QSTP-0016 Bring Fennel the cooked potatoes | QST-0006 | Show | ITEM-0058:5 |
+| QSTP-0022 Hear Fennel's farewell | QST-0006 | Talk | |
+| QSTP-0023 Speak with Fennel at the farm | QST-0011 | Talk | |
+| QSTP-0024 Gather compost and speak with Fennel | QST-0011 | Talk | |
+| QSTP-0035 Return to Fennel | QST-0011 | Talk | |
+
+Typed steps complete only through their dialogue action, so the panel's `Talk` no longer advances them. QSTP-0002 has no `Deliver:` Notes, because quest completion would otherwise take the food a second time. QSTP-0023 lost its `GiveOnTalk`.
+
+### Gifts
+Gift flags are `gift:<quest or dialogue ID>:<key>`. Every gift choice sets its flag in the same commit as the grant and rejects it with `!flag:`, so closing the window mid-conversation cannot claim twice. Quest gifts also require `!quest_done:<quest>`. A full bag refuses the grant without setting the flag, so the gift stays claimable. `/abandonquest` clears the quest's gift flags.
+
+| Choice | Gift | Guard |
+|---|---|---|
+| DCH-0001 Citadel Guide | Baked Potato x1 | `!flag:gift:DLG-0001:potato` |
+| DCH-0014 Fennel G1 | Potato Seed x1 (the only starting seed) | `!flag:gift:QST-0011:seed;!quest_done:QST-0011;quest_step:QST-0011:QSTP-0023` |
+
+The `quest_step` guard on DCH-0014 means players whose QSTP-0023 is already done (they got the old GiveOnTalk seed) never get a second one.
+
+### Quest payouts (on completion, once)
+- **QST-0006 Getting Started:** DCH-0012 runs `talk_flag` on QSTP-0022, then `complete_quest`. Pays BOOK-0001.
+- **QST-0011 Green Thumb:** DCH-0021 runs `talk_flag` on QSTP-0035, then `complete_quest`. Pays ITEM-0324 x3, ITEM-0339 x3 and BOOK-0002. With the DCH-0014 seed, a full run gives 4 Potato Seed, 3 Carrot Seed and the Botanist's Guide in total. DCH-0017 (compost) needs Compost in the bag, because `talk_flag` does not re-check the step's gather counter.
+- **QST-0001 The Grand Feast:** pays 10,000 Cooking XP, Golden Spud ITEM-0026 x1 (stays tradeable) and the Courtyard Botany unlock.
+  - DLG-0011 (pitch): DCH-0023 runs `start_quest` + `talk_flag` on QSTP-0001. DCH-0029 is for players who accepted on the old panel but never talked; it runs `talk_flag` only. Both are Hidden.
+  - DLG-0012 (Priority 11, opens ahead of the pitch while the quest is active past QSTP-0001): DCH-0026 is `hand_in` on QSTP-0002, so batches and progress are kept across visits and reloads. Once the step latches, "The feast is ready." (DCH-0031 after a hand-in, or DCH-0030 when reopening) runs `complete_quest`. `hand_in` and `complete_quest` are separate choices because a failing `complete_quest` would roll back a partial hand-in.
+
+### Known gaps (engine, not content)
+- `farmBotanyUnlocked` still keys off the panel talk's `talk:NPC-0014` counter on QST-0011. A player who only uses Fennel's dialogue never unlocks the farm patch, so they cannot plant for QSTP-0034 there.
+- No migration backfills `step:` latches. A save that finished one of these steps under the old talk flow but was never swept by `applyQuestStepUnlocks` must redo it through dialogue.
+- A save whose old `Deliver:` QSTP-0002 was already latched (it once held 10 + 10) can complete the feast without handing anything in.
