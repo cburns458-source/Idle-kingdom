@@ -125,7 +125,7 @@ On live:
 2. Before each cleanup, Economy saves a list of the open orders it will cancel,
    so QA can check each refund in `bazaar_collect` (reason `'cancelled'`).
 3. Run them in the order listed.
-4. Afterwards, confirm both versions appear in `schema_migrations` and zero open
+4. Afterwards, confirm each version appears in `schema_migrations` and zero open
    orders remain for the affected items.
 
 Checklist, in order:
@@ -143,10 +143,13 @@ Checklist, in order:
    once the PR lands on `test-launch`; live only after Conor approves and
    merges to `main`. Safe to re-run.
    Status: applied on test Oct 12 2026 (0 orders cancelled); live pending.
-
-Open item: `revoke_hall_economy_rpcs` is applied on test but has no file in
-`supabase/migrations/`. Ops & Security is checking it and will add the file;
-after that it joins this list.
+3. [ ] `20261007045115_revoke_hall_economy_rpcs.sql`. Revokes client execute on
+   `guild_pay_hall_debt(numeric)` and `guild_donate_hall_item(text, numeric)`;
+   the `game` function handles both now. The same two revokes are at the end of
+   `20261007050000_player_save_authority.sql`, which live already has, so this
+   should change nothing there; it records the version test has. Safe to
+   re-run.
+   Status: applied on test (version `20261007045115`); live pending.
 
 The eight files before that (profile guard through Wave F cleanup) were applied
 to live when `efbda080` shipped to `main`.
