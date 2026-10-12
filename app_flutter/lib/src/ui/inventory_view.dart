@@ -219,7 +219,7 @@ class _InventoryViewState extends State<InventoryView> {
       });
       return;
     }
-    final priced = sellPriceAtLocation(db, save, stack.itemId);
+    final priced = sellPriceAtLocation(db, save, stack.itemId, enchantmentId: stack.enchantmentId);
     if (priced == null) {
       setState(() => _message = 'That item cannot be sold.');
       return;
@@ -254,8 +254,13 @@ class _InventoryViewState extends State<InventoryView> {
     return selling.entries.fold<num>(0, (sum, entry) {
       if (entry.key >= save.inventory.length) return sum;
       final stack = save.inventory[entry.key];
-      if (stack.enchantmentId != null || isFavoriteStack(stack)) return sum;
-      final priced = sellPriceAtLocation(db, save, stack.itemId);
+      if (isFavoriteStack(stack)) return sum;
+      final priced = sellPriceAtLocation(
+        db,
+        save,
+        stack.itemId,
+        enchantmentId: stack.enchantmentId,
+      );
       if (priced == null) return sum;
       return sum + priced.unitPrice * entry.value;
     });

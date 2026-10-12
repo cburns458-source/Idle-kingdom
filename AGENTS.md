@@ -2,6 +2,8 @@
 
 ## Where work lands
 
+What to work on next lives in [docs/BACKLOG.md](docs/BACKLOG.md), the master backlog Conor approved.
+
 Read `docs/AGENT_WORKFLOW.md` first. Short version:
 
 1. Share a plan. Stop until the owner confirms it.

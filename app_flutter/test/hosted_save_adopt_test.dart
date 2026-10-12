@@ -428,4 +428,34 @@ void main() {
     expect(arrived, isTrue);
     expect(controller.switchBusy, isFalse);
   });
+
+  test('guild hall travel never shows the Kingswoods Bola notice', () async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: 'LOC-0001',
+        claimedKingswoodsSling: true,
+        inventory: const <InventoryStack>[InventoryStack(itemId: bolaItemId, quantity: 1)],
+      ),
+    );
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    controller.submitGameCommand = (command, [args = const <String, Object?>{}]) async {
+      expect(command, 'travel_guild_hall');
+      final plan = planGuildHallTravel(
+        controller.db,
+        controller.save,
+        controller.session.clock(),
+        () => 0,
+      );
+      final arrival = (plan as TravelInstant).arrival;
+      controller.adoptHostedSave(arrival.save, command: 'travel_guild_hall');
+      return null;
+    };
+
+    expect(controller.travelToGuildHall(), isTrue);
+    await pumpEventQueue();
+    expect(controller.save.currentLocationId, guildHallLocationId);
+    expect(controller.discoveryNotice, isNull);
+  });
 }

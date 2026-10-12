@@ -46,12 +46,26 @@ class _ShopPanelState extends State<ShopPanel> {
     });
   }
 
+  /// Unit price for an offer line at this counter (wizard uses the enchanted rate).
+  num? _sellUnit(ShopRow shop, String itemId) {
+    return playerSellPrice(
+      db,
+      shop,
+      itemId,
+      enchanted: shopEnchantedSellMode(shop) == ShopEnchantedSellMode.enchantedOnly,
+    );
+  }
+
   /// What this shop will take off the player, ignoring what cannot be traded.
   List<({String itemId, num owned, num unit})> _sellable(ShopRow shop) {
+    final mode = shopEnchantedSellMode(shop);
     final byItem = <String, ({String itemId, num owned, num unit})>{};
     for (final stack in save.inventory) {
-      if (stack.enchantmentId != null || isFavoriteStack(stack)) continue;
-      final unit = playerSellPrice(db, shop, stack.itemId);
+      if (isFavoriteStack(stack)) continue;
+      final enchanted = stack.enchantmentId != null && stack.enchantmentId!.trim().isNotEmpty;
+      if (enchanted && mode == ShopEnchantedSellMode.reject) continue;
+      if (!enchanted && mode == ShopEnchantedSellMode.enchantedOnly) continue;
+      final unit = playerSellPrice(db, shop, stack.itemId, enchanted: enchanted);
       if (unit == null) continue;
       final existing = byItem[stack.itemId];
       byItem[stack.itemId] = (
@@ -84,7 +98,7 @@ class _ShopPanelState extends State<ShopPanel> {
     final editing = already > 0;
     final budget =
         save.gold +
-        _total(_sells, (id) => playerSellPrice(db, shop, id)) -
+        _total(_sells, (id) => _sellUnit(shop, id)) -
         _total(_buys, (id) => playerBuyPrice(db, shop, id));
     final available = budget + already * unit;
     final affordable = unit <= 0 ? null : (available / unit).floor();
@@ -206,7 +220,7 @@ class _ShopPanelState extends State<ShopPanel> {
     }
 
     final buyTotal = _total(_buys, (id) => playerBuyPrice(db, shop, id));
-    final sellTotal = _total(_sells, (id) => playerSellPrice(db, shop, id));
+    final sellTotal = _total(_sells, (id) => _sellUnit(shop, id));
     final net = sellTotal - buyTotal;
     final nowMs = controller.session.clock();
     final stock = shopStockForPlayer(db, save, shop);

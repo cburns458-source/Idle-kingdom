@@ -111,7 +111,10 @@ function citadelSave(): PlayerSave {
   }
 }
 
-/** At the Wizard's Shop, which sells Essence and buys nothing at all. */
+/**
+ * At the Wizard's Shop: Essence for sale, plain bags for the "buys nothing
+ * ordinary" cases, plus an enchanted weapon the counter will take at 2×.
+ */
 function wizardSave(): PlayerSave {
   const base = baseSave(contentDatabase())
   return {
@@ -119,7 +122,10 @@ function wizardSave(): PlayerSave {
     characterName: 'Adept',
     gold: 200_000,
     currentLocationId: 'LOC-0007',
-    inventory: [{ itemId: 'ITEM-0025', quantity: 3 }],
+    inventory: [
+      { itemId: 'ITEM-0025', quantity: 3 },
+      { itemId: 'ITEM-0130', quantity: 1, enchantmentId: 'ENCH-0003' },
+    ],
   }
 }
 
@@ -205,7 +211,7 @@ const OFFER_CASES: Array<{ name: string; save: SaveKind; shopId: string; offer: 
     offer: { buys: [], sells: [{ itemId: 'ITEM-0031', quantity: 1 }] },
   },
   {
-    name: 'sell-enchanted-blocked',
+    name: 'sell-enchanted-ok',
     save: 'general',
     shopId: 'SHP-0001',
     offer: { buys: [], sells: [{ itemId: 'ITEM-0100', quantity: 1 }] },
@@ -295,6 +301,12 @@ const OFFER_CASES: Array<{ name: string; save: SaveKind; shopId: string; offer: 
     offer: { buys: [], sells: [{ itemId: 'ITEM-0025', quantity: 1 }] },
   },
   {
+    name: 'wizard-sell-enchanted',
+    save: 'wizard',
+    shopId: 'SHP-0003',
+    offer: { buys: [], sells: [{ itemId: 'ITEM-0130', quantity: 1 }] },
+  },
+  {
     name: 'cosmetic-purchase',
     save: 'citadel-bare',
     shopId: 'SHP-0004',
@@ -329,7 +341,7 @@ const OFFER_CASES: Array<{ name: string; save: SaveKind; shopId: string; offer: 
 const SELL_BAG_CASES: Array<{ name: string; save: SaveKind; indexes: number[] }> = [
   { name: 'ok', save: 'general', indexes: [0, 3] },
   { name: 'favorite-blocked', save: 'general', indexes: [1] },
-  { name: 'enchanted-blocked', save: 'general', indexes: [2] },
+  { name: 'enchanted-ok', save: 'general', indexes: [2] },
   { name: 'currency-cannot-sell', save: 'general', indexes: [4] },
   { name: 'out-of-range', save: 'general', indexes: [99, -1, 1.5] },
   { name: 'duplicate-indexes', save: 'general', indexes: [0, 0, 3] },

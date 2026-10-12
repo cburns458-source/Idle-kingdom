@@ -23,18 +23,21 @@ export function fieldSellPrice(db: GameDatabase, itemId: string): number | null 
 
 /**
  * Best unit price for selling at the current location.
- * Uses an accessible shop when it will buy the item; otherwise 50% field price.
+ * Uses an accessible shop when it will buy the item (including enchanted gear
+ * at the Wizard's Shop or a general merchant); otherwise 50% field price.
  */
 export function sellPriceAtLocation(
   db: GameDatabase,
   save: PlayerSave,
   itemId: string,
+  options: { enchantmentId?: string | null } = {},
 ): { unitPrice: number; shopId: string | null } | null {
+  const enchanted = Boolean(options.enchantmentId && String(options.enchantmentId).trim())
   const shops = shopsAtLocation(db, save.currentLocationId)
   let best: { unitPrice: number; shopId: string } | null = null
   for (const shop of shops) {
     if (!canAccessShop(db, save, shop).ok) continue
-    const price = playerSellPrice(db, shop, itemId)
+    const price = playerSellPrice(db, shop, itemId, { enchanted })
     if (price == null) continue
     if (!best || price > best.unitPrice) {
       best = { unitPrice: price, shopId: shop['Shop ID'] }
@@ -97,10 +100,9 @@ export function sellInventoryQuantities(
     if (isFavoriteStack(stack)) {
       return { ok: false, reason: 'Favorited items cannot be sold. Unfavorite them first.' }
     }
-    if (stack.enchantmentId) {
-      return { ok: false, reason: 'Enchanted items cannot be sold from the bag.' }
-    }
-    const priced = sellPriceAtLocation(db, save, stack.itemId)
+    const priced = sellPriceAtLocation(db, save, stack.itemId, {
+      enchantmentId: stack.enchantmentId,
+    })
     if (!priced) {
       const name =
         db.Items.find((item) => item['Item ID'] === stack.itemId)?.['Display Name'] ?? 'That item'
