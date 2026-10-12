@@ -13,6 +13,8 @@ const _goldenSpud = 'ITEM-0026';
 const _potato = 'ITEM-0025';
 const _noRoom = 'No room in your bag. Free 1 slot and try again.';
 const _favouritesPrompt = 'Some items are favourited. Do you still want to use them?';
+const _cooking = 'SKL-0007';
+const _apothecary = 'LOC-0026';
 
 Map<String, Object?> _launch(Map<String, Object?> row) => <String, Object?>{
   'Status': 'Confirmed',
@@ -91,6 +93,12 @@ GameDatabase _patchedDatabase() {
       _quest('QST-9105', 'AutoCompleteOnVisit', _spud),
       _quest('QST-9106', 'Deliver: $_bakedPotato x5', {..._spud, 'Reward Mode': 'dialogue'}),
       _quest('QST-9107', null, {'Reward Mode': 'dialogue'}),
+      _quest(
+        'QST-9108',
+        'Deliver: $_bakedPotato x5; RewardGold: 100; RewardXp: $_cooking 5000; '
+            'UnlockLocation: $_apothecary; RewardBook: BOOK-0001',
+        _spud,
+      ),
     ],
     'QuestSteps': [
       _step('QSTP-9104', 'QST-9104', 1, 'Talk', null),
@@ -122,6 +130,11 @@ GameDatabase _patchedDatabase() {
         'hand_in:QST-9107:QSTP-9172;grant_item:$_goldenSpud:1;set_flag:gift:QST-9107:thanks',
       ),
       _choice('DCH-9102', 'quest_active:QST-9101', 'complete_quest:QST-9101'),
+      _choice(
+        'DCH-9108',
+        'quest_active:QST-9108',
+        'complete_quest:QST-9108;set_flag:gift:QST-9108:done',
+      ),
     ],
   };
   final db = <String, Object?>{...base};
@@ -150,6 +163,19 @@ PlayerSave _fillBag(PlayerSave save, int free) {
 }
 
 String _snapshot(PlayerSave save) => jsonEncode(save.toJson());
+
+/// Everything a turn-in could pay or take, so a refusal can be checked field by field.
+Map<String, Object?> _paidState(PlayerSave save, String questId) => <String, Object?>{
+  'cookingXp': getSkillProgress(save, _cooking).xp,
+  'gold': save.gold,
+  'inventory': [for (final stack in save.inventory) stack.toJson()],
+  'unlockedLocationIds': save.unlockedLocationIds,
+  'unlockedBookIds': save.unlockedBookIds,
+  'dialogueFlags': save.dialogueFlags,
+  'completedDialogueIds': save.completedDialogueIds,
+  'quest': getQuestProgress(save, questId).toJson(),
+  'courtyard': courtyardBotanyUnlocked(save),
+};
 
 const _noRoomJson = <String, Object?>{
   'ok': false,
@@ -282,6 +308,84 @@ void main() {
       expect(result.reason, _noRoom);
       expect(result.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
       expect(identical(result.save, save), isTrue);
+    });
+  });
+
+  group('no_room is all-or-nothing', () {
+    PlayerSave rewardReady(int free) =>
+        _fillBag(_withStacks(started('QST-9108'), _bakedPotato, [(7, false)]), free);
+
+    test(
+      'pays no XP, gold, book, unlock or item and keeps the quest active on a legacy turn-in',
+      () {
+        final save = rewardReady(0);
+        final before = _paidState(save, 'QST-9108');
+        expect(before['unlockedLocationIds'], isNot(contains(_apothecary)));
+
+        final result = completeQuest(db, save, 'QST-9108');
+        expect(result.code, 'no_room');
+        expect(result.save, isNull);
+        expect(_paidState(save, 'QST-9108'), before);
+        expect(getQuestProgress(save, 'QST-9108').status, 'active');
+
+        final paid = completeQuest(db, _fillBag(save, 1), 'QST-9108');
+        expect(paid.ok, isTrue, reason: paid.reason);
+        expect(
+          getSkillProgress(paid.save!, _cooking).xp,
+          getSkillProgress(save, _cooking).xp + 5000,
+        );
+        expect(paid.save!.unlockedLocationIds, contains(_apothecary));
+        expect(paid.save!.unlockedBookIds, contains('BOOK-0001'));
+        expect(getQuestProgress(paid.save!, 'QST-9108').status, 'completed');
+      },
+    );
+
+    test('writes nothing, flags included, when a dialogue complete_quest hits a full bag', () {
+      final save = rewardReady(0);
+      final before = _paidState(save, 'QST-9108');
+      final result = chooseDialogue(db, save, 'DLG-9101', 'DNODE-9101', 'DCH-9108');
+      expect(result.ok, isFalse);
+      expect(result.code, 'no_room');
+      expect(result.itemDeltas, isEmpty);
+      expect(result.bookDeltas, isEmpty);
+      expect(identical(result.save, save), isTrue);
+      expect(_paidState(result.save, 'QST-9108'), before);
+
+      final paid = chooseDialogue(db, _fillBag(save, 1), 'DLG-9101', 'DNODE-9101', 'DCH-9108');
+      expect(paid.ok, isTrue, reason: paid.reason);
+      expect(getSkillProgress(paid.save, _cooking).xp, getSkillProgress(save, _cooking).xp + 5000);
+      expect(paid.save.dialogueFlags, ['gift:QST-9108:done']);
+      expect(paid.save.unlockedLocationIds, contains(_apothecary));
+      expect(getQuestProgress(paid.save, 'QST-9108').status, 'completed');
+    });
+
+    test('keeps The Grand Feast unpaid: no Cooking XP, no Courtyard plot, deliveries and quest state untouched', () {
+      final accepted = acceptQuest(
+        contentDb,
+        createNewSave(contentDb, 0).copyWith(currentLocationId: 'LOC-0016'),
+        'QST-0001',
+      );
+      expect(accepted.ok, isTrue, reason: accepted.reason);
+      var save = applyQuestTalkProgress(contentDb, accepted.save!, 'NPC-0001');
+      save = addItemToInventory(addItemToInventory(save, _bakedPotato, 11), _cookedPerch, 11);
+      save = _fillBag(save, 0);
+      final before = _paidState(save, 'QST-0001');
+      expect(before['courtyard'], isFalse);
+
+      final result = completeQuest(contentDb, save, 'QST-0001');
+      expect(result.code, 'no_room');
+      expect(result.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+      expect(_paidState(save, 'QST-0001'), before);
+
+      final paid = completeQuest(contentDb, _fillBag(save, 1), 'QST-0001');
+      expect(paid.ok, isTrue, reason: paid.reason);
+      expect(
+        getSkillProgress(paid.save!, _cooking).xp,
+        getSkillProgress(save, _cooking).xp + 10000,
+      );
+      expect(courtyardBotanyUnlocked(paid.save!), isTrue);
+      expect(bagCount(paid.save!, _bakedPotato), 1);
+      expect(bagCount(paid.save!, _goldenSpud), 1);
     });
   });
 

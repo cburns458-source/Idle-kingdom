@@ -2,12 +2,16 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { DIALOGUE_PATCH, patchedDatabase } from '../../parity/scenarios/dialogue'
+import { addItemToInventory } from '../activity/rewards'
+import { getSkillProgress } from '../activity/xp'
 import { prepareDatabase } from '../data/loadDatabase'
 import { chooseDialogue } from '../dialogue/engine'
 import { bagCount } from '../inventory/bag'
 import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { bribeForQuest, talkWithQuestNpc } from '../npcs/conversation'
 import { createNewSave } from '../save/saveStore'
+import { courtyardBotanyUnlocked } from '../timers/locationTimers'
+import { applyQuestTalkProgress } from './progress'
 import type { PlayerSave } from '../save/types'
 import { applyGameCommand, type GameCommandResult } from '../server/authority'
 import { latchStep } from './steps'
@@ -71,6 +75,8 @@ function talkStep(id: string, questId: string): Row {
 }
 
 const spud = { 'Reward Item ID': GOLDEN_SPUD, 'Reward Item Quantity': 1 }
+const COOKING = 'SKL-0007'
+const APOTHECARY = 'LOC-0026'
 
 const rawDatabase = patchedDatabase({
   ...DIALOGUE_PATCH,
@@ -82,11 +88,31 @@ const rawDatabase = patchedDatabase({
     questRow('QST-9104', 'AutoCompleteOnTalk', spud),
     questRow('QST-9105', 'AutoCompleteOnVisit', spud),
     questRow('QST-9106', `Deliver: ${BAKED_POTATO} x5`, { ...spud, 'Reward Mode': 'dialogue' }),
+    questRow(
+      'QST-9108',
+      `Deliver: ${BAKED_POTATO} x5; RewardGold: 100; RewardXp: ${COOKING} 5000; UnlockLocation: ${APOTHECARY}; RewardBook: BOOK-0001`,
+      spud,
+    ),
   ] as never,
   QuestSteps: [
     ...DIALOGUE_PATCH.QuestSteps!,
     talkStep('QSTP-9104', 'QST-9104'),
     talkStep('QSTP-9105', 'QST-9105'),
+  ] as never,
+  DialogueChoices: [
+    ...DIALOGUE_PATCH.DialogueChoices!,
+    {
+      'Choice ID': 'DCH-9108',
+      'Node ID': 'DNODE-9031',
+      Label: 'DCH-9108',
+      'Next Node ID': null,
+      Condition: 'quest_active:QST-9108',
+      Action: 'complete_quest:QST-9108;set_flag:gift:QST-9108:done',
+      'Sort Order': 9,
+      Status: 'Confirmed',
+      'Release Phase': 'Launch',
+      Notes: null,
+    },
   ] as never,
 })
 const { launch: db } = prepareDatabase(rawDatabase)
@@ -238,6 +264,88 @@ describe('legacy quest rewards with a full bag', () => {
     const result = chooseDialogue(db, save, 'DLG-9004', 'DNODE-9031', 'DCH-9031')
     expect(result).toMatchObject({ ok: false, code: 'no_room', reason: NO_ROOM, noRoom: { slotsNeeded: 1, slotsFree: 0 } })
     expect(result.save).toBe(save)
+  })
+})
+
+/** Everything a turn-in could pay or take, so a refusal can be checked field by field. */
+function paidState(save: PlayerSave, questId: string) {
+  return {
+    cookingXp: getSkillProgress(save, COOKING).xp,
+    gold: save.gold,
+    inventory: save.inventory,
+    unlockedLocationIds: save.unlockedLocationIds ?? [],
+    unlockedBookIds: save.unlockedBookIds ?? [],
+    dialogueFlags: save.dialogueFlags ?? [],
+    completedDialogueIds: save.completedDialogueIds,
+    quest: getQuestProgress(save, questId),
+    courtyard: courtyardBotanyUnlocked(save),
+  }
+}
+
+describe('no_room is all-or-nothing', () => {
+  function rewardReady(free: number): PlayerSave {
+    return fillBag(withStacks(started('QST-9108'), BAKED_POTATO, [[7, false]]), free)
+  }
+
+  it('pays no XP, gold, book, unlock or item and keeps the quest active on a legacy turn-in', () => {
+    const save = rewardReady(0)
+    const before = paidState(save, 'QST-9108')
+    expect(before.unlockedLocationIds).not.toContain(APOTHECARY)
+
+    const result = completeQuest(db, save, 'QST-9108')
+    expect(result).toMatchObject({ ok: false, code: 'no_room' })
+    expect(paidState(save, 'QST-9108')).toEqual(before)
+    expect(before.quest.status).toBe('active')
+
+    const paid = completeQuest(db, fillBag(save, 1), 'QST-9108')
+    expect(paid.ok).toBe(true)
+    if (!paid.ok) return
+    const after = paidState(paid.save, 'QST-9108')
+    expect(after.cookingXp).toBe(before.cookingXp + 5000)
+    expect(after.unlockedLocationIds).toContain(APOTHECARY)
+    expect(after.unlockedBookIds).toContain('BOOK-0001')
+    expect(after.quest.status).toBe('completed')
+  })
+
+  it('writes nothing, flags included, when a dialogue complete_quest hits a full bag', () => {
+    const save = rewardReady(0)
+    const before = paidState(save, 'QST-9108')
+    const result = chooseDialogue(db, save, 'DLG-9004', 'DNODE-9031', 'DCH-9108')
+    expect(result).toMatchObject({ ok: false, code: 'no_room', itemDeltas: [], bookDeltas: [] })
+    expect(result.save).toBe(save)
+    expect(paidState(result.save, 'QST-9108')).toEqual(before)
+
+    const paid = chooseDialogue(db, fillBag(save, 1), 'DLG-9004', 'DNODE-9031', 'DCH-9108')
+    expect(paid.ok).toBe(true)
+    expect(paidState(paid.save, 'QST-9108')).toMatchObject({
+      cookingXp: before.cookingXp + 5000,
+      dialogueFlags: ['gift:QST-9108:done'],
+      quest: { status: 'completed' },
+    })
+    expect(paid.save.unlockedLocationIds).toContain(APOTHECARY)
+  })
+
+  it('keeps The Grand Feast unpaid: no Cooking XP, no Courtyard plot, deliveries and quest state untouched', () => {
+    let save: PlayerSave = { ...createNewSave(contentDb, START_MS), currentLocationId: 'LOC-0016' }
+    const accepted = acceptQuest(contentDb, save, 'QST-0001')
+    if (!accepted.ok) throw new Error(accepted.reason)
+    save = applyQuestTalkProgress(contentDb, accepted.save, 'NPC-0001')
+    save = addItemToInventory(addItemToInventory(save, BAKED_POTATO, 11), COOKED_PERCH, 11)
+    save = fillBag(save, 0)
+    const before = paidState(save, 'QST-0001')
+    expect(before.courtyard).toBe(false)
+
+    const result = completeQuest(contentDb, save, 'QST-0001')
+    expect(result).toMatchObject({ ok: false, code: 'no_room', noRoom: { slotsNeeded: 1, slotsFree: 0 } })
+    expect(paidState(save, 'QST-0001')).toEqual(before)
+
+    const paid = completeQuest(contentDb, fillBag(save, 1), 'QST-0001')
+    expect(paid.ok).toBe(true)
+    if (!paid.ok) return
+    expect(getSkillProgress(paid.save, COOKING).xp).toBe(before.cookingXp + 10000)
+    expect(courtyardBotanyUnlocked(paid.save)).toBe(true)
+    expect(bagCount(paid.save, BAKED_POTATO)).toBe(1)
+    expect(bagCount(paid.save, GOLDEN_SPUD)).toBe(1)
   })
 })
 
