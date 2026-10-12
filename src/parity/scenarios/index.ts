@@ -6,6 +6,7 @@ import { combatScenarios } from './combat'
 import { combatStatScenarios } from './combatStats'
 import { contentScenarios } from './content'
 import { coreRuleScenarios } from './coreRules'
+import { dialogueScenarios } from './dialogue'
 import { equipmentScenarios } from './equipment'
 import { metaScenarios } from './meta'
 import { multiplayerScenarios } from './multiplayer'
@@ -42,6 +43,7 @@ export const parityScenarios: ParityScenario[] = [
   ...projectScenarios,
   ...pvpScenarios,
   ...questScenarios,
+  ...dialogueScenarios,
   ...npcScenarios,
   ...bountyScenarios,
   ...combatScenarios,

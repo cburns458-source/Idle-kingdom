@@ -1006,6 +1006,17 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 61,
     }),
   },
+  {
+    fromVersion: 61,
+    toVersion: 62,
+    migrate: (save) => ({
+      ...save,
+      dialogueFlags: [
+        ...new Set(normalizeStringIds((save as PlayerSave & { dialogueFlags?: unknown }).dialogueFlags)),
+      ].sort(),
+      saveVersion: 62,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

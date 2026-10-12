@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 61;
+const int saveVersion = 62;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1122,6 +1122,7 @@ class PlayerSave {
     required this.shopPurchasesToday,
     required this.claimedMerchantTipIds,
     required this.completedDialogueIds,
+    required this.dialogueFlags,
     required this.claimedKingswoodsSling,
     required this.critterCollections,
     required this.activeCritterSpawns,
@@ -1235,6 +1236,7 @@ class PlayerSave {
         json['completedDialogueIds'],
         (Object? entry) => entry as String,
       ),
+      dialogueFlags: listOf(json['dialogueFlags'], (Object? entry) => entry as String),
       claimedKingswoodsSling: json['claimedKingswoodsSling'] as bool,
       critterCollections: listOf(
         json['critterCollections'],
@@ -1406,6 +1408,10 @@ class PlayerSave {
 
   /// Standalone dialogue IDs finished once (non-repeatable conversations).
   final List<String> completedDialogueIds;
+
+  /// Flags written by dialogue `set_flag` actions, sorted and unique. Once-only
+  /// gifts use `gift:<QST or DLG id>:<key>` so a cheat abandon can clear a quest's.
+  final List<String> dialogueFlags;
 
   /// One-time Kingswoods Sling grant. Existing saves keep false until they visit.
   final bool claimedKingswoodsSling;
@@ -1609,6 +1615,7 @@ class PlayerSave {
       'shopPurchasesToday': shopPurchasesToday,
       'claimedMerchantTipIds': claimedMerchantTipIds,
       'completedDialogueIds': completedDialogueIds,
+      'dialogueFlags': dialogueFlags,
       'claimedKingswoodsSling': claimedKingswoodsSling,
       'critterCollections': critterCollections.map((entry) => entry.toJson()).toList(),
       'activeCritterSpawns': activeCritterSpawns.map((entry) => entry.toJson()).toList(),
@@ -1701,6 +1708,7 @@ class PlayerSave {
     Map<String, num>? shopPurchasesToday,
     List<String>? claimedMerchantTipIds,
     List<String>? completedDialogueIds,
+    List<String>? dialogueFlags,
     bool? claimedKingswoodsSling,
     List<CritterCollectionEntry>? critterCollections,
     List<CritterSpawn>? activeCritterSpawns,
@@ -1796,6 +1804,7 @@ class PlayerSave {
       shopPurchasesToday: shopPurchasesToday ?? this.shopPurchasesToday,
       claimedMerchantTipIds: claimedMerchantTipIds ?? this.claimedMerchantTipIds,
       completedDialogueIds: completedDialogueIds ?? this.completedDialogueIds,
+      dialogueFlags: dialogueFlags ?? this.dialogueFlags,
       claimedKingswoodsSling: claimedKingswoodsSling ?? this.claimedKingswoodsSling,
       critterCollections: critterCollections ?? this.critterCollections,
       activeCritterSpawns: activeCritterSpawns ?? this.activeCritterSpawns,

@@ -5,6 +5,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { applyGameCommand } from '../server/authority'
 import { chooseDialogue, dialoguesForNpc, startDialogue } from './engine'
+import { validateDialogueContent } from './validate'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -48,5 +49,12 @@ describe('standalone dialogue engine', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.save.completedDialogueIds).toContain('DLG-0001')
+  })
+
+  // Rows without Release Phase Launch never load, so the dormant SYS-01 rows
+  // waiting for the content PR are checked by the recorded validate fixture only.
+  it('ships dialogue content without validation errors', () => {
+    const issues = validateDialogueContent(db)
+    expect(issues.filter((issue) => issue.severity === 'error')).toEqual([])
   })
 })

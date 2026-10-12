@@ -61,7 +61,13 @@ import { syncBountyHour } from '../bounties/progress'
 import { applyRankedPvpResult } from '../pvp/matchmaking'
 import { GUILD_CREATE_GOLD_COST } from '../multiplayer/types'
 import { createGuildRefusalFor } from '../guild/rules'
-import { chooseDialogue } from '../dialogue/engine'
+import {
+  chooseDialogue,
+  startDialogue,
+  viewDialogueNode,
+  type DialogueItemDelta,
+  type DialogueView,
+} from '../dialogue/engine'
 
 export { createTrackedMulberry32 }
 
@@ -106,6 +112,8 @@ export type GameCommandName =
   | 'quest_assign_skill_xp'
   | 'merchant_tip_claim'
   | 'dialogue_choose'
+  | 'dialogue_view'
+  | 'quest_abandon'
   | 'quest_inspect'
   | 'complete_special_project'
   | 'mail_read'
@@ -124,8 +132,9 @@ export type GameCommandName =
 export type GameCommandArgs = Record<string, unknown>
 
 export type GameCommandResult =
-  | { ok: true; save: PlayerSave; hall?: GuildHallState; goldCost?: number }
+  | { ok: true; save: PlayerSave; hall?: GuildHallState; goldCost?: number; view?: DialogueView | null }
   | { ok: false; reason: string }
+  | { ok: false; reason: string; code: string; favourites: DialogueItemDelta[] }
   | { ok: false; reason: string; catchingUp: true; save: PlayerSave }
 
 export type Phase2SyncResult = {
@@ -241,7 +250,10 @@ function failed(reason: string): GameCommandResult {
   return { ok: false, reason }
 }
 
-function ok(save: PlayerSave, extra?: { hall?: GuildHallState; goldCost?: number }): GameCommandResult {
+function ok(
+  save: PlayerSave,
+  extra?: { hall?: GuildHallState; goldCost?: number; view?: DialogueView | null },
+): GameCommandResult {
   return { ok: true, save, ...extra }
 }
 
@@ -568,9 +580,31 @@ function applyExistingCommand(
       const nodeId = asString(args.nodeId)
       const choiceId = asString(args.choiceId)
       if (!dialogueId || !nodeId || !choiceId) return failed('Missing dialogue choice.')
-      const chosen = chooseDialogue(db, save, dialogueId, nodeId, choiceId)
-      return chosen.ok ? ok(chosen.save) : failed(chosen.reason)
+      // Per request only: never written to the save, so a yes cannot carry over.
+      const useFavourites = args.useFavourites
+      if (useFavourites !== undefined && typeof useFavourites !== 'boolean') {
+        return failed('useFavourites must be true or false.')
+      }
+      const chosen = chooseDialogue(db, save, dialogueId, nodeId, choiceId, {
+        useFavourites: useFavourites === true,
+      })
+      if (chosen.ok) return ok(chosen.save)
+      if (chosen.code === 'confirm_favourites') {
+        return { ok: false, reason: chosen.reason, code: chosen.code, favourites: chosen.favourites }
+      }
+      return failed(chosen.reason)
     }
+    case 'dialogue_view': {
+      // Read-only: the game function returns the view and does not write the save.
+      const dialogueId = asString(args.dialogueId)
+      if (!dialogueId) return failed('Missing dialogue.')
+      const nodeId = asString(args.nodeId)
+      if (nodeId) return ok(save, { view: viewDialogueNode(db, save, dialogueId, nodeId) })
+      const started = startDialogue(db, save, dialogueId)
+      return started.ok ? ok(save, { view: started.view }) : failed(started.reason)
+    }
+    case 'quest_abandon':
+      return failed('Quests cannot be abandoned.')
     case 'quest_inspect': {
       const target = asString(args.target)
       if (!target) return failed('Missing inspect.')

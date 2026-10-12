@@ -44,6 +44,15 @@ export interface QuestRow {
   'Reward Item ID': string | null
   'Reward Item Quantity': number | null
   'Possible Rewards': string | null
+  /** `dialogue` pays nothing on completion; rewards come from dialogue actions. Missing means `legacy`. */
+  'Reward Mode'?: string | null
+}
+
+export type QuestRewardMode = 'legacy' | 'dialogue'
+
+export function questRewardMode(quest: QuestRow): QuestRewardMode {
+  const raw = quest['Reward Mode']
+  return typeof raw === 'string' && raw.trim().toLowerCase() === 'dialogue' ? 'dialogue' : 'legacy'
 }
 
 export function asQuestRows(db: GameDatabase): QuestRow[] {
@@ -286,9 +295,10 @@ export function completeQuest(
   const loot: LootGrant[] = []
   let goldGained = 0
   let pendingSkillXp = 0
+  const paysRewards = questRewardMode(quest) === 'legacy'
   const bribed = hasQuestFlag(save, questId, 'choice:bribe')
-  const xpGrants = questXpGrants(quest, parsed)
-  if (bribed && parsed.branchSkillXp > 0) {
+  const xpGrants = paysRewards ? questXpGrants(quest, parsed) : []
+  if (paysRewards && bribed && parsed.branchSkillXp > 0) {
     pendingSkillXp = parsed.branchSkillXp
     rewards.push({
       label: `Choose ${pendingSkillXp.toLocaleString()} XP in a non-combat skill`,
@@ -304,7 +314,7 @@ export function completeQuest(
     }
   }
 
-  if (parsed.rewardGold > 0) {
+  if (paysRewards && parsed.rewardGold > 0) {
     goldGained = parsed.rewardGold
     next = { ...next, gold: next.gold + parsed.rewardGold }
     rewards.push({ label: `${parsed.rewardGold.toLocaleString()} gold` })
@@ -312,7 +322,7 @@ export function completeQuest(
 
   const rewardItemId = quest['Reward Item ID']
   const rewardQty = quest['Reward Item Quantity']
-  if (rewardItemId && typeof rewardQty === 'number' && rewardQty > 0) {
+  if (paysRewards && rewardItemId && typeof rewardQty === 'number' && rewardQty > 0) {
     next = addItemToInventory(next, rewardItemId, rewardQty)
     const itemName =
       db.Items.find((item) => item['Item ID'] === rewardItemId)?.['Display Name'] ?? 'item'
@@ -320,7 +330,7 @@ export function completeQuest(
     loot.push({ itemId: rewardItemId, quantity: rewardQty, displayName: itemName })
   }
 
-  for (const grant of parsed.rewardItems) {
+  for (const grant of paysRewards ? parsed.rewardItems : []) {
     if (grant.quantity <= 0) continue
     next = addItemToInventory(next, grant.targetId, grant.quantity)
     const itemName =
@@ -342,7 +352,7 @@ export function completeQuest(
     }
   }
 
-  for (const recipeId of parsed.rewardRecipeIds) {
+  for (const recipeId of paysRewards ? parsed.rewardRecipeIds : []) {
     const before = next.unlockedRecipeIds?.length ?? 0
     next = unlockRecipeId(next, recipeId)
     if ((next.unlockedRecipeIds?.length ?? 0) > before) {
@@ -354,7 +364,7 @@ export function completeQuest(
     }
   }
 
-  for (const rewardNpcId of parsed.rewardProjectNpcIds) {
+  for (const rewardNpcId of paysRewards ? parsed.rewardProjectNpcIds : []) {
     if (!(next.unlockedNpcIds ?? []).includes(rewardNpcId)) {
       next = {
         ...next,
@@ -366,7 +376,7 @@ export function completeQuest(
     }
   }
 
-  for (const cosmeticId of parsed.rewardCosmeticIds) {
+  for (const cosmeticId of paysRewards ? parsed.rewardCosmeticIds : []) {
     const granted = grantCosmetic(next, cosmeticId)
     next = granted.save
     if (granted.granted) {
@@ -380,7 +390,7 @@ export function completeQuest(
   }
 
   const booksGranted: { bookId: string; isFirstEver: boolean }[] = []
-  for (const bookId of parsed.rewardBookIds) {
+  for (const bookId of paysRewards ? parsed.rewardBookIds : []) {
     const granted = grantBook(next, bookId)
     next = granted.save
     if (granted.granted) {
@@ -619,6 +629,42 @@ export function resetQuestProgress(save: PlayerSave, questIds: string[]): Player
   }
 }
 
+/** Dialogue flags owned by [ownerId] (a quest or dialogue ID) under the once-only gift convention. */
+export function isGiftFlagOf(flag: string, ownerId: string): boolean {
+  return flag === `gift:${ownerId}` || flag.startsWith(`gift:${ownerId}:`)
+}
+
+export type CheatAbandonResult =
+  | { ok: true; save: PlayerSave; deletedHandIns: Array<{ itemId: string; quantity: number }> }
+  | { ok: false; reason: string }
+
+/**
+ * Testing-only abandon. Drops the quest row, so every counter goes with it,
+ * including items an NPC holds for a HandIn step (deleted, never refunded), and
+ * clears that quest's once-only gift flags so the gifts can be claimed again.
+ * Players have no abandon; the server only reaches this behind developer_accounts.
+ */
+export function cheatAbandonQuest(save: PlayerSave, questId: string): CheatAbandonResult {
+  const progress = getQuestProgress(save, questId)
+  if (progress.status !== 'active') return { ok: false, reason: 'That quest is not active.' }
+  const deletedHandIns: Array<{ itemId: string; quantity: number }> = []
+  for (const key of Object.keys(progress.counters ?? {}).sort()) {
+    if (!key.startsWith('handIn:')) continue
+    const quantity = Number(progress.counters?.[key] ?? 0)
+    if (quantity <= 0) continue
+    deletedHandIns.push({ itemId: key.slice(key.lastIndexOf(':') + 1), quantity })
+  }
+  const reset = resetQuestProgress(save, [questId])
+  return {
+    ok: true,
+    save: {
+      ...reset,
+      dialogueFlags: (reset.dialogueFlags ?? []).filter((flag) => !isGiftFlagOf(flag, questId)),
+    },
+    deletedHandIns,
+  }
+}
+
 /** Clears first-run intro flags so those hints can fire again. */
 export function resetIntroFlags(
   save: PlayerSave,
@@ -655,6 +701,16 @@ export function questCompletionRewardLabels(
   const questId = quest['Quest ID']
   const parsed = parseStructuredObjectives(quest)
   const rewards: string[] = []
+  if (questRewardMode(quest) === 'dialogue') {
+    for (const locationId of parsed.unlockLocationIds) {
+      const locName =
+        db.Locations.find((location) => location['Location ID'] === locationId)?.['Display Name'] ??
+        locationId
+      rewards.push(`Unlocked ${locName}`)
+    }
+    rewards.push(...facilityUnlockRewardLabels(db, questId))
+    return rewards
+  }
   const bribed = save != null && hasQuestFlag(save, questId, 'choice:bribe')
   if (bribed && parsed.branchSkillXp > 0) {
     rewards.push(`Choose ${parsed.branchSkillXp.toLocaleString()} XP in a non-combat skill`)

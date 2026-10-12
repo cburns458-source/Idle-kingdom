@@ -144,6 +144,55 @@ function journalProgressLines(
   )
 }
 
+/** Step types that only a dialogue action can complete. */
+export type DialogueStepType = 'Talk' | 'Show' | 'HandIn'
+
+export interface StepItemNeed {
+  itemId: string
+  quantity: number
+}
+
+export function getQuestStep(
+  db: GameDatabase,
+  questId: string,
+  stepId: string,
+): QuestStepRow | undefined {
+  return asQuestStepRows(db).find((row) => row['Step ID'] === stepId && row['Quest ID'] === questId)
+}
+
+export function dialogueStepType(step: QuestStepRow | null | undefined): DialogueStepType | null {
+  const raw = typeof step?.['Step Type'] === 'string' ? step['Step Type'].trim() : ''
+  return raw === 'Talk' || raw === 'Show' || raw === 'HandIn' ? raw : null
+}
+
+/**
+ * `ITEM-x:n;ITEM-y:m` from a Show/HandIn step. Entries without a whole
+ * quantity of at least 1 are skipped; repeated items are summed.
+ */
+export function parseStepItems(raw: string | null | undefined): StepItemNeed[] {
+  const needs: StepItemNeed[] = []
+  if (typeof raw !== 'string') return needs
+  for (const entry of raw.split(';')) {
+    const parts = entry.split(':').map((part) => part.trim())
+    if (parts.length !== 2 || parts[0] === '' || !/^\d+$/.test(parts[1]!)) continue
+    const quantity = Number(parts[1])
+    if (quantity < 1) continue
+    const existing = needs.find((need) => need.itemId === parts[0])
+    if (existing) existing.quantity += quantity
+    else needs.push({ itemId: parts[0]!, quantity })
+  }
+  return needs
+}
+
+/** Counter holding how many of [itemId] the NPC already keeps for a HandIn step. */
+export function handInCounterKey(stepId: string, itemId: string): string {
+  return `handIn:${stepId}:${itemId}`
+}
+
+export function isStepLatched(save: PlayerSave, questId: string, stepId: string): boolean {
+  return Number(getQuestProgress(save, questId).counters?.[stepCompleteKey(stepId)] ?? 0) >= 1
+}
+
 export function isStepComplete(
   db: GameDatabase,
   save: PlayerSave,
@@ -151,9 +200,8 @@ export function isStepComplete(
   notes: string,
   stepId?: string,
 ): boolean {
-  if (stepId && Number(getQuestProgress(save, questId).counters?.[stepCompleteKey(stepId)] ?? 0) >= 1) {
-    return true
-  }
+  if (stepId && isStepLatched(save, questId, stepId)) return true
+  if (stepId && dialogueStepType(getQuestStep(db, questId, stepId))) return false
   if (isAskAroundSkipped(db, save, questId, notes)) return true
   const lines = stepProgressLines(db, save, questId, notes, stepId)
   if (lines.length === 0) return true
@@ -189,7 +237,28 @@ export function stepCompleteKey(stepId: string): string {
   return `step:${stepId}`
 }
 
-function latchStep(save: PlayerSave, questId: string, stepId: string): PlayerSave {
+/** Replaces a quest's counters, keeping `progress` as their sum. */
+export function withQuestCounters(
+  save: PlayerSave,
+  questId: string,
+  counters: Record<string, number>,
+): PlayerSave {
+  const progress = getQuestProgress(save, questId)
+  return {
+    ...save,
+    quests: [
+      ...save.quests.filter((row) => row.questId !== questId),
+      {
+        ...progress,
+        counters,
+        progress: Object.values(counters).reduce((sum, value) => sum + Number(value), 0),
+      },
+    ],
+  }
+}
+
+/** Marks a step done for good (BUG-01). The one write path for Talk, Show and HandIn too. */
+export function latchStep(save: PlayerSave, questId: string, stepId: string): PlayerSave {
   const key = stepCompleteKey(stepId)
   const progress = getQuestProgress(save, questId)
   if (Number(progress.counters?.[key] ?? 0) >= 1) return save

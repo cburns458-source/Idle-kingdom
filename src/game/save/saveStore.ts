@@ -84,6 +84,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     shopPurchasesToday: {},
     claimedMerchantTipIds: [],
     completedDialogueIds: [],
+    dialogueFlags: [],
     claimedKingswoodsSling: false,
     critterCollections: [],
     activeCritterSpawns: [],

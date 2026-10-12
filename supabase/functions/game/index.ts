@@ -7,6 +7,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
+import { gateDevCommand } from '../_shared/dev_gate.ts'
 import {
   applyDevCommand,
   applyGameCommand,
@@ -391,7 +392,21 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
         202,
       )
     }
-    if (!result.ok) return json({ error: result.reason, phase: 2 }, 400)
+    if (!result.ok) {
+      const prompt = 'code' in result ? { code: result.code, favourites: result.favourites } : {}
+      return json({ error: result.reason, phase: 2, ...prompt }, 400)
+    }
+    if (command === 'dialogue_view') {
+      return json({
+        ok: true,
+        phase: 2,
+        action: 'command',
+        command,
+        view: result.view ?? null,
+        version: hosted?.version ?? 0,
+        wroteSave: false,
+      })
+    }
     let foundedGuild: Record<string, unknown> | null = null
     if (command === 'guild_create') {
       const founded = await foundGuild(admin, userId, args)
@@ -465,21 +480,27 @@ async function handleDevCommand(admin: Client, userId: string, payload: GameBody
     ? payload.tokens.filter((part): part is string => typeof part === 'string')
     : []
 
-  const { data: allow, error: allowError } = await admin
-    .from('developer_accounts')
-    .select('user_id')
-    .eq('user_id', userId)
-    .maybeSingle()
-  if (allowError) return json({ error: allowError.message, phase: 2 }, 500)
-  if (!allow?.user_id) {
-    await admin.from('developer_audit_log').insert({
-      user_id: userId,
-      command,
-      args: { tokens },
-      ok: false,
-      reason: 'Not a developer account.',
-    })
-    return json({ error: 'Not a developer account.', phase: 2, action: 'dev_command' }, 403)
+  const gate = await gateDevCommand(
+    {
+      lookupDeveloper: async (id) => {
+        const { data, error } = await admin
+          .from('developer_accounts')
+          .select('user_id')
+          .eq('user_id', id)
+          .maybeSingle()
+        return { developer: Boolean(data?.user_id), error: error?.message ?? null }
+      },
+      audit: async (row) => {
+        await admin.from('developer_audit_log').insert(row)
+      },
+    },
+    userId,
+    command,
+    tokens,
+  )
+  if (!gate.ok) {
+    if (gate.status === 500) return json({ error: gate.error, phase: 2 }, 500)
+    return json({ error: gate.error, phase: 2, action: 'dev_command' }, 403)
   }
 
   const nowMs = Date.now()

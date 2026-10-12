@@ -35,6 +35,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     heldActionByActivityId: {},
     claimedMerchantTipIds: [],
     completedDialogueIds: [],
+    dialogueFlags: [],
     claimedKingswoodsSling: false,
     critterCollections: [],
     activeCritterSpawns: [],
