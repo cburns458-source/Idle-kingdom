@@ -27,7 +27,14 @@ import {
 import type { PlayerSave } from '../save/types'
 import { getSkillProgress } from '../activity/xp'
 import { totalLevel } from '../skills/totals'
-import { bagCount, stepProgressGroup, takeFromBag, type StepProgressGroup } from './stepProgress'
+import {
+  bagCount,
+  handInCount,
+  stepProgressGroup,
+  takeForHandIn,
+  takeFromBag,
+  type StepProgressGroup,
+} from './stepProgress'
 
 export interface DialogueToken {
   raw: string
@@ -162,7 +169,7 @@ function stepNotReadyReason(db: GameDatabase, save: PlayerSave, questId: string,
   }
   if (type === 'HandIn') {
     const wanted = needs.filter((need) => handInRemaining(save, questId, stepId, need.itemId, need.quantity) > 0)
-    if (wanted.some((need) => bagCount(save, need.itemId) > 0)) return null
+    if (wanted.some((need) => handInCount(save, need.itemId) > 0)) return null
     return `Bring ${wanted.map((need) => itemName(db, need.itemId)).join(' or ')}`
   }
   return null
@@ -702,9 +709,9 @@ function applyAction(
       for (const need of needs) {
         const key = handInCounterKey(b, need.itemId)
         const kept = Number(counters[key] ?? 0)
-        const move = Math.min(bagCount(next, need.itemId), Math.max(0, need.quantity - kept))
+        const move = Math.min(handInCount(next, need.itemId), Math.max(0, need.quantity - kept))
         if (move > 0) {
-          next = takeFromBag(next, need.itemId, move)!
+          next = takeForHandIn(next, need.itemId, move)!
           counters[key] = kept + move
           moved += move
           work.itemDeltas.push({ itemId: need.itemId, qty: -move })

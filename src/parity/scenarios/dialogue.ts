@@ -366,6 +366,14 @@ export function runDialogueScript(db: GameDatabase, initial: PlayerSave, ops: Op
         save = { ...save, bank: quantity > 0 ? [...bank, { itemId, quantity }] : bank }
         break
       }
+      case 'setStacks': {
+        const itemId = str(op, 'itemId')
+        const stacks = (op.stacks as Array<{ quantity: number; favorite: boolean }>).map((stack) =>
+          stack.favorite ? { itemId, quantity: stack.quantity, favorite: true } : { itemId, quantity: stack.quantity },
+        )
+        save = { ...save, inventory: [...save.inventory.filter((stack) => stack.itemId !== itemId), ...stacks] }
+        break
+      }
       case 'fillBag':
         save = fillBag(save, Number(op.free))
         break
@@ -603,6 +611,35 @@ const SCRIPTS: Record<string, Op[]> = {
     { op: 'clearFillers' },
     GIFTS('DCH-9028'),
     feastProgress,
+  ],
+
+  // Conor: hearted stacks count for Show; HandIn never counts or takes them.
+  favourites: [
+    FENNEL('DCH-9011'),
+    { op: 'setStacks', itemId: BAKED_POTATO, stacks: [{ quantity: 5, favorite: true }] },
+    { op: 'progress', questId: 'QST-9002', stepId: 'QSTP-9011' },
+    { op: 'conditions', tokens: [`has_item:${BAKED_POTATO}:5`, 'step_ready:QST-9002:QSTP-9011'] },
+    FENNEL('DCH-9012'),
+    KING('DCH-9001'),
+    { op: 'setStacks', itemId: BAKED_POTATO, stacks: [{ quantity: 10, favorite: true }] },
+    { op: 'setStacks', itemId: COOKED_PERCH, stacks: [{ quantity: 10, favorite: true }] },
+    feastProgress,
+    { op: 'conditions', tokens: ['step_ready:QST-9001:QSTP-9002'] },
+    KING('DCH-9002'),
+    KING('DCH-9006'),
+    {
+      op: 'setStacks',
+      itemId: BAKED_POTATO,
+      stacks: [
+        { quantity: 10, favorite: true },
+        { quantity: 4, favorite: false },
+      ],
+    },
+    feastProgress,
+    KING('DCH-9002'),
+    feastProgress,
+    KING('DCH-9006'),
+    { op: 'view', dialogueId: 'DLG-9001', nodeId: 'DNODE-9001' },
   ],
 
   // 11. Partial hand-in survives logout / login.

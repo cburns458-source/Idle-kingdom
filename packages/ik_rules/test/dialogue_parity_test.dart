@@ -95,6 +95,20 @@ Map<String, Object?> _runScript(GameDatabase db, PlayerSave initial, List<Object
         save = save.copyWith(
           bank: quantity > 0 ? [...bank, InventoryStack(itemId: itemId, quantity: quantity)] : bank,
         );
+      case 'setStacks':
+        final itemId = str('itemId');
+        final stacks = [
+          for (final raw in op['stacks']! as List<Object?>)
+            if (raw case final Map<String, Object?> stack)
+              InventoryStack(
+                itemId: itemId,
+                quantity: stack['quantity']! as num,
+                favorite: stack['favorite'] == true ? true : null,
+              ),
+        ];
+        save = save.copyWith(
+          inventory: [...save.inventory.where((stack) => stack.itemId != itemId), ...stacks],
+        );
       case 'fillBag':
         save = _fillBag(save, (op['free']! as num).toInt());
       case 'clearFillers':

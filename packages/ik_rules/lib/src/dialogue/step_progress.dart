@@ -1,6 +1,7 @@
 /// Show / HandIn progress for the UI ("6/10 Baked Potato handed in", "You have 3/5").
 ///
 /// Counts read the bag only, never the bank. Enchanted stacks do not count.
+/// Show counts hearted (favourited) stacks; HandIn neither counts nor takes them.
 /// Ported from `src/game/dialogue/stepProgress.ts`.
 library;
 
@@ -24,7 +25,7 @@ class StepProgressLine {
 
   final String itemId;
 
-  /// Unenchanted bag count right now.
+  /// Unenchanted bag count right now; HandIn leaves hearted stacks out.
   final num have;
 
   /// Already kept by the NPC (HandIn); always 0 for Show.
@@ -78,6 +79,36 @@ num bagCount(PlayerSave save, String itemId) {
   return total;
 }
 
+/// Unenchanted, unhearted bag quantity of [itemId]: what a HandIn step may take.
+num handInCount(PlayerSave save, String itemId) {
+  num total = 0;
+  for (final stack in save.inventory) {
+    if (stack.itemId == itemId && isBlank(stack.enchantmentId) && stack.favorite != true) {
+      total += stack.quantity;
+    }
+  }
+  return total;
+}
+
+/// Removes [quantity] unenchanted, unhearted [itemId]; null when fewer are held.
+PlayerSave? takeForHandIn(PlayerSave save, String itemId, num quantity) {
+  if (quantity <= 0) return save;
+  if (handInCount(save, itemId) < quantity) return null;
+  final inventory = [...save.inventory];
+  var remaining = quantity;
+  for (var index = 0; index < inventory.length; index++) {
+    if (remaining <= 0) break;
+    final stack = inventory[index];
+    if (stack.itemId != itemId || isNotBlank(stack.enchantmentId) || stack.favorite == true) {
+      continue;
+    }
+    final taken = math.min(stack.quantity, remaining);
+    inventory[index] = stack.copyWith(quantity: stack.quantity - taken);
+    remaining -= taken;
+  }
+  return save.copyWith(inventory: inventory.where((stack) => stack.quantity > 0).toList());
+}
+
 /// Removes [quantity] unenchanted [itemId] from the bag, unhearted stacks first.
 /// Returns null when the bag holds fewer.
 PlayerSave? takeFromBag(PlayerSave save, String itemId, num quantity) {
@@ -125,7 +156,7 @@ StepProgressGroup? stepProgressGroup(
     for (final need in parseStepItems(step?.raw['Step Items']))
       StepProgressLine(
         itemId: need.itemId,
-        have: bagCount(save, need.itemId),
+        have: mode == 'show' ? bagCount(save, need.itemId) : handInCount(save, need.itemId),
         handedIn: mode == 'show'
             ? 0
             : done

@@ -181,7 +181,7 @@ String? _stepNotReadyReason(GameDatabase db, PlayerSave save, String questId, St
     final wanted = needs
         .where((need) => _handInRemaining(save, questId, stepId, need.itemId, need.quantity) > 0)
         .toList();
-    if (wanted.any((need) => bagCount(save, need.itemId) > 0)) return null;
+    if (wanted.any((need) => handInCount(save, need.itemId) > 0)) return null;
     return 'Bring ${wanted.map((need) => _itemName(db, need.itemId)).join(' or ')}';
   }
   return null;
@@ -793,9 +793,9 @@ _ActionFailure? _applyAction(
       for (final need in needs) {
         final key = handInCounterKey(b, need.itemId);
         final kept = counters[key] ?? 0;
-        final move = math.min(bagCount(next, need.itemId), math.max(0, need.quantity - kept));
+        final move = math.min(handInCount(next, need.itemId), math.max(0, need.quantity - kept));
         if (move > 0) {
-          next = takeFromBag(next, need.itemId, move)!;
+          next = takeForHandIn(next, need.itemId, move)!;
           counters[key] = kept + move;
           moved += move;
           work.itemDeltas.add(DialogueItemDelta(itemId: need.itemId, qty: -move));
