@@ -2953,7 +2953,7 @@
       "Icon Asset Key": "dwarven_warhammer",
       "Notes": null,
       "Base Sell Value": 244,
-      "Tradeable": true,
+      "Tradeable": false,
       "Stackable": null
     },
     {

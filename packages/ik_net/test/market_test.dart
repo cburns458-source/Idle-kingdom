@@ -131,7 +131,13 @@ void main() {
   group('the stand-in exchange', () {
     test('will not take a stack of an untradeable item', () {
       final untradeable = fakeExchangeUntradeableIds(_database());
-      expect(untradeable, <String>{_machete, _excavatorsPickaxe, 'ITEM-0299', 'ITEM-0300'});
+      expect(untradeable, <String>{
+        _machete,
+        _excavatorsPickaxe,
+        'ITEM-0299',
+        'ITEM-0300',
+        'ITEM-0123',
+      });
       final machete = <String, Object?>{'itemId': _machete, 'quantity': 1};
       final spud = <String, Object?>{'itemId': _goldenSpud, 'quantity': 1};
       expect(fakeExchangeTradableStack(machete, untradeable: untradeable), isFalse);
