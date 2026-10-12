@@ -1614,6 +1614,8 @@ class GameController extends ChangeNotifier {
   /// Travels into the player's guild hall from the Guilds screen.
   bool travelToGuildHall({void Function()? onArrived}) {
     if (switchBusy) return false;
+    final claimedSling = save.claimedKingswoodsSling;
+    final ownedSling = saveOwnsSling(save);
     if (playsHosted) {
       final plan = planGuildHallTravel(db, save, session.clock(), _random);
       switch (plan) {
@@ -1626,6 +1628,8 @@ class GameController extends ChangeNotifier {
               const <String, Object?>{},
               arrival,
               onArrived: onArrived,
+              claimedSling: claimedSling,
+              ownedSling: ownedSling,
             ),
           );
       }
@@ -1834,6 +1838,8 @@ class GameController extends ChangeNotifier {
   }
 
   void _noteKingswoodsSling({required bool claimedBefore, required bool ownedBefore}) {
+    // Only the Kingswoods grant shows this line — never after guild hall or other travel.
+    if (save.currentLocationId != kingswoodsLocationId) return;
     if (claimedBefore || ownedBefore || !save.claimedKingswoodsSling || !saveOwnsSling(save)) {
       return;
     }

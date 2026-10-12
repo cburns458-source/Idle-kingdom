@@ -17,6 +17,39 @@ export const ESSENCE_BUY_MULT = 100
 export const MINING_ORE_SELL_MULT = 1.5
 export const GENERAL_SELL_MULT = 1
 
+/** Enchanted gear at the Wizard's Shop. */
+export const ENCHANTED_WIZARD_SELL_MULT = 2
+
+/** General merchants that buy enchanted gear at Base Sell Value. */
+export const GENERAL_MERCHANT_SHOP_KEYS = new Set([
+  'general_store',
+  'citadel_market_hall',
+  'citadel_supply_stall',
+])
+
+export function isWizardsShop(shop: ShopRow): boolean {
+  return shop['Internal Key'] === 'wizards_shop'
+}
+
+export function isGeneralMerchantShop(shop: ShopRow): boolean {
+  const key = shop['Internal Key']
+  return typeof key === 'string' && GENERAL_MERCHANT_SHOP_KEYS.has(key)
+}
+
+/** Wizard's Shop and the three general merchants accept enchanted bag sales. */
+export function shopAcceptsEnchantedSales(shop: ShopRow): boolean {
+  return isWizardsShop(shop) || isGeneralMerchantShop(shop)
+}
+
+/** How a shop treats enchanted stacks when the player sells to its counter. */
+export type ShopEnchantedSellMode = 'reject' | 'preferPlain' | 'enchantedOnly'
+
+export function shopEnchantedSellMode(shop: ShopRow): ShopEnchantedSellMode {
+  if (isWizardsShop(shop)) return 'enchantedOnly'
+  if (isGeneralMerchantShop(shop)) return 'preferPlain'
+  return 'reject'
+}
+
 export interface ShopStockEntry {
   itemId: string
   /** 1-based shop entry slot. */
@@ -174,16 +207,29 @@ export function isOreItem(item: ItemRow): boolean {
   return subtype === 'ore' || tags.includes('ore') || name.endsWith(' ore')
 }
 
-/** Price the shop pays the player for one unit. Null = shop will not buy it. */
+/**
+ * Price the shop pays the player for one unit. Null = shop will not buy it.
+ *
+ * `enchanted` is for a bag stack with an enchantment. Only the Wizard's Shop
+ * (2×) and the three general merchants (1×) buy those; every other counter
+ * refuses them. The Bazaar is separate and still blocks enchanted listings.
+ */
 export function playerSellPrice(
   db: GameDatabase,
   shop: ShopRow,
   itemId: string,
+  options: { enchanted?: boolean } = {},
 ): number | null {
   if (itemId === currencyItemId(db)) return null
   const item = db.Items.find((row) => row['Item ID'] === itemId)
   const base = baseSellValue(item)
   if (base == null || base <= 0) return null
+
+  if (options.enchanted) {
+    if (isWizardsShop(shop)) return Math.round(base * ENCHANTED_WIZARD_SELL_MULT)
+    if (isGeneralMerchantShop(shop)) return Math.round(base * GENERAL_SELL_MULT)
+    return null
+  }
 
   const key = shop['Internal Key']
   if (key === 'dwarven_mining_store') {

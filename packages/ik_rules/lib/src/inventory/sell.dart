@@ -33,13 +33,20 @@ class LocationSellPrice {
 
 /// Best unit price for selling at the current location.
 ///
-/// Uses an accessible shop when one will buy the item, otherwise the 50% field
+/// Uses an accessible shop when one will buy the item (including enchanted
+/// gear at the Wizard's Shop or a general merchant), otherwise the 50% field
 /// price. Null means the item cannot be sold anywhere.
-LocationSellPrice? sellPriceAtLocation(GameDatabase db, PlayerSave save, String itemId) {
+LocationSellPrice? sellPriceAtLocation(
+  GameDatabase db,
+  PlayerSave save,
+  String itemId, {
+  String? enchantmentId,
+}) {
+  final enchanted = isNotBlank(enchantmentId);
   LocationSellPrice? best;
   for (final shop in shopsAtLocation(db, save.currentLocationId)) {
     if (!canAccessShop(db, save, shop).ok) continue;
-    final price = playerSellPrice(db, shop, itemId);
+    final price = playerSellPrice(db, shop, itemId, enchanted: enchanted);
     if (price == null) continue;
     if (best == null || price > best.unitPrice) {
       best = LocationSellPrice(unitPrice: price, shopId: shop.raw['Shop ID'] as String?);
@@ -128,10 +135,7 @@ SellInventoryResult sellInventoryQuantities(
         'Favorited items cannot be sold. Unfavorite them first.',
       );
     }
-    if (isNotBlank(stack.enchantmentId)) {
-      return const SellInventoryResult.failed('Enchanted items cannot be sold from the bag.');
-    }
-    final priced = sellPriceAtLocation(db, save, stack.itemId);
+    final priced = sellPriceAtLocation(db, save, stack.itemId, enchantmentId: stack.enchantmentId);
     if (priced == null) {
       final name = db.items
           .firstWhereOrNull((item) => item.raw['Item ID'] == stack.itemId)
