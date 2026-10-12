@@ -34390,9 +34390,9 @@
       "Repeatable": "No",
       "Reward XP Skill ID": null,
       "Reward XP Amount": null,
-      "Reward Item ID": null,
-      "Reward Item Quantity": null,
-      "Possible Rewards": "Smithing and Metallurgy XP"
+      "Reward Item ID": "ITEM-0123",
+      "Reward Item Quantity": 1,
+      "Possible Rewards": "Smithing and Metallurgy XP; Dwarven Warhammer x1"
     },
     {
       "Quest ID": "QST-0008",
