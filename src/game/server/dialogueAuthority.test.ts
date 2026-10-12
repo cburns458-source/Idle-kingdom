@@ -31,8 +31,18 @@ function command(save: PlayerSave, name: string, args: Record<string, unknown> =
   return applyGameCommand(rawDatabase, { command: name, args, save, nowMs: START_MS, random: () => 0 })
 }
 
-function king(save: PlayerSave, choiceId: string): GameCommandResult {
-  return command(save, 'dialogue_choose', { dialogueId: 'DLG-9001', nodeId: 'DNODE-9001', choiceId })
+function king(save: PlayerSave, choiceId: string, extra: Record<string, unknown> = {}): GameCommandResult {
+  return command(save, 'dialogue_choose', { dialogueId: 'DLG-9001', nodeId: 'DNODE-9001', choiceId, ...extra })
+}
+
+function withStacks(save: PlayerSave, itemId: string, stacks: Array<[number, boolean]>): PlayerSave {
+  return {
+    ...save,
+    inventory: [
+      ...save.inventory.filter((stack) => stack.itemId !== itemId),
+      ...stacks.map(([quantity, favorite]) => (favorite ? { itemId, quantity, favorite } : { itemId, quantity })),
+    ],
+  }
 }
 
 function saveOf(result: GameCommandResult): PlayerSave {
@@ -164,5 +174,35 @@ describe('dialogue commands on the server', () => {
       'DCH-9005',
       'DCH-9006',
     ])
+  })
+
+  it('asks before handing in favourited stacks and validates useFavourites', () => {
+    const save = withStacks(withStacks(startedFeast(), POTATO, [[10, true], [4, false]]), PERCH, [])
+
+    expect(king(save, 'DCH-9006', { useFavourites: 'yes' })).toEqual({
+      ok: false,
+      reason: 'useFavourites must be true or false.',
+    })
+    expect(king(save, 'DCH-9006')).toEqual({
+      ok: false,
+      reason: 'Some items are favourited. Do you still want to use them?',
+      code: 'confirm_favourites',
+      favourites: [{ itemId: POTATO, qty: 6 }],
+    })
+    expect(king(save, 'DCH-9006', { useFavourites: false })).toMatchObject({ code: 'confirm_favourites' })
+
+    const confirmed = saveOf(king(save, 'DCH-9006', { useFavourites: true }))
+    expect('useFavourites' in confirmed).toBe(false)
+    expect(JSON.stringify(confirmed)).not.toContain('useFavourites')
+    expect(confirmed.inventory.filter((stack) => stack.itemId === POTATO)).toEqual([
+      { itemId: POTATO, quantity: 4, favorite: true },
+    ])
+
+    const next = withStacks(confirmed, PERCH, [[3, true]])
+    expect(king(next, 'DCH-9006')).toMatchObject({
+      ok: false,
+      code: 'confirm_favourites',
+      favourites: [{ itemId: PERCH, qty: 3 }],
+    })
   })
 })

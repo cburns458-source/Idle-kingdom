@@ -2,7 +2,8 @@
  * Show / HandIn progress for the UI ("6/10 Baked Potato handed in", "You have 3/5").
  *
  * Counts read the bag only, never the bank. Enchanted stacks do not count.
- * Show counts hearted (favourited) stacks; HandIn neither counts nor takes them.
+ * Hearted (favourited) stacks count everywhere; taking from one needs the
+ * player's confirmation (see `confirm_favourites` in the engine).
  */
 
 import type { GameDatabase } from '../data/types'
@@ -20,7 +21,7 @@ export type StepProgressMode = 'show' | 'handIn'
 
 export interface StepProgressLine {
   itemId: string
-  /** Unenchanted bag count right now; HandIn leaves hearted stacks out. */
+  /** Unenchanted bag count right now, hearted stacks included. */
   have: number
   /** Already kept by the NPC (HandIn); always 0 for Show. */
   handedIn: number
@@ -46,29 +47,13 @@ export function bagCount(save: PlayerSave, itemId: string): number {
   return total
 }
 
-/** Unenchanted, unhearted bag quantity of [itemId]: what a HandIn step may take. */
-export function handInCount(save: PlayerSave, itemId: string): number {
+/** Unenchanted bag quantity of [itemId] outside hearted (favourited) stacks. */
+export function unfavouriteCount(save: PlayerSave, itemId: string): number {
   let total = 0
   for (const stack of save.inventory) {
     if (stack.itemId === itemId && !stack.enchantmentId && stack.favorite !== true) total += stack.quantity
   }
   return total
-}
-
-/** Removes [quantity] unenchanted, unhearted [itemId]; null when fewer are held. */
-export function takeForHandIn(save: PlayerSave, itemId: string, quantity: number): PlayerSave | null {
-  if (quantity <= 0) return save
-  if (handInCount(save, itemId) < quantity) return null
-  const inventory = save.inventory.map((stack) => ({ ...stack }))
-  let remaining = quantity
-  for (const stack of inventory) {
-    if (remaining <= 0) break
-    if (stack.itemId !== itemId || stack.enchantmentId || stack.favorite === true) continue
-    const taken = Math.min(stack.quantity, remaining)
-    stack.quantity -= taken
-    remaining -= taken
-  }
-  return { ...save, inventory: inventory.filter((stack) => stack.quantity > 0) }
 }
 
 /**
@@ -119,7 +104,7 @@ export function stepProgressGroup(
     const kept = Number(counters[handInCounterKey(stepId, need.itemId)] ?? 0)
     return {
       itemId: need.itemId,
-      have: mode === 'show' ? bagCount(save, need.itemId) : handInCount(save, need.itemId),
+      have: bagCount(save, need.itemId),
       handedIn: mode === 'show' ? 0 : done ? need.quantity : Math.min(kept, need.quantity),
       need: need.quantity,
       mode,

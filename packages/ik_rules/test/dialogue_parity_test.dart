@@ -64,6 +64,7 @@ Map<String, Object?> _resultSummary(PlayerSave before, DialogueResult result) {
     'stepProgress': json['stepProgress'],
     'noRoom': json['noRoom'],
     'missing': json['missing'],
+    'favourites': json['favourites'],
     'unchanged': canonicalJson(before.toJson()) == canonicalJson(result.save.toJson()),
   };
 }
@@ -83,7 +84,14 @@ Map<String, Object?> _runScript(GameDatabase db, PlayerSave initial, List<Object
       case 'view':
         out = viewDialogueNode(db, save, str('dialogueId'), str('nodeId'))?.toJson();
       case 'choose':
-        final result = chooseDialogue(db, save, str('dialogueId'), str('nodeId'), str('choiceId'));
+        final result = chooseDialogue(
+          db,
+          save,
+          str('dialogueId'),
+          str('nodeId'),
+          str('choiceId'),
+          useFavourites: op['useFavourites'] == true,
+        );
         out = _resultSummary(save, result);
         if (result.ok) save = result.save;
       case 'setItem':

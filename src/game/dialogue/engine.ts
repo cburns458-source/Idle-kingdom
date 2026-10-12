@@ -29,10 +29,9 @@ import { getSkillProgress } from '../activity/xp'
 import { totalLevel } from '../skills/totals'
 import {
   bagCount,
-  handInCount,
   stepProgressGroup,
-  takeForHandIn,
   takeFromBag,
+  unfavouriteCount,
   type StepProgressGroup,
 } from './stepProgress'
 
@@ -169,7 +168,7 @@ function stepNotReadyReason(db: GameDatabase, save: PlayerSave, questId: string,
   }
   if (type === 'HandIn') {
     const wanted = needs.filter((need) => handInRemaining(save, questId, stepId, need.itemId, need.quantity) > 0)
-    if (wanted.some((need) => handInCount(save, need.itemId) > 0)) return null
+    if (wanted.some((need) => bagCount(save, need.itemId) > 0)) return null
     return `Bring ${wanted.map((need) => itemName(db, need.itemId)).join(' or ')}`
   }
   return null
@@ -345,7 +344,19 @@ export type DialogueFailureCode =
   | 'no_room'
   | 'missing_items'
   | 'nothing_to_hand_in'
+  | 'confirm_favourites'
   | 'action_failed'
+
+/** Player-facing text for `confirm_favourites`; the UI asks Yes / No with it. */
+export const CONFIRM_FAVOURITES_PROMPT = 'Some items are favourited. Do you still want to use them?'
+
+export interface ChooseDialogueOptions {
+  /**
+   * The player said yes to using favourited stacks for this one request. Never
+   * stored, so a later choice asks again.
+   */
+  useFavourites?: boolean
+}
 
 export interface DialogueResult {
   ok: boolean
@@ -364,13 +375,15 @@ export interface DialogueResult {
   stepProgress: StepProgressGroup[]
   noRoom: DialogueNoRoom | null
   missing: DialogueMissingItem[]
+  /** For `confirm_favourites`: how many of each item would come out of hearted stacks. */
+  favourites: DialogueItemDelta[]
 }
 
 function failed(
   save: PlayerSave,
   code: DialogueFailureCode,
   reason: string,
-  extra: Partial<Pick<DialogueResult, 'stepProgress' | 'noRoom' | 'missing'>> = {},
+  extra: Partial<Pick<DialogueResult, 'stepProgress' | 'noRoom' | 'missing' | 'favourites'>> = {},
 ): DialogueResult {
   return {
     ok: false,
@@ -385,6 +398,7 @@ function failed(
     stepProgress: extra.stepProgress ?? [],
     noRoom: extra.noRoom ?? null,
     missing: extra.missing ?? [],
+    favourites: extra.favourites ?? [],
   }
 }
 
@@ -541,6 +555,7 @@ export function startDialogue(db: GameDatabase, save: PlayerSave, dialogueId: st
     stepProgress: [],
     noRoom: null,
     missing: [],
+    favourites: [],
   }
 }
 
@@ -552,6 +567,17 @@ interface Working {
   itemDeltas: DialogueItemDelta[]
   bookDeltas: string[]
   stepProgress: StepProgressGroup[]
+  /** Quantities taken (or about to be) from hearted stacks, per item. */
+  favourites: DialogueItemDelta[]
+}
+
+/** Records how much of taking [quantity] from [save] would come out of hearted stacks. */
+function noteFavourites(work: Working, save: PlayerSave, itemId: string, quantity: number): void {
+  const fromFavourites = Math.max(0, quantity - unfavouriteCount(save, itemId))
+  if (fromFavourites <= 0) return
+  const existing = work.favourites.find((line) => line.itemId === itemId)
+  if (existing) existing.qty += fromFavourites
+  else work.favourites.push({ itemId, qty: fromFavourites })
 }
 
 type ActionFailure = {
@@ -653,6 +679,7 @@ function applyAction(
       const qty = parseCount(token.args[1])
       if (qty == null) return { code: 'invalid', reason: `Unknown dialogue action: ${token.raw}` }
       const taken = takeFromBag(save, a, qty)
+      if (taken) noteFavourites(work, save, a, qty)
       if (!taken) {
         return {
           code: 'missing_items',
@@ -709,9 +736,10 @@ function applyAction(
       for (const need of needs) {
         const key = handInCounterKey(b, need.itemId)
         const kept = Number(counters[key] ?? 0)
-        const move = Math.min(handInCount(next, need.itemId), Math.max(0, need.quantity - kept))
+        const move = Math.min(bagCount(next, need.itemId), Math.max(0, need.quantity - kept))
         if (move > 0) {
-          next = takeForHandIn(next, need.itemId, move)!
+          noteFavourites(work, next, need.itemId, move)
+          next = takeFromBag(next, need.itemId, move)!
           counters[key] = kept + move
           moved += move
           work.itemDeltas.push({ itemId: need.itemId, qty: -move })
@@ -776,6 +804,7 @@ export function chooseDialogue(
   dialogueId: string,
   nodeId: string,
   choiceId: string,
+  options: ChooseDialogueOptions = {},
 ): DialogueResult {
   const dialogue = dialogueRow(db, dialogueId)
   if (!dialogue) return failed(save, 'not_found', 'That conversation was not found.')
@@ -791,10 +820,23 @@ export function chooseDialogue(
   if (!gate.holds) return failed(save, 'not_available', gate.reason ?? 'That reply is not available.')
 
   const tokens = parseDialogueTokens(choice.Action)
-  const work: Working = { original: save, save, messages: [], itemDeltas: [], bookDeltas: [], stepProgress: [] }
+  const work: Working = {
+    original: save,
+    save,
+    messages: [],
+    itemDeltas: [],
+    bookDeltas: [],
+    stepProgress: [],
+    favourites: [],
+  }
   for (let index = 0; index < tokens.length; index += 1) {
     const failure = applyAction(db, work, tokens, index)
     if (failure) return failed(save, failure.code, failure.reason, failure)
+  }
+  // Checked once every action has run, so the prompt lists the whole choice
+  // and a choice that would fail anyway reports that failure instead.
+  if (work.favourites.length > 0 && options.useFavourites !== true) {
+    return failed(save, 'confirm_favourites', CONFIRM_FAVOURITES_PROMPT, { favourites: work.favourites })
   }
 
   let nextSave = work.save
@@ -810,6 +852,7 @@ export function chooseDialogue(
     stepProgress: work.stepProgress,
     noRoom: null,
     missing: [],
+    favourites: [],
   }
   if (nextNodeId == null || nextNodeId === '') {
     nextSave = markCompleted(db, nextSave, dialogueId)

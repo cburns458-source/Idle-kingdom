@@ -392,7 +392,10 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
         202,
       )
     }
-    if (!result.ok) return json({ error: result.reason, phase: 2 }, 400)
+    if (!result.ok) {
+      const prompt = 'code' in result ? { code: result.code, favourites: result.favourites } : {}
+      return json({ error: result.reason, phase: 2, ...prompt }, 400)
+    }
     if (command === 'dialogue_view') {
       return json({
         ok: true,

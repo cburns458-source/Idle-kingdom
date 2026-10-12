@@ -254,6 +254,14 @@ export const DIALOGUE_PATCH: Patch = {
       `hand_in:QST-9001:QSTP-9002;grant_item:${GOLDEN_SPUD}:1`,
       { Repeatable: true },
     ),
+    choice('DCH-9029', 'DNODE-9021', 9, null, `take_item:${COOKED_PERCH}:3`),
+    choice(
+      'DCH-9030',
+      'DNODE-9021',
+      10,
+      'quest_active:QST-9001;!flag:gift:QST-9001:thanks',
+      `hand_in:QST-9001:QSTP-9002;grant_item:${GOLDEN_SPUD}:1;set_flag:gift:QST-9001:thanks`,
+    ),
     choice(
       'DCH-9031',
       'DNODE-9031',
@@ -326,6 +334,7 @@ function resultSummary(before: PlayerSave, result: DialogueResult): JsonValue {
     stepProgress: json(result.stepProgress),
     noRoom: json(result.noRoom),
     missing: json(result.missing),
+    favourites: json(result.favourites),
     unchanged: canonicalJson(asJson(before)) === canonicalJson(asJson(result.save)),
   }
 }
@@ -351,7 +360,9 @@ export function runDialogueScript(db: GameDatabase, initial: PlayerSave, ops: Op
         out = json(viewDialogueNode(db, save, str(op, 'dialogueId'), str(op, 'nodeId')))
         break
       case 'choose': {
-        const result = chooseDialogue(db, save, str(op, 'dialogueId'), str(op, 'nodeId'), str(op, 'choiceId'))
+        const result = chooseDialogue(db, save, str(op, 'dialogueId'), str(op, 'nodeId'), str(op, 'choiceId'), {
+          useFavourites: op.useFavourites === true,
+        })
         out = resultSummary(save, result)
         if (result.ok) save = result.save
         break
@@ -424,6 +435,13 @@ const FENNEL = (choiceId: string) => choose('DLG-9002', 'DNODE-9011', choiceId)
 const GIFTS = (choiceId: string) => choose('DLG-9003', 'DNODE-9021', choiceId)
 const setItem = (itemId: string, quantity: number): Op => ({ op: 'setItem', itemId, quantity })
 const feastProgress: Op = { op: 'progress', questId: 'QST-9001', stepId: 'QSTP-9002' }
+const confirmed = (op: Op): Op => ({ ...op, useFavourites: true })
+/** Exact stacks of one item: `[quantity, favourite]` each. */
+const stacks = (itemId: string, ...entries: Array<[number, boolean]>): Op => ({
+  op: 'setStacks',
+  itemId,
+  stacks: entries.map(([quantity, favorite]) => ({ quantity, favorite })),
+})
 
 const SCRIPTS: Record<string, Op[]> = {
   // 1. Condition matrix incl. negation, step_ready, has_book, unknown tokens.
@@ -613,33 +631,49 @@ const SCRIPTS: Record<string, Op[]> = {
     feastProgress,
   ],
 
-  // Conor: hearted stacks count for Show; HandIn never counts or takes them.
+  // Conor: hearted stacks count everywhere; taking one needs useFavourites,
+  // per request. Covers Show, hand_in and take_item, and the bank never counts.
   favourites: [
     FENNEL('DCH-9011'),
-    { op: 'setStacks', itemId: BAKED_POTATO, stacks: [{ quantity: 5, favorite: true }] },
+    stacks(BAKED_POTATO, [5, true]),
     { op: 'progress', questId: 'QST-9002', stepId: 'QSTP-9011' },
-    { op: 'conditions', tokens: [`has_item:${BAKED_POTATO}:5`, 'step_ready:QST-9002:QSTP-9011'] },
     FENNEL('DCH-9012'),
     KING('DCH-9001'),
-    { op: 'setStacks', itemId: BAKED_POTATO, stacks: [{ quantity: 10, favorite: true }] },
-    { op: 'setStacks', itemId: COOKED_PERCH, stacks: [{ quantity: 10, favorite: true }] },
+    stacks(BAKED_POTATO, [10, true]),
+    { op: 'setBank', itemId: BAKED_POTATO, quantity: 50 },
+    { op: 'setBank', itemId: COOKED_PERCH, quantity: 50 },
     feastProgress,
     { op: 'conditions', tokens: ['step_ready:QST-9001:QSTP-9002'] },
-    KING('DCH-9002'),
-    KING('DCH-9006'),
-    {
-      op: 'setStacks',
-      itemId: BAKED_POTATO,
-      stacks: [
-        { quantity: 10, favorite: true },
-        { quantity: 4, favorite: false },
-      ],
-    },
-    feastProgress,
-    KING('DCH-9002'),
-    feastProgress,
-    KING('DCH-9006'),
     { op: 'view', dialogueId: 'DLG-9001', nodeId: 'DNODE-9001' },
+    // Unconfirmed with only hearted stacks: prompt, nothing taken, no progress or gift flag.
+    KING('DCH-9002'),
+    GIFTS('DCH-9030'),
+    // Mixed: the prompt names only what hearted stacks would supply; yes takes unhearted first.
+    stacks(BAKED_POTATO, [10, true], [4, false]),
+    KING('DCH-9002'),
+    confirmed(KING('DCH-9002')),
+    feastProgress,
+    // Hand-in plus gift: prompt leaves the gift flag unset; yes commits both.
+    stacks(COOKED_PERCH, [6, true]),
+    GIFTS('DCH-9030'),
+    confirmed(GIFTS('DCH-9030')),
+    feastProgress,
+    // A yes does not carry over: the next hand-in that needs hearted stacks asks again.
+    stacks(COOKED_PERCH, [6, true]),
+    KING('DCH-9002'),
+    // Enough unhearted: no prompt, hearted stack untouched.
+    stacks(COOKED_PERCH, [5, true], [4, false]),
+    KING('DCH-9002'),
+    feastProgress,
+    // take_item: the same rules.
+    stacks(COOKED_PERCH, [6, true]),
+    GIFTS('DCH-9029'),
+    confirmed(GIFTS('DCH-9029')),
+    GIFTS('DCH-9029'),
+    stacks(COOKED_PERCH, [5, true], [3, false]),
+    GIFTS('DCH-9029'),
+    stacks(COOKED_PERCH, [5, true], [1, false]),
+    confirmed(GIFTS('DCH-9029')),
   ],
 
   // 11. Partial hand-in survives logout / login.

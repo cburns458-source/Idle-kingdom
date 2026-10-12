@@ -181,7 +181,7 @@ String? _stepNotReadyReason(GameDatabase db, PlayerSave save, String questId, St
     final wanted = needs
         .where((need) => _handInRemaining(save, questId, stepId, need.itemId, need.quantity) > 0)
         .toList();
-    if (wanted.any((need) => handInCount(save, need.itemId) > 0)) return null;
+    if (wanted.any((need) => bagCount(save, need.itemId) > 0)) return null;
     return 'Bring ${wanted.map((need) => _itemName(db, need.itemId)).join(' or ')}';
   }
   return null;
@@ -391,6 +391,9 @@ class DialogueMissingItem {
   Map<String, Object?> toJson() => <String, Object?>{'itemId': itemId, 'have': have, 'need': need};
 }
 
+/// Player-facing text for `confirm_favourites`; the UI asks Yes / No with it.
+const String confirmFavouritesPrompt = 'Some items are favourited. Do you still want to use them?';
+
 class DialogueResult {
   const DialogueResult({
     required this.ok,
@@ -405,13 +408,15 @@ class DialogueResult {
     this.stepProgress = const <StepProgressGroup>[],
     this.noRoom,
     this.missing = const <DialogueMissingItem>[],
+    this.favourites = const <DialogueItemDelta>[],
   });
 
   final bool ok;
   final String reason;
 
   /// Machine-readable failure (`no_room`, `missing_items`, `nothing_to_hand_in`,
-  /// `not_available`, `not_found`, `invalid`, `action_failed`), null on success.
+  /// `confirm_favourites`, `not_available`, `not_found`, `invalid`,
+  /// `action_failed`), null on success.
   final String? code;
   final PlayerSave save;
   final DialogueView? view;
@@ -429,6 +434,9 @@ class DialogueResult {
   final DialogueNoRoom? noRoom;
   final List<DialogueMissingItem> missing;
 
+  /// For `confirm_favourites`: how many of each item would come out of hearted stacks.
+  final List<DialogueItemDelta> favourites;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'ok': ok,
     'reason': reason,
@@ -442,6 +450,7 @@ class DialogueResult {
     'stepProgress': [for (final group in stepProgress) group.toJson()],
     'noRoom': noRoom?.toJson(),
     'missing': [for (final line in missing) line.toJson()],
+    'favourites': [for (final line in favourites) line.toJson()],
   };
 }
 
@@ -452,6 +461,7 @@ class _ActionFailure {
     this.noRoom,
     this.missing = const <DialogueMissingItem>[],
     this.stepProgress = const <StepProgressGroup>[],
+    this.favourites = const <DialogueItemDelta>[],
   });
 
   final String code;
@@ -459,6 +469,7 @@ class _ActionFailure {
   final DialogueNoRoom? noRoom;
   final List<DialogueMissingItem> missing;
   final List<StepProgressGroup> stepProgress;
+  final List<DialogueItemDelta> favourites;
 }
 
 DialogueResult _failed(PlayerSave save, String code, String reason, [_ActionFailure? extra]) {
@@ -473,6 +484,7 @@ DialogueResult _failed(PlayerSave save, String code, String reason, [_ActionFail
     stepProgress: extra?.stepProgress ?? const <StepProgressGroup>[],
     noRoom: extra?.noRoom,
     missing: extra?.missing ?? const <DialogueMissingItem>[],
+    favourites: extra?.favourites ?? const <DialogueItemDelta>[],
   );
 }
 
@@ -642,6 +654,16 @@ class _Working {
   final List<DialogueItemDelta> itemDeltas = <DialogueItemDelta>[];
   final List<String> bookDeltas = <String>[];
   final List<StepProgressGroup> stepProgress = <StepProgressGroup>[];
+
+  /// Quantities taken (or about to be) from hearted stacks, per item, in first-seen order.
+  final Map<String, num> favourites = <String, num>{};
+
+  /// Records how much of taking [quantity] from [from] would come out of hearted stacks.
+  void noteFavourites(PlayerSave from, String itemId, num quantity) {
+    final fromFavourites = math.max(0, quantity - unfavouriteCount(from, itemId));
+    if (fromFavourites <= 0) return;
+    favourites[itemId] = (favourites[itemId] ?? 0) + fromFavourites;
+  }
 }
 
 /// New bag slots every grant in [tokens] needs against [save].
@@ -735,6 +757,7 @@ _ActionFailure? _applyAction(
       final qty = _parseCount(_arg(token, 1));
       if (qty == null) return _ActionFailure('invalid', 'Unknown dialogue action: ${token.raw}');
       final taken = takeFromBag(save, a, qty);
+      if (taken != null) work.noteFavourites(save, a, qty);
       if (taken == null) {
         return _ActionFailure(
           'missing_items',
@@ -793,9 +816,10 @@ _ActionFailure? _applyAction(
       for (final need in needs) {
         final key = handInCounterKey(b, need.itemId);
         final kept = counters[key] ?? 0;
-        final move = math.min(handInCount(next, need.itemId), math.max(0, need.quantity - kept));
+        final move = math.min(bagCount(next, need.itemId), math.max(0, need.quantity - kept));
         if (move > 0) {
-          next = takeForHandIn(next, need.itemId, move)!;
+          work.noteFavourites(next, need.itemId, move);
+          next = takeFromBag(next, need.itemId, move)!;
           counters[key] = kept + move;
           moved += move;
           work.itemDeltas.add(DialogueItemDelta(itemId: need.itemId, qty: -move));
@@ -850,13 +874,17 @@ _ActionFailure? _applyAction(
 ///
 /// The client sends the node it is looking at; the server re-checks that the
 /// choice belongs to that node and that its conditions hold on the server save.
+///
+/// [useFavourites] is the player's yes to taking from hearted stacks, for this
+/// one call only; it is never stored, so a later choice asks again.
 DialogueResult chooseDialogue(
   GameDatabase db,
   PlayerSave save,
   String dialogueId,
   String nodeId,
-  String choiceId,
-) {
+  String choiceId, {
+  bool useFavourites = false,
+}) {
   final dialogue = _dialogue(db, dialogueId);
   if (dialogue == null) return _failed(save, 'not_found', 'That conversation was not found.');
   // Mid-conversation choices stay allowed even after one-time completion was
@@ -877,6 +905,23 @@ DialogueResult chooseDialogue(
   for (var index = 0; index < tokens.length; index++) {
     final failure = _applyAction(db, work, tokens, index);
     if (failure != null) return _failed(save, failure.code, failure.reason, failure);
+  }
+  // Checked once every action has run, so the prompt lists the whole choice
+  // and a choice that would fail anyway reports that failure instead.
+  if (work.favourites.isNotEmpty && !useFavourites) {
+    return _failed(
+      save,
+      'confirm_favourites',
+      confirmFavouritesPrompt,
+      _ActionFailure(
+        'confirm_favourites',
+        confirmFavouritesPrompt,
+        favourites: [
+          for (final entry in work.favourites.entries)
+            DialogueItemDelta(itemId: entry.key, qty: entry.value),
+        ],
+      ),
+    );
   }
 
   var nextSave = work.save;
