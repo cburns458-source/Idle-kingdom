@@ -17,8 +17,15 @@ the test site. Never commit or push to `main`. Only Conor promotes
 `test-launch` to `main` by manually merging a PR, which publishes the live
 site.
 
+**Agents: never run bare `npx wrangler deploy` (no `--env`).** That always
+publishes to `restoria-idlerpg` / restoriaidle.com. Preview or test builds
+must use `npx wrangler deploy --env staging` only. Uploading a version with
+a branch alias onto the live Worker still pollutes its version history;
+do not upload versions to `restoria-idlerpg` from feature branches.
+
 The two sites are different Workers. Deploying `test-launch` cannot overwrite
-`restoria-idlerpg` or the apex/www custom domains.
+`restoria-idlerpg` or the apex/www custom domains — unless someone runs bare
+`wrangler deploy` from a feature branch, which targets production by default.
 
 Live custom domains are bound in the Cloudflare dashboard, not listed in the
 top-level Wrangler config. A deploy that declared those routes would rewrite
