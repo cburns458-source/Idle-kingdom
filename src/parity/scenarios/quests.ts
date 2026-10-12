@@ -188,7 +188,7 @@ export const questScenarios: ParityScenario[] = [
       stages.push({
         label,
         stepIndex: getCurrentStepIndex(db, save, quest),
-        progress: asJson(getQuestProgress(save, 'QST-0006')),
+        progress: getQuestProgress(save, 'QST-0006') as unknown as JsonValue,
       })
     const base = saveFor('base')
     let save: PlayerSave = {
