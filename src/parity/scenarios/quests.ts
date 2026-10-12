@@ -7,7 +7,11 @@ import {
   applyQuestDefeatProgress,
   applyQuestLearnRecipeProgress,
   applyQuestProcessProgress,
+  applyQuestTalkProgress,
+  applyQuestVisitProgress,
 } from '../../game/quests/progress'
+import { applyQuestStepUnlocks, getCurrentStepIndex } from '../../game/quests/steps'
+import { addItemToInventory } from '../../game/activity/rewards'
 import {
   acceptQuest,
   asQuestRows,
@@ -34,6 +38,12 @@ import {
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
 import { asJson, baseSave, questSave, richSave } from './saveFixtures'
+
+/** Replaces every stack of an item with one stack of `quantity` (0 clears it). */
+function setItemCount(save: PlayerSave, itemId: string, quantity: number): PlayerSave {
+  const cleared = { ...save, inventory: save.inventory.filter((stack) => stack.itemId !== itemId) }
+  return quantity > 0 ? addItemToInventory(cleared, itemId, quantity) : cleared
+}
 
 type SaveKind = 'base' | 'rich' | 'quest'
 
@@ -167,6 +177,42 @@ export const questScenarios: ParityScenario[] = [
       inactive: asJson(applyQuestProcessProgress(db, { ...save, quests: [] }, 'RCP-0001', 1)),
       zeroAmount: asJson(applyQuestDefeatProgress(db, save, 'ENM-0001', 0)),
     }
+  }),
+
+  // BUG-01: Getting Started walks hold -> talk -> cook 5 -> talk -> sell cooked.
+  scenario('quests/step-latch', 'getting-started', withSave('base'), () => {
+    const db = contentDatabase()
+    const quest = getQuest(db, 'QST-0006')!
+    const stages: JsonValue[] = []
+    const record = (label: string, save: PlayerSave) =>
+      stages.push({
+        label,
+        stepIndex: getCurrentStepIndex(db, save, quest),
+        progress: asJson(getQuestProgress(save, 'QST-0006')),
+      })
+    const base = saveFor('base')
+    let save: PlayerSave = {
+      ...base,
+      quests: [
+        ...base.quests.filter((row) => row.questId !== 'QST-0006'),
+        { questId: 'QST-0006', status: 'active', progress: 0, counters: {} },
+      ],
+    }
+    save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0025', 5))
+    record('hold', save)
+    save = applyQuestTalkProgress(db, save, 'NPC-0014')
+    record('show', save)
+    save = applyQuestVisitProgress(db, save, 'LOC-0023')
+    for (let cooked = 1; cooked <= 5; cooked += 1) {
+      save = setItemCount(setItemCount(save, 'ITEM-0025', 5 - cooked), 'ITEM-0058', cooked)
+      save = applyQuestProcessProgress(db, save, 'RCP-0001')
+      record(`cook-${cooked}`, save)
+    }
+    save = applyQuestTalkProgress(db, save, 'NPC-0014')
+    record('deliver', save)
+    save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0058', 0))
+    record('sold', save)
+    return { stages, save: asJson(save) }
   }),
 
   scenario('world/submaps', 'topology', withSave('base', { mapIds: MAP_IDS }), () => {
