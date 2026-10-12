@@ -10,22 +10,22 @@ own workflow; this page is the Worker, branch, DNS, and project layout.
 | Branch | Site | Worker | How it is published |
 | --- | --- | --- | --- |
 | `test-launch` | https://test.restoriaidle.com | `restoria-idlerpg-staging` | Push to `test-launch`, or `npx wrangler deploy --env staging` |
-| `main` | https://restoriaidle.com and https://www.restoriaidle.com | `restoria-idlerpg` | Push to `main`, or `npx wrangler deploy` (no `--env`) |
+| `main` | https://restoriaidle.com and https://www.restoriaidle.com | `restoria-idlerpg` | Push to `main`, or `npx wrangler deploy --env production` |
 
 Going forward: implement on a branch from latest `test-launch` and playtest
 the test site. Never commit or push to `main`. Only Conor promotes
 `test-launch` to `main` by manually merging a PR, which publishes the live
 site.
 
-**Agents: never run bare `npx wrangler deploy` (no `--env`).** That always
-publishes to `restoria-idlerpg` / restoriaidle.com. Preview or test builds
-must use `npx wrangler deploy --env staging` only. Uploading a version with
-a branch alias onto the live Worker still pollutes its version history;
-do not upload versions to `restoria-idlerpg` from feature branches.
+**Agents: never target the live Worker from a feature branch.** Bare
+`npx wrangler deploy` (no `--env`) hits the sink Worker
+`restoria-idlerpg-do-not-deploy`, not live. Test builds must use
+`npx wrangler deploy --env staging` only. Live is only
+`npx wrangler deploy --env production` (CI on `main`). Do not
+`wrangler versions upload` onto `restoria-idlerpg`.
 
-The two sites are different Workers. Deploying `test-launch` cannot overwrite
-`restoria-idlerpg` or the apex/www custom domains — unless someone runs bare
-`wrangler deploy` from a feature branch, which targets production by default.
+The two sites are different Workers. Deploying with `--env staging` cannot
+overwrite `restoria-idlerpg` or the apex/www custom domains.
 
 Live custom domains are bound in the Cloudflare dashboard, not listed in the
 top-level Wrangler config. A deploy that declared those routes would rewrite
@@ -136,8 +136,8 @@ bash scripts/cf-reserve-staging-dns.sh
 # Publish the test-launch Worker (test.restoriaidle.com only)
 npx wrangler deploy --env staging
 
-# Publish the live Worker (restoriaidle.com). Never pass --env staging.
-npx wrangler deploy
+# Publish the live Worker (restoriaidle.com). Requires --env production.
+npx wrangler deploy --env production
 ```
 
 `scripts/cf-build.sh` runs as Wrangler's build step and needs Flutter 3.47.0.
