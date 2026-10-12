@@ -5,17 +5,17 @@
 Read `docs/AGENT_WORKFLOW.md` first. Short version:
 
 1. Share a plan. Stop until the owner confirms it.
-2. Implement only on `test-launch`. No standalone feature branches.
-3. Owner playtests the live test-launch build.
-4. Ship that same revision to `main` only after the owner confirms it.
+2. Branch from the latest `test-launch` and open a pull request targeting `test-launch`.
+3. Owner playtests the test-launch build.
+4. Never commit or push to `main`. Only Conor promotes `test-launch` to `main` by manually merging a PR.
 
 `test-launch` is the test site ([test.restoriaidle.com](https://test.restoriaidle.com)).
-`main` is the live site ([restoriaidle.com](https://restoriaidle.com)). Do not
-commit to `main` until the owner confirms the test-launch playtest, and do not
-leave work on a `cursor/*` or other side branch.
+`main` is the live site ([restoriaidle.com](https://restoriaidle.com)). Never
+commit or push to `main`. Only Conor promotes `test-launch` to `main` by
+manually merging a PR.
 
-A push to `test-launch` publishes Worker `restoria-idlerpg-staging`. Shipping
-that same revision to `main` publishes Worker `restoria-idlerpg`. See
+A push to `test-launch` publishes Worker `restoria-idlerpg-staging`. Conor
+merging `test-launch` into `main` publishes Worker `restoria-idlerpg`. See
 [docs/deployment.md](docs/deployment.md).
 
 **Balance / playable behavior must land on `test-launch`.** Before calling
@@ -63,8 +63,8 @@ code failed. Retrigger the empty/failed run before debugging logic.
 
 The agent applies files under `supabase/migrations/` through the Supabase
 connection (`apply_migration`): the **test** project first, then the **live**
-project only at ship time. Say so in the summary. The game misbehaves quietly
-until the SQL is actually on that project.
+project only after Conor merges `test-launch` into `main`. Say so in the
+summary. The game misbehaves quietly until the SQL is actually on that project.
 
 Do not use `supabase db push` against the hosted projects. That command decides
 what to apply from a tracking table. Live still has an empty history because

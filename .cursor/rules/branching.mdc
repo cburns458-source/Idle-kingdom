@@ -1,0 +1,9 @@
+---
+description: Branching and release rules
+alwaysApply: true
+---
+- Never commit or push to `main`, for any reason, even if asked to "ship".
+- Always create a new branch from the latest `origin/test-launch`.
+- Open pull requests that target `test-launch`. Never target `main`.
+- Only Conor promotes `test-launch` to `main`, by manually merging a PR in GitHub.
+- Never force-push to `main` or `test-launch`.
