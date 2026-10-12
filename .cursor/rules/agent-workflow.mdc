@@ -1,5 +1,5 @@
 ---
-description: Confirm-then-implement workflow; test-launch only; ship to main after playtest
+description: Confirm-then-implement workflow; branch from test-launch; never push to main
 alwaysApply: true
 ---
 
@@ -8,7 +8,6 @@ alwaysApply: true
 Read and follow `docs/AGENT_WORKFLOW.md` and `AGENTS.md` before writing code.
 
 - Owner sends instructions → share a plan → stop until they confirm.
-- Implement confirmed work on `test-launch` only (https://test.restoriaidle.com).
-- Do not create standalone feature branches.
-- Do not commit to or merge into `main` until the owner playtests the test site and explicitly says to ship (https://restoriaidle.com).
-- Migrations still owed to live are listed under "Pending on live" in `docs/deployment.md`.
+- Branch from the latest `origin/test-launch` and open a pull request targeting `test-launch` (https://test.restoriaidle.com).
+- Never commit or push to `main`. Only Conor promotes `test-launch` to `main` by manually merging a PR (https://restoriaidle.com).
+- Migrations still owed to live are listed under "Pending on live" in `docs/deployment.md`. Apply them to the live project only after Conor merges.
