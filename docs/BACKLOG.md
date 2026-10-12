@@ -127,10 +127,9 @@ Conor's rulings, dated. Immutable once written.
   Abandoned Mineshaft (`game-database.json`).
 - ⚠️ Vesper (race change) = miniquest "A Change of Skin", total level 500,
   repeatable every 7 days (QST-0009, NPC-0016).
-- ⚠️ "Untradeable" isn't a real flag in the code. Whether an item can be sold
-  or traded comes only from `Base Sell Value > 0`, and shops and the Bazaar both
-  use that one rule. PR #301 also *deliberately* lets enchanted gear sell at
-  shops. Conor needs to define "untradeable" (OQ-05) before BUG-02 is fixed.
+- "Untradeable" is the Items `Tradeable` column (BUG-02). False keeps an item
+  off the Bazaar only; shops still buy anything with `Base Sell Value > 0`.
+  PR #301 *deliberately* lets enchanted gear sell at shops.
 
 **Guardrail from `Master_Prompt.md` §2:** "Do not add currencies, energy
 systems, monetization systems… not defined by the supplied sources." Plaza
@@ -156,7 +155,7 @@ Conor decides. All are open as of 2026-10-12.
 
 | ID | Question | Blocks | Status |
 |---|---|---|---|
-| OQ-05 | What does "untradeable" mean? Quest items, uniques (Excavator's Pickaxe sells for 69), starter cosmetics (Traveler's Tunic 24), enchanted gear? Should it be an explicit DB column? | BUG-02, QST-12, ARC-01 | Open |
+| OQ-05 | What does "untradeable" mean? Quest items, uniques (Excavator's Pickaxe sells for 69), starter cosmetics (Traveler's Tunic 24), enchanted gear? Should it be an explicit DB column? | BUG-02, QST-12, ARC-01 | Answered 2026-10-12 (Conor): can't be listed on the Bazaar, still sells to shops; untradeable iff its only source is quest rewards; Golden Spud stays tradeable; enchanted Bazaar block unchanged. Items `Tradeable` column. |
 | OQ-06 | Membership: price, one-time or subscription, and is it fair? "Instant Bazaar at total level 1" and "double AFK" are close to pay-to-win in a game with a shared market and leaderboards. | MEM-\* | Open |
 | OQ-07 | Religion vs races: replace races fully? What happens to existing race bonuses, race starting items, Vesper, "A Change of Skin", and the Pureblooded title? | WLD-01, TTL-03 | Open |
 | OQ-08 | Mass bosses: which bosses? What are the scaling and contribution formulas? Are there server-side lobbies (new realtime infra)? | SOC-04 | Open |
@@ -236,7 +235,7 @@ Direction, Community = Community/Notifications).
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
 | BUG-01 | Fennels second step in getting started isn't working properly… | Needs decision (fix direction A/B/C) | **P0** | none | QA | Root cause in [Appendix A](#appendix-a-fennel-getting-started-bug-analysis). **Dup/overlap:** QST-01, QST-02. Blocks QST-02, NTF-06. |
-| BUG-02 | Fix selling "untradeable" items to shops. | Needs decision | **P0** | OQ-05 | QA + Econ | Sell/trade rule = `Base Sell Value > 0` (`shops.dart:236`, `market.dart:79`). PR #301 widened enchanted sales. **Overlap:** QST-12 |
+| BUG-02 | Fix selling "untradeable" items to shops. | In PR | **P0** | OQ-05 | QA + Econ | Items `Tradeable` column (default true; false for Machete, Excavator's Pickaxe, Stolen Coin Purse, Beggar's Hood). Bazaar refuses them client and server side; shops unchanged. Migration `20261012170000` cancels open orders. `validateTradeability` keeps quest-only items untradeable. **Overlap:** QST-12 |
 | BUG-03 | Fixes: todo- drops/recipes | Needs decision | P1 | Conor's list | QA | Placeholder. Needs Conor's specific drop/recipe list. |
 
 ### QST: Quests and dialogue
