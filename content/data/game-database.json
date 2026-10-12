@@ -11962,7 +11962,7 @@
       "Map Node Name": "Town Gate",
       "Hidden On Map IDs": "MAP-0006",
       "Notes": "Sub-map gateway for MAP-0006.",
-      "Landing Location ID": "LOC-0024"
+      "Landing Location ID": "LOC-0054"
     },
     {
       "Location ID": "LOC-0003",
@@ -12106,7 +12106,7 @@
       "Map Node Name": null,
       "Hidden On Map IDs": "MAP-0002",
       "Notes": null,
-      "Landing Location ID": "LOC-0012"
+      "Landing Location ID": "LOC-0055"
     },
     {
       "Location ID": "LOC-0011",
@@ -12842,6 +12842,42 @@
       "Map Node Name": null,
       "Hidden On Map IDs": null,
       "Notes": "Main-map node south of The Citadel.",
+      "Landing Location ID": null
+    },
+    {
+      "Location ID": "LOC-0054",
+      "Internal Key": "town_square",
+      "Display Name": "Town Square",
+      "Map ID": "MAP-0006",
+      "Location Type": "Hub District",
+      "Parent Location ID": "LOC-0002",
+      "Node ID": "NODE-0054",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "The cobbled square just inside the Town Gate, where every street begins.",
+      "Danger / Hostility": null,
+      "Background Asset Key": "locations/loc_town.webp",
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
+      "Notes": "Landing for The Town. Open from the start. Art reuses the Town gateway.",
+      "Landing Location ID": null
+    },
+    {
+      "Location ID": "LOC-0055",
+      "Internal Key": "cave_mouth",
+      "Display Name": "Cave Mouth",
+      "Map ID": "MAP-0002",
+      "Location Type": "Sub-location",
+      "Parent Location ID": "LOC-0010",
+      "Node ID": "NODE-0055",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Daylight fades just past the entrance, where the tunnels split toward the mines.",
+      "Danger / Hostility": null,
+      "Background Asset Key": "locations/loc_cave_entrance.webp",
+      "Map Node Name": null,
+      "Hidden On Map IDs": null,
+      "Notes": "Landing for Cave Entrance. Open from the start. Art reuses the Cave Entrance.",
       "Landing Location ID": null
     }
   ],
@@ -37520,6 +37556,26 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Just south of The Citadel; east of Town to avoid label overlap."
+    },
+    {
+      "Map Node ID": "MN-0059",
+      "Map ID": "MAP-0006",
+      "Location ID": "LOC-0054",
+      "X": 40,
+      "Y": 31,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Town Square landing, just inside the Town Gate (40, 21)."
+    },
+    {
+      "Map Node ID": "MN-0060",
+      "Map ID": "MAP-0002",
+      "Location ID": "LOC-0055",
+      "X": 34,
+      "Y": 20,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Cave Mouth landing, just inside the cave entrance (34, 8)."
     }
   ],
   "Books": [

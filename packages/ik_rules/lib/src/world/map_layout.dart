@@ -52,6 +52,8 @@ const Map<String, NodePosition> mainMapNodeLayout = <String, NodePosition>{
 const Map<String, NodePosition> caveMapNodeLayout = <String, NodePosition>{
   // Sunlit cave mouth looking out to the pines
   'LOC-0010': NodePosition(x: 34, y: 8),
+  // Cave Mouth landing, just inside the entrance
+  'LOC-0055': NodePosition(x: 34, y: 20),
   // Built dwarven shop with gem counter
   'LOC-0012': NodePosition(x: 73, y: 44),
   // Working mine cart and ore
@@ -82,6 +84,8 @@ const Map<String, NodePosition> castleMapNodeLayout = <String, NodePosition>{
 const Map<String, NodePosition> townMapNodeLayout = <String, NodePosition>{
   // Town gateway, offset in the northern cluster
   'LOC-0002': NodePosition(x: 40, y: 21),
+  // Town Square landing, just inside the gate
+  'LOC-0054': NodePosition(x: 40, y: 31),
   // Kitchen, west street
   'LOC-0023': NodePosition(x: 27, y: 43),
   // General Store, east stall

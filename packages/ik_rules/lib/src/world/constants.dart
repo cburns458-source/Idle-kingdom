@@ -17,6 +17,9 @@ const String mountainsMapId = 'MAP-0010';
 
 const String caveEntranceId = 'LOC-0010';
 const String caveMiningStoreId = 'LOC-0012';
+
+/// Landing for world-map travel to Cave Entrance (MAP-0002).
+const String caveMouthId = 'LOC-0055';
 const String castleGatewayId = 'LOC-0013';
 const String castleCourtyardId = 'LOC-0014';
 const String townGatewayId = 'LOC-0002';
@@ -35,6 +38,9 @@ const String townGeneralStoreId = 'LOC-0024';
 const String townFoundryId = 'LOC-0025';
 const String townApothecaryId = 'LOC-0026';
 const String townBankId = 'LOC-0034';
+
+/// Landing for world-map travel to The Town.
+const String townSquareId = 'LOC-0054';
 
 /// Citadel hub nodes (MAP-0007).
 const String citadelPlazaId = 'LOC-0028';

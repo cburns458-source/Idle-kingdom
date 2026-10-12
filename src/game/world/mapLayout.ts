@@ -58,6 +58,8 @@ export const MAIN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 export const CAVE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Sunlit cave mouth looking out to the pines
   'LOC-0010': { x: 34, y: 8 },
+  // Cave Mouth landing, just inside the entrance
+  'LOC-0055': { x: 34, y: 20 },
   // Built dwarven shop with gem counter
   'LOC-0012': { x: 73, y: 44 },
   // Working mine cart and ore
@@ -88,6 +90,8 @@ export const CASTLE_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
 export const TOWN_MAP_NODE_LAYOUT: Record<string, NodePosition> = {
   // Town gateway, offset in the northern cluster
   'LOC-0002': { x: 40, y: 21 },
+  // Town Square landing, just inside the gate
+  'LOC-0054': { x: 40, y: 31 },
   // Kitchen, west street
   'LOC-0023': { x: 27, y: 43 },
   // General Store, east stall
