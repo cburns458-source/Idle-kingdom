@@ -5,16 +5,18 @@ import { applyQuestAutoStartOnSeed } from '../quests/progress'
 import { canFitItemQuantity } from '../inventory/capacity'
 import { isFavoriteStack } from '../inventory/favorites'
 import type { GameDatabase } from '../data/types'
-import type { PlayerSave } from '../save/types'
+import type { InventoryStack, PlayerSave } from '../save/types'
 import {
   canAccessShop,
   getShop,
   playerBuyPrice,
   playerSellPrice,
   recordShopPurchases,
+  shopEnchantedSellMode,
   shopRemainingToday,
   shopSellsItem,
   syncShopPurchaseDay,
+  type ShopEnchantedSellMode,
 } from './shops'
 
 /** Cosmetic ID(s) newly granted by a shop purchase (for the Wardrobe-unlock popup). */
@@ -103,7 +105,14 @@ export function confirmShopOffer(
 
   const buyCost = lineTotal(buys, (itemId) => playerBuyPrice(db, shop, itemId))
   if (!buyCost.ok) return buyCost
-  const sellCredit = lineTotal(sells, (itemId) => playerSellPrice(db, shop, itemId))
+  const enchantedMode = shopEnchantedSellMode(shop)
+  const sellCredit = lineTotal(sells, (itemId) =>
+    // Wizard's counter only prices enchanted gear; generals use the plain rate
+    // for both (enchanted and plain share Base Sell Value there).
+    playerSellPrice(db, shop, itemId, {
+      enchanted: enchantedMode === 'enchantedOnly',
+    }),
+  )
   if (!sellCredit.ok) return sellCredit
 
   const goldDelta = sellCredit.total - buyCost.total
@@ -112,7 +121,7 @@ export function confirmShopOffer(
   }
 
   if (sells.length > 0) {
-    const removed = removeSellableInventory(next, sells)
+    const removed = removeSellableInventory(next, sells, enchantedMode)
     if (!removed) {
       return {
         ok: false,
@@ -170,22 +179,42 @@ export function confirmShopOffer(
   }
 }
 
-/** Remove sold quantities from non-favorite, non-enchanted bag stacks only. */
+function stackIsEnchanted(stack: InventoryStack): boolean {
+  return Boolean(stack.enchantmentId && String(stack.enchantmentId).trim())
+}
+
+/**
+ * Removes sold quantities from bag stacks this shop will take.
+ * Favorites are always skipped. Enchanted stacks follow `mode`.
+ */
 function removeSellableInventory(
   save: PlayerSave,
   sells: ShopOfferLine[],
+  mode: ShopEnchantedSellMode,
 ): PlayerSave | null {
   const inventory = save.inventory.map((stack) => ({ ...stack }))
   for (const line of sells) {
     let need = Math.floor(line.quantity)
     if (need <= 0) return null
-    for (const stack of inventory) {
-      if (need <= 0) break
-      if (stack.itemId !== line.itemId) continue
-      if (isFavoriteStack(stack) || stack.enchantmentId) continue
-      const take = Math.min(stack.quantity, need)
-      stack.quantity -= take
-      need -= take
+
+    const takeFrom = (accept: (stack: InventoryStack) => boolean) => {
+      for (const stack of inventory) {
+        if (need <= 0) return
+        if (stack.itemId !== line.itemId) continue
+        if (isFavoriteStack(stack) || !accept(stack)) continue
+        const take = Math.min(stack.quantity, need)
+        stack.quantity -= take
+        need -= take
+      }
+    }
+
+    if (mode === 'reject') {
+      takeFrom((stack) => !stackIsEnchanted(stack))
+    } else if (mode === 'preferPlain') {
+      takeFrom((stack) => !stackIsEnchanted(stack))
+      if (need > 0) takeFrom(stackIsEnchanted)
+    } else {
+      takeFrom(stackIsEnchanted)
     }
     if (need > 0) return null
   }

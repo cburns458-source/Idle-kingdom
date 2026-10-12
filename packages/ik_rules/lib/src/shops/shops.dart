@@ -16,6 +16,45 @@ const num essenceBuyMult = 100;
 const num miningOreSellMult = 1.5;
 const num generalSellMult = 1;
 
+/// Enchanted gear at the Wizard's Shop.
+const num enchantedWizardSellMult = 2;
+
+/// General merchants that buy enchanted gear at Base Sell Value.
+const Set<String> generalMerchantShopKeys = <String>{
+  'general_store',
+  'citadel_market_hall',
+  'citadel_supply_stall',
+};
+
+bool isWizardsShop(ShopRow shop) => shop.raw['Internal Key'] == 'wizards_shop';
+
+bool isGeneralMerchantShop(ShopRow shop) {
+  final key = shop.raw['Internal Key'];
+  return key is String && generalMerchantShopKeys.contains(key);
+}
+
+/// Wizard's Shop and the three general merchants accept enchanted bag sales.
+bool shopAcceptsEnchantedSales(ShopRow shop) =>
+    isWizardsShop(shop) || isGeneralMerchantShop(shop);
+
+/// How a shop treats enchanted stacks when the player sells to its counter.
+enum ShopEnchantedSellMode {
+  /// Armory, forge, mining store, etc. — enchanted gear is refused.
+  reject,
+
+  /// General merchants — plain stacks first, then enchanted, same unit price.
+  preferPlain,
+
+  /// Wizard's Shop — only enchanted stacks, at the higher rate.
+  enchantedOnly,
+}
+
+ShopEnchantedSellMode shopEnchantedSellMode(ShopRow shop) {
+  if (isWizardsShop(shop)) return ShopEnchantedSellMode.enchantedOnly;
+  if (isGeneralMerchantShop(shop)) return ShopEnchantedSellMode.preferPlain;
+  return ShopEnchantedSellMode.reject;
+}
+
 /// One line of a shop's stock. Only sell-to-player entries are listed.
 class ShopStockEntry {
   const ShopStockEntry({required this.itemId, required this.slot, required this.dailyLimit});
@@ -191,11 +230,26 @@ bool isOreItem(ItemRow item) {
 }
 
 /// Price the shop pays the player for one unit. Null means it will not buy it.
-num? playerSellPrice(GameDatabase db, ShopRow shop, String itemId) {
+///
+/// [enchanted] is for a bag stack with an enchantment. Only the Wizard's Shop
+/// (2×) and the three general merchants (1×) buy those; every other counter
+/// refuses them. The Bazaar is separate and still blocks enchanted listings.
+num? playerSellPrice(
+  GameDatabase db,
+  ShopRow shop,
+  String itemId, {
+  bool enchanted = false,
+}) {
   if (itemId == currencyItemId(db)) return null;
   final item = _item(db, itemId);
   final base = baseSellValue(item);
   if (base == null || base <= 0) return null;
+
+  if (enchanted) {
+    if (isWizardsShop(shop)) return (base * enchantedWizardSellMult).round();
+    if (isGeneralMerchantShop(shop)) return (base * generalSellMult).round();
+    return null;
+  }
 
   final key = shop.raw['Internal Key'];
   if (key == 'dwarven_mining_store') {

@@ -36,4 +36,39 @@ describe('inventory selling', () => {
     expect(priced?.shopId).toBeTruthy()
     expect(priced?.unitPrice).toBeGreaterThan(fieldSellPrice(launch, 'ITEM-0224') ?? 0)
   })
+
+  it('sells enchanted gear from the bag at shop or field rates', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const sword = 'ITEM-0130'
+    const base = launch.Items.find((row) => row['Item ID'] === sword)!['Base Sell Value']!
+    const enchantmentId = 'ENCH-0003'
+
+    let inField = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0009',
+      gold: 0,
+      inventory: [{ itemId: sword, quantity: 1, enchantmentId }],
+    }
+    const fieldPriced = sellPriceAtLocation(launch, inField, sword, { enchantmentId })
+    expect(fieldPriced?.shopId).toBeNull()
+    expect(fieldPriced?.unitPrice).toBe(fieldSellPrice(launch, sword))
+    const fieldSold = sellInventoryIndexes(launch, inField, [0])
+    expect(fieldSold.ok).toBe(true)
+    if (!fieldSold.ok) return
+    expect(fieldSold.goldEarned).toBe(fieldSellPrice(launch, sword))
+
+    let atWizard = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0007',
+      gold: 0,
+      inventory: [{ itemId: sword, quantity: 1, enchantmentId }],
+    }
+    const wizardPriced = sellPriceAtLocation(launch, atWizard, sword, { enchantmentId })
+    expect(wizardPriced?.shopId).toBe('SHP-0003')
+    expect(wizardPriced?.unitPrice).toBe(Math.round(base * 2))
+    const wizardSold = sellInventoryIndexes(launch, atWizard, [0])
+    expect(wizardSold.ok).toBe(true)
+    if (!wizardSold.ok) return
+    expect(wizardSold.goldEarned).toBe(Math.round(base * 2))
+  })
 })

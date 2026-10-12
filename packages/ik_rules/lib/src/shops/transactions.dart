@@ -140,7 +140,17 @@ ShopTransactionResult confirmShopOffer(
 
   final buyCost = _lineTotal(offer.buys, (itemId) => playerBuyPrice(db, shop, itemId));
   if (!buyCost.ok) return ShopTransactionResult.failed(buyCost.reason);
-  final sellCredit = _lineTotal(offer.sells, (itemId) => playerSellPrice(db, shop, itemId));
+  final enchantedMode = shopEnchantedSellMode(shop);
+  final sellCredit = _lineTotal(offer.sells, (itemId) {
+    // Wizard's counter only prices enchanted gear; generals use the plain rate
+    // for both (enchanted and plain share Base Sell Value there).
+    return playerSellPrice(
+      db,
+      shop,
+      itemId,
+      enchanted: enchantedMode == ShopEnchantedSellMode.enchantedOnly,
+    );
+  });
   if (!sellCredit.ok) return ShopTransactionResult.failed(sellCredit.reason);
 
   final goldDelta = sellCredit.total - buyCost.total;
@@ -149,7 +159,7 @@ ShopTransactionResult confirmShopOffer(
   }
 
   if (offer.sells.isNotEmpty) {
-    final removed = _removeSellableInventory(next, offer.sells);
+    final removed = _removeSellableInventory(next, offer.sells, mode: enchantedMode);
     if (removed == null) {
       return const ShopTransactionResult.failed(
         'Missing items to sell (favorited items cannot be sold).',
@@ -220,20 +230,43 @@ ShopTransactionResult confirmShopOffer(
   );
 }
 
-/// Removes sold quantities from non-favorite, non-enchanted bag stacks only.
-PlayerSave? _removeSellableInventory(PlayerSave save, List<ShopOfferLine> sells) {
+bool _stackIsEnchanted(InventoryStack stack) => isNotBlank(stack.enchantmentId);
+
+/// Removes sold quantities from bag stacks this shop will take.
+///
+/// Favorites are always skipped. Enchanted stacks follow [mode]: refused,
+/// taken after plain stacks at general merchants, or taken alone at the wizard.
+PlayerSave? _removeSellableInventory(
+  PlayerSave save,
+  List<ShopOfferLine> sells, {
+  required ShopEnchantedSellMode mode,
+}) {
   final inventory = save.inventory.toList();
   for (final line in sells) {
     num need = line.quantity.floor();
     if (need <= 0) return null;
-    for (var index = 0; index < inventory.length; index += 1) {
-      if (need <= 0) break;
-      final stack = inventory[index];
-      if (stack.itemId != line.itemId) continue;
-      if (isFavoriteStack(stack) || isNotBlank(stack.enchantmentId)) continue;
-      final take = stack.quantity < need ? stack.quantity : need;
-      inventory[index] = stack.copyWith(quantity: stack.quantity - take);
-      need -= take;
+
+    bool takeFrom(bool Function(InventoryStack stack) accept) {
+      for (var index = 0; index < inventory.length; index += 1) {
+        if (need <= 0) return true;
+        final stack = inventory[index];
+        if (stack.itemId != line.itemId) continue;
+        if (isFavoriteStack(stack) || !accept(stack)) continue;
+        final take = stack.quantity < need ? stack.quantity : need;
+        inventory[index] = stack.copyWith(quantity: stack.quantity - take);
+        need -= take;
+      }
+      return need <= 0;
+    }
+
+    switch (mode) {
+      case ShopEnchantedSellMode.reject:
+        takeFrom((stack) => !_stackIsEnchanted(stack));
+      case ShopEnchantedSellMode.preferPlain:
+        takeFrom((stack) => !_stackIsEnchanted(stack));
+        if (need > 0) takeFrom(_stackIsEnchanted);
+      case ShopEnchantedSellMode.enchantedOnly:
+        takeFrom(_stackIsEnchanted);
     }
     if (need > 0) return null;
   }

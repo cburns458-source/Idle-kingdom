@@ -245,6 +245,65 @@ describe('shops', () => {
     expect(stock).not.toContain('ITEM-0337')
   })
 
+  it('buys enchanted gear at the Wizard shop for 2× and at general merchants for 1×', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const sword = 'ITEM-0130'
+    const base = launch.Items.find((row) => row['Item ID'] === sword)!['Base Sell Value']!
+    const wizard = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0003')!
+    const general = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!
+    const market = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0004')!
+    const supply = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0005')!
+    const armory = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0007')!
+
+    expect(playerSellPrice(launch, wizard, sword)).toBeNull()
+    expect(playerSellPrice(launch, wizard, sword, { enchanted: true })).toBe(Math.round(base * 2))
+    expect(playerSellPrice(launch, general, sword, { enchanted: true })).toBe(base)
+    expect(playerSellPrice(launch, market, sword, { enchanted: true })).toBe(base)
+    expect(playerSellPrice(launch, supply, sword, { enchanted: true })).toBe(base)
+    expect(playerSellPrice(launch, armory, sword, { enchanted: true })).toBeNull()
+
+    let atWizard = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0007',
+      gold: 0,
+      inventory: [{ itemId: sword, quantity: 1, enchantmentId: 'ENCH-0003' }],
+    }
+    const wizardSale = confirmShopOffer(launch, atWizard, 'SHP-0003', {
+      buys: [],
+      sells: [{ itemId: sword, quantity: 1 }],
+    })
+    expect(wizardSale.ok).toBe(true)
+    if (!wizardSale.ok) return
+    expect(wizardSale.save.gold).toBe(Math.round(base * 2))
+    expect(wizardSale.save.inventory.some((stack) => stack.itemId === sword)).toBe(false)
+
+    let atGeneral = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0024',
+      gold: 0,
+      inventory: [{ itemId: sword, quantity: 1, enchantmentId: 'ENCH-0003' }],
+    }
+    const generalSale = confirmShopOffer(launch, atGeneral, 'SHP-0001', {
+      buys: [],
+      sells: [{ itemId: sword, quantity: 1 }],
+    })
+    expect(generalSale.ok).toBe(true)
+    if (!generalSale.ok) return
+    expect(generalSale.save.gold).toBe(base)
+
+    let atArmory = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0032',
+      gold: 0,
+      inventory: [{ itemId: sword, quantity: 1, enchantmentId: 'ENCH-0003' }],
+    }
+    const armorySale = confirmShopOffer(launch, atArmory, 'SHP-0007', {
+      buys: [],
+      sells: [{ itemId: sword, quantity: 1 }],
+    })
+    expect(armorySale.ok).toBe(false)
+  })
+
   it('caps shop buys per offer per UTC day', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0001')!
