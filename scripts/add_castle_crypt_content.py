@@ -36,23 +36,6 @@ def main() -> None:
             }
         )
 
-    connections = db['TravelConnections']
-    if not any(row['Connection ID'] == 'TRV-0020' for row in connections):
-        connections.append(
-            {
-                'Connection ID': 'TRV-0020',
-                'From Location ID': 'LOC-0013',
-                'To Location ID': 'LOC-0037',
-                'Method': 'Castle sub-map',
-                'Direction': 'Two-way',
-                'Base Duration': None,
-                'Required Mount / Status': None,
-                'Status': 'Planned',
-                'Release Phase': 'Launch',
-                'Notes': 'Castle gateway to Castle Crypt',
-            }
-        )
-
     activities = db['Activities']
     if not any(row['Activity ID'] == 'ACT-0041' for row in activities):
         activities.append(

@@ -15,11 +15,6 @@ import 'map_label.dart';
 import 'kingswoods_sling.dart';
 import 'submaps.dart';
 
-/// Travel is a menu button: destinations are instant, with no walk or mount delay.
-num travelDurationMs(TravelConnectionRow? _) {
-  return 0;
-}
-
 String getLocationMapId(LocationRow location) {
   final mapId = location.raw['Map ID'];
   return mapId is String ? mapId : mainMapId;
@@ -32,34 +27,6 @@ String resolveActiveMapId(GameDatabase db, LocationRow location) {
   final childMap = subMapIdForGateway(db, jsString(location.raw['Location ID']));
   if (childMap != null) return childMap;
   return mainMapId;
-}
-
-bool _isTwoWay(TravelConnectionRow connection) {
-  final direction = connection.raw['Direction'];
-  return (direction is String ? direction : 'Two-way').toLowerCase().contains('two');
-}
-
-List<TravelConnectionRow> connectionsFrom(GameDatabase db, String fromLocationId) {
-  return db.travelConnections.where((connection) {
-    if (connection.raw['From Location ID'] == fromLocationId) return true;
-    if (_isTwoWay(connection) && connection.raw['To Location ID'] == fromLocationId) return true;
-    return false;
-  }).toList();
-}
-
-TravelConnectionRow? findConnection(GameDatabase db, String fromLocationId, String toLocationId) {
-  return db.travelConnections.firstWhereOrNull((connection) {
-    if (connection.raw['From Location ID'] == fromLocationId &&
-        connection.raw['To Location ID'] == toLocationId) {
-      return true;
-    }
-    if (_isTwoWay(connection) &&
-        connection.raw['From Location ID'] == toLocationId &&
-        connection.raw['To Location ID'] == fromLocationId) {
-      return true;
-    }
-    return false;
-  });
 }
 
 bool _locationOpenForSave(
@@ -162,8 +129,6 @@ bool canTravelTo(
     // but future horizon gateways are browse-only.
     return destination.raw['Map ID'] == mainMapId && !isFutureHorizonLocation(toLocationId);
   }
-
-  if (findConnection(db, fromLocationId, toLocationId) != null) return true;
 
   // Nodes shown together on the active sub-map are mutually reachable.
   return locationsForMapView(

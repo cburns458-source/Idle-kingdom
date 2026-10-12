@@ -25,7 +25,7 @@ import { SAVE_VERSION, type PlayerSave } from '../save/types'
 import { canAccessShop } from '../shops/shops'
 import { resolveUnattendedProgress } from '../unattended/resolve'
 import { MAIN_MAP_ID } from '../world/constants'
-import { applyTravelArrival, canTravelTo, findConnection } from '../world/travel'
+import { applyTravelArrival, canTravelTo } from '../world/travel'
 import { createMemoryStorage } from '../../test/memoryStorage'
 
 const rawDatabase = JSON.parse(
@@ -108,7 +108,6 @@ describe('Step 11 release audit', () => {
     expect(save.currentLocationId).toBe('LOC-0001')
 
     expect(canTravelTo(launch, save.currentLocationId, 'LOC-0002', MAIN_MAP_ID)).toBe(true)
-    expect(findConnection(launch, 'LOC-0001', 'LOC-0002') || true).toBeTruthy()
     save = applyTravelArrival(launch, save, 'LOC-0002')
     expect(save.currentLocationId).toBe('LOC-0002')
 

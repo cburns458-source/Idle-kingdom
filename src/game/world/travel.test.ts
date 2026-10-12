@@ -10,7 +10,6 @@ import {
   canTravelTo,
   locationsForMapView,
   resolveActiveMapId,
-  travelDurationMs,
 } from './travel'
 import {
   DEFAULT_TRAVEL_DURATION_MS,
@@ -55,11 +54,7 @@ const rawDatabase = JSON.parse(
 
 describe('travel rules', () => {
   it('treats every Travel button as instant', () => {
-    expect(travelDurationMs(null)).toBe(0)
     expect(DEFAULT_TRAVEL_DURATION_MS).toBe(0)
-    const { launch } = prepareDatabase(rawDatabase)
-    const connection = launch.TravelConnections.find((row) => typeof row['Base Duration'] === 'number')
-    expect(travelDurationMs(connection)).toBe(0)
   })
 
   it('allows main-map node travel between Launch overworld locations', () => {

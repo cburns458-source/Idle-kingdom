@@ -29,47 +29,6 @@ Map<String, Object?> _claimJson(LocationSearchClaimResult result) {
 }
 
 void main() {
-  group('travel connection parity', () {
-    for (final fixture in loadParityFixtures('world/travel/connections')) {
-      test(fixture.name, () {
-        final db = databaseOf(fixture);
-        final locations = _stringList(fixture, 'locations');
-        expect(
-          checkParity(fixture, {
-            'byLocation': locations
-                .map(
-                  (locationId) => <String, Object?>{
-                    'locationId': locationId,
-                    'from': connectionsFrom(
-                      db,
-                      locationId,
-                    ).map((row) => row.raw['Connection ID']).toList(),
-                    'durations': connectionsFrom(
-                      db,
-                      locationId,
-                    ).map((row) => travelDurationMs(row)).toList(),
-                  },
-                )
-                .toList(),
-            'pairs': locations
-                .expand(
-                  (from) => locations.map(
-                    (to) => <String, Object?>{
-                      'from': from,
-                      'to': to,
-                      'connectionId': findConnection(db, from, to)?.raw['Connection ID'],
-                    },
-                  ),
-                )
-                .toList(),
-            'missingDuration': <num>[travelDurationMs(null), travelDurationMs(null)],
-          }),
-          isNull,
-        );
-      });
-    }
-  });
-
   group('map view parity', () {
     for (final fixture in loadParityFixtures('world/travel/maps')) {
       test(fixture.name, () {

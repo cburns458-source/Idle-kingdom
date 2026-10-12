@@ -126,19 +126,6 @@ export interface MapRow {
   Description: string | null
 }
 
-export interface TravelConnectionRow {
-  'Connection ID': string
-  'From Location ID': string
-  'To Location ID': string
-  Method: string | null
-  Direction: string | null
-  'Base Duration': number | null
-  'Required Mount / Status': string | null
-  Status: RecordStatus
-  'Release Phase': ReleasePhase
-  Notes: string | null
-}
-
 export interface FacilityRow {
   'Facility ID': string
   'Internal Key': string
@@ -429,7 +416,6 @@ export interface GameDatabase {
   Enchantments: EnchantmentRow[]
   Maps: MapRow[]
   Locations: LocationRow[]
-  TravelConnections: TravelConnectionRow[]
   Facilities: FacilityRow[]
   Activities: ActivityRow[]
   PoolEntries: PoolEntryRow[]
@@ -469,7 +455,6 @@ export const DATABASE_TABLES = [
   'Enchantments',
   'Maps',
   'Locations',
-  'TravelConnections',
   'Facilities',
   'Activities',
   'PoolEntries',

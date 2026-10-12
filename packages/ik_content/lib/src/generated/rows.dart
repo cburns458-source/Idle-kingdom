@@ -854,30 +854,6 @@ class SkillRow extends DbRow {
   String? get rulesNotes => stringOrNull('Rules / Notes');
 }
 
-class TravelConnectionRow extends DbRow {
-  const TravelConnectionRow(super.raw);
-
-  String get connectionId => stringValue('Connection ID');
-
-  String get fromLocationId => stringValue('From Location ID');
-
-  String get toLocationId => stringValue('To Location ID');
-
-  String? get method => stringOrNull('Method');
-
-  String? get direction => stringOrNull('Direction');
-
-  num? get baseDuration => numberOrNull('Base Duration');
-
-  String? get requiredMountStatus => stringOrNull('Required Mount / Status');
-
-  String get status => stringValue('Status');
-
-  String get releasePhase => stringValue('Release Phase');
-
-  String? get notes => stringOrNull('Notes');
-}
-
 class XPCurveRow extends DbRow {
   const XPCurveRow(super.raw);
 
@@ -900,7 +876,6 @@ const List<String> databaseTables = <String>[
   'Enchantments',
   'Maps',
   'Locations',
-  'TravelConnections',
   'Facilities',
   'Activities',
   'PoolEntries',
@@ -961,12 +936,6 @@ class GameDatabase {
   late final List<MapRow> maps = typedRows(raw, 'Maps', MapRow.new);
 
   late final List<LocationRow> locations = typedRows(raw, 'Locations', LocationRow.new);
-
-  late final List<TravelConnectionRow> travelConnections = typedRows(
-    raw,
-    'TravelConnections',
-    TravelConnectionRow.new,
-  );
 
   late final List<FacilityRow> facilities = typedRows(raw, 'Facilities', FacilityRow.new);
 
