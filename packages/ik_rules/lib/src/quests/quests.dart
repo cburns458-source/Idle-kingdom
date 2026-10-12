@@ -30,6 +30,13 @@ typedef QuestRow = Map<String, Object?>;
 
 List<QuestRow> asQuestRows(GameDatabase db) => db.quests;
 
+/// `dialogue` pays nothing on completion; rewards come from dialogue actions.
+/// Missing or anything else means `legacy`.
+String questRewardMode(QuestRow quest) {
+  final raw = quest['Reward Mode'];
+  return raw is String && raw.trim().toLowerCase() == 'dialogue' ? 'dialogue' : 'legacy';
+}
+
 QuestRow? getQuest(GameDatabase db, String questId) {
   return asQuestRows(db).firstWhereOrNull((quest) => quest['Quest ID'] == questId);
 }
@@ -311,9 +318,10 @@ QuestCompletion completeQuest(
   final loot = <LootGrant>[];
   var goldGained = 0.0;
   num pendingSkillXp = 0;
+  final paysRewards = questRewardMode(quest) == 'legacy';
   final bribed = hasQuestFlag(save, questId, 'choice:bribe');
-  final xpGrants = _questXpGrants(quest, parsed);
-  if (bribed && parsed.branchSkillXp > 0) {
+  final xpGrants = paysRewards ? _questXpGrants(quest, parsed) : const <QuestCounterTarget>[];
+  if (paysRewards && bribed && parsed.branchSkillXp > 0) {
     pendingSkillXp = parsed.branchSkillXp;
     rewards.add('Choose ${jsLocaleNumber(pendingSkillXp)} XP in a non-combat skill');
   } else {
@@ -333,7 +341,7 @@ QuestCompletion completeQuest(
     }
   }
 
-  if (parsed.rewardGold > 0) {
+  if (paysRewards && parsed.rewardGold > 0) {
     goldGained = parsed.rewardGold.toDouble();
     next = next.copyWith(gold: next.gold + parsed.rewardGold);
     rewards.add('${jsLocaleNumber(parsed.rewardGold)} gold');
@@ -341,7 +349,11 @@ QuestCompletion completeQuest(
 
   final rewardItemId = quest['Reward Item ID'];
   final rewardQty = quest['Reward Item Quantity'];
-  if (rewardItemId is String && rewardItemId.isNotEmpty && rewardQty is num && rewardQty > 0) {
+  if (paysRewards &&
+      rewardItemId is String &&
+      rewardItemId.isNotEmpty &&
+      rewardQty is num &&
+      rewardQty > 0) {
     next = addItemToInventory(next, rewardItemId, rewardQty);
     final itemName = db.items
         .firstWhereOrNull((item) => item.raw['Item ID'] == rewardItemId)
@@ -351,7 +363,7 @@ QuestCompletion completeQuest(
     loot.add(LootGrant(itemId: rewardItemId, quantity: rewardQty, displayName: displayName));
   }
 
-  for (final grant in parsed.rewardItems) {
+  for (final grant in paysRewards ? parsed.rewardItems : const <QuestCounterTarget>[]) {
     if (grant.quantity <= 0) continue;
     next = addItemToInventory(next, grant.targetId, grant.quantity);
     final itemName = db.items
@@ -374,7 +386,7 @@ QuestCompletion completeQuest(
     }
   }
 
-  for (final recipeId in parsed.rewardRecipeIds) {
+  for (final recipeId in paysRewards ? parsed.rewardRecipeIds : const <String>[]) {
     final before = next.unlockedRecipeIds.length;
     next = unlockRecipeId(next, recipeId);
     if (next.unlockedRecipeIds.length > before) {
@@ -386,7 +398,7 @@ QuestCompletion completeQuest(
     }
   }
 
-  for (final npcId in parsed.rewardProjectNpcIds) {
+  for (final npcId in paysRewards ? parsed.rewardProjectNpcIds : const <String>[]) {
     if (next.unlockedNpcIds.contains(npcId)) continue;
     next = next.copyWith(unlockedNpcIds: [...next.unlockedNpcIds, npcId]);
     final npcName = db.npcs
@@ -395,7 +407,7 @@ QuestCompletion completeQuest(
     rewards.add('Project knowledge from ${npcName is String ? npcName : npcId}');
   }
 
-  for (final cosmeticId in parsed.rewardCosmeticIds) {
+  for (final cosmeticId in paysRewards ? parsed.rewardCosmeticIds : const <String>[]) {
     final granted = grantCosmetic(next, cosmeticId);
     next = granted.save;
     if (granted.granted) {
@@ -409,7 +421,7 @@ QuestCompletion completeQuest(
   }
 
   final booksGranted = <QuestBookGrant>[];
-  for (final bookId in parsed.rewardBookIds) {
+  for (final bookId in paysRewards ? parsed.rewardBookIds : const <String>[]) {
     final granted = grantBook(next, bookId);
     next = granted.save;
     if (granted.granted) {
@@ -460,8 +472,7 @@ QuestCompletion completeQuest(
       goldGained: goldGained,
     ),
     booksGranted: booksGranted,
-    message:
-        spoken ?? (rewards.isNotEmpty ? 'Thank you — ${rewards.join(' and ')}.' : 'Thank you.'),
+    message: spoken ?? (rewards.isNotEmpty ? 'Thank you — ${rewards.join(' and ')}.' : 'Thank you.'),
   );
 }
 
@@ -669,6 +680,60 @@ PlayerSave resetQuestProgress(PlayerSave save, Iterable<String> questIds) {
   );
 }
 
+/// Dialogue flags owned by [ownerId] (a quest or dialogue ID) under the once-only gift convention.
+bool isGiftFlagOf(String flag, String ownerId) =>
+    flag == 'gift:$ownerId' || flag.startsWith('gift:$ownerId:');
+
+class HandInDeletion {
+  const HandInDeletion({required this.itemId, required this.quantity});
+
+  final String itemId;
+  final num quantity;
+
+  Map<String, Object?> toJson() => <String, Object?>{'itemId': itemId, 'quantity': quantity};
+}
+
+class CheatAbandonResult {
+  const CheatAbandonResult.ok(PlayerSave this.save, this.deletedHandIns) : reason = null;
+
+  const CheatAbandonResult.failed(String this.reason)
+    : save = null,
+      deletedHandIns = const <HandInDeletion>[];
+
+  bool get ok => reason == null;
+  final PlayerSave? save;
+  final List<HandInDeletion> deletedHandIns;
+  final String? reason;
+}
+
+/// Testing-only abandon. Drops the quest row, so every counter goes with it,
+/// including items an NPC holds for a HandIn step (deleted, never refunded), and
+/// clears that quest's once-only gift flags so the gifts can be claimed again.
+/// Players have no abandon; the server only reaches this behind developer_accounts.
+CheatAbandonResult cheatAbandonQuest(PlayerSave save, String questId) {
+  final progress = getQuestProgress(save, questId);
+  if (progress.status != 'active') {
+    return const CheatAbandonResult.failed('That quest is not active.');
+  }
+  final counters = progress.counters ?? const <String, num>{};
+  final deleted = <HandInDeletion>[];
+  for (final key in counters.keys.toList()..sort()) {
+    if (!key.startsWith('handIn:')) continue;
+    final quantity = counters[key] ?? 0;
+    if (quantity <= 0) continue;
+    deleted.add(
+      HandInDeletion(itemId: key.substring(key.lastIndexOf(':') + 1), quantity: quantity),
+    );
+  }
+  final reset = resetQuestProgress(save, <String>[questId]);
+  return CheatAbandonResult.ok(
+    reset.copyWith(
+      dialogueFlags: reset.dialogueFlags.where((flag) => !isGiftFlagOf(flag, questId)).toList(),
+    ),
+    deleted,
+  );
+}
+
 /// Clears first-run intro flags so those hints can fire again.
 PlayerSave resetIntroFlags(PlayerSave save, {bool fennel = false, bool wardrobe = false}) {
   return save.copyWith(
@@ -697,6 +762,16 @@ List<String> questCompletionRewardLabels(GameDatabase db, QuestRow quest, [Playe
   final questId = jsString(quest['Quest ID']);
   final parsed = parseStructuredObjectives(quest);
   final rewards = <String>[];
+  if (questRewardMode(quest) == 'dialogue') {
+    for (final locationId in parsed.unlockLocationIds) {
+      final locationName = db.locations
+          .firstWhereOrNull((location) => location.raw['Location ID'] == locationId)
+          ?.raw['Display Name'];
+      rewards.add('Unlocked ${locationName is String ? locationName : locationId}');
+    }
+    rewards.addAll(facilityUnlockRewardLabels(db, questId));
+    return rewards;
+  }
   final bribed = save != null && hasQuestFlag(save, questId, 'choice:bribe');
   if (bribed && parsed.branchSkillXp > 0) {
     rewards.add('Choose ${jsLocaleNumber(parsed.branchSkillXp)} XP in a non-combat skill');

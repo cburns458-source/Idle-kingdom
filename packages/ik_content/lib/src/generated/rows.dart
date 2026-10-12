@@ -185,6 +185,15 @@ class DialogueChoiceRow extends DbRow {
   /// Typed action string applied when the choice is taken, or null.
   String? get action => stringOrNull('Action');
 
+  /// When true, the choice is left out of the view while its conditions fail.
+  bool? get hidden => boolOrNull('Hidden');
+
+  /// When true, a grant on this choice may be taken more than once.
+  bool? get repeatable => boolOrNull('Repeatable');
+
+  /// Forces the quest marker on the choice even without a quest action.
+  bool? get questMarker => boolOrNull('QuestMarker');
+
   num get sortOrder => numberValue('Sort Order');
 
   String get status => stringValue('Status');
@@ -225,6 +234,12 @@ class DialogueRow extends DbRow {
   String get startNodeId => stringValue('Start Node ID');
 
   bool get repeatable => boolValue('Repeatable');
+
+  /// Higher opens first when an NPC has several available dialogues. Missing means 0.
+  num? get priority => numberOrNull('Priority');
+
+  /// `;`-separated condition tokens gating the whole dialogue, or null.
+  String? get condition => stringOrNull('Condition');
 
   String get status => stringValue('Status');
 
@@ -637,6 +652,17 @@ class QuestStepRow extends DbRow {
   String get journalLabel => stringValue('Journal Label');
 
   String? get notes => stringOrNull('Notes');
+
+  /// `Talk`, `Show` or `HandIn` make the step dialogue-only: it completes only
+  /// through a dialogue action and its Notes objectives are ignored. Missing or
+  /// any other value keeps the Notes-driven step.
+  String? get stepType => stringOrNull('Step Type');
+
+  /// `ITEM-x:n;ITEM-y:m` for Show and HandIn steps.
+  String? get stepItems => stringOrNull('Step Items');
+
+  /// NPC the step is talked, shown or handed in to.
+  String? get stepNpc => stringOrNull('Step NPC');
 
   String get status => stringValue('Status');
 

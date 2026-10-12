@@ -127,6 +127,56 @@ List<QuestProgressLine> _journalProgressLines(
       .toList();
 }
 
+/// Step types that only a dialogue action can complete.
+const List<String> dialogueStepTypes = <String>['Talk', 'Show', 'HandIn'];
+
+class StepItemNeed {
+  const StepItemNeed({required this.itemId, required this.quantity});
+
+  final String itemId;
+  final int quantity;
+}
+
+QuestStepRow? getQuestStep(GameDatabase db, String questId, String stepId) {
+  return db.questSteps.firstWhereOrNull((row) => row.stepId == stepId && row.questId == questId);
+}
+
+/// `Talk`, `Show` or `HandIn`, or null for a Notes-driven step.
+String? dialogueStepType(QuestStepRow? step) {
+  final raw = step?.raw['Step Type'];
+  final type = raw is String ? raw.trim() : '';
+  return dialogueStepTypes.contains(type) ? type : null;
+}
+
+final RegExp _wholeCount = RegExp(r'^\d+$');
+
+/// `ITEM-x:n;ITEM-y:m` from a Show/HandIn step. Entries without a whole
+/// quantity of at least 1 are skipped; repeated items are summed.
+List<StepItemNeed> parseStepItems(Object? raw) {
+  final needs = <StepItemNeed>[];
+  if (raw is! String) return needs;
+  for (final entry in raw.split(';')) {
+    final parts = entry.split(':').map((part) => part.trim()).toList();
+    if (parts.length != 2 || parts[0].isEmpty || !_wholeCount.hasMatch(parts[1])) continue;
+    final quantity = int.parse(parts[1]);
+    if (quantity < 1) continue;
+    final index = needs.indexWhere((need) => need.itemId == parts[0]);
+    if (index >= 0) {
+      needs[index] = StepItemNeed(itemId: parts[0], quantity: needs[index].quantity + quantity);
+    } else {
+      needs.add(StepItemNeed(itemId: parts[0], quantity: quantity));
+    }
+  }
+  return needs;
+}
+
+/// Counter holding how many of [itemId] the NPC already keeps for a HandIn step.
+String handInCounterKey(String stepId, String itemId) => 'handIn:$stepId:$itemId';
+
+bool isStepLatched(PlayerSave save, String questId, String stepId) {
+  return (getQuestProgress(save, questId).counters?[stepCompleteKey(stepId)] ?? 0) >= 1;
+}
+
 bool _isStepComplete(
   GameDatabase db,
   PlayerSave save,
@@ -136,6 +186,7 @@ bool _isStepComplete(
 ]) {
   final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
   if (stepId != null && (counters[stepCompleteKey(stepId)] ?? 0) >= 1) return true;
+  if (stepId != null && dialogueStepType(getQuestStep(db, questId, stepId)) != null) return false;
   if (_isAskAroundSkipped(db, save, questId, notes)) return true;
   final structured = parseNotesObjectives(notes);
   final progress = objectiveProgressFromStructured(db, save, structured, counters);
@@ -185,7 +236,7 @@ PlayerSave applyQuestStepUnlocks(GameDatabase db, PlayerSave save) {
         continue;
       }
       if (latching && stepId.isNotEmpty) {
-        next = _latchStep(next, questId, stepId);
+        next = latchStep(next, questId, stepId);
       }
       for (final locationId in parseNotesObjectives(step.notes ?? '').unlockLocationIds) {
         final updated = unlockLocation(unlocked, locationId);
@@ -199,7 +250,24 @@ PlayerSave applyQuestStepUnlocks(GameDatabase db, PlayerSave save) {
   return changed ? next.copyWith(unlockedLocationIds: unlocked) : next;
 }
 
-PlayerSave _latchStep(PlayerSave save, String questId, String stepId) {
+/// Replaces a quest's counters, keeping `progress` as their sum.
+PlayerSave withQuestCounters(PlayerSave save, String questId, Map<String, num> counters) {
+  final progress = getQuestProgress(save, questId);
+  return save.copyWith(
+    quests: [
+      ...save.quests.where((row) => row.questId != questId),
+      QuestProgress(
+        questId: progress.questId,
+        status: progress.status,
+        counters: counters,
+        progress: counters.values.fold<num>(0, (sum, value) => sum + value),
+      ),
+    ],
+  );
+}
+
+/// Marks a step done for good (BUG-01). The one write path for Talk, Show and HandIn too.
+PlayerSave latchStep(PlayerSave save, String questId, String stepId) {
   final key = stepCompleteKey(stepId);
   final progress = getQuestProgress(save, questId);
   if ((progress.counters?[key] ?? 0) >= 1) return save;

@@ -233,6 +233,10 @@ export interface DialogueRow {
   'NPC ID': string
   'Start Node ID': string
   Repeatable: boolean
+  /** Higher opens first when an NPC has several available dialogues. Missing means 0. */
+  Priority?: number | null
+  /** `;`-separated condition tokens gating the whole dialogue, or null. */
+  Condition?: string | null
   Status: RecordStatus
   'Release Phase': ReleasePhase
   Notes: string | null
@@ -256,6 +260,12 @@ export interface DialogueChoiceRow {
   Condition: string | null
   /** Typed action string applied when the choice is taken, or null. */
   Action: string | null
+  /** When true, the choice is left out of the view while its conditions fail. */
+  Hidden?: boolean | null
+  /** When true, a grant on this choice may be taken more than once. */
+  Repeatable?: boolean | null
+  /** Forces the quest marker on the choice even without a quest action. */
+  QuestMarker?: boolean | null
   'Sort Order': number
   Status: RecordStatus
   'Release Phase': ReleasePhase
@@ -268,6 +278,16 @@ export interface QuestStepRow {
   'Step Order': number
   'Journal Label': string
   Notes: string | null
+  /**
+   * `Talk`, `Show` or `HandIn` make the step dialogue-only: it completes only
+   * through a dialogue action and its Notes objectives are ignored. Missing or
+   * any other value keeps the Notes-driven step.
+   */
+  'Step Type'?: string | null
+  /** `ITEM-x:n;ITEM-y:m` for Show and HandIn steps. */
+  'Step Items'?: string | null
+  /** NPC the step is talked, shown or handed in to. */
+  'Step NPC'?: string | null
   Status: RecordStatus
   'Release Phase': ReleasePhase
 }
