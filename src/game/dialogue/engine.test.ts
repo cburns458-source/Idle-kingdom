@@ -5,6 +5,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { applyGameCommand } from '../server/authority'
 import { chooseDialogue, dialoguesForNpc, startDialogue } from './engine'
+import { validateDialogueContent } from './validate'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -48,5 +49,10 @@ describe('standalone dialogue engine', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.save.completedDialogueIds).toContain('DLG-0001')
+  })
+
+  it('ships dialogue content without validation errors', () => {
+    const issues = validateDialogueContent(rawDatabase)
+    expect(issues.filter((issue) => issue.severity === 'error')).toEqual([])
   })
 })

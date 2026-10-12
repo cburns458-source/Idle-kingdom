@@ -43,6 +43,8 @@ export 'src/cosmetics/wardrobe.dart';
 export 'src/critters/critters.dart';
 export 'src/critters/pets.dart';
 export 'src/dialogue/engine.dart';
+export 'src/dialogue/step_progress.dart';
+export 'src/dialogue/validate.dart';
 export 'src/equipment/auto_equip.dart';
 export 'src/equipment/compare.dart';
 export 'src/equipment/loadout.dart';
