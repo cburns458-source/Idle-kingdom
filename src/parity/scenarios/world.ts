@@ -16,12 +16,9 @@ import { layoutForMap, positionForLocation } from '../../game/world/mapLayout'
 import {
   applyTravelArrival,
   canTravelTo,
-  connectionsFrom,
-  findConnection,
   getLocationMapId,
   locationsForMapView,
   resolveActiveMapId,
-  travelDurationMs,
 } from '../../game/world/travel'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
@@ -116,30 +113,6 @@ function travelPairs(): Array<{ from: string; to: string; mapId: string }> {
 }
 
 export const worldScenarios: ParityScenario[] = [
-  scenario(
-    'world/travel/connections',
-    'lookups',
-    { source: 'content', locations: TRAVEL_LOCATIONS },
-    () => {
-      const db = contentDatabase()
-      return {
-        byLocation: TRAVEL_LOCATIONS.map((locationId) => ({
-          locationId,
-          from: connectionsFrom(db, locationId).map((row) => row['Connection ID']),
-          durations: connectionsFrom(db, locationId).map((row) => travelDurationMs(row)),
-        })),
-        pairs: TRAVEL_LOCATIONS.flatMap((from) =>
-          TRAVEL_LOCATIONS.map((to) => ({
-            from,
-            to,
-            connectionId: findConnection(db, from, to)?.['Connection ID'] ?? null,
-          })),
-        ),
-        missingDuration: [travelDurationMs(null), travelDurationMs(undefined)],
-      } as unknown as JsonValue
-    },
-  ),
-
   scenario(
     'world/travel/maps',
     'views',

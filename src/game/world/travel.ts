@@ -1,6 +1,6 @@
 import { isDeathPaused } from '../combat/engine'
 import { stopPrimaryActivityNow } from '../activity/transition'
-import type { GameDatabase, LocationRow, TravelConnectionRow } from '../data/types'
+import type { GameDatabase, LocationRow } from '../data/types'
 import { applyQuestAutoCompleteOnVisit, type QuestArrivalCompletion } from '../quests/quests'
 import { applyQuestLocationProgressResult } from '../quests/progress'
 import { questRevealsLocation } from '../quests/steps'
@@ -17,11 +17,6 @@ import {
   subMapIdForGateway,
 } from './submaps'
 
-/** Travel is a menu button: destinations are instant, with no walk or mount delay. */
-export function travelDurationMs(_connection?: TravelConnectionRow | null): number {
-  return 0
-}
-
 export function getLocationMapId(location: LocationRow): string {
   return location['Map ID'] ?? MAIN_MAP_ID
 }
@@ -33,45 +28,6 @@ export function resolveActiveMapId(db: GameDatabase, location: LocationRow): str
   const childMap = subMapIdForGateway(db, location['Location ID'])
   if (childMap) return childMap
   return MAIN_MAP_ID
-}
-
-function isTwoWay(connection: TravelConnectionRow): boolean {
-  const direction = (connection.Direction ?? 'Two-way').toLowerCase()
-  return direction.includes('two')
-}
-
-export function connectionsFrom(
-  db: GameDatabase,
-  fromLocationId: string,
-): TravelConnectionRow[] {
-  return db.TravelConnections.filter((connection) => {
-    if (connection['From Location ID'] === fromLocationId) return true
-    if (isTwoWay(connection) && connection['To Location ID'] === fromLocationId) return true
-    return false
-  })
-}
-
-export function findConnection(
-  db: GameDatabase,
-  fromLocationId: string,
-  toLocationId: string,
-): TravelConnectionRow | undefined {
-  return db.TravelConnections.find((connection) => {
-    if (
-      connection['From Location ID'] === fromLocationId &&
-      connection['To Location ID'] === toLocationId
-    ) {
-      return true
-    }
-    if (
-      isTwoWay(connection) &&
-      connection['From Location ID'] === toLocationId &&
-      connection['To Location ID'] === fromLocationId
-    ) {
-      return true
-    }
-    return false
-  })
 }
 
 /**
@@ -166,9 +122,7 @@ export function canTravelTo(
     return destination['Map ID'] === MAIN_MAP_ID && !isFutureHorizonLocation(toLocationId)
   }
 
-  if (findConnection(db, fromLocationId, toLocationId)) return true
-
-  // Allow moving among nodes shown on the active sub-map.
+  // Travel is gated only by unlocked nodes: any node shown on the active sub-map.
   return locationsForMapView(db, activeMapId, save).some(
     (location) => location['Location ID'] === toLocationId,
   )
