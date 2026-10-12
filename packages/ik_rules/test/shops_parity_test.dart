@@ -252,6 +252,26 @@ void main() {
       expect(playerSellPrice(db, general, 'ITEM-0313'), 69);
     });
 
+    test('selling from the inventory still pays for them', () {
+      final save = createNewSave(db, offerNowMs).copyWith(
+        gold: 0,
+        inventory: const <InventoryStack>[
+          InventoryStack(itemId: 'ITEM-0406', quantity: 1),
+          InventoryStack(itemId: 'ITEM-0313', quantity: 1),
+        ],
+      );
+      final expected =
+          sellPriceAtLocation(db, save, 'ITEM-0406')!.unitPrice +
+          sellPriceAtLocation(db, save, 'ITEM-0313')!.unitPrice;
+      // Away from a shop this is the 50% field rate, the same as any other item.
+      expect(expected, 99 + 35);
+      final sold = sellInventoryIndexes(db, save, const <num>[0, 1]);
+      expect(sold.reason, isNull);
+      expect(sold.goldEarned, expected);
+      expect(sold.save!.inventory, isEmpty);
+      expect(sold.save!.gold, expected);
+    });
+
     test('enchanted gear still sells where it did', () {
       expect(playerSellPrice(db, general, 'ITEM-0406', enchanted: true), 198);
       expect(playerSellPrice(db, wizards, 'ITEM-0406', enchanted: true), 396);
