@@ -472,7 +472,7 @@ QuestCompletion completeQuest(
       goldGained: goldGained,
     ),
     booksGranted: booksGranted,
-    message: spoken ?? (rewards.isNotEmpty ? 'Thank you — ${rewards.join(' and ')}.' : 'Thank you.'),
+    message: spoken ?? (rewards.isNotEmpty ? 'Thank you. ${rewards.join(' and ')}.' : 'Thank you.'),
   );
 }
 
