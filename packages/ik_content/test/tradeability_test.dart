@@ -8,6 +8,7 @@ const String _machete = 'ITEM-0406';
 const String _excavatorsPickaxe = 'ITEM-0313';
 const String _stolenCoinPurse = 'ITEM-0299';
 const String _beggarsHood = 'ITEM-0300';
+const String _dwarvenWarhammer = 'ITEM-0123';
 const String _goldenSpud = 'ITEM-0026';
 const String _chefsHat = 'ITEM-0165';
 const String _pirateInsignia = 'ITEM-0288';
@@ -25,7 +26,7 @@ ItemRow _item(GameDatabase db, String itemId) => db.items.firstWhere((row) => ro
 
 void main() {
   group('the Tradeable column', () {
-    test('marks the four quest-only rewards untradeable and nothing else', () {
+    test('marks the quest-only rewards untradeable and nothing else', () {
       final db = assertGameDatabaseShape(_rawCopy());
       final untradeable = db.items.where((item) => !item.isTradeable).map((item) => item.itemId);
       expect(untradeable.toSet(), <String>{
@@ -33,6 +34,7 @@ void main() {
         _excavatorsPickaxe,
         _stolenCoinPurse,
         _beggarsHood,
+        _dwarvenWarhammer,
       });
       for (final itemId in <String>[_goldenSpud, _chefsHat, _pirateInsignia]) {
         expect(_item(db, itemId).isTradeable, isTrue, reason: itemId);

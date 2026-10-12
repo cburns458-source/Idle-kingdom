@@ -42,4 +42,8 @@ echo "=== BUG-02: open orders for untradeable items are cancelled ==="
 run -f supabase/tests/bazaar_untradeable_migration_test.sql
 
 echo
+echo "=== BUG-02: open Dwarven Warhammer orders are cancelled ==="
+run -f supabase/tests/bazaar_warhammer_migration_test.sql
+
+echo
 echo "All Bazaar SQL checks passed."

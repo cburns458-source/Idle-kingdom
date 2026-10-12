@@ -116,6 +116,11 @@ the editor), so a push would try to replay from `001`.
   On each project, apply it only after the `bazaar` function that refuses those
   items has deployed there (test: after the PR lands on `test-launch`; live:
   after Conor merges to `main`). Safe to re-run.
+- `20261012200000_bazaar_cancel_warhammer_orders.sql` (BUG-02). Cancels open
+  Bazaar orders for the Dwarven Warhammer (ITEM-0123) through
+  `bazaar_cancel_order`. Apply after #314 deploys: Economy runs it on test once
+  the PR lands on `test-launch`; live only after Conor approves and merges to
+  `main`. Safe to re-run.
 
 The eight files before that (profile guard through Wave F cleanup) were applied
 to live when `efbda080` shipped to `main`.
