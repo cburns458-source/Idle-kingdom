@@ -491,9 +491,19 @@ class MarketSnapshot {
 /// that returns one has already had the escrow taken or the box paid out, and
 /// the client's job is to adopt it rather than to apply anything itself.
 class MarketActionResult {
-  const MarketActionResult.ok({this.save, this.message, this.order}) : reason = null;
+  const MarketActionResult.ok({
+    this.save,
+    this.message,
+    this.order,
+    this.code,
+    this.noRoom,
+    this.rowsLeft,
+  }) : reason = null;
 
-  const MarketActionResult.failed(this.reason) : save = null, message = null, order = null;
+  const MarketActionResult.failed(this.reason, {this.code, this.noRoom, this.rowsLeft})
+    : save = null,
+      message = null,
+      order = null;
 
   final PlayerSave? save;
 
@@ -501,6 +511,13 @@ class MarketActionResult {
   final String? message;
   final MarketOrder? order;
   final String? reason;
+
+  /// `no_room` on a full or partial collect that left item rows behind.
+  final String? code;
+  final NoRoom? noRoom;
+
+  /// Item rows still waiting in the collection box.
+  final int? rowsLeft;
 
   bool get ok => reason == null;
 
@@ -510,8 +527,17 @@ class MarketActionResult {
           if (save != null) 'save': save!.toJson(),
           if (message != null) 'message': message,
           if (order != null) 'order': order!.toJson(),
+          if (code != null) 'code': code,
+          if (noRoom != null) 'noRoom': noRoom!.toJson(),
+          if (rowsLeft != null) 'rowsLeft': rowsLeft,
         }
-      : <String, Object?>{'ok': false, 'reason': reason};
+      : <String, Object?>{
+          'ok': false,
+          'reason': reason,
+          if (code != null) 'code': code,
+          if (noRoom != null) 'noRoom': noRoom!.toJson(),
+          if (rowsLeft != null) 'rowsLeft': rowsLeft,
+        };
 }
 
 /// One of the six offer boxes, filled or empty.

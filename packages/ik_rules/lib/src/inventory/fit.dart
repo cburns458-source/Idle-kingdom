@@ -7,29 +7,52 @@ import 'dart:math' as math;
 
 import 'package:ik_content/ik_content.dart';
 
+import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import 'add_items.dart';
 import 'capacity.dart';
 import 'gold.dart';
 
 class NoRoom {
-  const NoRoom({required this.slotsNeeded, required this.slotsFree});
+  const NoRoom({this.slotsNeeded, this.slotsFree, this.reason, this.target});
 
-  /// New bag slots the grants need; stacks already in the bag cost none.
-  final int slotsNeeded;
-  final int slotsFree;
+  factory NoRoom.fromJson(Map<String, Object?> json) {
+    final slotsNeeded = json['slotsNeeded'];
+    final slotsFree = json['slotsFree'];
+    final reason = json['reason'];
+    final target = json['target'];
+    return NoRoom(
+      slotsNeeded: slotsNeeded is num ? slotsNeeded.toInt() : null,
+      slotsFree: slotsFree is num ? slotsFree.toInt() : null,
+      reason: reason is String && reason.isNotEmpty ? reason : null,
+      target: target is String && target.isNotEmpty ? target : null,
+    );
+  }
+
+  /// New slots the grants need; stacks already in the container cost none.
+  final int? slotsNeeded;
+  final int? slotsFree;
+
+  /// Set when a mergeable stack is at cap and free slots would not help.
+  final String? reason;
+
+  /// Which container is full. Omitted for the bag.
+  final String? target;
 
   Map<String, Object?> toJson() => <String, Object?>{
-    'slotsNeeded': slotsNeeded,
-    'slotsFree': slotsFree,
+    if (slotsNeeded != null) 'slotsNeeded': slotsNeeded,
+    if (slotsFree != null) 'slotsFree': slotsFree,
+    if (reason != null) 'reason': reason,
+    if (target != null) 'target': target,
   };
 }
 
 class ItemGrant {
-  const ItemGrant({required this.itemId, required this.quantity});
+  const ItemGrant({required this.itemId, required this.quantity, this.enchantmentId});
 
   final String itemId;
   final num quantity;
+  final String? enchantmentId;
 }
 
 class RewardsFit {
@@ -39,23 +62,53 @@ class RewardsFit {
   final NoRoom noRoom;
 }
 
-/// New bag slots [itemIds] need against [save]: one per distinct non-gold item
-/// without a pile to grow.
-int slotsNeededForItems(GameDatabase? db, PlayerSave save, Iterable<String> itemIds) {
+/// New slots [grants] need: one per distinct unenchanted non-gold pile, or one
+/// per enchanted item.
+int slotsNeededForGrants(GameDatabase? db, PlayerSave save, Iterable<ItemGrant> grants) {
   final seen = <String>{};
   var needed = 0;
-  for (final itemId in itemIds) {
-    if (isGoldCurrencyItem(itemId, db) || !seen.add(itemId)) continue;
-    if (mergeableStackIndex(save.inventory, itemId) >= 0) continue;
+  for (final grant in grants) {
+    if (grant.quantity <= 0) continue;
+    final enchantmentId = grant.enchantmentId;
+    if (isGoldCurrencyItem(grant.itemId, db) && isBlank(enchantmentId)) continue;
+    if (isNotBlank(enchantmentId)) {
+      needed += grant.quantity.floor();
+      continue;
+    }
+    if (!seen.add(grant.itemId)) continue;
+    if (mergeableStackIndex(save.inventory, grant.itemId, enchantmentId) >= 0) continue;
     needed += 1;
   }
   return needed;
 }
 
-/// `No room in your bag. Free N slot(s) and try again.`
+/// New bag slots [itemIds] need against [save]: one per distinct non-gold item
+/// without a pile to grow.
+int slotsNeededForItems(GameDatabase? db, PlayerSave save, Iterable<String> itemIds) {
+  return slotsNeededForGrants(db, save, [
+    for (final itemId in itemIds) ItemGrant(itemId: itemId, quantity: 1),
+  ]);
+}
+
+/// Human-readable refusal for a `no_room` payload.
 String noRoomReason(NoRoom noRoom) {
-  final short = math.max(1, noRoom.slotsNeeded - noRoom.slotsFree);
+  if (noRoom.reason == 'stack_full') {
+    return 'That stack cannot hold more of this item.';
+  }
+  final slotsNeeded = noRoom.slotsNeeded ?? 1;
+  final slotsFree = noRoom.slotsFree ?? 0;
+  final short = math.max(1, slotsNeeded - slotsFree);
+  if (noRoom.target == 'bank') {
+    return 'Your bank is full. Make room for $short slot${short == 1 ? '' : 's'} and try again.';
+  }
   return 'No room in your bag. Free $short slot${short == 1 ? '' : 's'} and try again.';
+}
+
+NoRoom _noRoomFromFit({required bool fits, required int slotsNeeded, required int slotsFree}) {
+  if (!fits && slotsNeeded == 0 && slotsFree > 0) {
+    return const NoRoom(reason: 'stack_full');
+  }
+  return NoRoom(slotsNeeded: fits ? slotsNeeded : math.max(1, slotsNeeded), slotsFree: slotsFree);
 }
 
 /// Whether every grant fits in the bag together, added in order on a copy of [save].
@@ -76,7 +129,7 @@ RewardsFit rewardsFit(
       working,
       grant.itemId,
       grant.quantity,
-      null,
+      grant.enchantmentId,
       false,
       db,
       slotLimit,
@@ -87,11 +140,12 @@ RewardsFit rewardsFit(
     }
     working = added.save;
   }
-  final slotsNeeded = slotsNeededForItems(db, save, wanted.map((grant) => grant.itemId));
+  final slotsNeeded = slotsNeededForGrants(db, save, wanted);
   return RewardsFit(
     fits: fits,
-    noRoom: NoRoom(
-      slotsNeeded: fits ? slotsNeeded : math.max(1, slotsNeeded),
+    noRoom: _noRoomFromFit(
+      fits: fits,
+      slotsNeeded: slotsNeeded,
       slotsFree: inventorySlotsFree(save, slotLimit),
     ),
   );
@@ -106,5 +160,16 @@ NoRoom? noRoomFor(
   int slotLimit = inventorySlotLimit,
 ]) {
   final fit = rewardsFit(db, save, grants, slotLimit);
-  return fit.fits ? null : fit.noRoom;
+  if (fit.fits) return null;
+  return noRoomPayload(fit.noRoom);
+}
+
+/// The `no_room` fields only — never extra keys from a fit result.
+NoRoom noRoomPayload(NoRoom noRoom) {
+  if (noRoom.reason == 'stack_full') return const NoRoom(reason: 'stack_full');
+  return NoRoom(
+    slotsNeeded: noRoom.slotsNeeded,
+    slotsFree: noRoom.slotsFree,
+    target: noRoom.target,
+  );
 }
