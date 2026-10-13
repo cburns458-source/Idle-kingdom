@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/dialogue_text.dart';
 import 'package:idle_kingdoms/src/ui/dialogue_window.dart';
 import 'package:ik_content/ik_content.dart';
@@ -185,5 +188,49 @@ void main() {
     await tester.pump();
     expect(find.text('Choose a skill'), findsNothing);
     expect(getSkillProgress(controller.save, 'SKL-0007').xp, 250);
+  });
+
+  testWidgets('a dialogue choice that unlocks a cosmetic shows the notice', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0016'),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 900));
+    await tester.pump();
+    expect(isCosmeticUnlocked(controller.save, 'COS-0002'), isFalse);
+    expect(find.text('You found a Cosmetic!'), findsNothing);
+
+    final nav = tester.element(find.byType(AppShell));
+    unawaited(
+      showDialog<void>(
+        context: nav,
+        builder: (context) => Dialog(
+          child: StandaloneDialogueHost(
+            controller: controller,
+            dialogueId: 'DLG-0011',
+            onClose: () => Navigator.of(context).pop(),
+            request: (view, choiceId, {required useFavourites}) async {
+              final granted = grantCosmetic(controller.save, 'COS-0002');
+              expect(granted.granted, isTrue);
+              return DialogueResult(
+                ok: true,
+                reason: '',
+                save: granted.save,
+                view: view,
+                completed: false,
+                message: null,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Not today, Your Majesty.'));
+    await tester.pump();
+
+    expect(find.text('You found a Cosmetic!'), findsOne);
+    expect(find.text('New Cosmetic'), findsOne);
   });
 }
