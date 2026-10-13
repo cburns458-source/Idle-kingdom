@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/dialogue_text.dart';
+import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:idle_kingdoms/src/ui/dialogue_window.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -549,5 +550,72 @@ void main() {
     for (final path in ['lib/src/ui/dialogue_window.dart', 'lib/src/ui/dialogue_text.dart']) {
       expect(File(path).readAsStringSync().toLowerCase(), isNot(contains('bank')), reason: path);
     }
+  });
+
+  testWidgets('the reward popup shows before the wardrobe notice', (tester) async {
+    final controller = buildController(database, seed: bag(feastSixHandedIn(), _bakedPotato, 7));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 900));
+    await tester.pump();
+    expect(find.text('You found a Cosmetic!'), findsNothing);
+    expect(find.text('Thank you'), findsNothing);
+
+    final nav = tester.element(find.byType(AppShell));
+    unawaited(
+      showDialog<void>(
+        context: nav,
+        builder: (context) => Dialog(
+          child: StandaloneDialogueHost(
+            controller: controller,
+            dialogueId: _king,
+            onClose: () => Navigator.of(context).pop(),
+            request: (view, choiceId, {required useFavourites}) async {
+              final granted = grantCosmetic(controller.save, 'COS-0002');
+              expect(granted.granted, isTrue);
+              const completions = <QuestArrivalCompletion>[
+                QuestArrivalCompletion(
+                  questId: 'QST-9001',
+                  questName: 'The feast',
+                  rewards: <String>['Golden Spud'],
+                  pendingSkillXp: 0,
+                  message: 'Thank you.',
+                ),
+              ];
+              // Same order as the local `_send` path: queue the reward, then commit.
+              controller.noteDialogueQuestCompletions(completions);
+              controller.commit(granted.save);
+              return DialogueResult(
+                ok: true,
+                reason: '',
+                save: granted.save,
+                view: view,
+                completed: true,
+                message: null,
+                questCompletions: completions,
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Hand in 4 Baked Potato').first);
+    await tester.pump();
+    for (var i = 0; i < 20 && find.text('Collect').evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(find.text('Thank you'), findsOne);
+    expect(find.text('The feast'), findsOne);
+    expect(find.text('Collect'), findsOne);
+    await tester.tap(find.widgetWithText(GameButton, 'Collect'));
+    await tester.pump();
+    for (var i = 0; i < 20 && find.text('Collect').evaluate().isNotEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(find.text('Collect'), findsNothing);
+    expect(find.text('You found a Cosmetic!'), findsOne);
+    expect(find.text('New Cosmetic'), findsOne);
   });
 }

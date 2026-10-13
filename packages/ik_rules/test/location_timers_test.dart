@@ -117,6 +117,46 @@ void main() {
     ]);
   });
 
+  test('/abandonquest QST-0011 confirm prunes a locked farm and keeps a growing crop', () {
+    const growing = LocationTimer(
+      locationId: 'LOC-0001',
+      kind: 'botany',
+      inputItemId: 'ITEM-0324',
+      outputItemId: 'ITEM-0025',
+      outputQuantity: 1,
+      skillId: 'SKL-0014',
+      xpReward: 10,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      durationMs: 60000,
+    );
+    final save = createNewSave(db, 0).copyWith(
+      discoveredTimerSpotIds: const ['botany:LOC-0001', 'botany:LOC-0009', 'fishing_pot:LOC-0003'],
+      quests: const [
+        QuestProgress(
+          questId: 'QST-0011',
+          status: 'active',
+          progress: 1,
+          counters: {'talk:NPC-0014': 1, 'step:QSTP-0023': 1},
+        ),
+      ],
+    );
+    final abandoned = cheatAbandonQuest(save, 'QST-0011');
+    expect(abandoned.ok, isTrue);
+    final pruned = pruneLockedTimerSpots(db, abandoned.save!);
+    expect(pruned.discoveredTimerSpotIds, ['botany:LOC-0009', 'fishing_pot:LOC-0003']);
+    expect(getQuestProgress(pruned, 'QST-0011').status, 'inactive');
+
+    final abandonedGrowing = cheatAbandonQuest(
+      save.copyWith(locationTimers: const [growing]),
+      'QST-0011',
+    );
+    expect(abandonedGrowing.ok, isTrue);
+    final prunedGrowing = pruneLockedTimerSpots(db, abandonedGrowing.save!);
+    expect(prunedGrowing.discoveredTimerSpotIds, contains('botany:LOC-0001'));
+    expect(prunedGrowing.discoveredTimerSpotIds, contains('botany:LOC-0009'));
+    expect(prunedGrowing.discoveredTimerSpotIds, contains('fishing_pot:LOC-0003'));
+  });
+
   test('plant and place discover their spots', () {
     var save = createNewSave(db, 0).copyWith(
       currentLocationId: 'LOC-0001',
