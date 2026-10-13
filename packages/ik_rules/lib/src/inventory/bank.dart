@@ -96,13 +96,20 @@ _Taken? _takeFromStacks(List<InventoryStack> stacks, int index, num takenQty) {
   );
 }
 
+NoRoom _withBankTarget(NoRoom noRoom) {
+  if (noRoom.reason == 'stack_full') return const NoRoom(reason: 'stack_full');
+  return NoRoom(slotsNeeded: noRoom.slotsNeeded, slotsFree: noRoom.slotsFree, target: 'bank');
+}
+
+BankMoveResult _noRoomMove(NoRoom noRoom) =>
+    BankMoveResult.failed(noRoomReason(noRoom), code: 'no_room', noRoom: noRoom);
+
 BankMoveResult _moveStack({
   required PlayerSave save,
   required List<InventoryStack> from,
   required bool toBank,
   required int index,
   required num quantity,
-  required String fullMessage,
 }) {
   if (index < 0 || index >= from.length) {
     return const BankMoveResult.failed('That stack is not there.');
@@ -120,47 +127,42 @@ BankMoveResult _moveStack({
     return const BankMoveResult.failed('Gold cannot be deposited.');
   }
   final favorite = piece.favorite == true;
+  final slotLimit = toBank ? bankSlotLimit : inventorySlotLimit;
   final target = toBank
       ? _withBankAsBag(save.copyWith(inventory: taken.stacks))
       : save.copyWith(bank: taken.stacks);
-  if (toBank) {
-    if (!canFitItemQuantity(
-      target,
-      piece.itemId,
-      piece.quantity,
-      piece.enchantmentId,
-      favorite,
-      null,
-      bankSlotLimit,
-    )) {
-      return BankMoveResult.failed(fullMessage);
-    }
-    final added = addItemToInventoryExact(
-      _withBankAsBag(save.copyWith(inventory: taken.stacks)),
-      piece.itemId,
-      piece.quantity,
-      piece.enchantmentId,
-      favorite,
-      null,
-      bankSlotLimit,
-    );
-    if (!added.ok) return BankMoveResult.failed(added.reason ?? fullMessage);
-    return BankMoveResult.ok(_restoreBag(save.copyWith(inventory: taken.stacks), added.save!));
-  }
-  final blocked = noRoomFor(target, [ItemGrant(itemId: piece.itemId, quantity: piece.quantity)]);
+  final grant = ItemGrant(
+    itemId: piece.itemId,
+    quantity: piece.quantity,
+    enchantmentId: piece.enchantmentId,
+  );
+  final blocked = noRoomFor(target, [grant], null, slotLimit);
   if (blocked != null) {
-    return BankMoveResult.failed(noRoomReason(blocked), code: 'no_room', noRoom: blocked);
+    return _noRoomMove(toBank ? _withBankTarget(blocked) : blocked);
   }
   final added = addItemToInventoryExact(
-    save,
+    toBank ? _withBankAsBag(save.copyWith(inventory: taken.stacks)) : save,
     piece.itemId,
     piece.quantity,
     piece.enchantmentId,
     favorite,
     null,
-    inventorySlotLimit,
+    slotLimit,
   );
-  if (!added.ok) return BankMoveResult.failed(added.reason ?? fullMessage);
+  if (!added.ok) {
+    final slotsFree = inventorySlotsFree(target, slotLimit);
+    if (slotsFree <= 0) {
+      return _noRoomMove(
+        toBank
+            ? const NoRoom(slotsNeeded: 1, slotsFree: 0, target: 'bank')
+            : const NoRoom(slotsNeeded: 1, slotsFree: 0),
+      );
+    }
+    return _noRoomMove(const NoRoom(reason: 'stack_full'));
+  }
+  if (toBank) {
+    return BankMoveResult.ok(_restoreBag(save.copyWith(inventory: taken.stacks), added.save!));
+  }
   return BankMoveResult.ok(added.save!.copyWith(bank: taken.stacks));
 }
 
@@ -172,7 +174,6 @@ BankMoveResult depositToBank(PlayerSave save, int inventoryIndex, num quantity) 
     toBank: true,
     index: inventoryIndex,
     quantity: quantity,
-    fullMessage: 'Bank is full ($bankSlotLimit slots).',
   );
 }
 
@@ -184,6 +185,5 @@ BankMoveResult withdrawFromBank(PlayerSave save, int bankIndex, num quantity) {
     toBank: false,
     index: bankIndex,
     quantity: quantity,
-    fullMessage: 'Inventory is full ($inventorySlotLimit slots).',
   );
 }

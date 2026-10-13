@@ -496,6 +496,32 @@ describe('unattended progression', () => {
       }
     })
 
+    it('resuming a step-limit stop matches one straight-through run', () => {
+      const { launch, save: meadow } = meadowSave()
+      const save = {
+        ...meadow,
+        inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
+          itemId: `FILL-${index}`,
+          quantity: 1,
+        })),
+      }
+      const now = startedAt + 180_000
+      const first = resolveUnattendedProgress(launch, save, now, () => 0, { maxStepsOverride: 4 })
+      expect(first.caughtUp).toBe(false)
+      expect(first.gatheringActions).toBeGreaterThan(0)
+      const resumed = resolveUnattendedProgress(launch, first.save, now, () => 0)
+      expect(resumed.caughtUp).toBe(true)
+      const whole = resolveUnattendedProgress(launch, save, now, () => 0)
+      expect(whole.caughtUp).toBe(true)
+      expect(first.gatheringActions + resumed.gatheringActions).toBe(whole.gatheringActions)
+      expect(resumed.save.inventory).toEqual(whole.save.inventory)
+      expect(resumed.save.skills).toEqual(whole.save.skills)
+      expect(resumed.save.unattendedProgressAt).toBe(whole.save.unattendedProgressAt)
+      expect(mergeLeftBehind([...(first.leftBehind ?? []), ...(resumed.leftBehind ?? [])])).toEqual(
+        whole.leftBehind ?? [],
+      )
+    })
+
     it('ignores a window start that no longer contains the save anchor', () => {
       const { launch, save } = meadowSave()
       const now = startedAt + 3_600_000

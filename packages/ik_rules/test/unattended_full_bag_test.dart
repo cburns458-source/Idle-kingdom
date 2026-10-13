@@ -79,4 +79,31 @@ void main() {
       expect(grant.quantity, firstQty + againQty);
     }
   });
+
+  test('resuming a step-limit stop matches one straight-through run', () {
+    final startedAt = DateTime.utc(2026).millisecondsSinceEpoch;
+    final save = meadowSave(startedAt, fullBag: true);
+    final now = startedAt + 180000;
+    final first = resolveUnattendedProgress(db, save, now, () => 0, maxStepsOverride: 4);
+    expect(first.caughtUp, isFalse);
+    expect(first.gatheringActions, greaterThan(0));
+    final resumed = resolveUnattendedProgress(db, first.save, now, () => 0);
+    expect(resumed.caughtUp, isTrue);
+    final whole = resolveUnattendedProgress(db, save, now, () => 0);
+    expect(whole.caughtUp, isTrue);
+    expect(first.gatheringActions + resumed.gatheringActions, whole.gatheringActions);
+    expect(
+      resumed.save.inventory.map((stack) => stack.toJson()).toList(),
+      whole.save.inventory.map((stack) => stack.toJson()).toList(),
+    );
+    expect(
+      resumed.save.skills.map((skill) => skill.toJson()).toList(),
+      whole.save.skills.map((skill) => skill.toJson()).toList(),
+    );
+    expect(resumed.save.unattendedProgressAt, whole.save.unattendedProgressAt);
+    expect(
+      mergeLeftBehind([...first.leftBehind, ...resumed.leftBehind]).map((grant) => grant.toJson()),
+      whole.leftBehind.map((grant) => grant.toJson()),
+    );
+  });
 }
