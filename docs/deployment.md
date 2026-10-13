@@ -197,3 +197,5 @@ Agent secrets are the place for it.
 <!-- token-split verify: live redeploy -->
 
 <!-- emergency live reset after staging-token DNS update -->
+
+<!-- emergency live reset: 2h recheck 2026-10-13T17:10Z -->
