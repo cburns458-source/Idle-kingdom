@@ -93,6 +93,20 @@ void main() {
     }
   });
 
+  test('an edge label on a 320px overworld is slid inside the view', () {
+    const box = Size(320, 568);
+    final dot = mapArtOffset(
+      const NodePosition(x: 84, y: 28),
+      box,
+      aspectRatio: mainMapArtAspectRatio,
+    );
+    final width = mapLabelMaxWidth(box.width);
+    final left = clampCentredLeft(dot.dx, width, box.width);
+    expect(dot.dx - width / 2 + width, greaterThan(box.width));
+    expect(left + width, lessThanOrEqualTo(box.width - mapLabelEdgeMargin));
+    expect(left, greaterThanOrEqualTo(mapLabelEdgeMargin));
+  });
+
   test('an unmeasured box does not throw', () {
     expect(mapArtRect(Size.zero), const Rect.fromLTWH(0, 0, 0, 0));
   });
