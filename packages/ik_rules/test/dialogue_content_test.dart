@@ -121,6 +121,93 @@ void main() {
     }
   });
 
+  test('keeps a Fennel planting reminder on QSTP-0034', () {
+    final dialogue = db.dialogues.where((row) => row.dialogueId == 'DLG-0009').single;
+    expect(dialogue.condition, 'quest_step:QST-0011:QSTP-0034');
+    final node = db.dialogueNodes.where((row) => row.nodeId == 'DNODE-0015').single;
+    expect(node.line, contains('patch'));
+    expect(node.line, contains('compost'));
+    expect(node.line.toLowerCase(), isNot(contains('bank')));
+    expect(startDialogue(db, greenThumbActive(), 'DLG-0009').ok, isFalse);
+    final planted = withQuest(greenThumbActive(), 'QST-0011', 'active', {
+      'step:QSTP-0023': 1,
+      'step:QSTP-0024': 1,
+    });
+    expect(stepOf(planted, 'QST-0011'), 'QSTP-0034');
+    expect(dialoguesForNpc(db, planted, 'NPC-0014'), ['DLG-0009']);
+    expect(startDialogue(db, planted, 'DLG-0009').view?.line, node.line);
+    expect(choiceIds(startDialogue(db, planted, 'DLG-0009').view), ['DCH-0020']);
+  });
+
+  test('guides Visiting the Citadel on the Guide and Market Master without quest actions', () {
+    expect(
+      [
+        for (final row in db.dialogues)
+          if (row.dialogueId == 'DLG-0013' || row.dialogueId == 'DLG-0014')
+            (row.dialogueId, row.npcId, row.condition, row.priority),
+      ],
+      [
+        ('DLG-0013', 'NPC-0013', 'quest_active:QST-0004', 10),
+        ('DLG-0014', 'NPC-0006', 'quest_active:QST-0004', 10),
+      ],
+    );
+    final guideLine = db.dialogueNodes.where((row) => row.nodeId == 'DNODE-0023').single.line;
+    final marketLine = db.dialogueNodes.where((row) => row.nodeId == 'DNODE-0024').single.line;
+    expect(guideLine, contains('bazaar'));
+    expect(guideLine, contains('training grounds'));
+    expect(marketLine.toLowerCase(), contains('browse'));
+    expect('$guideLine $marketLine'.toLowerCase(), isNot(contains('bank')));
+    expect('$guideLine $marketLine'.toLowerCase(), isNot(contains('gold')));
+
+    final idle = fresh(_citadelPlaza);
+    expect(dialoguesForNpc(db, idle, 'NPC-0013'), ['DLG-0001']);
+    expect(dialoguesForNpc(db, idle, 'NPC-0006'), isEmpty);
+
+    final touring = withQuest(idle, 'QST-0004', 'active');
+    expect(dialoguesForNpc(db, touring, 'NPC-0013').first, 'DLG-0013');
+    expect(dialoguesForNpc(db, touring, 'NPC-0013'), contains('DLG-0001'));
+    expect(dialoguesForNpc(db, touring, 'NPC-0006'), ['DLG-0014']);
+    expect(startDialogue(db, touring, 'DLG-0013').view?.line, guideLine);
+    expect(startDialogue(db, touring, 'DLG-0014').view?.line, marketLine);
+
+    for (final choice in [
+      ('DLG-0013', 'DNODE-0023', 'DCH-0033'),
+      ('DLG-0014', 'DNODE-0024', 'DCH-0034'),
+    ]) {
+      final row = (raw['DialogueChoices']! as List<Object?>)
+          .cast<Map<String, Object?>>()
+          .singleWhere((entry) => entry['Choice ID'] == choice.$3);
+      expect(row['Action'], isNull);
+      final after = picked(touring, choice.$1, choice.$2, choice.$3);
+      expect(getQuestProgress(after.save, 'QST-0004').status, 'active');
+      expect(after.itemDeltas, isEmpty);
+    }
+
+    final done = withQuest(idle, 'QST-0004', 'completed');
+    expect(dialoguesForNpc(db, done, 'NPC-0013'), ['DLG-0001']);
+    expect(dialoguesForNpc(db, done, 'NPC-0006'), isEmpty);
+  });
+
+  test('stores a numberless make-room line on every SYS-01 hand-out choice', () {
+    final handOuts = [
+      for (final row in raw['DialogueChoices']! as List<Object?>)
+        if (row case final Map<String, Object?> choice)
+          if (parseDialogueTokens(choice['Action'] as String?)
+              .any((token) => token.name == 'grant_item' || token.name == 'complete_quest'))
+            choice,
+    ];
+    expect(
+      [for (final row in handOuts) row['Choice ID']],
+      ['DCH-0001', 'DCH-0012', 'DCH-0014', 'DCH-0021', 'DCH-0030', 'DCH-0031'],
+    );
+    for (final row in handOuts) {
+      final line = row['No Room Line'] as String;
+      expect(line.length, greaterThan(10));
+      expect(line, isNot(contains(RegExp(r'\d'))));
+      expect(line.toLowerCase(), isNot(contains('bank')));
+    }
+  });
+
   test('gives each gift once, even after closing mid-conversation and reloading', () {
     var save = picked(fresh(_citadelPlaza), 'DLG-0001', 'DNODE-0001', 'DCH-0001').save;
     expect(bagCount(save, _bakedPotato), 1);

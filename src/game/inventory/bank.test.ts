@@ -111,9 +111,12 @@ describe('bank storage', () => {
       })),
     }
     const blocked = depositToBank(save, 0, 1)
-    expect(blocked.ok).toBe(false)
-    if (blocked.ok) return
-    expect(blocked.reason).toBe(`Bank is full (${BANK_SLOT_LIMIT} slots).`)
+    expect(blocked).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      reason: 'Your bank is full. Make room for 1 slot and try again.',
+      noRoom: { target: 'bank', slotsNeeded: 1, slotsFree: 0 },
+    })
 
     const almostFull = {
       ...createNewSave(launch),
@@ -167,5 +170,67 @@ describe('bank storage', () => {
     if (!withdrawn.ok) return
     expect(withdrawn.save.inventory.find((stack) => stack.itemId === 'ITEM-0002')?.quantity).toBe(4)
     expect(withdrawn.save.bank).toEqual([{ itemId: 'ITEM-0002', quantity: 2 }])
+  })
+
+  it('refuses an enchanted withdraw into a full bag that already holds a plain stack', () => {
+    const save = {
+      ...createNewSave(launch),
+      inventory: [
+        { itemId: 'ITEM-0100', quantity: 1 },
+        ...Array.from({ length: INVENTORY_SLOT_LIMIT - 1 }, (_, index) => ({
+          itemId: `FILL-${index}`,
+          quantity: 1,
+        })),
+      ],
+      bank: [{ itemId: 'ITEM-0100', quantity: 1, enchantmentId: 'ENCH-0001' }],
+    }
+    const blocked = withdrawFromBank(save, 0, 1)
+    expect(blocked).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      reason: 'No room in your bag. Free 1 slot and try again.',
+      noRoom: { slotsNeeded: 1, slotsFree: 0 },
+    })
+    if (blocked.ok) return
+    expect(blocked.reason).not.toMatch(/Inventory is full/)
+    expect(save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
+    expect(save.bank).toEqual([{ itemId: 'ITEM-0100', quantity: 1, enchantmentId: 'ENCH-0001' }])
+  })
+
+  it('refuses a stack-cap withdraw with stack_full and no slot count', () => {
+    const save = {
+      ...createNewSave(launch),
+      inventory: [{ itemId: 'ITEM-0002', quantity: Number.MAX_SAFE_INTEGER }],
+      bank: [{ itemId: 'ITEM-0002', quantity: 2 }],
+    }
+    const blocked = withdrawFromBank(save, 0, 1)
+    expect(blocked).toEqual({
+      ok: false,
+      code: 'no_room',
+      reason: 'That stack cannot hold more of this item.',
+      noRoom: { reason: 'stack_full' },
+    })
+    if (blocked.ok) return
+    expect(blocked.noRoom).not.toHaveProperty('slotsNeeded')
+    expect(blocked.noRoom).not.toHaveProperty('slotsFree')
+    expect(save.inventory).toEqual([{ itemId: 'ITEM-0002', quantity: Number.MAX_SAFE_INTEGER }])
+    expect(save.bank).toEqual([{ itemId: 'ITEM-0002', quantity: 2 }])
+  })
+
+  it('refuses a stack-cap deposit with stack_full and no slot count', () => {
+    const save = {
+      ...createNewSave(launch),
+      inventory: [{ itemId: 'ITEM-0002', quantity: 2 }],
+      bank: [{ itemId: 'ITEM-0002', quantity: Number.MAX_SAFE_INTEGER }],
+    }
+    const blocked = depositToBank(save, 0, 1)
+    expect(blocked).toEqual({
+      ok: false,
+      code: 'no_room',
+      reason: 'That stack cannot hold more of this item.',
+      noRoom: { reason: 'stack_full' },
+    })
+    expect(save.inventory).toEqual([{ itemId: 'ITEM-0002', quantity: 2 }])
+    expect(save.bank).toEqual([{ itemId: 'ITEM-0002', quantity: Number.MAX_SAFE_INTEGER }])
   })
 })

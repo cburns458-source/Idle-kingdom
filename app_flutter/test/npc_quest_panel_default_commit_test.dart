@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
@@ -216,6 +217,65 @@ void main() {
         expect(find.text('Collect'), findsOne);
       },
     );
+  });
+
+  group('default commit path — more than one reward slot', () {
+    late LoadedDatabase twoRewardDb;
+
+    setUpAll(() {
+      final raw = jsonDecode(
+        File('../content/data/game-database.json').readAsStringSync(),
+      ) as Map<String, Object?>;
+      raw['Quests'] = [
+        for (final row in raw['Quests']! as List)
+          if (row is Map && row['Quest ID'] == _roseQuest)
+            <String, Object?>{
+              ...Map<String, Object?>.from(row),
+              'Notes': '${row['Notes']}; RewardItem: ITEM-0026 x1',
+            }
+          else
+            row,
+      ];
+      twoRewardDb = prepareDatabase(raw);
+    });
+
+    NpcRow roseTwo() {
+      return twoRewardDb.launch.npcs.firstWhere((row) => row.raw['NPC ID'] == _roseId);
+    }
+
+    testWidgets('a Turn in needing more than one bag slot shows N more items', (tester) async {
+      // Chef's Hat plus Golden Spud need two new slots. Qty 6 leaves each
+      // delivery pile in place, so turning in frees none.
+      var seed = startedCharacter(twoRewardDb).copyWith(
+        currentLocationId: _kitchen,
+        gold: 1500,
+        inventory: [
+          stack(_rabbitsFoot, quantity: 6),
+          stack(_fernleaf, quantity: 6),
+          stack(_wildBerries, quantity: 6),
+          stack(_weaselTail, quantity: 6),
+        ],
+        quests: const [QuestProgress(questId: _roseQuest, status: 'active', progress: 0)],
+      );
+      seed = fillBag(seed, 0);
+      final controller = buildController(twoRewardDb, seed: seed);
+      addTearDown(controller.dispose);
+      await pumpPanel(tester, NpcPanel(controller: controller, npc: roseTwo(), onClose: () {}));
+      await tester.tap(find.text('Continue'));
+      await tester.pump();
+      expect(find.text('Turn in'), findsOne);
+      final log = watchCommits(controller);
+      final before = _snapshot(controller.save);
+
+      await tester.tap(find.text('Turn in'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your bag is full. Make room for 2 more items and try again.'), findsOne);
+      expect(_snapshot(controller.save), before);
+      expect(getQuestProgress(controller.save, _roseQuest).status, 'active');
+      expect(log.saves, isEmpty);
+      expect(questCompleteArgs(log), isEmpty);
+    });
   });
 }
 

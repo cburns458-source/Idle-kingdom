@@ -1103,6 +1103,23 @@ const CONTENT_SCRIPTS: Record<string, Op[]> = {
     feastPitch('DCH-0029'),
     npcList('NPC-0001'),
   ],
+
+  // Visiting the Citadel: Guide and Market Master remind; they do not advance the Visit step.
+  'visiting-the-citadel': [
+    at(CITADEL_PLAZA),
+    npcList('NPC-0013'),
+    npcList('NPC-0006'),
+    questRow('QST-0004', 'active'),
+    npcList('NPC-0013'),
+    npcList('NPC-0006'),
+    { op: 'start', dialogueId: 'DLG-0013' },
+    choose('DLG-0013', 'DNODE-0023', 'DCH-0033'),
+    { op: 'start', dialogueId: 'DLG-0014' },
+    choose('DLG-0014', 'DNODE-0024', 'DCH-0034'),
+    questRow('QST-0004', 'completed'),
+    npcList('NPC-0013'),
+    npcList('NPC-0006'),
+  ],
 }
 
 /** 10. A v61 save as it was stored: no dialogueFlags, mid-quest and completed rows. */

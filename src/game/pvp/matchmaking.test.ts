@@ -100,4 +100,31 @@ describe('arena matchmaking', () => {
     expect(nextDay.save.rankedPvpFightsToday).toBe(1)
     expect(nextDay.save.rankedPvpDayKey).toBe('2026-08-14')
   })
+
+  it('the sixth win is unpaid and the cap resets at midnight UTC', () => {
+    const beforeMidnight = Date.parse('2026-08-13T23:59:59.000Z')
+    const midnight = Date.parse('2026-08-14T00:00:00.000Z')
+    let save = createNewSave(launch, beforeMidnight)
+    for (let i = 0; i < RANKED_PVP_DAILY_CAP; i++) {
+      save = applyRankedPvpResult(save, true, beforeMidnight).save
+    }
+    expect(rankedWinsRemaining(save, beforeMidnight)).toBe(0)
+    expect(rankedPvpDayKey(beforeMidnight)).toBe('2026-08-13')
+
+    const sixth = applyRankedPvpResult(save, true, beforeMidnight)
+    expect(sixth.paid).toBe(false)
+    expect(sixth.code).toBe('daily_cap_reached')
+    expect(sixth.winsRemaining).toBe(0)
+    expect(sixth.save.gold).toBe(save.gold)
+    expect(sixth.save.rankedPvpFightsToday).toBe(RANKED_PVP_DAILY_CAP + 1)
+
+    expect(rankedWinsRemaining(sixth.save, midnight)).toBe(RANKED_PVP_DAILY_CAP)
+    const afterMidnight = applyRankedPvpResult(sixth.save, true, midnight)
+    expect(afterMidnight.paid).toBe(true)
+    expect(afterMidnight.code).toBeUndefined()
+    expect(afterMidnight.winsRemaining).toBe(RANKED_PVP_DAILY_CAP - 1)
+    expect(afterMidnight.save.gold).toBe(sixth.save.gold + RANKED_PVP_WIN_GOLD)
+    expect(afterMidnight.save.rankedPvpFightsToday).toBe(1)
+    expect(afterMidnight.save.rankedPvpDayKey).toBe('2026-08-14')
+  })
 })
