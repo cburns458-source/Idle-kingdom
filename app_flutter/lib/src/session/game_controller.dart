@@ -221,6 +221,7 @@ class GameController extends ChangeNotifier {
   BookUnlockNotice? _bookUnlock;
   String? _discoveryNotice;
   List<QuestArrivalCompletion> _pendingQuestCompletions = <QuestArrivalCompletion>[];
+  List<QuestArrivalCompletion> _pendingDialogueQuestCompletions = <QuestArrivalCompletion>[];
   List<TimerCollectNotice> _pendingTimerCollects = <TimerCollectNotice>[];
   List<String> _pendingTimerRoomAlerts = <String>[];
   List<SkillLevelUpNotice> _pendingSkillLevelUps = <SkillLevelUpNotice>[];
@@ -248,6 +249,29 @@ class GameController extends ChangeNotifier {
     final pending = List<QuestArrivalCompletion>.of(_pendingQuestCompletions);
     _pendingQuestCompletions = <QuestArrivalCompletion>[];
     return pending;
+  }
+
+  /// Quests a dialogue choice completed, waiting for the same reward popup.
+  List<QuestArrivalCompletion> takePendingDialogueQuestCompletions() {
+    final pending = List<QuestArrivalCompletion>.of(_pendingDialogueQuestCompletions);
+    _pendingDialogueQuestCompletions = <QuestArrivalCompletion>[];
+    return pending;
+  }
+
+  /// Queues the reward popup for quests a dialogue choice completed.
+  ///
+  /// Call before [commit]: its notify flushes this queue together with the
+  /// level-ups the reward caused, so the reward popup shows first.
+  void noteDialogueQuestCompletions(List<QuestArrivalCompletion> completions) {
+    if (completions.isEmpty) return;
+    _pendingDialogueQuestCompletions = [..._pendingDialogueQuestCompletions, ...completions];
+    for (final completion in completions) {
+      final bundle = completion.rewardBundle;
+      if (bundle != null &&
+          (bundle.goldGained > 0 || bundle.xpRewards.isNotEmpty || bundle.loot.isNotEmpty)) {
+        noteReward(bundle);
+      }
+    }
   }
 
   /// Timer hauls waiting for the quest-style reward popup.

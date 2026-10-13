@@ -320,13 +320,32 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     controller.placeTrapHere(fishingPotItemId, baitItemIds: chosen);
   }
 
+  Future<void> _showQuestCompletion(QuestArrivalCompletion completion, {String? spokenLine}) async {
+    await showQuestRewards(
+      context,
+      questName: completion.questName,
+      rewards: completion.rewards,
+      spokenLine: spokenLine,
+    );
+    if (!mounted) return;
+    controller.noteBookUnlocks(completion.booksGranted);
+    if (completion.pendingSkillXp > 0) {
+      await showSkillXpPicker(context, controller: controller, amount: completion.pendingSkillXp);
+    }
+  }
+
   void _flushPendingDialogs() {
     if (_questRewardQueued) return;
     final pending = controller.takePendingQuestCompletions();
+    final dialogueCompletions = controller.takePendingDialogueQuestCompletions();
     final timerCollects = controller.takePendingTimerCollects();
     final roomAlerts = controller.takePendingTimerRoomAlerts();
     final levelUps = controller.takePendingSkillLevelUps();
-    if (pending.isEmpty && timerCollects.isEmpty && roomAlerts.isEmpty && levelUps.isEmpty) {
+    if (pending.isEmpty &&
+        dialogueCompletions.isEmpty &&
+        timerCollects.isEmpty &&
+        roomAlerts.isEmpty &&
+        levelUps.isEmpty) {
       return;
     }
     _questRewardQueued = true;
@@ -339,21 +358,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           final spoken = npcId is String
               ? questTalkLine(controller.db, completion.questId, npcId, controller.save)
               : null;
-          await showQuestRewards(
-            context,
-            questName: completion.questName,
-            rewards: completion.rewards,
-            spokenLine: spoken,
-          );
+          await _showQuestCompletion(completion, spokenLine: spoken);
           if (!mounted) return;
-          controller.noteBookUnlocks(completion.booksGranted);
-          if (completion.pendingSkillXp > 0) {
-            await showSkillXpPicker(
-              context,
-              controller: controller,
-              amount: completion.pendingSkillXp,
-            );
-          }
+        }
+        // The NPC already spoke through the dialogue, so no legacy line here.
+        for (final completion in dialogueCompletions) {
+          if (!mounted) return;
+          await _showQuestCompletion(completion);
           if (!mounted) return;
         }
         for (final haul in timerCollects) {

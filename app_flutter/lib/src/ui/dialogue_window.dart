@@ -106,6 +106,7 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
   void _choose(String choiceId) {
     final view = _view;
     if (view == null) return;
+    final beforeUnlocked = controller.save.cosmetics.unlocked.toSet();
     final result = chooseDialogue(
       controller.db,
       controller.save,
@@ -117,6 +118,7 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
       setState(() => _error = result.reason);
       return;
     }
+    controller.noteDialogueQuestCompletions(result.questCompletions);
     controller.commit(
       result.save,
       command: 'dialogue_choose',
@@ -127,6 +129,11 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
       },
     );
     if (result.message != null) controller.announce(result.message!);
+    controller.noteCosmeticUnlocks([
+      for (final id in result.save.cosmetics.unlocked)
+        if (!beforeUnlocked.contains(id))
+          ShopCosmeticGrant(cosmeticId: id, isFirstEver: beforeUnlocked.isEmpty),
+    ]);
     if (result.completed || result.view == null) {
       widget.onClose();
       return;

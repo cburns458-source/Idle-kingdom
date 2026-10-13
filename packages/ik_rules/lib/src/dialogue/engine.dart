@@ -388,6 +388,7 @@ class DialogueResult {
     this.noRoom,
     this.missing = const <DialogueMissingItem>[],
     this.favourites = const <DialogueItemDelta>[],
+    this.questCompletions = const <QuestArrivalCompletion>[],
   });
 
   final bool ok;
@@ -415,6 +416,10 @@ class DialogueResult {
 
   /// For `confirm_favourites`: how many of each item would come out of hearted stacks.
   final List<DialogueItemDelta> favourites;
+
+  /// Quests this choice completed, for the client's reward popup. Client-only:
+  /// left out of [toJson] because the TypeScript result has no such field.
+  final List<QuestArrivalCompletion> questCompletions;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'ok': ok,
@@ -633,6 +638,7 @@ class _Working {
   final List<DialogueItemDelta> itemDeltas = <DialogueItemDelta>[];
   final List<String> bookDeltas = <String>[];
   final List<StepProgressGroup> stepProgress = <StepProgressGroup>[];
+  final List<QuestArrivalCompletion> questCompletions = <QuestArrivalCompletion>[];
 
   /// Quantities taken (or about to be) from hearted stacks, per item, in first-seen order.
   final Map<String, num> favourites = <String, num>{};
@@ -827,6 +833,17 @@ _ActionFailure? _applyAction(
       work.bookDeltas.addAll(completed.booksGranted.map((grant) => grant.bookId));
       work.save = completed.save!;
       work.messages.add(completed.message!);
+      work.questCompletions.add(
+        QuestArrivalCompletion(
+          questId: a,
+          questName: completed.questName!,
+          rewards: completed.rewards,
+          pendingSkillXp: completed.pendingSkillXp,
+          rewardBundle: completed.rewardBundle,
+          message: completed.message!,
+          booksGranted: completed.booksGranted,
+        ),
+      );
       return null;
     case 'grant_book':
       final book = bookById(db, a);
@@ -919,6 +936,7 @@ DialogueResult chooseDialogue(
       itemDeltas: work.itemDeltas,
       bookDeltas: work.bookDeltas,
       stepProgress: work.stepProgress,
+      questCompletions: work.questCompletions,
     );
   }
   final view = _viewFor(db, nextSave, dialogueId, nextNodeId);
@@ -933,5 +951,6 @@ DialogueResult chooseDialogue(
     itemDeltas: work.itemDeltas,
     bookDeltas: work.bookDeltas,
     stepProgress: work.stepProgress,
+    questCompletions: work.questCompletions,
   );
 }

@@ -141,6 +141,8 @@ Gift flags are `gift:<quest or dialogue ID>:<key>`. Every gift choice sets its f
 The `quest_step` guard on DCH-0014 means players whose QSTP-0023 is already done (they got the old GiveOnTalk seed) never get a second one.
 
 ### Quest payouts (on completion, once)
+A `complete_quest` choice shows the same reward popup as Turn in (quest name and reward lines, then the skill XP picker when the quest has one). It shows no `QuestDialogue` line because the NPC has already spoken through the dialogue. The Dart result's `questCompletions` carries the popup data. It is client-only and stays out of `toJson` and the parity fixtures.
+
 - **QST-0006 Getting Started:** DCH-0012 runs `talk_flag` on QSTP-0022, then `complete_quest`. Pays BOOK-0001.
 - **QST-0011 Green Thumb:** DCH-0021 runs `talk_flag` on QSTP-0035, then `complete_quest`. Pays ITEM-0324 x3, ITEM-0339 x3 and BOOK-0002. With the DCH-0014 seed, a full run gives 4 Potato Seed, 3 Carrot Seed and the Botanist's Guide in total. DCH-0017 (compost) needs Compost in the bag, because `talk_flag` does not re-check the step's gather counter.
 - **QST-0001 The Grand Feast:** pays 10,000 Cooking XP, Golden Spud ITEM-0026 x1 (stays tradeable) and the Courtyard Botany unlock.
