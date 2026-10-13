@@ -63,29 +63,41 @@ void main() {
         final db = databaseOf(fixture);
         final nowMs = fixture.inputField<num>('nowMs');
         var save = createNewSave(db, nowMs);
-        final remainingFresh = rankedFightsRemaining(save, nowMs);
+        final remainingFresh = rankedWinsRemaining(save, nowMs);
         final startOk = canStartRankedPvp(save, nowMs);
-        save = applyRankedPvpResult(save, true, nowMs);
+        save = applyRankedPvpResult(save, true, nowMs).save;
         for (var i = 0; i < 4; i++) {
-          save = applyRankedPvpResult(save, false, nowMs);
+          save = applyRankedPvpResult(save, true, nowMs).save;
         }
-        final blocked = canStartRankedPvp(save, nowMs);
-        final nextDay = applyRankedPvpResult(save, false, nowMs + 24 * 60 * 60 * 1000);
+        final afterFive = applyRankedPvpResult(save, false, nowMs);
+        save = afterFive.save;
+        final sixth = applyRankedPvpResult(save, true, nowMs);
+        final stillOk = canStartRankedPvp(sixth.save, nowMs);
+        final nextDay = applyRankedPvpResult(sixth.save, true, nowMs + 24 * 60 * 60 * 1000);
         expect(
           checkParity(fixture, {
             'remainingFresh': remainingFresh,
             'startOk': startOk.toJson(),
-            'afterFive': <String, Object?>{
+            'afterFiveWins': <String, Object?>{
               'fights': save.rankedPvpFightsToday,
               'wins': save.rankedPvpWins,
               'losses': save.rankedPvpLosses,
-              'remaining': rankedFightsRemaining(save, nowMs),
+              'remaining': rankedWinsRemaining(save, nowMs),
               'kd': rankedPvpKd(save.rankedPvpWins, save.rankedPvpLosses),
+              'gold': save.gold,
             },
-            'blocked': blocked.toJson(),
+            'sixth': <String, Object?>{
+              'paid': sixth.paid,
+              'code': sixth.code,
+              'gold': sixth.save.gold,
+              'wins': sixth.save.rankedPvpWins,
+              'remaining': sixth.winsRemaining,
+            },
+            'stillOk': stillOk.toJson(),
             'nextDay': <String, Object?>{
-              'dayKey': nextDay.rankedPvpDayKey,
-              'fights': nextDay.rankedPvpFightsToday,
+              'dayKey': nextDay.save.rankedPvpDayKey,
+              'fights': nextDay.save.rankedPvpFightsToday,
+              'paid': nextDay.paid,
             },
           }),
           isNull,

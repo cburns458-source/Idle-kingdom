@@ -32,8 +32,9 @@ class BountyTurnInResult {
 
 /// The Plaza notice-board turn-in.
 ///
-/// The objective and the delivery are checked locally, but who was first is the
-/// backend's to decide, so the reward is only applied once a claim comes back.
+/// Hosted play sends `bounty_turn_in` so the claim and the gold land in one
+/// server transaction. Offline demo still pays here after the local backend
+/// records the first completer.
 Future<BountyTurnInResult> turnInBounty(
   MultiplayerService service,
   GameDatabase db,
@@ -44,6 +45,30 @@ Future<BountyTurnInResult> turnInBounty(
   final session = service.session;
   if (!service.isSignedIn || session == null) {
     return const BountyTurnInResult.failed('Sign in to claim bounties.');
+  }
+
+  if (service.hostedCommands) {
+    final hosted = await service.gameCommand('bounty_turn_in', <String, Object?>{
+      'bountyId': bounty.id,
+    });
+    if (!hosted.ok || hosted.save == null) {
+      return BountyTurnInResult.failed(hosted.reason ?? 'Could not claim that bounty.');
+    }
+    final claim =
+        hosted.claim ??
+        BountyClaimRecord(
+          hourKey: hourlyBountyBoard(nowMs).hourKey,
+          bountyId: bounty.id,
+          userId: session.userId,
+          username: session.username,
+          claimedAt: isoFromMs(nowMs),
+        );
+    return BountyTurnInResult.ok(
+      save: hosted.save!,
+      claim: claim,
+      firstCompleter: hosted.firstCompleter ?? false,
+      goldGained: hosted.goldGained ?? 0,
+    );
   }
 
   final prepared = prepareBountyTurnIn(save, bounty, nowMs);

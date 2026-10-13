@@ -29,6 +29,20 @@ export {
 } from './rankings'
 export { prepareDatabase } from '../data/loadDatabase'
 export { parseSave } from '../save/saveStore'
+export { applyBountyReward, prepareBountyTurnIn } from '../bounties/reward'
+export { hourlyBountyBoard } from '../bounties/rotation'
+export { combatLevelOf } from '../combat/stats'
+export {
+  mintRankedFightId,
+  pickRankedOpponent,
+  rankedWinsRemaining,
+  RANKED_PVP_DAILY_CAP,
+  RANKED_PVP_FAKED_WIN_REFUSAL,
+  RANKED_PVP_UNKNOWN_FIGHT_REFUSAL,
+} from '../pvp/matchmaking'
+export type { ArenaOpponent } from '../pvp/matchmaking'
+export { replaceUnauthorizedPayouts } from '../save/payoutGuard'
+export { totalLevel } from '../skills/totals'
 
 const MEADOW_LOCATION_ID = 'LOC-0009'
 const MEADOW_ACTIVITY_ID = 'ACT-0012'

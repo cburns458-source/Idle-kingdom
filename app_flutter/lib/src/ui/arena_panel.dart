@@ -46,6 +46,10 @@ class _ArenaPanelState extends State<ArenaPanel> {
   String? _outcome;
   bool _rankedFight = false;
   bool _rankedApplied = false;
+  List<PvpRoundResult>? _replayRounds;
+  String? _rankedCode;
+  num? _rankedGoldGained;
+  bool _startingFight = false;
   bool _savingEquipment = false;
   bool _equipmentSaved = false;
   PlayerSave? _ownLoadout;
@@ -130,12 +134,9 @@ class _ArenaPanelState extends State<ArenaPanel> {
       setState(() => _error = pvpEquipmentRequired);
       return;
     }
-    if (ranked) {
-      final gate = canStartRankedPvp(save, controller.session.clock());
-      if (!gate.ok) {
-        setState(() => _error = gate.reason);
-        return;
-      }
+    if (ranked && multiplayer.service.hostedCommands) {
+      await _hostedRankedFight();
+      return;
     }
     final themSave = await multiplayer.service.readOpponentSave(opponent.userId);
     if (!mounted) return;
@@ -160,16 +161,74 @@ class _ArenaPanelState extends State<ArenaPanel> {
       _outcome = null;
       _rankedFight = ranked;
       _rankedApplied = false;
+      _replayRounds = null;
+      _rankedCode = null;
+      _rankedGoldGained = null;
     });
   }
 
   Future<void> _rankedMatch() async {
+    if (multiplayer.service.hostedCommands) {
+      await _hostedRankedFight();
+      return;
+    }
     final pick = pickRankedOpponent(combatLevelOf(save), totalLevel(save), _all);
     if (pick == null) {
       setState(() => _error = 'No other players to fight.');
       return;
     }
     await _fightOpponent(pick, ranked: true);
+  }
+
+  Future<void> _hostedRankedFight() async {
+    final loadout = _ownLoadout;
+    if (loadout == null) {
+      setState(() => _error = pvpEquipmentRequired);
+      return;
+    }
+    if (_startingFight) return;
+    setState(() {
+      _startingFight = true;
+      _error = null;
+    });
+    final result = await multiplayer.submitGameCommand('ranked_pvp_fight');
+    if (!mounted) return;
+    if (!result.ok || result.rounds == null || result.rounds!.isEmpty) {
+      setState(() {
+        _startingFight = false;
+        _error = result.reason ?? 'Could not start a ranked fight.';
+      });
+      return;
+    }
+    final opponent =
+        result.opponent ??
+        ArenaOpponent(userId: 'opponent', username: 'Opponent', combatLevel: 1, totalLevel: 1);
+    final themSave = result.opponent != null
+        ? await multiplayer.service.readOpponentSave(result.opponent!.userId)
+        : null;
+    if (!mounted) return;
+    final you = composePvpFighter(controller.db, save, loadout);
+    final them = themSave == null ? you : composePvpFighter(controller.db, themSave, themSave);
+    setState(() {
+      _startingFight = false;
+      _error = null;
+      _opponent = opponent;
+      _you = you;
+      _them = them;
+      _youHp = you.currentHp;
+      _themHp = them.currentHp;
+      _youMaxHp = result.youMaxHp ?? you.currentHp;
+      _themMaxHp = result.themMaxHp ?? them.currentHp;
+      _roundStartedAt = controller.session.clock();
+      _round = null;
+      _roundSeq = 0;
+      _outcome = null;
+      _rankedFight = true;
+      _rankedApplied = true;
+      _replayRounds = result.rounds;
+      _rankedCode = result.code;
+      _rankedGoldGained = result.goldGained;
+    });
   }
 
   void _advanceRounds({required num until, bool skip = false}) {
@@ -183,15 +242,18 @@ class _ArenaPanelState extends State<ArenaPanel> {
     var seq = _roundSeq;
     PvpRoundResult? last = _round;
     String? outcome;
+    final replay = _replayRounds;
     while (outcome == null && seq < 2000 && (skip || until - startedAt >= roundMs)) {
-      final round = resolvePvpRound(
-        controller.db,
-        you,
-        them,
-        youHp,
-        themHp,
-        controller.session.random,
-      );
+      final PvpRoundResult round;
+      if (replay != null) {
+        if (seq >= replay.length) {
+          outcome = last?.outcome == 'win' ? 'win' : 'loss';
+          break;
+        }
+        round = replay[seq];
+      } else {
+        round = resolvePvpRound(controller.db, you, them, youHp, themHp, controller.session.random);
+      }
       last = round;
       youHp = round.youHp;
       themHp = round.themHp;
@@ -200,6 +262,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
       if (round.outcome != 'ongoing') outcome = round.outcome;
     }
     if (seq >= 2000 && outcome == null) outcome = 'loss';
+    if (outcome != null) _applyRanked(outcome);
     if (!mounted) return;
     setState(() {
       _youHp = youHp;
@@ -209,18 +272,16 @@ class _ArenaPanelState extends State<ArenaPanel> {
       _roundStartedAt = startedAt;
       _outcome = outcome;
     });
-    if (outcome != null) _applyRanked(outcome);
   }
 
   void _applyRanked(String outcome) {
     if (!_rankedFight || _rankedApplied) return;
     _rankedApplied = true;
+    if (multiplayer.service.hostedCommands) return;
     final next = applyRankedPvpResult(save, outcome == 'win', controller.session.clock());
-    controller.commit(
-      next,
-      command: 'apply_ranked_pvp',
-      args: <String, Object?>{'won': outcome == 'win'},
-    );
+    controller.commit(next.save);
+    _rankedGoldGained = next.goldGained;
+    _rankedCode = next.code;
   }
 
   Future<void> _saveEquipment() async {
@@ -263,6 +324,9 @@ class _ArenaPanelState extends State<ArenaPanel> {
       _roundSeq = 0;
       _outcome = null;
       _error = null;
+      _replayRounds = null;
+      _rankedCode = null;
+      _rankedGoldGained = null;
     });
   }
 
@@ -404,18 +468,20 @@ class _ArenaPanelState extends State<ArenaPanel> {
   }
 
   Widget _rankedLobby() {
-    final remaining = rankedFightsRemaining(save, controller.session.clock());
+    final remaining = rankedWinsRemaining(save, controller.session.clock());
+    final capped = remaining <= 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         MutedText(
           'Closest combat level. Win: ${formatThousands(rankedPvpWinGold)} gold. '
-          '$remaining / ${formatThousands(rankedPvpDailyCap)} left today.',
+          '${capped ? '0' : remaining} / ${formatThousands(rankedPvpDailyCap)} ranked wins left today.',
         ),
+        if (capped) ...[const SizedBox(height: 6), const MutedText(rankedPvpDailyCapMessage)],
         const SizedBox(height: 8),
         GameButton(
-          label: 'Find match',
-          onPressed: remaining > 0 && !_loading ? _rankedMatch : null,
+          label: _startingFight ? 'Matching…' : 'Find match',
+          onPressed: _loading || _startingFight ? null : _rankedMatch,
         ),
         const SizedBox(height: 6),
         MutedText(
@@ -483,12 +549,23 @@ class _ArenaPanelState extends State<ArenaPanel> {
                             : const Color(0xFFFF8A8A),
                       ),
                     ),
-                    if (_rankedFight && _outcome == 'win')
+                    if (_rankedFight && _rankedCode == rankedPvpDailyCapCode)
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
-                        child: MutedText('Ranked purse: 1,000 gold.', textAlign: TextAlign.center),
+                        child: MutedText(rankedPvpDailyCapMessage, textAlign: TextAlign.center),
                       )
-                    else if (_rankedFight)
+                    else if (_rankedFight &&
+                        _outcome == 'win' &&
+                        _rankedGoldGained != null &&
+                        _rankedGoldGained! > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: MutedText(
+                          'Ranked purse: ${formatThousands(_rankedGoldGained!)} gold.',
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    else if (_rankedFight && _outcome != 'win')
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: MutedText(
@@ -496,7 +573,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
                           textAlign: TextAlign.center,
                         ),
                       )
-                    else
+                    else if (!_rankedFight)
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: MutedText('Search fight. No gold.', textAlign: TextAlign.center),

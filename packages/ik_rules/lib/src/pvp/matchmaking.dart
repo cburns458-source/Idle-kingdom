@@ -1,10 +1,16 @@
 import '../combat/stats.dart';
+import '../economy/payout.dart';
 import '../save/generated/save_models.dart';
 import '../skills/totals.dart';
 import '../time.dart';
 
 const num rankedPvpDailyCap = 5;
 const num rankedPvpWinGold = 1000;
+const String rankedPvpDailyCapCode = 'daily_cap_reached';
+const String rankedPvpDailyCapMessage =
+    "You've won 5 ranked fights today. Fights still count, but rewards return tomorrow.";
+const String rankedPvpFakedWinRefusal = 'The server resolves ranked fights.';
+const String rankedPvpUnknownFightRefusal = 'Unknown ranked fight.';
 
 /// A stored player the arena can search or match against.
 class ArenaOpponent {
@@ -15,6 +21,16 @@ class ArenaOpponent {
     required this.totalLevel,
     this.appearance,
   });
+
+  factory ArenaOpponent.fromJson(Map<String, Object?> json) => ArenaOpponent(
+    userId: json['userId']! as String,
+    username: json['username']! as String,
+    combatLevel: json['combatLevel'] as num? ?? 0,
+    totalLevel: json['totalLevel'] as num? ?? 0,
+    appearance: json['appearance'] is Map
+        ? PlayerAppearance.fromJson(Map<String, Object?>.from(json['appearance']! as Map))
+        : null,
+  );
 
   final String userId;
   final String username;
@@ -41,17 +57,23 @@ num rankedPvpKd(num wins, num losses) {
   return w / (l <= 0 ? 1 : l);
 }
 
-num rankedFightsUsedToday(PlayerSave save, num nowMs) {
+/// Ranked wins already counted toward today's cap.
+num rankedWinsUsedToday(PlayerSave save, num nowMs) {
   final key = rankedPvpDayKey(nowMs);
   if (save.rankedPvpDayKey != key) return 0;
   final used = save.rankedPvpFightsToday;
   return used < 0 ? 0 : used.floor();
 }
 
-num rankedFightsRemaining(PlayerSave save, num nowMs) {
-  final left = rankedPvpDailyCap - rankedFightsUsedToday(save, nowMs);
+num rankedWinsRemaining(PlayerSave save, num nowMs) {
+  final left = rankedPvpDailyCap - rankedWinsUsedToday(save, nowMs);
   return left < 0 ? 0 : left;
 }
+
+/// Paid ranked wins still available today. Fights after the cap still resolve.
+num rankedFightsUsedToday(PlayerSave save, num nowMs) => rankedWinsUsedToday(save, nowMs);
+
+num rankedFightsRemaining(PlayerSave save, num nowMs) => rankedWinsRemaining(save, nowMs);
 
 class RankedPvpStartResult {
   const RankedPvpStartResult._({required this.ok, this.reason});
@@ -105,26 +127,66 @@ ArenaOpponent? pickRankedOpponent(
   return ranked.first;
 }
 
+/// Ranked fights always start. The daily cap stops the purse, not the match.
 RankedPvpStartResult canStartRankedPvp(PlayerSave save, num nowMs) {
-  if (rankedFightsRemaining(save, nowMs) <= 0) {
-    return const RankedPvpStartResult.failed('Ranked is capped at 5 fights a day.');
-  }
+  final _ = (save, nowMs);
   return const RankedPvpStartResult.ok();
 }
 
-/// Records a ranked fight: the daily cap, K/D, and 1,000 gold on a win. Search fights skip this.
-PlayerSave applyRankedPvpResult(PlayerSave save, bool won, num nowMs) {
+class RankedPvpApplyResult {
+  const RankedPvpApplyResult({
+    required this.save,
+    required this.won,
+    required this.paid,
+    required this.goldGained,
+    required this.winsToday,
+    required this.winsRemaining,
+    this.code,
+  });
+
+  final PlayerSave save;
+  final bool won;
+  final bool paid;
+  final num goldGained;
+  final String? code;
+  final num winsToday;
+  final num winsRemaining;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'save': save.toJson(),
+    'won': won,
+    'paid': paid,
+    'goldGained': goldGained,
+    'winsToday': winsToday,
+    'winsRemaining': winsRemaining,
+    if (code != null) 'code': code,
+  };
+}
+
+/// Records a ranked fight: K/D always, and 1,000 gold on a win under the daily
+/// cap of 5 wins. Search fights skip this. The sixth win still counts but pays
+/// nothing.
+RankedPvpApplyResult applyRankedPvpResult(PlayerSave save, bool won, num nowMs) {
   final key = rankedPvpDayKey(nowMs);
-  final used = rankedFightsUsedToday(save, nowMs);
-  final gold = won ? rankedPvpWinGold : 0;
+  final winsToday = rankedWinsUsedToday(save, nowMs);
+  final paid = won && winsToday < rankedPvpDailyCap;
+  final payout = payReward(save, Reward(type: rewardTypeGold, amount: paid ? rankedPvpWinGold : 0));
+  final nextWinsToday = won ? winsToday + 1 : winsToday;
   final wins = save.rankedPvpWins < 0 ? 0 : save.rankedPvpWins.floor();
   final losses = save.rankedPvpLosses < 0 ? 0 : save.rankedPvpLosses.floor();
-  return save.copyWith(
-    rankedPvpDayKey: key,
-    rankedPvpFightsToday: used + 1,
-    rankedPvpWins: wins + (won ? 1 : 0),
-    rankedPvpLosses: losses + (won ? 0 : 1),
-    gold: save.gold + gold,
+  return RankedPvpApplyResult(
+    save: payout.save.copyWith(
+      rankedPvpDayKey: key,
+      rankedPvpFightsToday: nextWinsToday,
+      rankedPvpWins: wins + (won ? 1 : 0),
+      rankedPvpLosses: losses + (won ? 0 : 1),
+    ),
+    won: won,
+    paid: paid,
+    goldGained: payout.paid,
+    code: won && !paid ? rankedPvpDailyCapCode : null,
+    winsToday: nextWinsToday,
+    winsRemaining: nextWinsToday > rankedPvpDailyCap ? 0 : rankedPvpDailyCap - nextWinsToday,
   );
 }
 

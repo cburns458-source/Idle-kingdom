@@ -1388,7 +1388,7 @@ class PlayerSave {
   /// UTC date key (`YYYY-MM-DD`) for the ranked PvP daily fight cap.
   final String? rankedPvpDayKey;
 
-  /// Ranked arena fights already used during [rankedPvpDayKey].
+  /// Ranked arena wins already counted toward today's 5-win purse cap.
   final num rankedPvpFightsToday;
 
   /// Ranked arena wins, which feed the PvP K/D leaderboard.

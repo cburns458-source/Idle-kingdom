@@ -3,7 +3,7 @@ import {
   applyRankedPvpResult,
   canStartRankedPvp,
   pickRankedOpponent,
-  rankedFightsRemaining,
+  rankedWinsRemaining,
   rankedPvpKd,
   searchArenaOpponents,
   type ArenaOpponent,
@@ -48,26 +48,39 @@ export const pvpScenarios: ParityScenario[] = [
   scenario('pvp/matchmaking', 'ranked-cap', { source: 'content', nowMs: NOW_MS }, () => {
     const db = contentDatabase()
     let save: PlayerSave = { ...createNewSave(db, NOW_MS), attackStyle: 'balanced' }
-    const remainingFresh = rankedFightsRemaining(save, NOW_MS)
+    const remainingFresh = rankedWinsRemaining(save, NOW_MS)
     const startOk = canStartRankedPvp(save, NOW_MS)
-    save = applyRankedPvpResult(save, true, NOW_MS)
-    for (let i = 0; i < 4; i++) save = applyRankedPvpResult(save, false, NOW_MS)
-    const blocked = canStartRankedPvp(save, NOW_MS)
-    const nextDay = applyRankedPvpResult(save, false, NOW_MS + 24 * 60 * 60 * 1000)
+    const first = applyRankedPvpResult(save, true, NOW_MS)
+    save = first.save
+    for (let i = 0; i < 4; i++) save = applyRankedPvpResult(save, true, NOW_MS).save
+    const afterFive = applyRankedPvpResult(save, false, NOW_MS)
+    save = afterFive.save
+    const sixth = applyRankedPvpResult(save, true, NOW_MS)
+    const stillOk = canStartRankedPvp(sixth.save, NOW_MS)
+    const nextDay = applyRankedPvpResult(sixth.save, true, NOW_MS + 24 * 60 * 60 * 1000)
     return {
       remainingFresh,
       startOk,
-      afterFive: {
+      afterFiveWins: {
         fights: save.rankedPvpFightsToday,
         wins: save.rankedPvpWins,
         losses: save.rankedPvpLosses,
-        remaining: rankedFightsRemaining(save, NOW_MS),
+        remaining: rankedWinsRemaining(save, NOW_MS),
         kd: rankedPvpKd(save.rankedPvpWins, save.rankedPvpLosses),
+        gold: save.gold,
       },
-      blocked,
+      sixth: {
+        paid: sixth.paid,
+        code: sixth.code ?? null,
+        gold: sixth.save.gold,
+        wins: sixth.save.rankedPvpWins,
+        remaining: sixth.winsRemaining,
+      },
+      stillOk,
       nextDay: {
-        dayKey: nextDay.rankedPvpDayKey,
-        fights: nextDay.rankedPvpFightsToday,
+        dayKey: nextDay.save.rankedPvpDayKey,
+        fights: nextDay.save.rankedPvpFightsToday,
+        paid: nextDay.paid,
       },
     } as unknown as JsonValue
   }),

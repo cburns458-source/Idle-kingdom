@@ -14,11 +14,36 @@ enum CloudSyncSource {
 }
 
 class CloudSyncResult {
-  const CloudSyncResult.ok(PlayerSave this.save, CloudSyncSource this.source)
-    : reason = null,
-      remote = null;
+  const CloudSyncResult.ok(
+    PlayerSave this.save,
+    CloudSyncSource this.source, {
+    this.goldGained,
+    this.firstCompleter,
+    this.code,
+    this.fightId,
+    this.winsRemaining,
+    this.pvpOutcome,
+    this.rounds,
+    this.youMaxHp,
+    this.themMaxHp,
+    this.opponent,
+    this.claim,
+  }) : reason = null,
+       remote = null;
 
-  const CloudSyncResult.failed(this.reason, {this.remote}) : save = null, source = null;
+  const CloudSyncResult.failed(this.reason, {this.remote, this.winsRemaining})
+    : save = null,
+      source = null,
+      goldGained = null,
+      firstCompleter = null,
+      code = null,
+      fightId = null,
+      pvpOutcome = null,
+      rounds = null,
+      youMaxHp = null,
+      themMaxHp = null,
+      opponent = null,
+      claim = null;
 
   final PlayerSave? save;
   final CloudSyncSource? source;
@@ -27,10 +52,30 @@ class CloudSyncResult {
   /// The backend's copy, when it is the reason the sync stopped.
   final CloudSaveRecord? remote;
 
+  final num? goldGained;
+  final bool? firstCompleter;
+  final String? code;
+  final String? fightId;
+  final num? winsRemaining;
+  final String? pvpOutcome;
+  final List<PvpRoundResult>? rounds;
+  final num? youMaxHp;
+  final num? themMaxHp;
+  final ArenaOpponent? opponent;
+  final BountyClaimRecord? claim;
+
   bool get ok => reason == null;
 
   Map<String, Object?> toJson() => ok
-      ? <String, Object?>{'ok': true, 'save': save!.toJson(), 'source': source!.wire}
+      ? <String, Object?>{
+          'ok': true,
+          'save': save!.toJson(),
+          'source': source!.wire,
+          if (goldGained != null) 'goldGained': goldGained,
+          if (firstCompleter != null) 'firstCompleter': firstCompleter,
+          if (code != null) 'code': code,
+          if (fightId != null) 'fightId': fightId,
+        }
       : <String, Object?>{
           'ok': false,
           'reason': reason,

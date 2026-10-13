@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import '../economy/payout.dart';
 import '../js_compat.dart';
 import '../production/recipes.dart';
 import '../save/generated/save_models.dart';
@@ -86,18 +87,17 @@ BountyRewardResult applyBountyReward(
   bool firstCompleter,
 ) {
   final goldGained = bounty.rewardGold + (firstCompleter ? bounty.firstPlaceBonusGold : 0);
+  final payout = payReward(save, Reward(type: rewardTypeGold, amount: goldGained));
   return BountyRewardResult(
-    save: save.copyWith(
-      gold: save.gold + goldGained,
+    save: payout.save.copyWith(
       bountyClaimedIds: <String>[...save.bountyClaimedIds, bounty.id],
       statistics: PlayerStatistics(
         values: <String, num>{
-          ...save.statistics.values,
+          ...payout.save.statistics.values,
           'bounties_completed': jsNumber(save.statistics.values['bounties_completed'] ?? 0) + 1,
-          'gold_earned': jsNumber(save.statistics.values['gold_earned'] ?? 0) + goldGained,
         },
       ),
     ),
-    goldGained: goldGained,
+    goldGained: payout.paid,
   );
 }

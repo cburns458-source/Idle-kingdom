@@ -46,4 +46,8 @@ echo "=== BUG-02: open Dwarven Warhammer orders are cancelled ==="
 run -f supabase/tests/bazaar_warhammer_migration_test.sql
 
 echo
+echo "=== BUG-04: payout RPC version conflict rolls back the insert ==="
+run -f supabase/tests/payout_rpc_conflict_test.sql
+
+echo
 echo "All Bazaar SQL checks passed."

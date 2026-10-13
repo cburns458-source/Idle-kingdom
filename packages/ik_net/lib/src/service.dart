@@ -23,6 +23,9 @@ abstract interface class MultiplayerService {
 
   bool get isSignedIn;
 
+  /// Hosted play applies discrete intents on the server. Local demo applies them here.
+  bool get hostedCommands;
+
   Future<SessionResult> signUp(String email, String username, String password);
 
   Future<SessionResult> signIn(String email, String password);
@@ -300,6 +303,9 @@ class LocalMultiplayerService implements MultiplayerService {
 
   @override
   bool get isSignedIn => _sessions.isSignedIn;
+
+  @override
+  bool get hostedCommands => false;
 
   /// A table on this device is always there to be read.
   @override
