@@ -1,9 +1,6 @@
 /// Map and location IDs the rules reference by name.
 library;
 
-/// Travel delay when database Base Duration is null. 0 = instant travel.
-const num defaultTravelDurationMs = 0;
-
 const String mainMapId = 'MAP-0001';
 const String caveMapId = 'MAP-0002';
 const String castleMapId = 'MAP-0003';
