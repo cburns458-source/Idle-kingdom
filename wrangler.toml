@@ -9,6 +9,12 @@ compatibility_date = "2026-08-17"
 [build]
 command = "bash scripts/cf-build.sh"
 
+# Feature-branch Workers Builds run `npx wrangler preview` (no --env).
+# Wrangler 4.135+ requires this block. Empty is enough: that command
+# publishes a Preview of the sink Worker, not restoria-idlerpg and not
+# the test site. Do not put production routes or secrets here.
+[previews]
+
 [assets]
 directory = "./app_flutter/build/web"
 not_found_handling = "single-page-application"
@@ -49,3 +55,7 @@ custom_domain = true
 
 [env.staging.vars]
 ENVIRONMENT = "staging"
+
+# So `npx wrangler preview --env staging` can parse. Empty on purpose:
+# do not copy the test.restoriaidle.com custom domain onto a Preview.
+[env.staging.previews]
