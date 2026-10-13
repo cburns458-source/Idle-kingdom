@@ -14,7 +14,7 @@ import {
   takeFromBag,
   type ItemDelta,
 } from '../inventory/bag'
-import { noRoomReason, rewardsFit, type ItemGrant, type NoRoom } from '../inventory/fit'
+import { noRoomPayload, noRoomReason, rewardsFit, type ItemGrant, type NoRoom } from '../inventory/fit'
 import { unlockRecipeId } from '../recipes/knowledge'
 import type { PlayerSave, QuestProgress } from '../save/types'
 import { playerHasAnyBotanySeed } from '../timers/locationTimers'
@@ -237,7 +237,7 @@ export interface CompleteQuestOptions {
 }
 
 function noRoomFailure(fit: NoRoom): QuestFailure {
-  const noRoom = { slotsNeeded: fit.slotsNeeded, slotsFree: fit.slotsFree }
+  const noRoom = noRoomPayload(fit)
   return { ok: false, reason: noRoomReason(noRoom), code: 'no_room', noRoom }
 }
 

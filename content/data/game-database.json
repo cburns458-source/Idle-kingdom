@@ -34461,6 +34461,32 @@
       "Notes": "Grand Feast K3 hand-in (QSTP-0002, HandIn ITEM-0058 x10 + ITEM-0059 x10, any number of visits). A separate choice completes QST-0001 once the step is done; quest completion pays 10,000 Cooking XP, ITEM-0026 x1 (stays tradeable) and the Courtyard Botany unlock. Priority 11 so it opens ahead of the pitch.",
       "Priority": 11,
       "Condition": "quest_active:QST-0001;!quest_step:QST-0001:QSTP-0001"
+    },
+    {
+      "Dialogue ID": "DLG-0013",
+      "Internal Key": "citadel_guide_visiting_citadel",
+      "Display Name": "Citadel Guide",
+      "NPC ID": "NPC-0013",
+      "Start Node ID": "DNODE-0023",
+      "Repeatable": true,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Visiting the Citadel (QSTP-0009). Reminder only; the step is Visit + AutoCompleteOnVisit, so no talk_flag or complete_quest.",
+      "Priority": 10,
+      "Condition": "quest_active:QST-0004"
+    },
+    {
+      "Dialogue ID": "DLG-0014",
+      "Internal Key": "market_master_visiting_citadel",
+      "Display Name": "Market Master",
+      "NPC ID": "NPC-0006",
+      "Start Node ID": "DNODE-0024",
+      "Repeatable": true,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Visiting the Citadel (QSTP-0009). Reminder only; visiting the bazaar is a location visit, not a Talk step.",
+      "Priority": 10,
+      "Condition": "quest_active:QST-0004"
     }
   ],
   "DialogueNodes": [
@@ -34639,6 +34665,22 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
+    },
+    {
+      "Node ID": "DNODE-0023",
+      "Dialogue ID": "DLG-0013",
+      "Line": "The plaza is only the doorstep. Walk the bazaar, the workshops, the outskirts, and the training grounds. See what's posted, and speak with the people who keep this place running.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Node ID": "DNODE-0024",
+      "Dialogue ID": "DLG-0014",
+      "Line": "New around here? Browse all you like \u2014 no obligation to buy. When you're done, walk the rest of the Citadel. There's more than stalls.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
     }
   ],
   "DialogueChoices": [
@@ -34652,7 +34694,8 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "One-time gift. The flag stops a second claim after closing mid-conversation."
+      "Notes": "One-time gift. The flag stops a second claim after closing mid-conversation. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "No Room Line": "Your pack's stuffed full, friend. Clear some space and come back to me."
     },
     {
       "Choice ID": "DCH-0002",
@@ -34784,7 +34827,8 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Completes QST-0006; quest completion grants BOOK-0001 once."
+      "Notes": "Completes QST-0006; quest completion grants BOOK-0001 once. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "No Room Line": "You're carrying too much for a harvest gift. Clear some space and come back to me."
     },
     {
       "Choice ID": "DCH-0013",
@@ -34808,7 +34852,8 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "One-time gift. Players whose QSTP-0023 is already done (the old GiveOnTalk seed) never see it again."
+      "Notes": "One-time gift. Players whose QSTP-0023 is already done (the old GiveOnTalk seed) never see it again. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "No Room Line": "You're carrying too much for a harvest gift. Clear some space and come back to me."
     },
     {
       "Choice ID": "DCH-0015",
@@ -34892,7 +34937,8 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Only completes QST-0011; quest completion pays the seeds and BOOK-0002 once."
+      "Notes": "Only completes QST-0011; quest completion pays the seeds and BOOK-0002 once. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "No Room Line": "You're carrying too much for a harvest gift. Clear some space and come back to me."
     },
     {
       "Choice ID": "DCH-0022",
@@ -34979,8 +35025,9 @@
       "Sort Order": 2,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Completes QST-0001 once the hand-in is done; quest completion pays the reward.",
-      "Hidden": true
+      "Notes": "Completes QST-0001 once the hand-in is done; quest completion pays the reward. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "Hidden": true,
+      "No Room Line": "You've no space left for a royal gift. Clear some room and return to me."
     },
     {
       "Choice ID": "DCH-0027",
@@ -35016,8 +35063,9 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Completes QST-0001; quest completion pays the reward.",
-      "Hidden": true
+      "Notes": "Completes QST-0001; quest completion pays the reward. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "Hidden": true,
+      "No Room Line": "You've no space left for a royal gift. Clear some room and return to me."
     },
     {
       "Choice ID": "DCH-0032",
@@ -35031,6 +35079,30 @@
       "Release Phase": "Launch",
       "Notes": null,
       "Hidden": true
+    },
+    {
+      "Choice ID": "DCH-0033",
+      "Node ID": "DNODE-0023",
+      "Label": "I'll have a look.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Choice ID": "DCH-0034",
+      "Node ID": "DNODE-0024",
+      "Label": "Thanks.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
     }
   ],
   "Achievements": [

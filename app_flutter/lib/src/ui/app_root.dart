@@ -10,6 +10,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import '../content/database_loader.dart';
 import '../net/supabase_transport.dart';
 import '../session/activity_icons_pref.dart';
+import '../session/bag_overflow_pref.dart';
 import '../session/battery_saver_pref.dart';
 import '../session/game_controller.dart';
 import '../session/local_player_art.dart';
@@ -92,6 +93,7 @@ class _BootGateState extends State<_BootGate> {
       uiChrome: UiChromePref.load(storage),
       batterySaverPref: BatterySaverPref.load(storage),
       questLogSort: QuestLogSortPref.load(storage),
+      bagOverflow: BagOverflowPref.load(storage),
     )..adoptBoot(boot);
     final backend = await _multiplayerService(storage);
     _ensureDemoWorld(backend.service, database.launch);

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/bag_overflow_pref.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/session/quest_log_sort_pref.dart';
@@ -65,6 +66,7 @@ GameController buildController(
   PlayerSave? seed,
   TestClock? clock,
   QuestLogSortPref? questLogSort,
+  BagOverflowPref? bagOverflow,
 }) {
   final testClock = clock ?? TestClock();
   final repository = SaveRepository(storage: MemorySaveStorage(), clock: testClock.read);
@@ -77,8 +79,12 @@ GameController buildController(
     random: () => 0,
   );
   final boot = session.boot();
-  return GameController(database: database, session: session, questLogSort: questLogSort)
-    ..adoptBoot(boot);
+  return GameController(
+    database: database,
+    session: session,
+    questLogSort: questLogSort,
+    bagOverflow: bagOverflow,
+  )..adoptBoot(boot);
 }
 
 /// Registers [account] on the local backend. Does not sign them in.
