@@ -23,6 +23,36 @@ function capabilityTags(effects: string | null | undefined): string[] {
     .filter(Boolean)
 }
 
+const SPELL_POWER_PCT_TAG = /^spell_power_pct=(\d+(?:\.\d+)?)$/
+
+/** Sum `spell_power_pct=N` tokens from one capability string. */
+export function parseSpellPowerPercent(effects: string | null | undefined): number {
+  let total = 0
+  for (const tag of capabilityTags(effects)) {
+    const match = tag.match(SPELL_POWER_PCT_TAG)
+    if (match) total += Number(match[1])
+  }
+  return total
+}
+
+/**
+ * Multiplier from equipped gear such as the Wizard's Tome (`spell_power_pct=20`
+ * => 1.2). Same bonus types add. Does not apply unless spells are also equipped.
+ */
+export function equippedSpellPowerMultiplier(db: GameDatabase, save: PlayerSave): number {
+  let total = 0
+  for (const stack of Object.values(save.equipment.slots)) {
+    if (!stack?.itemId) continue
+    const equipment = db.Equipment.find((row) => row['Item ID'] === stack.itemId)
+    total += parseSpellPowerPercent(equipment?.['Capabilities / Effects'])
+  }
+  return 1 + total / 100
+}
+
+function applySpellPower(db: GameDatabase, save: PlayerSave, stackedPercent: number): number {
+  return stackedPercent * equippedSpellPowerMultiplier(db, save)
+}
+
 export function isSpellEquipment(equipment: EquipmentRow | undefined): boolean {
   if (!equipment) return false
   const tags = capabilityTags(equipment['Capabilities / Effects'])
@@ -236,7 +266,7 @@ export function activeSpellDamageRangeMultiplier(
     percent: spellDamageRangeBonusPercent(db, stack.itemId),
     stacks: spellAllowsStacking(db, stack.itemId),
   }))
-  return 1 + combineSpellPercentBonuses(contributions) / 100
+  return 1 + applySpellPower(db, save, combineSpellPercentBonuses(contributions)) / 100
 }
 
 /** Total chance to double item quantities on a successful drop (capped at 100). */
@@ -246,7 +276,11 @@ export function activeSpellItemDoubleChancePercent(
 ): number {
   return Math.min(
     100,
-    activeSpellStackedPercent(db, save, (itemId) => spellItemDoubleChancePercent(db, itemId)),
+    applySpellPower(
+      db,
+      save,
+      activeSpellStackedPercent(db, save, (itemId) => spellItemDoubleChancePercent(db, itemId)),
+    ),
   )
 }
 
@@ -257,7 +291,11 @@ export function activeSpellGoldDoubleChancePercent(
 ): number {
   return Math.min(
     100,
-    activeSpellStackedPercent(db, save, (itemId) => spellGoldDoubleChancePercent(db, itemId)),
+    applySpellPower(
+      db,
+      save,
+      activeSpellStackedPercent(db, save, (itemId) => spellGoldDoubleChancePercent(db, itemId)),
+    ),
   )
 }
 
@@ -268,7 +306,11 @@ export function activeSpellDamageReductionPercent(
 ): number {
   return Math.min(
     100,
-    activeSpellStackedPercent(db, save, (itemId) => spellDamageReductionPercent(db, itemId)),
+    applySpellPower(
+      db,
+      save,
+      activeSpellStackedPercent(db, save, (itemId) => spellDamageReductionPercent(db, itemId)),
+    ),
   )
 }
 
@@ -276,7 +318,11 @@ export function activeSpellDamageReductionPercent(
 export function activeSpellLifestealPercent(db: GameDatabase, save: PlayerSave): number {
   return Math.min(
     100,
-    activeSpellStackedPercent(db, save, (itemId) => spellLifestealPercent(db, itemId)),
+    applySpellPower(
+      db,
+      save,
+      activeSpellStackedPercent(db, save, (itemId) => spellLifestealPercent(db, itemId)),
+    ),
   )
 }
 
@@ -285,8 +331,12 @@ export function activeSpellProductionDurationMultiplier(
   db: GameDatabase,
   save: PlayerSave,
 ): number {
-  const percent = activeSpellStackedPercent(db, save, (itemId) =>
-    spellProductionDurationReductionPercent(db, itemId),
+  const percent = applySpellPower(
+    db,
+    save,
+    activeSpellStackedPercent(db, save, (itemId) =>
+      spellProductionDurationReductionPercent(db, itemId),
+    ),
   )
   return Math.max(0.01, 1 - percent / 100)
 }
@@ -296,8 +346,12 @@ export function activeSpellGatheringDurationMultiplier(
   db: GameDatabase,
   save: PlayerSave,
 ): number {
-  const percent = activeSpellStackedPercent(db, save, (itemId) =>
-    spellGatheringDurationReductionPercent(db, itemId),
+  const percent = applySpellPower(
+    db,
+    save,
+    activeSpellStackedPercent(db, save, (itemId) =>
+      spellGatheringDurationReductionPercent(db, itemId),
+    ),
   )
   return Math.max(0.01, 1 - percent / 100)
 }
