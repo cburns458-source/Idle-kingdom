@@ -115,8 +115,18 @@ Other choices keep their content `Label`. No dialogue string mentions the bank; 
 - `no_room`: popup only; the dialogue stays on the same node with no inline error.
 - Progress the last choice touched stays listed on the next node when that node does not reference the step, so `Shown ✓` / the new hand-in count stays visible.
 
+### NPC quest panel (legacy Turn in / hand-in)
+The same popups are used from `NpcPanel` when the player taps **Turn in** (the non-dialogue quest panel). Text still comes from `DialogueText`; the widgets are `showDialogueBagFullPopup` and `showDialogueFavouritesPrompt` in `dialogue_window.dart`.
+
+- `no_room` on that tap shows the bag-full popup. N is `slotsNeeded` (new slots only). Nothing is committed.
+- `confirm_favourites` shows the Yes/No prompt and lists every `{itemId, count}` as `Name xN`. **No** cancels. **Yes** resends the same `quest_complete` once with `useFavourites: true`. The flag is never saved.
+- Turn in is never greyed out because items are favourited.
+- A quest that completes on its own (visit / talk auto-complete) and hits a full bag waits for the next visit: no popup.
+
 ### Still to come (not in this pass)
 Shared `DialoguePanel` replacing `_DialogueCard` in `npc_panel.dart`, item chips, text reveal, tap-to-advance, fixed panel height, stacked full-width / 44 px choices, locked-reason text (needs non-placeholder engine wording or UI wording per condition), quest glyph (waits for the asset pack).
 
 ### Tests (`app_flutter/test/dialogue_window_test.dart`, content + the SYS-01 parity patch)
 Hand-in progress and label; "Bring …" with none in the bag (bank stock ignored); hand-in commit; Show progress, label, missing-items text and `Shown ✓`; bag-only counts; disabled greyed and hidden not drawn; favourites never grey out or hint; double tap sends one request (pending request and local engine); full-bag popup counts new slots only; `confirm_favourites` lists every entry, No does nothing, Yes resends once with `useFavourites` and is not remembered; full bag after Yes shows the bag popup without reopening the prompt; each failure code worded by the UI; no dialogue UI string contains "bank".
+
+NPC quest panel (`app_flutter/test/npc_quest_panel_popups_test.dart`): `no_room` popup with the correct N; Yes resends with `useFavourites` exactly once; No does nothing; a double tap sends one request; a full bag after Yes shows the popup; several favourites listed; Turn in stays enabled when items are favourited.
