@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { applyBountyReward, prepareBountyTurnIn } from '../bounties/complete'
+import { applyBountyReward, prepareBountyTurnIn } from '../bounties/reward'
 import { hourlyBountyBoard } from '../bounties/rotation'
 import { prepareDatabase } from '../data/loadDatabase'
 import { applyRankedPvpResult, RANKED_PVP_DAILY_CAP } from '../pvp/matchmaking'

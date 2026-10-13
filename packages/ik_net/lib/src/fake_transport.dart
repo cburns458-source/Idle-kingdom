@@ -959,11 +959,20 @@ class FakeTransport implements RemoteTransport {
     return expected.toInt() != ((saveRow['version'] as num?) ?? 1).toInt();
   }
 
-  RemoteInvokeResult _saveVersionConflictResult() {
-    return const RemoteInvokeResult.ok(<String, Object?>{
+  RemoteInvokeResult _saveVersionConflictResult({num? winsRemaining}) {
+    return RemoteInvokeResult.ok(<String, Object?>{
       'error': saveVersionConflictReason,
       'phase': 2,
       'conflict': true,
+      if (winsRemaining != null) 'winsRemaining': winsRemaining,
+    });
+  }
+
+  RemoteInvokeResult _rankedFightRefusal(String error, num winsRemaining) {
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'error': error,
+      'phase': 2,
+      'winsRemaining': winsRemaining,
     });
   }
 
@@ -975,8 +984,19 @@ class FakeTransport implements RemoteTransport {
   ) {
     if (body['command'] != 'ranked_pvp_fight') return null;
     final args = (body['args'] as Map?) ?? const <Object?, Object?>{};
+    final payload = saveRow['payload'];
+    num winsRemaining = rankedPvpDailyCap;
+    PlayerSave? parsedSave;
+    if (payload is Map) {
+      try {
+        parsedSave = parseSave(Map<String, Object?>.from(payload), _clockMs());
+        winsRemaining = rankedWinsRemaining(parsedSave, _clockMs());
+      } on Object {
+        parsedSave = null;
+      }
+    }
     if (args.containsKey('won')) {
-      return const RemoteInvokeResult.failed(rankedPvpFakedWinRefusal);
+      return _rankedFightRefusal(rankedPvpFakedWinRefusal, winsRemaining);
     }
     final requested = args['fightId'];
     final results = tables.putIfAbsent(RemoteTables.rankedPvpResults, () => <RemoteRow>[]);
@@ -988,7 +1008,7 @@ class FakeTransport implements RemoteTransport {
           break;
         }
       }
-      if (existing == null) return const RemoteInvokeResult.failed(rankedPvpUnknownFightRefusal);
+      if (existing == null) return _rankedFightRefusal(rankedPvpUnknownFightRefusal, winsRemaining);
       return RemoteInvokeResult.ok(<String, Object?>{
         'ok': true,
         'phase': 2,
@@ -1006,16 +1026,11 @@ class FakeTransport implements RemoteTransport {
       });
     }
     final db = database;
-    if (db == null) return const RemoteInvokeResult.failed('No other players to fight.');
-    final payload = saveRow['payload'];
-    if (payload is! Map)
-      return const RemoteInvokeResult.failed('The cloud save could not be read.');
-    PlayerSave save;
-    try {
-      save = parseSave(Map<String, Object?>.from(payload), _clockMs());
-    } on Object {
-      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    if (db == null) return _rankedFightRefusal('No other players to fight.', winsRemaining);
+    if (parsedSave == null) {
+      return _rankedFightRefusal('The cloud save could not be read.', winsRemaining);
     }
+    final save = parsedSave;
     final snapshots = tables[RemoteTables.pvpSnapshots] ?? const <RemoteRow>[];
     final candidates = <ArenaOpponent>[];
     final payloads = <String, PlayerSave>{};
@@ -1040,7 +1055,7 @@ class FakeTransport implements RemoteTransport {
       }
     }
     final pick = pickRankedOpponent(combatLevelOf(save), totalLevel(save), candidates);
-    if (pick == null) return const RemoteInvokeResult.failed('No other players to fight.');
+    if (pick == null) return _rankedFightRefusal('No other players to fight.', winsRemaining);
     final them = payloads[pick.userId]!;
     final rng = Mulberry32(((saveRow['rng_state'] as num?) ?? 1).toInt());
     final fight = simulatePvpFight(db, save, them, rng.asFunction);
@@ -1060,7 +1075,7 @@ class FakeTransport implements RemoteTransport {
     });
     if (_saveVersionConflicts(body, saveRow)) {
       results.removeWhere((row) => row['user_id'] == userId && row['fight_id'] == fightId);
-      return _saveVersionConflictResult();
+      return _saveVersionConflictResult(winsRemaining: winsRemaining);
     }
     saveRow['payload'] = applied.save.toJson();
     final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;

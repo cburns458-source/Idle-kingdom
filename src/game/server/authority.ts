@@ -58,7 +58,7 @@ import {
   plantBotanySelection,
   placeTrap,
 } from '../timers/locationTimers'
-import { prepareBountyTurnIn, applyBountyReward } from '../bounties/complete'
+import { prepareBountyTurnIn, applyBountyReward } from '../bounties/reward'
 import { syncBountyHour } from '../bounties/progress'
 import { hourlyBountyBoard } from '../bounties/rotation'
 import { simulatePvpFight, type PvpRoundResult } from '../combat/pvp'

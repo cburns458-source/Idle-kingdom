@@ -29,12 +29,14 @@ export {
 } from './rankings'
 export { prepareDatabase } from '../data/loadDatabase'
 export { parseSave } from '../save/saveStore'
-export { applyBountyReward, prepareBountyTurnIn } from '../bounties/complete'
+export { applyBountyReward, prepareBountyTurnIn } from '../bounties/reward'
 export { hourlyBountyBoard } from '../bounties/rotation'
 export { combatLevelOf } from '../combat/stats'
 export {
   mintRankedFightId,
   pickRankedOpponent,
+  rankedWinsRemaining,
+  RANKED_PVP_DAILY_CAP,
   RANKED_PVP_FAKED_WIN_REFUSAL,
   RANKED_PVP_UNKNOWN_FIGHT_REFUSAL,
 } from '../pvp/matchmaking'

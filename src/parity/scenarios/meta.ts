@@ -1,5 +1,5 @@
 import { hasEveryCritter, syncProgressionMeta } from '../../game/achievements/progress'
-import { applyBountyReward, prepareBountyTurnIn } from '../../game/bounties/complete'
+import { applyBountyReward, prepareBountyTurnIn } from '../../game/bounties/reward'
 import { hourlyBountyBoard } from '../../game/bounties/rotation'
 import type { BountyDefinition } from '../../game/bounties/types'
 import {

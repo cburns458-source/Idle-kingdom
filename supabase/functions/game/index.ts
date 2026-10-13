@@ -23,6 +23,8 @@ import {
   pvpSnapshotRowForSave,
   rankingBoardRowsFor,
   rankingProfilePatch,
+  rankedWinsRemaining,
+  RANKED_PVP_DAILY_CAP,
   RANKED_PVP_FAKED_WIN_REFUSAL,
   RANKED_PVP_UNKNOWN_FIGHT_REFUSAL,
   runPhase0Prototype,
@@ -366,13 +368,22 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
   const args = payload.args && typeof payload.args === 'object' ? (payload.args as Record<string, unknown>) : {}
   const nowMs = Date.now()
   const hosted = await loadHostedRow(admin, userId)
+  const rankedWinsLeft = command === 'ranked_pvp_fight' ? rankedWinsRemainingFromHosted(hosted, nowMs) : null
   const expected = parseVersion(payload.version, hosted?.version ?? 0)
-  if (expected === null) return json({ error: 'version must be a whole number.', phase: 2 }, 400)
+  if (expected === null) {
+    return json(
+      withRankedWinsRemaining({ error: 'version must be a whole number.', phase: 2 }, rankedWinsLeft),
+      400,
+    )
+  }
 
   const hallContext = await loadHallContext(admin, userId)
   const rng = createTrackedMulberry32(hosted?.rng_state ?? ((nowMs ^ userId.length) >>> 0))
   const windowStartMs = hosted ? catchUpWindowStartMs(hosted) : undefined
-  const rankedContext = command === 'ranked_pvp_fight' ? await loadRankedFightContext(admin, userId, args, hosted, nowMs) : null
+  const rankedContext =
+    command === 'ranked_pvp_fight'
+      ? await loadRankedFightContext(admin, userId, args, hosted, nowMs, rankedWinsLeft ?? RANKED_PVP_DAILY_CAP)
+      : null
   if (rankedContext && 'response' in rankedContext) return rankedContext.response
   try {
     const result = applyGameCommand(rawDatabase, {
@@ -413,7 +424,10 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     if (!result.ok) {
       const prompt =
         'code' in result ? { code: result.code, favourites: result.favourites, noRoom: result.noRoom } : {}
-      return json({ error: result.reason, phase: 2, ...prompt }, 400)
+      return json(
+        withRankedWinsRemaining({ error: result.reason, phase: 2, ...prompt }, rankedWinsLeft),
+        400,
+      )
     }
     if (command === 'dialogue_view') {
       return json({
@@ -451,7 +465,15 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       result.fightId &&
       !(rankedContext && !('response' in rankedContext) && rankedContext.existingRankedFight)
     ) {
-      const recorded = await recordRankedFight(admin, userId, result, expected, rng.getState(), nowMs)
+      const recorded = await recordRankedFight(
+        admin,
+        userId,
+        result,
+        expected,
+        rng.getState(),
+        nowMs,
+        rankedWinsLeft ?? RANKED_PVP_DAILY_CAP,
+      )
       if (!recorded.ok) return recorded.response
       written = { ok: true, version: recorded.version }
       if (recorded.alreadyPaid) commandSave = parseSave(hosted.payload, nowMs)
@@ -462,6 +484,7 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
             payload: result.save,
             rngState: rng.getState(),
             nowMs,
+            conflictExtras: rankedWinsLeft == null ? undefined : { winsRemaining: rankedWinsLeft },
           })
         : await insertHostedSave(admin, userId, {
             payload: result.save,
@@ -517,7 +540,7 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Command failed.'
-    return json({ error: message, phase: 2 }, 400)
+    return json(withRankedWinsRemaining({ error: message, phase: 2 }, rankedWinsLeft), 400)
   }
 }
 
@@ -629,6 +652,7 @@ async function loadRankedFightContext(
   args: Record<string, unknown>,
   hosted: HostedSaveRow | null,
   nowMs: number,
+  winsRemaining: number,
 ): Promise<
   | {
       issuedFightId?: string
@@ -649,7 +673,7 @@ async function loadRankedFightContext(
   | { response: Response }
 > {
   if (Object.prototype.hasOwnProperty.call(args, 'won')) {
-    return { response: json({ error: RANKED_PVP_FAKED_WIN_REFUSAL, phase: 2 }, 400) }
+    return { response: json({ error: RANKED_PVP_FAKED_WIN_REFUSAL, phase: 2, winsRemaining }, 400) }
   }
   const requested = asTrimmedString(args.fightId)
   if (requested) {
@@ -659,8 +683,10 @@ async function loadRankedFightContext(
       .eq('user_id', userId)
       .eq('fight_id', requested)
       .maybeSingle()
-    if (error) return { response: json({ error: error.message, phase: 2 }, 500) }
-    if (!data) return { response: json({ error: RANKED_PVP_UNKNOWN_FIGHT_REFUSAL, phase: 2 }, 400) }
+    if (error) return { response: json({ error: error.message, phase: 2, winsRemaining }, 500) }
+    if (!data) {
+      return { response: json({ error: RANKED_PVP_UNKNOWN_FIGHT_REFUSAL, phase: 2, winsRemaining }, 400) }
+    }
     const outcome = data.outcome === 'win' ? 'win' : 'loss'
     return {
       existingRankedFight: {
@@ -675,11 +701,11 @@ async function loadRankedFightContext(
       },
     }
   }
-  if (!hosted) return { response: json({ error: 'No cloud save.', phase: 2 }, 400) }
+  if (!hosted) return { response: json({ error: 'No cloud save.', phase: 2, winsRemaining }, 400) }
   const { data, error } = await admin
     .from('pvp_snapshots')
     .select('user_id, username, combat_level, total_level, payload')
-  if (error) return { response: json({ error: error.message, phase: 2 }, 500) }
+  if (error) return { response: json({ error: error.message, phase: 2, winsRemaining }, 500) }
   const candidates: ArenaOpponent[] = []
   const payloads = new Map<string, unknown>()
   for (const row of data ?? []) {
@@ -700,12 +726,14 @@ async function loadRankedFightContext(
     selfCombat = combatLevelOf(self)
     selfTotal = totalLevel(self)
   } catch {
-    return { response: json({ error: 'The cloud save could not be read.', phase: 2 }, 400) }
+    return { response: json({ error: 'The cloud save could not be read.', phase: 2, winsRemaining }, 400) }
   }
   const opponent = pickRankedOpponent(selfCombat, selfTotal, candidates)
-  if (!opponent) return { response: json({ error: 'No other players to fight.', phase: 2 }, 400) }
+  if (!opponent) return { response: json({ error: 'No other players to fight.', phase: 2, winsRemaining }, 400) }
   const rawOpponent = payloads.get(opponent.userId)
-  if (rawOpponent == null) return { response: json({ error: 'No other players to fight.', phase: 2 }, 400) }
+  if (rawOpponent == null) {
+    return { response: json({ error: 'No other players to fight.', phase: 2, winsRemaining }, 400) }
+  }
   try {
     return {
       issuedFightId: mintRankedFightId(),
@@ -713,7 +741,7 @@ async function loadRankedFightContext(
       opponentSave: parseSave(rawOpponent, nowMs),
     }
   } catch {
-    return { response: json({ error: 'No other players to fight.', phase: 2 }, 400) }
+    return { response: json({ error: 'No other players to fight.', phase: 2, winsRemaining }, 400) }
   }
 }
 
@@ -735,6 +763,7 @@ async function recordRankedFight(
   expectedVersion: number,
   rngState: number,
   nowMs: number,
+  winsRemaining: number,
 ): Promise<{ ok: true; version: number; alreadyPaid: boolean } | { ok: false; response: Response }> {
   const { data, error } = await admin.rpc('ranked_pvp_record_hosted', {
     p_user_id: userId,
@@ -752,7 +781,9 @@ async function recordRankedFight(
     p_rng_state: rngState,
     p_now: new Date(nowMs).toISOString(),
   })
-  if (error) return { ok: false, response: json({ error: error.message, phase: 2 }, 400) }
+  if (error) {
+    return { ok: false, response: json({ error: error.message, phase: 2, winsRemaining }, 400) }
+  }
   const answer = (data ?? {}) as {
     ok?: boolean
     reason?: string
@@ -764,7 +795,12 @@ async function recordRankedFight(
     return {
       ok: false,
       response: json(
-        { error: answer.reason ?? 'The ranked fight could not be recorded.', phase: 2, conflict: answer.conflict },
+        {
+          error: answer.reason ?? 'The ranked fight could not be recorded.',
+          phase: 2,
+          conflict: answer.conflict,
+          winsRemaining,
+        },
         answer.conflict ? 409 : 400,
       ),
     }
@@ -925,6 +961,7 @@ async function writeHostedSave(
     nowMs: number
     /** A catch-up that stopped early keeps the window start so the cap holds. */
     advancedToMs?: number
+    conflictExtras?: Record<string, unknown>
   },
 ): Promise<{ ok: true; version: number } | { ok: false; response: Response }> {
   const writtenAt = new Date(options.nowMs).toISOString()
@@ -946,7 +983,15 @@ async function writeHostedSave(
   if (!data) {
     return {
       ok: false,
-      response: json({ error: 'Save version conflict. Sync and retry.', phase: 2, conflict: true }, 409),
+      response: json(
+        {
+          error: 'Save version conflict. Sync and retry.',
+          phase: 2,
+          conflict: true,
+          ...options.conflictExtras,
+        },
+        409,
+      ),
     }
   }
   return { ok: true, version: data.version as number }
@@ -1009,6 +1054,22 @@ async function loadHallContext(admin: Client, userId: string): Promise<HallConte
         : [],
     },
   }
+}
+
+function rankedWinsRemainingFromHosted(hosted: HostedSaveRow | null, nowMs: number): number {
+  if (!hosted) return RANKED_PVP_DAILY_CAP
+  try {
+    return rankedWinsRemaining(parseSave(hosted.payload, nowMs), nowMs)
+  } catch {
+    return RANKED_PVP_DAILY_CAP
+  }
+}
+
+function withRankedWinsRemaining(
+  body: Record<string, unknown>,
+  winsRemaining: number | null,
+): Record<string, unknown> {
+  return winsRemaining == null ? body : { ...body, winsRemaining }
 }
 
 function parseVersion(value: unknown, fallback: number): number | null {

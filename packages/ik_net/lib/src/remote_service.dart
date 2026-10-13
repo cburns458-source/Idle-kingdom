@@ -913,7 +913,10 @@ class RemoteMultiplayerService implements MultiplayerService {
         if (!catchingUp || attempt >= remoteGameCatchUpAttempts) break;
       }
       if (data['error'] is String) {
-        return CloudSyncResult.failed(data['error']! as String);
+        return CloudSyncResult.failed(
+          data['error']! as String,
+          winsRemaining: data['winsRemaining'] is num ? data['winsRemaining'] as num : null,
+        );
       }
       final rawSave = data['save'];
       if (rawSave is! Map) {

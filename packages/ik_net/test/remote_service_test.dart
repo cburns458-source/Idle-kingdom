@@ -1426,6 +1426,46 @@ void main() {
     },
   );
 
+  test('hosted ranked_pvp_fight includes pre-RPC winsRemaining on refusal and conflict', () async {
+    final transport = FakeTransport(database: _database(), nowMs: () => _nowMs);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    var heroSave = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    heroSave = applyRankedPvpResult(heroSave, true, _nowMs).save;
+    heroSave = applyRankedPvpResult(heroSave, true, _nowMs).save;
+    final remaining = rankedWinsRemaining(heroSave, _nowMs);
+    expect(remaining, rankedPvpDailyCap - 2);
+    expect((await seedHostedSave(hero, transport, heroSave)).ok, isTrue);
+
+    final faked = await hero.gameCommand('ranked_pvp_fight', <String, Object?>{'won': true});
+    expect(faked.ok, isFalse);
+    expect(faked.reason, rankedPvpFakedWinRefusal);
+    expect(faked.winsRemaining, remaining);
+
+    final unknown = await hero.gameCommand('ranked_pvp_fight', <String, Object?>{
+      'fightId': 'client-made',
+    });
+    expect(unknown.ok, isFalse);
+    expect(unknown.reason, rankedPvpUnknownFightRefusal);
+    expect(unknown.winsRemaining, remaining);
+
+    final rival = _service(FakeTransport.joining(transport), MemorySaveStorage());
+    expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+    final rivalSave = createNewSave(db, _nowMs).copyWith(characterName: 'Rival');
+    expect((await seedHostedSave(rival, transport, rivalSave)).ok, isTrue);
+    expect((await rival.savePvpEquipment(rivalSave)).ok, isTrue);
+
+    final heroRow = transport.tables[RemoteTables.saves]!.firstWhere(
+      (row) => row['user_id'] == hero.session!.userId,
+    );
+    heroRow['version'] = 9;
+    final conflicted = await hero.gameCommand('ranked_pvp_fight');
+    expect(conflicted.ok, isFalse);
+    expect(conflicted.reason, FakeTransport.saveVersionConflictReason);
+    expect(conflicted.winsRemaining, remaining);
+    expect(transport.tables[RemoteTables.rankedPvpResults], isEmpty);
+  });
+
   test('needs an account before it will touch the bounty board', () async {
     final transport = FakeTransport();
     final service = _service(transport, MemorySaveStorage());

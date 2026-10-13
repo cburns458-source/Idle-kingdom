@@ -31,14 +31,13 @@ class CloudSyncResult {
   }) : reason = null,
        remote = null;
 
-  const CloudSyncResult.failed(this.reason, {this.remote})
+  const CloudSyncResult.failed(this.reason, {this.remote, this.winsRemaining})
     : save = null,
       source = null,
       goldGained = null,
       firstCompleter = null,
       code = null,
       fightId = null,
-      winsRemaining = null,
       pvpOutcome = null,
       rounds = null,
       youMaxHp = null,
