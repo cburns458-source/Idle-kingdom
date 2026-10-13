@@ -29,6 +29,13 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 
 import {
+  BAZAAR_TOTAL_LEVEL_REQUIRED,
+  BAZAAR_TOTAL_LEVEL_TOO_LOW,
+  BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE,
+  bazaarTotalLevelGate,
+  bazaarTotalLevelRefusalFields,
+} from '../_shared/bazaar_gate.ts'
+import {
   GOLD_CAP,
   collectNoRoomReason,
   collectRows,
@@ -301,6 +308,11 @@ async function place(
   const stored = await loadSave(admin, userId)
   if ('error' in stored) return refused(stored.error)
 
+  const gate = bazaarTotalLevelGate(stored.payload)
+  if (!gate.ok) {
+    return refused(gate.error, bazaarTotalLevelRefusalFields(gate))
+  }
+
   const open = await admin
     .from('bazaar_orders')
     .select('id')
@@ -341,7 +353,7 @@ async function place(
     p_payload: escrowed,
     p_expected_updated_at: stored.updatedAt,
   })
-  if (error) return refused(refusalFor(error))
+  if (error) return totalLevelRefusalResponse(error) ?? refused(refusalFor(error))
 
   const result = (data ?? {}) as Record<string, unknown>
   const order = (result.order ?? {}) as OrderRow
@@ -525,6 +537,7 @@ function refusalFor(error: unknown): string {
     typeof error === 'object' && error != null && 'message' in error
       ? String((error as { message: unknown }).message)
       : String(error)
+  if (message.includes('BAZAAR_TOTAL_LEVEL')) return BAZAAR_TOTAL_LEVEL_TOO_LOW
   if (message.includes('BAZAAR_STALE')) {
     return 'Your save moved while that was being placed. Try again.'
   }
@@ -643,6 +656,22 @@ function priceJson(row: Record<string, unknown>): Record<string, unknown> {
 
 function formatGold(amount: number): string {
   return amount.toLocaleString('en-US')
+}
+
+/** Structured ECO-01 refusal when the RPC/trigger raised BAZAAR_TOTAL_LEVEL. */
+function totalLevelRefusalResponse(error: unknown): Response | null {
+  const message =
+    typeof error === 'object' && error != null && 'message' in error
+      ? String((error as { message: unknown }).message)
+      : String(error)
+  if (!message.includes('BAZAAR_TOTAL_LEVEL')) return null
+  const match = /totalLevel=(\d+)/.exec(message)
+  const totalLevel = match ? Number(match[1]) : 0
+  return refused(BAZAAR_TOTAL_LEVEL_TOO_LOW, {
+    code: BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE,
+    required: BAZAAR_TOTAL_LEVEL_REQUIRED,
+    totalLevel: Number.isFinite(totalLevel) ? totalLevel : 0,
+  })
 }
 
 function cors(): HeadersInit {

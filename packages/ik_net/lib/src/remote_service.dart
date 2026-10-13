@@ -1997,6 +1997,13 @@ class RemoteMultiplayerService implements MultiplayerService {
     required num quantity,
   }) async {
     if (!isSignedIn) return const MarketActionResult.failed(bazaarSignInToTrade);
+    final levelRefusal = bazaarTotalLevelRefusal(save);
+    if (levelRefusal != null) {
+      return const MarketActionResult.failed(
+        bazaarTotalLevelTooLow,
+        code: bazaarTotalLevelTooLowCode,
+      );
+    }
     // The server escrows from the stored save, so the stored save has to be this
     // one. Pushing first is what turns "the client says it has 400 logs" into
     // "the backend can see 400 logs".
@@ -2035,7 +2042,8 @@ class RemoteMultiplayerService implements MultiplayerService {
     final rowsLeft = data['rowsLeft'] is num ? (data['rowsLeft']! as num).toInt() : null;
     final refused = data['error'];
     if (refused is String && refused.isNotEmpty) {
-      return MarketActionResult.failed(refused, code: code, noRoom: noRoom, rowsLeft: rowsLeft);
+      final reason = code == bazaarTotalLevelTooLowCode ? bazaarTotalLevelTooLow : refused;
+      return MarketActionResult.failed(reason, code: code, noRoom: noRoom, rowsLeft: rowsLeft);
     }
 
     PlayerSave? written;

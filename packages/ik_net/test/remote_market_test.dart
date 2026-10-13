@@ -67,7 +67,31 @@ PlayerSave _save(
   GameDatabase db, {
   List<InventoryStack> bag = const <InventoryStack>[],
   num gold = 0,
-}) => createNewSave(db, _nowMs).copyWith(inventory: bag, gold: gold);
+  int totalLevelTarget = 200,
+}) => withTotalLevel(
+  createNewSave(db, _nowMs).copyWith(inventory: bag, gold: gold),
+  totalLevelTarget,
+);
+
+PlayerSave withTotalLevel(PlayerSave save, int target) {
+  if (save.skills.isEmpty) {
+    return save.copyWith(
+      skills: <SkillProgress>[SkillProgress(skillId: 'SKL-0001', level: target, xp: 0)],
+    );
+  }
+  final current = totalLevel(save);
+  final first = save.skills.first;
+  final next = first.level + (target - current);
+  if (next < 1) {
+    return save.copyWith(skills: <SkillProgress>[first.copyWith(level: target)]);
+  }
+  return save.copyWith(
+    skills: <SkillProgress>[
+      first.copyWith(level: next),
+      ...save.skills.skip(1),
+    ],
+  );
+}
 
 InventoryStack _stack(String itemId, num quantity, {String? enchantmentId, bool? favorite}) =>
     InventoryStack(
@@ -960,6 +984,180 @@ void main() {
       expect(refused.rowsLeft, 1);
       expect(refused.save, isNull);
       expect((await buyer.bazaarMarket()).collect.single.itemId, _ironOre);
+    });
+  });
+
+  group('ECO-01 total-level gate', () {
+    test('refuses BUY and SELL at 199 without sending the place request', () async {
+      final project = _project();
+      final db = _database();
+      final seller = await _trader(
+        project,
+        db,
+        'seller@example.com',
+        'Seller',
+        bag: <InventoryStack>[_stack(_ironOre, 10)],
+        gold: 5000,
+      );
+      final low = withTotalLevel(_stored(project, seller), 199);
+      expect((await seedHostedSave(seller, project, low)).ok, isTrue);
+
+      bool placedInvoke(String call) => call.contains('invoke:$remoteBazaarMarketFunction');
+      final callsBefore = project.calls.where(placedInvoke).length;
+
+      final sell = await seller.placeBazaarOffer(
+        db,
+        low,
+        side: bazaarSell,
+        itemId: _ironOre,
+        unitPrice: 30,
+        quantity: 1,
+      );
+      expect(sell.ok, isFalse);
+      expect(sell.code, bazaarTotalLevelTooLowCode);
+      expect(sell.reason, bazaarTotalLevelTooLow);
+      expect(sell.reason, 'You need total level 200 to use the bazaar.');
+
+      final buy = await seller.placeBazaarOffer(
+        db,
+        low,
+        side: bazaarBuy,
+        itemId: _ironOre,
+        unitPrice: 10,
+        quantity: 1,
+      );
+      expect(buy.ok, isFalse);
+      expect(buy.code, bazaarTotalLevelTooLowCode);
+      expect(buy.reason, bazaarTotalLevelTooLow);
+      expect(project.calls.where(placedInvoke).length, callsBefore);
+      expect(project.exchange.orders, isEmpty);
+    });
+
+    test('allows BUY and SELL at exactly 200', () async {
+      final project = _project();
+      final db = _database();
+      final seller = await _trader(
+        project,
+        db,
+        'seller@example.com',
+        'Seller',
+        bag: <InventoryStack>[_stack(_ironOre, 10)],
+      );
+      final buyer = await _trader(project, db, 'buyer@example.com', 'Buyer', gold: 5000);
+      expect(totalLevel(_stored(project, seller)), 200);
+      expect(totalLevel(_stored(project, buyer)), 200);
+
+      final sold = await seller.placeBazaarOffer(
+        db,
+        _stored(project, seller),
+        side: bazaarSell,
+        itemId: _ironOre,
+        unitPrice: 30,
+        quantity: 5,
+      );
+      expect(sold.ok, isTrue, reason: sold.reason);
+      final bought = await buyer.placeBazaarOffer(
+        db,
+        _stored(project, buyer),
+        side: bazaarBuy,
+        itemId: _titaniumOre,
+        unitPrice: 10,
+        quantity: 2,
+      );
+      expect(bought.ok, isTrue, reason: bought.reason);
+      expect((await seller.bazaarMarket()).orders, hasLength(1));
+      expect((await buyer.bazaarMarket()).orders, hasLength(1));
+    });
+
+    test('the hosted exchange refuses 199 with the structured payload', () async {
+      final project = _project();
+      final db = _database();
+      final seller = await _trader(
+        project,
+        db,
+        'seller@example.com',
+        'Seller',
+        bag: <InventoryStack>[_stack(_ironOre, 10)],
+        gold: 5000,
+      );
+      expect(
+        (await seedHostedSave(seller, project, withTotalLevel(_stored(project, seller), 199))).ok,
+        isTrue,
+      );
+
+      for (final side in <String>[bazaarSell, bazaarBuy]) {
+        final result = project.exchange.call(
+          userId: seller.session!.userId,
+          username: 'Seller',
+          body: <String, Object?>{
+            'action': 'place',
+            'side': side,
+            'itemId': _ironOre,
+            'unitPrice': 10,
+            'quantity': 1,
+          },
+        );
+        expect(result.ok, isTrue);
+        expect(result.data, isNotNull);
+        expect(result.data!['ok'], isFalse);
+        expect(result.data!['code'], 'total_level_too_low');
+        expect(result.data!['required'], 200);
+        expect(result.data!['totalLevel'], 199);
+        expect(result.data!['error'], 'You need total level 200 to use the bazaar.');
+      }
+      expect(project.exchange.orders, isEmpty);
+    });
+
+    test('an existing offer still fills and collects after the owner drops below 200', () async {
+      final project = _project();
+      final db = _database();
+      final seller = await _trader(
+        project,
+        db,
+        'seller@example.com',
+        'Seller',
+        bag: <InventoryStack>[_stack(_ironOre, 10)],
+      );
+      final buyer = await _trader(project, db, 'buyer@example.com', 'Buyer', gold: 1000);
+
+      final placed = await seller.placeBazaarOffer(
+        db,
+        _stored(project, seller),
+        side: bazaarSell,
+        itemId: _ironOre,
+        unitPrice: 30,
+        quantity: 10,
+      );
+      expect(placed.ok, isTrue, reason: placed.reason);
+
+      final lowered = withTotalLevel(_stored(project, seller), 199);
+      expect((await seedHostedSave(seller, project, lowered)).ok, isTrue);
+      expect((await seller.bazaarMarket()).orders.single.status, 'open');
+
+      final extra = await seller.placeBazaarOffer(
+        db,
+        _stored(project, seller),
+        side: bazaarSell,
+        itemId: _ironOre,
+        unitPrice: 30,
+        quantity: 1,
+      );
+      expect(extra.code, bazaarTotalLevelTooLowCode);
+
+      final bought = await buyer.placeBazaarOffer(
+        db,
+        _stored(project, buyer),
+        side: bazaarBuy,
+        itemId: _ironOre,
+        unitPrice: 30,
+        quantity: 10,
+      );
+      expect(bought.ok, isTrue, reason: bought.reason);
+      expect((await seller.bazaarMarket()).orders, isEmpty);
+
+      final collected = await seller.collectBazaarBox(db, _stored(project, seller));
+      expect(collected.ok, isTrue, reason: collected.reason);
+      expect(collected.save!.gold, 300);
     });
   });
 }

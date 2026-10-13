@@ -22,6 +22,26 @@ PlayerSave _save(
   num gold = 0,
 }) => createNewSave(db, _nowMs).copyWith(inventory: bag, gold: gold);
 
+PlayerSave withTotalLevel(PlayerSave save, int target) {
+  if (save.skills.isEmpty) {
+    return save.copyWith(
+      skills: <SkillProgress>[SkillProgress(skillId: 'SKL-0001', level: target, xp: 0)],
+    );
+  }
+  final current = totalLevel(save);
+  final first = save.skills.first;
+  final next = first.level + (target - current);
+  if (next < 1) {
+    return save.copyWith(skills: <SkillProgress>[first.copyWith(level: target)]);
+  }
+  return save.copyWith(
+    skills: <SkillProgress>[
+      first.copyWith(level: next),
+      ...save.skills.skip(1),
+    ],
+  );
+}
+
 InventoryStack _stack(String itemId, num quantity, {String? enchantmentId, bool? favorite}) =>
     InventoryStack(
       itemId: itemId,
@@ -248,6 +268,35 @@ void main() {
         bazaarNoSlots,
       );
       expect(bazaarOfferRefusal(side: bazaarBuy, unitPrice: 5, quantity: 5, slotsFree: 1), isNull);
+    });
+  });
+
+  group('ECO-01 total-level gate', () {
+    test('refuses a save below 200 with the exact popup copy', () {
+      final db = _database();
+      final low = withTotalLevel(_save(db), 199);
+      expect(totalLevel(low), 199);
+      expect(bazaarTotalLevelRefusal(low), bazaarTotalLevelTooLow);
+      expect(bazaarTotalLevelTooLow, 'You need total level 200 to use the bazaar.');
+      expect(bazaarTotalLevelTooLowCode, 'total_level_too_low');
+      expect(bazaarTotalLevelRequired, 200);
+    });
+
+    test('allows a save at exactly 200', () {
+      expect(bazaarTotalLevelRefusal(withTotalLevel(_save(_database()), 200)), isNull);
+    });
+
+    test('sums a stored payload the same way as totalLevel', () {
+      expect(bazaarPayloadTotalLevel(<String, Object?>{}), 0);
+      expect(
+        bazaarPayloadTotalLevel(<String, Object?>{
+          'skills': <Map<String, Object?>>[
+            <String, Object?>{'skillId': 'SKL-0001', 'level': 10, 'xp': 0},
+            <String, Object?>{'skillId': 'SKL-0002', 'level': 190, 'xp': 0},
+          ],
+        }),
+        200,
+      );
     });
   });
 

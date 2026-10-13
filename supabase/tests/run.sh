@@ -50,4 +50,8 @@ echo "=== BUG-04: payout RPC version conflict rolls back the insert ==="
 run -f supabase/tests/payout_rpc_conflict_test.sql
 
 echo
+echo "=== ECO-01: new offers need total level 200 ==="
+run -f supabase/tests/bazaar_total_level_gate_test.sql
+
+echo
 echo "All Bazaar SQL checks passed."

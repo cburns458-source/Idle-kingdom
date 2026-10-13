@@ -118,6 +118,34 @@ const String bazaarHostedOnly = 'The Bazaar opens once you are playing on an acc
 
 const String bazaarSignInToTrade = 'Sign in to trade at the Bazaar.';
 
+/// New BUY and SELL offers require this many total levels (ECO-01).
+const int bazaarTotalLevelRequired = 200;
+
+/// Server refusal code when the owner is below [bazaarTotalLevelRequired].
+const String bazaarTotalLevelTooLowCode = 'total_level_too_low';
+
+/// Exact copy the Bazaar screen shows for [bazaarTotalLevelTooLowCode].
+const String bazaarTotalLevelTooLow = 'You need total level 200 to use the bazaar.';
+
+/// Why [save] cannot place a new offer, or null when it can.
+String? bazaarTotalLevelRefusal(PlayerSave save) {
+  if (totalLevel(save) < bazaarTotalLevelRequired) return bazaarTotalLevelTooLow;
+  return null;
+}
+
+/// Sum of skill levels on a stored save payload, matching [totalLevel].
+num bazaarPayloadTotalLevel(Map<String, Object?> payload) {
+  final skills = payload['skills'];
+  if (skills is! List) return 0;
+  var sum = 0;
+  for (final entry in skills) {
+    if (entry is! Map) continue;
+    final level = entry['level'];
+    if (level is num) sum += level.floor();
+  }
+  return sum;
+}
+
 const String bazaarBlurbMarket =
     'Buy and sell with every other player. Six offers at a time; '
     'sales over 100 gold an item pay 1%.';
