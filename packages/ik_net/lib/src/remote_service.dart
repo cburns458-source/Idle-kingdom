@@ -819,6 +819,9 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// Compare-and-swap token from the last hosted read or write.
   int get hostedSaveVersion => _hostedSaveVersion;
 
+  /// Stands in for a lost first response: the app still has the old version.
+  set hostedSaveVersion(int value) => _hostedSaveVersion = value;
+
   /// Server mulberry32 state from the last hosted read or write.
   int get hostedRngState => _hostedRngState;
 

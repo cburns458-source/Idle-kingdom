@@ -1009,12 +1009,15 @@ class FakeTransport implements RemoteTransport {
         }
       }
       if (existing == null) return _rankedFightRefusal(rankedPvpUnknownFightRefusal, winsRemaining);
+      // Already recorded: return the stored row even if the app still has the
+      // pre-fight save version (a lost first response).
       return RemoteInvokeResult.ok(<String, Object?>{
         'ok': true,
         'phase': 2,
         'save': saveRow['payload'],
         'version': saveRow['version'] ?? 1,
         'rngState': saveRow['rng_state'] ?? 1,
+        'wroteSave': false,
         'fightId': existing['fight_id'],
         'rounds': existing['rounds'] ?? const <Object?>[],
         'pvpOutcome': existing['outcome'],

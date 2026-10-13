@@ -449,6 +449,9 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     let written: { ok: true; version: number } | { ok: false; response: Response }
     let commandSave = result.save
     let bountyExtras: Record<string, unknown> = {}
+    let wroteSave = true
+    const existingRankedFight =
+      rankedContext && !('response' in rankedContext) ? rankedContext.existingRankedFight : undefined
     if (command === 'bounty_turn_in' && hosted) {
       const settled = await settleBountyTurnIn(admin, userId, args, result.save, expected, rng.getState(), nowMs)
       if (!settled.ok) return settled.response
@@ -459,12 +462,13 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
         firstCompleter: settled.firstCompleter,
         claim: settled.claim,
       }
-    } else if (
-      command === 'ranked_pvp_fight' &&
-      hosted &&
-      result.fightId &&
-      !(rankedContext && !('response' in rankedContext) && rankedContext.existingRankedFight)
-    ) {
+    } else if (command === 'ranked_pvp_fight' && existingRankedFight) {
+      // A lost first response retries the same fightId with the old version.
+      // The row is already stored; skip the save write so this is not a 409.
+      written = { ok: true, version: hosted?.version ?? expected }
+      commandSave = hosted ? parseSave(hosted.payload, nowMs) : result.save
+      wroteSave = false
+    } else if (command === 'ranked_pvp_fight' && hosted && result.fightId) {
       const recorded = await recordRankedFight(
         admin,
         userId,
@@ -521,7 +525,7 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       save: commandSave,
       version: written.version,
       rngState: rng.getState(),
-      wroteSave: true,
+      wroteSave,
       ...(foundedGuild ? { guild: foundedGuild } : {}),
       ...(result.fightId
         ? {

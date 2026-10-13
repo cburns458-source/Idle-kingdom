@@ -85,6 +85,8 @@ describe('ranked PvP and bounty authority', () => {
         fightId: 'fight-1',
         outcome: first.pvpOutcome ?? 'loss',
         goldGained: first.goldGained ?? 0,
+        code: first.code,
+        winsRemaining: first.winsRemaining,
         rounds: first.rounds ?? [],
         youMaxHp: first.youMaxHp ?? 0,
         themMaxHp: first.themMaxHp ?? 0,
@@ -94,6 +96,11 @@ describe('ranked PvP and bounty authority', () => {
     if (!replay.ok) return
     expect(replay.save.gold).toBe(goldAfterFirst)
     expect(replay.goldGained).toBe(first.goldGained ?? 0)
+    expect(replay.rounds).toEqual(first.rounds ?? [])
+    expect(replay.code).toBe(first.code)
+    expect(replay.winsRemaining).toBe(first.winsRemaining)
+    expect(replay.youMaxHp).toBe(first.youMaxHp)
+    expect(replay.themMaxHp).toBe(first.themMaxHp)
   })
 
   it('pays the sixth win nothing and returns daily_cap_reached', () => {

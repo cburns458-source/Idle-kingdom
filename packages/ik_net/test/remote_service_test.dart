@@ -1392,6 +1392,45 @@ void main() {
     }
   });
 
+  test('hosted ranked_pvp_fight retry with the old version returns the stored result', () async {
+    final transport = FakeTransport(database: _database(), nowMs: () => _nowMs);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final heroSave = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    expect((await seedHostedSave(hero, transport, heroSave)).ok, isTrue);
+
+    final rival = _service(FakeTransport.joining(transport), MemorySaveStorage());
+    expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+    final rivalSave = createNewSave(db, _nowMs).copyWith(characterName: 'Rival');
+    expect((await seedHostedSave(rival, transport, rivalSave)).ok, isTrue);
+    expect((await rival.savePvpEquipment(rivalSave)).ok, isTrue);
+
+    final versionBeforeFight = hero.hostedSaveVersion;
+    final first = await hero.gameCommand('ranked_pvp_fight');
+    expect(first.ok, isTrue, reason: first.reason);
+    expect(first.fightId, isNotNull);
+    expect(hero.hostedSaveVersion, greaterThan(versionBeforeFight));
+    final goldAfterFirst = first.save!.gold;
+
+    hero.hostedSaveVersion = versionBeforeFight;
+    final retry = await hero.gameCommand('ranked_pvp_fight', <String, Object?>{
+      'fightId': first.fightId,
+    });
+    expect(retry.ok, isTrue, reason: retry.reason);
+    expect(retry.fightId, first.fightId);
+    expect(
+      retry.rounds?.map((round) => round.toJson()),
+      first.rounds?.map((round) => round.toJson()),
+    );
+    expect(retry.code, first.code);
+    expect(retry.goldGained, first.goldGained);
+    expect(retry.winsRemaining, first.winsRemaining);
+    expect(retry.youMaxHp, first.youMaxHp);
+    expect(retry.themMaxHp, first.themMaxHp);
+    expect(retry.save!.gold, goldAfterFirst);
+    expect(transport.tables[RemoteTables.rankedPvpResults], hasLength(1));
+  });
+
   test(
     'hosted ranked_pvp_fight rolls back the fight row when the save version conflicts',
     () async {
