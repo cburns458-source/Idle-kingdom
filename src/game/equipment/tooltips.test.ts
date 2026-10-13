@@ -101,4 +101,10 @@ describe('equipment tooltips', () => {
       ),
     ).toEqual(['Lockpick break chance -20%'])
   })
+
+  it('lists Wizard Tome spell-power from capabilities', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const tome = launch.Equipment.find((row) => row['Equipment ID'] === 'EQP-0067')
+    expect(equipmentTooltipStatLines(tome)).toEqual(['Equipped spells +20% stronger'])
+  })
 })

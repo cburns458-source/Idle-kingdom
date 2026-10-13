@@ -3345,7 +3345,7 @@
       "Functional / Source Tags": "arcana_equipment; combat_buff",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": null,
+      "Description": "Equipped spells are 20% stronger.",
       "Icon Asset Key": "wizard_s_tome",
       "Notes": null,
       "Base Sell Value": 157,
@@ -8950,7 +8950,7 @@
       "Damage Reduction": null,
       "Healing Amount": null,
       "Action Time Reduction %": null,
-      "Capabilities / Effects": "arcana_equipment; combat_buff",
+      "Capabilities / Effects": "arcana_equipment; combat_buff; spell_power_pct=20",
       "Status": "Planned",
       "Notes": null
     },

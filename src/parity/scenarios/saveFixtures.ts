@@ -303,6 +303,53 @@ export function fullBankSave(db: GameDatabase, items: string[]): PlayerSave {
   return { ...base, bank }
 }
 
+/**
+ * Off-hand Wizard's Tome plus one of each boosted spell type, so the Tome's
+ * post-stack ×1.2 is visible on damage, DR, gold double, and item double.
+ */
+export function tomeSave(db: GameDatabase): PlayerSave {
+  const base = baseSave(db)
+  return {
+    ...base,
+    characterName: 'Tome',
+    gold: 1_000,
+    currentLocationId: 'LOC-0007',
+    equipment: {
+      slots: {
+        ...base.equipment.slots,
+        'SLOT-0002': { itemId: 'ITEM-0149', quantity: 1 },
+        'SLOT-0013': { itemId: 'ITEM-0295', quantity: 1 },
+        'SLOT-0014': { itemId: 'ITEM-0297', quantity: 1 },
+        'SLOT-0015': { itemId: 'ITEM-0395', quantity: 1 },
+        'SLOT-0016': { itemId: 'ITEM-0394', quantity: 1 },
+      },
+    },
+  }
+}
+
+/**
+ * Off-hand Wizard's Tome plus Lifesteal, Haste, and Pathfinder, so the ×1.2
+ * also covers heal percent and duration cuts.
+ */
+export function tomeDurationSave(db: GameDatabase): PlayerSave {
+  const base = baseSave(db)
+  return {
+    ...base,
+    characterName: 'TomeDuration',
+    gold: 1_000,
+    currentLocationId: 'LOC-0007',
+    equipment: {
+      slots: {
+        ...base.equipment.slots,
+        'SLOT-0002': { itemId: 'ITEM-0149', quantity: 1 },
+        'SLOT-0013': { itemId: 'ITEM-0396', quantity: 1 },
+        'SLOT-0014': { itemId: 'ITEM-0398', quantity: 1 },
+        'SLOT-0015': { itemId: 'ITEM-0399', quantity: 1 },
+      },
+    },
+  }
+}
+
 export function asJson(save: PlayerSave): JsonValue {
   return save as unknown as JsonValue
 }
