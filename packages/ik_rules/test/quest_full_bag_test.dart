@@ -360,32 +360,43 @@ void main() {
     });
 
     test('keeps The Grand Feast unpaid: no Cooking XP, no Courtyard plot, deliveries and quest state untouched', () {
-      final accepted = acceptQuest(
+      final accepted = chooseDialogue(
         contentDb,
         createNewSave(contentDb, 0).copyWith(currentLocationId: 'LOC-0016'),
-        'QST-0001',
+        'DLG-0011',
+        'DNODE-0018',
+        'DCH-0023',
       );
       expect(accepted.ok, isTrue, reason: accepted.reason);
-      var save = applyQuestTalkProgress(contentDb, accepted.save!, 'NPC-0001');
-      save = addItemToInventory(addItemToInventory(save, _bakedPotato, 11), _cookedPerch, 11);
-      save = _fillBag(save, 0);
+      var save = addItemToInventory(
+        addItemToInventory(accepted.save, _bakedPotato, 11),
+        _cookedPerch,
+        11,
+      );
+      final handedIn = chooseDialogue(contentDb, save, 'DLG-0012', 'DNODE-0020', 'DCH-0026');
+      expect(handedIn.ok, isTrue, reason: handedIn.reason);
+      save = _fillBag(handedIn.save, 0);
       final before = _paidState(save, 'QST-0001');
       expect(before['courtyard'], isFalse);
 
-      final result = completeQuest(contentDb, save, 'QST-0001');
+      final result = chooseDialogue(contentDb, save, 'DLG-0012', 'DNODE-0022', 'DCH-0031');
       expect(result.code, 'no_room');
       expect(result.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+      expect(identical(result.save, save), isTrue);
       expect(_paidState(save, 'QST-0001'), before);
 
-      final paid = completeQuest(contentDb, _fillBag(save, 1), 'QST-0001');
-      expect(paid.ok, isTrue, reason: paid.reason);
-      expect(
-        getSkillProgress(paid.save!, _cooking).xp,
-        getSkillProgress(save, _cooking).xp + 10000,
+      final paid = chooseDialogue(
+        contentDb,
+        _fillBag(save, 1),
+        'DLG-0012',
+        'DNODE-0022',
+        'DCH-0031',
       );
-      expect(courtyardBotanyUnlocked(paid.save!), isTrue);
-      expect(bagCount(paid.save!, _bakedPotato), 1);
-      expect(bagCount(paid.save!, _goldenSpud), 1);
+      expect(paid.ok, isTrue, reason: paid.reason);
+      expect(getSkillProgress(paid.save, _cooking).xp, getSkillProgress(save, _cooking).xp + 10000);
+      expect(courtyardBotanyUnlocked(paid.save), isTrue);
+      expect(bagCount(paid.save, _bakedPotato), 1);
+      expect(bagCount(paid.save, _goldenSpud), 1);
     });
   });
 

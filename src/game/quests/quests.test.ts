@@ -5,6 +5,7 @@ import { activityVisibleForSave } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
 import { raiseSkillToMinimumLevel } from '../activity/xp'
 import { prepareDatabase } from '../data/loadDatabase'
+import { chooseDialogue, dialoguesForNpc } from '../dialogue/engine'
 import { chooseCombatForQuest, npcConversation, questTalkLine, talkWithQuestNpc } from '../npcs/conversation'
 import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { specialProductionStationsVisibleAt } from '../projects/projects'
@@ -61,18 +62,23 @@ describe('quest tours', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0016' }
 
-    const accepted = acceptQuest(launch, save, 'QST-0001')
-    expect(accepted.ok).toBe(true)
-    if (!accepted.ok) return
+    expect(dialoguesForNpc(launch, save, 'NPC-0001')[0]).toBe('DLG-0011')
+    const accepted = chooseDialogue(launch, save, 'DLG-0011', 'DNODE-0018', 'DCH-0023')
+    expect(accepted.ok, accepted.reason).toBe(true)
     save = accepted.save
-
+    expect(getCurrentStepId(launch, save, getQuest(launch, 'QST-0001')!)).toBe('QSTP-0002')
     expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
-    save = applyQuestTalkProgress(launch, save, 'NPC-0001')
-    expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
+    expect(dialoguesForNpc(launch, save, 'NPC-0001')[0]).toBe('DLG-0012')
 
     save = addItemToInventory(save, 'ITEM-0058', 10)
-    expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
     save = addItemToInventory(save, 'ITEM-0059', 10)
+    expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
+    const handed = chooseDialogue(launch, save, 'DLG-0012', 'DNODE-0020', 'DCH-0026')
+    expect(handed.ok, handed.reason).toBe(true)
+    save = handed.save
+    expect(inventoryCount(save, 'ITEM-0058')).toBe(0)
+    expect(inventoryCount(save, 'ITEM-0059')).toBe(0)
+
     const completed = completeQuest(launch, save, 'QST-0001')
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
@@ -305,7 +311,13 @@ describe('quest tours', () => {
     expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).not.toMatch(
       /Open the world map/i,
     )
-    save = applyQuestTalkProgress(launch, save, 'NPC-0014')
+    // Fennel's steps are dialogue steps now: the panel talk alone no longer advances them.
+    expect(getCurrentStepId(launch, applyQuestTalkProgress(launch, save, 'NPC-0014'), getQuest(launch, 'QST-0006')!)).toBe(
+      'QSTP-0014',
+    )
+    const shownRaw = chooseDialogue(launch, save, 'DLG-0003', 'DNODE-0004', 'DCH-0005')
+    expect(shownRaw.ok, shownRaw.reason).toBe(true)
+    save = shownRaw.save
     expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity).toBe(5)
     expect(npcConversation(launch, save, fennel).quests[0]?.idlePrompt).toBe('')
     expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).toBeNull()
@@ -316,19 +328,17 @@ describe('quest tours', () => {
     save = { ...save, currentLocationId: 'LOC-0001' }
     expect(npcConversation(launch, save, fennel).quests[0]?.talkLine).toMatch(/sword and shield/i)
 
-    const advice = talkWithQuestNpc(launch, save, 'NPC-0014')
-    expect(advice.ok).toBe(true)
-    if (!advice.ok) return
-    expect(advice.message).toBe('')
+    const advice = chooseDialogue(launch, save, 'DLG-0005', 'DNODE-0007', 'DCH-0009')
+    expect(advice.ok, advice.reason).toBe(true)
+    expect(advice.itemDeltas).toEqual([])
     expect(getQuestProgress(advice.save, 'QST-0006').status).toBe('active')
     expect(npcConversation(launch, advice.save, fennel).quests[0]?.talkLine).toMatch(
       /Good luck on your adventure/i,
     )
 
-    const finished = talkWithQuestNpc(launch, advice.save, 'NPC-0014')
-    expect(finished.ok).toBe(true)
-    if (!finished.ok) return
-    expect(finished.message).toMatch(/Good luck on your adventure/i)
+    const finished = chooseDialogue(launch, advice.save, 'DLG-0006', 'DNODE-0009', 'DCH-0012')
+    expect(finished.ok, finished.reason).toBe(true)
+    expect(finished.bookDeltas).toEqual(['BOOK-0001'])
     expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
     expect(
       npcConversation(launch, finished.save, fennel).quests.find((row) => row.questId === 'QST-0006')
@@ -593,7 +603,13 @@ describe('quest tours', () => {
           questId: 'QST-0006',
           status: 'active' as const,
           progress: 0,
-          counters: { 'talk:NPC-0014': 1, 'talk:NPC-0014:QSTP-0014': 1, 'visit:LOC-0023': 1 },
+          counters: {
+            'talk:NPC-0014': 1,
+            'talk:NPC-0014:QSTP-0014': 1,
+            'step:QSTP-0013': 1,
+            'step:QSTP-0014': 1,
+            'visit:LOC-0023': 1,
+          },
         },
       ],
     }
@@ -613,6 +629,8 @@ describe('quest tours', () => {
           counters: {
             'talk:NPC-0014': 1,
             'talk:NPC-0014:QSTP-0014': 1,
+            'step:QSTP-0013': 1,
+            'step:QSTP-0014': 1,
             'visit:LOC-0023': 1,
             'process:RCP-0001': 5,
           },
@@ -803,14 +821,14 @@ describe('quest tours', () => {
       /something special/i,
     )
 
-    const firstTalk = talkWithQuestNpc(launch, save, 'NPC-0014')
-    expect(firstTalk.ok).toBe(true)
-    if (!firstTalk.ok) return
-    expect(firstTalk.message).toBe('')
+    const firstTalk = chooseDialogue(launch, save, 'DLG-0007', 'DNODE-0011', 'DCH-0014')
+    expect(firstTalk.ok, firstTalk.reason).toBe(true)
+    expect(firstTalk.itemDeltas).toEqual([{ itemId: 'ITEM-0324', qty: 1 }])
     save = firstTalk.save
     expect(save.inventory.find((stack) => stack.itemId === 'ITEM-0324')?.quantity).toBe(2)
     expect(farmBotanyUnlocked(launch, save)).toBe(true)
-    expect(hasQuestFlag(save, 'QST-0011', 'talk:NPC-0014')).toBe(true)
+    expect(save.dialogueFlags).toContain('gift:QST-0011:seed')
+    expect(getCurrentStepId(launch, save, quest)).toBe('QSTP-0024')
     expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.canTalk).toBe(
       false,
     )
@@ -824,10 +842,11 @@ describe('quest tours', () => {
     expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.talkLine).toMatch(
       /Smells great/i,
     )
-    const compostTalk = talkWithQuestNpc(launch, save, 'NPC-0014')
-    expect(compostTalk.ok).toBe(true)
-    if (!compostTalk.ok) return
-    expect(compostTalk.message).toBe('')
+    expect(farmBotanyUnlocked(launch, save)).toBe(true)
+    expect(getCurrentStepId(launch, save, quest)).toBe('QSTP-0024')
+    expect(inventoryCount(save, 'ITEM-0324')).toBe(2)
+    const compostTalk = chooseDialogue(launch, save, 'DLG-0008', 'DNODE-0013', 'DCH-0017')
+    expect(compostTalk.ok, compostTalk.reason).toBe(true)
     save = compostTalk.save
     expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
     expect(
@@ -846,9 +865,8 @@ describe('quest tours', () => {
     expect(getQuestProgress(save, 'QST-0011').status).toBe('active')
     expect(hasQuestFlag(save, 'QST-0011', 'plant:ITEM-0324')).toBe(true)
 
-    const finished = talkWithQuestNpc(launch, save, 'NPC-0014')
-    expect(finished.ok).toBe(true)
-    if (!finished.ok) return
+    const finished = chooseDialogue(launch, save, 'DLG-0010', 'DNODE-0016', 'DCH-0021')
+    expect(finished.ok, finished.reason).toBe(true)
     expect(finished.message).toMatch(/keep an eye on them/i)
     expect(finished.message).not.toMatch(/^Thank you/)
     expect(getQuestProgress(finished.save, 'QST-0011').status).toBe('completed')

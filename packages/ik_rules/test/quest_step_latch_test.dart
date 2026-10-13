@@ -33,12 +33,23 @@ PlayerSave _activeGettingStarted(GameDatabase db) {
 int _index(GameDatabase db, PlayerSave save) =>
     getCurrentStepIndex(db, save, getQuest(db, _quest)!);
 
+/// Fennel's Show choices: the raw potatoes (QSTP-0014) and the baked ones (QSTP-0016).
+PlayerSave _showFennel(GameDatabase db, PlayerSave save, {required bool cooked}) {
+  final shown = cooked
+      ? chooseDialogue(db, save, 'DLG-0005', 'DNODE-0007', 'DCH-0009')
+      : chooseDialogue(db, save, 'DLG-0003', 'DNODE-0004', 'DCH-0005');
+  expect(shown.ok, isTrue, reason: shown.reason);
+  return shown.save;
+}
+
 /// Hold 5 raw, show Fennel, visit the kitchen, cook all 5.
 PlayerSave _throughCooking(GameDatabase db) {
   var save = _setCount(_activeGettingStarted(db), _raw, 5);
   save = applyQuestStepUnlocks(db, save);
   expect(_index(db, save), 1);
   save = applyQuestTalkProgress(db, save, _fennel);
+  expect(_index(db, save), 1);
+  save = _showFennel(db, save, cooked: false);
   expect(_index(db, save), 2);
   save = applyQuestVisitProgress(db, save, _kitchen);
   for (var cooked = 1; cooked <= 5; cooked++) {
@@ -61,12 +72,13 @@ void main() {
     expect(counters['step:QSTP-0014'], 1);
     expect(counters['step:QSTP-0015'], 1);
     expect(inventoryCount(save, _raw), 0);
-    save = applyQuestTalkProgress(db, save, _fennel);
+    save = _showFennel(db, save, cooked: true);
     expect(_index(db, save), 4);
+    expect(inventoryCount(save, _cooked), 5);
   });
 
   test('selling the cooked potatoes at step 5 does not regress', () {
-    var save = applyQuestTalkProgress(db, _throughCooking(db), _fennel);
+    var save = _showFennel(db, _throughCooking(db), cooked: true);
     expect(_index(db, save), 4);
     save = applyQuestStepUnlocks(db, _setCount(save, _cooked, 0));
     expect(_index(db, save), 4);
