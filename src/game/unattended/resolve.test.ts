@@ -456,7 +456,7 @@ describe('unattended progression', () => {
         let gatheringActions = 0
         for (let calls = 0; calls < 500; calls += 1) {
           const slice = resolveUnattendedProgress(launch, current, now, () => 0, {
-            budgetMs: 25,
+            maxStepsOverride: 250,
             windowStartMs: startedAt,
           })
           gatheringActions += slice.gatheringActions
