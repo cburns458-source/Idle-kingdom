@@ -1,7 +1,7 @@
 name: Deploy Worker (main)
 
-# restoriaidle.com follows the main branch. Uses the top-level Wrangler
-# config (no --env), which is the existing restoria-idlerpg Worker.
+# restoriaidle.com follows the main branch. Always use --env production so
+# bare `wrangler deploy` (top-level sink Worker) cannot overwrite live.
 
 on:
   push:
@@ -48,4 +48,4 @@ jobs:
             echo "::error title=Live Worker deploy skipped::Set the CLOUDFLARE_API_TOKEN repository secret (Workers Scripts Edit) to deploy restoria-idlerpg."
             exit 1
           fi
-          npx --yes wrangler@4.148.0 deploy
+          npx --yes wrangler@4.148.0 deploy --env production

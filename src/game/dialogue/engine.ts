@@ -9,8 +9,9 @@
 
 import { addItemsToInventory } from '../activity/rewards'
 import type { DialogueChoiceRow, DialogueRow, GameDatabase } from '../data/types'
-import { inventorySlotsFree, mergeableStackIndex } from '../inventory/capacity'
-import { isGoldCurrencyItem } from '../inventory/gold'
+import { addFavouriteLine, CONFIRM_FAVOURITES_PROMPT, favouritesNeeded, type ItemDelta } from '../inventory/bag'
+import { inventorySlotsFree } from '../inventory/capacity'
+import { noRoomReason, slotsNeededForItems, type NoRoom } from '../inventory/fit'
 import { bookById, grantBook, isBookUnlocked } from '../library/books'
 import { acceptQuest, completeQuest, getQuest, getQuestProgress } from '../quests/quests'
 import {
@@ -31,7 +32,6 @@ import {
   bagCount,
   stepProgressGroup,
   takeFromBag,
-  unfavouriteCount,
   type StepProgressGroup,
 } from './stepProgress'
 
@@ -319,17 +319,9 @@ export interface DialogueView {
   finished: boolean
 }
 
-export interface DialogueItemDelta {
-  itemId: string
-  /** Positive when granted, negative when taken or handed in. */
-  qty: number
-}
+export type DialogueItemDelta = ItemDelta
 
-export interface DialogueNoRoom {
-  /** New bag slots the remaining grants need; stacks already in the bag cost none. */
-  slotsNeeded: number
-  slotsFree: number
-}
+export type DialogueNoRoom = NoRoom
 
 export interface DialogueMissingItem {
   itemId: string
@@ -347,8 +339,7 @@ export type DialogueFailureCode =
   | 'confirm_favourites'
   | 'action_failed'
 
-/** Player-facing text for `confirm_favourites`; the UI asks Yes / No with it. */
-export const CONFIRM_FAVOURITES_PROMPT = 'Some items are favourited. Do you still want to use them?'
+export { CONFIRM_FAVOURITES_PROMPT }
 
 export interface ChooseDialogueOptions {
   /**
@@ -573,11 +564,7 @@ interface Working {
 
 /** Records how much of taking [quantity] from [save] would come out of hearted stacks. */
 function noteFavourites(work: Working, save: PlayerSave, itemId: string, quantity: number): void {
-  const fromFavourites = Math.max(0, quantity - unfavouriteCount(save, itemId))
-  if (fromFavourites <= 0) return
-  const existing = work.favourites.find((line) => line.itemId === itemId)
-  if (existing) existing.qty += fromFavourites
-  else work.favourites.push({ itemId, qty: fromFavourites })
+  addFavouriteLine(work.favourites, itemId, favouritesNeeded(save, itemId, quantity))
 }
 
 type ActionFailure = {
@@ -590,17 +577,10 @@ type ActionFailure = {
 
 /** New bag slots every grant in [tokens] needs against [save]. */
 function slotsNeededForGrants(db: GameDatabase, save: PlayerSave, tokens: DialogueToken[]): number {
-  const seen = new Set<string>()
-  let needed = 0
-  for (const token of tokens) {
-    if (token.name !== 'grant_item' || !isKnownDialogueAction(token)) continue
-    const itemId = token.args[0]!
-    if (isGoldCurrencyItem(itemId, db) || seen.has(itemId)) continue
-    seen.add(itemId)
-    if (mergeableStackIndex(save.inventory, itemId) >= 0) continue
-    needed += 1
-  }
-  return needed
+  const itemIds = tokens
+    .filter((token) => token.name === 'grant_item' && isKnownDialogueAction(token))
+    .map((token) => token.args[0]!)
+  return slotsNeededForItems(db, save, itemIds)
 }
 
 /** Checks the quest is active, the step belongs to it with [type], and is current. */
@@ -660,14 +640,11 @@ function applyAction(
       }
       const added = addItemsToInventory(save, a, qty, null, false, db)
       if (added.added < qty) {
-        const slotsNeeded = Math.max(1, slotsNeededForGrants(db, work.original, tokens))
-        const slotsFree = inventorySlotsFree(work.original)
-        const short = Math.max(1, slotsNeeded - slotsFree)
-        return {
-          code: 'no_room',
-          reason: `No room in your bag. Free ${short} slot${short === 1 ? '' : 's'} and try again.`,
-          noRoom: { slotsNeeded, slotsFree },
+        const noRoom = {
+          slotsNeeded: Math.max(1, slotsNeededForGrants(db, work.original, tokens)),
+          slotsFree: inventorySlotsFree(work.original),
         }
+        return { code: 'no_room', reason: noRoomReason(noRoom), noRoom }
       }
       work.save = added.save
       work.itemDeltas.push({ itemId: a, qty })
@@ -762,8 +739,16 @@ function applyAction(
       return null
     }
     case 'complete_quest': {
-      const completed = completeQuest(db, save, a)
-      if (!completed.ok) return { code: 'action_failed', reason: completed.reason }
+      // Hearted delivery stacks join this choice's own favourites prompt.
+      let completed = completeQuest(db, save, a)
+      if (!completed.ok && completed.code === 'confirm_favourites') {
+        for (const line of completed.favourites ?? []) addFavouriteLine(work.favourites, line.itemId, line.qty)
+        completed = completeQuest(db, save, a, { useFavourites: true })
+      }
+      if (!completed.ok) {
+        if (completed.code === 'no_room') return { code: 'no_room', reason: completed.reason, noRoom: completed.noRoom }
+        return { code: 'action_failed', reason: completed.reason }
+      }
       work.itemDeltas.push(...bagDiff(save, completed.save))
       work.bookDeltas.push(...completed.booksGranted.map((grant) => grant.bookId))
       work.save = completed.save

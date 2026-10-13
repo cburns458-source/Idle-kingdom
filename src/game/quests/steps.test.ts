@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
 import type { GameDatabase } from '../data/types'
+import { chooseDialogue } from '../dialogue/engine'
 import { inventoryCount } from '../production/recipes'
 import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
@@ -48,10 +49,21 @@ function activeGettingStarted(db: GameDatabase): PlayerSave {
 const index = (db: GameDatabase, save: PlayerSave) =>
   getCurrentStepIndex(db, save, getQuest(db, QUEST)!)
 
+/** Fennel's Show choices: the raw potatoes (QSTP-0014) and the baked ones (QSTP-0016). */
+function showFennel(db: GameDatabase, save: PlayerSave, which: 'raw' | 'cooked'): PlayerSave {
+  const [dialogueId, nodeId, choiceId] =
+    which === 'raw' ? ['DLG-0003', 'DNODE-0004', 'DCH-0005'] : ['DLG-0005', 'DNODE-0007', 'DCH-0009']
+  const shown = chooseDialogue(db, save, dialogueId, nodeId, choiceId)
+  expect(shown.ok, shown.reason).toBe(true)
+  return shown.save
+}
+
 function throughCooking(db: GameDatabase): PlayerSave {
   let save = applyQuestStepUnlocks(db, setCount(activeGettingStarted(db), RAW, 5))
   expect(index(db, save)).toBe(1)
   save = applyQuestTalkProgress(db, save, FENNEL)
+  expect(index(db, save)).toBe(1)
+  save = showFennel(db, save, 'raw')
   expect(index(db, save)).toBe(2)
   save = applyQuestVisitProgress(db, save, KITCHEN)
   for (let cooked = 1; cooked <= 5; cooked += 1) {
@@ -73,12 +85,13 @@ describe('quest step latching (BUG-01)', () => {
     expect(counters['step:QSTP-0014']).toBe(1)
     expect(counters['step:QSTP-0015']).toBe(1)
     expect(inventoryCount(save, RAW)).toBe(0)
-    save = applyQuestTalkProgress(launch, save, FENNEL)
+    save = showFennel(launch, save, 'cooked')
     expect(index(launch, save)).toBe(4)
+    expect(inventoryCount(save, COOKED)).toBe(5)
   })
 
   it('selling the cooked potatoes at step 5 does not regress', () => {
-    let save = applyQuestTalkProgress(launch, throughCooking(launch), FENNEL)
+    let save = showFennel(launch, throughCooking(launch), 'cooked')
     expect(index(launch, save)).toBe(4)
     save = applyQuestStepUnlocks(launch, setCount(save, COOKED, 0))
     expect(index(launch, save)).toBe(4)

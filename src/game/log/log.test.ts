@@ -138,17 +138,16 @@ describe('quest log', () => {
         {
           questId: 'QST-0001',
           status: 'active' as const,
-          progress: 1,
-          counters: { 'talk:NPC-0001': 1 },
+          progress: 2,
+          counters: { 'talk:NPC-0001': 1, 'step:QSTP-0001': 1 },
         },
       ],
     }
     const row = questLog(launch, save).find((entry) => entry.questId === 'QST-0001')!
+    // QSTP-0002 is a HandIn step: progress lives in the King's dialogue, not Deliver lines.
     expect(row.steps).toEqual([
       { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'done' },
       { key: 'QSTP-0002', label: 'Prepare food for the feast', state: 'current' },
-      { key: 'deliver:ITEM-0058', label: 'Deliver Baked Potato 0 / 10', state: 'current' },
-      { key: 'deliver:ITEM-0059', label: 'Deliver Cooked Perch 0 / 10', state: 'current' },
     ])
   })
 

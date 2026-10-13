@@ -136,7 +136,14 @@ void main() {
     save = addItemToInventory(save, 'ITEM-0025', 5);
     expect(gettingStarted(save).canTalk, isTrue);
     expect(gettingStarted(save).talkLine, contains('You can cook them at the kitchen'));
-    save = applyQuestTalkProgress(db, save, 'NPC-0014');
+    // Fennel's steps are dialogue steps now: the panel talk alone no longer advances them.
+    expect(
+      getCurrentStepId(db, applyQuestTalkProgress(db, save, 'NPC-0014'), getQuest(db, 'QST-0006')!),
+      'QSTP-0014',
+    );
+    final shownRaw = chooseDialogue(db, save, 'DLG-0003', 'DNODE-0004', 'DCH-0005');
+    expect(shownRaw.ok, isTrue, reason: shownRaw.reason);
+    save = shownRaw.save;
     expect(save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity, 5);
     expect(gettingStarted(save).idlePrompt, '');
     expect(gettingStarted(save).talkLine, isNull);
@@ -147,25 +154,25 @@ void main() {
     save = save.copyWith(currentLocationId: 'LOC-0001');
     expect(gettingStarted(save).talkLine, contains('sword and shield'));
 
-    final advice = talkWithQuestNpc(db, save, 'NPC-0014');
-    expect(advice.ok, isTrue);
-    expect(advice.message, '');
-    expect(getQuestProgress(advice.save!, 'QST-0006').status, 'active');
-    expect(gettingStarted(advice.save!).talkLine, contains('Good luck on your adventure'));
+    final advice = chooseDialogue(db, save, 'DLG-0005', 'DNODE-0007', 'DCH-0009');
+    expect(advice.ok, isTrue, reason: advice.reason);
+    expect(advice.itemDeltas, isEmpty);
+    expect(getQuestProgress(advice.save, 'QST-0006').status, 'active');
+    expect(gettingStarted(advice.save).talkLine, contains('Good luck on your adventure'));
 
-    final finished = talkWithQuestNpc(db, advice.save!, 'NPC-0014');
-    expect(finished.ok, isTrue);
-    expect(finished.message, contains('Good luck on your adventure'));
-    expect(getQuestProgress(finished.save!, 'QST-0006').status, 'completed');
-    expect(gettingStarted(finished.save!).completedNote, contains('Good luck on your adventure'));
-    expect(isBookUnlocked(finished.save!, 'BOOK-0001'), isTrue);
+    final finished = chooseDialogue(db, advice.save, 'DLG-0006', 'DNODE-0009', 'DCH-0012');
+    expect(finished.ok, isTrue, reason: finished.reason);
+    expect(finished.bookDeltas, ['BOOK-0001']);
+    expect(getQuestProgress(finished.save, 'QST-0006').status, 'completed');
+    expect(gettingStarted(finished.save).completedNote, contains('Good luck on your adventure'));
+    expect(isBookUnlocked(finished.save, 'BOOK-0001'), isTrue);
     expect(
-      finished.save!.inventory.where((stack) => stack.itemId == 'ITEM-0058').single.quantity,
+      finished.save.inventory.where((stack) => stack.itemId == 'ITEM-0058').single.quantity,
       5,
     );
     // Fennel stays to teach Botany (QST-0011) after Getting Started.
     expect(
-      npcsAtLocationForSave(db, finished.save!, 'LOC-0001', 0).map((npc) => npc.raw['NPC ID']),
+      npcsAtLocationForSave(db, finished.save, 'LOC-0001', 0).map((npc) => npc.raw['NPC ID']),
       contains('NPC-0014'),
     );
   });
@@ -492,7 +499,7 @@ void main() {
     expect(getQuestProgress(save, 'QST-0011').status, 'active');
     expect(questLog(db, save).any((row) => row.questId == 'QST-0011'), isFalse);
     expect(miniQuestLog(db, save, 0).any((row) => row.questId == 'QST-0011'), isTrue);
-    expect(farmBotanyUnlocked(save), isFalse);
+    expect(farmBotanyUnlocked(db, save), isFalse);
 
     final fennel = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0014');
     NpcQuestBlock greenThumb(PlayerSave next) => npcConversation(
@@ -503,12 +510,13 @@ void main() {
     ).quests.singleWhere((quest) => quest.questId == 'QST-0011');
     expect(greenThumb(save).talkLine, contains('something special'));
 
-    final firstTalk = talkWithQuestNpc(db, save, 'NPC-0014');
-    expect(firstTalk.ok, isTrue);
-    expect(firstTalk.message, '');
-    save = firstTalk.save!;
+    final firstTalk = chooseDialogue(db, save, 'DLG-0007', 'DNODE-0011', 'DCH-0014');
+    expect(firstTalk.ok, isTrue, reason: firstTalk.reason);
+    save = firstTalk.save;
     expect(inventoryCount(save, 'ITEM-0324'), 2);
-    expect(farmBotanyUnlocked(save), isTrue);
+    expect(farmBotanyUnlocked(db, save), isTrue);
+    expect(save.dialogueFlags, contains('gift:QST-0011:seed'));
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0024');
     expect(greenThumb(save).canTalk, isFalse);
     expect(greenThumb(save).talkLine, isNull);
     expect(greenThumb(save).idlePrompt, '');
@@ -516,10 +524,12 @@ void main() {
     save = addItemToInventory(save, 'ITEM-0377', 1);
     save = applyQuestActionProgress(db, save, 'ACN-0199', 1);
     expect(greenThumb(save).talkLine, contains('Smells great'));
-    final compostTalk = talkWithQuestNpc(db, save, 'NPC-0014');
-    expect(compostTalk.ok, isTrue);
-    expect(compostTalk.message, '');
-    save = compostTalk.save!;
+    expect(farmBotanyUnlocked(db, save), isTrue);
+    expect(getCurrentStepId(db, save, quest), 'QSTP-0024');
+    expect(inventoryCount(save, 'ITEM-0324'), 2);
+    final compostTalk = chooseDialogue(db, save, 'DLG-0008', 'DNODE-0013', 'DCH-0017');
+    expect(compostTalk.ok, isTrue, reason: compostTalk.reason);
+    save = compostTalk.save;
     expect(getQuestProgress(save, 'QST-0011').status, 'active');
     expect(greenThumb(save).idlePrompt, '');
 
@@ -538,19 +548,19 @@ void main() {
     save = planted.save!;
     expect(getQuestProgress(save, 'QST-0011').status, 'active');
 
-    final finished = talkWithQuestNpc(db, save, 'NPC-0014');
-    expect(finished.ok, isTrue);
+    final finished = chooseDialogue(db, save, 'DLG-0010', 'DNODE-0016', 'DCH-0021');
+    expect(finished.ok, isTrue, reason: finished.reason);
     expect(finished.message, contains('keep an eye on them'));
-    expect(getQuestProgress(finished.save!, 'QST-0011').status, 'completed');
-    expect(isBookUnlocked(finished.save!, 'BOOK-0002'), isTrue);
-    expect(inventoryCount(finished.save!, 'ITEM-0324'), 4);
-    expect(inventoryCount(finished.save!, 'ITEM-0339'), 3);
+    expect(getQuestProgress(finished.save, 'QST-0011').status, 'completed');
+    expect(isBookUnlocked(finished.save, 'BOOK-0002'), isTrue);
+    expect(inventoryCount(finished.save, 'ITEM-0324'), 4);
+    expect(inventoryCount(finished.save, 'ITEM-0339'), 3);
     expect(
-      botanyCollectChancePercent(finished.save!, 'LOC-0001', 1, 1),
+      botanyCollectChancePercent(finished.save, 'LOC-0001', 1, 1),
       botanySuccessChancePercent(1, 1) + 10,
     );
     expect(
-      botanyCollectChancePercent(finished.save!, 'LOC-0031', 1, 1),
+      botanyCollectChancePercent(finished.save, 'LOC-0031', 1, 1),
       botanySuccessChancePercent(1, 1),
     );
   });
