@@ -237,3 +237,5 @@ Agent secrets are the place for it.
 <!-- token-split verify: staging redeploy -->
 
 <!-- token-split verify: staging dns token -->
+
+<!-- token-split verify: staging workers routes edit -->
