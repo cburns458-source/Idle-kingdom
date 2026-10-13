@@ -114,12 +114,16 @@ Conor's rulings, dated. Immutable once written.
 | 2026-10-12 | Enchanted gear sells at Wizard's Shop (2×) and general merchants (1×), not at the Bazaar | PR #301, merged 2026-10-12 08:14 PT (on test-launch; PR #302 promotes to main) |
 | ≤ 2026-10-12 | Location art spec: square sources that crop to portrait | `docs/Master_Prompt.md` §6 |
 | ≤ 2026-10-12 | Confirm email is OFF on purpose (turning it on breaks character creation) | `docs/deployment.md`; see ADM-02 |
+| 2026-10-13 | Travel is instant except the delays below (30 s death pause, hostile-area confirm / under-level forced combat, optional walk animation, 150 ms network spinner). No timed travel mechanic. | Conor (OQ-01 / SYS-02) |
 
 ### 2.1 Standing context (facts that shape open items)
 
 - ⚠️ Combat now has HP **and** DR (Damage Resistance): PR #289 "Retune enemy
   base HP and add Damage Resistance". Affects OQ-04.
-- ⚠️ Timed travel was removed (branch `remove-timed-travel`). Affects OQ-01.
+- ⚠️ Travel is instant except the delays below: 30 s death pause, hostile-area
+  confirm / under-level forced combat, optional walk animation (off by default),
+  and the 150 ms network spinner. Timed travel was removed (`remove-timed-travel`);
+  the unused travel-duration constant is gone (SYS-02 / OQ-01).
 - ⚠️ Items that already exist: Quiver (back slot, Artisanry 15), 9 bows, no
   arrows, Enchanting Tablet + Spell Tablet (Crafting → consumed by Arcana), one
   Essence item (harnessed at Wizard's Tower), Chromium and Vanadium ore/bars,
@@ -146,7 +150,7 @@ Conor decides. All are open as of 2026-10-12.
 
 | ID | Question | Blocks | Context found | Status |
 |---|---|---|---|---|
-| OQ-01 | Should moving between locations be a mechanic, or instant? | MAP-01, MAP-04, SYS-02 | Timed travel was removed earlier; travel clocks still exist in hosted code | Open |
+| OQ-01 | Should moving between locations be a mechanic, or instant? | MAP-01, MAP-04, SYS-02 | Answered 2026-10-13 (Conor): instant. Travel is instant except the delays below (death pause, hostile-area confirm, optional walk animation, loading spinner). Dead travel-duration constant removed. | Answered |
 | OQ-02 | Should bows require arrows? | ITM-03, ITM-04 | 9 bows, Quiver gives a Hunting XP factor, no arrow items | Open |
 | OQ-03 | Maximum inventory size? | SYS-03, UI-12, MEM-01, NTF-02 | No inventory cap key in Config | Open |
 | OQ-04 | Defense, or just health? | SYS-04, ARC-07, ARC-08 | DR already shipped in #289, so the question is really "keep DR as the defense stat?" | Open |
@@ -257,7 +261,7 @@ Direction, Community = Community/Notifications).
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
 | SYS-01 | Create a dedicated dialogue system *(from UI)* | Ready for plan | P1 | none | Systems | **MVP already exists** (Citadel Guide). This item = extend it to every NPC and quest. Blocks QST-01/02/03. |
-| SYS-02 | Should there be a mechanic for moving between locations… | Needs decision | — | OQ-01 | Design | |
+| SYS-02 | Should there be a mechanic for moving between locations… | In PR | — | OQ-01 | Design | Answered: instant. Travel is instant except the delays below. Dead travel-duration constant removed. |
 | SYS-03 | Maximum inventory size? | Needs decision | — | OQ-03 | Design + Econ | Blocks UI-12, MEM-01 |
 | SYS-04 | Should there be defense or just health? | Needs decision | — | OQ-04 | Design + Econ | |
 | SYS-05 | Notifications system (plumbing for NTF-\*) | Ready for plan | P1 | none | Community | Today only chat bubbles exist (`notification_bubble.dart`). Blocks NTF-01..09, ADM-03. |
@@ -316,7 +320,7 @@ Direction, Community = Community/Notifications).
 
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
-| MAP-01 | Add a region map. continent map, with regions… | Needs decision | P1 | OQ-01, OQ-11 | Design + UI | **Foundation:** blocks MAP-01b/02/03 |
+| MAP-01 | Add a region map. continent map, with regions… | Needs decision | P1 | OQ-11 | Design + UI | **Foundation:** blocks MAP-01b/02/03. OQ-01 answered: travel stays instant (no region-gate timers). |
 | MAP-01b | Regions can be unlocked at 200, 400, 800 total level citadel can be in the middle with a persistent travel button on every map *(from UI)* | Needs decision | P1 | MAP-01, OQ-11 | Design | **Dup** with MAP-01 (unlock rule) and MAP-03 (citadel) |
 | MAP-02 | Start a new map/region, move the depths there, call it the isles… underwater exploration | Idea | P2 | MAP-01 | Design + Art | "The Depths" is MAP-0009 today |
 | MAP-03 | Move citadel to its own 2nd main map… thievery… low level areas but mostly mid to high | Idea | P2 | MAP-01 | Design | **Dup:** UI "Citadel can be its own region, restoria is a old crumbling empire, the citadel is a nearby empire" → merged here (lore part → WLD-02) |
