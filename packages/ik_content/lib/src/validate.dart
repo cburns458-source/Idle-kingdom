@@ -43,6 +43,18 @@ const Map<String, String> tableIdFields = <String, String>{
   'RaceStartingItems': 'Race Starting Item ID',
 };
 
+/// Economy still owns stew XP / quantity. Until that lands, these recipes may
+/// disagree with their linked Action XP Reward.
+const Set<String> recipeActionXpMismatchAllowlist = <String>{
+  'RCP-0012',
+  'RCP-0013',
+  'RCP-0060',
+  'RCP-0063',
+  'RCP-0064',
+  'RCP-0065',
+  'RCP-0066',
+};
+
 const List<String> _knownRequirementTypes = <String>[
   'Tool Capability',
   'Empty Slot',
@@ -296,6 +308,27 @@ List<ValidationIssue> validateDatabase(GameDatabase db) {
           table: 'Actions',
           id: actionId,
           message: 'Missing Secondary Drop Chance for reward table $secondaryTable',
+        ),
+      );
+    }
+  }
+
+  for (final recipe in db.recipes) {
+    final recipeId = '${recipe.raw['Recipe ID'] ?? ''}';
+    if (recipeActionXpMismatchAllowlist.contains(recipeId)) continue;
+    final actionId = recipe.raw['Action ID'];
+    if (actionId is! String || actionId.isEmpty) continue;
+    final action = indexes.actionsById[actionId];
+    if (action == null) continue;
+    final recipeXp = recipe.raw['XP Reward'];
+    final actionXp = action.raw['XP Reward'];
+    if (recipeXp != actionXp) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'Recipes',
+          id: recipeId,
+          message: 'Action $actionId XP Reward $actionXp does not match Recipe XP Reward $recipeXp',
         ),
       );
     }
