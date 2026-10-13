@@ -233,3 +233,5 @@ should share it.
 
 Do not commit the token. Do not paste it into chat. GitHub and Cursor Cloud
 Agent secrets are the place for it.
+
+<!-- token-split verify: staging redeploy -->
