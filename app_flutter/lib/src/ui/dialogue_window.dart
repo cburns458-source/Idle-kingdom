@@ -89,6 +89,28 @@ class DialogueWindow extends StatelessWidget {
   }
 }
 
+/// Full-bag popup. [slotsNeeded] is new slots only; only the bag counts.
+Future<void> showDialogueBagFullPopup({
+  required BuildContext context,
+  required int slotsNeeded,
+}) async {
+  await showGameAlert(context: context, message: DialogueText.bagFull(slotsNeeded));
+}
+
+/// Yes/No prompt listing every favourited stack the engine returned.
+Future<bool> showDialogueFavouritesPrompt({
+  required BuildContext context,
+  required DialogueText text,
+  required List<DialogueItemDelta> favourites,
+}) {
+  return showGameAlert(
+    context: context,
+    message: '${DialogueText.favouritesPrompt}\n\n${text.favouritesList(favourites)}',
+    confirmLabel: 'Yes',
+    cancelLabel: 'No',
+  );
+}
+
 /// Sends one choice. [useFavourites] is the player's yes for this request only.
 typedef DialogueRequest = Future<DialogueResult> Function(
   DialogueView view,
@@ -203,12 +225,7 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
   }
 
   Future<bool> _confirmFavourites(List<DialogueItemDelta> favourites) {
-    return showGameAlert(
-      context: context,
-      message: '${DialogueText.favouritesPrompt}\n\n${_text.favouritesList(favourites)}',
-      confirmLabel: 'Yes',
-      cancelLabel: 'No',
-    );
+    return showDialogueFavouritesPrompt(context: context, text: _text, favourites: favourites);
   }
 
   Future<void> _settle(PlayerSave before, DialogueResult result) async {
@@ -229,9 +246,9 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
     }
     if (result.code == 'no_room') {
       setState(() => _error = null);
-      await showGameAlert(
+      await showDialogueBagFullPopup(
         context: context,
-        message: DialogueText.bagFull(result.noRoom?.slotsNeeded ?? 1),
+        slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
       );
       return;
     }
