@@ -89,6 +89,25 @@ class DialogueWindow extends StatelessWidget {
   }
 }
 
+/// The full-bag popup. [slotsNeeded] counts new bag slots only.
+Future<void> showBagFullPopup(BuildContext context, int slotsNeeded) {
+  return showGameAlert(context: context, message: DialogueText.bagFull(slotsNeeded));
+}
+
+/// Yes / No before taking from favourited stacks, listing every entry. True on Yes.
+Future<bool> confirmUseFavourites(
+  BuildContext context,
+  DialogueText text,
+  List<DialogueItemDelta> favourites,
+) {
+  return showGameAlert(
+    context: context,
+    message: '${DialogueText.favouritesPrompt}\n\n${text.favouritesList(favourites)}',
+    confirmLabel: 'Yes',
+    cancelLabel: 'No',
+  );
+}
+
 /// Sends one choice. [useFavourites] is the player's yes for this request only.
 typedef DialogueRequest = Future<DialogueResult> Function(
   DialogueView view,
@@ -183,7 +202,7 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
       var result = await _send(view, choiceId, useFavourites: false);
       if (!mounted) return;
       if (result.code == 'confirm_favourites') {
-        if (!await _confirmFavourites(result.favourites) || !mounted) return;
+        if (!await confirmUseFavourites(context, _text, result.favourites) || !mounted) return;
         result = await _send(view, choiceId, useFavourites: true);
         if (!mounted) return;
       }
@@ -200,15 +219,6 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => _busy = false);
     WidgetsBinding.instance.ensureVisualUpdate();
-  }
-
-  Future<bool> _confirmFavourites(List<DialogueItemDelta> favourites) {
-    return showGameAlert(
-      context: context,
-      message: '${DialogueText.favouritesPrompt}\n\n${_text.favouritesList(favourites)}',
-      confirmLabel: 'Yes',
-      cancelLabel: 'No',
-    );
   }
 
   Future<void> _settle(PlayerSave before, DialogueResult result) async {
@@ -229,10 +239,7 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
     }
     if (result.code == 'no_room') {
       setState(() => _error = null);
-      await showGameAlert(
-        context: context,
-        message: DialogueText.bagFull(result.noRoom?.slotsNeeded ?? 1),
-      );
+      await showBagFullPopup(context, result.noRoom?.slotsNeeded ?? 1);
       return;
     }
     setState(() => _error = _text.failure(result));
