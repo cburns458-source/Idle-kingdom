@@ -8,6 +8,16 @@
 -- SELECT (owner RLS) and service_role writes remain.
 --
 -- Re-run safe: CREATE OR REPLACE / ADD COLUMN IF NOT EXISTS.
+--
+-- Rollback (comments only; do not run unless reversing this change):
+--   DROP FUNCTION IF EXISTS public.plaza_shop_purchase_hosted(uuid, text, integer, jsonb, bigint, timestamptz);
+--   DROP FUNCTION IF EXISTS public.plaza_shop_item_price(text);
+--   DROP FUNCTION IF EXISTS public.bounty_plaza_points(text, boolean);
+--   DROP FUNCTION IF EXISTS public.ranked_pvp_win_points();
+--   DROP FUNCTION IF EXISTS public.ranked_pvp_daily_cap();
+--   -- Restore bounty_turn_in_hosted and ranked_pvp_record_hosted from
+--   -- 20261013120000_ranked_pvp_results_and_bounty_claims.sql
+--   ALTER TABLE public.ranked_pvp_results DROP COLUMN IF EXISTS points_paid;
 
 alter table public.ranked_pvp_results
   add column if not exists points_paid integer not null default 0;

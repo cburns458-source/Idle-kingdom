@@ -1235,6 +1235,7 @@ class FakeTransport implements RemoteTransport {
       'rngState': saveRow['rng_state'] ?? 1,
       'pointsGained': 0,
       'plazaPoints': bought.plazaPoints,
+      'pointsSpent': bought.pointsSpent,
     });
   }
 

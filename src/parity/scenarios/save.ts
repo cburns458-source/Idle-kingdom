@@ -46,6 +46,7 @@ const INTRODUCED_AT: Array<[number, string[]]> = [
   [48, ['lootTrackerPausedAtMs', 'xpTrackerPausedAtMs']],
   [51, ['mailbox']],
   [62, ['dialogueFlags']],
+  [63, ['plazaPoints']],
 ]
 
 /**
@@ -221,6 +222,24 @@ export const saveScenarios: ParityScenario[] = [
       },
       () => migrationResult(legacySave(contentDatabase(), version)),
     ),
+  ),
+
+  scenario(
+    'save/migrations',
+    'from-v62-bad-plaza-points',
+    {
+      source: 'content',
+      nowMs: NOW_MS,
+      legacy: {
+        ...legacySave(contentDatabase(), 62),
+        plazaPoints: 'not-a-number',
+      } as JsonValue,
+    },
+    () =>
+      migrationResult({
+        ...legacySave(contentDatabase(), 62),
+        plazaPoints: 'not-a-number',
+      }),
   ),
 
   scenario(

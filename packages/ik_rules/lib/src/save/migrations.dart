@@ -978,7 +978,7 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     migrate: (save, _) {
       final next = _bumped(save, 63);
       final raw = jsNumber(save['plazaPoints']);
-      next['plazaPoints'] = raw < 0 ? 0 : raw.floor();
+      next['plazaPoints'] = raw.isFinite ? (raw < 0 ? 0 : raw.floor()) : 0;
       return next;
     },
   ),

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { BOUNTY_CATALOG } from '../bounties/catalog'
 import { applyBountyReward, bountyPointsFor } from '../bounties/reward'
 import { prepareDatabase } from '../data/loadDatabase'
 import { applyRankedPvpResult } from '../pvp/matchmaking'
@@ -13,6 +14,7 @@ import {
   HEARTHGUARD_CUIRASS_ID,
   HEARTHGUARD_SET_BONUS_TEXT,
   PLAZA_SHOP_INSUFFICIENT_POINTS,
+  PLAZA_SHOP_STOCK,
   RANKED_PVP_WIN_POINTS,
   hearthguardSetBonusText,
   plazaPointsOf,
@@ -165,4 +167,69 @@ describe('ECO-03 plaza points', () => {
     expect(hearthguardSetBonusText(worn)).toBe(HEARTHGUARD_SET_BONUS_TEXT)
     expect(HEARTHGUARD_SET_BONUS_TEXT).toBe('Hearthguard (5/5): +10% max HP.')
   })
+
+  it('returns pointsSpent on plaza_shop_buy', () => {
+    const result = applyGameCommand(rawDatabase, {
+      command: 'plaza_shop_buy',
+      args: { itemId: HEARTHGUARD_CUIRASS_ID, points: 1 },
+      save: {
+        ...createNewSave(launch, START_MS),
+        currentLocationId: CITADEL_PLAZA_ID,
+        plazaPoints: 210,
+      },
+      nowMs: START_MS,
+      random: () => 0,
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.pointsSpent).toBe(210)
+    expect(result.plazaPoints).toBe(0)
+    expect(result.pointsGained).toBe(0)
+  })
+
+  it('SQL bounty points and plaza shop prices match the TS catalog', () => {
+    const sql = readFileSync(
+      resolve(process.cwd(), 'supabase/migrations/20261013200000_eco03_plaza_points_payouts.sql'),
+      'utf8',
+    )
+    const bountyFn = functionBody(sql, 'bounty_plaza_points')
+    const baseMap = whenThenMap(sliceBetween(bountyFn, 'v_base :=', 'v_bonus :='))
+    const bonusMap = whenThenMap(sliceBetween(bountyFn, 'v_bonus :=', 'return floor'))
+    expect(Object.keys(baseMap).sort()).toEqual(BOUNTY_CATALOG.map((row) => row.id).sort())
+    for (const bounty of BOUNTY_CATALOG) {
+      expect(baseMap[bounty.id], bounty.id).toBe(bounty.rewardGold)
+      expect(bonusMap[bounty.id], `${bounty.id} first`).toBe(bounty.firstPlaceBonusGold)
+    }
+
+    const priceMap = whenThenMap(functionBody(sql, 'plaza_shop_item_price'))
+    expect(Object.keys(priceMap).sort()).toEqual(PLAZA_SHOP_STOCK.map((row) => row.itemId).sort())
+    for (const row of PLAZA_SHOP_STOCK) {
+      expect(priceMap[row.itemId], row.itemId).toBe(row.points)
+    }
+  })
 })
+
+function functionBody(sql: string, name: string): string {
+  const start = sql.indexOf(`create or replace function public.${name}`)
+  expect(start, name).toBeGreaterThanOrEqual(0)
+  const next = sql.indexOf('create or replace function', start + 1)
+  return next === -1 ? sql.slice(start) : sql.slice(start, next)
+}
+
+function sliceBetween(sql: string, startMarker: string, endMarker: string): string {
+  const start = sql.indexOf(startMarker)
+  const end = sql.indexOf(endMarker, start + startMarker.length)
+  expect(start, startMarker).toBeGreaterThanOrEqual(0)
+  expect(end, endMarker).toBeGreaterThanOrEqual(0)
+  return sql.slice(start, end)
+}
+
+function whenThenMap(sql: string): Record<string, number> {
+  const out: Record<string, number> = {}
+  const re = /when '([^']+)' then (\d+)/g
+  let match: RegExpExecArray | null
+  while ((match = re.exec(sql))) {
+    out[match[1]] = Number(match[2])
+  }
+  return out
+}

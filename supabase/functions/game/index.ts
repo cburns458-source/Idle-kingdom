@@ -488,6 +488,7 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       bountyExtras = {
         pointsGained: 0,
         plazaPoints: purchased.plazaPoints,
+        pointsSpent: purchased.pointsSpent,
       }
     } else if (command === 'ranked_pvp_fight' && hosted && result.fightId) {
       const recorded = await recordRankedFight(
@@ -919,7 +920,7 @@ async function settlePlazaShopPurchase(
   rngState: number,
   nowMs: number,
 ): Promise<
-  | { ok: true; version: number; save: unknown; plazaPoints: number }
+  | { ok: true; version: number; save: unknown; plazaPoints: number; pointsSpent: number }
   | { ok: false; response: Response }
 > {
   const itemId = asTrimmedString(args.itemId)
@@ -939,6 +940,7 @@ async function settlePlazaShopPurchase(
     conflict?: boolean
     version?: number
     plazaPoints?: number
+    pointsSpent?: number
     payload?: unknown
   }
   if (answer.ok !== true) {
@@ -955,6 +957,7 @@ async function settlePlazaShopPurchase(
     version: Number(answer.version ?? expectedVersion + 1),
     save: answer.payload ?? preparedSave,
     plazaPoints: Number(answer.plazaPoints ?? 0),
+    pointsSpent: Number(answer.pointsSpent ?? 0),
   }
 }
 

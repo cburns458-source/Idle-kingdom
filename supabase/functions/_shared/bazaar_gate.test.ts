@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  BAZAAR_SKILL_LEVEL_INVALID_CODE,
   BAZAAR_TOTAL_LEVEL_REQUIRED,
   BAZAAR_TOTAL_LEVEL_TOO_LOW,
   BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE,
+  bazaarSkillLevelInvalidError,
   bazaarTotalLevelGate,
   bazaarTotalLevelRefusalFields,
   totalLevelFromPayload,
@@ -62,5 +64,33 @@ describe('ECO-01 bazaar total-level gate', () => {
 
   it('allows a new offer above 200', () => {
     expect(bazaarTotalLevelGate(payloadAt(201))).toEqual({ ok: true, totalLevel: 201 })
+  })
+
+  it('refuses a non-numeric skill level instead of skipping it', () => {
+    expect(() =>
+      totalLevelFromPayload({
+        skills: [
+          { skillId: 'SKL-0001', level: 10, xp: 0 },
+          { skillId: 'SKL-0002', level: 'adept', xp: 0 },
+        ],
+      }),
+    ).toThrow(bazaarSkillLevelInvalidError('adept'))
+
+    const gate = bazaarTotalLevelGate({
+      skills: [{ skillId: 'SKL-0001', level: 'adept', xp: 0 }],
+    })
+    expect(gate).toEqual({
+      ok: false,
+      code: BAZAAR_SKILL_LEVEL_INVALID_CODE,
+      error: bazaarSkillLevelInvalidError('adept'),
+    })
+  })
+
+  it('still skips a missing or null skill level', () => {
+    expect(
+      totalLevelFromPayload({
+        skills: [{ skillId: 'SKL-0001' }, { skillId: 'SKL-0002', level: null, xp: 0 }, { skillId: 'SKL-0003', level: 200 }],
+      }),
+    ).toBe(200)
   })
 })

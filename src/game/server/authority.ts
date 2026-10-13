@@ -186,6 +186,7 @@ export type GameCommandResult =
       goldGained?: number
       pointsGained?: number
       plazaPoints?: number
+      pointsSpent?: number
       code?: string
       winsRemaining?: number
       youMaxHp?: number
@@ -876,6 +877,7 @@ function resolvePlazaShopBuyCommand(
   return ok(bought.save, {
     pointsGained: 0,
     plazaPoints: bought.plazaPoints,
+    pointsSpent: bought.pointsSpent,
   })
 }
 

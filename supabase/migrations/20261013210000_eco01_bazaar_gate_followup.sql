@@ -3,6 +3,13 @@
 --
 -- Does not edit 20261013180000. Replaces the helper bodies and the trigger
 -- function so every layer reads 200 from bazaar_total_level_required().
+--
+-- Rollback (comments only; do not run unless reversing this change):
+--   Restore bazaar_total_level_required, bazaar_payload_total_level, and
+--   bazaar_orders_require_total_level from
+--   20261013180000_eco01_bazaar_total_level_gate.sql (CREATE OR REPLACE).
+--   DROP FUNCTION IF EXISTS public.bazaar_total_level_required(); is only
+--   safe if no later migration still calls it.
 
 create or replace function public.bazaar_total_level_required()
 returns integer
