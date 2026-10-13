@@ -66,21 +66,13 @@ describe('database loading', () => {
     expect(issues.some((issue) => issue.message.includes('Unknown Requirement Type'))).toBe(true)
   })
 
-  it('rejects recipe and action XP mismatches except the stew allowlist', () => {
+  it('rejects any recipe and action XP mismatch, including stews', () => {
     const loaded = prepareDatabase(rawDatabase)
     const xpMismatch = (issue: { message: string }) =>
       issue.message.includes('does not match Recipe XP Reward')
 
     expect(validateDatabase(loaded.source).filter(xpMismatch)).toEqual([])
-    expect([...RECIPE_ACTION_XP_MISMATCH_ALLOWLIST].sort()).toEqual([
-      'RCP-0012',
-      'RCP-0013',
-      'RCP-0060',
-      'RCP-0063',
-      'RCP-0064',
-      'RCP-0065',
-      'RCP-0066',
-    ])
+    expect([...RECIPE_ACTION_XP_MISMATCH_ALLOWLIST]).toEqual([])
 
     const mismatched = validateDatabase({
       ...loaded.source,
@@ -97,12 +89,19 @@ describe('database loading', () => {
       ),
     ).toBe(true)
 
-    const stewStillAllowed = validateDatabase({
+    const stewMismatched = validateDatabase({
       ...loaded.source,
       Actions: loaded.source.Actions.map((row) =>
         row['Action ID'] === 'ACN-0122' ? { ...row, 'XP Reward': 1 } : row,
       ),
     })
-    expect(stewStillAllowed.filter(xpMismatch)).toEqual([])
+    expect(
+      stewMismatched.some(
+        (issue) =>
+          issue.table === 'Recipes' &&
+          issue.id === 'RCP-0012' &&
+          issue.message === 'Action ACN-0122 XP Reward 1 does not match Recipe XP Reward 1400',
+      ),
+    ).toBe(true)
   })
 })

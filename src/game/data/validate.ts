@@ -12,19 +12,8 @@ import {
   type ValidationIssue,
 } from './types'
 
-/**
- * Economy still owns stew XP / quantity. Until that lands, these recipes may
- * disagree with their linked Action XP Reward.
- */
-export const RECIPE_ACTION_XP_MISMATCH_ALLOWLIST = new Set([
-  'RCP-0012',
-  'RCP-0013',
-  'RCP-0060',
-  'RCP-0063',
-  'RCP-0064',
-  'RCP-0065',
-  'RCP-0066',
-])
+/** Empty after Economy aligned stew Action XP with Recipe XP. */
+export const RECIPE_ACTION_XP_MISMATCH_ALLOWLIST = new Set<string>()
 
 /** Kept here so content validation does not import runtime requirement rules. */
 const KNOWN_REQUIREMENT_TYPES = [

@@ -43,17 +43,8 @@ const Map<String, String> tableIdFields = <String, String>{
   'RaceStartingItems': 'Race Starting Item ID',
 };
 
-/// Economy still owns stew XP / quantity. Until that lands, these recipes may
-/// disagree with their linked Action XP Reward.
-const Set<String> recipeActionXpMismatchAllowlist = <String>{
-  'RCP-0012',
-  'RCP-0013',
-  'RCP-0060',
-  'RCP-0063',
-  'RCP-0064',
-  'RCP-0065',
-  'RCP-0066',
-};
+/// Empty after Economy aligned stew Action XP with Recipe XP.
+const Set<String> recipeActionXpMismatchAllowlist = <String>{};
 
 const List<String> _knownRequirementTypes = <String>[
   'Tool Capability',
