@@ -14,18 +14,20 @@ import 'capacity.dart';
 import 'gold.dart';
 
 class NoRoom {
-  const NoRoom({this.slotsNeeded, this.slotsFree, this.reason, this.target});
+  const NoRoom({this.slotsNeeded, this.slotsFree, this.reason, this.target, this.npcLine});
 
   factory NoRoom.fromJson(Map<String, Object?> json) {
     final slotsNeeded = json['slotsNeeded'];
     final slotsFree = json['slotsFree'];
     final reason = json['reason'];
     final target = json['target'];
+    final npcLine = json['npcLine'];
     return NoRoom(
       slotsNeeded: slotsNeeded is num ? slotsNeeded.toInt() : null,
       slotsFree: slotsFree is num ? slotsFree.toInt() : null,
       reason: reason is String && reason.isNotEmpty ? reason : null,
       target: target is String && target.isNotEmpty ? target : null,
+      npcLine: npcLine is String && npcLine.isNotEmpty ? npcLine : null,
     );
   }
 
@@ -39,11 +41,16 @@ class NoRoom {
   /// Which container is full. Omitted for the bag.
   final String? target;
 
+  /// NPC make-room line. Set only on dialogue `no_room` when the choice has a
+  /// `No Room Line`. Shop, bank, and mail refusals leave this unset.
+  final String? npcLine;
+
   Map<String, Object?> toJson() => <String, Object?>{
     if (slotsNeeded != null) 'slotsNeeded': slotsNeeded,
     if (slotsFree != null) 'slotsFree': slotsFree,
     if (reason != null) 'reason': reason,
     if (target != null) 'target': target,
+    if (npcLine != null) 'npcLine': npcLine,
   };
 }
 

@@ -266,6 +266,11 @@ export interface DialogueChoiceRow {
   Repeatable?: boolean | null
   /** Forces the quest marker on the choice even without a quest action. */
   QuestMarker?: boolean | null
+  /**
+   * NPC make-room line when this choice is refused because the bag is full.
+   * Empty or missing leaves `no_room.npcLine` unset.
+   */
+  'No Room Line'?: string | null
   'Sort Order': number
   Status: RecordStatus
   'Release Phase': ReleasePhase

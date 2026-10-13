@@ -457,6 +457,25 @@ class _ActionFailure {
   final List<DialogueItemDelta> favourites;
 }
 
+/// Trimmed `No Room Line` when the cell has text; empty or missing stays unset.
+String? _npcLineFromChoice(DialogueChoiceRow choice) {
+  final line = choice.noRoomLine?.trim();
+  return line != null && line.isNotEmpty ? line : null;
+}
+
+NoRoom? _withNpcLine(NoRoom? noRoom, DialogueChoiceRow choice) {
+  if (noRoom == null) return null;
+  final npcLine = _npcLineFromChoice(choice);
+  if (npcLine == null) return noRoom;
+  return NoRoom(
+    slotsNeeded: noRoom.slotsNeeded,
+    slotsFree: noRoom.slotsFree,
+    reason: noRoom.reason,
+    target: noRoom.target,
+    npcLine: npcLine,
+  );
+}
+
 DialogueResult _failed(PlayerSave save, String code, String reason, [_ActionFailure? extra]) {
   return DialogueResult(
     ok: false,
@@ -902,7 +921,21 @@ DialogueResult chooseDialogue(
   final work = _Working(save);
   for (var index = 0; index < tokens.length; index++) {
     final failure = _applyAction(db, work, tokens, index);
-    if (failure != null) return _failed(save, failure.code, failure.reason, failure);
+    if (failure != null) {
+      return _failed(
+        save,
+        failure.code,
+        failure.reason,
+        _ActionFailure(
+          failure.code,
+          failure.reason,
+          noRoom: _withNpcLine(failure.noRoom, choice),
+          missing: failure.missing,
+          stepProgress: failure.stepProgress,
+          favourites: failure.favourites,
+        ),
+      );
+    }
   }
   // Checked once every action has run, so the prompt lists the whole choice
   // and a choice that would fail anyway reports that failure instead.

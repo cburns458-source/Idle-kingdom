@@ -194,6 +194,10 @@ class DialogueChoiceRow extends DbRow {
   /// Forces the quest marker on the choice even without a quest action.
   bool? get questMarker => boolOrNull('QuestMarker');
 
+  /// NPC make-room line when this choice is refused because the bag is full.
+  /// Empty or missing leaves `no_room.npcLine` unset.
+  String? get noRoomLine => stringOrNull('No Room Line');
+
   num get sortOrder => numberValue('Sort Order');
 
   String get status => stringValue('Status');

@@ -587,6 +587,20 @@ type ActionFailure = {
   stepProgress?: StepProgressGroup[]
 }
 
+/** Trimmed `No Room Line` when the cell has text; empty or missing stays unset. */
+function npcLineFromChoice(choice: DialogueChoiceRow): string | undefined {
+  const line = choice['No Room Line']
+  if (typeof line !== 'string') return undefined
+  const trimmed = line.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function withNpcLine(noRoom: DialogueNoRoom | undefined, choice: DialogueChoiceRow): DialogueNoRoom | undefined {
+  if (!noRoom) return noRoom
+  const npcLine = npcLineFromChoice(choice)
+  return npcLine ? { ...noRoom, npcLine } : noRoom
+}
+
 /** New bag slots every grant in [tokens] needs against [save]. */
 function slotsNeededForGrants(db: GameDatabase, save: PlayerSave, tokens: DialogueToken[]): number {
   const itemIds = tokens
@@ -838,7 +852,12 @@ export function chooseDialogue(
   }
   for (let index = 0; index < tokens.length; index += 1) {
     const failure = applyAction(db, work, tokens, index)
-    if (failure) return failed(save, failure.code, failure.reason, failure)
+    if (failure) {
+      return failed(save, failure.code, failure.reason, {
+        ...failure,
+        noRoom: withNpcLine(failure.noRoom, choice),
+      })
+    }
   }
   // Checked once every action has run, so the prompt lists the whole choice
   // and a choice that would fail anyway reports that failure instead.

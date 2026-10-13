@@ -24,6 +24,11 @@ export interface NoRoom {
   reason?: NoRoomStackReason
   /** Which container is full. Omitted for the bag. */
   target?: NoRoomTarget
+  /**
+   * NPC make-room line. Set only on dialogue `no_room` when the choice has a
+   * `No Room Line`. Shop, bank, and mail refusals leave this unset.
+   */
+  npcLine?: string
 }
 
 export interface ItemGrant {
