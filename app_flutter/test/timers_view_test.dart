@@ -147,4 +147,64 @@ void main() {
     // Reward popups use a Collect button. A full bag must not take the haul.
     expect(find.text('Collect'), findsNothing);
   });
+
+  testWidgets('Timers drops a locked farm after /abandonquest and keeps a growing crop', (
+    tester,
+  ) async {
+    const growing = LocationTimer(
+      locationId: 'LOC-0001',
+      kind: 'botany',
+      inputItemId: 'ITEM-0324',
+      outputItemId: 'ITEM-0025',
+      outputQuantity: 1,
+      skillId: botanySkillId,
+      xpReward: 10,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      durationMs: 60000,
+    );
+    final withFarm = startedCharacter(database).copyWith(
+      // Stand somewhere else so the HUD title is not also "The Farm".
+      currentLocationId: 'LOC-0009',
+      discoveredTimerSpotIds: const <String>[
+        'botany:LOC-0001',
+        'botany:LOC-0009',
+        'fishing_pot:LOC-0003',
+      ],
+      quests: const [
+        QuestProgress(
+          questId: 'QST-0011',
+          status: 'active',
+          progress: 1,
+          counters: {'talk:NPC-0014': 1, 'step:QSTP-0023': 1},
+        ),
+      ],
+    );
+
+    final abandoned = cheatAbandonQuest(withFarm, 'QST-0011');
+    expect(abandoned.ok, isTrue);
+    final pruned = pruneLockedTimerSpots(database.launch, abandoned.save!);
+    final emptyFarm = buildController(database, seed: pruned);
+    addTearDown(emptyFarm.dispose);
+    await pumpShell(tester, emptyFarm, size: const Size(420, 900));
+    await openChinScreen(tester, 'Timers');
+    expect(find.text('The Farm'), findsNothing);
+    expect(find.text('Meadow'), findsWidgets);
+    expect(find.text('Goblin Camp'), findsOne);
+
+    await tester.pumpWidget(const SizedBox());
+    final abandonedGrowing = cheatAbandonQuest(
+      withFarm.copyWith(locationTimers: const [growing]),
+      'QST-0011',
+    );
+    expect(abandonedGrowing.ok, isTrue);
+    final prunedGrowing = pruneLockedTimerSpots(database.launch, abandonedGrowing.save!);
+    final growingFarm = buildController(database, seed: prunedGrowing);
+    addTearDown(growingFarm.dispose);
+    await pumpShell(tester, growingFarm, size: const Size(420, 900));
+    await openChinScreen(tester, 'Timers');
+    expect(find.text('The Farm'), findsOne);
+    expect(find.textContaining('Growing'), findsOne);
+    expect(find.text('Meadow'), findsWidgets);
+    expect(find.text('Goblin Camp'), findsOne);
+  });
 }

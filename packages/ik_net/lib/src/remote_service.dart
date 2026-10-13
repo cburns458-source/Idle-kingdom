@@ -819,7 +819,8 @@ class RemoteMultiplayerService implements MultiplayerService {
   /// Compare-and-swap token from the last hosted read or write.
   int get hostedSaveVersion => _hostedSaveVersion;
 
-  /// Stands in for a lost first response: the app still has the old version.
+  /// Test-only: rewind the compare-and-swap token to stand in for a lost first
+  /// response so the app still has the old version.
   set hostedSaveVersion(int value) => _hostedSaveVersion = value;
 
   /// Server mulberry32 state from the last hosted read or write.
@@ -2029,8 +2030,13 @@ class RemoteMultiplayerService implements MultiplayerService {
     final result = await transport.invoke(remoteBazaarMarketFunction, body);
     if (!result.ok) return MarketActionResult.failed(friendlyRemoteError(result.reason!));
     final data = result.data ?? const <String, Object?>{};
+    final code = data['code'] is String ? data['code']! as String : null;
+    final noRoom = _noRoomFrom(data['noRoom']);
+    final rowsLeft = data['rowsLeft'] is num ? (data['rowsLeft']! as num).toInt() : null;
     final refused = data['error'];
-    if (refused is String && refused.isNotEmpty) return MarketActionResult.failed(refused);
+    if (refused is String && refused.isNotEmpty) {
+      return MarketActionResult.failed(refused, code: code, noRoom: noRoom, rowsLeft: rowsLeft);
+    }
 
     PlayerSave? written;
     final payload = data['save'];
@@ -2049,7 +2055,15 @@ class RemoteMultiplayerService implements MultiplayerService {
       save: written,
       message: message is String && message.isNotEmpty ? message : null,
       order: order is Map ? MarketOrder.fromJson(remoteRowFrom(order)) : null,
+      code: code,
+      noRoom: noRoom,
+      rowsLeft: rowsLeft,
     );
+  }
+
+  static NoRoom? _noRoomFrom(Object? value) {
+    if (value is! Map) return null;
+    return NoRoom.fromJson(remoteRowFrom(value));
   }
 
   @override

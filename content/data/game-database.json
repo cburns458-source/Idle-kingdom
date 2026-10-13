@@ -1926,7 +1926,7 @@
       "Description": null,
       "Icon Asset Key": "raw_shark",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 50,
       "Tradeable": true,
       "Stackable": null
     },
@@ -2106,7 +2106,7 @@
       "Description": null,
       "Icon Asset Key": "cooked_shark",
       "Notes": null,
-      "Base Sell Value": 301,
+      "Base Sell Value": 48,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4194,7 +4194,7 @@
       "Description": null,
       "Icon Asset Key": "minor_strength_potion",
       "Notes": null,
-      "Base Sell Value": 7,
+      "Base Sell Value": 210,
       "Tradeable": true,
       "Stackable": null
     },
@@ -5724,7 +5724,7 @@
       "Description": "A rich bowl of baby giant squid, potatoes, and carrots.",
       "Icon Asset Key": "squid_noodle_soup",
       "Notes": "Heals 1,100. Level 66 kitchen recipe.",
-      "Base Sell Value": 415,
+      "Base Sell Value": 850,
       "Tradeable": true,
       "Stackable": null
     },
@@ -6680,7 +6680,7 @@
       "Description": null,
       "Icon Asset Key": "crawfish_stew",
       "Notes": null,
-      "Base Sell Value": 1,
+      "Base Sell Value": 9,
       "Tradeable": true,
       "Stackable": null
     },
@@ -6716,7 +6716,7 @@
       "Description": null,
       "Icon Asset Key": "dungeness_stew",
       "Notes": null,
-      "Base Sell Value": 53,
+      "Base Sell Value": 120,
       "Tradeable": true,
       "Stackable": null
     },
@@ -6734,7 +6734,7 @@
       "Description": null,
       "Icon Asset Key": "lobster_stew",
       "Notes": null,
-      "Base Sell Value": 203,
+      "Base Sell Value": 1330,
       "Tradeable": true,
       "Stackable": null
     },
@@ -16978,7 +16978,7 @@
       "Target ID": "ITEM-0068",
       "Proficiency Level": 26,
       "Base Duration Seconds": 12,
-      "XP Reward": 14001,
+      "XP Reward": 1400,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0074",
@@ -17038,7 +17038,7 @@
       "Target ID": "ITEM-0069",
       "Proficiency Level": 46,
       "Base Duration Seconds": 12,
-      "XP Reward": 16667,
+      "XP Reward": 1667,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0077",
@@ -17923,7 +17923,7 @@
       "Target ID": "ITEM-0302",
       "Proficiency Level": 66,
       "Base Duration Seconds": 12,
-      "XP Reward": 40001,
+      "XP Reward": 1850,
       "Guaranteed Gold": 0,
       "Drop Chance": 100,
       "Reward Table ID": "RWT-0118",
@@ -26176,7 +26176,7 @@
       "Display Name": "Baked Potato",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0058",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 1,
       "Base Duration Seconds": 12,
@@ -26426,11 +26426,11 @@
       "Display Name": "Pheasant Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0068",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 26,
       "Base Duration Seconds": 12,
-      "XP Reward": 2800,
+      "XP Reward": 1400,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0122",
       "Status": "Planned",
@@ -26451,11 +26451,11 @@
       "Display Name": "Venison Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0069",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 46,
       "Base Duration Seconds": 12,
-      "XP Reward": 3333,
+      "XP Reward": 1667,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0125",
       "Status": "Planned",
@@ -27326,11 +27326,11 @@
       "Display Name": "Squid Noodle Soup",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0302",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 66,
       "Base Duration Seconds": 12,
-      "XP Reward": 8000,
+      "XP Reward": 1850,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0175",
       "Status": "Planned",
@@ -27401,11 +27401,11 @@
       "Display Name": "Crawfish Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0358",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 16,
       "Base Duration Seconds": 12,
-      "XP Reward": 2135,
+      "XP Reward": 1068,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0193",
       "Status": "Planned",
@@ -27426,11 +27426,11 @@
       "Display Name": "Red Crab Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0359",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 36,
       "Base Duration Seconds": 12,
-      "XP Reward": 2880,
+      "XP Reward": 1440,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0194",
       "Status": "Planned",
@@ -27451,11 +27451,11 @@
       "Display Name": "Dungeness Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0360",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 56,
       "Base Duration Seconds": 12,
-      "XP Reward": 3373,
+      "XP Reward": 1687,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0195",
       "Status": "Planned",
@@ -27476,11 +27476,11 @@
       "Display Name": "Lobster Stew",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0361",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 76,
       "Base Duration Seconds": 12,
-      "XP Reward": 4001,
+      "XP Reward": 2001,
       "Knowledge Source": "Automatic level unlock",
       "Action ID": "ACN-0196",
       "Status": "Planned",
@@ -34461,6 +34461,32 @@
       "Notes": "Grand Feast K3 hand-in (QSTP-0002, HandIn ITEM-0058 x10 + ITEM-0059 x10, any number of visits). A separate choice completes QST-0001 once the step is done; quest completion pays 10,000 Cooking XP, ITEM-0026 x1 (stays tradeable) and the Courtyard Botany unlock. Priority 11 so it opens ahead of the pitch.",
       "Priority": 11,
       "Condition": "quest_active:QST-0001;!quest_step:QST-0001:QSTP-0001"
+    },
+    {
+      "Dialogue ID": "DLG-0013",
+      "Internal Key": "citadel_guide_visiting_citadel",
+      "Display Name": "Citadel Guide",
+      "NPC ID": "NPC-0013",
+      "Start Node ID": "DNODE-0023",
+      "Repeatable": true,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Visiting the Citadel (QSTP-0009). Reminder only; the step is Visit + AutoCompleteOnVisit, so no talk_flag or complete_quest.",
+      "Priority": 10,
+      "Condition": "quest_active:QST-0004"
+    },
+    {
+      "Dialogue ID": "DLG-0014",
+      "Internal Key": "market_master_visiting_citadel",
+      "Display Name": "Market Master",
+      "NPC ID": "NPC-0006",
+      "Start Node ID": "DNODE-0024",
+      "Repeatable": true,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Visiting the Citadel (QSTP-0009). Reminder only; visiting the bazaar is a location visit, not a Talk step.",
+      "Priority": 10,
+      "Condition": "quest_active:QST-0004"
     }
   ],
   "DialogueNodes": [
@@ -34639,6 +34665,22 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
+    },
+    {
+      "Node ID": "DNODE-0023",
+      "Dialogue ID": "DLG-0013",
+      "Line": "The plaza is only the doorstep. Walk the bazaar, the workshops, the outskirts, and the training grounds. See what's posted, and speak with the people who keep this place running.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Node ID": "DNODE-0024",
+      "Dialogue ID": "DLG-0014",
+      "Line": "New around here? Browse all you like \u2014 no obligation to buy. When you're done, walk the rest of the Citadel. There's more than stalls.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
     }
   ],
   "DialogueChoices": [
@@ -34652,7 +34694,8 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "One-time gift. The flag stops a second claim after closing mid-conversation."
+      "Notes": "One-time gift. The flag stops a second claim after closing mid-conversation. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "No Room Line": "Your pack's stuffed full, friend. Clear some space and come back to me."
     },
     {
       "Choice ID": "DCH-0002",
@@ -34784,7 +34827,8 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Completes QST-0006; quest completion grants BOOK-0001 once."
+      "Notes": "Completes QST-0006; quest completion grants BOOK-0001 once. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "No Room Line": "You're carrying too much for a harvest gift. Clear some space and come back to me."
     },
     {
       "Choice ID": "DCH-0013",
@@ -34808,7 +34852,8 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "One-time gift. Players whose QSTP-0023 is already done (the old GiveOnTalk seed) never see it again."
+      "Notes": "One-time gift. Players whose QSTP-0023 is already done (the old GiveOnTalk seed) never see it again. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "No Room Line": "You're carrying too much for a harvest gift. Clear some space and come back to me."
     },
     {
       "Choice ID": "DCH-0015",
@@ -34892,7 +34937,8 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Only completes QST-0011; quest completion pays the seeds and BOOK-0002 once."
+      "Notes": "Only completes QST-0011; quest completion pays the seeds and BOOK-0002 once. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "No Room Line": "You're carrying too much for a harvest gift. Clear some space and come back to me."
     },
     {
       "Choice ID": "DCH-0022",
@@ -34979,8 +35025,9 @@
       "Sort Order": 2,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Completes QST-0001 once the hand-in is done; quest completion pays the reward.",
-      "Hidden": true
+      "Notes": "Completes QST-0001 once the hand-in is done; quest completion pays the reward. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "Hidden": true,
+      "No Room Line": "You've no space left for a royal gift. Clear some room and return to me."
     },
     {
       "Choice ID": "DCH-0027",
@@ -35016,8 +35063,9 @@
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Completes QST-0001; quest completion pays the reward.",
-      "Hidden": true
+      "Notes": "Completes QST-0001; quest completion pays the reward. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
+      "Hidden": true,
+      "No Room Line": "You've no space left for a royal gift. Clear some room and return to me."
     },
     {
       "Choice ID": "DCH-0032",
@@ -35031,6 +35079,30 @@
       "Release Phase": "Launch",
       "Notes": null,
       "Hidden": true
+    },
+    {
+      "Choice ID": "DCH-0033",
+      "Node ID": "DNODE-0023",
+      "Label": "I'll have a look.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Choice ID": "DCH-0034",
+      "Node ID": "DNODE-0024",
+      "Label": "Thanks.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
     }
   ],
   "Achievements": [

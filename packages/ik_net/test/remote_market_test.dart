@@ -912,6 +912,53 @@ void main() {
       final claimed = await buyer.collectBazaarBox(db, full);
       expect(claimed.ok, isTrue, reason: claimed.reason);
       expect(claimed.message, 'Collected 200 gold. 1 more would not fit.');
+      expect(claimed.code, 'no_room');
+      expect(claimed.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+      expect(claimed.rowsLeft, 1);
+      expect((await buyer.bazaarMarket()).collect.single.itemId, _ironOre);
+    });
+
+    test('refuses a full-bag collect of items with no_room and leaves gold-free rows', () async {
+      final project = _project();
+      final db = _database();
+      final seller = await _trader(
+        project,
+        db,
+        'seller@example.com',
+        'Seller',
+        bag: <InventoryStack>[_stack(_ironOre, 10)],
+      );
+      final buyer = await _trader(project, db, 'buyer@example.com', 'Buyer', gold: 300);
+      await seller.placeBazaarOffer(
+        db,
+        _stored(project, seller),
+        side: bazaarSell,
+        itemId: _ironOre,
+        unitPrice: 30,
+        quantity: 10,
+      );
+      await buyer.placeBazaarOffer(
+        db,
+        _stored(project, buyer),
+        side: bazaarBuy,
+        itemId: _ironOre,
+        unitPrice: 30,
+        quantity: 10,
+      );
+
+      final full = _stored(project, buyer).copyWith(
+        inventory: <InventoryStack>[
+          for (var slot = 0; slot < inventorySlotLimit; slot += 1) _stack(_titaniumOre, 1),
+        ],
+      );
+      expect((await seedHostedSave(buyer, project, full)).ok, isTrue);
+      final refused = await buyer.collectBazaarBox(db, full);
+      expect(refused.ok, isFalse);
+      expect(refused.code, 'no_room');
+      expect(refused.reason, 'No room in your bag. Free 1 slot and try again.');
+      expect(refused.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+      expect(refused.rowsLeft, 1);
+      expect(refused.save, isNull);
       expect((await buyer.bazaarMarket()).collect.single.itemId, _ironOre);
     });
   });

@@ -20,6 +20,7 @@ import 'critter_overlay.dart';
 import 'format.dart';
 import 'codex_view.dart';
 import 'inventory_view.dart';
+import 'left_behind_popup.dart';
 import 'library_view.dart';
 import 'location_view.dart';
 import 'wait_mark.dart';
@@ -134,6 +135,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   bool _returnHoldArmed = false;
   Timer? _returnHold;
   bool _questRewardQueued = false;
+  bool _leftBehindQueued = false;
   String? _codexItemId;
 
   /// XP / Loot panel docked left of the desktop menu when side rails are up.
@@ -178,8 +180,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     };
     controller.addListener(_armReturningHold);
     controller.addListener(_flushPendingDialogs);
+    controller.addListener(_flushLeftBehindPopup);
     controller.addListener(_syncPlayLoop);
     _armReturningHold();
+    _flushLeftBehindPopup();
     _ticker = createTicker((_) {
       if (!mounted || !_canPlay) return;
       controller.tick();
@@ -401,6 +405,25 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     });
   }
 
+  void _flushLeftBehindPopup() {
+    if (_leftBehindQueued) return;
+    if (controller.returningFromAway || controller.awaySummary != null) return;
+    if (controller.pendingLeftBehind.isEmpty) return;
+    _leftBehindQueued = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        if (!mounted) return;
+        if (controller.returningFromAway || controller.awaySummary != null) return;
+        if (controller.pendingLeftBehind.isEmpty) return;
+        await showLeftBehindLootPopup(context: context, controller: controller);
+        if (mounted) controller.dismissLeftBehindPopup();
+      } finally {
+        _leftBehindQueued = false;
+        if (mounted) _flushLeftBehindPopup();
+      }
+    });
+  }
+
   void _armReturningHold() {
     if (!controller.returningFromAway) {
       _returnHold?.cancel();
@@ -480,6 +503,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     multiplayer.removeListener(_onMultiplayerChanged);
     controller.removeListener(_armReturningHold);
     controller.removeListener(_flushPendingDialogs);
+    controller.removeListener(_flushLeftBehindPopup);
     controller.removeListener(_syncPlayLoop);
     _ticker?.stop();
     _ticker?.dispose();
@@ -581,6 +605,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   void _selectScreen(GameScreen screen) {
     if (screen == GameScreen.account) screen = GameScreen.menu;
     if (screen != GameScreen.codex) _codexItemId = null;
+    if (screen == GameScreen.character) {
+      controller.clearBagOverflowBadge();
+    }
     if (screen == GameScreen.location) {
       _popToLocation();
       return;

@@ -1,6 +1,6 @@
 # Restoria master backlog
 
-**Status: Approved by Conor on 2026-10-12.**
+**Status: Approved by Conor on 2026-10-12. Updated 2026-10-13 (Conor).**
 
 This is the single master backlog for Restoria. Only Conor edits it, or a PR he
 approves. Every design call stays with Conor. Work on any item still follows
@@ -98,7 +98,8 @@ overlaps, repo touchpoints and links go in Notes.
   immutable once written; a reversal is a new row.
 - When an `OQ-##` is answered, record the answer in the decisions log, mark the
   question resolved, and move the items it blocked forward.
-- When an item goes `Live`, move it to the done archive with its PR and date.
+- When an item lands on `test-launch`, move it to the done archive with its PR
+  and date (Conor, 2026-10-13: the Done list tracks test-launch; `main` later).
 
 ---
 
@@ -108,18 +109,29 @@ Conor's rulings, dated. Immutable once written.
 
 | Date | Decision | Evidence |
 |---|---|---|
+| 2026-10-13 | Done archive tracks `test-launch`; `main` is updated later | Conor |
+| 2026-10-13 | Inventory/bank caps: 84 bag slots / 168 bank slots | PR #332, Conor (OQ-03 / SYS-03) |
+| 2026-10-13 | Travel stays instant; remove the unused travel-time setting (no player-facing change) | Conor (SYS-07) |
+| 2026-10-13 | QST-01 closed (Getting Started / Green Thumb dialogue) | PR #323, #270 |
+| 2026-10-13 | BUG-03 (todo drops/recipes) closed: solved before tracking | Conor; no fixing PR in `git log` |
+| 2026-10-13 | Ranked PvP reward exploit closed (server-authoritative payouts) | PR #333 (BUG-04) |
+| 2026-10-12 | Region unlocks by total level at 200 / 400 / 800; regions not implemented yet (on hold for map assets). Whether existing quest unlocks also stay is undecided | Conor (OQ-11; still Open) |
 | 2026-10-12 | This backlog (structure, items, IDs, priorities, owner bots) approved | Conor |
 | ≤ 2026-10-12 | Workflow: plan → owner OK → PR into `test-launch` → playtest → Conor merges to `main` | `AGENTS.md`, `docs/AGENT_WORKFLOW.md` (PR #299) |
 | ≤ 2026-10-12 | Server-authoritative saves: the `game` edge function is the only writer of `player_saves` | `docs/server-authority.md` |
 | 2026-10-12 | Enchanted gear sells at Wizard's Shop (2×) and general merchants (1×), not at the Bazaar | PR #301, merged 2026-10-12 08:14 PT (on test-launch; PR #302 promotes to main) |
 | ≤ 2026-10-12 | Location art spec: square sources that crop to portrait | `docs/Master_Prompt.md` §6 |
 | ≤ 2026-10-12 | Confirm email is OFF on purpose (turning it on breaks character creation) | `docs/deployment.md`; see ADM-02 |
+| 2026-10-13 | Travel is instant except the delays below (30 s death pause, hostile-area confirm / under-level forced combat, optional walk animation, 150 ms network spinner). No timed travel mechanic. | Conor (OQ-01 / SYS-02) |
 
 ### 2.1 Standing context (facts that shape open items)
 
 - ⚠️ Combat now has HP **and** DR (Damage Resistance): PR #289 "Retune enemy
   base HP and add Damage Resistance". Affects OQ-04.
-- ⚠️ Timed travel was removed (branch `remove-timed-travel`). Affects OQ-01.
+- ⚠️ Travel is instant except the delays below: 30 s death pause, hostile-area
+  confirm / under-level forced combat, optional walk animation (off by default),
+  and the 150 ms network spinner. Timed travel was removed (`remove-timed-travel`).
+  Unused travel-time setting cleanup is SYS-07 (this PR; approved 2026-10-13).
 - ⚠️ Items that already exist: Quiver (back slot, Artisanry 15), 9 bows, no
   arrows, Enchanting Tablet + Spell Tablet (Crafting → consumed by Arcana), one
   Essence item (harnessed at Wizard's Tower), Chromium and Vanadium ore/bars,
@@ -140,35 +152,35 @@ Conor to update the Game Bible/DB first, or agents will refuse or stall.
 
 ## 3. Open questions register
 
-Conor decides. All are open as of 2026-10-12.
+Conor decides. Open unless marked answered. OQ-03 and OQ-05 are answered; OQ-11 stays Open with a partial ruling.
 
 ### 3.1 Conor's own
 
 | ID | Question | Blocks | Context found | Status |
 |---|---|---|---|---|
-| OQ-01 | Should moving between locations be a mechanic, or instant? | MAP-01, MAP-04, SYS-02 | Timed travel was removed earlier; travel clocks still exist in hosted code | Open |
+| OQ-01 | Should moving between locations be a mechanic, or instant? | MAP-01, MAP-04, SYS-02 | Answered 2026-10-13 (Conor): instant. Travel is instant except the delays below (death pause, hostile-area confirm, optional walk animation, loading spinner). Dead travel-duration constant removed. | Answered |
 | OQ-02 | Should bows require arrows? | ITM-03, ITM-04 | 9 bows, Quiver gives a Hunting XP factor, no arrow items | Open |
-| OQ-03 | Maximum inventory size? | SYS-03, UI-12, MEM-01, NTF-02 | No inventory cap key in Config | Open |
+| OQ-03 | Maximum inventory size? | SYS-03, UI-12, MEM-01, NTF-02 | No inventory cap key in Config; shipped as 84 bag / 168 bank | Answered 2026-10-13 (Conor): 84 bag slots / 168 bank slots (#332) |
 | OQ-04 | Defense, or just health? | SYS-04, ARC-07, ARC-08 | DR already shipped in #289, so the question is really "keep DR as the defense stat?" | Open |
 
 ### 3.2 Found while building the backlog
 
-| ID | Question | Blocks | Status |
-|---|---|---|---|
-| OQ-05 | What does "untradeable" mean? Quest items, uniques (Excavator's Pickaxe sells for 69), starter cosmetics (Traveler's Tunic 24), enchanted gear? Should it be an explicit DB column? | BUG-02, QST-12, ARC-01 | Answered 2026-10-12 (Conor): can't be listed on the Bazaar, still sells to shops; untradeable iff its only source is quest rewards; Golden Spud stays tradeable; enchanted Bazaar block unchanged. Items `Tradeable` column. |
-| OQ-06 | Membership: price, one-time or subscription, and is it fair? "Instant Bazaar at total level 1" and "double AFK" are close to pay-to-win in a game with a shared market and leaderboards. | MEM-\* | Open |
-| OQ-07 | Religion vs races: replace races fully? What happens to existing race bonuses, race starting items, Vesper, "A Change of Skin", and the Pureblooded title? | WLD-01, TTL-03 | Open |
-| OQ-08 | Mass bosses: which bosses? What are the scaling and contribution formulas? Are there server-side lobbies (new realtime infra)? | SOC-04 | Open |
-| OQ-09 | Mandatory tutorial: what happens to existing players partway through Getting Started, and to players who already finished it? | QST-02 | Open |
-| OQ-10 | Bazaar gate at total level 200: what about existing players under 200 who have live offers? | ECO-01 | Open |
-| OQ-11 | Region unlocks (200/400/800 total level) vs the existing quest-based unlocks (Through the Thicket, Going Deeper, Forged in Fire). Which wins? | MAP-01, MAP-01b | Open |
-| OQ-12 | Back slot conflict: blessings, the Quiver/Hunter's Quiver, and capes all want the Back slot. | ITM-01, ITM-04 | Open |
-| OQ-13 | Spell charging: does the 1/150 per-action loss stack with "only spent on relevant actions"? What happens to existing spells? | ARC-03 | Open |
-| OQ-14 | Tablet rework migration: what happens to enchanted items players already own, and to recipes they've learned? | ARC-01 | Open |
-| OQ-15 | Plaza points: can they be traded? Do bounties keep any gold? What goes in the shop's item and XP catalog? | ECO-03 | Open |
-| OQ-16 | Telemetry: what do you want to measure, which vendor, and what privacy/consent rules? | ADM-05 | Open |
-| OQ-17 | Catacombs: solo survival, group roles, or both first? | DNG-01 | Open |
-| OQ-18 | Language support: which languages, and when? (Copy is in the DB plus hardcoded Dart strings.) | UI-14 | Open |
+| ID | Question | Blocks | Answer | Status |
+|---|---|---|---|---|
+| OQ-05 | What does "untradeable" mean? Quest items, uniques (Excavator's Pickaxe sells for 69), starter cosmetics (Traveler's Tunic 24), enchanted gear? Should it be an explicit DB column? | BUG-02, QST-12, ARC-01 | Can't be listed on the Bazaar, still sells to shops; untradeable iff its only source is quest rewards; Golden Spud stays tradeable; enchanted Bazaar block unchanged. Items `Tradeable` column. | Answered 2026-10-12 (Conor) |
+| OQ-06 | Membership: price, one-time or subscription, and is it fair? "Instant Bazaar at total level 1" and "double AFK" are close to pay-to-win in a game with a shared market and leaderboards. | MEM-\* | — | Open |
+| OQ-07 | Religion vs races: replace races fully? What happens to existing race bonuses, race starting items, Vesper, "A Change of Skin", and the Pureblooded title? | WLD-01, TTL-03 | — | Open |
+| OQ-08 | Mass bosses: which bosses? What are the scaling and contribution formulas? Are there server-side lobbies (new realtime infra)? | SOC-04 | — | Open |
+| OQ-09 | Mandatory tutorial: what happens to existing players partway through Getting Started, and to players who already finished it? | QST-02 | — | Open |
+| OQ-10 | Bazaar gate at total level 200: what about existing players under 200 who have live offers? | ECO-01 | — | Open |
+| OQ-11 | Region unlocks (200/400/800 total level) vs the existing quest-based unlocks (Through the Thicket, Going Deeper, Forged in Fire). Which wins? | MAP-01, MAP-01b | Conor confirmed total-level region unlock thresholds 200 / 400 / 800 (regions unlock by total level, decided Oct 12, 2026); regions are not implemented yet, so it is on hold until map assets arrive. Whether existing quest unlocks also stay is undecided. | Open |
+| OQ-12 | Back slot conflict: blessings, the Quiver/Hunter's Quiver, and capes all want the Back slot. | ITM-01, ITM-04 | — | Open |
+| OQ-13 | Spell charging: does the 1/150 per-action loss stack with "only spent on relevant actions"? What happens to existing spells? | ARC-03 | — | Open |
+| OQ-14 | Tablet rework migration: what happens to enchanted items players already own, and to recipes they've learned? | ARC-01 | — | Open |
+| OQ-15 | Plaza points: can they be traded? Do bounties keep any gold? What goes in the shop's item and XP catalog? | ECO-03 | — | Open |
+| OQ-16 | Telemetry: what do you want to measure, which vendor, and what privacy/consent rules? | ADM-05 | — | Open |
+| OQ-17 | Catacombs: solo survival, group roles, or both first? | DNG-01 | — | Open |
+| OQ-18 | Language support: which languages, and when? (Copy is in the DB plus hardcoded Dart strings.) | UI-14 | — | Open |
 
 ---
 
@@ -178,19 +190,19 @@ Just IDs, in order. Conor re-orders this.
 
 ### P0: Now (security, exploits, broken onboarding)
 
-1. **BUG-01** Fennel Getting Started step bug. Every new player hits it in the first 5 minutes.
+1. **BUG-01** Fennel Getting Started step bug. Needs a Fennel potato playtest re-check on test-launch before closing (step-latch shipped in #304).
 2. **ADM-01** Supabase/Cloudflare/RLS audit. Re-run advisors, do leaked-password protection, close the rls-hardening follow-ups (hall donations without debit, etc.).
-3. **BUG-02** Untradeable selling exploit. Gold/economy integrity. Blocked on OQ-05 (the definition), so get that answer first.
+3. **BUG-02** Untradeable selling exploit. Merged on test-launch via #310; leave the row in the BUG table as On test.
 4. **ADM-02** Email confirmation with the new email. Account security and recovery. Needs an auth-flow change because Confirm email is deliberately off.
 
 ### P1: Next
 
-5. **SYS-01** Dialogue system (extend the MVP). Unblocks QST-01/02/03.
-6. **QST-02 + QST-01** Mandatory tutorial and Getting Started/Green Thumb dialogue. One pass, right after BUG-01.
+5. **SYS-01** Dialogue system (extend the MVP). Unblocks QST-02/03 (QST-01 done).
+6. **QST-02** Mandatory tutorial. QST-01 (Getting Started / Green Thumb dialogue) closed via #323 and #270.
 7. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
 8. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Biggest idle-game QoL win.
 9. **ADM-04** Report/ideas button → Discord webhook. Cheap, and feeds QA.
-10. **Decision session on OQ-01..07, OQ-11, OQ-15.** Unblocks MAP-01, ECO-03, ARC-01, WLD-01.
+10. **Decision session on OQ-01..02, OQ-04..07, OQ-11, OQ-15.** OQ-03 answered (84/168). Unblocks MAP-01, ECO-03, ARC-01, WLD-01.
 11. **ECO-01** Bazaar total level 200 and **ECO-03** Plaza points. Economy health, after the decisions.
 12. **MAP-01** Region map (+ **MAP-04** landing nodes). Foundation for the isles/citadel.
 13. **ARC-01** Enchant tablets and **ARC-02** Essence rework (design doc together).
@@ -202,7 +214,7 @@ Just IDs, in order. Conor re-orders this.
 ARC-03/04/07/08/09 · ITM-01/03/04/05/07 · SKL-01/03/05 · QST-03/05/07/12 ·
 MAP-01b/02/03 · SOC-01/03 · WLD-01 (once decided) · WLD-02 · TTL-00/02/03 ·
 UI-01/02/03/04/06/12 · ART-02/04/05/06 · NTF-05/07/08/09 · ADM-05 Telemetry ·
-SYS-06 clock.
+SYS-06 clock · SYS-07 unused travel-time setting.
 
 ### Later
 
@@ -234,15 +246,16 @@ Direction, Community = Community/Notifications).
 
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
-| BUG-01 | Fennels second step in getting started isn't working properly… | Needs decision (fix direction A/B/C) | **P0** | none | QA | Root cause in [Appendix A](#appendix-a-fennel-getting-started-bug-analysis). **Dup/overlap:** QST-01, QST-02. Blocks QST-02, NTF-06. |
-| BUG-02 | Fix selling "untradeable" items to shops. | In PR | **P0** | OQ-05 | QA + Econ | Items `Tradeable` column (default true; false for Machete, Excavator's Pickaxe, Stolen Coin Purse, Beggar's Hood). Bazaar refuses them client and server side; shops unchanged. Migration `20261012170000` cancels open orders. `validateTradeability` keeps quest-only items untradeable. **Overlap:** QST-12 |
-| BUG-03 | Fixes: todo- drops/recipes | Needs decision | P1 | Conor's list | QA | Placeholder. Needs Conor's specific drop/recipe list. |
+| BUG-01 | Fennels second step in getting started isn't working properly… | Needs re-check (Fennel potato playtest) | **P0** | none | QA | Root cause in [Appendix A](#appendix-a-fennel-getting-started-bug-analysis). Step-latch shipped in #304. **Needs a Fennel potato playtest on test-launch before closing.** **Dup/overlap:** QST-01, QST-02. Blocks QST-02, NTF-06. |
+| BUG-02 | Fix selling "untradeable" items to shops. | On test | **P0** | OQ-05 | QA + Econ | Merged on test-launch via #310. Items `Tradeable` column (default true; false for Machete, Excavator's Pickaxe, Stolen Coin Purse, Beggar's Hood). Bazaar refuses them client and server side; shops unchanged. Migration `20261012170000` cancels open orders. `validateTradeability` keeps quest-only items untradeable. **Overlap:** QST-12 |
+| BUG-03 | Fixes: todo- drops/recipes | Done | P1 | none | QA | Closed 2026-10-13. No fixing PR in `git log`; solved before tracking. |
+| BUG-04 | Ranked PvP reward exploit | On test (merged) | **P0** | none | QA | Fixed in #333: server mints fight ID, picks opponent, pays; cap 5 paid wins/day resetting midnight UTC; idempotent retries. Merged on test-launch. |
 
 ### QST: Quests and dialogue
 
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
-| QST-01 | Fix dialogue for getting started and green thumb | Idea | P1 | SYS-01, BUG-01 | Writer | **Dup cluster** with BUG-01 / QST-02. Green Thumb lines were restored in #270. |
+| QST-01 | Fix dialogue for getting started and green thumb | Done (on test) | P1 | SYS-01, BUG-01 | Writer | Closed 2026-10-13, citing #323 and #270. Green Thumb lines restored in #270; Fennel and King dialogue content in #323. **Dup cluster** with BUG-01 / QST-02. |
 | QST-02 | Make getting started a mandatory tutorial… 5 actions guaranteed as potatoes, only fennel showing at first, then gather, then combat… | Needs decision | P1 | BUG-01, SYS-01, OQ-09 | Design + Writer | Redesigning this could replace the buggy Hold steps entirely |
 | QST-03 | Asking king about the queen and he describes a dragon but doesn't say it outright | Idea | P2 | SYS-01 | Writer | Ties to castle crypt dragon content (branch `castle-crypt-dragon`) |
 | QST-04 | Goblin Trouble (early)… Fight scouts at the Goblin Camp, then the Chief… riverside chest as thievery mark… | Idea | P1 | none (Goblin Camp exists) | Writer + Design | "First real combat quest". Fits the tutorial hand-off from QST-02. |
@@ -256,12 +269,13 @@ Direction, Community = Community/Notifications).
 
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
-| SYS-01 | Create a dedicated dialogue system *(from UI)* | Ready for plan | P1 | none | Systems | **MVP already exists** (Citadel Guide). This item = extend it to every NPC and quest. Blocks QST-01/02/03. |
-| SYS-02 | Should there be a mechanic for moving between locations… | Needs decision | — | OQ-01 | Design | |
-| SYS-03 | Maximum inventory size? | Needs decision | — | OQ-03 | Design + Econ | Blocks UI-12, MEM-01 |
+| SYS-01 | Create a dedicated dialogue system *(from UI)* | Ready for plan | P1 | none | Systems | **MVP already exists** (Citadel Guide). This item = extend it to every NPC and quest. QST-01 done (#323/#270). Still blocks QST-02/03. |
+| SYS-02 | Should there be a mechanic for moving between locations… | Needs decision | — | OQ-01 | Design | This PR records Conor's instant-travel ruling and removes the dead constant; test-launch also tracks that cleanup as SYS-07. |
+| SYS-03 | Maximum inventory size? | On test (decided) | — | none | Design + Econ | Decided 2026-10-13 (Conor): 84 bag slots / 168 bank slots (#332). Blocks UI-12, MEM-01 |
 | SYS-04 | Should there be defense or just health? | Needs decision | — | OQ-04 | Design + Econ | |
 | SYS-05 | Notifications system (plumbing for NTF-\*) | Ready for plan | P1 | none | Community | Today only chat bubbles exist (`notification_bubble.dart`). Blocks NTF-01..09, ADM-03. |
 | SYS-06 | Server time clock… weather art or item *(from UI)* | Idea | P2 | none | Systems + Art | Overlaps SKL-06 (tides) and leaderboard resets (already UTC-hour based) |
+| SYS-07 | Remove the unused travel-time setting | In PR | P2 | none | Systems | Travel stays instant; no player-facing change. Approved 2026-10-13 (Conor). This PR. |
 
 ### ARC: Arcana / Enchanting / Essence / Spells
 
@@ -316,8 +330,8 @@ Direction, Community = Community/Notifications).
 
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
-| MAP-01 | Add a region map. continent map, with regions… | Needs decision | P1 | OQ-01, OQ-11 | Design + UI | **Foundation:** blocks MAP-01b/02/03 |
-| MAP-01b | Regions can be unlocked at 200, 400, 800 total level citadel can be in the middle with a persistent travel button on every map *(from UI)* | Needs decision | P1 | MAP-01, OQ-11 | Design | **Dup** with MAP-01 (unlock rule) and MAP-03 (citadel) |
+| MAP-01 | Add a region map. continent map, with regions… | Needs decision | P1 | OQ-01, OQ-11 | Design + UI | **Foundation:** blocks MAP-01b/02/03. This PR: travel stays instant (no region-gate timers). |
+| MAP-01b | Regions can be unlocked at 200, 400, 800 total level citadel can be in the middle with a persistent travel button on every map *(from UI)* | Needs decision | P1 | MAP-01, OQ-11 | Design | Thresholds 200/400/800 confirmed (OQ-11, 2026-10-12). Still Open: whether quest unlocks also stay. On hold until map assets. **Dup** with MAP-01 (unlock rule) and MAP-03 (citadel) |
 | MAP-02 | Start a new map/region, move the depths there, call it the isles… underwater exploration | Idea | P2 | MAP-01 | Design + Art | "The Depths" is MAP-0009 today |
 | MAP-03 | Move citadel to its own 2nd main map… thievery… low level areas but mostly mid to high | Idea | P2 | MAP-01 | Design | **Dup:** UI "Citadel can be its own region, restoria is a old crumbling empire, the citadel is a nearby empire" → merged here (lore part → WLD-02) |
 | MAP-04 | Add proper landing nodes for sub maps | Idea | P1 | none (listed under OQ-01) | UI | Partly done? Branch `submap-landing-83f5` exists. Confirm what shipped. |
@@ -402,8 +416,8 @@ All depend on SYS-05. Owner: Community.
 | Cluster | Items | Agreed handling |
 |---|---|---|
 | Citadel as region | UI "Citadel can be its own region…", UI "citadel can be in the middle…", MAP-03 | One item, MAP-03. Lore → WLD-02, travel button → MAP-01b |
-| Region unlock vs region map | MAP-01b (200/400/800) vs MAP-01 | MAP-01 builds the map, MAP-01b sets the unlock rule (OQ-11) |
-| Getting Started | BUG-01 Fennel bug, QST-01 dialogue fix, QST-02 mandatory tutorial | Fix BUG-01 first (small, generic). Then do QST-02 and QST-01 as one design pass. |
+| Region unlock vs region map | MAP-01b (200/400/800) vs MAP-01 | MAP-01 builds the map, MAP-01b sets the unlock rule. OQ-11: thresholds 200/400/800 confirmed; quest-unlock overlap still Open; on hold for map assets. |
+| Getting Started | BUG-01 Fennel bug, QST-01 dialogue fix, QST-02 mandatory tutorial | QST-01 closed (#323, #270). BUG-01 needs a Fennel potato playtest before closing. Then QST-02. |
 | Essence | ARC-02 rework, ARC-04 0.1% essence item, ARC-03 spell charging | One "Essence economy" design doc |
 | Enchanting | ARC-01 tablets, ARC-07 piercing, ARC-08 shield | Tablets first, then new enchants ship as tablets |
 | Thievery | SKL-01 loot bags/recipes, SKL-02 companions, ITM-07 lockpick items, QST-07 lockpick quest, MAP-03 citadel thievery | One "Thievery expansion" epic |
@@ -419,14 +433,14 @@ All depend on SYS-05. Owner: Community.
 
 ```
 OQ-01/OQ-11 ─► MAP-01 region map ─► MAP-01b unlocks ─► MAP-02 isles, MAP-03 citadel map
-SYS-01 dialogue system ─► QST-01 dialogue fixes, QST-02 tutorial, QST-03 king/queen
-BUG-01 (persist steps) ─► QST-02 tutorial, NTF-06 quest-step notifications
+SYS-01 dialogue system ─► QST-01 dialogue fixes (done #323/#270), QST-02 tutorial, QST-03 king/queen
+BUG-01 (persist steps; needs Fennel potato playtest) ─► QST-02 tutorial, NTF-06 quest-step notifications
 OQ-15 + Bible ─► ECO-03 plaza points ─► bounty/pvp reward swap, SOC-03 leaderboard payouts
 SYS-05 notifications ─► NTF-01..09
 ARC-01 tablets ─► ARC-07 piercing, ARC-08 shield
 ARC-02 essence rework ─► ARC-03 spell charges, ARC-04 essence item
 OQ-07 religion ─► WLD-01 ─► TTL-03 Pureblooded, Vesper/QST-0009, ITM-01 blessings, ART-06
-OQ-03 inventory size ─► UI-12 tabs, MEM-01 bank space, NTF-02
+OQ-03 inventory size (answered: 84 bag / 168 bank, #332) ─► UI-12 tabs, MEM-01 bank space, NTF-02
 OQ-05 untradeable ─► BUG-02, QST-12, ARC-01
 ADM-01 audit ─► ADM-02 email, ADM-03 dashboard ─► ADM-05 telemetry
 rls-hardening #3–6 (server hall settlement) ─► SOC-01 guild hall tiers
@@ -438,8 +452,9 @@ ART-01 spec ─► ART-02/04/05, UI-01
 
 ## 6. Done archive
 
-Moved here with PR and date once `Live`. Seeded with work that was already done
-when the backlog was approved.
+Moved here with PR and date once on `test-launch` (Conor, 2026-10-13: the Done
+list tracks test-launch; `main` is updated later). Seeded with work that was
+already done when the backlog was approved.
 
 | What | PR / evidence | Date |
 |---|---|---|
@@ -456,12 +471,23 @@ when the backlog was approved.
 | Guild hall tiers 1–3: Build the Hall, Counting Room, Boxing Ring | `packages/ik_rules/lib/src/guild/hall.dart` | ≤ 2026-10-12 |
 | Bazaar: 6 offer slots, 1% tax over 100g | `docs/bazaar-api.md`, `market.dart` | ≤ 2026-10-12 |
 | Enchanted gear sells at Wizard's Shop (2×) and general merchants (1×), not at the Bazaar | PR #301 (on test-launch; PR #302 promotes to main) | 2026-10-12 |
+| SYS-01: show the quest reward popup when a dialogue choice completes a quest | PR #325 (on test-launch) | 2026-10-13 |
+| test(parity): walk Getting Started step-latch through Fennel dialogue | PR #327 (on test-launch) | 2026-10-13 |
+| test(npc): drive Turn in through the real default commit path | PR #328 (on test-launch) | 2026-10-13 |
+| SYS-02b: HandIn latch, farm timer spot, abandon prune | PR #329 (on test-launch) | 2026-10-13 |
+| Keep map node labels inside the view on narrow phones | PR #330 (on test-launch) | 2026-10-13 |
+| test(unattended): test-only step cap so the catch-up self-heal test runs fast | PR #331 (on test-launch) | 2026-10-13 |
+| SYS-03: 84 bag slots / 168 bank slots, leftover loot | PR #332 (on test-launch) | 2026-10-13 |
+| BUG-04: server-authoritative ranked PvP and bounty payouts | PR #333 (on test-launch) | 2026-10-13 |
+| QST-01 Getting Started / Green Thumb dialogue | PR #323, #270 (on test-launch) | 2026-10-13 |
+| BUG-03 todo drops/recipes | solved before tracking (no fixing PR in `git log`) | 2026-10-13 |
 
 ---
 
 ## Appendix A: Fennel "Getting Started" bug analysis
 
-Supports **BUG-01**. Analysis only; no fix has been implemented.
+Supports **BUG-01**. Analysis written before #304 (step-latch). That fix is on
+test-launch; status stays **Needs re-check** until a Fennel potato playtest.
 
 **Root cause (high confidence):** quest steps aren't saved once they're done.
 `getCurrentStepIndex` re-checks every step on every tick, and steps 1–2 of

@@ -122,7 +122,9 @@ void main() {
       1,
     );
     expect(blocked.ok, isFalse);
-    expect(blocked.reason, 'Bank is full ($bankSlotLimit slots).');
+    expect(blocked.code, 'no_room');
+    expect(blocked.reason, 'Your bank is full. Make room for 1 slot and try again.');
+    expect(blocked.noRoom?.toJson(), {'target': 'bank', 'slotsNeeded': 1, 'slotsFree': 0});
 
     final accepted = depositToBank(
       createNewSave(db, 0).copyWith(
@@ -174,5 +176,57 @@ void main() {
       4,
     );
     expect(withdrawn.save!.bank.single.quantity, 2);
+  });
+
+  test('refuses an enchanted withdraw into a full bag that already holds a plain stack', () {
+    final db = databaseOf(loadParityFixtures('save/roundtrip').first);
+    final save = createNewSave(db, 0).copyWith(
+      inventory: [
+        const InventoryStack(itemId: 'ITEM-0100', quantity: 1),
+        for (var index = 0; index < inventorySlotLimit - 1; index += 1)
+          InventoryStack(itemId: 'FILL-$index', quantity: 1),
+      ],
+      bank: const [InventoryStack(itemId: 'ITEM-0100', quantity: 1, enchantmentId: 'ENCH-0001')],
+    );
+    final blocked = withdrawFromBank(save, 0, 1);
+    expect(blocked.ok, isFalse);
+    expect(blocked.code, 'no_room');
+    expect(blocked.reason, 'No room in your bag. Free 1 slot and try again.');
+    expect(blocked.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+    expect(blocked.reason, isNot(contains('Inventory is full')));
+    expect(save.inventory, hasLength(inventorySlotLimit));
+    expect(save.bank.single.enchantmentId, 'ENCH-0001');
+  });
+
+  test('refuses a stack-cap withdraw with stack_full and no slot count', () {
+    final db = databaseOf(loadParityFixtures('save/roundtrip').first);
+    final save = createNewSave(db, 0).copyWith(
+      inventory: const [InventoryStack(itemId: 'ITEM-0002', quantity: inventoryStackMax)],
+      bank: const [InventoryStack(itemId: 'ITEM-0002', quantity: 2)],
+    );
+    final blocked = withdrawFromBank(save, 0, 1);
+    expect(blocked.ok, isFalse);
+    expect(blocked.code, 'no_room');
+    expect(blocked.reason, 'That stack cannot hold more of this item.');
+    expect(blocked.noRoom?.toJson(), {'reason': 'stack_full'});
+    expect(blocked.noRoom?.slotsNeeded, isNull);
+    expect(blocked.noRoom?.slotsFree, isNull);
+    expect(save.inventory.single.quantity, inventoryStackMax);
+    expect(save.bank.single.quantity, 2);
+  });
+
+  test('refuses a stack-cap deposit with stack_full and no slot count', () {
+    final db = databaseOf(loadParityFixtures('save/roundtrip').first);
+    final save = createNewSave(db, 0).copyWith(
+      inventory: const [InventoryStack(itemId: 'ITEM-0002', quantity: 2)],
+      bank: const [InventoryStack(itemId: 'ITEM-0002', quantity: inventoryStackMax)],
+    );
+    final blocked = depositToBank(save, 0, 1);
+    expect(blocked.ok, isFalse);
+    expect(blocked.code, 'no_room');
+    expect(blocked.reason, 'That stack cannot hold more of this item.');
+    expect(blocked.noRoom?.toJson(), {'reason': 'stack_full'});
+    expect(save.inventory.single.quantity, 2);
+    expect(save.bank.single.quantity, inventoryStackMax);
   });
 }

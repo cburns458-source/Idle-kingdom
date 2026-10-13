@@ -13,6 +13,8 @@ import { skillXpProgress } from '../../game/activity/xpProgress'
 import { filterLaunchContent } from '../../game/data/validate'
 import {
   canFitItemQuantity,
+  INVENTORY_SLOT_LIMIT,
+  INVENTORY_STACK_MAX,
   inventorySlotCount,
   inventorySlotsFree,
   maxAddableQuantity,
@@ -144,6 +146,30 @@ function saveFor(kind: 'base' | 'rich' | 'full'): PlayerSave {
   if (kind === 'base') return baseSave(db)
   if (kind === 'rich') return richSave(db)
   return fullBagSave(db, ['ITEM-0100', 'ITEM-0108'])
+}
+
+/** Full bag holding a plain Iron Sword, plus an enchanted Iron Sword in the bank. */
+function enchantedWithdrawFullBag(): PlayerSave {
+  return {
+    ...saveFor('base'),
+    inventory: [
+      { itemId: 'ITEM-0100', quantity: 1 },
+      ...Array.from({ length: INVENTORY_SLOT_LIMIT - 1 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+    ],
+    bank: [{ itemId: 'ITEM-0100', quantity: 1, enchantmentId: 'ENCH-0001' }],
+  }
+}
+
+/** Bag holds a maxed plain stack with free slots; bank holds more of the same. */
+function stackFullWithdrawSave(): PlayerSave {
+  return {
+    ...saveFor('base'),
+    inventory: [{ itemId: 'ITEM-0002', quantity: INVENTORY_STACK_MAX }],
+    bank: [{ itemId: 'ITEM-0002', quantity: 2 }],
+  }
 }
 
 export const coreRuleScenarios: ParityScenario[] = [
@@ -353,6 +379,18 @@ export const coreRuleScenarios: ParityScenario[] = [
       bankMoveJson(
         withdrawFromBank({ ...saveFor('full'), bank: [{ itemId: 'ITEM-0002', quantity: 1 }] }, 0, 1),
       ),
+  ),
+  scenario(
+    'inventory/bank',
+    'enchanted-withdraw-full-bag',
+    withBankMove(enchantedWithdrawFullBag(), 'withdraw', 0, 1),
+    () => bankMoveJson(withdrawFromBank(enchantedWithdrawFullBag(), 0, 1)),
+  ),
+  scenario(
+    'inventory/bank',
+    'stack-full-withdraw',
+    withBankMove(stackFullWithdrawSave(), 'withdraw', 0, 1),
+    () => bankMoveJson(withdrawFromBank(stackFullWithdrawSave(), 0, 1)),
   ),
   scenario(
     'inventory/bank',

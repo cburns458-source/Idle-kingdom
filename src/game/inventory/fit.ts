@@ -12,15 +12,48 @@ import { isGoldCurrencyItem } from './gold'
 
 export type RewardFailureCode = 'no_room'
 
+export type NoRoomStackReason = 'stack_full'
+
+export type NoRoomTarget = 'bank'
+
 export interface NoRoom {
-  /** New bag slots the grants need; stacks already in the bag cost none. */
-  slotsNeeded: number
-  slotsFree: number
+  /** New slots the grants need; stacks already in the container cost none. */
+  slotsNeeded?: number
+  slotsFree?: number
+  /** Set when a mergeable stack is at cap and free slots would not help. */
+  reason?: NoRoomStackReason
+  /** Which container is full. Omitted for the bag. */
+  target?: NoRoomTarget
 }
 
 export interface ItemGrant {
   itemId: string
   quantity: number
+  enchantmentId?: string | null
+}
+
+/** New slots [grants] need: one per distinct unenchanted non-gold pile, or one per enchanted item. */
+export function slotsNeededForGrants(
+  db: GameDatabase | undefined,
+  save: PlayerSave,
+  grants: readonly ItemGrant[],
+): number {
+  const seen = new Set<string>()
+  let needed = 0
+  for (const grant of grants) {
+    if (grant.quantity <= 0) continue
+    const enchantmentId = grant.enchantmentId ?? null
+    if (isGoldCurrencyItem(grant.itemId, db) && !enchantmentId) continue
+    if (enchantmentId) {
+      needed += Math.floor(grant.quantity)
+      continue
+    }
+    if (seen.has(grant.itemId)) continue
+    seen.add(grant.itemId)
+    if (mergeableStackIndex(save.inventory, grant.itemId, enchantmentId) >= 0) continue
+    needed += 1
+  }
+  return needed
 }
 
 /** New bag slots [itemIds] need against [save]: one per distinct non-gold item without a pile to grow. */
@@ -29,21 +62,35 @@ export function slotsNeededForItems(
   save: PlayerSave,
   itemIds: readonly string[],
 ): number {
-  const seen = new Set<string>()
-  let needed = 0
-  for (const itemId of itemIds) {
-    if (isGoldCurrencyItem(itemId, db) || seen.has(itemId)) continue
-    seen.add(itemId)
-    if (mergeableStackIndex(save.inventory, itemId) >= 0) continue
-    needed += 1
-  }
-  return needed
+  return slotsNeededForGrants(
+    db,
+    save,
+    itemIds.map((itemId) => ({ itemId, quantity: 1 })),
+  )
 }
 
-/** `No room in your bag. Free N slot(s) and try again.` */
+/** Human-readable refusal for a `no_room` payload. */
 export function noRoomReason(noRoom: NoRoom): string {
-  const short = Math.max(1, noRoom.slotsNeeded - noRoom.slotsFree)
+  if (noRoom.reason === 'stack_full') {
+    return 'That stack cannot hold more of this item.'
+  }
+  const slotsNeeded = noRoom.slotsNeeded ?? 1
+  const slotsFree = noRoom.slotsFree ?? 0
+  const short = Math.max(1, slotsNeeded - slotsFree)
+  if (noRoom.target === 'bank') {
+    return `Your bank is full. Make room for ${short} slot${short === 1 ? '' : 's'} and try again.`
+  }
   return `No room in your bag. Free ${short} slot${short === 1 ? '' : 's'} and try again.`
+}
+
+function noRoomFromFit(fits: boolean, slotsNeeded: number, slotsFree: number): NoRoom {
+  if (!fits && slotsNeeded === 0 && slotsFree > 0) {
+    return { reason: 'stack_full' }
+  }
+  return {
+    slotsNeeded: fits ? slotsNeeded : Math.max(1, slotsNeeded),
+    slotsFree,
+  }
 }
 
 /** Whether every grant fits in the bag together, added in order on a copy of [save]. */
@@ -57,29 +104,41 @@ export function rewardsFit(
   let working = save
   let fits = true
   for (const grant of wanted) {
-    const added = addItemsToInventory(working, grant.itemId, grant.quantity, null, false, db, slotLimit)
+    const added = addItemsToInventory(
+      working,
+      grant.itemId,
+      grant.quantity,
+      grant.enchantmentId ?? null,
+      false,
+      db,
+      slotLimit,
+    )
     if (added.added < Math.floor(grant.quantity)) {
       fits = false
       break
     }
     working = added.save
   }
-  const slotsNeeded = slotsNeededForItems(
-    db,
-    save,
-    wanted.map((grant) => grant.itemId),
-  )
-  return {
-    fits,
-    slotsNeeded: fits ? slotsNeeded : Math.max(1, slotsNeeded),
-    slotsFree: inventorySlotsFree(save, slotLimit),
-  }
+  const slotsNeeded = slotsNeededForGrants(db, save, wanted)
+  const slotsFree = inventorySlotsFree(save, slotLimit)
+  return { fits, ...noRoomFromFit(fits, slotsNeeded, slotsFree) }
 }
 
 /**
  * `null` when every grant fits together; otherwise the `no_room` counts for
  * the whole list. Paid and claimed paths use this before changing any state.
  */
+/** The `no_room` fields only — never `fits` from [rewardsFit]. */
+export function noRoomPayload(noRoom: NoRoom): NoRoom {
+  if (noRoom.reason === 'stack_full') return { reason: 'stack_full' }
+  const payload: NoRoom = {
+    slotsNeeded: noRoom.slotsNeeded,
+    slotsFree: noRoom.slotsFree,
+  }
+  if (noRoom.target) payload.target = noRoom.target
+  return payload
+}
+
 export function noRoomFor(
   save: PlayerSave,
   grants: readonly ItemGrant[],
@@ -87,7 +146,8 @@ export function noRoomFor(
   slotLimit: number = INVENTORY_SLOT_LIMIT,
 ): NoRoom | null {
   const fit = rewardsFit(db, save, grants, slotLimit)
-  return fit.fits ? null : { slotsNeeded: fit.slotsNeeded, slotsFree: fit.slotsFree }
+  if (fit.fits) return null
+  return noRoomPayload(fit)
 }
 
 /** Shared `{ok:false, code:'no_room'}` refusal used by shop, bank, and mail. */

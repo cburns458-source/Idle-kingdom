@@ -92,6 +92,32 @@ void main() {
     expect(_index(db, save), 0);
   });
 
+  test('the old panel talk does not mark QSTP-0014 or QSTP-0016 done', () {
+    void showDone(PlayerSave save, String stepId) {
+      final step = getQuestStep(db, _quest, stepId);
+      expect(isStepLatched(save, _quest, stepId), isFalse);
+      expect(isStepComplete(db, save, _quest, step?.notes ?? '', stepId), isFalse);
+      expect(getQuestProgress(save, _quest).counters?['step:$stepId'], isNull);
+    }
+
+    var save = applyQuestStepUnlocks(db, _setCount(_activeGettingStarted(db), _raw, 5));
+    expect(_index(db, save), 1);
+    save = applyQuestTalkProgress(db, save, _fennel);
+    expect(_index(db, save), 1);
+    showDone(save, 'QSTP-0014');
+    showDone(save, 'QSTP-0016');
+
+    final panel = talkWithQuestNpc(
+      db,
+      applyQuestStepUnlocks(db, _setCount(_activeGettingStarted(db), _raw, 5)),
+      _fennel,
+    );
+    expect(panel.ok, isTrue);
+    showDone(panel.save!, 'QSTP-0014');
+    showDone(panel.save!, 'QSTP-0016');
+    expect(_index(db, panel.save!), 1);
+  });
+
   test('unlocks from a latched step stay applied', () {
     final raw = Map<String, Object?>.from(contentDatabaseJson()! as Map);
     final steps = (raw['QuestSteps']! as List).map((row) {

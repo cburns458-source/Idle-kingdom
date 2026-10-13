@@ -67,8 +67,10 @@ class FakeExchange {
     }
   }
 
-  static RemoteInvokeResult _refused(String message) =>
-      RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'error': message});
+  static RemoteInvokeResult _refused(
+    String message, [
+    RemoteRow extra = const <String, Object?>{},
+  ]) => RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'error': message, ...extra});
 
   // --- Reads -----------------------------------------------------------------
 
@@ -456,12 +458,16 @@ class FakeExchange {
     var items = 0;
     var gold = 0;
     var left = 0;
+    var purseFull = false;
     for (final entry in waiting) {
       final applied = entry.isGold
           ? fakeExchangeGiveGold(payload, entry.gold)
           : fakeExchangeGiveItems(payload, entry.itemId!, entry.quantity);
       if (applied == null) {
         left += 1;
+        if (entry.isGold && fakeExchangeGold(payload) >= bazaarOfferValueCap) {
+          purseFull = true;
+        }
         continue;
       }
       payload = applied;
@@ -472,7 +478,22 @@ class FakeExchange {
         items += entry.quantity;
       }
     }
-    if (taken.isEmpty) return _refused('Your bag is full. Make room and collect again.');
+    final leftoverItems = [
+      for (final entry in waiting)
+        if (!taken.contains(entry) && !entry.isGold) entry,
+    ];
+    final rowsLeft = leftoverItems.length;
+    final noRoom = leftoverItems.isEmpty ? null : _noRoomForLeftovers(payload, leftoverItems);
+
+    if (taken.isEmpty) {
+      if (purseFull) return _refused('Your purse is full.');
+      final blocked = noRoom ?? const NoRoom(slotsNeeded: 1, slotsFree: 0);
+      return _refused(noRoomReason(blocked), <String, Object?>{
+        'code': 'no_room',
+        'noRoom': blocked.toJson(),
+        'rowsLeft': rowsLeft,
+      });
+    }
 
     box.removeWhere(taken.contains);
     _writeSave(row, payload);
@@ -483,8 +504,22 @@ class FakeExchange {
       'items': items,
       'gold': gold,
       'left': left,
+      'rowsLeft': rowsLeft,
+      if (noRoom != null) 'code': 'no_room',
+      if (noRoom != null) 'noRoom': noRoom.toJson(),
       'message': _collectedMessage(items, gold, left),
     });
+  }
+
+  static NoRoom? _noRoomForLeftovers(
+    Map<String, Object?> payload,
+    List<FakeExchangeCollect> leftoverItems,
+  ) {
+    if (leftoverItems.isEmpty) return null;
+    final save = PlayerSave.fromJson(payload);
+    return noRoomFor(save, [
+      for (final entry in leftoverItems) ItemGrant(itemId: entry.itemId!, quantity: entry.quantity),
+    ]);
   }
 
   String _collectedMessage(int items, int gold, int left) {

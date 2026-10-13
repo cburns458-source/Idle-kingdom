@@ -12,7 +12,6 @@ import {
   resolveActiveMapId,
 } from './travel'
 import {
-  DEFAULT_TRAVEL_DURATION_MS,
   MAIN_MAP_ID,
   CASTLE_MAP_ID,
   CAVE_MAP_ID,
@@ -53,10 +52,6 @@ const rawDatabase = JSON.parse(
 )
 
 describe('travel rules', () => {
-  it('treats every Travel button as instant', () => {
-    expect(DEFAULT_TRAVEL_DURATION_MS).toBe(0)
-  })
-
   it('allows main-map node travel between Launch overworld locations', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(canTravelTo(launch, 'LOC-0002', 'LOC-0001', MAIN_MAP_ID)).toBe(true)
