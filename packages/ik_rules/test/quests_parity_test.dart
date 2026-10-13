@@ -170,6 +170,43 @@ void main() {
 
     for (final fixture in loadParityFixtures('quests/step-latch')) {
       test(fixture.name, () {
+        if (fixture.name == 'handin-skipped-past') {
+          final db = databaseOf(fixture);
+          final quest = getQuest(db, 'QST-0001')!;
+          final base = saveOf(fixture);
+          PlayerSave withCounters(Map<String, num> counters) => base.copyWith(
+            quests: [
+              ...base.quests.where((row) => row.questId != 'QST-0001'),
+              QuestProgress(
+                questId: 'QST-0001',
+                status: 'active',
+                progress: counters.values.fold<num>(0, (sum, value) => sum + value),
+                counters: counters,
+              ),
+            ],
+          );
+          Map<String, Object?> snapshot(String label, PlayerSave save) => <String, Object?>{
+            'label': label,
+            'currentStep': getCurrentStepId(db, save, quest),
+            'complete': isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002'),
+            'passed': isStepPassed(db, save, 'QST-0001', 'QSTP-0002'),
+            'progress': getQuestProgress(save, 'QST-0001').toJson(),
+          };
+          expect(
+            checkParity(fixture, {
+              'cases': [
+                snapshot(
+                  'partial',
+                  withCounters({'step:QSTP-0001': 1, 'handIn:QSTP-0002:ITEM-0058': 4}),
+                ),
+                snapshot('latched', withCounters({'step:QSTP-0001': 1, 'step:QSTP-0002': 1})),
+                snapshot('talk-only', withCounters({'step:QSTP-0001': 1})),
+              ],
+            }),
+            isNull,
+          );
+          return;
+        }
         final db = databaseOf(fixture);
         final quest = getQuest(db, 'QST-0006')!;
         final stages = <Object?>[];
@@ -185,9 +222,19 @@ void main() {
             const QuestProgress(questId: 'QST-0006', status: 'active', progress: 0, counters: {}),
           ],
         );
+        PlayerSave showFennel(PlayerSave save, {required bool cooked}) {
+          final shown = cooked
+              ? chooseDialogue(db, save, 'DLG-0005', 'DNODE-0007', 'DCH-0009')
+              : chooseDialogue(db, save, 'DLG-0003', 'DNODE-0004', 'DCH-0005');
+          if (!shown.ok) {
+            throw StateError('Fennel ${cooked ? 'cooked' : 'raw'} show failed: ${shown.reason}');
+          }
+          return shown.save;
+        }
+
         save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0025', 5));
         record('hold', save);
-        save = applyQuestTalkProgress(db, save, 'NPC-0014');
+        save = showFennel(save, cooked: false);
         record('show', save);
         save = applyQuestVisitProgress(db, save, 'LOC-0023');
         for (var cooked = 1; cooked <= 5; cooked++) {
@@ -195,7 +242,7 @@ void main() {
           save = applyQuestProcessProgress(db, save, 'RCP-0001');
           record('cook-$cooked', save);
         }
-        save = applyQuestTalkProgress(db, save, 'NPC-0014');
+        save = showFennel(save, cooked: true);
         record('deliver', save);
         save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0058', 0));
         record('sold', save);

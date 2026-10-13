@@ -11,6 +11,7 @@ import { spawnCritterAtLocation } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
 import { assignRace } from '../races/assignRace'
 import { cheatAbandonQuest, getQuest, resetIntroFlags, resetQuestProgress } from '../quests/quests'
+import { pruneLockedTimerSpots } from '../timers/locationTimers'
 import type { PlayerSave, SkillProgress } from '../save/types'
 import { withRecalculatedVitals } from '../equipment/vitals'
 
@@ -267,7 +268,7 @@ export function applyDevCommand(
       if (!abandoned.ok) return failed(save, abandoned.reason)
       const held = abandoned.deletedHandIns.reduce((sum, line) => sum + line.quantity, 0)
       return ok(
-        abandoned.save,
+        pruneLockedTimerSpots(db, abandoned.save),
         held > 0
           ? `Abandoned ${quest['Display Name']}. ${held} handed-in item${held === 1 ? '' : 's'} deleted.`
           : `Abandoned ${quest['Display Name']}.`,

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { chooseDialogue } from '../dialogue/engine'
 import { stepProgressGroup } from '../dialogue/stepProgress'
+import { talkWithQuestNpc } from '../npcs/conversation'
 import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
 import {
@@ -13,7 +14,7 @@ import {
   farmBotanyUnlocked,
 } from '../timers/locationTimers'
 import { getQuest, getQuestProgress } from './quests'
-import { applyQuestStepUnlocks, getCurrentStepId, isStepPassed } from './steps'
+import { applyQuestStepUnlocks, getCurrentStepId, isStepComplete, isStepPassed } from './steps'
 
 type Row = Record<string, unknown>
 
@@ -37,7 +38,17 @@ function launchRow(row: Row): Row {
 
 const rawDatabase = {
   ...content,
-  QuestSteps: content.QuestSteps!.map((row) => ({ ...row, ...(TYPED[row['Step ID'] as string] ?? {}) })),
+  QuestSteps: [
+    ...content.QuestSteps!.map((row) => ({ ...row, ...(TYPED[row['Step ID'] as string] ?? {}) })),
+    launchRow({
+      'Step ID': 'QSTP-9202',
+      'Quest ID': 'QST-0001',
+      'Step Order': 3,
+      'Journal Label': 'Later talk',
+      'Step Type': 'Talk',
+      'Step NPC': 'NPC-0001',
+    }),
+  ],
   Dialogues: [
     ...content.Dialogues!,
     launchRow({
@@ -155,6 +166,7 @@ describe('farm patch for dialogue-only players (Green Thumb)', () => {
     expect(talked.ok).toBe(true)
     expect(getQuestProgress(talked.save, 'QST-0011').counters).toEqual({ 'step:QSTP-0023': 1 })
     expect(farmBotanyUnlocked(db, talked.save)).toBe(true)
+    expect(talked.save.discoveredTimerSpotIds).toContain(`botany:${FARM_LOCATION_ID}`)
   })
 
   it('still unlocks through the panel talk counter and on completion', () => {
@@ -167,5 +179,42 @@ describe('farm patch for dialogue-only players (Green Thumb)', () => {
 
   it('ignores step marks on untyped steps, as before #323', () => {
     expect(farmBotanyUnlocked(untypedDb, withQuest('QST-0011', { 'step:QSTP-0023': 1 }))).toBe(false)
+  })
+
+  it('adds the farm timer spot after panel talk', () => {
+    const talked = talkWithQuestNpc(db, withQuest('QST-0011', {}), 'NPC-0014')
+    expect(talked.ok).toBe(true)
+    if (!talked.ok) return
+    expect(talked.save.discoveredTimerSpotIds).toContain(`botany:${FARM_LOCATION_ID}`)
+  })
+})
+
+describe('HandIn steps only count with their step latch (option b)', () => {
+  const feast = () => getQuest(db, 'QST-0001')!
+
+  it('stays current when a later step is latched', () => {
+    const save = withQuest('QST-0001', { 'step:QSTP-0001': 1, 'step:QSTP-9202': 1 })
+    expect(isStepPassed(db, save, 'QST-0001', 'QSTP-0002')).toBe(true)
+    expect(isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002')).toBe(false)
+    expect(getCurrentStepId(db, save, feast())).toBe('QSTP-0002')
+    expect(stepProgressGroup(db, save, 'QST-0001', 'QSTP-0002')?.done).toBe(false)
+  })
+
+  it('counts as done once the step latch is written', () => {
+    const save = withQuest('QST-0001', { 'step:QSTP-0001': 1, 'step:QSTP-0002': 1 })
+    expect(isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002')).toBe(true)
+    expect(getCurrentStepId(db, save, feast())).toBe('QSTP-9202')
+    expect(stepProgressGroup(db, save, 'QST-0001', 'QSTP-0002')?.done).toBe(true)
+  })
+
+  it('stays unfinished when only a partial hand-in counter is present', () => {
+    const save = withQuest('QST-0001', {
+      'step:QSTP-0001': 1,
+      'handIn:QSTP-0002:ITEM-0058': 4,
+      'step:QSTP-9202': 1,
+    })
+    expect(isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002')).toBe(false)
+    expect(getCurrentStepId(db, save, feast())).toBe('QSTP-0002')
+    expect(stepProgressGroup(db, save, 'QST-0001', 'QSTP-0002')?.done).toBe(false)
   })
 })

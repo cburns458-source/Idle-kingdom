@@ -375,6 +375,30 @@ export function discoverTimerSpotsForLocation(
   return { ...save, discoveredTimerSpotIds: [...discovered] }
 }
 
+/** Adds the farm Botany spot once Green Thumb / Fennel has unlocked it. */
+export function discoverUnlockedFarmSpot(db: GameDatabase, save: PlayerSave): PlayerSave {
+  if (!farmBotanyUnlocked(db, save)) return save
+  return discoverTimerSpotsForLocation(db, save, FARM_LOCATION_ID)
+}
+
+/**
+ * Drops locked Botany spots from the timers list. A relocked farm with a crop
+ * still growing stays listed until that timer is collected.
+ */
+export function pruneLockedTimerSpots(db: GameDatabase, save: PlayerSave): PlayerSave {
+  const discovered = save.discoveredTimerSpotIds ?? []
+  const kept = discovered.filter((key) => {
+    const parsed = parseTimerSpotKey(key)
+    if (!parsed || parsed.kind !== 'botany') return true
+    if (botanyPatchUnlocked(db, save, parsed.locationId)) return true
+    return Boolean(timerAtLocationKind(save, parsed.locationId, 'botany'))
+  })
+  if (kept.length === discovered.length && kept.every((key, index) => key === discovered[index])) {
+    return save
+  }
+  return { ...save, discoveredTimerSpotIds: kept }
+}
+
 export function timerCompletesAtMs(timer: LocationTimer): number {
   return Date.parse(timer.startedAt) + timer.durationMs
 }

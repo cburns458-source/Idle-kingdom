@@ -32,6 +32,7 @@ import {
   type DialogueStepType,
 } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
+import { discoverUnlockedFarmSpot } from '../timers/locationTimers'
 import { getSkillProgress } from '../activity/xp'
 import { totalLevel } from '../skills/totals'
 import {
@@ -616,7 +617,7 @@ function guardStep(
 }
 
 function latchAndUnlock(db: GameDatabase, save: PlayerSave, questId: string, stepId: string): PlayerSave {
-  return applyQuestStepUnlocks(db, latchStep(save, questId, stepId))
+  return discoverUnlockedFarmSpot(db, applyQuestStepUnlocks(db, latchStep(save, questId, stepId)))
 }
 
 /** Unenchanted bag counts that changed, sorted by item ID. */

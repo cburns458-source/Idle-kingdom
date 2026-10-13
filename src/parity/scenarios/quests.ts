@@ -7,10 +7,16 @@ import {
   applyQuestDefeatProgress,
   applyQuestLearnRecipeProgress,
   applyQuestProcessProgress,
-  applyQuestTalkProgress,
   applyQuestVisitProgress,
 } from '../../game/quests/progress'
-import { applyQuestStepUnlocks, getCurrentStepIndex } from '../../game/quests/steps'
+import { chooseDialogue } from '../../game/dialogue/engine'
+import {
+  applyQuestStepUnlocks,
+  getCurrentStepId,
+  getCurrentStepIndex,
+  isStepComplete,
+  isStepPassed,
+} from '../../game/quests/steps'
 import { addItemToInventory } from '../../game/activity/rewards'
 import {
   acceptQuest,
@@ -179,7 +185,9 @@ export const questScenarios: ParityScenario[] = [
     }
   }),
 
-  // BUG-01: Getting Started walks hold -> talk -> cook 5 -> talk -> sell cooked.
+  // BUG-01: Getting Started walks hold -> Fennel show (DCH-0005) -> cook 5 ->
+  // Fennel show (DCH-0009) -> sell cooked. The Show steps (QSTP-0014 / QSTP-0016)
+  // only latch through those dialogue choices, not the panel talk.
   scenario('quests/step-latch', 'getting-started', withSave('base'), () => {
     const db = contentDatabase()
     const quest = getQuest(db, 'QST-0006')!
@@ -190,6 +198,17 @@ export const questScenarios: ParityScenario[] = [
         stepIndex: getCurrentStepIndex(db, save, quest),
         progress: getQuestProgress(save, 'QST-0006') as unknown as JsonValue,
       })
+    const showFennel = (save: PlayerSave, which: 'raw' | 'cooked'): PlayerSave => {
+      const [dialogueId, nodeId, choiceId] =
+        which === 'raw'
+          ? (['DLG-0003', 'DNODE-0004', 'DCH-0005'] as const)
+          : (['DLG-0005', 'DNODE-0007', 'DCH-0009'] as const)
+      const shown = chooseDialogue(db, save, dialogueId, nodeId, choiceId)
+      if (!shown.ok) {
+        throw new Error(`Fennel ${which} show failed: ${shown.reason}`)
+      }
+      return shown.save
+    }
     const base = saveFor('base')
     let save: PlayerSave = {
       ...base,
@@ -200,7 +219,7 @@ export const questScenarios: ParityScenario[] = [
     }
     save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0025', 5))
     record('hold', save)
-    save = applyQuestTalkProgress(db, save, 'NPC-0014')
+    save = showFennel(save, 'raw')
     record('show', save)
     save = applyQuestVisitProgress(db, save, 'LOC-0023')
     for (let cooked = 1; cooked <= 5; cooked += 1) {
@@ -208,11 +227,43 @@ export const questScenarios: ParityScenario[] = [
       save = applyQuestProcessProgress(db, save, 'RCP-0001')
       record(`cook-${cooked}`, save)
     }
-    save = applyQuestTalkProgress(db, save, 'NPC-0014')
+    save = showFennel(save, 'cooked')
     record('deliver', save)
     save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0058', 0))
     record('sold', save)
     return { stages, save: asJson(save) }
+  }),
+
+  scenario('quests/step-latch', 'handin-skipped-past', withSave('base'), () => {
+    const db = contentDatabase()
+    const quest = getQuest(db, 'QST-0001')!
+    const base = saveFor('base')
+    const withCounters = (counters: Record<string, number>): PlayerSave => ({
+      ...base,
+      quests: [
+        ...base.quests.filter((row) => row.questId !== 'QST-0001'),
+        {
+          questId: 'QST-0001',
+          status: 'active',
+          progress: Object.values(counters).reduce((sum, value) => sum + value, 0),
+          counters,
+        },
+      ],
+    })
+    const snapshot = (label: string, save: PlayerSave) => ({
+      label,
+      currentStep: getCurrentStepId(db, save, quest),
+      complete: isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002'),
+      passed: isStepPassed(db, save, 'QST-0001', 'QSTP-0002'),
+      progress: getQuestProgress(save, 'QST-0001') as unknown as JsonValue,
+    })
+    return {
+      cases: [
+        snapshot('partial', withCounters({ 'step:QSTP-0001': 1, 'handIn:QSTP-0002:ITEM-0058': 4 })),
+        snapshot('latched', withCounters({ 'step:QSTP-0001': 1, 'step:QSTP-0002': 1 })),
+        snapshot('talk-only', withCounters({ 'step:QSTP-0001': 1 })),
+      ],
+    }
   }),
 
   scenario('world/submaps', 'topology', withSave('base', { mapIds: MAP_IDS }), () => {
