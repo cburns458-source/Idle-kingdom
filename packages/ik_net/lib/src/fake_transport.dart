@@ -951,6 +951,22 @@ class FakeTransport implements RemoteTransport {
     });
   }
 
+  static const String saveVersionConflictReason = 'Save version conflict. Sync and retry.';
+
+  bool _saveVersionConflicts(RemoteRow body, RemoteRow saveRow) {
+    final expected = body['version'];
+    if (expected is! num) return false;
+    return expected.toInt() != ((saveRow['version'] as num?) ?? 1).toInt();
+  }
+
+  RemoteInvokeResult _saveVersionConflictResult() {
+    return const RemoteInvokeResult.ok(<String, Object?>{
+      'error': saveVersionConflictReason,
+      'phase': 2,
+      'conflict': true,
+    });
+  }
+
   RemoteInvokeResult? _applyRankedPvpFight(
     String userId,
     String username,
@@ -1042,6 +1058,10 @@ class FakeTransport implements RemoteTransport {
       'them_max_hp': fight.themMaxHp,
       'wins_remaining': applied.winsRemaining,
     });
+    if (_saveVersionConflicts(body, saveRow)) {
+      results.removeWhere((row) => row['user_id'] == userId && row['fight_id'] == fightId);
+      return _saveVersionConflictResult();
+    }
     saveRow['payload'] = applied.save.toJson();
     final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;
     saveRow['version'] = version;
@@ -1119,6 +1139,14 @@ class FakeTransport implements RemoteTransport {
     } else if (existing['user_id'] == userId &&
         (prepared.save!.bountyClaimedIds.contains(bountyId))) {
       return const RemoteInvokeResult.failed('You already claimed this bounty.');
+    }
+    if (_saveVersionConflicts(body, saveRow)) {
+      if (existing == null) {
+        claims.removeWhere(
+          (row) => row['hour_key'] == board.hourKey && row['bounty_id'] == bountyId,
+        );
+      }
+      return _saveVersionConflictResult();
     }
     final rewarded = applyBountyReward(prepared.save!, bounty, firstCompleter);
     saveRow['payload'] = rewarded.save.toJson();

@@ -7,6 +7,10 @@
 -- bounty_claims stays readable so the Plaza board can name who was first.
 -- Clients lose INSERT (policy and grant). The game function inserts the first
 -- completer in the same transaction as the save update.
+--
+-- fight_id is any uuid here. The game function is the only caller
+-- (service_role). It mints the id in loadRankedFightContext and refuses any
+-- id that is not that mint or a row already in ranked_pvp_results.
 
 create table if not exists public.ranked_pvp_results (
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -115,8 +119,10 @@ begin
      and version = p_expected_version
   returning version into v_version;
 
+  -- A normal RETURN after INSERT would commit the claim with no payout.
+  -- RAISE rolls the insert back (function-level savepoint) before the JSON.
   if v_version is null then
-    return jsonb_build_object('ok', false, 'reason', 'Save version conflict. Sync and retry.', 'conflict', true);
+    raise exception 'save_version_conflict' using errcode = 'P0001';
   end if;
 
   return jsonb_build_object(
@@ -131,6 +137,16 @@ begin
       'claimedAt', v_claim.claimed_at
     )
   );
+exception
+  when raise_exception then
+    if SQLERRM = 'save_version_conflict' then
+      return jsonb_build_object(
+        'ok', false,
+        'reason', 'Save version conflict. Sync and retry.',
+        'conflict', true
+      );
+    end if;
+    raise;
 end;
 $$;
 
@@ -218,8 +234,10 @@ begin
      and version = p_expected_version
   returning version into v_version;
 
+  -- A normal RETURN after INSERT would keep the fight row unpaid.
+  -- RAISE rolls the insert back so a retry can record and pay the fight.
   if v_version is null then
-    return jsonb_build_object('ok', false, 'reason', 'Save version conflict. Sync and retry.', 'conflict', true);
+    raise exception 'save_version_conflict' using errcode = 'P0001';
   end if;
 
   return jsonb_build_object(
@@ -232,6 +250,16 @@ begin
     'code', p_code,
     'winsRemaining', coalesce(p_wins_remaining, 0)
   );
+exception
+  when raise_exception then
+    if SQLERRM = 'save_version_conflict' then
+      return jsonb_build_object(
+        'ok', false,
+        'reason', 'Save version conflict. Sync and retry.',
+        'conflict', true
+      );
+    end if;
+    raise;
 end;
 $$;
 

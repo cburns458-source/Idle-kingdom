@@ -1275,6 +1275,48 @@ void main() {
     },
   );
 
+  test('hosted bounty_turn_in rolls back the claim when the save version conflicts', () async {
+    final stamp = jsDateParse('2026-08-12T21:00:00.000Z');
+    final transport = FakeTransport(database: _database(), nowMs: () => stamp);
+    final hero = await _signedIn(transport, MemorySaveStorage(), startMs: stamp);
+    final board = hourlyBountyBoard(stamp);
+    final bounty = board.bounties.first;
+    final db = _database();
+    final ready = createNewSave(db, stamp).copyWith(
+      characterName: 'Hero',
+      bountyHourKey: board.hourKey,
+      bountyProgress: bounty.kind == 'gather_deliver'
+          ? const <String, num>{}
+          : <String, num>{bounty.id: bounty.amount},
+      inventory: bounty.kind == 'gather_deliver'
+          ? <InventoryStack>[InventoryStack(itemId: bounty.targetId, quantity: bounty.amount)]
+          : const <InventoryStack>[],
+    );
+    expect((await seedHostedSave(hero, transport, ready)).ok, isTrue);
+    final goldBefore = ready.gold;
+    transport.tables[RemoteTables.saves]!.single['version'] = 9;
+
+    final conflicted = await hero.gameCommand('bounty_turn_in', <String, Object?>{
+      'bountyId': bounty.id,
+    });
+    expect(conflicted.ok, isFalse);
+    expect(conflicted.reason, FakeTransport.saveVersionConflictReason);
+    expect(transport.tables[RemoteTables.bountyClaims], isEmpty);
+    expect((transport.tables[RemoteTables.saves]!.single['payload'] as Map)['gold'], goldBefore);
+    expect(
+      (transport.tables[RemoteTables.saves]!.single['payload'] as Map)['bountyClaimedIds'],
+      isEmpty,
+    );
+
+    transport.tables[RemoteTables.saves]!.single['version'] = hero.hostedSaveVersion;
+    final retry = await hero.gameCommand('bounty_turn_in', <String, Object?>{
+      'bountyId': bounty.id,
+    });
+    expect(retry.ok, isTrue, reason: retry.reason);
+    expect(retry.firstCompleter, isTrue);
+    expect(transport.tables[RemoteTables.bountyClaims], hasLength(1));
+  });
+
   test('hosted ranked_pvp_fight refuses a faked win and an unknown fight id', () async {
     final transport = FakeTransport(database: _database());
     final hero = await _signedIn(transport, MemorySaveStorage());
@@ -1349,6 +1391,40 @@ void main() {
       expect(forced.goldGained, 0);
     }
   });
+
+  test(
+    'hosted ranked_pvp_fight rolls back the fight row when the save version conflicts',
+    () async {
+      final transport = FakeTransport(database: _database(), nowMs: () => _nowMs);
+      final hero = await _signedIn(transport, MemorySaveStorage());
+      final db = _database();
+      final heroSave = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+      expect((await seedHostedSave(hero, transport, heroSave)).ok, isTrue);
+
+      final rival = _service(FakeTransport.joining(transport), MemorySaveStorage());
+      expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+      final rivalSave = createNewSave(db, _nowMs).copyWith(characterName: 'Rival');
+      expect((await seedHostedSave(rival, transport, rivalSave)).ok, isTrue);
+      expect((await rival.savePvpEquipment(rivalSave)).ok, isTrue);
+
+      final goldBefore = heroSave.gold;
+      final heroRow = transport.tables[RemoteTables.saves]!.firstWhere(
+        (row) => row['user_id'] == hero.session!.userId,
+      );
+      heroRow['version'] = 9;
+
+      final conflicted = await hero.gameCommand('ranked_pvp_fight');
+      expect(conflicted.ok, isFalse);
+      expect(conflicted.reason, FakeTransport.saveVersionConflictReason);
+      expect(transport.tables[RemoteTables.rankedPvpResults], isEmpty);
+      expect((heroRow['payload'] as Map)['gold'], goldBefore);
+
+      heroRow['version'] = hero.hostedSaveVersion;
+      final retry = await hero.gameCommand('ranked_pvp_fight');
+      expect(retry.ok, isTrue, reason: retry.reason);
+      expect(transport.tables[RemoteTables.rankedPvpResults], hasLength(1));
+    },
+  );
 
   test('needs an account before it will touch the bounty board', () async {
     final transport = FakeTransport();
