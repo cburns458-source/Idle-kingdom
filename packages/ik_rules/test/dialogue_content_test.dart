@@ -232,6 +232,27 @@ void main() {
     expect(bagCount(save, _goldenSpud), 1);
   });
 
+  test('reports the quest a dialogue choice completed for the reward popup', () {
+    var save = picked(fresh(_throneRoom), 'DLG-0011', 'DNODE-0018', 'DCH-0023').save;
+    save = setCount(setCount(save, _bakedPotato, 10), _cookedPerch, 10);
+    final handedIn = picked(save, 'DLG-0012', 'DNODE-0020', 'DCH-0026');
+    expect(handedIn.questCompletions, isEmpty);
+
+    final paid = picked(handedIn.save, 'DLG-0012', 'DNODE-0022', 'DCH-0031');
+    expect(paid.questCompletions, hasLength(1));
+    final completion = paid.questCompletions.single;
+    final direct = completeQuest(db, handedIn.save, 'QST-0001');
+    expect(completion.questId, 'QST-0001');
+    expect(completion.questName, direct.questName);
+    expect(completion.rewards, direct.rewards);
+    expect(completion.rewards, isNotEmpty);
+    expect(completion.pendingSkillXp, direct.pendingSkillXp);
+    expect(completion.pendingSkillXp, 0);
+    expect(paid.toJson()['questCompletions'], [completion.toJson()]);
+
+    expect(pick(paid.save, 'DLG-0012', 'DNODE-0022', 'DCH-0031').questCompletions, isEmpty);
+  });
+
   test('keeps gifts claimable while the bag is full', () {
     final full = fillBag(fresh(_citadelPlaza));
     expect(guidePotato(full).code, 'no_room');

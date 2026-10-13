@@ -8,6 +8,7 @@ import type { PlayerSave } from '../save/types'
 import { applyGameCommand, type GameCommandResult } from './authority'
 import { applyDevCommand } from './devCommands'
 import { bagCount } from '../dialogue/stepProgress'
+import { chooseDialogue } from '../dialogue/engine'
 
 const rawDatabase = patchedDatabase(DIALOGUE_PATCH)
 const { launch: db } = prepareDatabase(rawDatabase)
@@ -204,5 +205,21 @@ describe('dialogue commands on the server', () => {
       code: 'confirm_favourites',
       favourites: [{ itemId: PERCH, qty: 3 }],
     })
+  })
+
+  it('returns questCompletions on dialogue_choose when a choice completes a quest', () => {
+    let save = startedFeast()
+    save = withItem(withItem(save, POTATO, 10), PERCH, 10)
+    save = saveOf(king(save, 'DCH-9002'))
+    const local = chooseDialogue(db, save, 'DLG-9001', 'DNODE-9001', 'DCH-9003')
+    expect(local.ok).toBe(true)
+    expect(local.questCompletions).toHaveLength(1)
+    expect(local.questCompletions[0]!.questId).toBe('QST-9001')
+    expect(local.questCompletions[0]!.pendingSkillXp).toBe(0)
+
+    const result = king(save, 'DCH-9003')
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.questCompletions).toEqual(local.questCompletions)
   })
 })

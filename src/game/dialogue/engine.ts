@@ -13,7 +13,13 @@ import { addFavouriteLine, CONFIRM_FAVOURITES_PROMPT, favouritesNeeded, type Ite
 import { inventorySlotsFree } from '../inventory/capacity'
 import { noRoomReason, slotsNeededForItems, type NoRoom } from '../inventory/fit'
 import { bookById, grantBook, isBookUnlocked } from '../library/books'
-import { acceptQuest, completeQuest, getQuest, getQuestProgress } from '../quests/quests'
+import {
+  acceptQuest,
+  completeQuest,
+  getQuest,
+  getQuestProgress,
+  type QuestArrivalCompletion,
+} from '../quests/quests'
 import {
   applyQuestStepUnlocks,
   dialogueStepType,
@@ -369,6 +375,8 @@ export interface DialogueResult {
   missing: DialogueMissingItem[]
   /** For `confirm_favourites`: how many of each item would come out of hearted stacks. */
   favourites: DialogueItemDelta[]
+  /** Quests this choice completed, for the client's reward popup. */
+  questCompletions: QuestArrivalCompletion[]
 }
 
 function failed(
@@ -391,6 +399,7 @@ function failed(
     noRoom: extra.noRoom ?? null,
     missing: extra.missing ?? [],
     favourites: extra.favourites ?? [],
+    questCompletions: [],
   }
 }
 
@@ -548,6 +557,7 @@ export function startDialogue(db: GameDatabase, save: PlayerSave, dialogueId: st
     noRoom: null,
     missing: [],
     favourites: [],
+    questCompletions: [],
   }
 }
 
@@ -561,6 +571,7 @@ interface Working {
   stepProgress: StepProgressGroup[]
   /** Quantities taken (or about to be) from hearted stacks, per item. */
   favourites: DialogueItemDelta[]
+  questCompletions: QuestArrivalCompletion[]
 }
 
 /** Records how much of taking [quantity] from [save] would come out of hearted stacks. */
@@ -754,6 +765,15 @@ function applyAction(
       work.bookDeltas.push(...completed.booksGranted.map((grant) => grant.bookId))
       work.save = completed.save
       work.messages.push(completed.message)
+      work.questCompletions.push({
+        questId: a,
+        questName: completed.questName,
+        rewards: completed.rewards.map((reward) => reward.label),
+        pendingSkillXp: completed.pendingSkillXp,
+        rewardBundle: completed.rewardBundle,
+        message: completed.message,
+        booksGranted: completed.booksGranted,
+      })
       return null
     }
     case 'grant_book': {
@@ -814,6 +834,7 @@ export function chooseDialogue(
     bookDeltas: [],
     stepProgress: [],
     favourites: [],
+    questCompletions: [],
   }
   for (let index = 0; index < tokens.length; index += 1) {
     const failure = applyAction(db, work, tokens, index)
@@ -839,6 +860,7 @@ export function chooseDialogue(
     noRoom: null,
     missing: [],
     favourites: [],
+    questCompletions: work.questCompletions,
   }
   if (nextNodeId == null || nextNodeId === '') {
     nextSave = markCompleted(db, nextSave, dialogueId)

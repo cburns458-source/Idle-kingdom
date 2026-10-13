@@ -352,6 +352,7 @@ function resultSummary(before: PlayerSave, result: DialogueResult): JsonValue {
     noRoom: json(result.noRoom),
     missing: json(result.missing),
     favourites: json(result.favourites),
+    questCompletions: json(result.questCompletions),
     unchanged: canonicalJson(asJson(before)) === canonicalJson(asJson(result.save)),
   }
 }

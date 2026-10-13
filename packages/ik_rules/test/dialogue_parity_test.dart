@@ -65,6 +65,7 @@ Map<String, Object?> _resultSummary(PlayerSave before, DialogueResult result) {
     'noRoom': json['noRoom'],
     'missing': json['missing'],
     'favourites': json['favourites'],
+    'questCompletions': json['questCompletions'],
     'unchanged': canonicalJson(before.toJson()) == canonicalJson(result.save.toJson()),
   };
 }

@@ -182,6 +182,9 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
       useFavourites: useFavourites,
     );
     if (result.ok) {
+      // Queue before [commit]: its notify flushes the reward popup ahead of
+      // any level-up the payout caused.
+      controller.noteDialogueQuestCompletions(result.questCompletions);
       controller.commit(
         result.save,
         command: 'dialogue_choose',
@@ -232,6 +235,12 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
     if (result.ok) {
       final notice = _text.notice(before, result);
       if (notice != null) controller.announce(notice);
+      final beforeUnlocked = before.cosmetics.unlocked.toSet();
+      controller.noteCosmeticUnlocks([
+        for (final id in result.save.cosmetics.unlocked)
+          if (!beforeUnlocked.contains(id))
+            ShopCosmeticGrant(cosmeticId: id, isFirstEver: beforeUnlocked.isEmpty),
+      ]);
       if (result.completed || result.view == null) {
         widget.onClose();
         return;
