@@ -65,29 +65,29 @@ describe('locationTimers', () => {
     let save = createNewSave(launch)
     expect(save.discoveredTimerSpotIds).toEqual([])
 
-    save = discoverTimerSpotsForLocation(save, 'LOC-0001')
+    save = discoverTimerSpotsForLocation(launch, save, 'LOC-0001')
     expect(save.discoveredTimerSpotIds).toEqual([])
 
     save = {
       ...save,
       quests: [{ questId: 'QST-0011', status: 'completed', progress: 1 }],
     }
-    save = discoverTimerSpotsForLocation(save, 'LOC-0001')
+    save = discoverTimerSpotsForLocation(launch, save, 'LOC-0001')
     expect(save.discoveredTimerSpotIds).toEqual(['botany:LOC-0001'])
-    expect(discoverTimerSpotsForLocation(save, 'LOC-0001')).toBe(save)
+    expect(discoverTimerSpotsForLocation(launch, save, 'LOC-0001')).toBe(save)
 
-    save = discoverTimerSpotsForLocation(save, 'LOC-0008')
+    save = discoverTimerSpotsForLocation(launch, save, 'LOC-0008')
     expect(save.discoveredTimerSpotIds).toEqual(['botany:LOC-0001'])
-    expect(discoverTimerSpotsForLocation(save, 'LOC-0008')).toBe(save)
+    expect(discoverTimerSpotsForLocation(launch, save, 'LOC-0008')).toBe(save)
 
-    save = discoverTimerSpotsForLocation(save, 'LOC-0009')
+    save = discoverTimerSpotsForLocation(launch, save, 'LOC-0009')
     expect(save.discoveredTimerSpotIds).toContain('botany:LOC-0009')
     expect(save.discoveredTimerSpotIds).not.toContain('hunting_trap:LOC-0009')
 
-    save = discoverTimerSpotsForLocation(save, 'LOC-0003')
+    save = discoverTimerSpotsForLocation(launch, save, 'LOC-0003')
     expect(save.discoveredTimerSpotIds).toContain('fishing_pot:LOC-0003')
 
-    expect(discoverTimerSpotsForLocation(save, 'LOC-9999')).toBe(save)
+    expect(discoverTimerSpotsForLocation(launch, save, 'LOC-9999')).toBe(save)
   })
 
   it('records discovery when planting or placing', () => {
@@ -561,7 +561,7 @@ describe('locationTimers', () => {
       currentLocationId: 'LOC-0001',
       inventory: [{ itemId: 'ITEM-0324', quantity: 2 }],
     }
-    expect(farmBotanyUnlocked(save)).toBe(false)
+    expect(farmBotanyUnlocked(launch, save)).toBe(false)
     expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
 
     save = {
@@ -575,7 +575,7 @@ describe('locationTimers', () => {
         },
       ],
     }
-    expect(farmBotanyUnlocked(save)).toBe(true)
+    expect(farmBotanyUnlocked(launch, save)).toBe(true)
     expect(canPlantBotanySeed(launch, save, 'ITEM-0324', 'LOC-0001', 2).ok).toBe(true)
   })
 

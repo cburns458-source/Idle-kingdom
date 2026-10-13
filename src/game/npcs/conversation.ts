@@ -22,6 +22,7 @@ import {
   getQuest,
   getQuestProgress,
   questsTouchingNpc,
+  type QuestFailure,
   type QuestRow,
 } from '../quests/quests'
 import { changeRaceAtNpc, raceChangeOffer, VESPER_ID, type RaceChangeOffer } from '../races/changeRace'
@@ -571,8 +572,8 @@ export function talkWithQuestNpc(
     ]),
   )
   let next = applyQuestTalkProgress(db, save, npcId)
-  if (farmBotanyUnlocked(next)) {
-    next = discoverTimerSpotsForLocation(next, FARM_LOCATION_ID)
+  if (farmBotanyUnlocked(db, next)) {
+    next = discoverTimerSpotsForLocation(db, next, FARM_LOCATION_ID)
   }
   for (const quest of questsTouchingNpc(db, next, npcId)) {
     const parsed = parseStructuredObjectives(quest)
@@ -599,7 +600,7 @@ export function bribeForQuest(
   db: GameDatabase,
   save: PlayerSave,
   questId: string,
-): { ok: true; save: PlayerSave; message: string } | { ok: false; reason: string } {
+): { ok: true; save: PlayerSave; message: string } | QuestFailure {
   const result = bribeQuestNpc(db, save, questId)
   if (!result.ok) return result
   return { ok: true, save: result.save, message: 'The purse changes hands.' }

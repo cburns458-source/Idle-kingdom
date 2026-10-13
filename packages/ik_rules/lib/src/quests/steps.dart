@@ -186,13 +186,59 @@ bool _isStepComplete(
 ]) {
   final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
   if (stepId != null && (counters[stepCompleteKey(stepId)] ?? 0) >= 1) return true;
-  if (stepId != null && dialogueStepType(getQuestStep(db, questId, stepId)) != null) return false;
+  if (stepId != null && dialogueStepType(getQuestStep(db, questId, stepId)) != null) {
+    return isStepPassed(db, save, questId, stepId);
+  }
   if (_isAskAroundSkipped(db, save, questId, notes)) return true;
   final structured = parseNotesObjectives(notes);
   final progress = objectiveProgressFromStructured(db, save, structured, counters);
   final lines = _scopedTalkLines(db, questId, progress.progressLines, counters, stepId);
   if (lines.isEmpty) return true;
   return lines.every((line) => line.current >= line.required);
+}
+
+bool isStepComplete(
+  GameDatabase db,
+  PlayerSave save,
+  String questId,
+  String notes, [
+  String? stepId,
+]) => _isStepComplete(db, save, questId, notes, stepId);
+
+/// Progress lines that read the bag right now rather than a saved counter.
+final RegExp _liveInventoryLine = RegExp(r'^(?:deliver|hold):');
+
+/// Whether the quest is already past [stepId]: a later step is latched, holds a
+/// counter scoped to it (a talk or a partial hand-in), or is a Notes-driven step
+/// whose saved-counter objectives are met. Lets saves from before a step was
+/// typed Show / Talk / HandIn skip it; nothing is written.
+bool isStepPassed(GameDatabase db, PlayerSave save, String questId, String stepId) {
+  final steps = getQuestSteps(db, questId);
+  final index = steps.indexWhere((step) => step.stepId == stepId);
+  if (index < 0) return false;
+  final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
+  final keys = [
+    for (final entry in counters.entries)
+      if (entry.value > 0) entry.key,
+  ];
+  for (final later in steps.skip(index + 1)) {
+    final laterId = later.stepId;
+    if (keys.any((key) => key.endsWith(':$laterId') || key.startsWith('handIn:$laterId:'))) {
+      return true;
+    }
+    if (dialogueStepType(later) != null) continue;
+    final structured = parseNotesObjectives(later.notes ?? '');
+    final progress = objectiveProgressFromStructured(db, save, structured, counters);
+    final lines = _scopedTalkLines(
+      db,
+      questId,
+      progress.progressLines,
+      counters,
+      laterId,
+    ).where((line) => !_liveInventoryLine.hasMatch(line.key)).toList();
+    if (lines.isNotEmpty && lines.every((line) => line.current >= line.required)) return true;
+  }
+  return false;
 }
 
 int getCurrentStepIndex(GameDatabase db, PlayerSave save, QuestRow quest) {
@@ -235,7 +281,8 @@ PlayerSave applyQuestStepUnlocks(GameDatabase db, PlayerSave save) {
         latching = false;
         continue;
       }
-      if (latching && stepId.isNotEmpty) {
+      // Typed steps latch only through their dialogue action, never by being passed.
+      if (latching && stepId.isNotEmpty && dialogueStepType(step) == null) {
         next = latchStep(next, questId, stepId);
       }
       for (final locationId in parseNotesObjectives(step.notes ?? '').unlockLocationIds) {

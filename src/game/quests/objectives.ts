@@ -1,4 +1,5 @@
 import type { GameDatabase } from '../data/types'
+import { bagCount } from '../inventory/bag'
 import { inventoryCount } from '../production/recipes'
 import { knowsRecipe } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
@@ -356,7 +357,7 @@ export function objectiveProgressFromStructured(
     return {
       itemId: line.targetId,
       name,
-      owned: inventoryCount(save, line.targetId),
+      owned: bagCount(save, line.targetId),
       required: line.quantity,
     }
   })
