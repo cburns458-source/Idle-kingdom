@@ -135,7 +135,7 @@ describe('standard production', () => {
     expect(finished).not.toBeNull()
     if (!finished) return
     expect(finished.reward.loot).toEqual([
-      { itemId: 'ITEM-0058', quantity: 2, displayName: expect.any(String) },
+      { itemId: 'ITEM-0058', quantity: 1, displayName: expect.any(String) },
     ])
     expect(finished.reward.xpRewards).toHaveLength(1)
     expect(finished.reward.xpRewards[0]?.skillId).toBe('SKL-0007')
@@ -167,11 +167,11 @@ describe('standard production', () => {
     )
     expect(resolved.craftsCompleted).toBe(2)
     expect(resolved.save.productionRecipeId).toBeNull()
-    expect(resolved.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(4)
+    expect(resolved.save.inventory.find((stack) => stack.itemId === 'ITEM-0058')?.quantity).toBe(2)
     const cooking = resolved.save.skills.find((skill) => skill.skillId === 'SKL-0007')
     expect(cooking?.xp).toBe(600)
     expect(resolved.messages).toEqual([
-      expect.stringMatching(/^Crafted 4 Baked Potato \(\+\d+ XP\)$/),
+      expect.stringMatching(/^Crafted 2 Baked Potato \(\+\d+ XP\)$/),
     ])
   })
 
@@ -216,7 +216,7 @@ describe('standard production', () => {
 
     const opened = { ...filled, inventory: [] }
     const finished = completeProductionCraft(launch, opened, Date.now(), () => 0)
-    expect(finished?.outputQty).toBe(2)
+    expect(finished?.outputQty).toBe(1)
     expect(finished?.save.productionQuantityRemaining).toBe(1)
   })
 

@@ -51,7 +51,7 @@ void main() {
     }
     expect(
       db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0012').raw['XP Reward'],
-      2800,
+      1400,
     );
     expect(db.actions.firstWhere((row) => row.actionId == 'ACN-0104').proficiencyLevel, 63);
 
