@@ -45,7 +45,7 @@ import {
 } from '../../game/spells/spells'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
-import { asJson, baseSave, gearedSave, richSave, tomeSave } from './saveFixtures'
+import { asJson, baseSave, gearedSave, richSave, tomeDurationSave, tomeSave } from './saveFixtures'
 
 type SaveKind = 'base' | 'rich' | 'geared'
 
@@ -147,22 +147,32 @@ export const arcanaScenarios: ParityScenario[] = [
     }),
   ),
 
-  scenario('spells/tome', 'with-spells', { source: 'content', save: asJson(tomeSave(contentDatabase())) }, () => {
-    const db = contentDatabase()
-    const save = tomeSave(db)
-    return {
-      stacks: equippedSpellStacks(save),
-      firstEmpty: firstEmptySpellSlot(save),
-      damageMultiplier: activeSpellDamageRangeMultiplier(db, save),
-      doubleChance: activeSpellItemDoubleChancePercent(db, save),
-      goldDoubleChance: activeSpellGoldDoubleChancePercent(db, save),
-      damageReduction: activeSpellDamageReductionPercent(db, save),
-      lifesteal: activeSpellLifestealPercent(db, save),
-      productionDurationMultiplier: activeSpellProductionDurationMultiplier(db, save),
-      gatheringDurationMultiplier: activeSpellGatheringDurationMultiplier(db, save),
-      spellPowerMultiplier: equippedSpellPowerMultiplier(db, save),
-    } as unknown as JsonValue
-  }),
+  ...(['with-spells', 'lifesteal-haste-pathfinder'] as const).map((kind) =>
+    scenario(
+      'spells/tome',
+      kind,
+      {
+        source: 'content',
+        save: asJson(kind === 'with-spells' ? tomeSave(contentDatabase()) : tomeDurationSave(contentDatabase())),
+      },
+      () => {
+        const db = contentDatabase()
+        const save = kind === 'with-spells' ? tomeSave(db) : tomeDurationSave(db)
+        return {
+          stacks: equippedSpellStacks(save),
+          firstEmpty: firstEmptySpellSlot(save),
+          damageMultiplier: activeSpellDamageRangeMultiplier(db, save),
+          doubleChance: activeSpellItemDoubleChancePercent(db, save),
+          goldDoubleChance: activeSpellGoldDoubleChancePercent(db, save),
+          damageReduction: activeSpellDamageReductionPercent(db, save),
+          lifesteal: activeSpellLifestealPercent(db, save),
+          productionDurationMultiplier: activeSpellProductionDurationMultiplier(db, save),
+          gatheringDurationMultiplier: activeSpellGatheringDurationMultiplier(db, save),
+          spellPowerMultiplier: equippedSpellPowerMultiplier(db, save),
+        } as unknown as JsonValue
+      },
+    ),
+  ),
 
   scenario(
     'spells/combine',

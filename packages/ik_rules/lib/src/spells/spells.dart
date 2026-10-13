@@ -305,26 +305,38 @@ num activeSpellDamageReductionPercent(GameDatabase db, PlayerSave save) {
 num activeSpellLifestealPercent(GameDatabase db, PlayerSave save) {
   return math.min(
     100,
-    _activeSpellStackedPercent(db, save, (itemId) => spellLifestealPercent(db, itemId)),
+    _applySpellPower(
+      db,
+      save,
+      _activeSpellStackedPercent(db, save, (itemId) => spellLifestealPercent(db, itemId)),
+    ),
   );
 }
 
 /// Multiplier for production craft duration from Haste spells (e.g. 10% => 0.9).
 num activeSpellProductionDurationMultiplier(GameDatabase db, PlayerSave save) {
-  final percent = _activeSpellStackedPercent(
+  final percent = _applySpellPower(
     db,
     save,
-    (itemId) => spellProductionDurationReductionPercent(db, itemId),
+    _activeSpellStackedPercent(
+      db,
+      save,
+      (itemId) => spellProductionDurationReductionPercent(db, itemId),
+    ),
   );
   return math.max(0.01, 1 - percent / 100);
 }
 
 /// Multiplier for gathering action duration from Pathfinder spells.
 num activeSpellGatheringDurationMultiplier(GameDatabase db, PlayerSave save) {
-  final percent = _activeSpellStackedPercent(
+  final percent = _applySpellPower(
     db,
     save,
-    (itemId) => spellGatheringDurationReductionPercent(db, itemId),
+    _activeSpellStackedPercent(
+      db,
+      save,
+      (itemId) => spellGatheringDurationReductionPercent(db, itemId),
+    ),
   );
   return math.max(0.01, 1 - percent / 100);
 }

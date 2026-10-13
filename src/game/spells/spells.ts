@@ -318,7 +318,11 @@ export function activeSpellDamageReductionPercent(
 export function activeSpellLifestealPercent(db: GameDatabase, save: PlayerSave): number {
   return Math.min(
     100,
-    activeSpellStackedPercent(db, save, (itemId) => spellLifestealPercent(db, itemId)),
+    applySpellPower(
+      db,
+      save,
+      activeSpellStackedPercent(db, save, (itemId) => spellLifestealPercent(db, itemId)),
+    ),
   )
 }
 
@@ -327,8 +331,12 @@ export function activeSpellProductionDurationMultiplier(
   db: GameDatabase,
   save: PlayerSave,
 ): number {
-  const percent = activeSpellStackedPercent(db, save, (itemId) =>
-    spellProductionDurationReductionPercent(db, itemId),
+  const percent = applySpellPower(
+    db,
+    save,
+    activeSpellStackedPercent(db, save, (itemId) =>
+      spellProductionDurationReductionPercent(db, itemId),
+    ),
   )
   return Math.max(0.01, 1 - percent / 100)
 }
@@ -338,8 +346,12 @@ export function activeSpellGatheringDurationMultiplier(
   db: GameDatabase,
   save: PlayerSave,
 ): number {
-  const percent = activeSpellStackedPercent(db, save, (itemId) =>
-    spellGatheringDurationReductionPercent(db, itemId),
+  const percent = applySpellPower(
+    db,
+    save,
+    activeSpellStackedPercent(db, save, (itemId) =>
+      spellGatheringDurationReductionPercent(db, itemId),
+    ),
   )
   return Math.max(0.01, 1 - percent / 100)
 }
