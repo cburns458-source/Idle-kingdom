@@ -129,8 +129,8 @@ ProductionQueueResult beginProductionQueue(
       ) *
       crafts;
   if (!canFitItemQuantity(withMaterials, outputItemId, outputTotal)) {
-    return const ProductionQueueResult.failed(
-      'Not enough inventory space for that queue (180 slots, stacks to max).',
+    return ProductionQueueResult.failed(
+      'Not enough inventory space for that queue ($inventorySlotLimit slots, stacks to max).',
     );
   }
 

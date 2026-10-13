@@ -1,4 +1,5 @@
 import 'package:ik_content/ik_content.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import 'market.dart';
 import 'remote.dart';
@@ -682,7 +683,7 @@ class FakeExchangePrice {
 // works on raw JSON, and a stand-in that parsed first would not notice a field
 // the real one drops.
 
-const int _fakeSlotLimit = 180;
+const int _fakeSlotLimit = inventorySlotLimit;
 const String _fakeGoldItemId = 'ITEM-0001';
 
 List<Map<String, Object?>> fakeExchangeInventory(Map<String, Object?> payload) {

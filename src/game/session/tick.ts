@@ -140,6 +140,7 @@ function victoryRewardBundle(
   goldGained: number,
   nowMs: number,
   cosmeticsGranted: NonNullable<ActionRewardBundle['cosmeticsGranted']> = [],
+  leftBehind: ActionRewardBundle['loot'] = [],
 ): ActionRewardBundle {
   const xpRewards = xpAwards.flatMap((award) => {
     if (award.xp <= 0) return []
@@ -160,6 +161,7 @@ function victoryRewardBundle(
     loot,
     goldGained,
     ...(cosmeticsGranted.length > 0 ? { cosmeticsGranted } : {}),
+    ...(leftBehind.length > 0 ? { leftBehind } : {}),
   }
 }
 
@@ -347,6 +349,7 @@ function applyDueCombatOutcome(
         victory.goldGained,
         roundEnd,
         victory.cosmeticsGranted,
+        victory.leftBehind ?? [],
       ),
     })
     out.emit({
@@ -614,6 +617,9 @@ export function advanceSession(
         goldGained: finished.result.goldGained,
         ...(finished.result.cosmeticsGranted?.length
           ? { cosmeticsGranted: finished.result.cosmeticsGranted }
+          : {}),
+        ...(finished.result.leftBehind?.length
+          ? { leftBehind: finished.result.leftBehind }
           : {}),
       },
       ...(damageTaken !== 0 || foodHealed !== 0 || showZeroDamageHit

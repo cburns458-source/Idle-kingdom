@@ -66,19 +66,21 @@ ActionRewards _resolvePruningRewards(
     return ActionRewards(save: save, loot: const <LootGrant>[], goldGained: 0);
   }
   final granted = addItemsToInventory(save, seedItemId, 1, null, false, db);
+  final rawName = db.items
+      .firstWhereOrNull((item) => item.raw['Item ID'] == seedItemId)
+      ?.displayName;
+  final name = rawName is String ? rawName : seedItemId;
   if (granted.added <= 0) {
-    return ActionRewards(save: granted.save, loot: const <LootGrant>[], goldGained: 0);
+    return ActionRewards(
+      save: granted.save,
+      loot: const <LootGrant>[],
+      goldGained: 0,
+      leftBehind: <LootGrant>[LootGrant(itemId: seedItemId, quantity: 1, displayName: name)],
+    );
   }
-  final name = db.items.firstWhereOrNull((item) => item.raw['Item ID'] == seedItemId)?.displayName;
   return ActionRewards(
     save: granted.save,
-    loot: <LootGrant>[
-      LootGrant(
-        itemId: seedItemId,
-        quantity: granted.added,
-        displayName: name is String ? name : seedItemId,
-      ),
-    ],
+    loot: <LootGrant>[LootGrant(itemId: seedItemId, quantity: granted.added, displayName: name)],
     goldGained: 0,
   );
 }
@@ -506,6 +508,7 @@ GatheringCompletion completeGatheringAction(
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
       cosmeticsGranted: rewarded.cosmeticsGranted,
+      leftBehind: rewarded.leftBehind,
       leveledUpTo: leveledUpTo,
       damageTaken: 0,
       foodHealed: foodHealed,

@@ -32,6 +32,23 @@ void main() {
     }
   });
 
+  group('unattended full-bag leftBehind parity', () {
+    for (final fixture in loadParityFixtures('unattended/full-bag-merged-left-behind')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final nowMs = fixture.inputField<num>('nowMs');
+        final seed = fixture.inputField<num>('seed').toInt();
+        final result = resolveUnattendedProgress(
+          db,
+          saveOf(fixture),
+          nowMs,
+          Mulberry32(seed).asFunction,
+        );
+        expect(checkParity(fixture, result.toJson()), isNull);
+      });
+    }
+  });
+
   group('unattended catch-up parity', () {
     for (final fixture in loadParityFixtures('unattended/resolve')) {
       test(fixture.name, () {

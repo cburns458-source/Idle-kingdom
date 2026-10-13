@@ -29,6 +29,7 @@ class ActionRewardBundle {
     required this.loot,
     required this.goldGained,
     this.cosmeticsGranted = const <ActionCosmeticGrant>[],
+    this.leftBehind = const <LootGrant>[],
   });
 
   final String id;
@@ -38,6 +39,9 @@ class ActionRewardBundle {
 
   /// Wardrobe cosmetics unlocked with this reward line (e.g. Baby Dragon pet).
   final List<ActionCosmeticGrant> cosmeticsGranted;
+
+  /// Drops that rolled but did not fit in the bag. Same shape as [loot].
+  final List<LootGrant> leftBehind;
 
   Map<String, Object?> toJson() {
     final json = <String, Object?>{
@@ -49,6 +53,9 @@ class ActionRewardBundle {
     // Omit when empty so existing session parity fixtures stay byte-stable.
     if (cosmeticsGranted.isNotEmpty) {
       json['cosmeticsGranted'] = cosmeticsGranted.map((grant) => grant.toJson()).toList();
+    }
+    if (leftBehind.isNotEmpty) {
+      json['leftBehind'] = leftBehind.map((grant) => grant.toJson()).toList();
     }
     return json;
   }
@@ -66,6 +73,7 @@ class ActionCompletionResult {
     required this.loot,
     required this.leveledUpTo,
     this.cosmeticsGranted = const <ActionCosmeticGrant>[],
+    this.leftBehind = const <LootGrant>[],
     this.damageTaken = 0,
     this.foodHealed = 0,
     this.showZeroDamageHit = false,
@@ -88,6 +96,9 @@ class ActionCompletionResult {
 
   /// Wardrobe cosmetics unlocked by this action (e.g. Baby Dragon pet).
   final List<ActionCosmeticGrant> cosmeticsGranted;
+
+  /// Drops that rolled but did not fit in the bag. Same shape as [loot].
+  final List<LootGrant> leftBehind;
   final num? leveledUpTo;
 
   /// HP lost on a thievery failure (for combat-style floaters).
@@ -111,6 +122,7 @@ class ActionCompletionResult {
     'goldGained': goldGained,
     'loot': loot.map((grant) => grant.toJson()).toList(),
     'cosmeticsGranted': cosmeticsGranted.map((grant) => grant.toJson()).toList(),
+    if (leftBehind.isNotEmpty) 'leftBehind': leftBehind.map((grant) => grant.toJson()).toList(),
     'leveledUpTo': leveledUpTo,
     'damageTaken': damageTaken,
     'foodHealed': foodHealed,

@@ -1,6 +1,7 @@
 import { beginActivitySave, generateNextAction } from '../../game/activity/engine'
 import { addItemToInventory } from '../../game/activity/rewards'
 import type { GameDatabase } from '../../game/data/types'
+import { INVENTORY_SLOT_LIMIT } from '../../game/inventory/capacity'
 import { beginProductionQueue } from '../../game/production/engine'
 import { mulberry32 } from '../../game/rng/mulberry32'
 import type { PlayerSave } from '../../game/save/types'
@@ -129,6 +130,18 @@ function anchorlessSave(db: GameDatabase): PlayerSave {
   return { ...gatheringSave(db), unattendedProgressAt: null }
 }
 
+/** Mid-gather with a full bag so overflow is recorded as one merged leftBehind list. */
+function fullBagGatheringSave(): PlayerSave {
+  const gathering = gatheringSave(contentDatabase())
+  return {
+    ...gathering,
+    inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
+      itemId: `FILL-${index}`,
+      quantity: 1,
+    })),
+  }
+}
+
 type SaveKind =
   | 'idle'
   | 'gathering'
@@ -225,5 +238,37 @@ export const unattendedScenarios: ParityScenario[] = [
       },
       () => resolved(entry.kind, entry.spanMs),
     ),
+  ),
+
+  scenario(
+    'unattended/full-bag-merged-left-behind',
+    'gathering',
+    {
+      source: 'content',
+      seed: SEED,
+      spanMs: 180_000,
+      nowMs: FIXED_TIMESTAMP_MS + 180_000,
+      save: asJson(fullBagGatheringSave()),
+    },
+    () => {
+      const result = resolveUnattendedProgress(
+        contentDatabase(),
+        fullBagGatheringSave(),
+        FIXED_TIMESTAMP_MS + 180_000,
+        mulberry32(SEED),
+      )
+      return {
+        save: asJson(result.save),
+        changed: result.changed,
+        messages: result.messages,
+        gatheringActions: result.gatheringActions,
+        craftsCompleted: result.craftsCompleted,
+        combatVictories: result.combatVictories,
+        combatDeaths: result.combatDeaths,
+        crittersSpawned: result.crittersSpawned,
+        effectiveElapsedMs: result.effectiveElapsedMs,
+        ...(result.leftBehind?.length ? { leftBehind: result.leftBehind } : {}),
+      } as unknown as JsonValue
+    },
   ),
 ]

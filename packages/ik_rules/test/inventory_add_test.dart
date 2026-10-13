@@ -10,6 +10,11 @@ void main() {
     db = assertGameDatabaseShape(contentDatabaseJson());
   });
 
+  test('exposes an 84-slot bag and a 168-slot bank', () {
+    expect(inventorySlotLimit, 84);
+    expect(bankSlotLimit, 168);
+  });
+
   test('adds collected items onto an existing favorited stack', () {
     var save = createNewSave(db, 0).copyWith(inventory: const <InventoryStack>[]);
     save = addItemToInventory(save, 'ITEM-0025', 2);

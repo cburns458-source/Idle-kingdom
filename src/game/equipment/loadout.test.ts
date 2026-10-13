@@ -200,12 +200,12 @@ describe('equipment loadout', () => {
     save = equipped.save
 
     // Fill every remaining bag slot with unique, non-stacking stacks.
-    const filler = Array.from({ length: 180 - save.inventory.length }, (_, i) => ({
+    const filler = Array.from({ length: INVENTORY_SLOT_LIMIT - save.inventory.length }, (_, i) => ({
       itemId: `FILLER-${i}`,
       quantity: 1,
     }))
     save = { ...save, inventory: [...save.inventory, ...filler] }
-    expect(save.inventory).toHaveLength(180)
+    expect(save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
 
     const result = unequipSlot(save, 'SLOT-0001')
     expect(result.ok).toBe(false)
@@ -213,7 +213,7 @@ describe('equipment loadout', () => {
     expect(result.reason).toMatch(/space/i)
     // Nothing changed: item stays equipped, bag stays full, nothing lost.
     expect(save.equipment.slots['SLOT-0001']?.itemId).toBe('ITEM-0111')
-    expect(save.inventory).toHaveLength(180)
+    expect(save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
   })
 
   it('still allows a like-for-like tool swap when the bag is exactly full', () => {
@@ -226,13 +226,13 @@ describe('equipment loadout', () => {
     save = equipped.save
     save = addItemToInventory(save, 'ITEM-0102', 1) // Wooden Pickaxe (also Mining level 1)
 
-    // Fill the bag to exactly 180 including the incoming Wooden Pickaxe stack.
-    const filler = Array.from({ length: 180 - save.inventory.length }, (_, i) => ({
+    // Fill the bag to exactly the slot cap including the incoming Wooden Pickaxe stack.
+    const filler = Array.from({ length: INVENTORY_SLOT_LIMIT - save.inventory.length }, (_, i) => ({
       itemId: `FILLER-${i}`,
       quantity: 1,
     }))
     save = { ...save, inventory: [...save.inventory, ...filler] }
-    expect(save.inventory).toHaveLength(180)
+    expect(save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
 
     // Swapping to a different single-slot tool must not be blocked just
     // because the bag is full: removing the incoming item frees the slot
@@ -241,7 +241,7 @@ describe('equipment loadout', () => {
     const result = equipInventoryIndex(launch, save, swapIndex)
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.save.inventory).toHaveLength(180)
+    expect(result.save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
     expect(
       result.save.inventory.find((stack) => stack.itemId === 'ITEM-0111')?.quantity,
     ).toBe(1)

@@ -143,7 +143,7 @@ function rememberMin(map: Map<string, number>, itemId: string, level: number | n
   if (current === undefined || level < current) map.set(itemId, level)
 }
 
-/** Cached grouping ranks so a 180-slot bag does not rescan the database per compare. */
+/** Cached grouping ranks so a full bag does not rescan the database per compare. */
 export class InventorySorter {
   private readonly items = new Map<string, ItemRow>()
   private readonly slotByItem = new Map<string, string>()

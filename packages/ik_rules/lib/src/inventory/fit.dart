@@ -41,7 +41,7 @@ class RewardsFit {
 
 /// New bag slots [itemIds] need against [save]: one per distinct non-gold item
 /// without a pile to grow.
-int slotsNeededForItems(GameDatabase db, PlayerSave save, Iterable<String> itemIds) {
+int slotsNeededForItems(GameDatabase? db, PlayerSave save, Iterable<String> itemIds) {
   final seen = <String>{};
   var needed = 0;
   for (final itemId in itemIds) {
@@ -59,7 +59,12 @@ String noRoomReason(NoRoom noRoom) {
 }
 
 /// Whether every grant fits in the bag together, added in order on a copy of [save].
-RewardsFit rewardsFit(GameDatabase db, PlayerSave save, List<ItemGrant> grants) {
+RewardsFit rewardsFit(
+  GameDatabase? db,
+  PlayerSave save,
+  List<ItemGrant> grants, [
+  int slotLimit = inventorySlotLimit,
+]) {
   final wanted = [
     for (final grant in grants)
       if (grant.quantity > 0) grant,
@@ -67,7 +72,15 @@ RewardsFit rewardsFit(GameDatabase db, PlayerSave save, List<ItemGrant> grants) 
   var working = save;
   var fits = true;
   for (final grant in wanted) {
-    final added = addItemsToInventory(working, grant.itemId, grant.quantity, null, false, db);
+    final added = addItemsToInventory(
+      working,
+      grant.itemId,
+      grant.quantity,
+      null,
+      false,
+      db,
+      slotLimit,
+    );
     if (added.added < grant.quantity.floor()) {
       fits = false;
       break;
@@ -79,7 +92,19 @@ RewardsFit rewardsFit(GameDatabase db, PlayerSave save, List<ItemGrant> grants) 
     fits: fits,
     noRoom: NoRoom(
       slotsNeeded: fits ? slotsNeeded : math.max(1, slotsNeeded),
-      slotsFree: inventorySlotsFree(save),
+      slotsFree: inventorySlotsFree(save, slotLimit),
     ),
   );
+}
+
+/// `null` when every grant fits together; otherwise the `no_room` counts for
+/// the whole list. Paid and claimed paths use this before changing any state.
+NoRoom? noRoomFor(
+  PlayerSave save,
+  List<ItemGrant> grants, [
+  GameDatabase? db,
+  int slotLimit = inventorySlotLimit,
+]) {
+  final fit = rewardsFit(db, save, grants, slotLimit);
+  return fit.fits ? null : fit.noRoom;
 }

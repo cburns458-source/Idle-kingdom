@@ -1,5 +1,6 @@
 import { addItemToInventoryExact } from '../activity/rewards'
 import type { GameDatabase } from '../data/types'
+import { noRoomFor, noRoomRefusal, type NoRoom } from '../inventory/fit'
 import type { MailAttachment, MailMessage, PlayerSave } from '../save/types'
 
 /** Mail is dropped this long after it was sent. */
@@ -297,12 +298,16 @@ export function markMailRead(save: PlayerSave, messageId: string, nowMs: number)
   return { ...save, mailbox }
 }
 
+export type MailClaimResult =
+  | { ok: true; save: PlayerSave }
+  | { ok: false; reason: string; code?: 'no_room'; noRoom?: NoRoom }
+
 export function claimMailAttachments(
   save: PlayerSave,
   messageId: string,
   nowMs: number,
   db?: GameDatabase,
-): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
+): MailClaimResult {
   const message = save.mailbox.find((entry) => entry.id === messageId)
   if (!message || isMailExpired(message.sentAt, nowMs)) {
     return { ok: false, reason: 'That letter is gone.' }
@@ -313,6 +318,15 @@ export function claimMailAttachments(
   if (message.claimedAt != null) {
     return { ok: false, reason: 'Those items were already claimed.' }
   }
+  const blocked = noRoomFor(
+    save,
+    message.attachments.map((attachment) => ({
+      itemId: attachment.itemId,
+      quantity: attachment.quantity,
+    })),
+    db,
+  )
+  if (blocked) return noRoomRefusal(blocked)
   let next = save
   for (const attachment of message.attachments) {
     const granted = addItemToInventoryExact(next, attachment.itemId, attachment.quantity, null, false, db)

@@ -7,7 +7,7 @@
 // server will do with a save is easier to trust than a port of the lot.
 //
 // What has to agree with the client, and does:
-//   * 180 stacks in a bag, each stack one item id
+//   * 84 stacks in a bag, each stack one item id
 //   * enchanted items never merge and are never fungible
 //   * gold is a number on the save, not a stack
 //   * a cloud save is refused above a billion gold
@@ -27,7 +27,8 @@ export type SavePayload = Record<string, unknown> & {
   updatedAt?: unknown
 }
 
-export const INVENTORY_SLOT_LIMIT = 180
+export const INVENTORY_SLOT_LIMIT = 84
+export const BANK_SLOT_LIMIT = 168
 export const STACK_MAX = 9007199254740991
 export const GOLD_CAP = 1000000000
 export const GOLD_ITEM_ID = 'ITEM-0001'
@@ -236,6 +237,120 @@ export function giveItems(
   const next = [...inventory]
   next[index] = { ...inventory[index], quantity: merged }
   return withInventory(payload, next)
+}
+
+export type CollectBoxRow = {
+  id?: unknown
+  item_id?: unknown
+  quantity?: unknown
+  gold?: unknown
+}
+
+export type CollectNoRoom = {
+  slotsNeeded: number
+  slotsFree: number
+}
+
+export type CollectRowsResult = {
+  payload: SavePayload
+  taken: string[]
+  items: number
+  gold: number
+  left: number
+  rowsLeft: number
+  noRoom: CollectNoRoom | null
+  purseFull: boolean
+}
+
+function mergeableCollectIndex(inventory: Stack[], itemId: string): number {
+  let index = -1
+  for (let at = 0; at < inventory.length; at += 1) {
+    const stack = inventory[at]
+    if (stack.itemId !== itemId) continue
+    if (typeof stack.enchantmentId === 'string' && stack.enchantmentId.trim() !== '') continue
+    if (stack.favorite === true) return at
+    if (index < 0) index = at
+  }
+  return index
+}
+
+function noRoomForCollectRows(
+  payload: SavePayload,
+  leftover: Array<{ itemId: string; quantity: number }>,
+): CollectNoRoom {
+  const inventory = inventoryOf(payload)
+  const slotsFree = Math.max(0, INVENTORY_SLOT_LIMIT - inventory.length)
+  const seen = new Set<string>()
+  let needed = 0
+  for (const grant of leftover) {
+    if (grant.quantity <= 0 || seen.has(grant.itemId)) continue
+    seen.add(grant.itemId)
+    if (mergeableCollectIndex(inventory, grant.itemId) >= 0) continue
+    needed += 1
+  }
+  return { slotsNeeded: Math.max(1, needed), slotsFree }
+}
+
+/** `No room in your bag. Free N slot(s) and try again.` — same copy as client `noRoomReason`. */
+export function collectNoRoomReason(noRoom: CollectNoRoom): string {
+  const short = Math.max(1, noRoom.slotsNeeded - noRoom.slotsFree)
+  return `No room in your bag. Free ${short} slot${short === 1 ? '' : 's'} and try again.`
+}
+
+/**
+ * Empties as much of the box into the save as will fit.
+ *
+ * Gold always collects. Each item row is taken whole or left in the box.
+ * [noRoom] describes the leftover item rows when any stay behind.
+ */
+export function collectRows(
+  payload: SavePayload,
+  rows: ReadonlyArray<CollectBoxRow | Record<string, unknown>>,
+): CollectRowsResult {
+  let next = payload
+  const taken: string[] = []
+  let items = 0
+  let gold = 0
+  const leftoverItems: Array<{ itemId: string; quantity: number }> = []
+  let leftoverOther = 0
+  let purseFull = false
+
+  for (const row of rows) {
+    const itemId = typeof row.item_id === 'string' ? row.item_id : null
+    const quantity = Number(row.quantity ?? 0)
+    const coin = Number(row.gold ?? 0)
+    if (itemId != null && quantity > 0) {
+      const applied = giveItems(next, itemId, quantity)
+      if (applied == null) {
+        leftoverItems.push({ itemId, quantity })
+        continue
+      }
+      next = applied
+      taken.push(String(row.id))
+      items += quantity
+      continue
+    }
+    const applied = giveGold(next, coin)
+    if (applied == null) {
+      leftoverOther += 1
+      if (goldOf(next) >= GOLD_CAP) purseFull = true
+      continue
+    }
+    next = applied
+    taken.push(String(row.id))
+    gold += coin
+  }
+
+  return {
+    payload: next,
+    taken,
+    items,
+    gold,
+    left: leftoverItems.length + leftoverOther,
+    rowsLeft: leftoverItems.length,
+    noRoom: leftoverItems.length > 0 ? noRoomForCollectRows(next, leftoverItems) : null,
+    purseFull,
+  }
 }
 
 /** The save with [amount] gold taken, or null when the purse is short. */

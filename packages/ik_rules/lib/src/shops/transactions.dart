@@ -4,8 +4,8 @@ import 'package:ik_content/ik_content.dart';
 import '../achievements/progress.dart';
 import '../cosmetics/cosmetics.dart';
 import '../inventory/add_items.dart';
-import '../inventory/capacity.dart';
 import '../inventory/favorites.dart';
+import '../inventory/fit.dart';
 import '../js_compat.dart';
 import '../quests/progress.dart';
 import '../save/generated/save_models.dart';
@@ -52,9 +52,11 @@ class ShopTransactionResult {
     required this.goldDelta,
     required this.message,
     required this.cosmeticsGranted,
-  }) : reason = null;
+  }) : reason = null,
+       code = null,
+       noRoom = null;
 
-  const ShopTransactionResult.failed(this.reason)
+  const ShopTransactionResult.failed(this.reason, {this.code, this.noRoom})
     : save = null,
       goldDelta = 0,
       message = null,
@@ -66,6 +68,8 @@ class ShopTransactionResult {
   final String? message;
   final List<ShopCosmeticGrant> cosmeticsGranted;
   final String? reason;
+  final String? code;
+  final NoRoom? noRoom;
 
   Map<String, Object?> toJson() => ok
       ? <String, Object?>{
@@ -75,7 +79,12 @@ class ShopTransactionResult {
           'message': message,
           'cosmeticsGranted': cosmeticsGranted.map((grant) => grant.toJson()).toList(),
         }
-      : <String, Object?>{'ok': false, 'reason': reason};
+      : <String, Object?>{
+          'ok': false,
+          'reason': reason,
+          if (code != null) 'code': code,
+          if (noRoom != null) 'noRoom': noRoom!.toJson(),
+        };
 }
 
 class _LineTotal {
@@ -194,6 +203,16 @@ ShopTransactionResult confirmShopOffer(
   // Bag space is checked after sells free slots and before buys commit.
   // Cosmetics bypass the bag entirely: they unlock into the wardrobe's
   // always-owned collection, so they never need inventory space.
+  final itemBuys = [
+    for (final line in offer.buys)
+      if (db.cosmetics.every((row) => row.raw['Item ID'] != line.itemId))
+        ItemGrant(itemId: line.itemId, quantity: line.quantity.floor()),
+  ];
+  final blocked = noRoomFor(next, itemBuys, db);
+  if (blocked != null) {
+    return ShopTransactionResult.failed(noRoomReason(blocked), code: 'no_room', noRoom: blocked);
+  }
+
   var staging = next;
   final cosmeticGrants = <ShopCosmeticGrant>[];
   for (final line in offer.buys) {
@@ -211,9 +230,6 @@ ShopTransactionResult confirmShopOffer(
         );
       }
       continue;
-    }
-    if (!canFitItemQuantity(staging, line.itemId, qty)) {
-      return const ShopTransactionResult.failed('Not enough inventory space (180 slots).');
     }
     final added = addItemToInventoryExact(staging, line.itemId, qty);
     if (!added.ok) return ShopTransactionResult.failed(added.reason);

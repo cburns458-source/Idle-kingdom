@@ -1,7 +1,13 @@
 import type { GameDatabase, LocationRow, ActivityRow } from '../data/types'
 import type { InventoryStack, PlayerSave } from '../save/types'
 import { addItemToInventoryExact } from '../activity/rewards'
-import { canFitItemQuantity, inventorySlotsFree, INVENTORY_SLOT_LIMIT } from './capacity'
+import {
+  BANK_SLOT_LIMIT,
+  canFitItemQuantity,
+  INVENTORY_SLOT_LIMIT,
+  inventorySlotsFree,
+} from './capacity'
+import { noRoomFor, noRoomRefusal, type NoRoom } from './fit'
 import { isGoldCurrencyItem } from './gold'
 
 /** Dedicated bank nodes (Town, Citadel) plus any future `*_bank` location. */
@@ -82,7 +88,7 @@ export function stackIsUnbankable(
 }
 
 export function bankSlotsFree(save: Pick<PlayerSave, 'bank'>): number {
-  return inventorySlotsFree({ inventory: bankStacks(save) })
+  return inventorySlotsFree({ inventory: bankStacks(save) }, BANK_SLOT_LIMIT)
 }
 
 function withBankAsBag(save: PlayerSave): PlayerSave {
@@ -101,7 +107,15 @@ export function canFitInBank(
   favorite = false,
 ): boolean {
   if (stackIsUnbankable({ itemId, enchantmentId })) return false
-  return canFitItemQuantity(withBankAsBag(save), itemId, quantity, enchantmentId, favorite)
+  return canFitItemQuantity(
+    withBankAsBag(save),
+    itemId,
+    quantity,
+    enchantmentId,
+    favorite,
+    undefined,
+    BANK_SLOT_LIMIT,
+  )
 }
 
 function takeFromStacks(
@@ -125,7 +139,7 @@ function takeFromStacks(
 
 export type BankMoveResult =
   | { ok: true; save: PlayerSave }
-  | { ok: false; reason: string }
+  | { ok: false; reason: string; code?: 'no_room'; noRoom?: NoRoom }
 
 function moveStack(
   save: PlayerSave,
@@ -145,34 +159,43 @@ function moveStack(
     ? { ...save, inventory: taken.stacks, bank: bankStacks(save) }
     : { ...save, inventory: save.inventory, bank: taken.stacks }
   const target = toIsBank ? withBankAsBag(destination) : { ...destination, inventory: destination.inventory }
-  if (
-    !canFitItemQuantity(
-      target,
-      piece.itemId,
-      piece.quantity,
-      piece.enchantmentId ?? null,
-      Boolean(piece.favorite),
-    )
-  ) {
-    return { ok: false, reason: fullMessage }
-  }
+  const slotLimit = toIsBank ? BANK_SLOT_LIMIT : INVENTORY_SLOT_LIMIT
   if (toIsBank) {
+    if (
+      !canFitItemQuantity(
+        target,
+        piece.itemId,
+        piece.quantity,
+        piece.enchantmentId ?? null,
+        Boolean(piece.favorite),
+        undefined,
+        slotLimit,
+      )
+    ) {
+      return { ok: false, reason: fullMessage }
+    }
     const added = addItemToInventoryExact(
       withBankAsBag(destination),
       piece.itemId,
       piece.quantity,
       piece.enchantmentId ?? null,
       Boolean(piece.favorite),
+      undefined,
+      BANK_SLOT_LIMIT,
     )
     if (!added.ok) return { ok: false, reason: added.reason }
     return { ok: true, save: restoreBag({ ...save, inventory: taken.stacks }, added.save) }
   }
+  const blocked = noRoomFor(target, [{ itemId: piece.itemId, quantity: piece.quantity }])
+  if (blocked) return noRoomRefusal(blocked)
   const added = addItemToInventoryExact(
     { ...destination, inventory: save.inventory },
     piece.itemId,
     piece.quantity,
     piece.enchantmentId ?? null,
     Boolean(piece.favorite),
+    undefined,
+    INVENTORY_SLOT_LIMIT,
   )
   if (!added.ok) return { ok: false, reason: added.reason }
   return { ok: true, save: { ...added.save, bank: taken.stacks } }
@@ -186,7 +209,7 @@ export function depositToBank(save: PlayerSave, inventoryIndex: number, quantity
     true,
     inventoryIndex,
     quantity,
-    `Bank is full (${INVENTORY_SLOT_LIMIT} slots).`,
+    `Bank is full (${BANK_SLOT_LIMIT} slots).`,
   )
 }
 

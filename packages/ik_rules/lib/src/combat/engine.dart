@@ -162,6 +162,7 @@ class CombatVictoryResult {
     required this.goldGained,
     required this.loot,
     this.cosmeticsGranted = const <ActionCosmeticGrant>[],
+    this.leftBehind = const <LootGrant>[],
     required this.foodConsumed,
     required this.foodHealed,
     required this.foodName,
@@ -178,6 +179,7 @@ class CombatVictoryResult {
   final num goldGained;
   final List<LootGrant> loot;
   final List<ActionCosmeticGrant> cosmeticsGranted;
+  final List<LootGrant> leftBehind;
   final bool foodConsumed;
   final num foodHealed;
   final String? foodName;
@@ -651,6 +653,7 @@ CombatVictoryResult applyCombatVictory(
     goldGained: goldGained,
     loot: rewarded.loot,
     cosmeticsGranted: rewarded.cosmeticsGranted,
+    leftBehind: rewarded.leftBehind,
     foodConsumed: false,
     foodHealed: 0,
     foodName: null,

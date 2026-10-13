@@ -331,23 +331,38 @@ function resolvePruningRewards(
   save: PlayerSave,
   action: ActionRow,
   random: RandomFn,
-): { save: PlayerSave; loot: ActionCompletionResult['loot']; goldGained: number } {
+): {
+  save: PlayerSave
+  loot: ActionCompletionResult['loot']
+  goldGained: number
+  leftBehind: ActionCompletionResult['loot']
+} {
   const seedItemId = pruningSeedItemId(db, action)
   if (!seedItemId || random() * 100 >= PRUNING_SEED_CHANCE_PERCENT) {
-    return { save, loot: [], goldGained: 0 }
+    return { save, loot: [], goldGained: 0, leftBehind: [] }
   }
   const granted = addItemsToInventory(save, seedItemId, 1, null, false, db)
-  if (granted.added <= 0) return { save: granted.save, loot: [], goldGained: 0 }
+  const displayName =
+    db.Items.find((item) => item['Item ID'] === seedItemId)?.['Display Name'] ?? seedItemId
+  if (granted.added <= 0) {
+    return {
+      save: granted.save,
+      loot: [],
+      goldGained: 0,
+      leftBehind: [{ itemId: seedItemId, quantity: 1, displayName }],
+    }
+  }
   return {
     save: granted.save,
     loot: [
       {
         itemId: seedItemId,
         quantity: granted.added,
-        displayName: db.Items.find((item) => item['Item ID'] === seedItemId)?.['Display Name'] ?? seedItemId,
+        displayName,
       },
     ],
     goldGained: 0,
+    leftBehind: [],
   }
 }
 
@@ -435,7 +450,7 @@ export function completeGatheringAction(
   const working = save
   const pruning = isPruningToolEquipped(db, working) && PRUNABLE_SKILL_IDS.has(skillId)
   const rewarded = pruning
-    ? { ...resolvePruningRewards(db, working, action, random), cosmeticsGranted: [] }
+    ? { ...resolvePruningRewards(db, working, action, random), cosmeticsGranted: [] as { cosmeticId: string; isFirstEver: boolean }[] }
     : resolveActionRewards(db, working, action, random)
   const fullXp = gatheringXpReward(db, working, action)
   const primarySkillId = pruning ? BOTANY_SKILL_ID : skillId
@@ -509,6 +524,7 @@ export function completeGatheringAction(
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
       cosmeticsGranted: rewarded.cosmeticsGranted,
+      ...(rewarded.leftBehind.length > 0 ? { leftBehind: rewarded.leftBehind } : {}),
       leveledUpTo,
       damageTaken: 0,
       foodHealed,

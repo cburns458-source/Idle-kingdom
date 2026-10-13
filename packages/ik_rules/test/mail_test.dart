@@ -64,13 +64,40 @@ void main() {
 
     final full = withGift.copyWith(
       inventory: [
-        for (var index = 0; index < 180; index += 1)
+        for (var index = 0; index < inventorySlotLimit; index += 1)
           InventoryStack(itemId: 'FILL-$index', quantity: 1),
       ],
     );
     final refused = claimMailAttachments(full, 'mail-gift', nowMs, db);
     expect(refused.ok, isFalse);
-    expect(refused.reason, contains('full'));
+    expect(refused.code, 'no_room');
+    expect(refused.reason, 'No room in your bag. Free 1 slot and try again.');
+    expect(refused.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+    expect(full.mailbox.first.claimedAt, isNull);
+  });
+
+  test('refuses a 3-attachment letter when only one slot is free', () {
+    final withGift = createNewSave(db, nowMs).copyWith(
+      inventory: [
+        for (var index = 0; index < inventorySlotLimit - 1; index += 1)
+          InventoryStack(itemId: 'FILL-$index', quantity: 1),
+      ],
+      mailbox: [
+        giftMail(
+          attachments: const [
+            MailAttachment(itemId: 'ITEM-0025', quantity: 1),
+            MailAttachment(itemId: 'ITEM-0058', quantity: 1),
+            MailAttachment(itemId: 'ITEM-0003', quantity: 1),
+          ],
+        ),
+      ],
+    );
+    final refused = claimMailAttachments(withGift, 'mail-gift', nowMs, db);
+    expect(refused.ok, isFalse);
+    expect(refused.code, 'no_room');
+    expect(refused.noRoom?.toJson(), {'slotsNeeded': 3, 'slotsFree': 1});
+    expect(withGift.mailbox.first.claimedAt, isNull);
+    expect(withGift.inventory, hasLength(inventorySlotLimit - 1));
   });
 
   test('adds an empty mailbox when migrating a v50 save', () {

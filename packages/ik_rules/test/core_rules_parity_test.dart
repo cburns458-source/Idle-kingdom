@@ -93,15 +93,7 @@ void main() {
         final result = action == 'deposit'
             ? depositToBank(saveOf(fixture), index, quantity)
             : withdrawFromBank(saveOf(fixture), index, quantity);
-        expect(
-          checkParity(
-            fixture,
-            result.ok
-                ? <String, Object?>{'ok': true, 'save': result.save!.toJson()}
-                : <String, Object?>{'ok': false, 'reason': result.reason},
-          ),
-          isNull,
-        );
+        expect(checkParity(fixture, result.toJson()), isNull);
       });
     }
   });

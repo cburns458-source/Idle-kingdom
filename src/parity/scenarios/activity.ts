@@ -42,6 +42,7 @@ import {
   asJson,
   baseSave,
   combatSave,
+  fullBagSave,
   gearedSave,
   kitchenSave,
   queuedProductionSave,
@@ -184,10 +185,38 @@ export const activityScenarios: ParityScenario[] = [
             save: asJson(rewarded.save),
             loot: rewarded.loot,
             goldGained: rewarded.goldGained,
+            ...(rewarded.leftBehind.length > 0 ? { leftBehind: rewarded.leftBehind } : {}),
           } as unknown as JsonValue
         },
       ),
     ),
+  ),
+
+  scenario(
+    'activity/rewards',
+    'full-bag-left-behind',
+    {
+      source: 'content',
+      save: asJson(fullBagSave(contentDatabase(), ['ITEM-0100'])),
+      actionId: 'ACN-0035',
+      seed: SEED,
+    },
+    () => {
+      const db = contentDatabase()
+      const action = db.Actions.find((row) => row['Action ID'] === 'ACN-0035')!
+      const rewarded = resolveActionRewards(
+        db,
+        fullBagSave(db, ['ITEM-0100']),
+        action,
+        mulberry32(SEED),
+      )
+      return {
+        save: asJson(rewarded.save),
+        loot: rewarded.loot,
+        goldGained: rewarded.goldGained,
+        ...(rewarded.leftBehind.length > 0 ? { leftBehind: rewarded.leftBehind } : {}),
+      } as unknown as JsonValue
+    },
   ),
 
   ...(['base', 'geared'] as const).flatMap((kind) =>

@@ -29,6 +29,26 @@ class LootGrant {
   };
 }
 
+/// One row per itemId, quantities summed, first displayName kept, then sorted.
+List<LootGrant> mergeLeftBehind(Iterable<LootGrant> grants) {
+  final byId = <String, LootGrant>{};
+  for (final grant in grants) {
+    if (grant.quantity <= 0) continue;
+    final existing = byId[grant.itemId];
+    if (existing != null) {
+      byId[grant.itemId] = LootGrant(
+        itemId: existing.itemId,
+        quantity: existing.quantity + grant.quantity,
+        displayName: existing.displayName,
+      );
+    } else {
+      byId[grant.itemId] = grant;
+    }
+  }
+  final merged = byId.values.toList()..sort((left, right) => left.itemId.compareTo(right.itemId));
+  return merged;
+}
+
 class ActionCosmeticGrant {
   const ActionCosmeticGrant({required this.cosmeticId, required this.isFirstEver});
 
@@ -47,12 +67,16 @@ class ActionRewards {
     required this.loot,
     required this.goldGained,
     this.cosmeticsGranted = const <ActionCosmeticGrant>[],
+    this.leftBehind = const <LootGrant>[],
   });
 
   final PlayerSave save;
   final List<LootGrant> loot;
   final num goldGained;
   final List<ActionCosmeticGrant> cosmeticsGranted;
+
+  /// Drops that rolled but did not fit in the bag. Same shape as [loot].
+  final List<LootGrant> leftBehind;
 }
 
 num _rollQuantity(RewardEntryRow entry, RandomFn random) {
@@ -89,6 +113,7 @@ ActionRewards resolveActionRewards(
 ) {
   var next = save;
   final loot = <LootGrant>[];
+  final leftBehind = <LootGrant>[];
   final cosmeticsGranted = <ActionCosmeticGrant>[];
   var goldGained = jsNumber(action.raw['Guaranteed Gold'] ?? 0);
   final skillDropBonus = raceSkillDropChanceBonusPercent(
@@ -131,15 +156,19 @@ ActionRewards resolveActionRewards(
       }
       final granted = addItemsToInventory(next, rewardValue, quantity, null, false, db);
       next = granted.save;
+      final rawName = db.items
+          .firstWhereOrNull((item) => item.raw['Item ID'] == rewardValue)
+          ?.raw['Display Name'];
+      final displayName = rawName is String ? rawName : rewardValue;
       if (granted.added > 0) {
-        final displayName = db.items
-            .firstWhereOrNull((item) => item.raw['Item ID'] == rewardValue)
-            ?.raw['Display Name'];
-        loot.add(
+        loot.add(LootGrant(itemId: rewardValue, quantity: granted.added, displayName: displayName));
+      }
+      if (granted.added < quantity) {
+        leftBehind.add(
           LootGrant(
             itemId: rewardValue,
-            quantity: granted.added,
-            displayName: displayName is String ? displayName : rewardValue,
+            quantity: quantity - granted.added,
+            displayName: displayName,
           ),
         );
       }
@@ -203,5 +232,6 @@ ActionRewards resolveActionRewards(
     loot: loot,
     goldGained: goldGained,
     cosmeticsGranted: cosmeticsGranted,
+    leftBehind: leftBehind,
   );
 }

@@ -128,6 +128,21 @@ void main() {
     }
   });
 
+  group('shop buy bag-full parity', () {
+    for (final fixture in loadParityFixtures('shops/buy')) {
+      test(fixture.name, () {
+        final result = confirmShopOffer(
+          databaseOf(fixture),
+          saveOf(fixture),
+          fixture.inputField<String>('shopId'),
+          _offerOf(fixture),
+          nowMs: offerNowMs,
+        );
+        expect(checkParity(fixture, result.toJson()), isNull);
+      });
+    }
+  });
+
   group('shop offer parity', () {
     for (final fixture in loadParityFixtures('shops/offer')) {
       test(fixture.name, () {

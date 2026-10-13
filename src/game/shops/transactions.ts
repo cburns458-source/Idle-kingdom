@@ -2,7 +2,7 @@ import { recordItemsSoldAtLocation } from '../achievements/progress'
 import { addItemToInventoryExact } from '../activity/rewards'
 import { grantCosmetic } from '../cosmetics/cosmetics'
 import { applyQuestAutoStartOnSeed } from '../quests/progress'
-import { canFitItemQuantity } from '../inventory/capacity'
+import { noRoomFor, noRoomRefusal, type NoRoom } from '../inventory/fit'
 import { isFavoriteStack } from '../inventory/favorites'
 import type { GameDatabase } from '../data/types'
 import type { InventoryStack, PlayerSave } from '../save/types'
@@ -43,7 +43,7 @@ export type ShopTransactionResult =
       message: string
       cosmeticsGranted: ShopCosmeticGrant[]
     }
-  | { ok: false; reason: string }
+  | { ok: false; reason: string; code?: 'no_room'; noRoom?: NoRoom }
 
 /**
  * A shop offer quantity must be a positive safe integer. Rejects non-numbers,
@@ -166,6 +166,14 @@ export function confirmShopOffer(
   // Validate bag space after sells free slots, before committing buys.
   // Cosmetics bypass the bag entirely — they're unlocked into the Wardrobe's
   // always-owned collection instead, so they never need inventory space.
+  const itemBuys = buys.filter((line) => !db.Cosmetics.some((row) => row['Item ID'] === line.itemId))
+  const blocked = noRoomFor(
+    next,
+    itemBuys.map((line) => ({ itemId: line.itemId, quantity: Math.floor(line.quantity) })),
+    db,
+  )
+  if (blocked) return noRoomRefusal(blocked)
+
   let spaceCheck = next
   const cosmeticGrants: ShopCosmeticGrant[] = []
   for (const line of buys) {
@@ -178,9 +186,6 @@ export function confirmShopOffer(
         cosmeticGrants.push({ cosmeticId: cosmetic['Cosmetic ID'], isFirstEver: granted.isFirstEver })
       }
       continue
-    }
-    if (!canFitItemQuantity(spaceCheck, line.itemId, qty)) {
-      return { ok: false, reason: 'Not enough inventory space (180 slots).' }
     }
     const staged = addItemToInventoryExact(spaceCheck, line.itemId, qty)
     if (!staged.ok) return { ok: false, reason: staged.reason }

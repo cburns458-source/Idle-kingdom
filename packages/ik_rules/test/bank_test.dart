@@ -107,4 +107,72 @@ void main() {
     expect(withdrawn.save!.bank.single.quantity, 1);
     expect(withdrawn.save!.inventory.single.quantity, 4);
   });
+
+  test('caps the chest at 168 slots, past the 84-slot bag', () {
+    final db = databaseOf(loadParityFixtures('save/roundtrip').first);
+    final blocked = depositToBank(
+      createNewSave(db, 0).copyWith(
+        inventory: const [InventoryStack(itemId: 'ITEM-0002', quantity: 1)],
+        bank: [
+          for (var index = 0; index < bankSlotLimit; index++)
+            InventoryStack(itemId: 'ITEM-fake-$index', quantity: 1),
+        ],
+      ),
+      0,
+      1,
+    );
+    expect(blocked.ok, isFalse);
+    expect(blocked.reason, 'Bank is full ($bankSlotLimit slots).');
+
+    final accepted = depositToBank(
+      createNewSave(db, 0).copyWith(
+        inventory: const [InventoryStack(itemId: 'ITEM-0002', quantity: 1)],
+        bank: [
+          for (var index = 0; index < bankSlotLimit - 1; index++)
+            InventoryStack(itemId: 'ITEM-fake-$index', quantity: 1),
+        ],
+      ),
+      0,
+      1,
+    );
+    expect(accepted.ok, isTrue);
+    expect(accepted.save!.bank, hasLength(bankSlotLimit));
+  });
+
+  test('refuses a new-stack withdraw with no_room and leaves bag and bank unchanged', () {
+    final db = databaseOf(loadParityFixtures('save/roundtrip').first);
+    final save = createNewSave(db, 0).copyWith(
+      inventory: [
+        for (var index = 0; index < inventorySlotLimit; index += 1)
+          InventoryStack(itemId: 'FILL-$index', quantity: 1),
+      ],
+      bank: const [InventoryStack(itemId: 'ITEM-0002', quantity: 3)],
+    );
+    final blocked = withdrawFromBank(save, 0, 1);
+    expect(blocked.ok, isFalse);
+    expect(blocked.code, 'no_room');
+    expect(blocked.reason, 'No room in your bag. Free 1 slot and try again.');
+    expect(blocked.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+    expect(save.inventory, hasLength(inventorySlotLimit));
+    expect(save.bank.single.quantity, 3);
+  });
+
+  test('withdraws onto an existing stack when the bag is full', () {
+    final db = databaseOf(loadParityFixtures('save/roundtrip').first);
+    final save = createNewSave(db, 0).copyWith(
+      inventory: [
+        const InventoryStack(itemId: 'ITEM-0002', quantity: 2),
+        for (var index = 0; index < inventorySlotLimit - 1; index += 1)
+          InventoryStack(itemId: 'FILL-$index', quantity: 1),
+      ],
+      bank: const [InventoryStack(itemId: 'ITEM-0002', quantity: 4)],
+    );
+    final withdrawn = withdrawFromBank(save, 0, 2);
+    expect(withdrawn.ok, isTrue);
+    expect(
+      withdrawn.save!.inventory.where((stack) => stack.itemId == 'ITEM-0002').first.quantity,
+      4,
+    );
+    expect(withdrawn.save!.bank.single.quantity, 2);
+  });
 }

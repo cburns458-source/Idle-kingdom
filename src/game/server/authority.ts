@@ -20,6 +20,7 @@ import {
 import { donateToGuildHall, payGuildHallDebt, withdrawFromGuildHall, type GuildHallState } from '../guild/economy'
 import { canPayGuildDebt } from '../guild/hall'
 import { depositToBank, withdrawFromBank } from '../inventory/bank'
+import type { LootGrant } from '../activity/types'
 import type { NoRoom } from '../inventory/fit'
 import { sellInventoryIndexes, sellInventoryQuantities } from '../inventory/sell'
 import { claimMailAttachments, markMailRead } from '../mail/mail'
@@ -155,6 +156,7 @@ export type Phase2SyncResult = {
   combatDeaths: number
   effectiveElapsedMs: number
   caughtUp: boolean
+  leftBehind?: LootGrant[]
 }
 
 /**
@@ -271,10 +273,21 @@ function ok(
   return { ok: true, save, ...extra }
 }
 
-function unwrap<T extends { ok: true; save: PlayerSave } | { ok: false; reason: string }>(
-  result: T,
-): GameCommandResult {
-  return result.ok ? ok(result.save) : failed(result.reason)
+function unwrap<
+  T extends
+    | { ok: true; save: PlayerSave }
+    | { ok: false; reason: string; code?: string; noRoom?: NoRoom },
+>(result: T): GameCommandResult {
+  if (result.ok) return ok(result.save)
+  if (result.code) {
+    return {
+      ok: false,
+      reason: result.reason,
+      code: result.code,
+      ...(result.noRoom ? { noRoom: result.noRoom } : {}),
+    }
+  }
+  return failed(result.reason)
 }
 
 /** Like [unwrap], but keeps a quest refusal's code (`no_room`, `confirm_favourites`) and its data. */
@@ -320,6 +333,7 @@ export function runPhase2Sync(
     combatDeaths: unattended.combatDeaths,
     effectiveElapsedMs: unattended.effectiveElapsedMs,
     caughtUp: unattended.caughtUp,
+    ...(unattended.leftBehind?.length ? { leftBehind: unattended.leftBehind } : {}),
   }
 }
 

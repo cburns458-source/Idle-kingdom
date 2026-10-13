@@ -29,7 +29,7 @@ import { totalLevel, totalSkillXp } from '../../game/skills/totals'
 import type { PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
-import { asJson, baseSave, fullBagSave, richSave } from './saveFixtures'
+import { asJson, baseSave, fullBagSave, fullBankSave, richSave } from './saveFixtures'
 
 /** Saves are carried in the fixture input, so Dart rebuilds the exact state. */
 function withSave(save: PlayerSave, extra: Record<string, JsonValue> = {}): JsonValue {
@@ -95,9 +95,13 @@ const BANK_ACCESS_LOCATION_IDS = [
 ]
 
 function bankMoveJson(result: BankMoveResult): JsonValue {
-  return result.ok
-    ? ({ ok: true, save: asJson(result.save) } as unknown as JsonValue)
-    : { ok: false, reason: result.reason }
+  if (result.ok) return { ok: true, save: asJson(result.save) } as unknown as JsonValue
+  return {
+    ok: false,
+    reason: result.reason,
+    ...(result.code ? { code: result.code } : {}),
+    ...(result.noRoom ? { noRoom: result.noRoom } : {}),
+  } as unknown as JsonValue
 }
 
 function withBankMove(
@@ -316,7 +320,10 @@ export const coreRuleScenarios: ParityScenario[] = [
     'inventory/bank',
     'bank-full',
     withBankMove(
-      { ...saveFor('full'), inventory: [{ itemId: 'ITEM-0002', quantity: 1 }], bank: saveFor('full').inventory },
+      {
+        ...fullBankSave(contentDatabase(), ['ITEM-0100', 'ITEM-0108']),
+        inventory: [{ itemId: 'ITEM-0002', quantity: 1 }],
+      },
       'deposit',
       0,
       1,
@@ -324,7 +331,10 @@ export const coreRuleScenarios: ParityScenario[] = [
     () =>
       bankMoveJson(
         depositToBank(
-          { ...saveFor('full'), inventory: [{ itemId: 'ITEM-0002', quantity: 1 }], bank: saveFor('full').inventory },
+          {
+            ...fullBankSave(contentDatabase(), ['ITEM-0100', 'ITEM-0108']),
+            inventory: [{ itemId: 'ITEM-0002', quantity: 1 }],
+          },
           0,
           1,
         ),
