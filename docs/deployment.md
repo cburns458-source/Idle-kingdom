@@ -199,3 +199,5 @@ Agent secrets are the place for it.
 <!-- emergency live reset after staging-token DNS update -->
 
 <!-- emergency live reset: 2h recheck 2026-10-13T17:10Z -->
+
+<!-- emergency live reset: overwrite-race after CI 17:14Z -->
