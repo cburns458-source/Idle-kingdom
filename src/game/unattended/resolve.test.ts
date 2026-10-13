@@ -188,7 +188,11 @@ describe('unattended progression', () => {
     }
 
     const now = startedAt + 24 * 3_600_000
-    const resolved = resolveUnattendedProgress(launch, save, now, () => 0)
+    // A small test-only step cap reaches the same step-limit path as the
+    // real ~20,000-step valve, in a fraction of the time.
+    const stepCap = { maxStepsOverride: 200 }
+    const resolved = resolveUnattendedProgress(launch, save, now, () => 0, stepCap)
+    expect(resolved.caughtUp).toBe(false)
 
     // The anchor must never jump past what was actually simulated — it can
     // fall short of `now` (there's more to catch up next load), but must
@@ -199,9 +203,10 @@ describe('unattended progression', () => {
 
     // Resuming from the partial checkpoint continues making progress
     // instead of being stuck (the remainder was preserved, not discarded).
-    const again = resolveUnattendedProgress(launch, resolved.save, now, () => 0)
+    const again = resolveUnattendedProgress(launch, resolved.save, now, () => 0, stepCap)
     expect(again.gatheringActions).toBeGreaterThan(0)
-  }, 60_000)
+    expect(Date.parse(again.save.unattendedProgressAt!)).toBeGreaterThan(stampedMs)
+  })
 
   it('resolves combat rounds with the live combat engine while away', () => {
     const { launch } = prepareDatabase(rawDatabase)

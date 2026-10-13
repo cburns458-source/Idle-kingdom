@@ -17,6 +17,20 @@ import 'player_sprite.dart';
 /// padding plus half of the 14px dot.
 const double mapNodeDotCenter = 15;
 
+/// Width of a node's tappable dot: the 14px dot plus 10px of padding each side.
+const double mapNodeDotBoxWidth = 34;
+
+/// Map node labels: small parchment text with the overlay shadow.
+const TextStyle mapNodeLabelStyle = TextStyle(
+  fontSize: GameFont.s,
+  fontWeight: FontWeight.w400,
+  color: Palette.parchmentText,
+  shadows: overlayShadow,
+);
+
+/// Labels wrap to this many lines, and only then end in an ellipsis.
+const int mapNodeLabelMaxLines = 2;
+
 /// Side of the walking sprite.
 const double mapWalkerSize = 36;
 
@@ -97,7 +111,7 @@ class WorldMapView extends StatelessWidget {
             return Stack(
               children: [
                 for (final node in nodes)
-                  _PinnedToArt(
+                  _PinnedNode(
                     position: positionOnBrowseMap(
                       node.locationId,
                       browseMapId,
@@ -106,8 +120,9 @@ class WorldMapView extends StatelessWidget {
                     ),
                     box: box,
                     aspectRatio: artAspect,
-                    anchorFromTop: mapNodeDotCenter,
-                    child: _MapNode(
+                    label: mapNodeLabel(node, browseMapId),
+                    builder: (layout) => _MapNode(
+                      layout: layout,
                       location: node,
                       browseMapId: browseMapId,
                       hintPulse:
@@ -234,6 +249,61 @@ class _PinnedToArt extends StatelessWidget {
   }
 }
 
+/// Where a node's dot and label sit inside its pinned box.
+class _NodeLayout {
+  const _NodeLayout({required this.dotInset, required this.labelInset, required this.labelWidth});
+
+  final double dotInset;
+  final double labelInset;
+  final double labelWidth;
+}
+
+/// Pins a map node over its landmark like [_PinnedToArt], but keeps its label
+/// inside the map view.
+///
+/// The dot always sits on the landmark. The label wraps at
+/// [mapLabelMaxWidth] and, near an edge, slides inward instead of being cut off.
+class _PinnedNode extends StatelessWidget {
+  const _PinnedNode({
+    required this.position,
+    required this.box,
+    required this.aspectRatio,
+    required this.label,
+    required this.builder,
+  });
+
+  final NodePosition position;
+  final Size box;
+  final double aspectRatio;
+  final String label;
+  final Widget Function(_NodeLayout layout) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    final point = mapArtOffset(position, box, aspectRatio: aspectRatio);
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: mapNodeLabelStyle),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: mapNodeLabelMaxLines,
+      ellipsis: '\u2026',
+    )..layout(maxWidth: mapLabelMaxWidth(box.width));
+    final labelWidth = painter.width.ceilToDouble();
+    painter.dispose();
+    final dotLeft = point.dx - mapNodeDotBoxWidth / 2;
+    final labelLeft = clampCentredLeft(point.dx, labelWidth, box.width);
+    final left = dotLeft < labelLeft ? dotLeft : labelLeft;
+    return Positioned(
+      left: left,
+      top: point.dy - mapNodeDotCenter,
+      child: builder(
+        _NodeLayout(dotInset: dotLeft - left, labelInset: labelLeft - left, labelWidth: labelWidth),
+      ),
+    );
+  }
+}
+
 /// A shrunk player sprite, wobbling as it walks.
 class _MapWalker extends StatelessWidget {
   const _MapWalker({required this.progress, required this.appearance, this.raceId, this.bytes});
@@ -263,6 +333,7 @@ class _MapWalker extends StatelessWidget {
 
 class _MapNode extends StatefulWidget {
   const _MapNode({
+    required this.layout,
     required this.location,
     required this.browseMapId,
     required this.isHere,
@@ -272,6 +343,7 @@ class _MapNode extends StatefulWidget {
     required this.onDoubleTap,
   });
 
+  final _NodeLayout layout;
   final LocationRow location;
   final String browseMapId;
   final bool isHere;
@@ -358,41 +430,48 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
       onTap: _handleTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(
-            button: true,
-            label: label,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-              child: widget.hintPulse
-                  ? BatterySaverScope.of(context)
-                        ? _mapDot(fill: fill, border: _hintPeak, width: 2)
-                        : AnimatedBuilder(
-                            animation: _hint,
-                            builder: (context, _) {
-                              final border = Color.lerp(
-                                const Color(0xB3B42318),
-                                _hintPeak,
-                                _hint.value,
-                              )!;
-                              return _mapDot(fill: fill, border: border, width: 2);
-                            },
-                          )
-                  : _mapDot(
-                      fill: fill,
-                      border: isSelected ? Palette.gold : Palette.parchment,
-                      width: isSelected || isHere ? 2 : 1,
-                    ),
+          Padding(
+            padding: EdgeInsets.only(left: widget.layout.dotInset),
+            child: Semantics(
+              button: true,
+              label: label,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                child: widget.hintPulse
+                    ? BatterySaverScope.of(context)
+                          ? _mapDot(fill: fill, border: _hintPeak, width: 2)
+                          : AnimatedBuilder(
+                              animation: _hint,
+                              builder: (context, _) {
+                                final border = Color.lerp(
+                                  const Color(0xB3B42318),
+                                  _hintPeak,
+                                  _hint.value,
+                                )!;
+                                return _mapDot(fill: fill, border: border, width: 2);
+                              },
+                            )
+                    : _mapDot(
+                        fill: fill,
+                        border: isSelected ? Palette.gold : Palette.parchment,
+                        width: isSelected || isHere ? 2 : 1,
+                      ),
+              ),
             ),
           ),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: GameFont.s,
-              fontWeight: FontWeight.w400,
-              color: Palette.parchmentText,
-              shadows: overlayShadow,
+          Padding(
+            padding: EdgeInsets.only(left: widget.layout.labelInset),
+            child: SizedBox(
+              width: widget.layout.labelWidth,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: mapNodeLabelMaxLines,
+                overflow: TextOverflow.ellipsis,
+                style: mapNodeLabelStyle,
+              ),
             ),
           ),
         ],

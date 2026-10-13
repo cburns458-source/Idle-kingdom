@@ -49,3 +49,32 @@ Offset mapArtOffset(NodePosition position, Size box, {double aspectRatio = mapAr
     rect.top + rect.height * (position.y / 100),
   );
 }
+
+/// How close a map node's dot or label may come to the edge of the map view.
+const double mapLabelEdgeMargin = 4;
+
+/// Widest a map node label may be before it wraps, for a map view [boxWidth]
+/// wide. Narrow phones get a narrower cap so an edge label has room to move in.
+double mapLabelMaxWidth(double boxWidth) {
+  final cap = boxWidth * 0.4;
+  return cap < 64 ? 64 : (cap > 120 ? 120 : cap);
+}
+
+/// Left edge for a box [width] wide that would like to be centred on
+/// [anchorX], slid inward just enough to stay [margin] inside [boxWidth].
+///
+/// A box wider than the room left between the margins is centred in the view.
+double clampCentredLeft(
+  double anchorX,
+  double width,
+  double boxWidth, {
+  double margin = mapLabelEdgeMargin,
+}) {
+  final centred = anchorX - width / 2;
+  final lo = margin;
+  final hi = boxWidth - margin - width;
+  if (hi < lo) return (boxWidth - width) / 2;
+  if (centred < lo) return lo;
+  if (centred > hi) return hi;
+  return centred;
+}
