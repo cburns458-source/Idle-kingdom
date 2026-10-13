@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/bazaar_view.dart';
+import 'package:idle_kingdoms/src/ui/dialogue_text.dart';
 import 'package:idle_kingdoms/src/ui/game_popup.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
@@ -516,4 +517,141 @@ void main() {
     expect(bazaarTaxLine(bazaarTaxThreshold), contains('untaxed'));
     expect(bazaarTaxLine(bazaarTaxThreshold + 1), contains('pay $bazaarTaxPercent%'));
   });
+
+  List<InventoryStack> filledBag({int free = 0}) {
+    return [
+      for (var index = 0; index < inventorySlotLimit - free; index++)
+        InventoryStack(itemId: 'FILL-$index', quantity: 1),
+    ];
+  }
+
+  void seedCollection(
+    FakeTransport project,
+    String userId, {
+    int gold = 0,
+    List<(String itemId, int quantity)> items = const <(String, int)>[],
+  }) {
+    var stamp = 0;
+    if (gold > 0) {
+      project.exchange.box.add(
+        FakeExchangeCollect(
+          id: 'bzc_gold',
+          userId: userId,
+          itemId: null,
+          quantity: 0,
+          gold: gold,
+          reason: bazaarCollectSold,
+          createdAt: '2026-01-01T00:00:${stamp.toString().padLeft(2, '0')}.000Z',
+        ),
+      );
+      stamp += 1;
+    }
+    for (final (itemId, quantity) in items) {
+      project.exchange.box.add(
+        FakeExchangeCollect(
+          id: 'bzc_$itemId',
+          userId: userId,
+          itemId: itemId,
+          quantity: quantity,
+          gold: 0,
+          reason: bazaarCollectBought,
+          createdAt: '2026-01-01T00:00:${stamp.toString().padLeft(2, '0')}.000Z',
+        ),
+      );
+      stamp += 1;
+    }
+  }
+
+  testWidgets('a full Bazaar collect shows no popup', (tester) async {
+    final player = await hostedPlayer(tester, gold: 10);
+    seedCollection(
+      player.project,
+      player.net.service.session!.userId,
+      gold: 40,
+      items: <(String, int)>[(_ironOre, 2)],
+    );
+    await pumpBazaar(tester, player.net, player.save);
+
+    await tester.tap(find.widgetWithText(GameButton, 'Collect'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(DialogueText.bazaarCollectionFull), findsNothing);
+    expect(find.textContaining('still in your collection box'), findsNothing);
+    expect(player.net.market.collect, isEmpty);
+  });
+
+  testWidgets('a full-bag Bazaar collect still takes gold and shows the collection-box popup', (
+    tester,
+  ) async {
+    final player = await hostedPlayer(tester);
+    final userId = player.net.service.session!.userId;
+    seedCollection(player.project, userId, gold: 80, items: <(String, int)>[(_ironOre, 3)]);
+    final full = player.save.copyWith(inventory: filledBag(), gold: 5);
+    expect(
+      (await seedHostedSave(
+        player.net.service as RemoteMultiplayerService,
+        player.project,
+        full,
+      )).ok,
+      isTrue,
+    );
+    final controller = buildController(database, seed: full);
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      BazaarView(controller: controller, multiplayer: player.net, onClose: () {}),
+      size: const Size(900, 2400),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(GameButton, 'Collect'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(DialogueText.bazaarCollectionFull), findsOne);
+    expect(find.textContaining('cannot hold'), findsNothing);
+    expect(controller.save.gold, 85);
+    expect(controller.save.inventory, hasLength(inventorySlotLimit));
+    expect(player.net.market.collect.single.itemId, _ironOre);
+  });
+
+  testWidgets('a partial Bazaar collect takes one row and shows the collection-box popup', (
+    tester,
+  ) async {
+    final player = await hostedPlayer(tester);
+    final userId = player.net.service.session!.userId;
+    seedCollection(
+      player.project,
+      userId,
+      items: <(String, int)>[(_ironOre, 1), (_titaniumOre, 1), (clayId, 1)],
+    );
+    final roomForOne = player.save.copyWith(inventory: filledBag(free: 1));
+    expect(
+      (await seedHostedSave(
+        player.net.service as RemoteMultiplayerService,
+        player.project,
+        roomForOne,
+      )).ok,
+      isTrue,
+    );
+    final controller = buildController(database, seed: roomForOne);
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      BazaarView(controller: controller, multiplayer: player.net, onClose: () {}),
+      size: const Size(900, 2400),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(GameButton, 'Collect'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(DialogueText.bazaarCollectionFull), findsOne);
+    expect(controller.save.inventory, hasLength(inventorySlotLimit));
+    expect(controller.save.inventory.any((stack) => stack.itemId == _ironOre), isTrue);
+    expect(player.net.market.collect, hasLength(2));
+  });
 }
+
+const String clayId = 'ITEM-0002';

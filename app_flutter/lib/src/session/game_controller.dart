@@ -317,10 +317,9 @@ class GameController extends ChangeNotifier {
   /// True when the bag tab should show the left-behind badge.
   bool get hasBagOverflowBadge => bagOverflow.hasBadge;
 
-  /// How many times [claimMailboxMessage] has run. Tests assert a single call.
-  int mailboxClaimCalls = 0;
-
-  void _bindBagOverflow() => bagOverflow.bindTo(save.characterName);
+  void _bindBagOverflow() {
+    bagOverflow.bindToCreatedAt(save.createdAt, legacyName: save.characterName);
+  }
 
   /// Merges overflow from a completion, combat win, tick, or catch-up.
   ///
@@ -841,8 +840,10 @@ class GameController extends ChangeNotifier {
   }
 
   /// Drops the character after sign-out or a kick from another device.
+  ///
+  /// Leaves each save's bag-overflow badge in local prefs. Binding to the
+  /// fresh unsigned save just hides it until that account is adopted again.
   void resetUnsigned() {
-    bagOverflow.setHasBadge(false);
     session.resetUnsigned();
     _bindBagOverflow();
     _awaySummary = null;
@@ -1830,7 +1831,6 @@ class GameController extends ChangeNotifier {
   ///
   /// One call. The engine changes nothing when the bag cannot take the parcel.
   MailClaimResult claimMailboxMessage(String messageId) {
-    mailboxClaimCalls += 1;
     final result = claimMailAttachments(save, messageId, session.clock(), db);
     if (!result.ok) return result;
     commit(result.save!, command: 'mail_claim', args: <String, Object?>{'messageId': messageId});

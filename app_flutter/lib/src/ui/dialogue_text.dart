@@ -15,9 +15,20 @@ class DialogueText {
   static const String favouritesPrompt =
       'Some items are favourited. Do you still want to use them?';
 
+  static const String stackFull = 'That stack is full.';
+
+  static const String bazaarCollectionFull =
+      'Your bag is full. Some items are still in your collection box.';
+
   static String bagFull(int slotsNeeded) {
     final n = math.max(1, slotsNeeded);
     return 'Your bag is full. Make room for $n more item${n == 1 ? '' : 's'} and try again.';
+  }
+
+  /// Player-facing bag `no_room` copy. Never uses the engine's `reason` string.
+  static String noRoomPopup(NoRoom? noRoom, {int? slotsNeeded}) {
+    if (noRoom?.reason == 'stack_full') return stackFull;
+    return bagFull(slotsNeeded ?? noRoom?.slotsNeeded ?? 1);
   }
 
   String itemName(String itemId) =>
@@ -92,7 +103,7 @@ class DialogueText {
         if (names.isEmpty) return 'You have nothing left to hand in.';
         return 'You have no ${names.join(' or ')} to hand in.';
       case 'no_room':
-        return bagFull(result.noRoom?.slotsNeeded ?? 1);
+        return noRoomPopup(result.noRoom);
       case 'not_available':
         return 'That isn’t available right now.';
       case 'action_failed' || 'confirm_favourites':

@@ -185,10 +185,7 @@ class _ShopPanelState extends State<ShopPanel> {
       if (result.code == 'no_room') {
         if (!mounted) return;
         setState(() => _error = null);
-        await showDialogueBagFullPopup(
-          context: context,
-          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
-        );
+        await showDialogueBagFullPopup(context: context, noRoom: result.noRoom);
         return;
       }
       if (!mounted) return;

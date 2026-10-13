@@ -6,6 +6,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'dialogue_text.dart';
 import 'format.dart';
 import 'game_popup.dart';
 import 'item_icon.dart';
@@ -145,6 +146,16 @@ class _BazaarViewState extends State<BazaarView> {
     widget.onClose();
   }
 
+  Future<void> _collectBox() async {
+    final result = await net.collectMarketBox(save, controller.commitLoadout);
+    if (!mounted || result == null) return;
+    // Check ok before code: a full success is ok without no_room.
+    if (result.ok && result.code != 'no_room') return;
+    if (result.code == 'no_room') {
+      await showGameAlert(context: context, message: DialogueText.bazaarCollectionFull);
+    }
+  }
+
   Future<void> _place(BazaarSide side, String itemId) async {
     await net.placeMarketOffer(
       side: side,
@@ -257,9 +268,7 @@ class _BazaarViewState extends State<BazaarView> {
                 : GameButton(
                     label: 'Collect',
                     compact: true,
-                    onPressed: net.busy
-                        ? null
-                        : () => net.collectMarketBox(save, controller.commitLoadout),
+                    onPressed: net.busy ? null : _collectBox,
                   ),
           );
         }
