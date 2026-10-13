@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'dialogue_window.dart';
 import 'floating_slot.dart';
 import 'format.dart';
 import 'item_icon.dart';
@@ -172,7 +173,7 @@ class _ShopPanelState extends State<ShopPanel> {
     });
   }
 
-  void _confirm() {
+  Future<void> _confirm() async {
     final result = confirmShopOffer(
       db,
       save,
@@ -181,6 +182,15 @@ class _ShopPanelState extends State<ShopPanel> {
       nowMs: controller.session.clock(),
     );
     if (!result.ok) {
+      if (result.code == 'no_room') {
+        setState(() => _error = null);
+        if (!mounted) return;
+        await showDialogueBagFullPopup(
+          context: context,
+          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
+        );
+        return;
+      }
       setState(() => _error = result.reason);
       return;
     }

@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'dialogue_window.dart';
 import 'format.dart';
 import 'game_image.dart';
 import 'game_popup.dart';
@@ -31,6 +32,28 @@ class _MailboxPopupState extends State<_MailboxPopup> {
   String? _notice;
 
   GameController get controller => widget.controller;
+
+  Future<void> _claim(String messageId) async {
+    final result = claimMailAttachments(
+      controller.save,
+      messageId,
+      controller.session.clock(),
+      controller.db,
+    );
+    if (!result.ok) {
+      if (result.code == 'no_room') {
+        if (!mounted) return;
+        await showDialogueBagFullPopup(
+          context: context,
+          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
+        );
+        return;
+      }
+      setState(() => _notice = result.reason);
+      return;
+    }
+    setState(() => _notice = controller.claimMailboxMessage(messageId));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +97,7 @@ class _MailboxPopupState extends State<_MailboxPopup> {
                         controller: controller,
                         message: open,
                         notice: _notice,
-                        onClaim: () {
-                          final id = open!.id;
-                          setState(() => _notice = controller.claimMailboxMessage(id));
-                        },
+                        onClaim: () => _claim(open!.id),
                       ),
               ),
               const SizedBox(height: 10),

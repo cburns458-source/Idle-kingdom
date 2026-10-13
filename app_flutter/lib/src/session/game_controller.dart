@@ -7,6 +7,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
 import 'activity_icons_pref.dart';
+import 'bag_overflow_pref.dart';
 import 'battery_saver_pref.dart';
 import 'hosted_save_adopt.dart';
 import 'hud_level_pref.dart';
@@ -130,6 +131,7 @@ class GameController extends ChangeNotifier {
     UiChromePref? uiChrome,
     BatterySaverPref? batterySaverPref,
     QuestLogSortPref? questLogSort,
+    BagOverflowPref? bagOverflow,
   }) : localArt = localArt ?? LocalPlayerArt(),
        mapTravel = mapTravel ?? MapTravelPref(),
        hudLevel = hudLevel ?? HudLevelPref(),
@@ -137,7 +139,8 @@ class GameController extends ChangeNotifier {
        activityIcons = activityIcons ?? ActivityIconsPref(),
        uiChrome = uiChrome ?? UiChromePref(),
        batterySaverPref = batterySaverPref ?? BatterySaverPref(),
-       questLogSort = questLogSort ?? QuestLogSortPref();
+       questLogSort = questLogSort ?? QuestLogSortPref(),
+       bagOverflow = bagOverflow ?? BagOverflowPref();
 
   final LoadedDatabase database;
 
@@ -167,6 +170,9 @@ class GameController extends ChangeNotifier {
 
   /// Client-only quest journal sort.
   final QuestLogSortPref questLogSort;
+
+  /// Client-only bag-tab badge after loot was left behind.
+  final BagOverflowPref bagOverflow;
 
   /// Clock-driven progress bars and timers.
   ///
@@ -213,6 +219,7 @@ class GameController extends ChangeNotifier {
   static const int _rewardHistory = 6;
 
   final List<ActionRewardBundle> _recentRewards = <ActionRewardBundle>[];
+  List<LootGrant> _pendingLeftBehind = const <LootGrant>[];
   String? _message;
   String? _activityError;
   UnattendedResult? _awaySummary;
@@ -304,10 +311,46 @@ class GameController extends ChangeNotifier {
     return chooseCombatForQuest(db, save, questId, session.clock(), _random);
   }
 
+  /// Overflow grants waiting for the left-behind popup. Empty after dismiss.
+  List<LootGrant> get pendingLeftBehind => List.unmodifiable(_pendingLeftBehind);
+
+  /// True when the bag tab should show the left-behind badge.
+  bool get hasBagOverflowBadge => bagOverflow.hasBadge;
+
+  /// Merges overflow from a completion, combat win, tick, or catch-up.
+  ///
+  /// Sets the bag-tab badge. While the popup is open the shell rebuilds this
+  /// list into the same card instead of stacking another.
+  void noteLeftBehind(Iterable<LootGrant> grants) {
+    final incoming = [
+      for (final grant in grants)
+        if (grant.quantity > 0) grant,
+    ];
+    if (incoming.isEmpty) return;
+    _pendingLeftBehind = mergeLeftBehind([..._pendingLeftBehind, ...incoming]);
+    bagOverflow.setHasBadge(true);
+    notifyListeners();
+  }
+
+  /// Clears the open popup's item list. The bag-tab badge stays until the bag opens.
+  void dismissLeftBehindPopup() {
+    if (_pendingLeftBehind.isEmpty) return;
+    _pendingLeftBehind = const <LootGrant>[];
+    notifyListeners();
+  }
+
+  /// Clears the bag-tab badge. Call when the player opens the bag.
+  void clearBagOverflowBadge() {
+    if (!bagOverflow.hasBadge) return;
+    bagOverflow.setHasBadge(false);
+    notifyListeners();
+  }
+
   /// Pushes a completed action or project onto the live reward strip.
   void noteReward(ActionRewardBundle bundle) {
     _recentRewards.insert(0, bundle);
     if (_recentRewards.length > _rewardHistory) _recentRewards.removeLast();
+    if (bundle.leftBehind.isNotEmpty) noteLeftBehind(bundle.leftBehind);
   }
 
   /// Instant projects toast a receipt and also land on the same strip as ticks.
@@ -761,6 +804,7 @@ class GameController extends ChangeNotifier {
     _awaySummary = boot.created || !away.hasCreditedWork ? null : away;
     _returningFromAway = !boot.created && away.effectiveElapsedMs > 0;
     _offerKingswoodsSling();
+    if (away.leftBehind.isNotEmpty) noteLeftBehind(away.leftBehind);
   }
 
   /// Covers a long hide the same way a cold boot does, but only when catch-up
@@ -772,6 +816,7 @@ class GameController extends ChangeNotifier {
     _recentRewards.clear();
     _message = null;
     _offerKingswoodsSling();
+    if (away.leftBehind.isNotEmpty) noteLeftBehind(away.leftBehind);
   }
 
   void finishReturningFromAway() {
@@ -794,6 +839,7 @@ class GameController extends ChangeNotifier {
     session.resetUnsigned();
     _awaySummary = null;
     _returningFromAway = false;
+    _pendingLeftBehind = const <LootGrant>[];
     _message = null;
     _activityError = null;
     notifyListeners();
