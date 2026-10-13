@@ -107,6 +107,7 @@ const rawDatabase = patchedDatabase({
       'Next Node ID': null,
       Condition: 'quest_active:QST-9108',
       Action: 'complete_quest:QST-9108;set_flag:gift:QST-9108:done',
+      'No Room Line': '',
       'Sort Order': 9,
       Status: 'Confirmed',
       'Release Phase': 'Launch',
@@ -262,6 +263,7 @@ describe('legacy quest rewards with a full bag', () => {
     const save = fillBag(freshSave(), 0)
     const result = chooseDialogue(db, save, 'DLG-9004', 'DNODE-9031', 'DCH-9031')
     expect(result).toMatchObject({ ok: false, code: 'no_room', reason: NO_ROOM, noRoom: { slotsNeeded: 1, slotsFree: 0 } })
+    expect(result.noRoom).toEqual({ slotsNeeded: 1, slotsFree: 0 })
     expect(result.save).toBe(save)
   })
 })
@@ -311,6 +313,7 @@ describe('no_room is all-or-nothing', () => {
     const before = paidState(save, 'QST-9108')
     const result = chooseDialogue(db, save, 'DLG-9004', 'DNODE-9031', 'DCH-9108')
     expect(result).toMatchObject({ ok: false, code: 'no_room', itemDeltas: [], bookDeltas: [] })
+    expect(result.noRoom).toEqual({ slotsNeeded: 1, slotsFree: 0 })
     expect(result.save).toBe(save)
     expect(paidState(result.save, 'QST-9108')).toEqual(before)
 
@@ -336,7 +339,13 @@ describe('no_room is all-or-nothing', () => {
     expect(before.courtyard).toBe(false)
 
     const result = chooseDialogue(contentDb, save, 'DLG-0012', 'DNODE-0022', 'DCH-0031')
-    expect(result).toMatchObject({ ok: false, code: 'no_room', noRoom: { slotsNeeded: 1, slotsFree: 0 } })
+    const kingLine = contentDb.DialogueChoices.find((row) => row['Choice ID'] === 'DCH-0031')?.['No Room Line']
+    expect(kingLine).toMatch(/Clear some room/)
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      noRoom: { slotsNeeded: 1, slotsFree: 0, npcLine: kingLine },
+    })
     expect(result.save).toBe(save)
     expect(paidState(save, 'QST-0001')).toEqual(before)
 

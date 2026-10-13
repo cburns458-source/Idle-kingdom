@@ -207,7 +207,7 @@ describe('Fennel and King dialogue content', () => {
       'DCH-0030',
       'DCH-0031',
     ])
-    for (const row of handOuts as Array<DialogueChoiceRow & { 'No Room Line'?: string }>) {
+    for (const row of handOuts) {
       const line = row['No Room Line'] ?? ''
       expect(line.length).toBeGreaterThan(10)
       expect(line).not.toMatch(/\d/)
@@ -388,6 +388,31 @@ describe('Fennel and King dialogue content', () => {
     expect(stepOf(noRoom.save, 'QST-0011')).toBe('QSTP-0023')
     const freed = { ...farm, inventory: farm.inventory.filter((stack) => !stack.itemId.startsWith('ITEM-FILL-')) }
     expect(seedGift(freed).ok).toBe(true)
+  })
+
+  it('puts the choice No Room Line on a grant_item no_room and grants nothing', () => {
+    const full = fillBag(fresh(CITADEL_PLAZA))
+    const line = db.DialogueChoices.find((row) => row['Choice ID'] === 'DCH-0001')?.['No Room Line']
+    expect(line).toMatch(/Clear some space/)
+    const refused = guidePotato(full)
+    expect(refused).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      itemDeltas: [],
+      noRoom: { slotsNeeded: 1, slotsFree: 0, npcLine: line },
+    })
+    expect(bagCount(refused.save, BAKED_POTATO)).toBe(0)
+    expect(refused.save.dialogueFlags ?? []).not.toContain('gift:DLG-0001:potato')
+  })
+
+  it('leaves npcLine unset when a full-bag choice grants nothing', () => {
+    const full = fillBag(fresh(CITADEL_PLAZA))
+    const declined = pick(full, 'DLG-0001', 'DNODE-0001', 'DCH-0002')
+    expect(declined.ok).toBe(true)
+    expect(declined.code).toBeNull()
+    expect(declined.noRoom).toBeNull()
+    expect(declined.itemDeltas).toEqual([])
+    expect(bagCount(declined.save, BAKED_POTATO)).toBe(0)
   })
 
   it('/abandonquest clears Green Thumb gift flags so the seed can be claimed again', () => {

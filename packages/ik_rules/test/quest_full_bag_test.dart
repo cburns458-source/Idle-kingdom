@@ -130,11 +130,14 @@ GameDatabase _patchedDatabase() {
         'hand_in:QST-9107:QSTP-9172;grant_item:$_goldenSpud:1;set_flag:gift:QST-9107:thanks',
       ),
       _choice('DCH-9102', 'quest_active:QST-9101', 'complete_quest:QST-9101'),
-      _choice(
-        'DCH-9108',
-        'quest_active:QST-9108',
-        'complete_quest:QST-9108;set_flag:gift:QST-9108:done',
-      ),
+      {
+        ..._choice(
+          'DCH-9108',
+          'quest_active:QST-9108',
+          'complete_quest:QST-9108;set_flag:gift:QST-9108:done',
+        ),
+        'No Room Line': '',
+      },
     ],
   };
   final db = <String, Object?>{...base};
@@ -307,6 +310,7 @@ void main() {
       expect(result.code, 'no_room');
       expect(result.reason, _noRoom);
       expect(result.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+      expect(result.noRoom?.npcLine, isNull);
       expect(identical(result.save, save), isTrue);
     });
   });
@@ -348,6 +352,8 @@ void main() {
       expect(result.code, 'no_room');
       expect(result.itemDeltas, isEmpty);
       expect(result.bookDeltas, isEmpty);
+      expect(result.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+      expect(result.noRoom?.npcLine, isNull);
       expect(identical(result.save, save), isTrue);
       expect(_paidState(result.save, 'QST-9108'), before);
 
@@ -380,8 +386,12 @@ void main() {
       expect(before['courtyard'], isFalse);
 
       final result = chooseDialogue(contentDb, save, 'DLG-0012', 'DNODE-0022', 'DCH-0031');
+      final kingLine = contentDb.dialogueChoices
+          .firstWhere((row) => row.choiceId == 'DCH-0031')
+          .noRoomLine;
+      expect(kingLine, contains('Clear some room'));
       expect(result.code, 'no_room');
-      expect(result.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+      expect(result.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0, 'npcLine': kingLine});
       expect(identical(result.save, save), isTrue);
       expect(_paidState(save, 'QST-0001'), before);
 

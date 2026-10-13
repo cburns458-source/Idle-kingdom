@@ -356,6 +356,29 @@ void main() {
     expect(seedGift(freed).ok, isTrue);
   });
 
+  test('puts the choice No Room Line on a grant_item no_room and grants nothing', () {
+    final full = fillBag(fresh(_citadelPlaza));
+    final line = db.dialogueChoices.firstWhere((row) => row.choiceId == 'DCH-0001').noRoomLine;
+    expect(line, contains('Clear some space'));
+    final refused = guidePotato(full);
+    expect(refused.ok, isFalse);
+    expect(refused.code, 'no_room');
+    expect(refused.itemDeltas, isEmpty);
+    expect(refused.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0, 'npcLine': line});
+    expect(bagCount(refused.save, _bakedPotato), 0);
+    expect(refused.save.dialogueFlags, isNot(contains('gift:DLG-0001:potato')));
+  });
+
+  test('leaves npcLine unset when a full-bag choice grants nothing', () {
+    final full = fillBag(fresh(_citadelPlaza));
+    final declined = pick(full, 'DLG-0001', 'DNODE-0001', 'DCH-0002');
+    expect(declined.ok, isTrue);
+    expect(declined.code, isNull);
+    expect(declined.noRoom, isNull);
+    expect(declined.itemDeltas, isEmpty);
+    expect(bagCount(declined.save, _bakedPotato), 0);
+  });
+
   test('/abandonquest clears Green Thumb gift flags so the seed can be claimed again', () {
     final gift = seedGift(greenThumbActive());
     expect(gift.ok, isTrue);
