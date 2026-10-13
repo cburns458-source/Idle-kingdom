@@ -148,6 +148,5 @@ The `quest_step` guard on DCH-0014 means players whose QSTP-0023 is already done
   - DLG-0012 (Priority 11, opens ahead of the pitch while the quest is active past QSTP-0001): DCH-0026 is `hand_in` on QSTP-0002, so batches and progress are kept across visits and reloads. Once the step latches, "The feast is ready." (DCH-0031 after a hand-in, or DCH-0030 when reopening) runs `complete_quest`. `hand_in` and `complete_quest` are separate choices because a failing `complete_quest` would roll back a partial hand-in.
 
 ### Known gaps (engine, not content)
-- `farmBotanyUnlocked` still keys off the panel talk's `talk:NPC-0014` counter on QST-0011. A player who only uses Fennel's dialogue never unlocks the farm patch, so they cannot plant for QSTP-0034 there.
 - No migration backfills `step:` latches. A save that finished one of these steps under the old talk flow but was never swept by `applyQuestStepUnlocks` must redo it through dialogue.
 - A save whose old `Deliver:` QSTP-0002 was already latched (it once held 10 + 10) can complete the feast without handing anything in.
