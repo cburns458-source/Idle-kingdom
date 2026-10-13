@@ -58,8 +58,17 @@ import {
   plantBotanySelection,
   placeTrap,
 } from '../timers/locationTimers'
+import { prepareBountyTurnIn, applyBountyReward } from '../bounties/complete'
 import { syncBountyHour } from '../bounties/progress'
-import { applyRankedPvpResult } from '../pvp/matchmaking'
+import { hourlyBountyBoard } from '../bounties/rotation'
+import { simulatePvpFight, type PvpRoundResult } from '../combat/pvp'
+import {
+  applyRankedPvpResult,
+  mintRankedFightId,
+  RANKED_PVP_FAKED_WIN_REFUSAL,
+  RANKED_PVP_UNKNOWN_FIGHT_REFUSAL,
+  type ArenaOpponent,
+} from '../pvp/matchmaking'
 import { GUILD_CREATE_GOLD_COST } from '../multiplayer/types'
 import { createGuildRefusalFor } from '../guild/rules'
 import {
@@ -122,6 +131,8 @@ export type GameCommandName =
   | 'mail_claim'
   | 'sync_bounty_hour'
   | 'apply_ranked_pvp'
+  | 'ranked_pvp_fight'
+  | 'bounty_turn_in'
   | 'change_race'
   | 'guild_create'
   | 'guild_create_pay'
@@ -133,6 +144,30 @@ export type GameCommandName =
 
 export type GameCommandArgs = Record<string, unknown>
 
+export type ExistingRankedFight = {
+  fightId: string
+  outcome: 'win' | 'loss'
+  goldGained: number
+  code?: string
+  winsRemaining?: number
+  rounds: PvpRoundResult[]
+  youMaxHp: number
+  themMaxHp: number
+  opponent?: ArenaOpponent
+}
+
+export type GameCommandContext = {
+  nowMs: number
+  random: RandomFn
+  hall?: GuildHallState
+  userId?: string
+  guildRole?: string
+  opponentSave?: PlayerSave
+  opponent?: ArenaOpponent
+  issuedFightId?: string
+  existingRankedFight?: ExistingRankedFight
+}
+
 export type GameCommandResult =
   | {
       ok: true
@@ -141,6 +176,17 @@ export type GameCommandResult =
       goldCost?: number
       view?: DialogueView | null
       questCompletions?: QuestArrivalCompletion[]
+      fightId?: string
+      rounds?: PvpRoundResult[]
+      pvpOutcome?: 'win' | 'loss'
+      goldGained?: number
+      code?: string
+      winsRemaining?: number
+      youMaxHp?: number
+      themMaxHp?: number
+      opponent?: ArenaOpponent
+      firstCompleter?: boolean
+      bountyId?: string
     }
   | { ok: false; reason: string }
   | { ok: false; reason: string; code: string; favourites?: DialogueItemDelta[]; noRoom?: NoRoom }
@@ -261,12 +307,7 @@ function failed(reason: string): GameCommandResult {
 
 function ok(
   save: PlayerSave,
-  extra?: {
-    hall?: GuildHallState
-    goldCost?: number
-    view?: DialogueView | null
-    questCompletions?: QuestArrivalCompletion[]
-  },
+  extra?: Omit<Extract<GameCommandResult, { ok: true }>, 'ok' | 'save'>,
 ): GameCommandResult {
   return { ok: true, save, ...extra }
 }
@@ -329,12 +370,8 @@ export function applyGameCommand(
     command: string
     args?: GameCommandArgs
     save?: unknown
-    nowMs: number
-    random: RandomFn
-    hall?: GuildHallState
-    userId?: string
-    guildRole?: string
-  } & HostedCatchUpOptions,
+  } & GameCommandContext &
+    HostedCatchUpOptions,
 ): GameCommandResult {
   const { launch: db } = prepareDatabase(rawDatabase)
   const args = options.args ?? {}
@@ -368,13 +405,7 @@ function applyExistingCommand(
   command: string,
   args: GameCommandArgs,
   save: PlayerSave,
-  options: {
-    nowMs: number
-    random: RandomFn
-    hall?: GuildHallState
-    userId?: string
-    guildRole?: string
-  } & HostedCatchUpOptions,
+  options: GameCommandContext & HostedCatchUpOptions,
 ): GameCommandResult {
   const nowMs = options.nowMs
   const random = options.random
@@ -667,7 +698,11 @@ function applyExistingCommand(
     case 'sync_bounty_hour':
       return ok(syncBountyHour(save, nowMs))
     case 'apply_ranked_pvp':
-      return ok(applyRankedPvpResult(save, asBool(args.won), nowMs))
+      return failed(RANKED_PVP_FAKED_WIN_REFUSAL)
+    case 'ranked_pvp_fight':
+      return resolveRankedPvpFightCommand(db, save, args, options)
+    case 'bounty_turn_in':
+      return resolveBountyTurnInCommand(save, args, nowMs)
     case 'change_race': {
       const raceId = asString(args.raceId)
       if (!raceId) return failed('Missing race.')
@@ -725,6 +760,81 @@ function applyExistingCommand(
     default:
       return failed('Unknown command.')
   }
+}
+
+function resolveRankedPvpFightCommand(
+  db: GameDatabase,
+  save: PlayerSave,
+  args: GameCommandArgs,
+  options: GameCommandContext,
+): GameCommandResult {
+  if (Object.prototype.hasOwnProperty.call(args, 'won')) {
+    return failed(RANKED_PVP_FAKED_WIN_REFUSAL)
+  }
+  const requested = asString(args.fightId)
+  const existing = options.existingRankedFight
+  if (existing) {
+    if (requested && requested !== existing.fightId) return failed(RANKED_PVP_UNKNOWN_FIGHT_REFUSAL)
+    return ok(save, {
+      fightId: existing.fightId,
+      rounds: existing.rounds,
+      pvpOutcome: existing.outcome,
+      goldGained: existing.goldGained,
+      code: existing.code,
+      winsRemaining: existing.winsRemaining,
+      youMaxHp: existing.youMaxHp,
+      themMaxHp: existing.themMaxHp,
+      opponent: existing.opponent ?? options.opponent,
+    })
+  }
+  if (requested) {
+    if (!options.issuedFightId || requested !== options.issuedFightId) {
+      return failed(RANKED_PVP_UNKNOWN_FIGHT_REFUSAL)
+    }
+  }
+  if (!options.opponentSave) return failed('No other players to fight.')
+  let opponentSave: PlayerSave
+  try {
+    opponentSave = parseSave(options.opponentSave, options.nowMs)
+  } catch {
+    return failed('No other players to fight.')
+  }
+  const fightId = options.issuedFightId ?? requested ?? mintRankedFightId()
+  const fight = simulatePvpFight(db, save, opponentSave, options.random)
+  const applied = applyRankedPvpResult(save, fight.outcome === 'win', options.nowMs)
+  return ok(applied.save, {
+    fightId,
+    rounds: fight.rounds,
+    pvpOutcome: fight.outcome,
+    goldGained: applied.goldGained,
+    code: applied.code,
+    winsRemaining: applied.winsRemaining,
+    youMaxHp: fight.youMaxHp,
+    themMaxHp: fight.themMaxHp,
+    opponent: options.opponent,
+  })
+}
+
+function resolveBountyTurnInCommand(
+  save: PlayerSave,
+  args: GameCommandArgs,
+  nowMs: number,
+): GameCommandResult {
+  const bountyId = asString(args.bountyId)
+  if (!bountyId) return failed('Missing bounty.')
+  const bounty = hourlyBountyBoard(nowMs).bounties.find((row) => row.id === bountyId)
+  if (!bounty) return failed('That bounty is not on the current board.')
+  const prepared = prepareBountyTurnIn(save, bounty, nowMs)
+  if (!prepared.ok) return failed(prepared.reason)
+  if (typeof args.firstCompleter !== 'boolean') {
+    return ok(prepared.save, { bountyId })
+  }
+  const rewarded = applyBountyReward(prepared.save, bounty, args.firstCompleter)
+  return ok(rewarded.save, {
+    goldGained: rewarded.goldGained,
+    firstCompleter: args.firstCompleter,
+    bountyId,
+  })
 }
 
 function applyMeta(save: PlayerSave, args: GameCommandArgs): PlayerSave {

@@ -41,6 +41,7 @@ class RemoteTables {
   static const String friendRequests = 'friend_requests';
   static const String friendships = 'friendships';
   static const String pvpSnapshots = 'pvp_snapshots';
+  static const String rankedPvpResults = 'ranked_pvp_results';
 }
 
 /// Postgres RPCs from migration 026 that signed-in clients may call.

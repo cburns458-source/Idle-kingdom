@@ -11,7 +11,7 @@ import {
   pickRankedOpponent,
   RANKED_PVP_DAILY_CAP,
   RANKED_PVP_WIN_GOLD,
-  rankedFightsRemaining,
+  rankedWinsRemaining,
   rankedPvpDayKey,
   rankedPvpKd,
   searchArenaOpponents,
@@ -59,30 +59,45 @@ describe('arena matchmaking', () => {
     expect(pickRankedOpponent(1, 13, [])).toBeNull()
   })
 
-  it('caps ranked fights at 5 a UTC day and pays 1000 gold on a win', () => {
+  it('caps ranked wins at 5 a UTC day and pays 1000 gold only under the cap', () => {
     let save = createNewSave(launch, NOW)
     expect(combatLevelOf(save)).toBe(2)
     expect(rankedPvpDayKey(NOW)).toBe('2026-08-13')
-    expect(rankedFightsRemaining(save, NOW)).toBe(RANKED_PVP_DAILY_CAP)
+    expect(rankedWinsRemaining(save, NOW)).toBe(RANKED_PVP_DAILY_CAP)
     expect(canStartRankedPvp(save, NOW).ok).toBe(true)
 
     const goldBefore = save.gold
-    save = applyRankedPvpResult(save, true, NOW)
+    const first = applyRankedPvpResult(save, true, NOW)
+    save = first.save
+    expect(first.paid).toBe(true)
     expect(save.gold).toBe(goldBefore + RANKED_PVP_WIN_GOLD)
     expect(save.rankedPvpWins).toBe(1)
     expect(save.rankedPvpLosses).toBe(0)
     expect(save.rankedPvpFightsToday).toBe(1)
 
-    for (let i = 0; i < RANKED_PVP_DAILY_CAP - 1; i++) {
-      save = applyRankedPvpResult(save, false, NOW)
-    }
-    expect(rankedFightsRemaining(save, NOW)).toBe(0)
-    expect(canStartRankedPvp(save, NOW).ok).toBe(false)
-    expect(save.rankedPvpLosses).toBe(4)
-    expect(rankedPvpKd(save.rankedPvpWins, save.rankedPvpLosses)).toBe(1 / 4)
+    const loss = applyRankedPvpResult(save, false, NOW)
+    save = loss.save
+    expect(loss.paid).toBe(false)
+    expect(save.gold).toBe(goldBefore + RANKED_PVP_WIN_GOLD)
+    expect(rankedWinsRemaining(save, NOW)).toBe(RANKED_PVP_DAILY_CAP - 1)
+    expect(canStartRankedPvp(save, NOW).ok).toBe(true)
 
-    const nextDay = applyRankedPvpResult(save, false, NOW + 24 * 60 * 60 * 1000)
-    expect(nextDay.rankedPvpFightsToday).toBe(1)
-    expect(nextDay.rankedPvpDayKey).toBe('2026-08-14')
+    for (let i = 0; i < RANKED_PVP_DAILY_CAP - 1; i++) {
+      save = applyRankedPvpResult(save, true, NOW).save
+    }
+    expect(rankedWinsRemaining(save, NOW)).toBe(0)
+    expect(canStartRankedPvp(save, NOW).ok).toBe(true)
+
+    const sixth = applyRankedPvpResult(save, true, NOW)
+    expect(sixth.paid).toBe(false)
+    expect(sixth.code).toBe('daily_cap_reached')
+    expect(sixth.save.gold).toBe(save.gold)
+    expect(sixth.save.rankedPvpWins).toBe(save.rankedPvpWins + 1)
+    expect(rankedPvpKd(sixth.save.rankedPvpWins, sixth.save.rankedPvpLosses)).toBe(6 / 1)
+
+    const nextDay = applyRankedPvpResult(sixth.save, true, NOW + 24 * 60 * 60 * 1000)
+    expect(nextDay.paid).toBe(true)
+    expect(nextDay.save.rankedPvpFightsToday).toBe(1)
+    expect(nextDay.save.rankedPvpDayKey).toBe('2026-08-14')
   })
 })

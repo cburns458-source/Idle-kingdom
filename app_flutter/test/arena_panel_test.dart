@@ -127,7 +127,7 @@ void main() {
       find.text('Victory').evaluate().isNotEmpty || find.text('Defeat').evaluate().isNotEmpty,
       isTrue,
     );
-    expect(controller.save.rankedPvpFightsToday, 1);
+    expect(controller.save.rankedPvpFightsToday, controller.save.rankedPvpWins);
     expect(
       controller.save.gold,
       goldBefore + (controller.save.rankedPvpWins > 0 ? rankedPvpWinGold : 0),

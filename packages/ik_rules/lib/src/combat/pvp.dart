@@ -24,6 +24,20 @@ class PvpRoundResult {
     required this.outcome,
   });
 
+  factory PvpRoundResult.fromJson(Map<String, Object?> json) => PvpRoundResult(
+    youHit: json['youHit'] as num? ?? 0,
+    youCrit: json['youCrit'] == true,
+    youOffhand: json['youOffhand'] as num?,
+    themHit: json['themHit'] as num?,
+    themCrit: json['themCrit'] == true,
+    themOffhand: json['themOffhand'] as num?,
+    youThorns: json['youThorns'] as num? ?? 0,
+    themThorns: json['themThorns'] as num? ?? 0,
+    youHp: json['youHp'] as num? ?? 0,
+    themHp: json['themHp'] as num? ?? 0,
+    outcome: json['outcome'] as String? ?? 'ongoing',
+  );
+
   final num youHit;
   final bool youCrit;
   final num? youOffhand;

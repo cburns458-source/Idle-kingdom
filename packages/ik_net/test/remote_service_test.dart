@@ -598,11 +598,22 @@ void main() {
     expect(created.save!.characterName, 'Vari');
     expect((transport.tables[RemoteTables.saves]!.single['payload'] as Map)['gold'], 42);
 
-    final later = save.copyWith(gold: 99);
+    final later = save.copyWith(
+      gold: 99,
+      bountyClaimedIds: const <String>['BNT-0001'],
+      rankedPvpWins: 9,
+      motto: 'still me',
+    );
     final updated = await service.pushSave(db, later, force: true);
     expect(updated.ok, isTrue, reason: updated.reason);
     expect(updated.source, CloudSyncSource.uploaded);
-    expect((transport.tables[RemoteTables.saves]!.single['payload'] as Map)['gold'], 99);
+    expect((transport.tables[RemoteTables.saves]!.single['payload'] as Map)['gold'], 42);
+    expect(
+      (transport.tables[RemoteTables.saves]!.single['payload'] as Map)['bountyClaimedIds'],
+      isEmpty,
+    );
+    expect((transport.tables[RemoteTables.saves]!.single['payload'] as Map)['rankedPvpWins'], 0);
+    expect((transport.tables[RemoteTables.saves]!.single['payload'] as Map)['motto'], 'still me');
   });
 
   test('loads a hosted save when version columns are not on the project yet', () async {
@@ -1148,82 +1159,195 @@ void main() {
     expect(hero.takeReadProblem(), isNull);
   });
 
-  test('records the first bounty turn-in of the hour and no other', () async {
+  test('reads an existing first bounty claim and does not insert', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
+    transport.tables[RemoteTables.bountyClaims]!.add(<String, Object?>{
+      'hour_key': '2026-08-13T00',
+      'bounty_id': 'BNT-0001',
+      'user_id': hero.session!.userId,
+      'username': 'Hero',
+      'claimed_at': transport.startIso,
+    });
 
     final first = await hero.claimBounty('2026-08-13T00', 'BNT-0001');
     expect(first.ok, isTrue, reason: first.reason);
     expect(first.firstCompleter, isTrue);
     expect(first.claim!.username, 'Hero');
-    expect(first.claim!.claimedAt, transport.startIso);
+    expect(transport.calls.where((call) => call.startsWith('insert')), isEmpty);
 
-    // The same player asking again is told they already hold it.
-    final again = await hero.claimBounty('2026-08-13T00', 'BNT-0001');
-    expect(again.firstCompleter, isTrue);
-    expect(transport.tables[RemoteTables.bountyClaims], hasLength(1));
-
-    // A rival gets the claim back, naming who beat them, and still succeeds.
     final rival = _service(transport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
     final second = await rival.claimBounty('2026-08-13T00', 'BNT-0001');
     expect(second.ok, isTrue, reason: second.reason);
     expect(second.firstCompleter, isFalse);
     expect(second.claim!.username, 'Hero');
-
-    // A different bounty is its own race.
-    expect((await rival.claimBounty('2026-08-13T00', 'BNT-0002')).firstCompleter, isTrue);
-    // And so is the next hour.
-    expect((await rival.claimBounty('2026-08-13T01', 'BNT-0001')).firstCompleter, isTrue);
   });
 
-  test('hands the winner back to whoever lost the race to the insert', () async {
+  test('refuses a client insert when nobody has claimed yet', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
-
-    // A claim that lands after the read said the slot was free, which is what a
-    // second device doing the same thing at the same moment looks like.
-    // The read that would have found it is made to fail, so the service goes on
-    // to attempt the insert and has to cope with losing.
-    transport.tables[RemoteTables.bountyClaims]!.add(<String, Object?>{
-      'hour_key': '2026-08-13T00',
-      'bounty_id': 'BNT-0001',
-      'user_id': 'usr_rival',
-      'username': 'Rival',
-      'claimed_at': transport.startIso,
-    });
-    transport.failOnce['select:${RemoteTables.bountyClaims}'] = 'Connection reset.';
-
-    final claimed = await hero.claimBounty('2026-08-13T00', 'BNT-0001');
-    expect(claimed.ok, isTrue, reason: claimed.reason);
-    expect(claimed.firstCompleter, isFalse);
-    expect(claimed.claim!.username, 'Rival');
-  });
-
-  test('reports a claim that failed for a reason other than losing', () async {
-    final transport = FakeTransport();
-    final hero = await _signedIn(transport, MemorySaveStorage());
-
-    // Nobody holds the bounty, so the refusal is the write itself, not a rival.
-    transport.failOnce['insert:${RemoteTables.bountyClaims}'] = 'Connection closed.';
     final refused = await hero.claimBounty('2026-08-13T00', 'BNT-0001');
-
     expect(refused.ok, isFalse);
-    expect(refused.reason, 'Connection closed.');
+    expect(refused.reason, 'Turn in the bounty from the Plaza board.');
     expect(transport.tables[RemoteTables.bountyClaims], isEmpty);
   });
 
   test('lists the hour that was asked for, oldest first', () async {
     final transport = FakeTransport();
     final hero = await _signedIn(transport, MemorySaveStorage());
-
-    await hero.claimBounty('2026-08-13T00', 'BNT-0001');
-    await hero.claimBounty('2026-08-13T00', 'BNT-0002');
-    await hero.claimBounty('2026-08-13T01', 'BNT-0001');
+    transport.tables[RemoteTables.bountyClaims]!.addAll(<RemoteRow>[
+      <String, Object?>{
+        'hour_key': '2026-08-13T00',
+        'bounty_id': 'BNT-0001',
+        'user_id': hero.session!.userId,
+        'username': 'Hero',
+        'claimed_at': transport.startIso,
+      },
+      <String, Object?>{
+        'hour_key': '2026-08-13T00',
+        'bounty_id': 'BNT-0002',
+        'user_id': hero.session!.userId,
+        'username': 'Hero',
+        'claimed_at': '2026-08-13T00:00:01.000Z',
+      },
+      <String, Object?>{
+        'hour_key': '2026-08-13T01',
+        'bounty_id': 'BNT-0001',
+        'user_id': hero.session!.userId,
+        'username': 'Hero',
+        'claimed_at': '2026-08-13T01:00:00.000Z',
+      },
+    ]);
 
     final hour = await hero.bountyClaims('2026-08-13T00');
     expect(hour.map((claim) => claim.bountyId), <String>['BNT-0001', 'BNT-0002']);
     expect(await hero.bountyClaims('2026-08-12T23'), isEmpty);
+  });
+
+  test(
+    'hosted bounty_turn_in pays once and gives the first-place bonus to the first claimer',
+    () async {
+      final stamp = jsDateParse('2026-08-12T21:00:00.000Z');
+      final transport = FakeTransport(database: _database(), nowMs: () => stamp);
+      final hero = await _signedIn(transport, MemorySaveStorage(), startMs: stamp);
+      final board = hourlyBountyBoard(stamp);
+      final bounty = board.bounties.first;
+      final db = _database();
+      final ready = createNewSave(db, stamp).copyWith(
+        characterName: 'Hero',
+        bountyHourKey: board.hourKey,
+        bountyProgress: bounty.kind == 'gather_deliver'
+            ? const <String, num>{}
+            : <String, num>{bounty.id: bounty.amount},
+        inventory: bounty.kind == 'gather_deliver'
+            ? <InventoryStack>[InventoryStack(itemId: bounty.targetId, quantity: bounty.amount)]
+            : const <InventoryStack>[],
+      );
+      expect((await seedHostedSave(hero, transport, ready)).ok, isTrue);
+
+      final first = await hero.gameCommand('bounty_turn_in', <String, Object?>{
+        'bountyId': bounty.id,
+      });
+      expect(first.ok, isTrue, reason: first.reason);
+      expect(first.firstCompleter, isTrue);
+      expect(first.goldGained, bounty.rewardGold + bounty.firstPlaceBonusGold);
+      expect(first.save!.bountyClaimedIds, contains(bounty.id));
+
+      final again = await hero.gameCommand('bounty_turn_in', <String, Object?>{
+        'bountyId': bounty.id,
+      });
+      expect(again.ok, isFalse);
+      expect(again.reason, 'You already claimed this bounty.');
+
+      final rival = _service(transport, MemorySaveStorage(), startMs: stamp);
+      expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+      expect(
+        (await seedHostedSave(rival, transport, ready.copyWith(characterName: 'Rival'))).ok,
+        isTrue,
+      );
+      final second = await rival.gameCommand('bounty_turn_in', <String, Object?>{
+        'bountyId': bounty.id,
+      });
+      expect(second.ok, isTrue, reason: second.reason);
+      expect(second.firstCompleter, isFalse);
+      expect(second.goldGained, bounty.rewardGold);
+    },
+  );
+
+  test('hosted ranked_pvp_fight refuses a faked win and an unknown fight id', () async {
+    final transport = FakeTransport(database: _database());
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    expect(
+      (await seedHostedSave(
+        hero,
+        transport,
+        createNewSave(db, _nowMs).copyWith(characterName: 'Hero'),
+      )).ok,
+      isTrue,
+    );
+
+    final faked = await hero.gameCommand('ranked_pvp_fight', <String, Object?>{'won': true});
+    expect(faked.ok, isFalse);
+    expect(faked.reason, rankedPvpFakedWinRefusal);
+
+    final unknown = await hero.gameCommand('ranked_pvp_fight', <String, Object?>{
+      'fightId': 'client-made',
+    });
+    expect(unknown.ok, isFalse);
+    expect(unknown.reason, rankedPvpUnknownFightRefusal);
+  });
+
+  test('hosted ranked_pvp_fight pays a fight id once and caps the sixth win', () async {
+    final transport = FakeTransport(database: _database(), nowMs: () => _nowMs);
+    final hero = await _signedIn(transport, MemorySaveStorage());
+    final db = _database();
+    final heroSave = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    expect((await seedHostedSave(hero, transport, heroSave)).ok, isTrue);
+
+    final rival = _service(FakeTransport.joining(transport), MemorySaveStorage());
+    expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
+    final rivalSave = createNewSave(db, _nowMs).copyWith(characterName: 'Rival');
+    expect((await seedHostedSave(rival, transport, rivalSave)).ok, isTrue);
+    expect((await rival.savePvpEquipment(rivalSave)).ok, isTrue);
+
+    final first = await hero.gameCommand('ranked_pvp_fight');
+    expect(first.ok, isTrue, reason: first.reason);
+    expect(first.fightId, isNotNull);
+    final goldAfterFirst = first.save!.gold;
+    final rematch = await hero.gameCommand('ranked_pvp_fight', <String, Object?>{
+      'fightId': first.fightId,
+    });
+    expect(rematch.ok, isTrue, reason: rematch.reason);
+    expect(rematch.save!.gold, goldAfterFirst);
+    expect(rematch.fightId, first.fightId);
+
+    var capped = applyRankedPvpResult(first.save!, true, _nowMs).save;
+    while (rankedWinsUsedToday(capped, _nowMs) < rankedPvpDailyCap) {
+      capped = applyRankedPvpResult(capped, true, _nowMs).save;
+    }
+    expect((await seedHostedSave(hero, transport, capped)).ok, isTrue);
+    final goldAtCap = capped.gold;
+    CloudSyncResult? sixthWin;
+    for (var i = 0; i < 12; i++) {
+      final bout = await hero.gameCommand('ranked_pvp_fight');
+      expect(bout.ok, isTrue, reason: bout.reason);
+      if (bout.pvpOutcome == 'win') {
+        sixthWin = bout;
+        break;
+      }
+    }
+    if (sixthWin != null) {
+      expect(sixthWin.goldGained, 0);
+      expect(sixthWin.code, rankedPvpDailyCapCode);
+      expect(sixthWin.save!.gold, goldAtCap);
+    } else {
+      final forced = applyRankedPvpResult(capped, true, _nowMs);
+      expect(forced.paid, isFalse);
+      expect(forced.code, rankedPvpDailyCapCode);
+      expect(forced.goldGained, 0);
+    }
   });
 
   test('needs an account before it will touch the bounty board', () async {

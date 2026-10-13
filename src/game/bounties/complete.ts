@@ -1,4 +1,5 @@
 import type { GameDatabase } from '../data/types'
+import { payReward } from '../economy/payout'
 import { getSession, isSignedIn } from '../multiplayer/auth'
 import { getLocalBackend } from '../multiplayer/client'
 import { inventoryCount } from '../production/recipes'
@@ -77,20 +78,19 @@ export function applyBountyReward(
   firstCompleter: boolean,
 ): BountyRewardResult {
   const goldGained = bounty.rewardGold + (firstCompleter ? bounty.firstPlaceBonusGold : 0)
+  const payout = payReward(save, { type: 'gold', amount: goldGained })
   return {
     save: {
-      ...save,
-      gold: save.gold + goldGained,
+      ...payout.save,
       bountyClaimedIds: [...(save.bountyClaimedIds ?? []), bounty.id],
       statistics: {
         values: {
-          ...save.statistics.values,
+          ...payout.save.statistics.values,
           bounties_completed: Number(save.statistics.values.bounties_completed ?? 0) + 1,
-          gold_earned: Number(save.statistics.values.gold_earned ?? 0) + goldGained,
         },
       },
     },
-    goldGained,
+    goldGained: payout.paid,
   }
 }
 

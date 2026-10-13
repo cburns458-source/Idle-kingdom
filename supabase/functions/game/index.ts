@@ -9,19 +9,34 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 import { gateDevCommand } from '../_shared/dev_gate.ts'
 import {
+  applyBountyReward,
   applyDevCommand,
   applyGameCommand,
+  combatLevelOf,
   createTrackedMulberry32,
+  hourlyBountyBoard,
+  mintRankedFightId,
   overlayPublishedPvpSnapshot,
   parseSave,
+  pickRankedOpponent,
   prepareDatabase,
   pvpSnapshotRowForSave,
   rankingBoardRowsFor,
   rankingProfilePatch,
+  RANKED_PVP_FAKED_WIN_REFUSAL,
+  RANKED_PVP_UNKNOWN_FIGHT_REFUSAL,
   runPhase0Prototype,
   runPhase1Shadow,
   runPhase2Sync,
+  totalLevel,
 } from '../_shared/game_rules.js'
+
+type ArenaOpponent = {
+  userId: string
+  username: string
+  combatLevel: number
+  totalLevel: number
+}
 
 const SHADOW_MIN_INTERVAL_MS = 90_000
 
@@ -357,6 +372,8 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
   const hallContext = await loadHallContext(admin, userId)
   const rng = createTrackedMulberry32(hosted?.rng_state ?? ((nowMs ^ userId.length) >>> 0))
   const windowStartMs = hosted ? catchUpWindowStartMs(hosted) : undefined
+  const rankedContext = command === 'ranked_pvp_fight' ? await loadRankedFightContext(admin, userId, args, hosted, nowMs) : null
+  if (rankedContext && 'response' in rankedContext) return rankedContext.response
   try {
     const result = applyGameCommand(rawDatabase, {
       command,
@@ -368,6 +385,7 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       userId,
       guildRole: hallContext?.role,
       windowStartMs,
+      ...(rankedContext && !('response' in rankedContext) ? rankedContext : {}),
     })
     if (!result.ok && 'catchingUp' in result && hosted) {
       // Keep the chunk that was simulated; the client retries the intent.
@@ -414,24 +432,49 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       if (!founded.ok) return founded.response
       foundedGuild = founded.guild
     }
-    const written = hosted
-      ? await writeHostedSave(admin, userId, {
-          expectedVersion: expected,
-          payload: result.save,
-          rngState: rng.getState(),
-          nowMs,
-        })
-      : await insertHostedSave(admin, userId, {
-          payload: result.save,
-          rngState: rng.getState(),
-          nowMs,
-        })
+    let written: { ok: true; version: number } | { ok: false; response: Response }
+    let commandSave = result.save
+    let bountyExtras: Record<string, unknown> = {}
+    if (command === 'bounty_turn_in' && hosted) {
+      const settled = await settleBountyTurnIn(admin, userId, args, result.save, expected, rng.getState(), nowMs)
+      if (!settled.ok) return settled.response
+      written = { ok: true, version: settled.version }
+      commandSave = settled.save
+      bountyExtras = {
+        goldGained: settled.goldGained,
+        firstCompleter: settled.firstCompleter,
+        claim: settled.claim,
+      }
+    } else if (
+      command === 'ranked_pvp_fight' &&
+      hosted &&
+      result.fightId &&
+      !(rankedContext && !('response' in rankedContext) && rankedContext.existingRankedFight)
+    ) {
+      const recorded = await recordRankedFight(admin, userId, result, expected, rng.getState(), nowMs)
+      if (!recorded.ok) return recorded.response
+      written = { ok: true, version: recorded.version }
+      if (recorded.alreadyPaid) commandSave = parseSave(hosted.payload, nowMs)
+    } else {
+      written = hosted
+        ? await writeHostedSave(admin, userId, {
+            expectedVersion: expected,
+            payload: result.save,
+            rngState: rng.getState(),
+            nowMs,
+          })
+        : await insertHostedSave(admin, userId, {
+            payload: result.save,
+            rngState: rng.getState(),
+            nowMs,
+          })
+    }
     if (!written.ok) {
       // The gold was not taken, so the guild it paid for goes back.
       if (foundedGuild) await admin.from('guilds').delete().eq('id', foundedGuild.id)
       return written.response
     }
-    const published = await publishPhase3Rows(admin, rawDatabase, userId, result.save, nowMs, command)
+    const published = await publishPhase3Rows(admin, rawDatabase, userId, commandSave, nowMs, command)
     if (!published.ok) return published.response
     if (result.hall && hallContext) {
       const { error: hallError } = await admin
@@ -452,11 +495,25 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       phase: 2,
       action: 'command',
       command,
-      save: result.save,
+      save: commandSave,
       version: written.version,
       rngState: rng.getState(),
       wroteSave: true,
       ...(foundedGuild ? { guild: foundedGuild } : {}),
+      ...(result.fightId
+        ? {
+            fightId: result.fightId,
+            rounds: result.rounds ?? [],
+            pvpOutcome: result.pvpOutcome,
+            goldGained: result.goldGained ?? 0,
+            code: result.code,
+            winsRemaining: result.winsRemaining,
+            youMaxHp: result.youMaxHp,
+            themMaxHp: result.themMaxHp,
+            opponent: result.opponent,
+          }
+        : {}),
+      ...bountyExtras,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Command failed.'
@@ -560,6 +617,229 @@ async function handleDevCommand(admin: Client, userId: string, payload: GameBody
     rngState: rng.getState(),
     wroteSave: true,
   })
+}
+
+function asTrimmedString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
+}
+
+async function loadRankedFightContext(
+  admin: Client,
+  userId: string,
+  args: Record<string, unknown>,
+  hosted: HostedSaveRow | null,
+  nowMs: number,
+): Promise<
+  | {
+      issuedFightId?: string
+      existingRankedFight?: {
+        fightId: string
+        outcome: 'win' | 'loss'
+        goldGained: number
+        code?: string
+        winsRemaining?: number
+        rounds: unknown[]
+        youMaxHp: number
+        themMaxHp: number
+        opponent?: ArenaOpponent
+      }
+      opponentSave?: unknown
+      opponent?: ArenaOpponent
+    }
+  | { response: Response }
+> {
+  if (Object.prototype.hasOwnProperty.call(args, 'won')) {
+    return { response: json({ error: RANKED_PVP_FAKED_WIN_REFUSAL, phase: 2 }, 400) }
+  }
+  const requested = asTrimmedString(args.fightId)
+  if (requested) {
+    const { data, error } = await admin
+      .from('ranked_pvp_results')
+      .select('fight_id, opponent_id, outcome, gold_paid, code, rounds, you_max_hp, them_max_hp, wins_remaining')
+      .eq('user_id', userId)
+      .eq('fight_id', requested)
+      .maybeSingle()
+    if (error) return { response: json({ error: error.message, phase: 2 }, 500) }
+    if (!data) return { response: json({ error: RANKED_PVP_UNKNOWN_FIGHT_REFUSAL, phase: 2 }, 400) }
+    const outcome = data.outcome === 'win' ? 'win' : 'loss'
+    return {
+      existingRankedFight: {
+        fightId: String(data.fight_id),
+        outcome,
+        goldGained: Number(data.gold_paid ?? 0),
+        code: typeof data.code === 'string' ? data.code : undefined,
+        winsRemaining: Number(data.wins_remaining ?? 0),
+        rounds: Array.isArray(data.rounds) ? data.rounds : [],
+        youMaxHp: Number(data.you_max_hp ?? 0),
+        themMaxHp: Number(data.them_max_hp ?? 0),
+      },
+    }
+  }
+  if (!hosted) return { response: json({ error: 'No cloud save.', phase: 2 }, 400) }
+  const { data, error } = await admin
+    .from('pvp_snapshots')
+    .select('user_id, username, combat_level, total_level, payload')
+  if (error) return { response: json({ error: error.message, phase: 2 }, 500) }
+  const candidates: ArenaOpponent[] = []
+  const payloads = new Map<string, unknown>()
+  for (const row of data ?? []) {
+    const id = typeof row.user_id === 'string' ? row.user_id : ''
+    if (!id || id === userId) continue
+    candidates.push({
+      userId: id,
+      username: typeof row.username === 'string' && row.username.length > 0 ? row.username : 'Adventurer',
+      combatLevel: Number(row.combat_level ?? 1),
+      totalLevel: Number(row.total_level ?? 1),
+    })
+    payloads.set(id, row.payload)
+  }
+  let selfCombat = 1
+  let selfTotal = 1
+  try {
+    const self = parseSave(hosted.payload, nowMs)
+    selfCombat = combatLevelOf(self)
+    selfTotal = totalLevel(self)
+  } catch {
+    return { response: json({ error: 'The cloud save could not be read.', phase: 2 }, 400) }
+  }
+  const opponent = pickRankedOpponent(selfCombat, selfTotal, candidates)
+  if (!opponent) return { response: json({ error: 'No other players to fight.', phase: 2 }, 400) }
+  const rawOpponent = payloads.get(opponent.userId)
+  if (rawOpponent == null) return { response: json({ error: 'No other players to fight.', phase: 2 }, 400) }
+  try {
+    return {
+      issuedFightId: mintRankedFightId(),
+      opponent,
+      opponentSave: parseSave(rawOpponent, nowMs),
+    }
+  } catch {
+    return { response: json({ error: 'No other players to fight.', phase: 2 }, 400) }
+  }
+}
+
+async function recordRankedFight(
+  admin: Client,
+  userId: string,
+  result: {
+    save: unknown
+    fightId?: string
+    rounds?: unknown[]
+    pvpOutcome?: 'win' | 'loss'
+    goldGained?: number
+    code?: string
+    winsRemaining?: number
+    youMaxHp?: number
+    themMaxHp?: number
+    opponent?: ArenaOpponent
+  },
+  expectedVersion: number,
+  rngState: number,
+  nowMs: number,
+): Promise<{ ok: true; version: number; alreadyPaid: boolean } | { ok: false; response: Response }> {
+  const { data, error } = await admin.rpc('ranked_pvp_record_hosted', {
+    p_user_id: userId,
+    p_fight_id: result.fightId,
+    p_opponent_id: result.opponent?.userId ?? null,
+    p_outcome: result.pvpOutcome,
+    p_gold_paid: result.goldGained ?? 0,
+    p_code: result.code ?? null,
+    p_rounds: result.rounds ?? [],
+    p_you_max_hp: result.youMaxHp ?? 0,
+    p_them_max_hp: result.themMaxHp ?? 0,
+    p_wins_remaining: result.winsRemaining ?? 0,
+    p_expected_version: expectedVersion,
+    p_payload: result.save,
+    p_rng_state: rngState,
+    p_now: new Date(nowMs).toISOString(),
+  })
+  if (error) return { ok: false, response: json({ error: error.message, phase: 2 }, 400) }
+  const answer = (data ?? {}) as {
+    ok?: boolean
+    reason?: string
+    conflict?: boolean
+    version?: number
+    alreadyPaid?: boolean
+  }
+  if (answer.ok !== true) {
+    return {
+      ok: false,
+      response: json(
+        { error: answer.reason ?? 'The ranked fight could not be recorded.', phase: 2, conflict: answer.conflict },
+        answer.conflict ? 409 : 400,
+      ),
+    }
+  }
+  return { ok: true, version: Number(answer.version ?? expectedVersion + 1), alreadyPaid: answer.alreadyPaid === true }
+}
+
+async function settleBountyTurnIn(
+  admin: Client,
+  userId: string,
+  args: Record<string, unknown>,
+  preparedSave: unknown,
+  expectedVersion: number,
+  rngState: number,
+  nowMs: number,
+): Promise<
+  | {
+      ok: true
+      version: number
+      save: unknown
+      goldGained: number
+      firstCompleter: boolean
+      claim: Record<string, unknown>
+    }
+  | { ok: false; response: Response }
+> {
+  const bountyId = asTrimmedString(args.bountyId)
+  if (!bountyId) return { ok: false, response: json({ error: 'Missing bounty.', phase: 2 }, 400) }
+  const bounty = hourlyBountyBoard(nowMs).bounties.find((row) => row.id === bountyId)
+  if (!bounty) {
+    return { ok: false, response: json({ error: 'That bounty is not on the current board.', phase: 2 }, 400) }
+  }
+  const first = applyBountyReward(preparedSave as Parameters<typeof applyBountyReward>[0], bounty, true)
+  const base = applyBountyReward(preparedSave as Parameters<typeof applyBountyReward>[0], bounty, false)
+  const { data: profile } = await admin.from('profiles').select('username').eq('user_id', userId).maybeSingle()
+  const username = typeof profile?.username === 'string' && profile.username.length > 0 ? profile.username : 'Adventurer'
+  const { data, error } = await admin.rpc('bounty_turn_in_hosted', {
+    p_user_id: userId,
+    p_hour_key: hourlyBountyBoard(nowMs).hourKey,
+    p_bounty_id: bountyId,
+    p_username: username,
+    p_expected_version: expectedVersion,
+    p_payload_first: first.save,
+    p_payload_base: base.save,
+    p_rng_state: rngState,
+    p_now: new Date(nowMs).toISOString(),
+  })
+  if (error) return { ok: false, response: json({ error: error.message, phase: 2 }, 400) }
+  const answer = (data ?? {}) as {
+    ok?: boolean
+    reason?: string
+    conflict?: boolean
+    version?: number
+    firstCompleter?: boolean
+    claim?: Record<string, unknown>
+  }
+  if (answer.ok !== true) {
+    return {
+      ok: false,
+      response: json(
+        { error: answer.reason ?? 'The bounty could not be claimed.', phase: 2, conflict: answer.conflict },
+        answer.conflict ? 409 : 400,
+      ),
+    }
+  }
+  const firstCompleter = answer.firstCompleter === true
+  const paid = firstCompleter ? first : base
+  return {
+    ok: true,
+    version: Number(answer.version ?? expectedVersion + 1),
+    save: paid.save,
+    goldGained: paid.goldGained,
+    firstCompleter,
+    claim: answer.claim ?? {},
+  }
 }
 
 // Writes the guild, its leader, hall, and starter goals in one transaction.

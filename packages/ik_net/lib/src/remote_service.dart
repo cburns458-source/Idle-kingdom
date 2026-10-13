@@ -210,6 +210,9 @@ class RemoteMultiplayerService implements MultiplayerService {
   bool get isSignedIn => _sessions.isSignedIn;
 
   @override
+  bool get hostedCommands => true;
+
+  @override
   Future<String?> refreshSession() => transport.refreshSession();
 
   @override
@@ -825,7 +828,16 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (current == null) {
       return const CloudSyncResult.failed('Sign in to sync cloud saves.');
     }
-    final stamped = save.copyWith(updatedAt: isoFromMs(_nowMs()));
+    var stamped = save.copyWith(updatedAt: isoFromMs(_nowMs()));
+    final existing = await _readSaveRow(current.userId);
+    if (existing != null) {
+      try {
+        final server = parseSave(existing.payload, _nowMs());
+        stamped = replaceUnauthorizedPayouts(server, stamped);
+      } on Object {
+        // A payload this build cannot read is not a reason to keep invented gold.
+      }
+    }
     final validation = softValidateSave(stamped);
     if (!validation.ok) return CloudSyncResult.failed(validation.reason!);
     final refused = await transport.upsert(RemoteTables.saves, <RemoteRow>[
@@ -914,10 +926,41 @@ class RemoteMultiplayerService implements MultiplayerService {
       return CloudSyncResult.ok(
         save,
         body['action'] == 'sync' ? CloudSyncSource.downloaded : CloudSyncSource.uploaded,
+        goldGained: data['goldGained'] is num ? data['goldGained'] as num : null,
+        firstCompleter: data['firstCompleter'] is bool ? data['firstCompleter'] as bool : null,
+        code: data['code'] is String ? data['code'] as String : null,
+        fightId: data['fightId'] is String ? data['fightId'] as String : null,
+        winsRemaining: data['winsRemaining'] is num ? data['winsRemaining'] as num : null,
+        pvpOutcome: data['pvpOutcome'] is String ? data['pvpOutcome'] as String : null,
+        rounds: _pvpRoundsFrom(data['rounds']),
+        youMaxHp: data['youMaxHp'] is num ? data['youMaxHp'] as num : null,
+        themMaxHp: data['themMaxHp'] is num ? data['themMaxHp'] as num : null,
+        opponent: _arenaOpponentFrom(data['opponent']),
+        claim: _bountyClaimFrom(data['claim']),
       );
     } catch (error) {
       return CloudSyncResult.failed(error.toString());
     }
+  }
+
+  List<PvpRoundResult>? _pvpRoundsFrom(Object? raw) {
+    if (raw is! List) return null;
+    return [
+      for (final entry in raw)
+        if (entry is Map) PvpRoundResult.fromJson(Map<String, Object?>.from(entry)),
+    ];
+  }
+
+  ArenaOpponent? _arenaOpponentFrom(Object? raw) {
+    if (raw is! Map) return null;
+    return ArenaOpponent.fromJson(Map<String, Object?>.from(raw));
+  }
+
+  BountyClaimRecord? _bountyClaimFrom(Object? raw) {
+    if (raw is! Map) return null;
+    final row = Map<String, Object?>.from(raw);
+    if (row.containsKey('hourKey')) return BountyClaimRecord.fromJson(row);
+    return bountyClaimFrom(row);
   }
 
   @override
@@ -1890,13 +1933,11 @@ class RemoteMultiplayerService implements MultiplayerService {
     return row == null ? null : bountyClaimFrom(row);
   }
 
-  /// Claims an hourly bounty, letting the backend decide who was first.
+  /// Reads who already holds this hour's first turn-in. Clients cannot insert.
   ///
-  /// This is the one thing the local backend cannot answer honestly, because on
-  /// one device everybody is always first. The table's primary key settles it:
-  /// the insert either lands, or is refused because somebody else won, and the
-  /// loser is handed the winner's claim so the board can name them. Either way
-  /// the turn-in succeeds — the base reward is not a race.
+  /// The hosted turn-in is `bounty_turn_in` on the game function, which writes
+  /// the claim and the save together. This stays so the board can name who was
+  /// first without giving the app an INSERT grant.
   @override
   Future<BountyClaimResult> claimBounty(String hourKey, String bountyId) async {
     final current = session;
@@ -1907,21 +1948,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     if (already != null) {
       return BountyClaimResult.ok(already, firstCompleter: already.userId == current.userId);
     }
-
-    final written = await transport.insert(
-      RemoteTables.bountyClaims,
-      bountyClaimRowFor(current, hourKey, bountyId),
-      columns: remoteBountyClaimColumns,
-    );
-    if (written.ok && written.single != null) {
-      return BountyClaimResult.ok(bountyClaimFrom(written.single!), firstCompleter: true);
-    }
-
-    // Refused: either somebody claimed it between the read and the write, or the
-    // write itself failed. A claim now on the table means the former.
-    final winner = await _existingClaim(hourKey, bountyId);
-    if (winner == null) return BountyClaimResult.failed(written.reason!);
-    return BountyClaimResult.ok(winner, firstCompleter: winner.userId == current.userId);
+    return const BountyClaimResult.failed('Turn in the bounty from the Plaza board.');
   }
 
   // --- The Bazaar exchange ---------------------------------------------------

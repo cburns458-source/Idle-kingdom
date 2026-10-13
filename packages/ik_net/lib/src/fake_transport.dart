@@ -219,6 +219,7 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.friendRequests: <String>['from_user_id', 'to_user_id'],
     RemoteTables.friendships: <String>['user_a', 'user_b'],
     RemoteTables.pvpSnapshots: <String>['user_id'],
+    RemoteTables.rankedPvpResults: <String>['user_id', 'fight_id'],
   };
 
   /// Columns a table holds unique beyond its key, so an insert can lose a race.
@@ -541,6 +542,12 @@ class FakeTransport implements RemoteTransport {
     final key = _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
     final written = <String, Object?>{..._defaults(table), ...row};
+    if (table == RemoteTables.bountyClaims) {
+      return const RemoteQueryResult.failed('permission denied for table bounty_claims');
+    }
+    if (table == RemoteTables.rankedPvpResults) {
+      return const RemoteQueryResult.failed('permission denied for table ranked_pvp_results');
+    }
     if (table == RemoteTables.profiles) {
       final blocked = _profileGuardRefusal(null, written);
       if (blocked != null) return RemoteQueryResult.failed(blocked);
@@ -791,6 +798,10 @@ class FakeTransport implements RemoteTransport {
     if (body['command'] == 'guild_create') return _foundGuildCommand(caller.userId, body, row);
     final hallCommand = _applyGuildHallCommand(caller.userId, body, row);
     if (hallCommand != null) return hallCommand;
+    final ranked = _applyRankedPvpFight(caller.userId, caller.username ?? 'Adventurer', body, row);
+    if (ranked != null) return ranked;
+    final bounty = _applyBountyTurnIn(caller.userId, caller.username ?? 'Adventurer', body, row);
+    if (bounty != null) return bounty;
     final version = ((row['version'] as num?) ?? 1).toInt() + 1;
     row['version'] = version;
     row['updated_at'] = stamp();
@@ -937,6 +948,201 @@ class FakeTransport implements RemoteTransport {
       'save': next.toJson(),
       'version': version,
       'rngState': saveRow['rng_state'] ?? 1,
+    });
+  }
+
+  RemoteInvokeResult? _applyRankedPvpFight(
+    String userId,
+    String username,
+    RemoteRow body,
+    RemoteRow saveRow,
+  ) {
+    if (body['command'] != 'ranked_pvp_fight') return null;
+    final args = (body['args'] as Map?) ?? const <Object?, Object?>{};
+    if (args.containsKey('won')) {
+      return const RemoteInvokeResult.failed(rankedPvpFakedWinRefusal);
+    }
+    final requested = args['fightId'];
+    final results = tables.putIfAbsent(RemoteTables.rankedPvpResults, () => <RemoteRow>[]);
+    if (requested is String && requested.isNotEmpty) {
+      RemoteRow? existing;
+      for (final row in results) {
+        if (row['user_id'] == userId && row['fight_id'] == requested) {
+          existing = row;
+          break;
+        }
+      }
+      if (existing == null) return const RemoteInvokeResult.failed(rankedPvpUnknownFightRefusal);
+      return RemoteInvokeResult.ok(<String, Object?>{
+        'ok': true,
+        'phase': 2,
+        'save': saveRow['payload'],
+        'version': saveRow['version'] ?? 1,
+        'rngState': saveRow['rng_state'] ?? 1,
+        'fightId': existing['fight_id'],
+        'rounds': existing['rounds'] ?? const <Object?>[],
+        'pvpOutcome': existing['outcome'],
+        'goldGained': existing['gold_paid'] ?? 0,
+        'code': existing['code'],
+        'winsRemaining': existing['wins_remaining'] ?? 0,
+        'youMaxHp': existing['you_max_hp'] ?? 0,
+        'themMaxHp': existing['them_max_hp'] ?? 0,
+      });
+    }
+    final db = database;
+    if (db == null) return const RemoteInvokeResult.failed('No other players to fight.');
+    final payload = saveRow['payload'];
+    if (payload is! Map)
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    PlayerSave save;
+    try {
+      save = parseSave(Map<String, Object?>.from(payload), _clockMs());
+    } on Object {
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    }
+    final snapshots = tables[RemoteTables.pvpSnapshots] ?? const <RemoteRow>[];
+    final candidates = <ArenaOpponent>[];
+    final payloads = <String, PlayerSave>{};
+    for (final row in snapshots) {
+      final id = row['user_id'];
+      if (id is! String || id == userId) continue;
+      final snap = pvpSnapshotPayloadFrom(row);
+      if (snap == null) continue;
+      try {
+        final them = parseSave(snap, _clockMs());
+        candidates.add(
+          ArenaOpponent(
+            userId: id,
+            username: row['username'] as String? ?? 'Adventurer',
+            combatLevel: combatLevelOf(them),
+            totalLevel: totalLevel(them),
+          ),
+        );
+        payloads[id] = them;
+      } on Object {
+        continue;
+      }
+    }
+    final pick = pickRankedOpponent(combatLevelOf(save), totalLevel(save), candidates);
+    if (pick == null) return const RemoteInvokeResult.failed('No other players to fight.');
+    final them = payloads[pick.userId]!;
+    final rng = Mulberry32(((saveRow['rng_state'] as num?) ?? 1).toInt());
+    final fight = simulatePvpFight(db, save, them, rng.asFunction);
+    final applied = applyRankedPvpResult(save, fight.outcome == 'win', _clockMs());
+    final fightId = '11111111-1111-1111-1111-${(results.length + 1).toString().padLeft(12, '0')}';
+    results.add(<String, Object?>{
+      'user_id': userId,
+      'fight_id': fightId,
+      'opponent_id': pick.userId,
+      'outcome': fight.outcome,
+      'gold_paid': applied.goldGained,
+      'code': applied.code,
+      'rounds': fight.rounds.map((round) => round.toJson()).toList(),
+      'you_max_hp': fight.youMaxHp,
+      'them_max_hp': fight.themMaxHp,
+      'wins_remaining': applied.winsRemaining,
+    });
+    saveRow['payload'] = applied.save.toJson();
+    final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;
+    saveRow['version'] = version;
+    saveRow['updated_at'] = stamp();
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'phase': 2,
+      'save': applied.save.toJson(),
+      'version': version,
+      'rngState': rng.state,
+      'fightId': fightId,
+      'rounds': fight.rounds.map((round) => round.toJson()).toList(),
+      'pvpOutcome': fight.outcome,
+      'goldGained': applied.goldGained,
+      'code': applied.code,
+      'winsRemaining': applied.winsRemaining,
+      'youMaxHp': fight.youMaxHp,
+      'themMaxHp': fight.themMaxHp,
+      'opponent': pick.toJson(),
+    });
+  }
+
+  RemoteInvokeResult? _applyBountyTurnIn(
+    String userId,
+    String username,
+    RemoteRow body,
+    RemoteRow saveRow,
+  ) {
+    if (body['command'] != 'bounty_turn_in') return null;
+    final args = (body['args'] as Map?) ?? const <Object?, Object?>{};
+    final bountyId = args['bountyId'];
+    if (bountyId is! String || bountyId.isEmpty) {
+      return const RemoteInvokeResult.failed('Missing bounty.');
+    }
+    final payload = saveRow['payload'];
+    if (payload is! Map)
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    PlayerSave save;
+    try {
+      save = parseSave(Map<String, Object?>.from(payload), _clockMs());
+    } on Object {
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    }
+    final nowMs = _clockMs();
+    final board = hourlyBountyBoard(nowMs);
+    BountyDefinition? bounty;
+    for (final row in board.bounties) {
+      if (row.id == bountyId) {
+        bounty = row;
+        break;
+      }
+    }
+    if (bounty == null) {
+      return const RemoteInvokeResult.failed('That bounty is not on the current board.');
+    }
+    final prepared = prepareBountyTurnIn(save, bounty, nowMs);
+    if (!prepared.ok) return RemoteInvokeResult.failed(prepared.reason!);
+    final claims = tables[RemoteTables.bountyClaims]!;
+    RemoteRow? existing;
+    for (final row in claims) {
+      if (row['hour_key'] == board.hourKey && row['bounty_id'] == bountyId) {
+        existing = row;
+        break;
+      }
+    }
+    final firstCompleter = existing == null || existing['user_id'] == userId;
+    if (existing == null) {
+      claims.add(<String, Object?>{
+        'hour_key': board.hourKey,
+        'bounty_id': bountyId,
+        'user_id': userId,
+        'username': username,
+        'claimed_at': stamp(),
+      });
+    } else if (existing['user_id'] == userId &&
+        (prepared.save!.bountyClaimedIds.contains(bountyId))) {
+      return const RemoteInvokeResult.failed('You already claimed this bounty.');
+    }
+    final rewarded = applyBountyReward(prepared.save!, bounty, firstCompleter);
+    saveRow['payload'] = rewarded.save.toJson();
+    final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;
+    saveRow['version'] = version;
+    saveRow['updated_at'] = stamp();
+    final claim = claims.firstWhere(
+      (row) => row['hour_key'] == board.hourKey && row['bounty_id'] == bountyId,
+    );
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'phase': 2,
+      'save': rewarded.save.toJson(),
+      'version': version,
+      'rngState': saveRow['rng_state'] ?? 1,
+      'goldGained': rewarded.goldGained,
+      'firstCompleter': firstCompleter,
+      'claim': <String, Object?>{
+        'hourKey': claim['hour_key'],
+        'bountyId': claim['bounty_id'],
+        'userId': claim['user_id'],
+        'username': claim['username'],
+        'claimedAt': claim['claimed_at'],
+      },
     });
   }
 
@@ -1704,6 +1910,7 @@ class _FakeProject {
     RemoteTables.friendRequests: <RemoteRow>[],
     RemoteTables.friendships: <RemoteRow>[],
     RemoteTables.pvpSnapshots: <RemoteRow>[],
+    RemoteTables.rankedPvpResults: <RemoteRow>[],
   };
 
   final Map<String, FakeAccount> accounts = <String, FakeAccount>{};

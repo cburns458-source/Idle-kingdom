@@ -1683,6 +1683,8 @@ class LocalMultiplayerBackend {
 
   /// Records the first completer for an hourly bounty slot. Later callers still
   /// succeed, since they can collect the personal base reward.
+  ///
+  /// Offline demo only. Hosted turn-in is `bounty_turn_in` on the game function.
   BountyClaimResult claimBounty(MultiplayerSession session, String hourKey, String bountyId) {
     final db = _db();
     final existing = db.bountyClaims.firstWhereOrNull(
