@@ -82,5 +82,8 @@ describe('developer commands', () => {
     )
     expect(abandonedGrowing.ok).toBe(true)
     expect(abandonedGrowing.save.discoveredTimerSpotIds).toContain('botany:LOC-0001')
+    expect(abandonedGrowing.save.discoveredTimerSpotIds).toContain('botany:LOC-0009')
+    expect(abandonedGrowing.save.discoveredTimerSpotIds).toContain('fishing_pot:LOC-0003')
+    expect(abandonedGrowing.save.locationTimers).toEqual([growing])
   })
 })

@@ -34,6 +34,12 @@ const int mapNodeLabelMaxLines = 2;
 /// Side of the walking sprite.
 const double mapWalkerSize = 36;
 
+/// A second tap inside this window travels (or opens the place you are at).
+///
+/// Timed by hand rather than with `onDoubleTap`, which would hold the first
+/// tap back for the whole window before selecting anything.
+const Duration worldMapDoubleTapWindow = Duration(milliseconds: 300);
+
 /// The map: nodes over the map art, and a panel for whichever one is selected.
 class WorldMapView extends StatelessWidget {
   const WorldMapView({
@@ -50,6 +56,7 @@ class WorldMapView extends StatelessWidget {
     this.walkFromId,
     this.walkToId,
     this.walkProgress,
+    this.now,
   });
 
   final GameController controller;
@@ -77,6 +84,9 @@ class WorldMapView extends StatelessWidget {
   /// Walk progress 0→1 while a map walk is in flight. A listenable keeps the
   /// shell from setState-ing on every animation frame.
   final ValueListenable<double>? walkProgress;
+
+  /// Clock for the double-tap window. Defaults to [DateTime.now].
+  final DateTime Function()? now;
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +147,7 @@ class WorldMapView extends StatelessWidget {
                           : node.locationId == save.currentLocationId
                           ? onOpenHere
                           : () => onTravel(node.locationId),
+                      now: now,
                     ),
                   ),
                 if (walking)
@@ -341,6 +352,7 @@ class _MapNode extends StatefulWidget {
     required this.hintPulse,
     required this.onTap,
     required this.onDoubleTap,
+    this.now,
   });
 
   final _NodeLayout layout;
@@ -354,15 +366,14 @@ class _MapNode extends StatefulWidget {
   /// A second tap travels, so a place can be reached without the panel.
   final VoidCallback? onDoubleTap;
 
+  /// Clock for the double-tap window. Defaults to [DateTime.now].
+  final DateTime Function()? now;
+
   @override
   State<_MapNode> createState() => _MapNodeState();
 }
 
 class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin {
-  /// Timed by hand rather than with `onDoubleTap`, which would hold the first
-  /// tap back for the whole double-tap window before selecting anything.
-  static const Duration _window = Duration(milliseconds: 300);
-
   /// Peak quest-hint border while battery saver holds the pulse still.
   static const Color _hintPeak = Color(0xFFB42318);
 
@@ -407,11 +418,11 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
   }
 
   void _handleTap() {
-    final now = DateTime.now();
+    final now = widget.now?.call() ?? DateTime.now();
     final last = _lastTap;
     _lastTap = now;
     if (widget.onDoubleTap case final travel?
-        when last != null && now.difference(last) <= _window) {
+        when last != null && now.difference(last) <= worldMapDoubleTapWindow) {
       _lastTap = null;
       travel();
       return;

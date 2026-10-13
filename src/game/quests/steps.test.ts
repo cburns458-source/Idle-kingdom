@@ -8,13 +8,14 @@ import { chooseDialogue } from '../dialogue/engine'
 import { inventoryCount } from '../production/recipes'
 import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
+import { talkWithQuestNpc } from '../npcs/conversation'
 import {
   applyQuestProcessProgress,
   applyQuestTalkProgress,
   applyQuestVisitProgress,
 } from './progress'
 import { getQuest, getQuestProgress } from './quests'
-import { applyQuestStepUnlocks, getCurrentStepIndex } from './steps'
+import { applyQuestStepUnlocks, getCurrentStepIndex, getQuestStep, isStepComplete, isStepLatched } from './steps'
 
 // BUG-01: completed quest steps latch via a `step:<stepId>` counter so live
 // `Hold:` checks can't send Getting Started (QST-0006) back to step 1.
@@ -101,6 +102,29 @@ describe('quest step latching (BUG-01)', () => {
     const save = applyQuestStepUnlocks(launch, setCount(activeGettingStarted(launch), COOKED, 5))
     expect(getQuestProgress(save, QUEST).counters?.['step:QSTP-0016']).toBeUndefined()
     expect(index(launch, save)).toBe(0)
+  })
+
+  it('the old panel talk does not mark QSTP-0014 or QSTP-0016 done', () => {
+    const showDone = (save: PlayerSave, stepId: 'QSTP-0014' | 'QSTP-0016') => {
+      const step = getQuestStep(launch, QUEST, stepId)
+      expect(isStepLatched(save, QUEST, stepId)).toBe(false)
+      expect(isStepComplete(launch, save, QUEST, step?.Notes ?? '', stepId)).toBe(false)
+      expect(getQuestProgress(save, QUEST).counters?.[`step:${stepId}`]).toBeUndefined()
+    }
+
+    let save = applyQuestStepUnlocks(launch, setCount(activeGettingStarted(launch), RAW, 5))
+    expect(index(launch, save)).toBe(1)
+    save = applyQuestTalkProgress(launch, save, FENNEL)
+    expect(index(launch, save)).toBe(1)
+    showDone(save, 'QSTP-0014')
+    showDone(save, 'QSTP-0016')
+
+    const panel = talkWithQuestNpc(launch, applyQuestStepUnlocks(launch, setCount(activeGettingStarted(launch), RAW, 5)), FENNEL)
+    expect(panel.ok).toBe(true)
+    if (!panel.ok) return
+    showDone(panel.save, 'QSTP-0014')
+    showDone(panel.save, 'QSTP-0016')
+    expect(index(launch, panel.save)).toBe(1)
   })
 
   it('unlocks from a latched step stay applied', () => {

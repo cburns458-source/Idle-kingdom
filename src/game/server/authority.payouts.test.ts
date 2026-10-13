@@ -135,6 +135,29 @@ describe('ranked PvP and bounty authority', () => {
     }
   })
 
+  it('pays again after midnight UTC once the daily win cap has reset', () => {
+    const beforeMidnight = Date.parse('2026-08-13T23:59:59.000Z')
+    const midnight = Date.parse('2026-08-14T00:00:00.000Z')
+    let save = createNewSave(launch, beforeMidnight)
+    while ((save.rankedPvpFightsToday ?? 0) < RANKED_PVP_DAILY_CAP) {
+      save = applyRankedPvpResult(save, true, beforeMidnight).save
+    }
+    const goldAtCap = save.gold
+    const sixth = applyRankedPvpResult(save, true, beforeMidnight)
+    expect(sixth.paid).toBe(false)
+    expect(sixth.code).toBe('daily_cap_reached')
+    expect(sixth.winsRemaining).toBe(0)
+    expect(sixth.save.gold).toBe(goldAtCap)
+
+    const afterMidnight = applyRankedPvpResult(sixth.save, true, midnight)
+    expect(afterMidnight.paid).toBe(true)
+    expect(afterMidnight.code).toBeUndefined()
+    expect(afterMidnight.winsRemaining).toBe(RANKED_PVP_DAILY_CAP - 1)
+    expect(afterMidnight.save.gold).toBe(goldAtCap + 1000)
+    expect(afterMidnight.save.rankedPvpFightsToday).toBe(1)
+    expect(afterMidnight.save.rankedPvpDayKey).toBe('2026-08-14')
+  })
+
   it('pays a bounty once and gives the first-place bonus only to the first claim', () => {
     const ready = readyBountySave(launch)
     const first = command(ready.save, 'bounty_turn_in', {
