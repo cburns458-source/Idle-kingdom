@@ -4,10 +4,17 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'dialogue_text.dart';
 import 'dialogue_window.dart';
 import 'format.dart';
 import 'game_popup.dart';
 import 'social_bits.dart';
+
+/// Sends one turn-in. [useFavourites] is the player's yes for this request only.
+typedef QuestTurnInRequest = Future<QuestCompletion> Function(
+  String questId, {
+  required bool useFavourites,
+});
 
 /// Talking to somebody: Talk opens the dialogue box immediately.
 ///
@@ -21,11 +28,15 @@ class NpcPanel extends StatefulWidget {
     required this.onClose,
     this.onOpenShop,
     this.onOpenTanner,
+    this.turnInRequest,
   });
 
   final GameController controller;
   final NpcRow npc;
   final VoidCallback onClose;
+
+  /// Defaults to the local rules plus a `quest_complete` commit.
+  final QuestTurnInRequest? turnInRequest;
 
   /// Opens the counter a merchant keeps, when the location has one.
   final void Function(String shopId)? onOpenShop;
@@ -45,7 +56,13 @@ class _NpcPanelState extends State<NpcPanel> {
   bool _pickingRace = false;
   String? _standaloneDialogueId;
 
+  /// One turn-in in flight at a time, held until the next frame so a double tap
+  /// on Turn in is dropped.
+  bool _busy = false;
+
   GameController get controller => widget.controller;
+
+  late final DialogueText _text = DialogueText(controller.db);
 
   NpcConversation get conversation =>
       npcConversation(controller.db, controller.save, widget.npc, controller.session.clock());
@@ -187,19 +204,67 @@ class _NpcPanelState extends State<NpcPanel> {
     if (result.startedActivity) widget.onClose();
   }
 
+  Future<QuestCompletion> _sendTurnIn(String questId, {required bool useFavourites}) async {
+    final request = widget.turnInRequest;
+    if (request != null) return request(questId, useFavourites: useFavourites);
+    final result = completeQuest(
+      controller.db,
+      controller.save,
+      questId,
+      useFavourites: useFavourites,
+    );
+    if (result.ok) {
+      controller.commit(
+        result.save!,
+        command: 'quest_complete',
+        args: <String, Object?>{'questId': questId, if (useFavourites) 'useFavourites': true},
+      );
+    }
+    return result;
+  }
+
   Future<void> _turnIn(NpcQuestBlock quest) async {
-    final beforeUnlocked = controller.save.cosmetics.unlocked.toSet();
-    final wasEmpty = beforeUnlocked.isEmpty;
-    final result = completeQuest(controller.db, controller.save, quest.questId);
-    if (!result.ok) {
-      setState(() => _error = result.reason);
+    if (_busy) return;
+    _busy = true;
+    try {
+      final beforeUnlocked = controller.save.cosmetics.unlocked.toSet();
+      var result = await _sendTurnIn(quest.questId, useFavourites: false);
+      if (!mounted) return;
+      if (result.code == 'confirm_favourites') {
+        if (!await confirmUseFavourites(context, _text, result.favourites) || !mounted) return;
+        result = await _sendTurnIn(quest.questId, useFavourites: true);
+        if (!mounted) return;
+      }
+      if (result.code == 'no_room') {
+        setState(() => _error = null);
+        await showBagFullPopup(context, result.noRoom?.slotsNeeded ?? 1);
+        return;
+      }
+      if (!result.ok) {
+        setState(() => _error = result.reason);
+        return;
+      }
+      await _settleTurnIn(quest, result, beforeUnlocked);
+    } finally {
+      _releaseNextFrame();
+    }
+  }
+
+  void _releaseNextFrame() {
+    if (!mounted) {
+      _busy = false;
       return;
     }
-    controller.commit(
-      result.save!,
-      command: 'quest_complete',
-      args: <String, Object?>{'questId': quest.questId},
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _busy = false);
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  Future<void> _settleTurnIn(
+    NpcQuestBlock quest,
+    QuestCompletion result,
+    Set<String> beforeUnlocked,
+  ) async {
+    final wasEmpty = beforeUnlocked.isEmpty;
     final spoken = questTalkLine(controller.db, quest.questId, conversation.npcId, result.save!);
     if (spoken == null) _announceIfPresent(result.message);
     final bundle = result.rewardBundle;

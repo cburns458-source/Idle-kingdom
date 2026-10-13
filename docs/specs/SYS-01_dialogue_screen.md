@@ -115,6 +115,15 @@ Other choices keep their content `Label`. No dialogue string mentions the bank; 
 - `no_room`: popup only; the dialogue stays on the same node with no inline error.
 - Progress the last choice touched stays listed on the next node when that node does not reference the step, so `Shown ✓` / the new hand-in count stays visible.
 
+### NPC quest panel (legacy Turn in)
+`npc_panel.dart` reuses `showBagFullPopup` and `confirmUseFavourites` from `dialogue_window.dart` and the `DialogueText` wording for Turn in (`quest_complete`):
+- `no_room`: the same bag-full popup, N = `slotsNeeded`. Nothing changes.
+- `confirm_favourites`: the same Yes / No prompt listing every entry. **Yes** resends once with `useFavourites: true` (local rules and the `quest_complete` arg), never stored. **No** changes nothing. A full bag after Yes shows the bag popup.
+- One turn-in in flight at a time, held until the next frame. Turn in is never greyed out because of favourites.
+- A quest that completes on its own (talk or visit) into a full bag stays active with no popup and finishes on a later visit with room.
+
+Tests: `app_flutter/test/npc_panel_bag_favourites_test.dart`.
+
 ### Still to come (not in this pass)
 Shared `DialoguePanel` replacing `_DialogueCard` in `npc_panel.dart`, item chips, text reveal, tap-to-advance, fixed panel height, stacked full-width / 44 px choices, locked-reason text (needs non-placeholder engine wording or UI wording per condition), quest glyph (waits for the asset pack).
 
