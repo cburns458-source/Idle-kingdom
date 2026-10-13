@@ -175,12 +175,18 @@ class _BottomNavState extends State<BottomNav> {
                   child: _NavSection(
                     selected: widget.screen == GameScreen.character,
                     tooltip: 'Inventory',
-                    semanticsLabel: 'Inventory',
+                    semanticsLabel: widget.controller.hasBagOverflowBadge
+                        ? 'Inventory, loot left behind'
+                        : 'Inventory',
                     onTap: () => _selectTab(GameScreen.character),
-                    child: GameImage(
-                      uiInventoryAssetPath(),
-                      width: _chinIconSize,
-                      height: _chinIconSize,
+                    child: Badged(
+                      key: const Key('bag-overflow-badge'),
+                      count: widget.controller.hasBagOverflowBadge ? 1 : 0,
+                      child: GameImage(
+                        uiInventoryAssetPath(),
+                        width: _chinIconSize,
+                        height: _chinIconSize,
+                      ),
                     ),
                   ),
                 ),

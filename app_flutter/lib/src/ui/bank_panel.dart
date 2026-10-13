@@ -3,6 +3,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'dialogue_window.dart';
 import 'floating_slot.dart';
 import 'format.dart';
 import 'item_icon.dart';
@@ -163,6 +164,14 @@ class _BankPanelState extends State<BankPanel> {
     if (quantity == null || !mounted) return;
     final result = withdrawFromBank(save, index, quantity);
     if (!result.ok) {
+      if (result.code == 'no_room') {
+        setState(() => _error = null);
+        await showDialogueBagFullPopup(
+          context: context,
+          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
+        );
+        return;
+      }
       setState(() => _error = result.reason);
       return;
     }
@@ -210,7 +219,7 @@ class _BankPanelState extends State<BankPanel> {
           ),
           MutedText(
             'Bag ${formatThousands(save.inventory.length)}/$inventorySlotLimit · '
-            'Bank ${formatThousands(bankLen)}/$inventorySlotLimit',
+            'Bank ${formatThousands(bankLen)}/$bankSlotLimit',
           ),
           const SizedBox(height: 8),
           TextField(

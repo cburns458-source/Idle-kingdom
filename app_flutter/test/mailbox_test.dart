@@ -52,7 +52,9 @@ void main() {
       claimedAt: null,
     );
     controller.commit(controller.save.copyWith(mailbox: [...controller.save.mailbox, gift]));
-    expect(controller.claimMailboxMessage('mail-gift'), 'Items claimed.');
+    final claimed = controller.claimMailboxMessage('mail-gift');
+    expect(claimed.ok, isTrue);
+    expect(controller.mailboxClaimCalls, 1);
     expect(
       controller.save.inventory.where((stack) => stack.itemId == 'ITEM-0025').first.quantity,
       3,
