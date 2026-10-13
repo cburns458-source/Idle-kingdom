@@ -128,6 +128,93 @@ describe('Fennel and King dialogue content', () => {
     expect(lines.filter((line) => /\bbank\b|\bbag\b|\bpack\b|inventory/i.test(line))).toEqual([])
   })
 
+  it('keeps a Fennel planting reminder on QSTP-0034', () => {
+    const dialogue = db.Dialogues.find((row) => row['Dialogue ID'] === 'DLG-0009')
+    expect(dialogue?.Condition).toBe('quest_step:QST-0011:QSTP-0034')
+    const node = db.DialogueNodes.find((row) => row['Node ID'] === 'DNODE-0015')
+    expect(node?.Line).toMatch(/patch/i)
+    expect(node?.Line).toMatch(/compost/i)
+    expect(node?.Line).not.toMatch(/\bbank\b/i)
+    expect(startDialogue(db, greenThumbActive(), 'DLG-0009').ok).toBe(false)
+    const planted = withQuest(greenThumbActive(), 'QST-0011', 'active', { 'step:QSTP-0023': 1, 'step:QSTP-0024': 1 })
+    expect(stepOf(planted, 'QST-0011')).toBe('QSTP-0034')
+    expect(dialoguesForNpc(db, planted, 'NPC-0014')).toEqual(['DLG-0009'])
+    const view = startDialogue(db, planted, 'DLG-0009').view
+    expect(view?.line).toBe(node?.Line)
+    expect(view?.choices.map((choice) => choice.choiceId)).toEqual(['DCH-0020'])
+  })
+
+  it('guides Visiting the Citadel on the Guide and Market Master without quest actions', () => {
+    expect(db.Dialogues.filter((row) => row['Dialogue ID'] === 'DLG-0013' || row['Dialogue ID'] === 'DLG-0014')).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          'Dialogue ID': 'DLG-0013',
+          'NPC ID': 'NPC-0013',
+          Condition: 'quest_active:QST-0004',
+          Priority: 10,
+        }),
+        expect.objectContaining({
+          'Dialogue ID': 'DLG-0014',
+          'NPC ID': 'NPC-0006',
+          Condition: 'quest_active:QST-0004',
+          Priority: 10,
+        }),
+      ]),
+    )
+    const guideLine = db.DialogueNodes.find((row) => row['Node ID'] === 'DNODE-0023')?.Line ?? ''
+    const marketLine = db.DialogueNodes.find((row) => row['Node ID'] === 'DNODE-0024')?.Line ?? ''
+    expect(guideLine).toMatch(/bazaar/i)
+    expect(guideLine).toMatch(/training grounds/i)
+    expect(marketLine).toMatch(/browse/i)
+    expect([guideLine, marketLine].join(' ')).not.toMatch(/\bbank\b|\bgold\b|\bpoints?\b/i)
+
+    const idle = fresh(CITADEL_PLAZA)
+    expect(dialoguesForNpc(db, idle, 'NPC-0013')).toEqual(['DLG-0001'])
+    expect(dialoguesForNpc(db, idle, 'NPC-0006')).toEqual([])
+
+    const touring = withQuest(idle, 'QST-0004', 'active')
+    expect(dialoguesForNpc(db, touring, 'NPC-0013')[0]).toBe('DLG-0013')
+    expect(dialoguesForNpc(db, touring, 'NPC-0013')).toContain('DLG-0001')
+    expect(dialoguesForNpc(db, touring, 'NPC-0006')).toEqual(['DLG-0014'])
+    expect(startDialogue(db, touring, 'DLG-0013').view?.line).toBe(guideLine)
+    expect(startDialogue(db, touring, 'DLG-0014').view?.line).toBe(marketLine)
+
+    for (const [dialogueId, nodeId, choiceId] of [
+      ['DLG-0013', 'DNODE-0023', 'DCH-0033'],
+      ['DLG-0014', 'DNODE-0024', 'DCH-0034'],
+    ] as const) {
+      const choice = rawDatabase.DialogueChoices.find((row: { 'Choice ID': string }) => row['Choice ID'] === choiceId)
+      expect(choice?.Action).toBeNull()
+      const after = picked(touring, dialogueId, nodeId, choiceId)
+      expect(getQuestProgress(after.save, 'QST-0004').status).toBe('active')
+      expect(after.itemDeltas).toEqual([])
+    }
+
+    const done = withQuest(idle, 'QST-0004', 'completed')
+    expect(dialoguesForNpc(db, done, 'NPC-0013')).toEqual(['DLG-0001'])
+    expect(dialoguesForNpc(db, done, 'NPC-0006')).toEqual([])
+  })
+
+  it('stores a numberless make-room line on every SYS-01 hand-out choice', () => {
+    const handOuts = rawDatabase.DialogueChoices.filter((row: DialogueChoiceRow) =>
+      parseDialogueTokens(row.Action).some((token) => token.name === 'grant_item' || token.name === 'complete_quest'),
+    )
+    expect(handOuts.map((row: { 'Choice ID': string }) => row['Choice ID'])).toEqual([
+      'DCH-0001',
+      'DCH-0012',
+      'DCH-0014',
+      'DCH-0021',
+      'DCH-0030',
+      'DCH-0031',
+    ])
+    for (const row of handOuts as Array<DialogueChoiceRow & { 'No Room Line'?: string }>) {
+      const line = row['No Room Line'] ?? ''
+      expect(line.length).toBeGreaterThan(10)
+      expect(line).not.toMatch(/\d/)
+      expect(line).not.toMatch(/\bbank\b/i)
+    }
+  })
+
   it('gives each gift once, even after closing mid-conversation and reloading', () => {
     let save = fresh(CITADEL_PLAZA)
     expect(startDialogue(db, save, 'DLG-0001').ok).toBe(true)
