@@ -183,14 +183,15 @@ class _ShopPanelState extends State<ShopPanel> {
     );
     if (!result.ok) {
       if (result.code == 'no_room') {
-        setState(() => _error = null);
         if (!mounted) return;
+        setState(() => _error = null);
         await showDialogueBagFullPopup(
           context: context,
           slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
         );
         return;
       }
+      if (!mounted) return;
       setState(() => _error = result.reason);
       return;
     }
@@ -203,6 +204,7 @@ class _ShopPanelState extends State<ShopPanel> {
       },
     );
     controller.noteCosmeticUnlocks(result.cosmeticsGranted);
+    if (!mounted) return;
     setState(() {
       _error = null;
       _receipt = result.message;

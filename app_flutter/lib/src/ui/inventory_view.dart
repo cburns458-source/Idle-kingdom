@@ -67,12 +67,6 @@ class _InventoryViewState extends State<InventoryView> {
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
 
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.clearBagOverflowBadge();
-  }
-
   /// Cached bag order; invalidated when inventory, sort, or search change.
   List<int>? _cachedBagIndexes;
   int? _bagCacheInventoryIdentity;

@@ -173,9 +173,18 @@ class _NpcPanelState extends State<NpcPanel> {
     setState(() => _error = null);
   }
 
-  void _bribe(NpcQuestBlock quest) {
+  Future<void> _bribe(NpcQuestBlock quest) async {
     final result = bribeForQuest(controller.db, controller.save, quest.questId);
     if (!result.ok) {
+      if (result.code == 'no_room') {
+        if (!mounted) return;
+        setState(() => _error = null);
+        await showDialogueBagFullPopup(
+          context: context,
+          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
+        );
+        return;
+      }
       setState(() => _error = result.reason);
       return;
     }
@@ -185,6 +194,7 @@ class _NpcPanelState extends State<NpcPanel> {
       args: <String, Object?>{'questId': quest.questId},
     );
     controller.announce(result.message!);
+    if (!mounted) return;
     setState(() => _error = null);
   }
 

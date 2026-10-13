@@ -34,15 +34,10 @@ class _MailboxPopupState extends State<_MailboxPopup> {
   GameController get controller => widget.controller;
 
   Future<void> _claim(String messageId) async {
-    final result = claimMailAttachments(
-      controller.save,
-      messageId,
-      controller.session.clock(),
-      controller.db,
-    );
+    final result = controller.claimMailboxMessage(messageId);
+    if (!mounted) return;
     if (!result.ok) {
       if (result.code == 'no_room') {
-        if (!mounted) return;
         await showDialogueBagFullPopup(
           context: context,
           slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
@@ -52,7 +47,7 @@ class _MailboxPopupState extends State<_MailboxPopup> {
       setState(() => _notice = result.reason);
       return;
     }
-    setState(() => _notice = controller.claimMailboxMessage(messageId));
+    setState(() => _notice = 'Items claimed.');
   }
 
   @override

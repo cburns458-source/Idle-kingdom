@@ -317,6 +317,11 @@ class GameController extends ChangeNotifier {
   /// True when the bag tab should show the left-behind badge.
   bool get hasBagOverflowBadge => bagOverflow.hasBadge;
 
+  /// How many times [claimMailboxMessage] has run. Tests assert a single call.
+  int mailboxClaimCalls = 0;
+
+  void _bindBagOverflow() => bagOverflow.bindTo(save.characterName);
+
   /// Merges overflow from a completion, combat win, tick, or catch-up.
   ///
   /// Sets the bag-tab badge. While the popup is open the shell rebuilds this
@@ -800,6 +805,7 @@ class GameController extends ChangeNotifier {
   /// A fresh character, or a return after a few seconds, has nothing to report
   /// and should not be met with a summary panel.
   void adoptBoot(SessionBoot boot) {
+    _bindBagOverflow();
     final away = boot.unattended;
     _awaySummary = boot.created || !away.hasCreditedWork ? null : away;
     _returningFromAway = !boot.created && away.effectiveElapsedMs > 0;
@@ -836,7 +842,9 @@ class GameController extends ChangeNotifier {
 
   /// Drops the character after sign-out or a kick from another device.
   void resetUnsigned() {
+    bagOverflow.setHasBadge(false);
     session.resetUnsigned();
+    _bindBagOverflow();
     _awaySummary = null;
     _returningFromAway = false;
     _pendingLeftBehind = const <LootGrant>[];
@@ -1018,6 +1026,7 @@ class GameController extends ChangeNotifier {
     }
     if (command == null && wouldRewindCurrentLocation(save, incoming)) return;
     session.apply(mergeHostedStartSave(save, incoming, command: command));
+    _bindBagOverflow();
     notifyListeners();
   }
 
@@ -1817,12 +1826,15 @@ class GameController extends ChangeNotifier {
     );
   }
 
-  /// Claims attached items into the bag, or returns why they would not fit.
-  String? claimMailboxMessage(String messageId) {
+  /// Claims attached items into the bag, or the engine's `no_room` refusal.
+  ///
+  /// One call. The engine changes nothing when the bag cannot take the parcel.
+  MailClaimResult claimMailboxMessage(String messageId) {
+    mailboxClaimCalls += 1;
     final result = claimMailAttachments(save, messageId, session.clock(), db);
-    if (!result.ok) return result.reason;
+    if (!result.ok) return result;
     commit(result.save!, command: 'mail_claim', args: <String, Object?>{'messageId': messageId});
-    return 'Items claimed.';
+    return result;
   }
 
   /// Names a new character, gives them a look, and grants their race's kit.
@@ -1835,6 +1847,7 @@ class GameController extends ChangeNotifier {
     final assigned = assignRace(db, named, raceId);
     if (!assigned.ok) return assigned.reason;
     session.apply(assigned.save!);
+    _bindBagOverflow();
     notifyListeners();
     return null;
   }
