@@ -262,6 +262,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
       if (round.outcome != 'ongoing') outcome = round.outcome;
     }
     if (seq >= 2000 && outcome == null) outcome = 'loss';
+    if (outcome != null) _applyRanked(outcome);
     if (!mounted) return;
     setState(() {
       _youHp = youHp;
@@ -271,7 +272,6 @@ class _ArenaPanelState extends State<ArenaPanel> {
       _roundStartedAt = startedAt;
       _outcome = outcome;
     });
-    if (outcome != null) _applyRanked(outcome);
   }
 
   void _applyRanked(String outcome) {
@@ -280,6 +280,8 @@ class _ArenaPanelState extends State<ArenaPanel> {
     if (multiplayer.service.hostedCommands) return;
     final next = applyRankedPvpResult(save, outcome == 'win', controller.session.clock());
     controller.commit(next.save);
+    _rankedGoldGained = next.goldGained;
+    _rankedCode = next.code;
   }
 
   Future<void> _saveEquipment() async {
@@ -473,7 +475,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
       children: [
         MutedText(
           'Closest combat level. Win: ${formatThousands(rankedPvpWinGold)} gold. '
-          '${capped ? '0' : remaining} / ${formatThousands(rankedPvpDailyCap)} wins paid today.',
+          '${capped ? '0' : remaining} / ${formatThousands(rankedPvpDailyCap)} ranked wins left today.',
         ),
         if (capped) ...[const SizedBox(height: 6), const MutedText(rankedPvpDailyCapMessage)],
         const SizedBox(height: 8),
@@ -552,15 +554,18 @@ class _ArenaPanelState extends State<ArenaPanel> {
                         padding: EdgeInsets.only(top: 4),
                         child: MutedText(rankedPvpDailyCapMessage, textAlign: TextAlign.center),
                       )
-                    else if (_rankedFight && _outcome == 'win')
+                    else if (_rankedFight &&
+                        _outcome == 'win' &&
+                        _rankedGoldGained != null &&
+                        _rankedGoldGained! > 0)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: MutedText(
-                          'Ranked purse: ${formatThousands(_rankedGoldGained ?? rankedPvpWinGold)} gold.',
+                          'Ranked purse: ${formatThousands(_rankedGoldGained!)} gold.',
                           textAlign: TextAlign.center,
                         ),
                       )
-                    else if (_rankedFight)
+                    else if (_rankedFight && _outcome != 'win')
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: MutedText(
@@ -568,7 +573,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
                           textAlign: TextAlign.center,
                         ),
                       )
-                    else
+                    else if (!_rankedFight)
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: MutedText('Search fight. No gold.', textAlign: TextAlign.center),
