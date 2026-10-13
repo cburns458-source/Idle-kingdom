@@ -213,7 +213,9 @@ ShopTransactionResult confirmShopOffer(
       continue;
     }
     if (!canFitItemQuantity(staging, line.itemId, qty)) {
-      return const ShopTransactionResult.failed('Not enough inventory space (180 slots).');
+      return ShopTransactionResult.failed(
+        'Not enough inventory space ($inventorySlotLimit slots).',
+      );
     }
     final added = addItemToInventoryExact(staging, line.itemId, qty);
     if (!added.ok) return ShopTransactionResult.failed(added.reason);

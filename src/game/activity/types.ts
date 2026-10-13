@@ -32,6 +32,8 @@ export interface ActionRewardBundle {
   goldGained: number
   /** Wardrobe cosmetics unlocked with this reward line (e.g. Baby Dragon pet). */
   cosmeticsGranted?: { cosmeticId: string; isFirstEver: boolean }[]
+  /** Drops that rolled but did not fit in the bag. Same shape as `loot`. */
+  leftBehind?: LootGrant[]
 }
 
 export interface ActionCompletionResult {
@@ -47,6 +49,8 @@ export interface ActionCompletionResult {
   loot: LootGrant[]
   /** Wardrobe cosmetics unlocked by this action (e.g. Baby Dragon pet). */
   cosmeticsGranted?: { cosmeticId: string; isFirstEver: boolean }[]
+  /** Drops that rolled but did not fit in the bag. Same shape as `loot`. */
+  leftBehind?: LootGrant[]
   leveledUpTo: number | null
   /** HP lost on a thievery failure (for combat-style floaters). */
   damageTaken?: number

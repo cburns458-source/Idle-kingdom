@@ -47,7 +47,7 @@ export function pickWeightedReward(
 }
 
 /**
- * Add as many as fit without exceeding the 180-slot bag or MAX_SAFE_INTEGER stacks.
+ * Add as many as fit without exceeding the bag slot cap or MAX_SAFE_INTEGER stacks.
  * Gold currency items are converted into `save.gold` instead of bag slots.
  * Returns how many were actually added (may be less than requested).
  */
@@ -58,6 +58,7 @@ export function addItemsToInventory(
   enchantmentId: string | null = null,
   favorite = false,
   db?: GameDatabase,
+  slotLimit: number = INVENTORY_SLOT_LIMIT,
 ): { save: PlayerSave; added: number } {
   const want = Math.floor(quantity)
   if (want <= 0) return { save, added: 0 }
@@ -69,7 +70,7 @@ export function addItemsToInventory(
     }
   }
 
-  const addable = maxAddableQuantity(save, itemId, enchantmentId, favorite, db)
+  const addable = maxAddableQuantity(save, itemId, enchantmentId, favorite, db, slotLimit)
   const added = Math.min(want, addable)
   if (added <= 0) return { save, added: 0 }
 
@@ -109,8 +110,9 @@ export function addItemToInventory(
   enchantmentId: string | null = null,
   favorite = false,
   db?: GameDatabase,
+  slotLimit: number = INVENTORY_SLOT_LIMIT,
 ): PlayerSave {
-  return addItemsToInventory(save, itemId, quantity, enchantmentId, favorite, db).save
+  return addItemsToInventory(save, itemId, quantity, enchantmentId, favorite, db, slotLimit).save
 }
 
 /** Add the full quantity or fail without changing the save. */
@@ -121,21 +123,25 @@ export function addItemToInventoryExact(
   enchantmentId: string | null = null,
   favorite = false,
   db?: GameDatabase,
+  slotLimit: number = INVENTORY_SLOT_LIMIT,
 ): { ok: true; save: PlayerSave } | { ok: false; reason: string } {
   const want = Math.floor(quantity)
   if (want <= 0) return { ok: true, save }
   if (isGoldCurrencyItem(itemId, db) && !enchantmentId) {
-    return { ok: true, save: addItemsToInventory(save, itemId, want, null, false, db).save }
+    return {
+      ok: true,
+      save: addItemsToInventory(save, itemId, want, null, false, db, slotLimit).save,
+    }
   }
-  if (!canFitItemQuantity(save, itemId, want, enchantmentId, favorite, db)) {
-    if (save.inventory.length >= INVENTORY_SLOT_LIMIT) {
-      return { ok: false, reason: 'Inventory is full (180 slots).' }
+  if (!canFitItemQuantity(save, itemId, want, enchantmentId, favorite, db, slotLimit)) {
+    if (save.inventory.length >= slotLimit) {
+      return { ok: false, reason: `Inventory is full (${slotLimit} slots).` }
     }
     return { ok: false, reason: 'That stack cannot hold more of this item.' }
   }
-  const result = addItemsToInventory(save, itemId, want, enchantmentId, favorite, db)
+  const result = addItemsToInventory(save, itemId, want, enchantmentId, favorite, db, slotLimit)
   if (result.added < want) {
-    return { ok: false, reason: 'Inventory is full (180 slots).' }
+    return { ok: false, reason: `Inventory is full (${slotLimit} slots).` }
   }
   return { ok: true, save: result.save }
 }
@@ -155,9 +161,11 @@ export function resolveActionRewards(
   loot: LootGrant[]
   goldGained: number
   cosmeticsGranted: ActionCosmeticGrant[]
+  leftBehind: LootGrant[]
 } {
   let next = save
   const loot: LootGrant[] = []
+  const leftBehind: LootGrant[] = []
   const cosmeticsGranted: ActionCosmeticGrant[] = []
   let goldGained = Number(action['Guaranteed Gold'] ?? 0)
 
@@ -195,12 +203,20 @@ export function resolveActionRewards(
       }
       const granted = addItemsToInventory(next, itemId, quantity, null, false, db)
       next = granted.save
+      const displayName =
+        db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name'] ?? itemId
       if (granted.added > 0) {
         loot.push({
           itemId,
           quantity: granted.added,
-          displayName:
-            db.Items.find((item) => item['Item ID'] === itemId)?.['Display Name'] ?? itemId,
+          displayName,
+        })
+      }
+      if (granted.added < quantity) {
+        leftBehind.push({
+          itemId,
+          quantity: quantity - granted.added,
+          displayName,
         })
       }
     } else if (picked['Reward Type'] === 'Gold' || picked['Reward Type'] === 'Currency') {
@@ -252,5 +268,5 @@ export function resolveActionRewards(
     }
   }
 
-  return { save: next, loot, goldGained, cosmeticsGranted }
+  return { save: next, loot, goldGained, cosmeticsGranted, leftBehind }
 }

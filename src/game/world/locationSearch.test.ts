@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import type { GameDatabase, LocationSearchRow } from '../data/types'
+import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { createNewSave } from '../save/saveStore'
 import {
   canClaimLocationSearch,
@@ -101,7 +102,10 @@ describe('location search', () => {
     // Fill every inventory slot with a non-stacking-relevant item so the Bola has no room.
     save = {
       ...save,
-      inventory: Array.from({ length: 180 }, () => ({ itemId: 'ITEM-0002', quantity: 1 })),
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, () => ({
+        itemId: 'ITEM-0002',
+        quantity: 1,
+      })),
     }
     const nowMs = Date.parse('2026-01-01T00:00:00.000Z')
     const result = claimLocationSearch(launch, save, 'SRCH-0001', nowMs)

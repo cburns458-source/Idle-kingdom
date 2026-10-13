@@ -183,6 +183,8 @@ void main() {
             'xpGained': result.xpGained,
             'goldGained': result.goldGained,
             'loot': result.loot.map((grant) => grant.toJson()).toList(),
+            if (result.leftBehind.isNotEmpty)
+              'leftBehind': result.leftBehind.map((grant) => grant.toJson()).toList(),
             'foodConsumed': result.foodConsumed,
             'foodHealed': result.foodHealed,
             'foodName': result.foodName,

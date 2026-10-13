@@ -2,7 +2,7 @@ import { recordItemsSoldAtLocation } from '../achievements/progress'
 import { addItemToInventoryExact } from '../activity/rewards'
 import { grantCosmetic } from '../cosmetics/cosmetics'
 import { applyQuestAutoStartOnSeed } from '../quests/progress'
-import { canFitItemQuantity } from '../inventory/capacity'
+import { canFitItemQuantity, INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { isFavoriteStack } from '../inventory/favorites'
 import type { GameDatabase } from '../data/types'
 import type { InventoryStack, PlayerSave } from '../save/types'
@@ -180,7 +180,7 @@ export function confirmShopOffer(
       continue
     }
     if (!canFitItemQuantity(spaceCheck, line.itemId, qty)) {
-      return { ok: false, reason: 'Not enough inventory space (180 slots).' }
+      return { ok: false, reason: `Not enough inventory space (${INVENTORY_SLOT_LIMIT} slots).` }
     }
     const staged = addItemToInventoryExact(spaceCheck, line.itemId, qty)
     if (!staged.ok) return { ok: false, reason: staged.reason }

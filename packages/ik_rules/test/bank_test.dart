@@ -107,4 +107,35 @@ void main() {
     expect(withdrawn.save!.bank.single.quantity, 1);
     expect(withdrawn.save!.inventory.single.quantity, 4);
   });
+
+  test('caps the chest at 168 slots, past the 84-slot bag', () {
+    final db = databaseOf(loadParityFixtures('save/roundtrip').first);
+    final blocked = depositToBank(
+      createNewSave(db, 0).copyWith(
+        inventory: const [InventoryStack(itemId: 'ITEM-0002', quantity: 1)],
+        bank: [
+          for (var index = 0; index < bankSlotLimit; index++)
+            InventoryStack(itemId: 'ITEM-fake-$index', quantity: 1),
+        ],
+      ),
+      0,
+      1,
+    );
+    expect(blocked.ok, isFalse);
+    expect(blocked.reason, 'Bank is full ($bankSlotLimit slots).');
+
+    final accepted = depositToBank(
+      createNewSave(db, 0).copyWith(
+        inventory: const [InventoryStack(itemId: 'ITEM-0002', quantity: 1)],
+        bank: [
+          for (var index = 0; index < bankSlotLimit - 1; index++)
+            InventoryStack(itemId: 'ITEM-fake-$index', quantity: 1),
+        ],
+      ),
+      0,
+      1,
+    );
+    expect(accepted.ok, isTrue);
+    expect(accepted.save!.bank, hasLength(bankSlotLimit));
+  });
 }

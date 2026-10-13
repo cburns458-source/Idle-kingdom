@@ -148,7 +148,7 @@ void _rememberMin(Map<String, int> map, String? itemId, num? level) {
   if (current == null || next < current) map[itemId] = next;
 }
 
-/// Cached grouping ranks so a 180-slot bag does not rescan the database per compare.
+/// Cached grouping ranks so a full bag does not rescan the database per compare.
 class InventorySorter {
   InventorySorter(this.db) {
     for (final item in db.items) {

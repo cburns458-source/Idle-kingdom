@@ -8,6 +8,7 @@ import { beginProductionQueue } from '../production/engine'
 import { addItemToInventory } from '../activity/rewards'
 import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
+import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { resolveUnattendedProgress, unattendedCapMs } from './resolve'
 
 const rawDatabase = JSON.parse(
@@ -107,7 +108,7 @@ describe('unattended progression', () => {
     save = {
       ...begun.save,
       unattendedProgressAt: new Date(startedAt).toISOString(),
-      inventory: Array.from({ length: 180 }, (_, index) => ({
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
         itemId: `FILL-${index}`,
         quantity: 1,
       })),

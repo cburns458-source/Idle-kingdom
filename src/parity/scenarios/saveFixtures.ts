@@ -1,4 +1,5 @@
 import type { GameDatabase } from '../../game/data/types'
+import { BANK_SLOT_LIMIT, INVENTORY_SLOT_LIMIT } from '../../game/inventory/capacity'
 import { createNewSave } from '../../game/save/saveStore'
 import type { PlayerSave } from '../../game/save/types'
 import type { JsonValue } from '../types'
@@ -283,12 +284,23 @@ export function combatSave(db: GameDatabase): PlayerSave {
 /** A bag filled to the slot limit, for overflow cases. */
 export function fullBagSave(db: GameDatabase, items: string[]): PlayerSave {
   const base = baseSave(db)
-  const inventory = Array.from({ length: 180 }, (_, index) => ({
+  const inventory = Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
     itemId: items[index % items.length]!,
     quantity: 1,
     enchantmentId: `ENCH-${String(index).padStart(4, '0')}`,
   }))
   return { ...base, inventory }
+}
+
+/** A bank filled to the slot limit, for overflow cases. */
+export function fullBankSave(db: GameDatabase, items: string[]): PlayerSave {
+  const base = baseSave(db)
+  const bank = Array.from({ length: BANK_SLOT_LIMIT }, (_, index) => ({
+    itemId: items[index % items.length]!,
+    quantity: 1,
+    enchantmentId: `ENCH-${String(index).padStart(4, '0')}`,
+  }))
+  return { ...base, bank }
 }
 
 export function asJson(save: PlayerSave): JsonValue {

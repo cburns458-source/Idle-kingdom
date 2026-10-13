@@ -6,6 +6,7 @@ import { createNewSave } from '../save/saveStore'
 import { migrateSave } from '../save/migrations'
 import type { MailMessage, PlayerSave } from '../save/types'
 import { SAVE_VERSION } from '../save/types'
+import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import {
   MAIL_UPDATE_2026_09_24_CATALOG_ID,
   MAIL_UPDATE_2026_09_22_CATALOG_ID,
@@ -84,7 +85,7 @@ describe('mailbox', () => {
 
     const full: PlayerSave = {
       ...withGift,
-      inventory: Array.from({ length: 180 }, (_, index) => ({
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
         itemId: `FILL-${index}`,
         quantity: 1,
       })),

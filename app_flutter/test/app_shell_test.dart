@@ -321,7 +321,9 @@ void main() {
     );
     expect(queued.ok, isTrue);
     final filled = queued.save!.copyWith(
-      inventory: [for (var i = 0; i < 180; i++) InventoryStack(itemId: 'FILL-$i', quantity: 1)],
+      inventory: [
+        for (var i = 0; i < inventorySlotLimit; i++) InventoryStack(itemId: 'FILL-$i', quantity: 1),
+      ],
     );
     final controller = buildController(database, seed: filled);
     addTearDown(controller.dispose);

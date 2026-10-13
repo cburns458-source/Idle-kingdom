@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
-import { INVENTORY_SLOT_LIMIT } from './capacity'
+import { BANK_SLOT_LIMIT, INVENTORY_SLOT_LIMIT } from './capacity'
 import {
   depositToBank,
   locationHasBank,
@@ -101,11 +101,11 @@ describe('bank storage', () => {
     expect(withdrawn.save.inventory).toEqual([{ itemId: 'ITEM-0002', quantity: 4 }])
   })
 
-  it(`caps the chest at ${INVENTORY_SLOT_LIMIT} slots`, () => {
+  it(`caps the chest at ${BANK_SLOT_LIMIT} slots`, () => {
     const save = {
       ...createNewSave(launch),
       inventory: [{ itemId: 'ITEM-0002', quantity: 1 }],
-      bank: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
+      bank: Array.from({ length: BANK_SLOT_LIMIT }, (_, index) => ({
         itemId: `ITEM-fake-${index}`,
         quantity: 1,
       })),
@@ -113,6 +113,20 @@ describe('bank storage', () => {
     const blocked = depositToBank(save, 0, 1)
     expect(blocked.ok).toBe(false)
     if (blocked.ok) return
-    expect(blocked.reason).toBe(`Bank is full (${INVENTORY_SLOT_LIMIT} slots).`)
+    expect(blocked.reason).toBe(`Bank is full (${BANK_SLOT_LIMIT} slots).`)
+
+    const almostFull = {
+      ...createNewSave(launch),
+      inventory: [{ itemId: 'ITEM-0002', quantity: 1 }],
+      bank: Array.from({ length: BANK_SLOT_LIMIT - 1 }, (_, index) => ({
+        itemId: `ITEM-fake-${index}`,
+        quantity: 1,
+      })),
+    }
+    const accepted = depositToBank(almostFull, 0, 1)
+    expect(accepted.ok).toBe(true)
+    if (!accepted.ok) return
+    expect(accepted.save.bank).toHaveLength(BANK_SLOT_LIMIT)
+    expect(INVENTORY_SLOT_LIMIT).toBe(84)
   })
 })

@@ -64,7 +64,7 @@ void main() {
 
     final full = withGift.copyWith(
       inventory: [
-        for (var index = 0; index < 180; index += 1)
+        for (var index = 0; index < inventorySlotLimit; index += 1)
           InventoryStack(itemId: 'FILL-$index', quantity: 1),
       ],
     );

@@ -3,7 +3,10 @@ import type { PlayerSave } from '../save/types'
 import { isGoldCurrencyItem } from './gold'
 
 /** Bag slot cap (each stack or enchanted item uses one slot). */
-export const INVENTORY_SLOT_LIMIT = 180
+export const INVENTORY_SLOT_LIMIT = 84
+
+/** Bank slot cap (each stack or enchanted item uses one slot). */
+export const BANK_SLOT_LIMIT = 168
 
 /** Max quantity on a single non-enchanted stack. */
 export const INVENTORY_STACK_MAX = Number.MAX_SAFE_INTEGER
@@ -12,8 +15,11 @@ export function inventorySlotCount(save: Pick<PlayerSave, 'inventory'>): number 
   return save.inventory.length
 }
 
-export function inventorySlotsFree(save: Pick<PlayerSave, 'inventory'>): number {
-  return Math.max(0, INVENTORY_SLOT_LIMIT - inventorySlotCount(save))
+export function inventorySlotsFree(
+  save: Pick<PlayerSave, 'inventory'>,
+  slotLimit: number = INVENTORY_SLOT_LIMIT,
+): number {
+  return Math.max(0, slotLimit - inventorySlotCount(save))
 }
 
 function isUnenchantedMatch(
@@ -50,19 +56,20 @@ export function maxAddableQuantity(
   enchantmentId: string | null = null,
   _favorite = false,
   db?: GameDatabase,
+  slotLimit: number = INVENTORY_SLOT_LIMIT,
 ): number {
   if (isGoldCurrencyItem(itemId, db) && !enchantmentId) {
     return INVENTORY_STACK_MAX
   }
   if (enchantmentId) {
-    return inventorySlotsFree(save)
+    return inventorySlotsFree(save, slotLimit)
   }
 
   const existingIndex = mergeableStackIndex(save.inventory, itemId)
   const existing = existingIndex >= 0 ? save.inventory[existingIndex] : undefined
   const stackRoom = existing
     ? Math.max(0, INVENTORY_STACK_MAX - existing.quantity)
-    : inventorySlotsFree(save) > 0
+    : inventorySlotsFree(save, slotLimit) > 0
       ? INVENTORY_STACK_MAX
       : 0
   return stackRoom
@@ -75,8 +82,9 @@ export function canFitItemQuantity(
   enchantmentId: string | null = null,
   favorite = false,
   db?: GameDatabase,
+  slotLimit: number = INVENTORY_SLOT_LIMIT,
 ): boolean {
   const want = Math.floor(quantity)
   if (want <= 0) return true
-  return maxAddableQuantity(save, itemId, enchantmentId, favorite, db) >= want
+  return maxAddableQuantity(save, itemId, enchantmentId, favorite, db, slotLimit) >= want
 }

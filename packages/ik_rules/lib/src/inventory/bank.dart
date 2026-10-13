@@ -13,7 +13,8 @@ bool locationHasBank(LocationRow? location) => locationLooksLikeBank(location);
 
 List<InventoryStack> bankStacks(PlayerSave save) => save.bank;
 
-int bankSlotsFree(PlayerSave save) => inventorySlotsFree(save.copyWith(inventory: save.bank));
+int bankSlotsFree(PlayerSave save) =>
+    inventorySlotsFree(save.copyWith(inventory: save.bank), bankSlotLimit);
 
 /// Gold currency cannot be deposited; enchanted gold stacks still take a slot.
 bool stackIsUnbankableGold(InventoryStack stack) =>
@@ -34,7 +35,15 @@ bool canFitInBank(
   )) {
     return false;
   }
-  return canFitItemQuantity(_withBankAsBag(save), itemId, quantity, enchantmentId, favorite);
+  return canFitItemQuantity(
+    _withBankAsBag(save),
+    itemId,
+    quantity,
+    enchantmentId,
+    favorite,
+    null,
+    bankSlotLimit,
+  );
 }
 
 PlayerSave _withBankAsBag(PlayerSave save) => save.copyWith(inventory: save.bank);
@@ -102,7 +111,16 @@ BankMoveResult _moveStack({
   final target = toBank
       ? _withBankAsBag(save.copyWith(inventory: taken.stacks))
       : save.copyWith(bank: taken.stacks);
-  if (!canFitItemQuantity(target, piece.itemId, piece.quantity, piece.enchantmentId, favorite)) {
+  final slotLimit = toBank ? bankSlotLimit : inventorySlotLimit;
+  if (!canFitItemQuantity(
+    target,
+    piece.itemId,
+    piece.quantity,
+    piece.enchantmentId,
+    favorite,
+    null,
+    slotLimit,
+  )) {
     return BankMoveResult.failed(fullMessage);
   }
   if (toBank) {
@@ -112,6 +130,8 @@ BankMoveResult _moveStack({
       piece.quantity,
       piece.enchantmentId,
       favorite,
+      null,
+      bankSlotLimit,
     );
     if (!added.ok) return BankMoveResult.failed(added.reason ?? fullMessage);
     return BankMoveResult.ok(_restoreBag(save.copyWith(inventory: taken.stacks), added.save!));
@@ -135,7 +155,7 @@ BankMoveResult depositToBank(PlayerSave save, int inventoryIndex, num quantity) 
     toBank: true,
     index: inventoryIndex,
     quantity: quantity,
-    fullMessage: 'Bank is full ($inventorySlotLimit slots).',
+    fullMessage: 'Bank is full ($bankSlotLimit slots).',
   );
 }
 

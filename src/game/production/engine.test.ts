@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { addItemToInventory } from '../activity/rewards'
+import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import {
@@ -197,7 +198,7 @@ describe('standard production', () => {
 
     const filled = {
       ...queued.save,
-      inventory: Array.from({ length: 180 }, (_, index) => ({
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
         itemId: `FILL-${index}`,
         quantity: 1,
       })),
@@ -206,7 +207,10 @@ describe('standard production', () => {
     expect(blocked).toBeNull()
     expect(filled.productionQuantityRemaining).toBe(2)
 
-    const roomToRefund = { ...filled, inventory: filled.inventory.slice(0, 179) }
+    const roomToRefund = {
+      ...filled,
+      inventory: filled.inventory.slice(0, INVENTORY_SLOT_LIMIT - 1),
+    }
     const cancelled = cancelProductionActivity(launch, roomToRefund)
     expect(cancelled.inventory.find((stack) => stack.itemId === 'ITEM-0025')?.quantity).toBe(2)
 

@@ -9,6 +9,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import {
+  BANK_SLOT_LIMIT,
   INVENTORY_SLOT_LIMIT,
   INVENTORY_STACK_MAX,
   canFitItemQuantity,
@@ -21,8 +22,9 @@ const rawDatabase = JSON.parse(
 )
 
 describe('inventory capacity', () => {
-  it('caps the bag at 180 slots and stacks to MAX_SAFE_INTEGER', () => {
-    expect(INVENTORY_SLOT_LIMIT).toBe(180)
+  it('caps the bag at 84 slots and stacks to MAX_SAFE_INTEGER', () => {
+    expect(INVENTORY_SLOT_LIMIT).toBe(84)
+    expect(BANK_SLOT_LIMIT).toBe(168)
     expect(INVENTORY_STACK_MAX).toBe(Number.MAX_SAFE_INTEGER)
 
     const { launch } = prepareDatabase(rawDatabase)
@@ -32,13 +34,13 @@ describe('inventory capacity', () => {
     for (let i = 0; i < INVENTORY_SLOT_LIMIT; i += 1) {
       save = addItemToInventory(save, `ITEM-fake-${i}`, 1)
     }
-    expect(save.inventory).toHaveLength(180)
+    expect(save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
     expect(inventorySlotsFree(save)).toBe(0)
     expect(maxAddableQuantity(save, 'ITEM-fake-new')).toBe(0)
 
     const blocked = addItemsToInventory(save, 'ITEM-fake-new', 5)
     expect(blocked.added).toBe(0)
-    expect(blocked.save.inventory).toHaveLength(180)
+    expect(blocked.save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
   })
 
   it('stops stacking before integer overflow', () => {

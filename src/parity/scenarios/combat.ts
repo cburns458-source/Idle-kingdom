@@ -14,7 +14,7 @@ import { mulberry32 } from '../../game/rng/mulberry32'
 import type { PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
-import { asJson, baseSave, combatSave, gearedSave } from './saveFixtures'
+import { asJson, baseSave, combatSave, fullBagSave, gearedSave } from './saveFixtures'
 
 type SaveKind = 'base' | 'combat' | 'geared'
 
@@ -125,11 +125,46 @@ export const combatScenarios: ParityScenario[] = [
         xpGained: result.xpGained,
         goldGained: result.goldGained,
         loot: result.loot,
+        ...(result.leftBehind?.length ? { leftBehind: result.leftBehind } : {}),
         foodConsumed: result.foodConsumed,
         foodHealed: result.foodHealed,
         foodName: result.foodName,
       } as unknown as JsonValue
     }),
+  ),
+
+  scenario(
+    'combat/victory',
+    'full-bag-left-behind',
+    {
+      source: 'content',
+      save: asJson(fullBagSave(contentDatabase(), ['ITEM-0100'])),
+      seed: SEED,
+      nowMs: NOW_MS,
+    },
+    () => {
+      const db = contentDatabase()
+      const action = db.Actions.find((row) => row['Action ID'] === 'ACN-0003')!
+      const enemy = getEnemy(db, 'ENM-0003')!
+      const result = applyCombatVictory(
+        db,
+        fullBagSave(db, ['ITEM-0100']),
+        action,
+        enemy,
+        mulberry32(SEED),
+        NOW_MS,
+      )
+      return {
+        save: asJson(result.save),
+        xpGained: result.xpGained,
+        goldGained: result.goldGained,
+        loot: result.loot,
+        ...(result.leftBehind?.length ? { leftBehind: result.leftBehind } : {}),
+        foodConsumed: result.foodConsumed,
+        foodHealed: result.foodHealed,
+        foodName: result.foodName,
+      } as unknown as JsonValue
+    },
   ),
 
   ...(['base', 'combat', 'geared'] as const).map((kind) =>

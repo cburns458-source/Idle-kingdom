@@ -13,7 +13,7 @@ import {
   ALCHEMY_SKILL_ID,
 } from '../equipment/specialist'
 import { equippedSuccessChanceBonusPercent } from '../equipment/loadout'
-import { canFitItemQuantity, maxAddableQuantity } from '../inventory/capacity'
+import { canFitItemQuantity, INVENTORY_SLOT_LIMIT, maxAddableQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
 import type { RecipeRow } from '../data/recipeTypes'
 import {
@@ -139,7 +139,7 @@ export function beginProductionQueue(
   if (!canFitItemQuantity(withMaterials, recipe['Output Item ID'], outputTotal)) {
     return {
       ok: false,
-      reason: 'Not enough inventory space for that queue (180 slots, stacks to max).',
+      reason: `Not enough inventory space for that queue (${INVENTORY_SLOT_LIMIT} slots, stacks to max).`,
     }
   }
 

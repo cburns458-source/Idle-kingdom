@@ -7,6 +7,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { beginProductionQueue } from '../production/engine'
 import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
+import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { advanceSession } from './tick'
 import { actionProgressAt } from './progress'
 
@@ -240,7 +241,7 @@ describe('session tick', () => {
     expect(queued.ok).toBe(true)
     const save = {
       ...(queued as { ok: true; save: PlayerSave }).save,
-      inventory: Array.from({ length: 180 }, (_, index) => ({
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
         itemId: `FILL-${index}`,
         quantity: 1,
       })),

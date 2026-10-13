@@ -7,7 +7,7 @@
 // server will do with a save is easier to trust than a port of the lot.
 //
 // What has to agree with the client, and does:
-//   * 180 stacks in a bag, each stack one item id
+//   * 84 stacks in a bag, each stack one item id
 //   * enchanted items never merge and are never fungible
 //   * gold is a number on the save, not a stack
 //   * a cloud save is refused above a billion gold
@@ -27,7 +27,8 @@ export type SavePayload = Record<string, unknown> & {
   updatedAt?: unknown
 }
 
-export const INVENTORY_SLOT_LIMIT = 180
+export const INVENTORY_SLOT_LIMIT = 84
+export const BANK_SLOT_LIMIT = 168
 export const STACK_MAX = 9007199254740991
 export const GOLD_CAP = 1000000000
 export const GOLD_ITEM_ID = 'ITEM-0001'

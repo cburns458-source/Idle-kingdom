@@ -13,6 +13,7 @@ import {
   BOUND_ITEM_REFUSAL,
   GOLD_CAP,
   GOLD_ITEM_ID,
+  BANK_SLOT_LIMIT,
   INVENTORY_SLOT_LIMIT,
   UNTRADABLE_ITEM_REFUSAL,
   giveGold,
@@ -238,6 +239,11 @@ describe('putting items back from the box', () => {
       { itemId: 'ITEM-0100', quantity: 1, enchantmentId: 'ENC-0001' },
       { itemId: 'ITEM-0100', quantity: 3 },
     ])
+  })
+
+  it('uses the bag slot cap of 84', () => {
+    expect(INVENTORY_SLOT_LIMIT).toBe(84)
+    expect(BANK_SLOT_LIMIT).toBe(168)
   })
 
   it('refuses a new stack when the bag is out of slots', () => {

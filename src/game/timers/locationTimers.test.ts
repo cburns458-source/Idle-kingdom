@@ -41,6 +41,7 @@ import {
   timerSpotKey,
 } from './locationTimers'
 import { getSkillProgress } from '../activity/xp'
+import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -531,7 +532,7 @@ describe('locationTimers', () => {
     const planted = {
       ...createNewSave(launch),
       currentLocationId: 'LOC-0001',
-      inventory: Array.from({ length: 180 }, (_, index) => ({
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
         itemId: `FILL-${index}`,
         quantity: 1,
       })),
@@ -561,7 +562,7 @@ describe('locationTimers', () => {
     if (collected.ok) return
     expect(collected.reason).toBe(TIMER_INVENTORY_FULL_HARVEST_REASON)
     expect(timerAtLocationKind(planted, 'LOC-0001', 'botany')).toBeTruthy()
-    expect(planted.inventory).toHaveLength(180)
+    expect(planted.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
   })
 
   it('asks for room to collect a catch when a pot haul will not fit', () => {
@@ -572,7 +573,7 @@ describe('locationTimers', () => {
       skills: createNewSave(launch).skills.map((row) =>
         row.skillId === 'SKL-0003' ? { ...row, level: 14, xp: 2000 } : row,
       ),
-      inventory: Array.from({ length: 180 }, (_, index) => ({
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
         itemId: `FILL-${index}`,
         quantity: 1,
       })),

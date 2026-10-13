@@ -39,6 +39,7 @@ AddItemsResult addItemsToInventory(
   String? enchantmentId,
   bool favorite = false,
   GameDatabase? db,
+  int slotLimit = inventorySlotLimit,
 ]) {
   final want = quantity.floor();
   if (want <= 0) return AddItemsResult(save: save, added: 0);
@@ -50,7 +51,7 @@ AddItemsResult addItemsToInventory(
     );
   }
 
-  final addable = maxAddableQuantity(save, itemId, enchantmentId, favorite, db);
+  final addable = maxAddableQuantity(save, itemId, enchantmentId, favorite, db, slotLimit);
   final added = math.min(want, addable);
   if (added <= 0) return AddItemsResult(save: save, added: 0);
 
@@ -98,8 +99,9 @@ PlayerSave addItemToInventory(
   String? enchantmentId,
   bool favorite = false,
   GameDatabase? db,
+  int slotLimit = inventorySlotLimit,
 ]) {
-  return addItemsToInventory(save, itemId, quantity, enchantmentId, favorite, db).save;
+  return addItemsToInventory(save, itemId, quantity, enchantmentId, favorite, db, slotLimit).save;
 }
 
 /// Adds the full quantity or leaves the save untouched.
@@ -110,21 +112,24 @@ AddItemsExactResult addItemToInventoryExact(
   String? enchantmentId,
   bool favorite = false,
   GameDatabase? db,
+  int slotLimit = inventorySlotLimit,
 ]) {
   final want = quantity.floor();
   if (want <= 0) return AddItemsExactResult.ok(save);
   if (isGoldCurrencyItem(itemId, db) && isBlank(enchantmentId)) {
-    return AddItemsExactResult.ok(addItemsToInventory(save, itemId, want, null, false, db).save);
+    return AddItemsExactResult.ok(
+      addItemsToInventory(save, itemId, want, null, false, db, slotLimit).save,
+    );
   }
-  if (!canFitItemQuantity(save, itemId, want, enchantmentId, favorite, db)) {
-    if (save.inventory.length >= inventorySlotLimit) {
-      return const AddItemsExactResult.failed('Inventory is full (180 slots).');
+  if (!canFitItemQuantity(save, itemId, want, enchantmentId, favorite, db, slotLimit)) {
+    if (save.inventory.length >= slotLimit) {
+      return AddItemsExactResult.failed('Inventory is full ($slotLimit slots).');
     }
     return const AddItemsExactResult.failed('That stack cannot hold more of this item.');
   }
-  final result = addItemsToInventory(save, itemId, want, enchantmentId, favorite, db);
+  final result = addItemsToInventory(save, itemId, want, enchantmentId, favorite, db, slotLimit);
   if (result.added < want) {
-    return const AddItemsExactResult.failed('Inventory is full (180 slots).');
+    return AddItemsExactResult.failed('Inventory is full ($slotLimit slots).');
   }
   return AddItemsExactResult.ok(result.save);
 }
