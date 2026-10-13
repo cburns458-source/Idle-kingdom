@@ -179,10 +179,7 @@ class _NpcPanelState extends State<NpcPanel> {
       if (result.code == 'no_room') {
         if (!mounted) return;
         setState(() => _error = null);
-        await showDialogueBagFullPopup(
-          context: context,
-          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
-        );
+        await showDialogueBagFullPopup(context: context, noRoom: result.noRoom);
         return;
       }
       setState(() => _error = result.reason);
@@ -270,10 +267,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (!result.ok) {
       if (result.code == 'no_room') {
         setState(() => _error = null);
-        await showDialogueBagFullPopup(
-          context: context,
-          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
-        );
+        await showDialogueBagFullPopup(context: context, noRoom: result.noRoom);
         return;
       }
       setState(() => _error = result.reason);

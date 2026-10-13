@@ -345,6 +345,26 @@ void main() {
     testWidgets('one missing slot reads singular', (tester) async {
       expect(DialogueText.bagFull(1), 'Your bag is full. Make room for 1 more item and try again.');
     });
+
+    testWidgets('stack_full says the stack is full and never names a count', (tester) async {
+      var save = bag(character(), _potato, 1);
+      save = fillBag(save, 1);
+      await open(
+        tester,
+        save,
+        _gifts,
+        request: (view, choiceId, {required useFavourites}) async {
+          return failed(save, 'no_room', noRoom: const DialogueNoRoom(reason: 'stack_full'));
+        },
+      );
+
+      await tester.tap(find.text('DCH-9025 label'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(DialogueText.stackFull), findsOne);
+      expect(find.textContaining('Make room'), findsNothing);
+      expect(find.textContaining('cannot hold'), findsNothing);
+    });
   });
 
   group('favourites', () {

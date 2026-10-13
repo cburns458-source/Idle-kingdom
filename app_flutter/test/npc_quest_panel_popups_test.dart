@@ -112,6 +112,25 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('Your bag is full'), findsNothing);
     });
+
+    testWidgets('stack_full says the stack is full and never names a count', (tester) async {
+      final seed = roseReady();
+      await openTurnIn(
+        tester,
+        seed,
+        turnInRequest: ({required questId, required useFavourites}) async {
+          return failed('no_room', noRoom: const NoRoom(reason: 'stack_full'));
+        },
+      );
+
+      await tester.tap(find.text('Turn in'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(DialogueText.stackFull), findsOne);
+      expect(find.textContaining('Make room'), findsNothing);
+      expect(find.textContaining('cannot hold'), findsNothing);
+      expect(find.textContaining('placeholder'), findsNothing);
+    });
   });
 
   group('favourites', () {

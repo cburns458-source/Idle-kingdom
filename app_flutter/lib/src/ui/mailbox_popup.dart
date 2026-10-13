@@ -38,10 +38,7 @@ class _MailboxPopupState extends State<_MailboxPopup> {
     if (!mounted) return;
     if (!result.ok) {
       if (result.code == 'no_room') {
-        await showDialogueBagFullPopup(
-          context: context,
-          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
-        );
+        await showDialogueBagFullPopup(context: context, noRoom: result.noRoom);
         return;
       }
       setState(() => _notice = result.reason);

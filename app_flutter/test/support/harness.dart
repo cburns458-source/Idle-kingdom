@@ -60,8 +60,26 @@ PlayerSave startedCharacter(LoadedDatabase database) {
   return assigned.save!.copyWith(hasSeenFennelIntro: true);
 }
 
+/// Test [GameController] that counts mailbox claims without touching production.
+class TestGameController extends GameController {
+  TestGameController({
+    required super.database,
+    required super.session,
+    super.questLogSort,
+    super.bagOverflow,
+  });
+
+  int mailboxClaimCalls = 0;
+
+  @override
+  MailClaimResult claimMailboxMessage(String messageId) {
+    mailboxClaimCalls += 1;
+    return super.claimMailboxMessage(messageId);
+  }
+}
+
 /// A booted controller over an in-memory save slot and a clock the test drives.
-GameController buildController(
+TestGameController buildController(
   LoadedDatabase database, {
   PlayerSave? seed,
   TestClock? clock,
@@ -79,7 +97,7 @@ GameController buildController(
     random: () => 0,
   );
   final boot = session.boot();
-  return GameController(
+  return TestGameController(
     database: database,
     session: session,
     questLogSort: questLogSort,

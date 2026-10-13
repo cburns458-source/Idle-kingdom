@@ -1,13 +1,26 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
-import 'dialogue_window.dart';
+import 'dialogue_text.dart';
+import 'game_popup.dart';
 import 'floating_slot.dart';
 import 'format.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
+
+/// Player-facing `no_room` copy for this chest. Stack-full shares the bag line.
+String bankNoRoomMessage(NoRoom? noRoom, {int? slotsNeeded}) {
+  if (noRoom?.reason == 'stack_full') return DialogueText.stackFull;
+  final n = math.max(1, slotsNeeded ?? noRoom?.slotsNeeded ?? 1);
+  if (noRoom?.target == 'bank') {
+    return 'Your bank is full. Make room for $n more item${n == 1 ? '' : 's'} and try again.';
+  }
+  return DialogueText.bagFull(n);
+}
 
 /// Town and Citadel vault: stored stacks on the left, bag on the right.
 class BankPanel extends StatefulWidget {
@@ -129,6 +142,11 @@ class _BankPanelState extends State<BankPanel> {
     if (quantity == null || !mounted) return;
     final result = depositToBank(save, index, quantity);
     if (!result.ok) {
+      if (result.code == 'no_room') {
+        setState(() => _error = null);
+        await showGameAlert(context: context, message: bankNoRoomMessage(result.noRoom));
+        return;
+      }
       setState(() => _error = result.reason);
       return;
     }
@@ -166,10 +184,7 @@ class _BankPanelState extends State<BankPanel> {
     if (!result.ok) {
       if (result.code == 'no_room') {
         setState(() => _error = null);
-        await showDialogueBagFullPopup(
-          context: context,
-          slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
-        );
+        await showGameAlert(context: context, message: bankNoRoomMessage(result.noRoom));
         return;
       }
       setState(() => _error = result.reason);

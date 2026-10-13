@@ -76,33 +76,139 @@ void main() {
 
   test('a new account does not inherit another save\'s bag-overflow badge', () {
     final storage = MemorySaveStorage();
-    final testerPref = BagOverflowPref.load(storage, identity: 'Tester');
+    final testerSave = startedCharacter(database);
+    final testerPref = BagOverflowPref.load(storage, identity: testerSave.createdAt);
     testerPref.setHasBadge(true);
-    expect(storage.getItem(BagOverflowPref.storageKeyFor('Tester')), '1');
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(testerSave.createdAt)), '1');
 
+    final otherSave = testerSave.copyWith(
+      characterName: 'Other',
+      createdAt: '2026-02-01T00:00:00.000Z',
+    );
     final other = buildController(
       database,
-      seed: startedCharacter(database).copyWith(characterName: 'Other'),
+      seed: otherSave,
       bagOverflow: BagOverflowPref.load(storage),
     );
     addTearDown(other.dispose);
     expect(other.hasBagOverflowBadge, isFalse);
-    expect(other.bagOverflow.identity, 'Other');
-    expect(storage.getItem(BagOverflowPref.storageKeyFor('Tester')), '1');
+    expect(other.bagOverflow.identity, otherSave.createdAt);
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(testerSave.createdAt)), '1');
     expect(storage.getItem(other.bagOverflow.storageKey), isNot('1'));
 
     final stillTester = buildController(
       database,
-      seed: startedCharacter(database),
+      seed: testerSave,
       bagOverflow: BagOverflowPref.load(storage),
     );
     addTearDown(stillTester.dispose);
     expect(stillTester.hasBagOverflowBadge, isTrue);
+    expect(stillTester.bagOverflow.identity, testerSave.createdAt);
+  });
 
-    stillTester.resetUnsigned();
-    expect(stillTester.hasBagOverflowBadge, isFalse);
-    expect(storage.getItem(BagOverflowPref.storageKeyFor('Tester')), '0');
-    expect(stillTester.bagOverflow.identity, BagOverflowPref.unsignedIdentity);
+  test('the bag-overflow badge migrates from a name-keyed pref', () {
+    final storage = MemorySaveStorage();
+    final save = startedCharacter(database);
+    storage.setItem(BagOverflowPref.storageKeyFor(save.characterName), '1');
+
+    final controller = buildController(
+      database,
+      seed: save,
+      bagOverflow: BagOverflowPref.load(storage),
+    );
+    addTearDown(controller.dispose);
+
+    expect(controller.hasBagOverflowBadge, isTrue);
+    expect(controller.bagOverflow.identity, save.createdAt);
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(save.createdAt)), '1');
+  });
+
+  test('the bag-overflow badge survives a rename', () {
+    final storage = MemorySaveStorage();
+    final save = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: save,
+      bagOverflow: BagOverflowPref.load(storage),
+    );
+    addTearDown(controller.dispose);
+    controller.noteLeftBehind(const [LootGrant(itemId: clayId, quantity: 1, displayName: 'Clay')]);
+    expect(controller.hasBagOverflowBadge, isTrue);
+
+    controller.commit(controller.save.copyWith(characterName: 'Renamed'));
+    expect(controller.save.characterName, 'Renamed');
+    expect(controller.hasBagOverflowBadge, isTrue);
+    expect(controller.bagOverflow.identity, save.createdAt);
+
+    final restored = buildController(
+      database,
+      seed: controller.save,
+      bagOverflow: BagOverflowPref.load(storage, identity: controller.save.createdAt),
+    );
+    addTearDown(restored.dispose);
+    expect(restored.hasBagOverflowBadge, isTrue);
+    expect(restored.bagOverflow.identity, save.createdAt);
+  });
+
+  test('the bag-overflow badge survives sign-out', () {
+    final storage = MemorySaveStorage();
+    final clock = TestClock();
+    final save = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: save,
+      clock: clock,
+      bagOverflow: BagOverflowPref.load(storage),
+    );
+    addTearDown(controller.dispose);
+    controller.noteLeftBehind(const [LootGrant(itemId: clayId, quantity: 1, displayName: 'Clay')]);
+    final saveKey = controller.bagOverflow.storageKey;
+    expect(storage.getItem(saveKey), '1');
+
+    clock.advance(60 * 1000);
+    controller.resetUnsigned();
+    expect(storage.getItem(saveKey), '1');
+    expect(controller.hasBagOverflowBadge, isFalse);
+    expect(controller.bagOverflow.identity, isNot(save.createdAt));
+
+    controller.adoptAccountSave(save);
+    expect(controller.hasBagOverflowBadge, isTrue);
+    expect(controller.bagOverflow.identity, save.createdAt);
+  });
+
+  test('no_room copy covers stack_full, bank-full, and bag-full', () {
+    expect(DialogueText.noRoomPopup(const NoRoom(reason: 'stack_full')), DialogueText.stackFull);
+    expect(DialogueText.stackFull, 'That stack is full.');
+    expect(DialogueText.stackFull, isNot(contains('cannot hold')));
+    expect(DialogueText.stackFull.contains(RegExp(r'\d')), isFalse);
+    expect(
+      bankNoRoomMessage(const NoRoom(target: 'bank', slotsNeeded: 1, slotsFree: 0)),
+      'Your bank is full. Make room for 1 more item and try again.',
+    );
+    expect(
+      bankNoRoomMessage(const NoRoom(target: 'bank', slotsNeeded: 3, slotsFree: 0)),
+      'Your bank is full. Make room for 3 more items and try again.',
+    );
+    expect(DialogueText.bagFull(1), 'Your bag is full. Make room for 1 more item and try again.');
+    expect(
+      DialogueText.noRoomPopup(const NoRoom(slotsNeeded: 2, slotsFree: 0)),
+      'Your bag is full. Make room for 2 more items and try again.',
+    );
+    expect(
+      DialogueText(database.launch).failure(
+        DialogueResult(
+          ok: false,
+          reason: 'That stack cannot hold more of this item.',
+          code: 'no_room',
+          save: startedCharacter(database),
+          view: null,
+          completed: false,
+          message: null,
+          noRoom: const NoRoom(reason: 'stack_full'),
+        ),
+      ),
+      DialogueText.stackFull,
+    );
   });
 
   testWidgets('the bag labels used / 84 from inventorySlotLimit', (tester) async {
@@ -216,6 +322,60 @@ void main() {
     expect(bagBadgeBubble(), findsNothing);
     expect(storage.getItem(controller.bagOverflow.storageKey), '0');
     expect(controller.hasBagOverflowBadge, isFalse);
+  });
+
+  testWidgets('the bag badge stays after a rename', (tester) async {
+    final storage = MemorySaveStorage();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database),
+      bagOverflow: BagOverflowPref.load(storage),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpShell(tester, controller, size: const Size(390, 844));
+    controller.noteLeftBehind(const [LootGrant(itemId: clayId, quantity: 1, displayName: 'Clay')]);
+    await pumpPopup(tester);
+    expect(bagBadgeBubble(), findsOne);
+
+    await tester.tap(find.text('OK'));
+    await pumpPopup(tester);
+    controller.commit(controller.save.copyWith(characterName: 'Renamed'));
+    await tester.pump();
+
+    expect(controller.save.characterName, 'Renamed');
+    expect(bagBadgeBubble(), findsOne);
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(controller.save.createdAt)), '1');
+  });
+
+  testWidgets('the bag badge stays after sign-out and sign-in', (tester) async {
+    final storage = MemorySaveStorage();
+    final clock = TestClock();
+    final save = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: save,
+      clock: clock,
+      bagOverflow: BagOverflowPref.load(storage),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpShell(tester, controller, size: const Size(390, 844));
+    controller.noteLeftBehind(const [LootGrant(itemId: clayId, quantity: 1, displayName: 'Clay')]);
+    await pumpPopup(tester);
+    await tester.tap(find.text('OK'));
+    await pumpPopup(tester);
+    expect(bagBadgeBubble(), findsOne);
+
+    clock.advance(60 * 1000);
+    controller.resetUnsigned();
+    await tester.pump();
+    expect(bagBadgeBubble(), findsNothing);
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(save.createdAt)), '1');
+
+    controller.adoptAccountSave(save);
+    await tester.pump();
+    expect(bagBadgeBubble(), findsOne);
   });
 
   testWidgets('offline catch-up shows one merged left-behind popup', (tester) async {
@@ -494,6 +654,153 @@ void main() {
     expect(jsonEncode(controller.save.toJson()), before);
     expect(controller.save.dialogueFlags, isNot(contains('gift:QST-0011:seed')));
     expect(controller.save.inventory.any((stack) => stack.itemId == 'ITEM-0324'), isFalse);
+  });
+
+  testWidgets('shop buy stack_full says the stack is full and never names a count', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: shopLocationId,
+        gold: 1000,
+        inventory: [
+          const InventoryStack(itemId: 'ITEM-0100', quantity: inventoryStackMax, favorite: true),
+          const InventoryStack(itemId: clayId, quantity: 1),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add to offer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm trade'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(DialogueText.stackFull), findsOne);
+    expect(find.textContaining('Make room'), findsNothing);
+    expect(find.textContaining('cannot hold'), findsNothing);
+    expect(controller.save.gold, 1000);
+    expect(
+      controller.save.inventory.where((stack) => stack.itemId == 'ITEM-0100').single.quantity,
+      inventoryStackMax,
+    );
+  });
+
+  testWidgets('bank withdraw stack_full says the stack is full', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        inventory: const [InventoryStack(itemId: clayId, quantity: inventoryStackMax)],
+        bank: const [InventoryStack(itemId: clayId, quantity: 2)],
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, BankPanel(controller: controller));
+    await tester.tap(find.byKey(const ValueKey('bank-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Max'));
+    await tester.pump();
+    await tester.tap(find.text('Withdraw'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(DialogueText.stackFull), findsOne);
+    expect(find.textContaining('Make room'), findsNothing);
+    expect(controller.save.bank.single.quantity, 2);
+    expect(controller.save.inventory.single.quantity, inventoryStackMax);
+  });
+
+  testWidgets('bank deposit no_room with target bank shows the bank-full popup', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        inventory: const [InventoryStack(itemId: clayId, quantity: 1)],
+        bank: [
+          for (var index = 0; index < bankSlotLimit; index++)
+            InventoryStack(itemId: 'BANK-$index', quantity: 1),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, BankPanel(controller: controller));
+    await tester.tap(find.byKey(const ValueKey('bag-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Max'));
+    await tester.pump();
+    await tester.tap(find.text('Deposit'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(bankNoRoomMessage(const NoRoom(target: 'bank', slotsNeeded: 1))), findsOne);
+    expect(controller.save.inventory.single.itemId, clayId);
+    expect(controller.save.bank, hasLength(bankSlotLimit));
+  });
+
+  testWidgets('enchanted withdraw into a full bag shows the make-room popup', (tester) async {
+    const copperAxe = 'ITEM-0132';
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        inventory: [
+          const InventoryStack(itemId: copperAxe, quantity: 1),
+          for (var index = 0; index < inventorySlotLimit - 1; index++)
+            InventoryStack(itemId: 'FILL-$index', quantity: 1),
+        ],
+        bank: const [InventoryStack(itemId: copperAxe, quantity: 1, enchantmentId: 'ENCH-0001')],
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, BankPanel(controller: controller));
+    await tester.tap(find.byKey(const ValueKey('bank-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Max'));
+    await tester.pump();
+    await tester.tap(find.text('Withdraw'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(DialogueText.bagFull(1)), findsOne);
+    expect(find.text(DialogueText.stackFull), findsNothing);
+    expect(controller.save.bank.single.enchantmentId, 'ENCH-0001');
+    expect(controller.save.inventory, hasLength(inventorySlotLimit));
+  });
+
+  testWidgets('mail claim stack_full says the stack is full', (tester) async {
+    final gift = MailMessage(
+      id: 'mail-stack',
+      catalogId: null,
+      subject: 'More clay',
+      body: 'Try this.',
+      sentAt: isoFromMs(testStartMs),
+      readAt: null,
+      attachments: const [MailAttachment(itemId: clayId, quantity: 1)],
+      claimedAt: null,
+    );
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        inventory: const [InventoryStack(itemId: clayId, quantity: inventoryStackMax)],
+        mailbox: [gift],
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpShell(tester, controller, size: const Size(900, 1600));
+    await tester.tap(find.byKey(const Key('mailbox-button')));
+    await pumpPopup(tester);
+    await tester.tap(find.byKey(const Key('mailbox-row-mail-stack')));
+    await tester.pump();
+    await tester.tap(find.text('Claim'));
+    await pumpPopup(tester);
+
+    expect(find.text(DialogueText.stackFull), findsOne);
+    expect(controller.mailboxClaimCalls, 1);
+    expect(
+      controller.save.mailbox.where((message) => message.id == 'mail-stack').single.claimedAt,
+      isNull,
+    );
   });
 
   testWidgets('Beggar bribe no_room takes no gold and sets no flag', (tester) async {

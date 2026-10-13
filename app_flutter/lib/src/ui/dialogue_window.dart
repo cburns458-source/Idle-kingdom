@@ -89,12 +89,16 @@ class DialogueWindow extends StatelessWidget {
   }
 }
 
-/// Full-bag popup. [slotsNeeded] is new slots only; only the bag counts.
+/// Bag `no_room` popup. [noRoom] picks a full stack or the make-room line.
 Future<void> showDialogueBagFullPopup({
   required BuildContext context,
-  required int slotsNeeded,
+  NoRoom? noRoom,
+  int? slotsNeeded,
 }) async {
-  await showGameAlert(context: context, message: DialogueText.bagFull(slotsNeeded));
+  await showGameAlert(
+    context: context,
+    message: DialogueText.noRoomPopup(noRoom, slotsNeeded: slotsNeeded),
+  );
 }
 
 /// Yes/No prompt listing every favourited stack the engine returned.
@@ -255,10 +259,7 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
     }
     if (result.code == 'no_room') {
       setState(() => _error = null);
-      await showDialogueBagFullPopup(
-        context: context,
-        slotsNeeded: result.noRoom?.slotsNeeded ?? 1,
-      );
+      await showDialogueBagFullPopup(context: context, noRoom: result.noRoom);
       return;
     }
     setState(() => _error = _text.failure(result));

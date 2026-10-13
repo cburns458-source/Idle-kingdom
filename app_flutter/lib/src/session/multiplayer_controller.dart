@@ -1913,14 +1913,25 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
-  Future<void> collectMarketBox(PlayerSave save, void Function(PlayerSave save) onSaved) {
-    return run(() async {
+  Future<MarketActionResult?> collectMarketBox(
+    PlayerSave save,
+    void Function(PlayerSave save) onSaved,
+  ) async {
+    MarketActionResult? collected;
+    await run(() async {
       final result = await service.collectBazaarBox(db, save);
+      collected = result;
+      if (result.ok) {
+        if (result.save case final written?) onSaved(written);
+        await refreshMarket();
+      }
+      // The Bazaar screen shows the collection-box popup. Do not surface the
+      // engine's no_room wording as a notice.
+      if (result.code == 'no_room') return null;
       if (!result.ok) return result.reason;
-      if (result.save case final written?) onSaved(written);
-      await refreshMarket();
       return result.message;
     });
+    return collected;
   }
 
   Future<void> leaveGuild(PlayerSave save) {
