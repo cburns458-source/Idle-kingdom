@@ -1873,22 +1873,34 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> placeMarketOffer({
+  Future<MarketActionResult?> placeMarketOffer({
     required BazaarSide side,
     required String itemId,
     required num unitPrice,
     required num quantity,
     required PlayerSave save,
     required void Function(PlayerSave save) onSaved,
-  }) {
-    return run(() async {
+  }) async {
+    MarketActionResult? placed;
+    await run(() async {
+      final levelRefusal = bazaarTotalLevelRefusal(save);
+      if (levelRefusal != null) {
+        placed = const MarketActionResult.failed(
+          bazaarTotalLevelTooLow,
+          code: bazaarTotalLevelTooLowCode,
+        );
+        return null;
+      }
       final refusal = bazaarOfferRefusal(
         side: side,
         unitPrice: unitPrice,
         quantity: quantity,
         slotsFree: _market.slotsFree,
       );
-      if (refusal != null) return refusal;
+      if (refusal != null) {
+        placed = MarketActionResult.failed(refusal);
+        return refusal;
+      }
       final result = await service.placeBazaarOffer(
         db,
         save,
@@ -1897,11 +1909,16 @@ class MultiplayerController extends ChangeNotifier {
         unitPrice: unitPrice,
         quantity: quantity,
       );
-      if (!result.ok) return result.reason;
+      placed = result;
+      if (!result.ok) {
+        if (result.code == bazaarTotalLevelTooLowCode) return null;
+        return result.reason;
+      }
       if (result.save case final written?) onSaved(written);
       await refreshMarket();
       return result.message;
     });
+    return placed;
   }
 
   Future<void> cancelMarketOffer(String orderId) {

@@ -190,6 +190,15 @@ class FakeExchange {
     final stored = _payload(row);
     if (stored == null) return _refused('Play a little and let the game save before trading.');
 
+    final total = bazaarPayloadTotalLevel(stored);
+    if (total < bazaarTotalLevelRequired) {
+      return _refused(bazaarTotalLevelTooLow, <String, Object?>{
+        'code': bazaarTotalLevelTooLowCode,
+        'required': bazaarTotalLevelRequired,
+        'totalLevel': total,
+      });
+    }
+
     if (orders.where((order) => order.userId == userId && order.isOpen).length >=
         bazaarOfferSlots) {
       return _refused(bazaarNoSlots);

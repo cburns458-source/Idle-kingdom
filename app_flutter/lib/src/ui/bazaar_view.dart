@@ -111,7 +111,8 @@ class _BazaarViewState extends State<BazaarView> {
     return baseSellValue(_item(itemId))?.floor().clamp(1, bazaarOfferValueCap) ?? 1;
   }
 
-  void _pick(BazaarSide side) {
+  Future<void> _pick(BazaarSide side) async {
+    if (await _blockIfBelowBazaarLevel()) return;
     setState(() {
       _route = _PickRoute(side);
       _group = null;
@@ -132,6 +133,12 @@ class _BazaarViewState extends State<BazaarView> {
 
   Future<void> _refuseBoundListing() async {
     await showGameAlert(context: context, message: bazaarBoundItem);
+  }
+
+  Future<bool> _blockIfBelowBazaarLevel() async {
+    if (bazaarTotalLevelRefusal(save) == null) return false;
+    await showGameAlert(context: context, message: bazaarTotalLevelTooLow);
+    return true;
   }
 
   /// Closes one step: the picker or the compose page first, the screen last.
@@ -157,7 +164,8 @@ class _BazaarViewState extends State<BazaarView> {
   }
 
   Future<void> _place(BazaarSide side, String itemId) async {
-    await net.placeMarketOffer(
+    if (await _blockIfBelowBazaarLevel()) return;
+    final result = await net.placeMarketOffer(
       side: side,
       itemId: itemId,
       unitPrice: _price,
@@ -165,6 +173,10 @@ class _BazaarViewState extends State<BazaarView> {
       save: save,
       onSaved: controller.commitLoadout,
     );
+    if (!mounted) return;
+    if (result != null && !result.ok && result.code == bazaarTotalLevelTooLowCode) {
+      await showGameAlert(context: context, message: bazaarTotalLevelTooLow);
+    }
     if (!mounted) return;
     // Placed or refused, the slots are where the answer shows.
     setState(() => _route = null);

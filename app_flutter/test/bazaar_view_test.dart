@@ -44,11 +44,15 @@ void main() {
     WidgetTester tester, {
     List<InventoryStack> bag = const <InventoryStack>[],
     num gold = 0,
+    int totalLevelTarget = 200,
   }) async {
     final project = FakeTransport(startIso: '2025-01-01T00:00:00.000Z', database: database.launch);
     final net = buildRemoteMultiplayer(database, transport: project);
     addTearDown(net.dispose);
-    var save = startedCharacter(database).copyWith(inventory: bag, gold: gold);
+    var save = withTotalLevel(
+      startedCharacter(database).copyWith(inventory: bag, gold: gold),
+      totalLevelTarget,
+    );
     await net.signUp(
       testAccount.email,
       testAccount.username,
@@ -75,8 +79,10 @@ void main() {
       storage: MemorySaveStorage(),
     );
     expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
-    final stocked = startedCharacter(database)
-        .copyWith(inventory: <InventoryStack>[_stack(itemId, quantity)]);
+    final stocked = withTotalLevel(
+      startedCharacter(database).copyWith(inventory: <InventoryStack>[_stack(itemId, quantity)]),
+      200,
+    );
     expect((await seedHostedSave(rival, project, stocked)).ok, isTrue);
     final placed = await rival.placeBazaarOffer(
       database.launch,
@@ -477,7 +483,7 @@ void main() {
       storage: MemorySaveStorage(),
     );
     expect((await rival.signUp('rival@example.com', 'Rival', 'secret')).ok, isTrue);
-    final rich = startedCharacter(database).copyWith(gold: 100000);
+    final rich = withTotalLevel(startedCharacter(database).copyWith(gold: 100000), 200);
     expect((await seedHostedSave(rival, player.project, rich)).ok, isTrue);
     expect(
       (await rival.placeBazaarOffer(
@@ -511,6 +517,75 @@ void main() {
     expect(find.text('Sold Titanium Ore ×10'), findsOne);
     expect(find.text('500 each · 4,950 gold received'), findsOne);
     expect(find.text('Tax 50'), findsOne);
+  });
+
+  testWidgets('shows the exact total-level popup on a buy and does not send a request', (
+    tester,
+  ) async {
+    final player = await hostedPlayer(
+      tester,
+      bag: <InventoryStack>[_stack(_ironOre, 40)],
+      gold: 5000,
+      totalLevelTarget: 199,
+    );
+    expect(totalLevel(player.save), 199);
+    await pumpBazaar(tester, player.net, player.save);
+
+    int bazaarCalls() => player.project.calls.where((call) => call.contains('bazaar')).length;
+    final callsBefore = bazaarCalls();
+    await startOrder(tester, bazaarBuy);
+
+    final popup = find.byType(GamePopupCard);
+    expect(popup, findsOne);
+    expect(
+      find.descendant(
+        of: popup,
+        matching: find.text('You need total level 200 to use the bazaar.'),
+      ),
+      findsOne,
+    );
+    expect(find.descendant(of: popup, matching: find.text(bazaarTotalLevelTooLow)), findsOne);
+    await tester.tap(find.descendant(of: popup, matching: find.widgetWithText(GameButton, 'OK')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(GamePopupCard), findsNothing);
+    expect(find.text('Quantity'), findsNothing);
+    expect(bazaarCalls(), callsBefore);
+    expect(player.project.exchange.orders, isEmpty);
+  });
+
+  testWidgets('shows the exact total-level popup on a sell and does not send a request', (
+    tester,
+  ) async {
+    final player = await hostedPlayer(
+      tester,
+      bag: <InventoryStack>[_stack(_ironOre, 40)],
+      gold: 5000,
+      totalLevelTarget: 199,
+    );
+    await pumpBazaar(tester, player.net, player.save);
+
+    int bazaarCalls() => player.project.calls.where((call) => call.contains('bazaar')).length;
+    final callsBefore = bazaarCalls();
+    await startOrder(tester, bazaarSell);
+
+    final popup = find.byType(GamePopupCard);
+    expect(popup, findsOne);
+    expect(
+      find.descendant(
+        of: popup,
+        matching: find.text('You need total level 200 to use the bazaar.'),
+      ),
+      findsOne,
+    );
+    await tester.tap(find.descendant(of: popup, matching: find.widgetWithText(GameButton, 'OK')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(GamePopupCard), findsNothing);
+    expect(bazaarCalls(), callsBefore);
+    expect(player.project.exchange.orders, isEmpty);
   });
 
   testWidgets('says a taxed sale is taxed and an untaxed one is not', (tester) async {
@@ -655,3 +730,23 @@ void main() {
 }
 
 const String clayId = 'ITEM-0002';
+
+PlayerSave withTotalLevel(PlayerSave save, int target) {
+  if (save.skills.isEmpty) {
+    return save.copyWith(
+      skills: <SkillProgress>[SkillProgress(skillId: 'SKL-0001', level: target, xp: 0)],
+    );
+  }
+  final current = totalLevel(save);
+  final first = save.skills.first;
+  final next = first.level + (target - current);
+  if (next < 1) {
+    return save.copyWith(skills: <SkillProgress>[first.copyWith(level: target)]);
+  }
+  return save.copyWith(
+    skills: <SkillProgress>[
+      first.copyWith(level: next),
+      ...save.skills.skip(1),
+    ],
+  );
+}
