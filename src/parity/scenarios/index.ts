@@ -22,6 +22,7 @@ import { saveScenarios } from './save'
 import { sessionScenarios } from './session'
 import { shopScenarios } from './shops'
 import { supportScenarios } from './support'
+import { timerScenarios } from './timers'
 import { unattendedScenarios } from './unattended'
 import { worldScenarios } from './world'
 
@@ -49,6 +50,7 @@ export const parityScenarios: ParityScenario[] = [
   ...combatScenarios,
   ...activityScenarios,
   ...shopScenarios,
+  ...timerScenarios,
   ...worldScenarios,
   ...metaScenarios,
   ...saveScenarios,

@@ -22,6 +22,8 @@ import {
   rollReturnedBotanySeed,
   TURNIP_SEED_ITEM_ID,
   discoverTimerSpotsForLocation,
+  discoverUnlockedFarmSpot,
+  pruneLockedTimerSpots,
   FISHING_POT_ITEM_ID,
   OLD_BOOTS_ITEM_ID,
   TIMER_INVENTORY_FULL_CATCH_REASON,
@@ -88,6 +90,54 @@ describe('locationTimers', () => {
     expect(save.discoveredTimerSpotIds).toContain('fishing_pot:LOC-0003')
 
     expect(discoverTimerSpotsForLocation(launch, save, 'LOC-9999')).toBe(save)
+  })
+
+  it('discoverUnlockedFarmSpot is a no-op until the farm is unlocked', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const locked = createNewSave(launch)
+    expect(discoverUnlockedFarmSpot(launch, locked)).toBe(locked)
+
+    const unlocked = {
+      ...locked,
+      quests: [{ questId: 'QST-0011', status: 'completed' as const, progress: 1 }],
+    }
+    expect(discoverUnlockedFarmSpot(launch, unlocked).discoveredTimerSpotIds).toEqual(['botany:LOC-0001'])
+  })
+
+  it('pruneLockedTimerSpots drops a locked farm and keeps growing crops and fishing pots', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const growing = {
+      locationId: 'LOC-0001',
+      kind: 'botany' as const,
+      inputItemId: 'ITEM-0324',
+      outputItemId: 'ITEM-0025',
+      outputQuantity: 1,
+      skillId: 'SKL-0014',
+      xpReward: 10,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      durationMs: 60_000,
+    }
+    const locked = {
+      ...createNewSave(launch),
+      discoveredTimerSpotIds: ['botany:LOC-0001', 'botany:LOC-0009', 'fishing_pot:LOC-0003'],
+    }
+    expect(pruneLockedTimerSpots(launch, locked).discoveredTimerSpotIds).toEqual([
+      'botany:LOC-0009',
+      'fishing_pot:LOC-0003',
+    ])
+
+    const unlocked = {
+      ...locked,
+      quests: [{ questId: 'QST-0011', status: 'completed' as const, progress: 1 }],
+    }
+    expect(pruneLockedTimerSpots(launch, unlocked)).toBe(unlocked)
+
+    const growingLocked = { ...locked, locationTimers: [growing] }
+    expect(pruneLockedTimerSpots(launch, growingLocked).discoveredTimerSpotIds).toEqual([
+      'botany:LOC-0001',
+      'botany:LOC-0009',
+      'fishing_pot:LOC-0003',
+    ])
   })
 
   it('records discovery when planting or placing', () => {

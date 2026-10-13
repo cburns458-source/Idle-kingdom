@@ -170,6 +170,43 @@ void main() {
 
     for (final fixture in loadParityFixtures('quests/step-latch')) {
       test(fixture.name, () {
+        if (fixture.name == 'handin-skipped-past') {
+          final db = databaseOf(fixture);
+          final quest = getQuest(db, 'QST-0001')!;
+          final base = saveOf(fixture);
+          PlayerSave withCounters(Map<String, num> counters) => base.copyWith(
+            quests: [
+              ...base.quests.where((row) => row.questId != 'QST-0001'),
+              QuestProgress(
+                questId: 'QST-0001',
+                status: 'active',
+                progress: counters.values.fold<num>(0, (sum, value) => sum + value),
+                counters: counters,
+              ),
+            ],
+          );
+          Map<String, Object?> snapshot(String label, PlayerSave save) => <String, Object?>{
+            'label': label,
+            'currentStep': getCurrentStepId(db, save, quest),
+            'complete': isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002'),
+            'passed': isStepPassed(db, save, 'QST-0001', 'QSTP-0002'),
+            'progress': getQuestProgress(save, 'QST-0001').toJson(),
+          };
+          expect(
+            checkParity(fixture, {
+              'cases': [
+                snapshot(
+                  'partial',
+                  withCounters({'step:QSTP-0001': 1, 'handIn:QSTP-0002:ITEM-0058': 4}),
+                ),
+                snapshot('latched', withCounters({'step:QSTP-0001': 1, 'step:QSTP-0002': 1})),
+                snapshot('talk-only', withCounters({'step:QSTP-0001': 1})),
+              ],
+            }),
+            isNull,
+          );
+          return;
+        }
         final db = databaseOf(fixture);
         final quest = getQuest(db, 'QST-0006')!;
         final stages = <Object?>[];

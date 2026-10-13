@@ -5,11 +5,7 @@ import {
   applyQuestTalkProgress,
   hasQuestFlag,
 } from '../quests/progress'
-import {
-  FARM_LOCATION_ID,
-  discoverTimerSpotsForLocation,
-  farmBotanyUnlocked,
-} from '../timers/locationTimers'
+import { discoverUnlockedFarmSpot } from '../timers/locationTimers'
 import { isMiniquest } from '../quests/miniquests'
 import {
   acceptQuest,
@@ -571,10 +567,7 @@ export function talkWithQuestNpc(
       questTalkLine(db, quest['Quest ID'], npcId, save),
     ]),
   )
-  let next = applyQuestTalkProgress(db, save, npcId)
-  if (farmBotanyUnlocked(db, next)) {
-    next = discoverTimerSpotsForLocation(db, next, FARM_LOCATION_ID)
-  }
+  let next = discoverUnlockedFarmSpot(db, applyQuestTalkProgress(db, save, npcId))
   for (const quest of questsTouchingNpc(db, next, npcId)) {
     const parsed = parseStructuredObjectives(quest)
     if (!parsed.autoCompleteOnTalk) continue

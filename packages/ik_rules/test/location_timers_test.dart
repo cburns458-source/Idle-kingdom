@@ -74,6 +74,49 @@ void main() {
     expect(identical(discoverTimerSpotsForLocation(db, save, 'LOC-9999'), save), isTrue);
   });
 
+  test('discoverUnlockedFarmSpot is a no-op until the farm is unlocked', () {
+    final locked = createNewSave(db, 0);
+    expect(identical(discoverUnlockedFarmSpot(db, locked), locked), isTrue);
+
+    final unlocked = locked.copyWith(
+      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+    );
+    expect(discoverUnlockedFarmSpot(db, unlocked).discoveredTimerSpotIds, ['botany:LOC-0001']);
+  });
+
+  test('pruneLockedTimerSpots drops a locked farm and keeps growing crops and fishing pots', () {
+    const growing = LocationTimer(
+      locationId: 'LOC-0001',
+      kind: 'botany',
+      inputItemId: 'ITEM-0324',
+      outputItemId: 'ITEM-0025',
+      outputQuantity: 1,
+      skillId: 'SKL-0014',
+      xpReward: 10,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      durationMs: 60000,
+    );
+    final locked = createNewSave(db, 0).copyWith(
+      discoveredTimerSpotIds: const ['botany:LOC-0001', 'botany:LOC-0009', 'fishing_pot:LOC-0003'],
+    );
+    expect(pruneLockedTimerSpots(db, locked).discoveredTimerSpotIds, [
+      'botany:LOC-0009',
+      'fishing_pot:LOC-0003',
+    ]);
+
+    final unlocked = locked.copyWith(
+      quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
+    );
+    expect(identical(pruneLockedTimerSpots(db, unlocked), unlocked), isTrue);
+
+    final growingLocked = locked.copyWith(locationTimers: const [growing]);
+    expect(pruneLockedTimerSpots(db, growingLocked).discoveredTimerSpotIds, [
+      'botany:LOC-0001',
+      'botany:LOC-0009',
+      'fishing_pot:LOC-0003',
+    ]);
+  });
+
   test('plant and place discover their spots', () {
     var save = createNewSave(db, 0).copyWith(
       currentLocationId: 'LOC-0001',

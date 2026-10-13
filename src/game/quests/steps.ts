@@ -201,7 +201,13 @@ export function isStepComplete(
   stepId?: string,
 ): boolean {
   if (stepId && isStepLatched(save, questId, stepId)) return true
-  if (stepId && dialogueStepType(getQuestStep(db, questId, stepId))) return isStepPassed(db, save, questId, stepId)
+  if (stepId) {
+    const type = dialogueStepType(getQuestStep(db, questId, stepId))
+    // HandIn counts only with its `step:<id>` latch. Show and Talk can still
+    // be inferred done from a later step (option b).
+    if (type === 'HandIn') return false
+    if (type) return isStepPassed(db, save, questId, stepId)
+  }
   if (isAskAroundSkipped(db, save, questId, notes)) return true
   const lines = stepProgressLines(db, save, questId, notes, stepId)
   if (lines.length === 0) return true
