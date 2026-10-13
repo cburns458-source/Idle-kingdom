@@ -222,9 +222,19 @@ void main() {
             const QuestProgress(questId: 'QST-0006', status: 'active', progress: 0, counters: {}),
           ],
         );
+        PlayerSave showFennel(PlayerSave save, {required bool cooked}) {
+          final shown = cooked
+              ? chooseDialogue(db, save, 'DLG-0005', 'DNODE-0007', 'DCH-0009')
+              : chooseDialogue(db, save, 'DLG-0003', 'DNODE-0004', 'DCH-0005');
+          if (!shown.ok) {
+            throw StateError('Fennel ${cooked ? 'cooked' : 'raw'} show failed: ${shown.reason}');
+          }
+          return shown.save;
+        }
+
         save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0025', 5));
         record('hold', save);
-        save = applyQuestTalkProgress(db, save, 'NPC-0014');
+        save = showFennel(save, cooked: false);
         record('show', save);
         save = applyQuestVisitProgress(db, save, 'LOC-0023');
         for (var cooked = 1; cooked <= 5; cooked++) {
@@ -232,7 +242,7 @@ void main() {
           save = applyQuestProcessProgress(db, save, 'RCP-0001');
           record('cook-$cooked', save);
         }
-        save = applyQuestTalkProgress(db, save, 'NPC-0014');
+        save = showFennel(save, cooked: true);
         record('deliver', save);
         save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0058', 0));
         record('sold', save);
