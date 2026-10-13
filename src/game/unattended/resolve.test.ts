@@ -9,6 +9,7 @@ import { addItemToInventory } from '../activity/rewards'
 import { createNewSave } from '../save/saveStore'
 import type { PlayerSave } from '../save/types'
 import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
+import { mergeLeftBehind } from '../activity/types'
 import { resolveUnattendedProgress, unattendedCapMs } from './resolve'
 
 const rawDatabase = JSON.parse(
@@ -347,6 +348,49 @@ describe('unattended progression', () => {
     ).toBe(true)
   })
 
+  it('returns one merged leftBehind list when the bag fills during gathering catch-up', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, currentLocationId: 'LOC-0009' }
+    const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
+    save = beginActivitySave(save, 'ACT-0012', new Date(startedAt).toISOString())
+    const generated = generateNextAction(launch, save, 'ACT-0012', () => 0, startedAt)
+    save = {
+      ...generated!.save,
+      unattendedProgressAt: new Date(startedAt).toISOString(),
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+    }
+    const resolved = resolveUnattendedProgress(launch, save, startedAt + 180_000, () => 0)
+    expect(resolved.gatheringActions).toBeGreaterThanOrEqual(3)
+    expect(resolved.caughtUp).toBe(true)
+    expect(resolved.leftBehind?.length).toBeGreaterThan(0)
+    const ids = resolved.leftBehind!.map((grant) => grant.itemId)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(resolved.messages).toContain(
+      'Some loot was left behind: your bag filled while you were away.',
+    )
+    expect(resolved.save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
+  })
+
+  it('omits leftBehind when the bag has room', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = { ...save, currentLocationId: 'LOC-0009' }
+    const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
+    save = beginActivitySave(save, 'ACT-0012', new Date(startedAt).toISOString())
+    const generated = generateNextAction(launch, save, 'ACT-0012', () => 0, startedAt)
+    save = {
+      ...generated!.save,
+      unattendedProgressAt: new Date(startedAt).toISOString(),
+    }
+    const resolved = resolveUnattendedProgress(launch, save, startedAt + 180_000, () => 0)
+    expect(resolved.gatheringActions).toBeGreaterThan(0)
+    expect(resolved.leftBehind).toBeUndefined()
+  })
+
   describe('chunked catch-up', () => {
     const startedAt = Date.parse('2026-01-01T00:00:00.000Z')
 
@@ -425,6 +469,32 @@ describe('unattended progression', () => {
       expect(sliced.save.playTimeMs).toBe(24 * 3_600_000)
       expect(sliced.save.unattendedProgressAt).toBe(new Date(now).toISOString())
     }, 120_000)
+
+    it('merges leftBehind across a step-limit resume and counts each item once', () => {
+      const { launch, save: meadow } = meadowSave()
+      const save = {
+        ...meadow,
+        inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
+          itemId: `FILL-${index}`,
+          quantity: 1,
+        })),
+      }
+      const now = startedAt + 180_000
+      const first = resolveUnattendedProgress(launch, save, now, () => 0, { maxStepsOverride: 4 })
+      expect(first.caughtUp).toBe(false)
+      expect(first.gatheringActions).toBeGreaterThan(0)
+      expect(first.leftBehind?.length).toBeGreaterThan(0)
+      const again = resolveUnattendedProgress(launch, first.save, now, () => 0, { maxStepsOverride: 4 })
+      expect(again.gatheringActions).toBeGreaterThan(0)
+      const merged = mergeLeftBehind([...(first.leftBehind ?? []), ...(again.leftBehind ?? [])])
+      const ids = merged.map((grant) => grant.itemId)
+      expect(new Set(ids).size).toBe(ids.length)
+      for (const grant of merged) {
+        const firstQty = first.leftBehind?.find((row) => row.itemId === grant.itemId)?.quantity ?? 0
+        const againQty = again.leftBehind?.find((row) => row.itemId === grant.itemId)?.quantity ?? 0
+        expect(grant.quantity).toBe(firstQty + againQty)
+      }
+    })
 
     it('ignores a window start that no longer contains the save anchor', () => {
       const { launch, save } = meadowSave()

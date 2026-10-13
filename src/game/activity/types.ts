@@ -10,6 +10,21 @@ export interface LootGrant {
   displayName: string
 }
 
+/** One row per itemId, quantities summed, first displayName kept, then sorted. */
+export function mergeLeftBehind(grants: readonly LootGrant[]): LootGrant[] {
+  const byId = new Map<string, LootGrant>()
+  for (const grant of grants) {
+    if (grant.quantity <= 0) continue
+    const existing = byId.get(grant.itemId)
+    if (existing) {
+      existing.quantity += grant.quantity
+    } else {
+      byId.set(grant.itemId, { ...grant })
+    }
+  }
+  return [...byId.values()].sort((left, right) => left.itemId.localeCompare(right.itemId))
+}
+
 export interface BonusXpGrant {
   skillId: string
   xp: number

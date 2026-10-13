@@ -1,6 +1,7 @@
 import 'package:ik_content/ik_content.dart';
 
 import '../inventory/add_items.dart';
+import '../inventory/fit.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
 
@@ -301,14 +302,25 @@ PlayerSave markMailRead(PlayerSave save, String messageId, num nowMs) {
 }
 
 class MailClaimResult {
-  const MailClaimResult.ok(this.save) : reason = null;
+  const MailClaimResult.ok(this.save) : reason = null, code = null, noRoom = null;
 
-  const MailClaimResult.failed(this.reason) : save = null;
+  const MailClaimResult.failed(this.reason, {this.code, this.noRoom}) : save = null;
 
   final PlayerSave? save;
   final String? reason;
+  final String? code;
+  final NoRoom? noRoom;
 
   bool get ok => reason == null;
+
+  Map<String, Object?> toJson() => ok
+      ? <String, Object?>{'ok': true, 'save': save!.toJson()}
+      : <String, Object?>{
+          'ok': false,
+          'reason': reason,
+          if (code != null) 'code': code,
+          if (noRoom != null) 'noRoom': noRoom!.toJson(),
+        };
 }
 
 MailClaimResult claimMailAttachments(
@@ -332,6 +344,13 @@ MailClaimResult claimMailAttachments(
   }
   if (message.claimedAt != null) {
     return const MailClaimResult.failed('Those items were already claimed.');
+  }
+  final blocked = noRoomFor(save, [
+    for (final attachment in message.attachments)
+      ItemGrant(itemId: attachment.itemId, quantity: attachment.quantity),
+  ], db);
+  if (blocked != null) {
+    return MailClaimResult.failed(noRoomReason(blocked), code: 'no_room', noRoom: blocked);
   }
   var next = save;
   for (final attachment in message.attachments) {

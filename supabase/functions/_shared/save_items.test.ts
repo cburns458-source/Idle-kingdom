@@ -16,6 +16,8 @@ import {
   BANK_SLOT_LIMIT,
   INVENTORY_SLOT_LIMIT,
   UNTRADABLE_ITEM_REFUSAL,
+  collectNoRoomReason,
+  collectRows,
   giveGold,
   giveItems,
   goldOf,
@@ -256,6 +258,52 @@ describe('putting items back from the box', () => {
     expect(giveItems(full, 'ITEM-9999', 1)).toBeNull()
     // A full bag can still take more of something it already holds.
     expect(giveItems(full, 'ITEM-1000', 1)).not.toBeNull()
+  })
+})
+
+describe('collection box rows', () => {
+  const full = save(
+    Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, at) => ({
+      itemId: `ITEM-${String(at + 1000)}`,
+      quantity: 1,
+    })),
+    10,
+  )
+
+  it('refuses when no item row fits and reports no_room', () => {
+    const result = collectRows(full, [
+      { id: 'row-1', item_id: 'ITEM-9999', quantity: 2, gold: 0 },
+    ])
+    expect(result.taken).toEqual([])
+    expect(result.noRoom).toEqual({ slotsNeeded: 1, slotsFree: 0 })
+    expect(result.rowsLeft).toBe(1)
+    expect(collectNoRoomReason(result.noRoom!)).toMatch(/Free 1 slot/)
+  })
+
+  it('always collects gold and leaves item rows with no_room', () => {
+    const result = collectRows(full, [
+      { id: 'gold-1', gold: 25 },
+      { id: 'row-1', item_id: 'ITEM-9999', quantity: 1, gold: 0 },
+    ])
+    expect(result.taken).toEqual(['gold-1'])
+    expect(result.gold).toBe(25)
+    expect(result.items).toBe(0)
+    expect(result.left).toBe(1)
+    expect(result.rowsLeft).toBe(1)
+    expect(result.noRoom).toEqual({ slotsNeeded: 1, slotsFree: 0 })
+    expect(goldOf(result.payload)).toBe(35)
+  })
+
+  it('collects a row that merges and leaves the rest with rowsLeft', () => {
+    const result = collectRows(full, [
+      { id: 'merge', item_id: 'ITEM-1000', quantity: 3, gold: 0 },
+      { id: 'new', item_id: 'ITEM-9999', quantity: 1, gold: 0 },
+    ])
+    expect(result.taken).toEqual(['merge'])
+    expect(result.items).toBe(3)
+    expect(result.left).toBe(1)
+    expect(result.rowsLeft).toBe(1)
+    expect(result.noRoom).toEqual({ slotsNeeded: 1, slotsFree: 0 })
   })
 })
 

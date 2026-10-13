@@ -4,6 +4,7 @@ import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import 'add_items.dart';
 import 'capacity.dart';
+import 'fit.dart';
 import 'gold.dart';
 
 /// Dedicated bank nodes on the Town and Citadel maps (and any future `*_bank`).
@@ -52,14 +53,25 @@ PlayerSave _restoreBag(PlayerSave original, PlayerSave banked) =>
     banked.copyWith(inventory: original.inventory, bank: banked.inventory);
 
 class BankMoveResult {
-  const BankMoveResult.ok(this.save) : reason = null;
+  const BankMoveResult.ok(this.save) : reason = null, code = null, noRoom = null;
 
-  const BankMoveResult.failed(this.reason) : save = null;
+  const BankMoveResult.failed(this.reason, {this.code, this.noRoom}) : save = null;
 
   final PlayerSave? save;
   final String? reason;
+  final String? code;
+  final NoRoom? noRoom;
 
   bool get ok => reason == null;
+
+  Map<String, Object?> toJson() => ok
+      ? <String, Object?>{'ok': true, 'save': save!.toJson()}
+      : <String, Object?>{
+          'ok': false,
+          'reason': reason,
+          if (code != null) 'code': code,
+          if (noRoom != null) 'noRoom': noRoom!.toJson(),
+        };
 }
 
 class _Taken {
@@ -111,19 +123,18 @@ BankMoveResult _moveStack({
   final target = toBank
       ? _withBankAsBag(save.copyWith(inventory: taken.stacks))
       : save.copyWith(bank: taken.stacks);
-  final slotLimit = toBank ? bankSlotLimit : inventorySlotLimit;
-  if (!canFitItemQuantity(
-    target,
-    piece.itemId,
-    piece.quantity,
-    piece.enchantmentId,
-    favorite,
-    null,
-    slotLimit,
-  )) {
-    return BankMoveResult.failed(fullMessage);
-  }
   if (toBank) {
+    if (!canFitItemQuantity(
+      target,
+      piece.itemId,
+      piece.quantity,
+      piece.enchantmentId,
+      favorite,
+      null,
+      bankSlotLimit,
+    )) {
+      return BankMoveResult.failed(fullMessage);
+    }
     final added = addItemToInventoryExact(
       _withBankAsBag(save.copyWith(inventory: taken.stacks)),
       piece.itemId,
@@ -136,12 +147,18 @@ BankMoveResult _moveStack({
     if (!added.ok) return BankMoveResult.failed(added.reason ?? fullMessage);
     return BankMoveResult.ok(_restoreBag(save.copyWith(inventory: taken.stacks), added.save!));
   }
+  final blocked = noRoomFor(target, [ItemGrant(itemId: piece.itemId, quantity: piece.quantity)]);
+  if (blocked != null) {
+    return BankMoveResult.failed(noRoomReason(blocked), code: 'no_room', noRoom: blocked);
+  }
   final added = addItemToInventoryExact(
     save,
     piece.itemId,
     piece.quantity,
     piece.enchantmentId,
     favorite,
+    null,
+    inventorySlotLimit,
   );
   if (!added.ok) return BankMoveResult.failed(added.reason ?? fullMessage);
   return BankMoveResult.ok(added.save!.copyWith(bank: taken.stacks));

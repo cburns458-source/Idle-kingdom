@@ -7,7 +7,7 @@
 import { addItemsToInventory } from '../activity/rewards'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
-import { inventorySlotsFree, mergeableStackIndex } from './capacity'
+import { INVENTORY_SLOT_LIMIT, inventorySlotsFree, mergeableStackIndex } from './capacity'
 import { isGoldCurrencyItem } from './gold'
 
 export type RewardFailureCode = 'no_room'
@@ -24,7 +24,11 @@ export interface ItemGrant {
 }
 
 /** New bag slots [itemIds] need against [save]: one per distinct non-gold item without a pile to grow. */
-export function slotsNeededForItems(db: GameDatabase, save: PlayerSave, itemIds: readonly string[]): number {
+export function slotsNeededForItems(
+  db: GameDatabase | undefined,
+  save: PlayerSave,
+  itemIds: readonly string[],
+): number {
   const seen = new Set<string>()
   let needed = 0
   for (const itemId of itemIds) {
@@ -44,15 +48,16 @@ export function noRoomReason(noRoom: NoRoom): string {
 
 /** Whether every grant fits in the bag together, added in order on a copy of [save]. */
 export function rewardsFit(
-  db: GameDatabase,
+  db: GameDatabase | undefined,
   save: PlayerSave,
   grants: readonly ItemGrant[],
+  slotLimit: number = INVENTORY_SLOT_LIMIT,
 ): { fits: boolean } & NoRoom {
   const wanted = grants.filter((grant) => grant.quantity > 0)
   let working = save
   let fits = true
   for (const grant of wanted) {
-    const added = addItemsToInventory(working, grant.itemId, grant.quantity, null, false, db)
+    const added = addItemsToInventory(working, grant.itemId, grant.quantity, null, false, db, slotLimit)
     if (added.added < Math.floor(grant.quantity)) {
       fits = false
       break
@@ -67,6 +72,30 @@ export function rewardsFit(
   return {
     fits,
     slotsNeeded: fits ? slotsNeeded : Math.max(1, slotsNeeded),
-    slotsFree: inventorySlotsFree(save),
+    slotsFree: inventorySlotsFree(save, slotLimit),
   }
+}
+
+/**
+ * `null` when every grant fits together; otherwise the `no_room` counts for
+ * the whole list. Paid and claimed paths use this before changing any state.
+ */
+export function noRoomFor(
+  save: PlayerSave,
+  grants: readonly ItemGrant[],
+  db?: GameDatabase,
+  slotLimit: number = INVENTORY_SLOT_LIMIT,
+): NoRoom | null {
+  const fit = rewardsFit(db, save, grants, slotLimit)
+  return fit.fits ? null : { slotsNeeded: fit.slotsNeeded, slotsFree: fit.slotsFree }
+}
+
+/** Shared `{ok:false, code:'no_room'}` refusal used by shop, bank, and mail. */
+export function noRoomRefusal(noRoom: NoRoom): {
+  ok: false
+  reason: string
+  code: RewardFailureCode
+  noRoom: NoRoom
+} {
+  return { ok: false, reason: noRoomReason(noRoom), code: 'no_room', noRoom }
 }

@@ -29,6 +29,26 @@ class LootGrant {
   };
 }
 
+/// One row per itemId, quantities summed, first displayName kept, then sorted.
+List<LootGrant> mergeLeftBehind(Iterable<LootGrant> grants) {
+  final byId = <String, LootGrant>{};
+  for (final grant in grants) {
+    if (grant.quantity <= 0) continue;
+    final existing = byId[grant.itemId];
+    if (existing != null) {
+      byId[grant.itemId] = LootGrant(
+        itemId: existing.itemId,
+        quantity: existing.quantity + grant.quantity,
+        displayName: existing.displayName,
+      );
+    } else {
+      byId[grant.itemId] = grant;
+    }
+  }
+  final merged = byId.values.toList()..sort((left, right) => left.itemId.compareTo(right.itemId));
+  return merged;
+}
+
 class ActionCosmeticGrant {
   const ActionCosmeticGrant({required this.cosmeticId, required this.isFirstEver});
 

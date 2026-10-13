@@ -13,6 +13,7 @@ import {
   shopStockForPlayer,
 } from './shops'
 import { assignRace } from '../races/assignRace'
+import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { confirmShopOffer } from './transactions'
 
 const rawDatabase = JSON.parse(
@@ -382,5 +383,84 @@ describe('shops', () => {
 
     const nextDay = confirmShopOffer(launch, save, 'SHP-0010', offer, day + 24 * 60 * 60 * 1000)
     expect(nextDay.ok).toBe(true)
+  })
+
+  it('refuses a new item with no_room and leaves gold untouched', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const gold = 10_000
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0024',
+      gold,
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+    }
+    const result = confirmShopOffer(launch, save, 'SHP-0001', {
+      buys: [{ itemId: 'ITEM-0102', quantity: 1 }],
+      sells: [],
+    })
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      reason: 'No room in your bag. Free 1 slot and try again.',
+      noRoom: { slotsNeeded: 1, slotsFree: 0 },
+    })
+    expect(save.gold).toBe(gold)
+    expect(save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
+  })
+
+  it('refuses a 3-item basket when only one slot is free', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const gold = 10_000
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0024',
+      gold,
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT - 1 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+    }
+    const result = confirmShopOffer(launch, save, 'SHP-0001', {
+      buys: [
+        { itemId: 'ITEM-0102', quantity: 1 },
+        { itemId: 'ITEM-0108', quantity: 1 },
+        { itemId: 'ITEM-0100', quantity: 1 },
+      ],
+      sells: [],
+    })
+    expect(result).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      noRoom: { slotsNeeded: 3, slotsFree: 1 },
+    })
+    expect(save.gold).toBe(gold)
+    expect(save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT - 1)
+  })
+
+  it('still buys onto an existing stack when the bag is full', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = {
+      ...createNewSave(launch),
+      currentLocationId: 'LOC-0024',
+      gold: 10_000,
+      inventory: [
+        { itemId: 'ITEM-0102', quantity: 1 },
+        ...Array.from({ length: INVENTORY_SLOT_LIMIT - 1 }, (_, index) => ({
+          itemId: `FILL-${index}`,
+          quantity: 1,
+        })),
+      ],
+    }
+    const result = confirmShopOffer(launch, save, 'SHP-0001', {
+      buys: [{ itemId: 'ITEM-0102', quantity: 1 }],
+      sells: [],
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0102')?.quantity).toBe(2)
+    expect(result.save.gold).toBeLessThan(save.gold)
   })
 })

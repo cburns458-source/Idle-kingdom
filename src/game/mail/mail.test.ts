@@ -91,9 +91,40 @@ describe('mailbox', () => {
       })),
     }
     const refused = claimMailAttachments(full, 'mail-gift', NOW_MS, source)
-    expect(refused.ok).toBe(false)
-    if (refused.ok) return
-    expect(refused.reason).toMatch(/full/)
+    expect(refused).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      reason: 'No room in your bag. Free 1 slot and try again.',
+      noRoom: { slotsNeeded: 1, slotsFree: 0 },
+    })
+    expect(full.mailbox[0]?.claimedAt).toBeNull()
+  })
+
+  it('refuses a 3-attachment letter when only one slot is free', () => {
+    const { source } = prepareDatabase(rawDatabase)
+    const base = createNewSave(source, NOW_MS)
+    const withGift: PlayerSave = {
+      ...base,
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT - 1 }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+      mailbox: [
+        giftMail(NOW_MS, [
+          { itemId: 'ITEM-0025', quantity: 1 },
+          { itemId: 'ITEM-0058', quantity: 1 },
+          { itemId: 'ITEM-0003', quantity: 1 },
+        ]),
+      ],
+    }
+    const refused = claimMailAttachments(withGift, 'mail-gift', NOW_MS, source)
+    expect(refused).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      noRoom: { slotsNeeded: 3, slotsFree: 1 },
+    })
+    expect(withGift.mailbox[0]?.claimedAt).toBeNull()
+    expect(withGift.inventory).toHaveLength(INVENTORY_SLOT_LIMIT - 1)
   })
 
   it('adds an empty mailbox when migrating a v50 save', () => {

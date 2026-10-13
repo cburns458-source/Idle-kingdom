@@ -19,9 +19,12 @@ import { applyActivityTimeTowardCritters } from '../critters/critters'
 import { resolveProductionProgress } from '../production/engine'
 import { accruePlayTime } from '../save/playTime'
 import type { PlayerSave } from '../save/types'
+import { mergeLeftBehind, type LootGrant } from '../activity/types'
 import { advanceSession } from '../session/tick'
 import { isIncompleteCombatAwayLine } from './summary'
 import { applyNaturalHpRegen } from '../vitals/regen'
+
+const LEFT_BEHIND_AWAY_LINE = 'Some loot was left behind: your bag filled while you were away.'
 
 /**
  * Safety valve on the combat/gathering catch-up loop (one discrete
@@ -71,6 +74,8 @@ export interface UnattendedResult {
   effectiveElapsedMs: number
   /** False when a step or time budget stopped the catch-up before `nowMs`. */
   caughtUp: boolean
+  /** Overflow from gathering, pruning, and combat during this catch-up window. */
+  leftBehind?: LootGrant[]
 }
 
 export interface UnattendedOptions {
@@ -159,6 +164,11 @@ export function resolveUnattendedProgress(
   // from "genuinely nothing more to simulate in this window."
   let lastResolvedMs = anchor
   let hitStepLimit = false
+  const overflow: LootGrant[] = []
+
+  const rememberLeftBehind = (grants: readonly LootGrant[] | undefined) => {
+    if (grants?.length) overflow.push(...grants)
+  }
 
   const pushCritterSpawn = (spawned: { displayName: string } | null) => {
     if (!spawned) return
@@ -258,6 +268,7 @@ export function resolveUnattendedProgress(
         if (event.kind === 'critter-spawned') {
           pushCritterSpawn({ displayName: event.displayName })
         }
+        if (event.kind === 'rewards') rememberLeftBehind(event.bundle.leftBehind)
         if (
           event.kind === 'message' &&
           !isIncompleteCombatAwayLine(event.text, event.topic)
@@ -284,6 +295,7 @@ export function resolveUnattendedProgress(
 
       const completed = completeGatheringAction(db, current, action, random, due)
       gatheringActions += 1
+      rememberLeftBehind(completed.result.leftBehind)
       let next = completed.save
       // Clear completed action fields before generating the next one.
       next = clearCombatSave({
@@ -360,6 +372,10 @@ export function resolveUnattendedProgress(
   if (craftsCompleted > 0 && !messages.some((line) => line.includes('Crafted'))) {
     messages.unshift(`Completed ${craftsCompleted} craft${craftsCompleted === 1 ? '' : 's'} while away.`)
   }
+  const leftBehind = mergeLeftBehind(overflow)
+  if (leftBehind.length > 0) {
+    messages.push(LEFT_BEHIND_AWAY_LINE)
+  }
 
   // Normally we're fully caught up to `endMs` (which is already <= nowMs),
   // so it's safe to stamp `nowMs`. But if the combat/gathering loop ran out
@@ -406,5 +422,6 @@ export function resolveUnattendedProgress(
     crittersSpawned,
     effectiveElapsedMs: creditedMs,
     caughtUp: !hitStepLimit,
+    ...(leftBehind.length > 0 ? { leftBehind } : {}),
   }
 }

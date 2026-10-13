@@ -30,9 +30,8 @@ import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 
 import {
   GOLD_CAP,
-  giveGold,
-  giveItems,
-  goldOf,
+  collectNoRoomReason,
+  collectRows,
   inventoryOf,
   isItemId,
   isTradableStack,
@@ -420,42 +419,22 @@ async function collect(admin: Client, userId: string): Promise<Response> {
   const rows = (box.data ?? []) as Array<Record<string, unknown>>
   if (rows.length === 0) return refused('The collection box is empty.')
 
-  let payload = stored.payload
-  const taken: string[] = []
-  let items = 0
-  let gold = 0
-  let left = 0
-  for (const row of rows) {
-    const itemId = typeof row.item_id === 'string' ? row.item_id : null
-    const quantity = Number(row.quantity ?? 0)
-    const coin = Number(row.gold ?? 0)
-    const applied =
-      itemId != null && quantity > 0
-        ? giveItems(payload, itemId, quantity)
-        : giveGold(payload, coin)
-    if (applied == null) {
-      left += 1
-      continue
-    }
-    payload = applied
-    taken.push(String(row.id))
-    if (itemId != null && quantity > 0) items += quantity
-    else gold += coin
-  }
-
-  if (taken.length === 0) {
-    return refused(
-      goldOf(payload) >= GOLD_CAP
-        ? 'Your purse is full.'
-        : 'Your bag is full. Make room and collect again.',
-    )
+  const collected = collectRows(stored.payload, rows)
+  if (collected.taken.length === 0) {
+    if (collected.purseFull) return refused('Your purse is full.')
+    const noRoom = collected.noRoom ?? { slotsNeeded: 1, slotsFree: 0 }
+    return refused(collectNoRoomReason(noRoom), {
+      code: 'no_room',
+      noRoom,
+      rowsLeft: collected.rowsLeft,
+    })
   }
 
   const iso = new Date().toISOString()
-  const filled = stamped(payload, iso)
+  const filled = stamped(collected.payload, iso)
   const { error } = await admin.rpc('bazaar_settle_collect', {
     p_user_id: userId,
-    p_ids: taken,
+    p_ids: collected.taken,
     p_payload: filled,
     p_expected_updated_at: stored.updatedAt,
   })
@@ -465,10 +444,13 @@ async function collect(admin: Client, userId: string): Promise<Response> {
     {
       ok: true,
       save: filled,
-      items,
-      gold,
-      left,
-      message: collectedMessage(items, gold, left),
+      items: collected.items,
+      gold: collected.gold,
+      left: collected.left,
+      ...(collected.noRoom
+        ? { code: 'no_room', noRoom: collected.noRoom, rowsLeft: collected.rowsLeft }
+        : {}),
+      message: collectedMessage(collected.items, collected.gold, collected.left),
     },
     200,
   )
@@ -679,8 +661,8 @@ function cors(): HeadersInit {
  * working — so it comes back as a result the client can read the message out of.
  * Genuine faults still answer 401 and 500.
  */
-function refused(message: string): Response {
-  return json({ ok: false, error: message }, 200)
+function refused(message: string, extra: Record<string, unknown> = {}): Response {
+  return json({ ok: false, error: message, ...extra }, 200)
 }
 
 function json(body: Record<string, unknown>, status: number): Response {

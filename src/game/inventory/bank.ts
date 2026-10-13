@@ -7,6 +7,7 @@ import {
   INVENTORY_SLOT_LIMIT,
   inventorySlotsFree,
 } from './capacity'
+import { noRoomFor, noRoomRefusal, type NoRoom } from './fit'
 import { isGoldCurrencyItem } from './gold'
 
 /** Dedicated bank nodes (Town, Citadel) plus any future `*_bank` location. */
@@ -138,7 +139,7 @@ function takeFromStacks(
 
 export type BankMoveResult =
   | { ok: true; save: PlayerSave }
-  | { ok: false; reason: string }
+  | { ok: false; reason: string; code?: 'no_room'; noRoom?: NoRoom }
 
 function moveStack(
   save: PlayerSave,
@@ -159,20 +160,20 @@ function moveStack(
     : { ...save, inventory: save.inventory, bank: taken.stacks }
   const target = toIsBank ? withBankAsBag(destination) : { ...destination, inventory: destination.inventory }
   const slotLimit = toIsBank ? BANK_SLOT_LIMIT : INVENTORY_SLOT_LIMIT
-  if (
-    !canFitItemQuantity(
-      target,
-      piece.itemId,
-      piece.quantity,
-      piece.enchantmentId ?? null,
-      Boolean(piece.favorite),
-      undefined,
-      slotLimit,
-    )
-  ) {
-    return { ok: false, reason: fullMessage }
-  }
   if (toIsBank) {
+    if (
+      !canFitItemQuantity(
+        target,
+        piece.itemId,
+        piece.quantity,
+        piece.enchantmentId ?? null,
+        Boolean(piece.favorite),
+        undefined,
+        slotLimit,
+      )
+    ) {
+      return { ok: false, reason: fullMessage }
+    }
     const added = addItemToInventoryExact(
       withBankAsBag(destination),
       piece.itemId,
@@ -185,12 +186,16 @@ function moveStack(
     if (!added.ok) return { ok: false, reason: added.reason }
     return { ok: true, save: restoreBag({ ...save, inventory: taken.stacks }, added.save) }
   }
+  const blocked = noRoomFor(target, [{ itemId: piece.itemId, quantity: piece.quantity }])
+  if (blocked) return noRoomRefusal(blocked)
   const added = addItemToInventoryExact(
     { ...destination, inventory: save.inventory },
     piece.itemId,
     piece.quantity,
     piece.enchantmentId ?? null,
     Boolean(piece.favorite),
+    undefined,
+    INVENTORY_SLOT_LIMIT,
   )
   if (!added.ok) return { ok: false, reason: added.reason }
   return { ok: true, save: { ...added.save, bank: taken.stacks } }

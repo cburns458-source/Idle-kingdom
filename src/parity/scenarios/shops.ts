@@ -20,6 +20,7 @@ import {
   shopStockForPlayer,
   shopsAtLocation,
 } from '../../game/shops/shops'
+import { INVENTORY_SLOT_LIMIT } from '../../game/inventory/capacity'
 import { confirmShopOffer, type ShopOffer } from '../../game/shops/transactions'
 import {
   actionsForSkill,
@@ -338,6 +339,39 @@ const OFFER_CASES: Array<{ name: string; save: SaveKind; shopId: string; offer: 
   },
 ]
 
+function filledShopSave(freeSlots: number): PlayerSave {
+  return {
+    ...saveFor('general'),
+    gold: 100_000,
+    inventory: Array.from({ length: INVENTORY_SLOT_LIMIT - freeSlots }, (_, index) => ({
+      itemId: `FILL-${index}`,
+      quantity: 1,
+    })),
+  }
+}
+
+const SHOP_BAG_CASES: Array<{ name: string; shopId: string; offer: ShopOffer; save: () => PlayerSave }> = [
+  {
+    name: 'full-bag-no-room',
+    shopId: 'SHP-0001',
+    offer: { buys: [{ itemId: 'ITEM-0102', quantity: 1 }], sells: [] },
+    save: () => filledShopSave(0),
+  },
+  {
+    name: 'one-free-slot-multi',
+    shopId: 'SHP-0001',
+    offer: {
+      buys: [
+        { itemId: 'ITEM-0102', quantity: 1 },
+        { itemId: 'ITEM-0108', quantity: 1 },
+        { itemId: 'ITEM-0100', quantity: 1 },
+      ],
+      sells: [],
+    },
+    save: () => filledShopSave(1),
+  },
+]
+
 const SELL_BAG_CASES: Array<{ name: string; save: SaveKind; indexes: number[] }> = [
   { name: 'ok', save: 'general', indexes: [0, 3] },
   { name: 'favorite-blocked', save: 'general', indexes: [1] },
@@ -486,6 +520,27 @@ export const shopScenarios: ParityScenario[] = [
       ],
     } as unknown as JsonValue
   }),
+  ),
+
+  ...SHOP_BAG_CASES.map((entry) =>
+    scenario(
+      'shops/buy',
+      entry.name,
+      {
+        source: 'content',
+        save: asJson(entry.save()),
+        shopId: entry.shopId,
+        offer: entry.offer as unknown as JsonValue,
+      },
+      () =>
+        confirmShopOffer(
+          contentDatabase(),
+          entry.save(),
+          entry.shopId,
+          entry.offer,
+          OFFER_NOW_MS,
+        ) as unknown as JsonValue,
+    ),
   ),
 
   scenario('skills/menu', 'entries', { source: 'content', skillIds: MENU_SKILLS }, () => {

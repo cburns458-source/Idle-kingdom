@@ -129,4 +129,43 @@ describe('bank storage', () => {
     expect(accepted.save.bank).toHaveLength(BANK_SLOT_LIMIT)
     expect(INVENTORY_SLOT_LIMIT).toBe(84)
   })
+
+  it('refuses a new-stack withdraw with no_room and leaves bag and bank unchanged', () => {
+    const save = {
+      ...createNewSave(launch),
+      inventory: Array.from({ length: INVENTORY_SLOT_LIMIT }, (_, index) => ({
+        itemId: `FILL-${index}`,
+        quantity: 1,
+      })),
+      bank: [{ itemId: 'ITEM-0002', quantity: 3 }],
+    }
+    const blocked = withdrawFromBank(save, 0, 1)
+    expect(blocked).toMatchObject({
+      ok: false,
+      code: 'no_room',
+      reason: 'No room in your bag. Free 1 slot and try again.',
+      noRoom: { slotsNeeded: 1, slotsFree: 0 },
+    })
+    expect(save.inventory).toHaveLength(INVENTORY_SLOT_LIMIT)
+    expect(save.bank).toEqual([{ itemId: 'ITEM-0002', quantity: 3 }])
+  })
+
+  it('withdraws onto an existing stack when the bag is full', () => {
+    const save = {
+      ...createNewSave(launch),
+      inventory: [
+        { itemId: 'ITEM-0002', quantity: 2 },
+        ...Array.from({ length: INVENTORY_SLOT_LIMIT - 1 }, (_, index) => ({
+          itemId: `FILL-${index}`,
+          quantity: 1,
+        })),
+      ],
+      bank: [{ itemId: 'ITEM-0002', quantity: 4 }],
+    }
+    const withdrawn = withdrawFromBank(save, 0, 2)
+    expect(withdrawn.ok).toBe(true)
+    if (!withdrawn.ok) return
+    expect(withdrawn.save.inventory.find((stack) => stack.itemId === 'ITEM-0002')?.quantity).toBe(4)
+    expect(withdrawn.save.bank).toEqual([{ itemId: 'ITEM-0002', quantity: 2 }])
+  })
 })

@@ -8,6 +8,7 @@ import { contentScenarios } from './content'
 import { coreRuleScenarios } from './coreRules'
 import { dialogueScenarios } from './dialogue'
 import { equipmentScenarios } from './equipment'
+import { mailScenarios } from './mail'
 import { metaScenarios } from './meta'
 import { multiplayerScenarios } from './multiplayer'
 import { npcScenarios } from './npcs'
@@ -50,6 +51,7 @@ export const parityScenarios: ParityScenario[] = [
   ...combatScenarios,
   ...activityScenarios,
   ...shopScenarios,
+  ...mailScenarios,
   ...timerScenarios,
   ...worldScenarios,
   ...metaScenarios,

@@ -337,6 +337,7 @@ async function handleSync(admin: Client, userId: string, payload: GameBody): Pro
       rngState: result.rngState,
       gatheringActions: result.gatheringActions,
       caughtUp: result.caughtUp,
+      ...(result.leftBehind?.length ? { leftBehind: result.leftBehind } : {}),
       wroteSave: true,
     })
   } catch (error) {

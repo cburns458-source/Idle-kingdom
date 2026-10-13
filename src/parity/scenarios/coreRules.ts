@@ -95,9 +95,13 @@ const BANK_ACCESS_LOCATION_IDS = [
 ]
 
 function bankMoveJson(result: BankMoveResult): JsonValue {
-  return result.ok
-    ? ({ ok: true, save: asJson(result.save) } as unknown as JsonValue)
-    : { ok: false, reason: result.reason }
+  if (result.ok) return { ok: true, save: asJson(result.save) } as unknown as JsonValue
+  return {
+    ok: false,
+    reason: result.reason,
+    ...(result.code ? { code: result.code } : {}),
+    ...(result.noRoom ? { noRoom: result.noRoom } : {}),
+  } as unknown as JsonValue
 }
 
 function withBankMove(

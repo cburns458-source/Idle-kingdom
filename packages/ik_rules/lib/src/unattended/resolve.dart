@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../achievements/progress.dart';
 import '../activity/engine.dart';
+import '../activity/rewards.dart';
 import '../activity/transition.dart';
 import '../combat/boss.dart';
 import '../combat/boss_phase.dart';
@@ -105,6 +106,8 @@ String _combatVictoryMessage(EnemyRow enemy, CombatPendingRound round) {
   return 'Defeated $enemyName';
 }
 
+const String leftBehindAwayLine = 'Some loot was left behind: your bag filled while you were away.';
+
 class UnattendedResult {
   const UnattendedResult({
     required this.save,
@@ -116,6 +119,8 @@ class UnattendedResult {
     required this.combatDeaths,
     required this.crittersSpawned,
     required this.effectiveElapsedMs,
+    this.leftBehind = const <LootGrant>[],
+    this.caughtUp = true,
   });
 
   final PlayerSave save;
@@ -127,6 +132,8 @@ class UnattendedResult {
   final num combatDeaths;
   final num crittersSpawned;
   final num effectiveElapsedMs;
+  final List<LootGrant> leftBehind;
+  final bool caughtUp;
 
   /// True when catch-up finished at least one gather, craft, fight, or spawn.
   bool get hasCreditedWork =>
@@ -142,6 +149,7 @@ class UnattendedResult {
     'combatDeaths': combatDeaths,
     'crittersSpawned': crittersSpawned,
     'effectiveElapsedMs': effectiveElapsedMs,
+    if (leftBehind.isNotEmpty) 'leftBehind': leftBehind.map((grant) => grant.toJson()).toList(),
   };
 }
 
@@ -168,8 +176,9 @@ UnattendedResult resolveUnattendedProgress(
   GameDatabase db,
   PlayerSave save,
   num nowMs,
-  RandomFn random,
-) {
+  RandomFn random, {
+  num? maxStepsOverride,
+}) {
   final capMs = unattendedCapMs(db);
   final anchor = _anchorMs(save, nowMs);
   final endMs = math.min(nowMs, anchor + capMs);
@@ -183,7 +192,8 @@ UnattendedResult resolveUnattendedProgress(
   num combatDeaths = 0;
   num crittersSpawned = 0;
   num steps = 0;
-  final maxSteps = _maxUnattendedSteps(db);
+  final maxSteps = maxStepsOverride ?? _maxUnattendedSteps(db);
+  final overflow = <LootGrant>[];
   // Tracks how far the combat/gathering simulation's own clock has actually
   // advanced, so we can tell "ran out of step budget mid-catch-up" apart from
   // "genuinely nothing more to simulate in this window."
@@ -391,6 +401,7 @@ UnattendedResult resolveUnattendedProgress(
           roundEnd,
         );
         combatVictories += 1;
+        overflow.addAll(victory.leftBehind);
         var next = victory.save;
         final critter = applyActivityTimeTowardCritters(
           next,
@@ -499,6 +510,7 @@ UnattendedResult resolveUnattendedProgress(
 
       final completed = completeGatheringAction(db, current, action, random, due);
       gatheringActions += 1;
+      overflow.addAll(completed.result.leftBehind);
       // Clear completed action fields before generating the next one.
       var next = clearCombatSave(
         completed.save.copyWith(
@@ -578,6 +590,10 @@ UnattendedResult resolveUnattendedProgress(
       'craft${craftsCompleted == 1 ? '' : 's'} while away.',
     );
   }
+  final leftBehind = mergeLeftBehind(overflow);
+  if (leftBehind.isNotEmpty) {
+    messages.add(leftBehindAwayLine);
+  }
 
   // Normally we're fully caught up to `endMs` (which is already <= nowMs), so
   // it's safe to stamp `nowMs`. But if the combat/gathering loop ran out of step
@@ -585,10 +601,14 @@ UnattendedResult resolveUnattendedProgress(
   // anchor as far as the simulation actually got — the remainder will be caught
   // up on the next load instead of being lost.
   // Regen runs even mid-combat once the 60s no-damage gate has passed.
-  current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs, endMs).save;
+  // A partial run only credits the time it simulated; the next run owns the rest.
+  if (!hitStepLimit) {
+    current = applyNaturalHpRegen(db, current, endMs - lastResolvedMs, endMs).save;
+  }
 
   final stampAt = hitStepLimit ? math.min(nowMs, lastResolvedMs) : nowMs;
-  final stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), effectiveElapsedMs);
+  final creditedMs = hitStepLimit ? math.max(0, stampAt - anchor) : effectiveElapsedMs;
+  final stamped = accruePlayTime(stampUnattendedProgressAt(current, stampAt), creditedMs);
   const deep = DeepCollectionEquality();
   final changed =
       !identical(stamped, save) &&
@@ -628,7 +648,9 @@ UnattendedResult resolveUnattendedProgress(
     combatVictories: combatVictories,
     combatDeaths: combatDeaths,
     crittersSpawned: crittersSpawned,
-    effectiveElapsedMs: effectiveElapsedMs,
+    effectiveElapsedMs: creditedMs,
+    leftBehind: leftBehind,
+    caughtUp: !hitStepLimit,
   );
 }
 
