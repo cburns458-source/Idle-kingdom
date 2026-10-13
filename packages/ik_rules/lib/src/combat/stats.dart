@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/xp.dart';
 import '../config.dart';
+import '../economy/plaza.dart';
 import '../equipment/loadout.dart';
 import '../js_compat.dart';
 import '../skills/skill_actions.dart';
@@ -333,7 +334,8 @@ num playerMaxHp(GameDatabase db, PlayerSave save) {
   final levelMult = combatLevelHpMultiplier(save);
   final raceMult = raceMaxHpMultiplier(db, save);
   final enchantHpMult = 1 + equippedEnchantmentMaxHpBonusPercent(db, save) / 100;
-  return math.max(1, _scaleStat(base + bonus, levelMult * raceMult * enchantHpMult));
+  final setHpMult = 1 + hearthguardSetMaxHpBonusPercent(save) / 100;
+  return math.max(1, _scaleStat(base + bonus, levelMult * raceMult * enchantHpMult * setHpMult));
 }
 
 /// Max HP from base + Combat Level + race only — equipment HP bonuses are ignored.

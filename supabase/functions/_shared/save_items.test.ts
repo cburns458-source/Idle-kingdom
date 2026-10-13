@@ -43,6 +43,11 @@ const EXCAVATORS_PICKAXE = 'ITEM-0313'
 const STOLEN_COIN_PURSE = 'ITEM-0299'
 const BEGGARS_HOOD = 'ITEM-0300'
 const DWARVEN_WARHAMMER = 'ITEM-0123'
+const HEARTHGUARD_HELM = 'ITEM-0427'
+const HEARTHGUARD_CUIRASS = 'ITEM-0428'
+const HEARTHGUARD_GREAVES = 'ITEM-0429'
+const HEARTHGUARD_GAUNTLETS = 'ITEM-0430'
+const HEARTHGUARD_BOOTS = 'ITEM-0431'
 const GOLDEN_SPUD = 'ITEM-0026'
 const CHEFS_HAT = 'ITEM-0165'
 const PIRATE_INSIGNIA = 'ITEM-0288'
@@ -93,7 +98,18 @@ describe('what may be listed', () => {
 describe('items the exchange will not carry', () => {
   it('reads the quest-only rewards as untradeable from the database', () => {
     expect([...CATALOG.untradeable].sort()).toEqual(
-      [EXCAVATORS_PICKAXE, MACHETE, STOLEN_COIN_PURSE, BEGGARS_HOOD, DWARVEN_WARHAMMER].sort(),
+      [
+        EXCAVATORS_PICKAXE,
+        MACHETE,
+        STOLEN_COIN_PURSE,
+        BEGGARS_HOOD,
+        DWARVEN_WARHAMMER,
+        HEARTHGUARD_HELM,
+        HEARTHGUARD_CUIRASS,
+        HEARTHGUARD_GREAVES,
+        HEARTHGUARD_GAUNTLETS,
+        HEARTHGUARD_BOOTS,
+      ].sort(),
     )
     expect(isTradableItem(MACHETE, CATALOG)).toBe(false)
     expect(isTradableItem(GOLDEN_SPUD, CATALOG)).toBe(true)

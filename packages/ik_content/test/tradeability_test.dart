@@ -12,6 +12,11 @@ const String _dwarvenWarhammer = 'ITEM-0123';
 const String _goldenSpud = 'ITEM-0026';
 const String _chefsHat = 'ITEM-0165';
 const String _pirateInsignia = 'ITEM-0288';
+const String _hearthguardHelm = 'ITEM-0427';
+const String _hearthguardCuirass = 'ITEM-0428';
+const String _hearthguardGreaves = 'ITEM-0429';
+const String _hearthguardGauntlets = 'ITEM-0430';
+const String _hearthguardBoots = 'ITEM-0431';
 
 /// A private copy of the real database, safe to edit.
 Map<String, Object?> _rawCopy() =>
@@ -35,6 +40,11 @@ void main() {
         _stolenCoinPurse,
         _beggarsHood,
         _dwarvenWarhammer,
+        _hearthguardHelm,
+        _hearthguardCuirass,
+        _hearthguardGreaves,
+        _hearthguardGauntlets,
+        _hearthguardBoots,
       });
       for (final itemId in <String>[_goldenSpud, _chefsHat, _pirateInsignia]) {
         expect(_item(db, itemId).isTradeable, isTrue, reason: itemId);

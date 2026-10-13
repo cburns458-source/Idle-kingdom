@@ -1,3 +1,4 @@
+import { plazaPointsOf } from '../economy/plaza'
 import type { PlayerSave } from './types'
 
 function claimedIds(save: PlayerSave): string[] {
@@ -16,6 +17,7 @@ function counter(value: unknown): number {
  */
 export function clientSaveRaisesPayouts(server: PlayerSave, client: PlayerSave): boolean {
   if (client.gold > server.gold) return true
+  if (plazaPointsOf(client) > plazaPointsOf(server)) return true
   const allowed = new Set(claimedIds(server))
   if (claimedIds(client).some((id) => !allowed.has(id))) return true
   if (counter(client.rankedPvpWins) > counter(server.rankedPvpWins)) return true
@@ -35,6 +37,8 @@ export function clientSaveRaisesPayouts(server: PlayerSave, client: PlayerSave):
 export function replaceUnauthorizedPayouts(server: PlayerSave, client: PlayerSave): PlayerSave {
   const allowed = new Set(claimedIds(server))
   const gold = client.gold > server.gold ? server.gold : client.gold
+  const plazaPoints =
+    plazaPointsOf(client) > plazaPointsOf(server) ? plazaPointsOf(server) : plazaPointsOf(client)
   const rankedPvpWins =
     counter(client.rankedPvpWins) > counter(server.rankedPvpWins)
       ? server.rankedPvpWins
@@ -56,6 +60,7 @@ export function replaceUnauthorizedPayouts(server: PlayerSave, client: PlayerSav
   return {
     ...client,
     gold,
+    plazaPoints,
     bountyClaimedIds: claimedIds(client).filter((id) => allowed.has(id)),
     rankedPvpWins,
     rankedPvpLosses,

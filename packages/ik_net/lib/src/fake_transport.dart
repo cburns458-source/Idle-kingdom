@@ -802,6 +802,8 @@ class FakeTransport implements RemoteTransport {
     if (ranked != null) return ranked;
     final bounty = _applyBountyTurnIn(caller.userId, caller.username ?? 'Adventurer', body, row);
     if (bounty != null) return bounty;
+    final plaza = _applyPlazaShopBuy(caller.userId, body, row);
+    if (plaza != null) return plaza;
     final version = ((row['version'] as num?) ?? 1).toInt() + 1;
     row['version'] = version;
     row['updated_at'] = stamp();
@@ -1021,7 +1023,9 @@ class FakeTransport implements RemoteTransport {
         'fightId': existing['fight_id'],
         'rounds': existing['rounds'] ?? const <Object?>[],
         'pvpOutcome': existing['outcome'],
-        'goldGained': existing['gold_paid'] ?? 0,
+        'goldGained': 0,
+        'pointsGained': existing['points_paid'] ?? 0,
+        'plazaPoints': plazaResponseInt(parsedSave?.plazaPoints),
         'code': existing['code'],
         'winsRemaining': existing['wins_remaining'] ?? 0,
         'youMaxHp': existing['you_max_hp'] ?? 0,
@@ -1069,7 +1073,8 @@ class FakeTransport implements RemoteTransport {
       'fight_id': fightId,
       'opponent_id': pick.userId,
       'outcome': fight.outcome,
-      'gold_paid': applied.goldGained,
+      'gold_paid': 0,
+      'points_paid': applied.pointsGained,
       'code': applied.code,
       'rounds': fight.rounds.map((round) => round.toJson()).toList(),
       'you_max_hp': fight.youMaxHp,
@@ -1093,7 +1098,9 @@ class FakeTransport implements RemoteTransport {
       'fightId': fightId,
       'rounds': fight.rounds.map((round) => round.toJson()).toList(),
       'pvpOutcome': fight.outcome,
-      'goldGained': applied.goldGained,
+      'goldGained': 0,
+      'pointsGained': applied.pointsGained,
+      'plazaPoints': plazaPointsOf(applied.save),
       'code': applied.code,
       'winsRemaining': applied.winsRemaining,
       'youMaxHp': fight.youMaxHp,
@@ -1180,7 +1187,9 @@ class FakeTransport implements RemoteTransport {
       'save': rewarded.save.toJson(),
       'version': version,
       'rngState': saveRow['rng_state'] ?? 1,
-      'goldGained': rewarded.goldGained,
+      'goldGained': 0,
+      'pointsGained': rewarded.pointsGained,
+      'plazaPoints': plazaPointsOf(rewarded.save),
       'firstCompleter': firstCompleter,
       'claim': <String, Object?>{
         'hourKey': claim['hour_key'],
@@ -1189,6 +1198,43 @@ class FakeTransport implements RemoteTransport {
         'username': claim['username'],
         'claimedAt': claim['claimed_at'],
       },
+    });
+  }
+
+  RemoteInvokeResult? _applyPlazaShopBuy(String userId, RemoteRow body, RemoteRow saveRow) {
+    if (body['command'] != 'plaza_shop_buy') return null;
+    final args = (body['args'] as Map?) ?? const <Object?, Object?>{};
+    final itemId = args['itemId'];
+    if (itemId is! String || itemId.isEmpty) {
+      return const RemoteInvokeResult.failed('Missing item.');
+    }
+    final db = database;
+    if (db == null)
+      return const RemoteInvokeResult.failed('The plaza shop does not sell that item.');
+    final payload = saveRow['payload'];
+    if (payload is! Map)
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    PlayerSave save;
+    try {
+      save = parseSave(Map<String, Object?>.from(payload), _clockMs());
+    } on Object {
+      return const RemoteInvokeResult.failed('The cloud save could not be read.');
+    }
+    final bought = purchasePlazaShopItem(db, save, itemId, args['points'] ?? args['amount']);
+    if (!bought.ok) return RemoteInvokeResult.failed(bought.reason!);
+    if (_saveVersionConflicts(body, saveRow)) return _saveVersionConflictResult();
+    saveRow['payload'] = bought.save!.toJson();
+    final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;
+    saveRow['version'] = version;
+    saveRow['updated_at'] = stamp();
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'phase': 2,
+      'save': bought.save!.toJson(),
+      'version': version,
+      'rngState': saveRow['rng_state'] ?? 1,
+      'pointsGained': 0,
+      'plazaPoints': bought.plazaPoints,
     });
   }
 

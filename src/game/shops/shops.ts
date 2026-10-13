@@ -31,6 +31,11 @@ export function isWizardsShop(shop: ShopRow): boolean {
   return shop['Internal Key'] === 'wizards_shop'
 }
 
+/** Plaza-points counter. Gold `shop_confirm` must not sell these. */
+export function isPlazaShop(shop: ShopRow): boolean {
+  return shop['Shop Type'] === 'Plaza Shop' || shop['Internal Key'] === 'hearthguard_shop'
+}
+
 export function isGeneralMerchantShop(shop: ShopRow): boolean {
   const key = shop['Internal Key']
   return typeof key === 'string' && GENERAL_MERCHANT_SHOP_KEYS.has(key)
@@ -192,7 +197,8 @@ export function baseSellValue(item: ItemRow | undefined): number | null {
 }
 
 /** Price the player pays to buy one unit from the shop. */
-export function playerBuyPrice(db: GameDatabase, _shop: ShopRow, itemId: string): number | null {
+export function playerBuyPrice(db: GameDatabase, shop: ShopRow, itemId: string): number | null {
+  if (isPlazaShop(shop)) return null
   const item = db.Items.find((row) => row['Item ID'] === itemId)
   const base = baseSellValue(item)
   if (base == null) return null

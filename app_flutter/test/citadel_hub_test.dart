@@ -84,12 +84,14 @@ void main() {
 
     expect(find.text('Turn in'), findsWidgets);
     final goldBefore = controller.save.gold;
+    final pointsBefore = plazaPointsOf(controller.save);
 
     await tester.tap(find.text('Turn in').first);
     await tester.pump();
     await tester.pump();
 
-    expect(controller.save.gold, greaterThan(goldBefore));
+    expect(controller.save.gold, goldBefore);
+    expect(plazaPointsOf(controller.save), greaterThan(pointsBefore));
     expect(find.textContaining('First completer! +'), findsOne);
     expect(find.text('Claimed'), findsOne);
   });

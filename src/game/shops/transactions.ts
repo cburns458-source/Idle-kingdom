@@ -9,6 +9,7 @@ import type { InventoryStack, PlayerSave } from '../save/types'
 import {
   canAccessShop,
   getShop,
+  isPlazaShop,
   playerBuyPrice,
   playerSellPrice,
   recordShopPurchases,
@@ -79,6 +80,9 @@ export function confirmShopOffer(
 ): ShopTransactionResult {
   const shop = getShop(db, shopId)
   if (!shop) return { ok: false, reason: 'Shop not found.' }
+  if (isPlazaShop(shop)) {
+    return { ok: false, reason: 'Buy this with plaza points.' }
+  }
 
   const access = canAccessShop(db, save, shop)
   if (!access.ok) return access

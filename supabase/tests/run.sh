@@ -54,4 +54,12 @@ echo "=== ECO-01: new offers need total level 200 ==="
 run -f supabase/tests/bazaar_total_level_gate_test.sql
 
 echo
+echo "=== ECO-01 leftovers: one constant and a clear non-numeric error ==="
+run -f supabase/tests/eco01_bazaar_gate_followup_test.sql
+
+echo
+echo "=== ECO-03: plaza points payouts and Hearthguard shop ==="
+run -f supabase/tests/eco03_plaza_points_test.sql
+
+echo
 echo "All Bazaar SQL checks passed."

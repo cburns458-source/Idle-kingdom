@@ -157,6 +157,11 @@ void main() {
         'ITEM-0299',
         'ITEM-0300',
         'ITEM-0123',
+        hearthguardHelmId,
+        hearthguardCuirassId,
+        hearthguardGreavesId,
+        hearthguardGauntletsId,
+        hearthguardBootsId,
       });
       final machete = <String, Object?>{'itemId': _machete, 'quantity': 1};
       final spud = <String, Object?>{'itemId': _goldenSpud, 'quantity': 1};
@@ -286,16 +291,11 @@ void main() {
       expect(bazaarTotalLevelRefusal(withTotalLevel(_save(_database()), 200)), isNull);
     });
 
-    test('sums a stored payload the same way as totalLevel', () {
-      expect(bazaarPayloadTotalLevel(<String, Object?>{}), 0);
+    test('keeps the required total in one Dart constant', () {
+      expect(bazaarTotalLevelRequired, 200);
       expect(
-        bazaarPayloadTotalLevel(<String, Object?>{
-          'skills': <Map<String, Object?>>[
-            <String, Object?>{'skillId': 'SKL-0001', 'level': 10, 'xp': 0},
-            <String, Object?>{'skillId': 'SKL-0002', 'level': 190, 'xp': 0},
-          ],
-        }),
-        200,
+        bazaarTotalLevelTooLow,
+        'You need total level $bazaarTotalLevelRequired to use the bazaar.',
       );
     });
   });

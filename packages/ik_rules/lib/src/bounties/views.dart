@@ -32,7 +32,7 @@ class BountyRowView {
   final String title;
   final String description;
 
-  /// `3 / 10 · 120 gold (+60 first)`.
+  /// `3 / 10 · 120 points (+60 first)`.
   final String progressLine;
 
   /// `First completer: Rowan`, or null while nobody has turned one in.
@@ -61,7 +61,7 @@ String _rewardLine(BountyDefinition bounty, num progress) {
       ? ' (+${jsNumberToString(bounty.firstPlaceBonusGold)} first)'
       : '';
   return '${jsNumberToString(done)} / ${jsNumberToString(bounty.amount)} · '
-      '${jsNumberToString(bounty.rewardGold)} gold$bonus';
+      '${jsNumberToString(bounty.rewardGold)} points$bonus';
 }
 
 BountyRowView bountyRowView(
@@ -112,7 +112,7 @@ List<BountyRowView> bountyRows(
 }
 
 /// What the turn-in says once a backend has accepted it.
-String bountyClaimedNotice(num goldGained, bool firstCompleter) {
-  final gold = jsNumberToString(goldGained);
-  return firstCompleter ? 'First completer! +$gold gold.' : 'Bounty claimed. +$gold gold.';
+String bountyClaimedNotice(num pointsGained, bool firstCompleter) {
+  final points = jsNumberToString(pointsGained);
+  return firstCompleter ? 'First completer! +$points points.' : 'Bounty claimed. +$points points.';
 }

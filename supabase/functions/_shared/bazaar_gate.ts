@@ -12,7 +12,7 @@ export const BAZAAR_TOTAL_LEVEL_REQUIRED = 200
 export const BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE = 'total_level_too_low'
 
 /** Exact copy the Bazaar screen shows for [BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE]. */
-export const BAZAAR_TOTAL_LEVEL_TOO_LOW = 'You need total level 200 to use the bazaar.'
+export const BAZAAR_TOTAL_LEVEL_TOO_LOW = `You need total level ${BAZAAR_TOTAL_LEVEL_REQUIRED} to use the bazaar.`
 
 /**
  * Sum of skill levels on a stored save payload.

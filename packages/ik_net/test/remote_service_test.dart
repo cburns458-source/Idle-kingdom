@@ -1251,7 +1251,8 @@ void main() {
       });
       expect(first.ok, isTrue, reason: first.reason);
       expect(first.firstCompleter, isTrue);
-      expect(first.goldGained, bounty.rewardGold + bounty.firstPlaceBonusGold);
+      expect(first.goldGained, 0);
+      expect(first.pointsGained, bounty.rewardGold + bounty.firstPlaceBonusGold);
       expect(first.save!.bountyClaimedIds, contains(bounty.id));
 
       final again = await hero.gameCommand('bounty_turn_in', <String, Object?>{
@@ -1271,7 +1272,8 @@ void main() {
       });
       expect(second.ok, isTrue, reason: second.reason);
       expect(second.firstCompleter, isFalse);
-      expect(second.goldGained, bounty.rewardGold);
+      expect(second.goldGained, 0);
+      expect(second.pointsGained, bounty.rewardGold);
     },
   );
 

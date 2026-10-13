@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 62;
+const int saveVersion = 63;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -15,6 +15,9 @@ const String startingLocationId = 'LOC-0001';
 
 /// Base gold before race kit; race starters grant the real starting gold.
 const int startingGold = 0;
+
+/// Plaza points start at 0. Old saves migrate to 0 (grandfathered).
+const int startingPlazaPoints = 0;
 
 /// Level 1 Hunting Net — granted on older save migration only.
 const String startingHuntingToolId = 'ITEM-0108';
@@ -1105,6 +1108,7 @@ class PlayerSave {
     required this.equipmentPresets,
     required this.activeEquipmentPresetIndex,
     required this.gold,
+    required this.plazaPoints,
     required this.quests,
     required this.achievements,
     required this.statistics,
@@ -1210,6 +1214,7 @@ class PlayerSave {
       ),
       activeEquipmentPresetIndex: json['activeEquipmentPresetIndex'] as num,
       gold: json['gold'] as num,
+      plazaPoints: json['plazaPoints'] as num,
       quests: listOf(json['quests'], (Object? entry) => QuestProgress.fromJson(asJsonMap(entry))),
       achievements: listOf(
         json['achievements'],
@@ -1360,6 +1365,10 @@ class PlayerSave {
 
   /// Gold amount; itemized currency uses Config currency_item_id.
   final num gold;
+
+  /// Plaza points. Non-tradeable, not bankable, not on the Bazaar.
+  /// Missing on v62 and older; migrate to 0.
+  final num plazaPoints;
 
   final List<QuestProgress> quests;
 
@@ -1598,6 +1607,7 @@ class PlayerSave {
       'equipmentPresets': equipmentPresets.map((entry) => entry.toJson()).toList(),
       'activeEquipmentPresetIndex': activeEquipmentPresetIndex,
       'gold': gold,
+      'plazaPoints': plazaPoints,
       'quests': quests.map((entry) => entry.toJson()).toList(),
       'achievements': achievements.map((entry) => entry.toJson()).toList(),
       'statistics': statistics.toJson(),
@@ -1691,6 +1701,7 @@ class PlayerSave {
     List<EquipmentPreset>? equipmentPresets,
     num? activeEquipmentPresetIndex,
     num? gold,
+    num? plazaPoints,
     List<QuestProgress>? quests,
     List<AchievementProgress>? achievements,
     PlayerStatistics? statistics,
@@ -1783,6 +1794,7 @@ class PlayerSave {
       equipmentPresets: equipmentPresets ?? this.equipmentPresets,
       activeEquipmentPresetIndex: activeEquipmentPresetIndex ?? this.activeEquipmentPresetIndex,
       gold: gold ?? this.gold,
+      plazaPoints: plazaPoints ?? this.plazaPoints,
       quests: quests ?? this.quests,
       achievements: achievements ?? this.achievements,
       statistics: statistics ?? this.statistics,

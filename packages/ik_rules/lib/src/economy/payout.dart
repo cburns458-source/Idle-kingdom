@@ -1,8 +1,10 @@
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
+import 'plaza.dart';
 
-/// Reward kinds the shared payout can pay. Plaza points (ECO-03) add a second kind later.
+/// Reward kinds the shared payout can pay.
 const String rewardTypeGold = 'gold';
+const String rewardTypePlazaPoints = 'plaza_points';
 
 class Reward {
   const Reward({required this.type, required this.amount});
@@ -18,16 +20,16 @@ class RewardPayout {
   final num paid;
 }
 
-num _goldAmount(num amount) {
+num _wholeAmount(num amount) {
   final paid = jsNumber(amount).floor();
   return paid < 0 ? 0 : paid;
 }
 
 /// Pays one reward into a save. Ranked PvP and bounty turn-in both go through
-/// this so a later plaza-points swap only changes the gold kind.
+/// this. Plaza points round down; gold is unchanged by a points payout.
 RewardPayout payReward(PlayerSave save, Reward reward) {
+  final paid = _wholeAmount(reward.amount);
   if (reward.type == rewardTypeGold) {
-    final paid = _goldAmount(reward.amount);
     return RewardPayout(
       save: save.copyWith(
         gold: save.gold + paid,
@@ -35,6 +37,22 @@ RewardPayout payReward(PlayerSave save, Reward reward) {
           values: <String, num>{
             ...save.statistics.values,
             'gold_earned': jsNumber(save.statistics.values['gold_earned'] ?? 0) + paid,
+          },
+        ),
+      ),
+      paid: paid,
+    );
+  }
+  if (reward.type == rewardTypePlazaPoints) {
+    final next = plazaPointsOf(save) + paid;
+    return RewardPayout(
+      save: save.copyWith(
+        plazaPoints: next,
+        statistics: PlayerStatistics(
+          values: <String, num>{
+            ...save.statistics.values,
+            'plaza_points_earned':
+                jsNumber(save.statistics.values['plaza_points_earned'] ?? 0) + paid,
           },
         ),
       ),

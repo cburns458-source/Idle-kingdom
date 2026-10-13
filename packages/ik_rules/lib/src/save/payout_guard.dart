@@ -1,3 +1,4 @@
+import '../economy/plaza.dart';
 import 'generated/save_models.dart';
 
 num _counter(num value) => value < 0 ? 0 : value.floor();
@@ -6,6 +7,7 @@ num _counter(num value) => value < 0 ? 0 : value.floor();
 /// relative to the hosted copy.
 bool clientSaveRaisesPayouts(PlayerSave server, PlayerSave client) {
   if (client.gold > server.gold) return true;
+  if (plazaPointsOf(client) > plazaPointsOf(server)) return true;
   final allowed = server.bountyClaimedIds.toSet();
   if (client.bountyClaimedIds.any((id) => !allowed.contains(id))) return true;
   if (_counter(client.rankedPvpWins) > _counter(server.rankedPvpWins)) return true;
@@ -24,6 +26,8 @@ PlayerSave replaceUnauthorizedPayouts(PlayerSave server, PlayerSave client) {
   final allowed = server.bountyClaimedIds.toSet();
   var gold = client.gold;
   if (client.gold > server.gold) gold = server.gold;
+  var plazaPoints = plazaPointsOf(client);
+  if (plazaPointsOf(client) > plazaPointsOf(server)) plazaPoints = plazaPointsOf(server);
   var rankedPvpWins = client.rankedPvpWins;
   if (_counter(client.rankedPvpWins) > _counter(server.rankedPvpWins)) {
     rankedPvpWins = server.rankedPvpWins;
@@ -44,6 +48,7 @@ PlayerSave replaceUnauthorizedPayouts(PlayerSave server, PlayerSave client) {
   }
   return client.copyWith(
     gold: gold,
+    plazaPoints: plazaPoints,
     bountyClaimedIds: client.bountyClaimedIds.where(allowed.contains).toList(),
     rankedPvpWins: rankedPvpWins,
     rankedPvpLosses: rankedPvpLosses,

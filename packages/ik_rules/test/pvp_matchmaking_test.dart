@@ -34,7 +34,9 @@ void main() {
     expect(afterMidnight.paid, isTrue);
     expect(afterMidnight.code, isNull);
     expect(afterMidnight.winsRemaining, rankedPvpDailyCap - 1);
-    expect(afterMidnight.save.gold, sixth.save.gold + rankedPvpWinGold);
+    expect(afterMidnight.save.gold, sixth.save.gold);
+    expect(afterMidnight.pointsGained, 25);
+    expect(afterMidnight.save.plazaPoints, sixth.save.plazaPoints + 25);
     expect(afterMidnight.save.rankedPvpFightsToday, 1);
     expect(afterMidnight.save.rankedPvpDayKey, '2026-08-14');
   });

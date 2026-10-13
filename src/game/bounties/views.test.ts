@@ -44,7 +44,7 @@ describe('bounty rows', () => {
   it('counts what is done against what is asked', () => {
     const save = { ...startedSave(), bountyProgress: { [BOUNTY.id]: 4 } }
     const row = bountyRowView(save, BOUNTY, null, true, NOW)
-    expect(row.progressLine).toBe('4 / 10 · 120 gold (+60 first)')
+    expect(row.progressLine).toBe('4 / 10 · 120 points (+60 first)')
     expect(row.actionLabel).toBe('In progress')
     expect(row.canTurnIn).toBe(false)
     expect(row.firstCompleterLine).toBeNull()
@@ -53,14 +53,14 @@ describe('bounty rows', () => {
   it('never counts past the objective', () => {
     const save = { ...startedSave(), bountyProgress: { [BOUNTY.id]: 99 } }
     expect(bountyRowView(save, BOUNTY, null, true, NOW).progressLine).toBe(
-      '10 / 10 · 120 gold (+60 first)',
+      '10 / 10 · 120 points (+60 first)',
     )
   })
 
   it('leaves the bonus out when a bounty has none', () => {
     const save = startedSave()
     const plain = { ...BOUNTY, firstPlaceBonusGold: 0 }
-    expect(bountyRowView(save, plain, null, true, NOW).progressLine).toBe('0 / 10 · 120 gold')
+    expect(bountyRowView(save, plain, null, true, NOW).progressLine).toBe('0 / 10 · 120 points')
   })
 
   it('offers the turn-in once the objective is met', () => {
@@ -112,7 +112,7 @@ describe('bounty board wording', () => {
   })
 
   it('celebrates a first turn-in and acknowledges the rest', () => {
-    expect(bountyClaimedNotice(180, true)).toBe('First completer! +180 gold.')
-    expect(bountyClaimedNotice(120, false)).toBe('Bounty claimed. +120 gold.')
+    expect(bountyClaimedNotice(180, true)).toBe('First completer! +180 points.')
+    expect(bountyClaimedNotice(120, false)).toBe('Bounty claimed. +120 points.')
   })
 })

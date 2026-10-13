@@ -1017,6 +1017,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 62,
     }),
   },
+  {
+    fromVersion: 62,
+    toVersion: 63,
+    migrate: (save) => ({
+      ...save,
+      plazaPoints: Math.max(
+        0,
+        Math.floor(Number((save as PlayerSave & { plazaPoints?: unknown }).plazaPoints) || 0),
+      ),
+      saveVersion: 63,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

@@ -15,6 +15,7 @@ import {
   equippedEnchantmentDamageRangeMultiplier,
   equippedEnchantmentMaxHpBonusPercent,
 } from '../projects/enchantments'
+import { hearthguardSetMaxHpBonusPercent } from '../economy/plaza'
 import { raceMaxHpMultiplier } from '../races/races'
 import type { AttackStyle, PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
@@ -362,7 +363,8 @@ export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
   const levelMult = combatLevelHpMultiplier(save)
   const raceMult = raceMaxHpMultiplier(db, save)
   const enchantHpMult = 1 + equippedEnchantmentMaxHpBonusPercent(db, save) / 100
-  return Math.max(1, scaleStat(base + bonus, levelMult * raceMult * enchantHpMult))
+  const setHpMult = 1 + hearthguardSetMaxHpBonusPercent(save) / 100
+  return Math.max(1, scaleStat(base + bonus, levelMult * raceMult * enchantHpMult * setHpMult))
 }
 
 export function playerBaseMaxHp(db: GameDatabase, save: PlayerSave): number {

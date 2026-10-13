@@ -934,6 +934,11 @@ class RemoteMultiplayerService implements MultiplayerService {
         save,
         body['action'] == 'sync' ? CloudSyncSource.downloaded : CloudSyncSource.uploaded,
         goldGained: data['goldGained'] is num ? data['goldGained'] as num : null,
+        pointsGained: plazaResponseInt(data['pointsGained']),
+        plazaPoints: plazaResponseInt(
+          data['plazaPoints'] ??
+              (data['save'] is Map ? (data['save'] as Map)['plazaPoints'] : null),
+        ),
         firstCompleter: data['firstCompleter'] is bool ? data['firstCompleter'] as bool : null,
         code: data['code'] is String ? data['code'] as String : null,
         fightId: data['fightId'] is String ? data['fightId'] as String : null,
