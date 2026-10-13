@@ -11,7 +11,6 @@ import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { bribeForQuest, talkWithQuestNpc } from '../npcs/conversation'
 import { createNewSave } from '../save/saveStore'
 import { courtyardBotanyUnlocked } from '../timers/locationTimers'
-import { applyQuestTalkProgress } from './progress'
 import type { PlayerSave } from '../save/types'
 import { applyGameCommand, type GameCommandResult } from '../server/authority'
 import { latchStep } from './steps'
@@ -327,21 +326,22 @@ describe('no_room is all-or-nothing', () => {
 
   it('keeps The Grand Feast unpaid: no Cooking XP, no Courtyard plot, deliveries and quest state untouched', () => {
     let save: PlayerSave = { ...createNewSave(contentDb, START_MS), currentLocationId: 'LOC-0016' }
-    const accepted = acceptQuest(contentDb, save, 'QST-0001')
+    const accepted = chooseDialogue(contentDb, save, 'DLG-0011', 'DNODE-0018', 'DCH-0023')
     if (!accepted.ok) throw new Error(accepted.reason)
-    save = applyQuestTalkProgress(contentDb, accepted.save, 'NPC-0001')
-    save = addItemToInventory(addItemToInventory(save, BAKED_POTATO, 11), COOKED_PERCH, 11)
-    save = fillBag(save, 0)
+    save = addItemToInventory(addItemToInventory(accepted.save, BAKED_POTATO, 11), COOKED_PERCH, 11)
+    const handedIn = chooseDialogue(contentDb, save, 'DLG-0012', 'DNODE-0020', 'DCH-0026')
+    if (!handedIn.ok) throw new Error(handedIn.reason)
+    save = fillBag(handedIn.save, 0)
     const before = paidState(save, 'QST-0001')
     expect(before.courtyard).toBe(false)
 
-    const result = completeQuest(contentDb, save, 'QST-0001')
+    const result = chooseDialogue(contentDb, save, 'DLG-0012', 'DNODE-0022', 'DCH-0031')
     expect(result).toMatchObject({ ok: false, code: 'no_room', noRoom: { slotsNeeded: 1, slotsFree: 0 } })
+    expect(result.save).toBe(save)
     expect(paidState(save, 'QST-0001')).toEqual(before)
 
-    const paid = completeQuest(contentDb, fillBag(save, 1), 'QST-0001')
-    expect(paid.ok).toBe(true)
-    if (!paid.ok) return
+    const paid = chooseDialogue(contentDb, fillBag(save, 1), 'DLG-0012', 'DNODE-0022', 'DCH-0031')
+    expect(paid.ok, paid.reason).toBe(true)
     expect(getSkillProgress(paid.save, COOKING).xp).toBe(before.cookingXp + 10000)
     expect(courtyardBotanyUnlocked(paid.save)).toBe(true)
     expect(bagCount(paid.save, BAKED_POTATO)).toBe(1)

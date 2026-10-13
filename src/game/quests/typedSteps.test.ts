@@ -64,7 +64,14 @@ const rawDatabase = {
   ],
 }
 const { launch: db } = prepareDatabase(rawDatabase)
-const { launch: untypedDb } = prepareDatabase(content)
+const { launch: untypedDb } = prepareDatabase({
+  ...content,
+  QuestSteps: content.QuestSteps!.map((row) => {
+    if (!TYPED[row['Step ID'] as string]) return row
+    const { 'Step Type': _type, 'Step Items': _items, 'Step NPC': _npc, ...untyped } = row
+    return untyped
+  }),
+})
 const START_MS = Date.parse('2026-01-01T00:00:00.000Z')
 
 function withQuest(questId: string, counters: Record<string, number>, save?: PlayerSave): PlayerSave {

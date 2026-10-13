@@ -80,7 +80,22 @@ void main() {
 
   setUpAll(() {
     db = _typedDatabase();
-    untypedDb = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
+    final base = asJsonMap(contentDatabaseJson());
+    untypedDb = filterLaunchContent(
+      assertGameDatabaseShape(<String, Object?>{
+        ...base,
+        'QuestSteps': [
+          for (final raw in _rows(base, 'QuestSteps'))
+            if (raw case final Map<String, Object?> row)
+              _typed.containsKey(row['Step ID'])
+                  ? (Map<String, Object?>.of(row)
+                      ..remove('Step Type')
+                      ..remove('Step Items')
+                      ..remove('Step NPC'))
+                  : row,
+        ],
+      }),
+    );
   });
 
   PlayerSave withQuest(String questId, Map<String, num> counters, {String status = 'active'}) {
