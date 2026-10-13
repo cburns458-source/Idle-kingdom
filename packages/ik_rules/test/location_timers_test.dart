@@ -54,24 +54,24 @@ void main() {
     var save = createNewSave(db, 0);
     expect(save.discoveredTimerSpotIds, isEmpty);
 
-    save = discoverTimerSpotsForLocation(save, 'LOC-0001');
+    save = discoverTimerSpotsForLocation(db, save, 'LOC-0001');
     expect(save.discoveredTimerSpotIds, isEmpty);
 
     save = save.copyWith(
       quests: const [QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1)],
     );
-    save = discoverTimerSpotsForLocation(save, 'LOC-0001');
+    save = discoverTimerSpotsForLocation(db, save, 'LOC-0001');
     expect(save.discoveredTimerSpotIds, ['botany:LOC-0001']);
-    expect(identical(discoverTimerSpotsForLocation(save, 'LOC-0001'), save), isTrue);
+    expect(identical(discoverTimerSpotsForLocation(db, save, 'LOC-0001'), save), isTrue);
 
-    save = discoverTimerSpotsForLocation(save, 'LOC-0009');
+    save = discoverTimerSpotsForLocation(db, save, 'LOC-0009');
     expect(save.discoveredTimerSpotIds, contains('botany:LOC-0009'));
     expect(save.discoveredTimerSpotIds, isNot(contains('hunting_trap:LOC-0009')));
 
-    save = discoverTimerSpotsForLocation(save, 'LOC-0003');
+    save = discoverTimerSpotsForLocation(db, save, 'LOC-0003');
     expect(save.discoveredTimerSpotIds, contains('fishing_pot:LOC-0003'));
 
-    expect(identical(discoverTimerSpotsForLocation(save, 'LOC-9999'), save), isTrue);
+    expect(identical(discoverTimerSpotsForLocation(db, save, 'LOC-9999'), save), isTrue);
   });
 
   test('plant and place discover their spots', () {
@@ -366,7 +366,7 @@ void main() {
       currentLocationId: 'LOC-0001',
       inventory: const [InventoryStack(itemId: 'ITEM-0324', quantity: 2)],
     );
-    expect(farmBotanyUnlocked(save), isFalse);
+    expect(farmBotanyUnlocked(db, save), isFalse);
     expect(canPlantBotanySeed(db, save, 'ITEM-0324').ok, isFalse);
 
     save = save.copyWith(
@@ -379,7 +379,7 @@ void main() {
         ),
       ],
     );
-    expect(farmBotanyUnlocked(save), isTrue);
+    expect(farmBotanyUnlocked(db, save), isTrue);
     expect(canPlantBotanySeed(db, save, 'ITEM-0324', plantQuantity: 2).ok, isTrue);
   });
 

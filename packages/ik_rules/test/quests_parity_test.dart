@@ -123,7 +123,7 @@ void main() {
                     'rewards': result.rewards,
                     'pendingSkillXp': result.pendingSkillXp,
                   }
-                : <String, Object?>{'ok': false, 'reason': result.reason},
+                : result.failureJson(),
           ),
           isNull,
         );

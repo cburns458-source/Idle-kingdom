@@ -20,6 +20,7 @@ import {
 import { donateToGuildHall, payGuildHallDebt, withdrawFromGuildHall, type GuildHallState } from '../guild/economy'
 import { canPayGuildDebt } from '../guild/hall'
 import { depositToBank, withdrawFromBank } from '../inventory/bank'
+import type { NoRoom } from '../inventory/fit'
 import { sellInventoryIndexes, sellInventoryQuantities } from '../inventory/sell'
 import { claimMailAttachments, markMailRead } from '../mail/mail'
 import { confirmTannerJob } from '../npcs/tanner'
@@ -35,7 +36,7 @@ import {
   talkWithQuestNpc,
 } from '../npcs/conversation'
 import { completeSpecialProject } from '../projects/engine'
-import { completeQuest } from '../quests/quests'
+import { completeQuest, type QuestFailure } from '../quests/quests'
 import { applyQuestInspectProgress } from '../quests/progress'
 import { assignRace } from '../races/assignRace'
 import { createNewSave, parseSave } from '../save/saveStore'
@@ -134,7 +135,7 @@ export type GameCommandArgs = Record<string, unknown>
 export type GameCommandResult =
   | { ok: true; save: PlayerSave; hall?: GuildHallState; goldCost?: number; view?: DialogueView | null }
   | { ok: false; reason: string }
-  | { ok: false; reason: string; code: string; favourites: DialogueItemDelta[] }
+  | { ok: false; reason: string; code: string; favourites?: DialogueItemDelta[]; noRoom?: NoRoom }
   | { ok: false; reason: string; catchingUp: true; save: PlayerSave }
 
 export type Phase2SyncResult = {
@@ -261,6 +262,26 @@ function unwrap<T extends { ok: true; save: PlayerSave } | { ok: false; reason: 
   result: T,
 ): GameCommandResult {
   return result.ok ? ok(result.save) : failed(result.reason)
+}
+
+/** Like [unwrap], but keeps a quest refusal's code (`no_room`, `confirm_favourites`) and its data. */
+function unwrapQuest(result: { ok: true; save: PlayerSave } | QuestFailure): GameCommandResult {
+  if (result.ok) return ok(result.save)
+  if (!result.code) return failed(result.reason)
+  return {
+    ok: false,
+    reason: result.reason,
+    code: result.code,
+    ...(result.favourites ? { favourites: result.favourites } : {}),
+    ...(result.noRoom ? { noRoom: result.noRoom } : {}),
+  }
+}
+
+/** `useFavourites` is per request only: never written to the save, so a yes cannot carry over. */
+function parseUseFavourites(args: GameCommandArgs): { ok: true; value: boolean } | { ok: false } {
+  const raw = args.useFavourites
+  if (raw !== undefined && typeof raw !== 'boolean') return { ok: false }
+  return { ok: true, value: raw === true }
 }
 
 export function runPhase2Sync(
@@ -556,12 +577,14 @@ function applyExistingCommand(
     case 'quest_bribe': {
       const questId = asString(args.questId)
       if (!questId) return failed('Missing quest.')
-      return unwrap(bribeForQuest(db, save, questId))
+      return unwrapQuest(bribeForQuest(db, save, questId))
     }
     case 'quest_complete': {
       const questId = asString(args.questId)
       if (!questId) return failed('Missing quest.')
-      return unwrap(completeQuest(db, save, questId))
+      const useFavourites = parseUseFavourites(args)
+      if (!useFavourites.ok) return failed('useFavourites must be true or false.')
+      return unwrapQuest(completeQuest(db, save, questId, { useFavourites: useFavourites.value }))
     }
     case 'quest_assign_skill_xp': {
       const skillId = asString(args.skillId)
@@ -580,17 +603,17 @@ function applyExistingCommand(
       const nodeId = asString(args.nodeId)
       const choiceId = asString(args.choiceId)
       if (!dialogueId || !nodeId || !choiceId) return failed('Missing dialogue choice.')
-      // Per request only: never written to the save, so a yes cannot carry over.
-      const useFavourites = args.useFavourites
-      if (useFavourites !== undefined && typeof useFavourites !== 'boolean') {
-        return failed('useFavourites must be true or false.')
-      }
+      const useFavourites = parseUseFavourites(args)
+      if (!useFavourites.ok) return failed('useFavourites must be true or false.')
       const chosen = chooseDialogue(db, save, dialogueId, nodeId, choiceId, {
-        useFavourites: useFavourites === true,
+        useFavourites: useFavourites.value,
       })
       if (chosen.ok) return ok(chosen.save)
       if (chosen.code === 'confirm_favourites') {
         return { ok: false, reason: chosen.reason, code: chosen.code, favourites: chosen.favourites }
+      }
+      if (chosen.code === 'no_room' && chosen.noRoom) {
+        return { ok: false, reason: chosen.reason, code: chosen.code, noRoom: chosen.noRoom }
       }
       return failed(chosen.reason)
     }

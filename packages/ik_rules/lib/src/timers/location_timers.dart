@@ -13,6 +13,7 @@ import '../production/recipes.dart';
 import '../loot/drop_chance.dart';
 import '../quests/progress.dart';
 import '../quests/quests.dart';
+import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
 import '../trackers/trackers.dart';
 
@@ -379,7 +380,7 @@ String timerSpotKey(String kind, String locationId) => '$kind:$locationId';
 
 /// Marks Botany / fishing pot spots at [locationId] as discovered when the
 /// location supports them. Safe to call on plant, place, or travel arrival.
-PlayerSave discoverTimerSpotsForLocation(PlayerSave save, String locationId) {
+PlayerSave discoverTimerSpotsForLocation(GameDatabase db, PlayerSave save, String locationId) {
   final discovered = <String>{...save.discoveredTimerSpotIds};
   var changed = false;
   void add(String kind) {
@@ -389,7 +390,7 @@ PlayerSave discoverTimerSpotsForLocation(PlayerSave save, String locationId) {
     changed = true;
   }
 
-  if (botanyPatchLocations.contains(locationId) && botanyPatchUnlocked(save, locationId)) {
+  if (botanyPatchLocations.contains(locationId) && botanyPatchUnlocked(db, save, locationId)) {
     add('botany');
   }
   if (fishingTrapLocations.contains(locationId)) add('fishing_pot');
@@ -414,16 +415,26 @@ bool courtyardBotanyUnlocked(PlayerSave save) {
   return getQuestProgress(save, grandFeastQuestId).status == 'completed';
 }
 
-bool farmBotanyUnlocked(PlayerSave save) {
+/// Green Thumb finished, Fennel heard through the panel, or a Green Thumb
+/// dialogue Talk step with Fennel done.
+bool farmBotanyUnlocked(GameDatabase db, PlayerSave save) {
   final progress = getQuestProgress(save, firstPlantingQuestId);
   if (progress.status == 'completed') return true;
-  return (progress.counters ?? const <String, num>{}).keys.any(
+  final heard = (progress.counters ?? const <String, num>{}).keys.any(
     (key) => key == 'talk:$fennelNpcId' || key.startsWith('talk:$fennelNpcId:'),
+  );
+  if (heard) return true;
+  if (progress.status != 'active') return false;
+  return getQuestSteps(db, firstPlantingQuestId).any(
+    (step) =>
+        dialogueStepType(step) == 'Talk' &&
+        step.raw['Step NPC'] == fennelNpcId &&
+        isStepComplete(db, save, firstPlantingQuestId, step.notes ?? '', step.stepId),
   );
 }
 
-bool botanyPatchUnlocked(PlayerSave save, String locationId) {
-  if (locationId == farmLocationId) return farmBotanyUnlocked(save);
+bool botanyPatchUnlocked(GameDatabase db, PlayerSave save, String locationId) {
+  if (locationId == farmLocationId) return farmBotanyUnlocked(db, save);
   return true;
 }
 
@@ -447,7 +458,7 @@ bool locationHasBotanyPatch(String locationId) => botanyPatchLocations.contains(
       reason: 'Complete The Grand Feast to unlock the Courtyard plot.',
     );
   }
-  if (!botanyPatchUnlocked(save, loc)) {
+  if (!botanyPatchUnlocked(db, save, loc)) {
     return (ok: false, quantity: 0, reason: 'Speak with Fennel before using this plot.');
   }
   if (timerAtLocationKind(save, loc, 'botany') != null) {
@@ -601,6 +612,7 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
     usedCompost: usedCompost ? true : null,
   );
   var next = discoverTimerSpotsForLocation(
+    db,
     removed.copyWith(
       locationTimers: [..._withoutLocationTimerKind(removed.locationTimers, loc, 'botany'), timer],
     ),
@@ -803,7 +815,7 @@ int fishingPotUsesToday(PlayerSave save, String locationId, {required num nowMs}
       loc: '${fishingPotUtcDayKey(now)}:${fishingPotUsesToday(removed, loc, nowMs: now) + 1}',
     },
   );
-  return (ok: true, save: discoverTimerSpotsForLocation(next, loc), reason: '');
+  return (ok: true, save: discoverTimerSpotsForLocation(db, next, loc), reason: '');
 }
 
 /// Pot-fishing catches: Goblin Camp freshwater vs Docks saltwater.

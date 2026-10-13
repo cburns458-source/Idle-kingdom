@@ -7,15 +7,19 @@
  */
 
 import type { GameDatabase } from '../data/types'
+import { bagCount } from '../inventory/bag'
 import { getQuestProgress } from '../quests/quests'
 import {
   dialogueStepType,
   getQuestStep,
   handInCounterKey,
   isStepLatched,
+  isStepPassed,
   parseStepItems,
 } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
+
+export { bagCount, takeFromBag, unfavouriteCount } from '../inventory/bag'
 
 export type StepProgressMode = 'show' | 'handIn'
 
@@ -38,46 +42,6 @@ export interface StepProgressGroup {
   items: StepProgressLine[]
 }
 
-/** Unenchanted bag quantity of [itemId]. */
-export function bagCount(save: PlayerSave, itemId: string): number {
-  let total = 0
-  for (const stack of save.inventory) {
-    if (stack.itemId === itemId && !stack.enchantmentId) total += stack.quantity
-  }
-  return total
-}
-
-/** Unenchanted bag quantity of [itemId] outside hearted (favourited) stacks. */
-export function unfavouriteCount(save: PlayerSave, itemId: string): number {
-  let total = 0
-  for (const stack of save.inventory) {
-    if (stack.itemId === itemId && !stack.enchantmentId && stack.favorite !== true) total += stack.quantity
-  }
-  return total
-}
-
-/**
- * Removes [quantity] unenchanted [itemId] from the bag, unhearted stacks first.
- * Returns null when the bag holds fewer.
- */
-export function takeFromBag(save: PlayerSave, itemId: string, quantity: number): PlayerSave | null {
-  if (quantity <= 0) return save
-  if (bagCount(save, itemId) < quantity) return null
-  const inventory = save.inventory.map((stack) => ({ ...stack }))
-  let remaining = quantity
-  for (const favoritePass of [false, true]) {
-    for (const stack of inventory) {
-      if (remaining <= 0) break
-      if (stack.itemId !== itemId || stack.enchantmentId) continue
-      if ((stack.favorite === true) !== favoritePass) continue
-      const taken = Math.min(stack.quantity, remaining)
-      stack.quantity -= taken
-      remaining -= taken
-    }
-  }
-  return { ...save, inventory: inventory.filter((stack) => stack.quantity > 0) }
-}
-
 /** Per-item lines for a Show or HandIn step; empty for any other step. */
 export function stepProgressView(
   db: GameDatabase,
@@ -98,7 +62,7 @@ export function stepProgressGroup(
   const type = dialogueStepType(step)
   if (type !== 'Show' && type !== 'HandIn') return null
   const mode: StepProgressMode = type === 'Show' ? 'show' : 'handIn'
-  const done = isStepLatched(save, questId, stepId)
+  const done = isStepLatched(save, questId, stepId) || isStepPassed(db, save, questId, stepId)
   const counters = getQuestProgress(save, questId).counters ?? {}
   const items = parseStepItems(step?.['Step Items']).map((need) => {
     const kept = Number(counters[handInCounterKey(stepId, need.itemId)] ?? 0)

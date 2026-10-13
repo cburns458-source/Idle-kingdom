@@ -201,11 +201,38 @@ export function isStepComplete(
   stepId?: string,
 ): boolean {
   if (stepId && isStepLatched(save, questId, stepId)) return true
-  if (stepId && dialogueStepType(getQuestStep(db, questId, stepId))) return false
+  if (stepId && dialogueStepType(getQuestStep(db, questId, stepId))) return isStepPassed(db, save, questId, stepId)
   if (isAskAroundSkipped(db, save, questId, notes)) return true
   const lines = stepProgressLines(db, save, questId, notes, stepId)
   if (lines.length === 0) return true
   return lines.every((line) => line.current >= line.required)
+}
+
+/** Progress lines that read the bag right now rather than a saved counter. */
+const LIVE_INVENTORY_LINE = /^(?:deliver|hold):/
+
+/**
+ * Whether the quest is already past [stepId]: a later step is latched, holds a
+ * counter scoped to it (a talk or a partial hand-in), or is a Notes-driven step
+ * whose saved-counter objectives are met. Lets saves from before a step was
+ * typed Show / Talk / HandIn skip it; nothing is written.
+ */
+export function isStepPassed(db: GameDatabase, save: PlayerSave, questId: string, stepId: string): boolean {
+  const steps = getQuestSteps(db, questId)
+  const index = steps.findIndex((step) => step['Step ID'] === stepId)
+  if (index < 0) return false
+  const counters = getQuestProgress(save, questId).counters ?? {}
+  const keys = Object.keys(counters).filter((key) => Number(counters[key]) > 0)
+  for (const later of steps.slice(index + 1)) {
+    const laterId = later['Step ID']
+    if (keys.some((key) => key.endsWith(`:${laterId}`) || key.startsWith(`handIn:${laterId}:`))) return true
+    if (dialogueStepType(later)) continue
+    const lines = stepProgressLines(db, save, questId, later.Notes ?? '', laterId).filter(
+      (line) => !LIVE_INVENTORY_LINE.test(line.key),
+    )
+    if (lines.length > 0 && lines.every((line) => line.current >= line.required)) return true
+  }
+  return false
 }
 
 export function getCurrentStepIndex(
@@ -298,7 +325,8 @@ export function applyQuestStepUnlocks(db: GameDatabase, save: PlayerSave): Playe
         latching = false
         continue
       }
-      if (latching && stepId) next = latchStep(next, questId, stepId)
+      // Typed steps latch only through their dialogue action, never by being passed.
+      if (latching && stepId && !dialogueStepType(step)) next = latchStep(next, questId, stepId)
       for (const locationId of parseNotesObjectives(step.Notes ?? '').unlockLocationIds) {
         const updated = unlockLocation({ unlockedLocationIds: unlocked }, locationId)
         if (updated !== unlocked) {

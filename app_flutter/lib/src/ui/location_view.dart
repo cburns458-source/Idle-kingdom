@@ -852,7 +852,7 @@ class _LocationViewState extends State<LocationView> {
       locationSupports:
           (kind == null || kind == 'botany') &&
           locationHasBotanyPatch(locationId) &&
-          botanyPatchUnlocked(controller.save, locationId),
+          botanyPatchUnlocked(controller.db, controller.save, locationId),
       idleCard: () {
         final courtyardLocked =
             locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save);
@@ -938,7 +938,7 @@ class _LocationViewState extends State<LocationView> {
 
   List<Widget> _compostCollect(String locationId) {
     if (!locationHasCompostCollect(locationId)) return const [];
-    if (!botanyPatchUnlocked(controller.save, locationId)) return const [];
+    if (!botanyPatchUnlocked(controller.db, controller.save, locationId)) return const [];
     if (locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save)) {
       return const [];
     }
