@@ -31,10 +31,12 @@ flutter pub get
 if printf '%s' "${SUPABASE_URL:-}" | grep -q 'https://\|supabase'; then
   SUPABASE_URL="$(printf '%s' "$SUPABASE_URL" | tr -d '\r\n[:space:]')"
 else
+  SUPABASE_URL="${SUPABASE_URL:-}"
   SUPABASE_URL="${SUPABASE_URL%%$'\n'*}"
   SUPABASE_URL="${SUPABASE_URL%%$'\r'*}"
   SUPABASE_URL="$(printf '%s' "$SUPABASE_URL" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
 fi
+SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY:-}"
 SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\n'*}"
 SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\r'*}"
 SUPABASE_ANON_KEY="$(printf '%s' "$SUPABASE_ANON_KEY" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
