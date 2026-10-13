@@ -7,12 +7,17 @@ delete from public.player_saves;
 delete from public.profiles;
 delete from auth.users;
 
+-- The gate may already be on this database (create or replace is re-run
+-- safe). Drop the insert trigger so the grandfathered 199 sell can land,
+-- then re-apply the migration below.
+drop trigger if exists bazaar_orders_require_total_level on public.bazaar_orders;
+
 insert into auth.users (id) values
   ('11111111-1111-1111-1111-111111111111'),
   ('22222222-2222-2222-2222-222222222222');
 
--- Low: total 199. High: total 200. Grandfathered sell is inserted before the
--- trigger exists so the test can prove fills and collects still run.
+-- Low: total 199. High: total 200. Grandfathered sell is inserted after the
+-- trigger is dropped so the test can prove fills and collects still run.
 insert into public.player_saves (user_id, save_version, updated_at, payload) values
   ('11111111-1111-1111-1111-111111111111', 7, '2026-01-01T00:00:00Z',
    '{"saveVersion":7,"updatedAt":"2026-01-01T00:00:00.000Z","gold":0,"inventory":[{"itemId":"ITEM-0100","quantity":60}],"skills":[{"skillId":"SKL-0001","level":199,"xp":0}]}'),
@@ -28,11 +33,13 @@ values
 \echo '--- apply ECO-01 ---'
 \i supabase/migrations/20261013180000_eco01_bazaar_total_level_gate.sql
 
-\echo '--- helper sums skill levels ---'
+\echo '--- helper floors each skill level then sums ---'
 select public.bazaar_payload_total_level(
          '{"skills":[{"level":199}]}'::jsonb) as at_199,
        public.bazaar_payload_total_level(
          '{"skills":[{"level":100},{"level":100}]}'::jsonb) as at_200,
+       public.bazaar_payload_total_level(
+         '{"skills":[{"level":99.9},{"level":99.9}]}'::jsonb) as floors_198,
        public.bazaar_payload_total_level('{}'::jsonb) as missing,
        public.bazaar_user_total_level('11111111-1111-1111-1111-111111111111') as owner_199,
        public.bazaar_user_total_level('22222222-2222-2222-2222-222222222222') as owner_200;
@@ -44,6 +51,9 @@ begin
   end if;
   if public.bazaar_payload_total_level('{"skills":[{"level":100},{"level":100}]}'::jsonb) <> 200 then
     raise exception '200 sum was wrong';
+  end if;
+  if public.bazaar_payload_total_level('{"skills":[{"level":99.9},{"level":99.9}]}'::jsonb) <> 198 then
+    raise exception 'each skill level must floor before the sum';
   end if;
   if public.bazaar_payload_total_level('{}'::jsonb) <> 0 then
     raise exception 'missing skills should be 0';

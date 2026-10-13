@@ -1,10 +1,23 @@
 -- ECO-01: new Bazaar offers require total level 200.
 --
--- Total level is the sum of every skill level on the owner's stored save,
--- matching `totalLevel` in `src/game/skills/totals.ts` and
--- `packages/ik_rules/lib/src/skills/totals.dart`. This only rejects INSERT
--- of a new `bazaar_orders` row. Updates (fills), cancellations, and
--- collection are not gated, so offers that already exist keep running.
+-- Total level is the floor of every skill level on the owner's stored save,
+-- then the sum of those floors, matching `totalLevelFromPayload` in
+-- `supabase/functions/_shared/bazaar_gate.ts` and `totalLevel` in
+-- `src/game/skills/totals.ts` / `packages/ik_rules/lib/src/skills/totals.dart`.
+-- This only rejects INSERT of a new `bazaar_orders` row. Updates (fills),
+-- cancellations, and collection are not gated, so offers that already exist
+-- keep running.
+--
+-- Re-run safe: functions are CREATE OR REPLACE; the trigger is dropped then
+-- recreated. Applying this file again on a database that already has it
+-- replaces the helper bodies (including the per-level floor) and leaves
+-- existing rows alone.
+--
+-- Rollback (do not run as part of apply):
+--   drop trigger if exists bazaar_orders_require_total_level on public.bazaar_orders;
+--   drop function if exists public.bazaar_orders_require_total_level();
+--   drop function if exists public.bazaar_user_total_level(uuid);
+--   drop function if exists public.bazaar_payload_total_level(jsonb);
 
 create or replace function public.bazaar_payload_total_level(p_payload jsonb)
 returns integer
@@ -13,7 +26,7 @@ immutable
 set search_path = public
 as $$
   select coalesce((
-    select sum(coalesce((skill->>'level')::numeric, 0))::integer
+    select sum(floor(coalesce((skill->>'level')::numeric, 0)))::integer
       from jsonb_array_elements(
         case
           when jsonb_typeof(p_payload -> 'skills') = 'array' then p_payload -> 'skills'
@@ -24,7 +37,7 @@ as $$
 $$;
 
 comment on function public.bazaar_payload_total_level(jsonb) is
-  'Sum of skill levels on a save payload, matching the game totalLevel helper.';
+  'Floor of each skill level, then the sum, matching the game totalLevel helper.';
 
 create or replace function public.bazaar_user_total_level(p_user_id uuid)
 returns integer

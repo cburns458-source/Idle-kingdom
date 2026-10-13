@@ -28,7 +28,13 @@ flutter pub get
 # line would compile SUPABASE_URL as "https://" and nobody can sign in.
 # A leftover newline inside --dart-define also makes Flutter treat the
 # next line as a target file.
-if printf '%s' "${SUPABASE_URL:-}" | grep -q 'https://\|supabase'; then
+#
+# Workers Builds preview triggers do not inject these secrets. `set -u`
+# would abort on `${SUPABASE_URL%%…}` when the var is unset; default
+# them so the local-only preview path below can run.
+SUPABASE_URL="${SUPABASE_URL-}"
+SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY-}"
+if printf '%s' "$SUPABASE_URL" | grep -q 'https://\|supabase'; then
   SUPABASE_URL="$(printf '%s' "$SUPABASE_URL" | tr -d '\r\n[:space:]')"
 else
   SUPABASE_URL="${SUPABASE_URL%%$'\n'*}"
