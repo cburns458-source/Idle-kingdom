@@ -12,6 +12,9 @@ import {
   type ValidationIssue,
 } from './types'
 
+/** Empty after Economy aligned stew Action XP with Recipe XP. */
+export const RECIPE_ACTION_XP_MISMATCH_ALLOWLIST = new Set<string>()
+
 /** Kept here so content validation does not import runtime requirement rules. */
 const KNOWN_REQUIREMENT_TYPES = [
   'Tool Capability',
@@ -262,6 +265,25 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
         table: 'Actions',
         id: actionId,
         message: `Missing Secondary Drop Chance for reward table ${action['Secondary Reward Table ID']}`,
+      })
+    }
+  }
+
+  for (const recipe of db.Recipes) {
+    const recipeId = String(recipe['Recipe ID'] ?? '')
+    if (RECIPE_ACTION_XP_MISMATCH_ALLOWLIST.has(recipeId)) continue
+    const actionId = recipe['Action ID']
+    if (typeof actionId !== 'string' || actionId.length === 0) continue
+    const action = indexes.actionsById.get(actionId)
+    if (!action) continue
+    const recipeXp = recipe['XP Reward']
+    const actionXp = action['XP Reward']
+    if (recipeXp !== actionXp) {
+      issues.push({
+        severity: 'error',
+        table: 'Recipes',
+        id: recipeId,
+        message: `Action ${actionId} XP Reward ${actionXp} does not match Recipe XP Reward ${recipeXp}`,
       })
     }
   }

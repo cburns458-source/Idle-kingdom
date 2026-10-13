@@ -308,3 +308,32 @@ export function raceStartingItem(id: string, raceId: string, itemId: string): Js
     Notes: null,
   }
 }
+
+export function recipe(id: string, actionId: string, xp: number, extra: JsonValue = {}): JsonValue {
+  return {
+    'Recipe ID': id,
+    'Internal Key': id.toLowerCase(),
+    'Display Name': id,
+    'Skill ID': 'SKL-0001',
+    'Output Item ID': 'ITEM-0001',
+    'Output Quantity': 1,
+    'Facility ID': 'FAC-0001',
+    'Proficiency Level': 1,
+    'Base Duration Seconds': 1,
+    'XP Reward': xp,
+    'Knowledge Source': null,
+    'Action ID': actionId,
+    Status: 'Confirmed',
+    'Release Phase': 'Launch',
+    Notes: null,
+    'Ingredient 1 Item ID': null,
+    'Ingredient 1 Quantity': null,
+    'Ingredient 2 Item ID': null,
+    'Ingredient 2 Quantity': null,
+    'Ingredient 3 Item ID': null,
+    'Ingredient 3 Quantity': null,
+    'Ingredient 4 Item ID': null,
+    'Ingredient 4 Quantity': null,
+    ...(extra as object),
+  }
+}

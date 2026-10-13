@@ -25,6 +25,7 @@ import {
   race,
   raceBonus,
   raceStartingItem,
+  recipe,
   rewardEntry,
   shop,
   skill,
@@ -255,6 +256,21 @@ function brokenDatabases(): Array<[string, JsonDatabase]> {
 
   const missingStartingLocation = withRows(base, 'Locations', [location('LOC-0001', 'Farm')])
 
+  const recipeActionXp = withRows(
+    withRows(base, 'Actions', [
+      action('ACN-0001', 'SKL-0001', { 'XP Reward': 10 }),
+      action('ACN-0002', 'SKL-0001', { 'XP Reward': 99 }),
+      action('ACN-0122', 'SKL-0001', { 'XP Reward': 14001 }),
+    ]),
+    'Recipes',
+    [
+      recipe('RCP-0001', 'ACN-0001', 10),
+      recipe('RCP-0002', 'ACN-0002', 10),
+      recipe('RCP-0012', 'ACN-0122', 2800),
+      recipe('RCP-0061', '', 120),
+    ],
+  )
+
   // Combines categories so cross-category issue ordering is locked down too.
   const everythingBroken = withRows(
     withRows(missingConfig, 'Locations', [
@@ -278,6 +294,7 @@ function brokenDatabases(): Array<[string, JsonDatabase]> {
     ['missing-config-keys', missingConfig],
     ['missing-starting-location', missingStartingLocation],
     ['everything-broken', everythingBroken],
+    ['recipe-action-xp', recipeActionXp],
   ]
 }
 

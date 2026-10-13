@@ -43,6 +43,9 @@ const Map<String, String> tableIdFields = <String, String>{
   'RaceStartingItems': 'Race Starting Item ID',
 };
 
+/// Empty after Economy aligned stew Action XP with Recipe XP.
+const Set<String> recipeActionXpMismatchAllowlist = <String>{};
+
 const List<String> _knownRequirementTypes = <String>[
   'Tool Capability',
   'Empty Slot',
@@ -296,6 +299,27 @@ List<ValidationIssue> validateDatabase(GameDatabase db) {
           table: 'Actions',
           id: actionId,
           message: 'Missing Secondary Drop Chance for reward table $secondaryTable',
+        ),
+      );
+    }
+  }
+
+  for (final recipe in db.recipes) {
+    final recipeId = '${recipe.raw['Recipe ID'] ?? ''}';
+    if (recipeActionXpMismatchAllowlist.contains(recipeId)) continue;
+    final actionId = recipe.raw['Action ID'];
+    if (actionId is! String || actionId.isEmpty) continue;
+    final action = indexes.actionsById[actionId];
+    if (action == null) continue;
+    final recipeXp = recipe.raw['XP Reward'];
+    final actionXp = action.raw['XP Reward'];
+    if (recipeXp != actionXp) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'Recipes',
+          id: recipeId,
+          message: 'Action $actionId XP Reward $actionXp does not match Recipe XP Reward $recipeXp',
         ),
       );
     }

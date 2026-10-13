@@ -3,7 +3,11 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { RequirementRow } from './types'
 import { prepareDatabase } from './loadDatabase'
-import { filterLaunchContent, validateDatabase } from './validate'
+import {
+  RECIPE_ACTION_XP_MISMATCH_ALLOWLIST,
+  filterLaunchContent,
+  validateDatabase,
+} from './validate'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -60,5 +64,44 @@ describe('database loading', () => {
     })
     expect(issues.some((issue) => issue.message.includes('Missing Drop Chance'))).toBe(true)
     expect(issues.some((issue) => issue.message.includes('Unknown Requirement Type'))).toBe(true)
+  })
+
+  it('rejects any recipe and action XP mismatch, including stews', () => {
+    const loaded = prepareDatabase(rawDatabase)
+    const xpMismatch = (issue: { message: string }) =>
+      issue.message.includes('does not match Recipe XP Reward')
+
+    expect(validateDatabase(loaded.source).filter(xpMismatch)).toEqual([])
+    expect([...RECIPE_ACTION_XP_MISMATCH_ALLOWLIST]).toEqual([])
+
+    const mismatched = validateDatabase({
+      ...loaded.source,
+      Actions: loaded.source.Actions.map((row) =>
+        row['Action ID'] === 'ACN-0115' ? { ...row, 'XP Reward': 9999 } : row,
+      ),
+    })
+    expect(
+      mismatched.some(
+        (issue) =>
+          issue.table === 'Recipes' &&
+          issue.id === 'RCP-0001' &&
+          issue.message === 'Action ACN-0115 XP Reward 9999 does not match Recipe XP Reward 300',
+      ),
+    ).toBe(true)
+
+    const stewMismatched = validateDatabase({
+      ...loaded.source,
+      Actions: loaded.source.Actions.map((row) =>
+        row['Action ID'] === 'ACN-0122' ? { ...row, 'XP Reward': 1 } : row,
+      ),
+    })
+    expect(
+      stewMismatched.some(
+        (issue) =>
+          issue.table === 'Recipes' &&
+          issue.id === 'RCP-0012' &&
+          issue.message === 'Action ACN-0122 XP Reward 1 does not match Recipe XP Reward 1400',
+      ),
+    ).toBe(true)
   })
 })
