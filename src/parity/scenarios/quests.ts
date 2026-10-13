@@ -10,7 +10,13 @@ import {
   applyQuestTalkProgress,
   applyQuestVisitProgress,
 } from '../../game/quests/progress'
-import { applyQuestStepUnlocks, getCurrentStepIndex } from '../../game/quests/steps'
+import {
+  applyQuestStepUnlocks,
+  getCurrentStepId,
+  getCurrentStepIndex,
+  isStepComplete,
+  isStepPassed,
+} from '../../game/quests/steps'
 import { addItemToInventory } from '../../game/activity/rewards'
 import {
   acceptQuest,
@@ -213,6 +219,38 @@ export const questScenarios: ParityScenario[] = [
     save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0058', 0))
     record('sold', save)
     return { stages, save: asJson(save) }
+  }),
+
+  scenario('quests/step-latch', 'handin-skipped-past', withSave('base'), () => {
+    const db = contentDatabase()
+    const quest = getQuest(db, 'QST-0001')!
+    const base = saveFor('base')
+    const withCounters = (counters: Record<string, number>): PlayerSave => ({
+      ...base,
+      quests: [
+        ...base.quests.filter((row) => row.questId !== 'QST-0001'),
+        {
+          questId: 'QST-0001',
+          status: 'active',
+          progress: Object.values(counters).reduce((sum, value) => sum + value, 0),
+          counters,
+        },
+      ],
+    })
+    const snapshot = (label: string, save: PlayerSave) => ({
+      label,
+      currentStep: getCurrentStepId(db, save, quest),
+      complete: isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002'),
+      passed: isStepPassed(db, save, 'QST-0001', 'QSTP-0002'),
+      progress: getQuestProgress(save, 'QST-0001') as unknown as JsonValue,
+    })
+    return {
+      cases: [
+        snapshot('partial', withCounters({ 'step:QSTP-0001': 1, 'handIn:QSTP-0002:ITEM-0058': 4 })),
+        snapshot('latched', withCounters({ 'step:QSTP-0001': 1, 'step:QSTP-0002': 1 })),
+        snapshot('talk-only', withCounters({ 'step:QSTP-0001': 1 })),
+      ],
+    }
   }),
 
   scenario('world/submaps', 'topology', withSave('base', { mapIds: MAP_IDS }), () => {

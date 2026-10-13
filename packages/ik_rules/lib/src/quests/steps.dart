@@ -184,12 +184,16 @@ bool _isStepComplete(
   String notes, [
   String? stepId,
 ]) {
-  final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
-  if (stepId != null && (counters[stepCompleteKey(stepId)] ?? 0) >= 1) return true;
-  if (stepId != null && dialogueStepType(getQuestStep(db, questId, stepId)) != null) {
-    return isStepPassed(db, save, questId, stepId);
+  if (stepId != null && isStepLatched(save, questId, stepId)) return true;
+  if (stepId != null) {
+    final type = dialogueStepType(getQuestStep(db, questId, stepId));
+    // HandIn counts only with its `step:<id>` latch. Show and Talk can still
+    // be inferred done from a later step (option b).
+    if (type == 'HandIn') return false;
+    if (type != null) return isStepPassed(db, save, questId, stepId);
   }
   if (_isAskAroundSkipped(db, save, questId, notes)) return true;
+  final counters = getQuestProgress(save, questId).counters ?? const <String, num>{};
   final structured = parseNotesObjectives(notes);
   final progress = objectiveProgressFromStructured(db, save, structured, counters);
   final lines = _scopedTalkLines(db, questId, progress.progressLines, counters, stepId);

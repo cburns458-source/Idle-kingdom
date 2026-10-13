@@ -22,6 +22,7 @@ import '../library/books.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
+import '../timers/location_timers.dart';
 import '../skills/totals.dart';
 import 'step_progress.dart';
 
@@ -673,7 +674,7 @@ _ActionFailure? _guardStep(
 }
 
 PlayerSave _latchAndUnlock(GameDatabase db, PlayerSave save, String questId, String stepId) {
-  return applyQuestStepUnlocks(db, latchStep(save, questId, stepId));
+  return discoverUnlockedFarmSpot(db, applyQuestStepUnlocks(db, latchStep(save, questId, stepId)));
 }
 
 /// Unenchanted bag counts that changed, sorted by item ID.

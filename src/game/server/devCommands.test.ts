@@ -44,4 +44,43 @@ describe('developer commands', () => {
     const ok = applyDevCommand(db, save, 'resetskills', ['confirm'], START_MS)
     expect(ok.ok).toBe(true)
   })
+
+  it('prunes a locked farm timer spot after /abandonquest QST-0011 confirm', () => {
+    const growing = {
+      locationId: 'LOC-0001',
+      kind: 'botany' as const,
+      inputItemId: 'ITEM-0324',
+      outputItemId: 'ITEM-0025',
+      outputQuantity: 1,
+      skillId: 'SKL-0014',
+      xpReward: 10,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      durationMs: 60_000,
+    }
+    const save = {
+      ...createNewSave(db, START_MS),
+      discoveredTimerSpotIds: ['botany:LOC-0001', 'botany:LOC-0009', 'fishing_pot:LOC-0003'],
+      quests: [
+        {
+          questId: 'QST-0011',
+          status: 'active' as const,
+          progress: 1,
+          counters: { 'talk:NPC-0014': 1, 'step:QSTP-0023': 1 },
+        },
+      ],
+    }
+    const abandoned = applyDevCommand(db, save, 'abandonquest', ['QST-0011', 'confirm'], START_MS)
+    expect(abandoned.ok).toBe(true)
+    expect(abandoned.save.discoveredTimerSpotIds).toEqual(['botany:LOC-0009', 'fishing_pot:LOC-0003'])
+
+    const abandonedGrowing = applyDevCommand(
+      db,
+      { ...save, locationTimers: [growing] },
+      'abandonquest',
+      ['QST-0011', 'confirm'],
+      START_MS,
+    )
+    expect(abandonedGrowing.ok).toBe(true)
+    expect(abandonedGrowing.save.discoveredTimerSpotIds).toContain('botany:LOC-0001')
+  })
 })
