@@ -69,6 +69,7 @@ import {
   type DialogueItemDelta,
   type DialogueView,
 } from '../dialogue/engine'
+import type { QuestArrivalCompletion } from '../quests/quests'
 
 export { createTrackedMulberry32 }
 
@@ -133,7 +134,14 @@ export type GameCommandName =
 export type GameCommandArgs = Record<string, unknown>
 
 export type GameCommandResult =
-  | { ok: true; save: PlayerSave; hall?: GuildHallState; goldCost?: number; view?: DialogueView | null }
+  | {
+      ok: true
+      save: PlayerSave
+      hall?: GuildHallState
+      goldCost?: number
+      view?: DialogueView | null
+      questCompletions?: QuestArrivalCompletion[]
+    }
   | { ok: false; reason: string }
   | { ok: false; reason: string; code: string; favourites?: DialogueItemDelta[]; noRoom?: NoRoom }
   | { ok: false; reason: string; catchingUp: true; save: PlayerSave }
@@ -253,7 +261,12 @@ function failed(reason: string): GameCommandResult {
 
 function ok(
   save: PlayerSave,
-  extra?: { hall?: GuildHallState; goldCost?: number; view?: DialogueView | null },
+  extra?: {
+    hall?: GuildHallState
+    goldCost?: number
+    view?: DialogueView | null
+    questCompletions?: QuestArrivalCompletion[]
+  },
 ): GameCommandResult {
   return { ok: true, save, ...extra }
 }
@@ -608,7 +621,7 @@ function applyExistingCommand(
       const chosen = chooseDialogue(db, save, dialogueId, nodeId, choiceId, {
         useFavourites: useFavourites.value,
       })
-      if (chosen.ok) return ok(chosen.save)
+      if (chosen.ok) return ok(chosen.save, { questCompletions: chosen.questCompletions })
       if (chosen.code === 'confirm_favourites') {
         return { ok: false, reason: chosen.reason, code: chosen.code, favourites: chosen.favourites }
       }

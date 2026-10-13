@@ -247,7 +247,8 @@ void main() {
     expect(completion.rewards, direct.rewards);
     expect(completion.rewards, isNotEmpty);
     expect(completion.pendingSkillXp, direct.pendingSkillXp);
-    expect(paid.toJson().containsKey('questCompletions'), isFalse);
+    expect(completion.pendingSkillXp, 0);
+    expect(paid.toJson()['questCompletions'], [completion.toJson()]);
 
     expect(pick(paid.save, 'DLG-0012', 'DNODE-0022', 'DCH-0031').questCompletions, isEmpty);
   });

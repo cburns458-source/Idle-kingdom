@@ -7,7 +7,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import type { DialogueChoiceRow } from '../data/types'
 import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
 import { applyQuestActionProgress, applyQuestAutoStartOnSeed, applyQuestPlantProgress } from '../quests/progress'
-import { cheatAbandonQuest, getQuest, getQuestProgress } from '../quests/quests'
+import { cheatAbandonQuest, completeQuest, getQuest, getQuestProgress } from '../quests/quests'
 import { getCurrentStepId } from '../quests/steps'
 import { createNewSave, parseSave } from '../save/saveStore'
 import { courtyardBotanyUnlocked } from '../timers/locationTimers'
@@ -252,6 +252,39 @@ describe('Fennel and King dialogue content', () => {
     }
     expect(getSkillProgress(save, COOKING).xp).toBe(10_000)
     expect(bagCount(save, GOLDEN_SPUD)).toBe(1)
+  })
+
+  it('reports the quest a dialogue choice completed for the reward popup', () => {
+    let save = picked(fresh(THRONE_ROOM), 'DLG-0011', 'DNODE-0018', 'DCH-0023').save
+    save = setCount(setCount(save, BAKED_POTATO, 10), COOKED_PERCH, 10)
+    const handedIn = picked(save, 'DLG-0012', 'DNODE-0020', 'DCH-0026')
+    expect(handedIn.questCompletions).toEqual([])
+
+    const paid = picked(handedIn.save, 'DLG-0012', 'DNODE-0022', 'DCH-0031')
+    expect(paid.questCompletions).toHaveLength(1)
+    const completion = paid.questCompletions[0]!
+    const direct = completeQuest(db, handedIn.save, 'QST-0001')
+    expect(direct.ok).toBe(true)
+    if (!direct.ok) return
+    expect(completion.questId).toBe('QST-0001')
+    expect(completion.questName).toBe(direct.questName)
+    expect(completion.rewards).toEqual(direct.rewards.map((reward) => reward.label))
+    expect(completion.rewards.length).toBeGreaterThan(0)
+    expect(completion.pendingSkillXp).toBe(direct.pendingSkillXp)
+    expect(completion.pendingSkillXp).toBe(0)
+    expect(JSON.parse(JSON.stringify(paid)).questCompletions).toEqual([
+      {
+        questId: completion.questId,
+        questName: completion.questName,
+        rewards: completion.rewards,
+        pendingSkillXp: completion.pendingSkillXp,
+        rewardBundle: completion.rewardBundle,
+        message: completion.message,
+        booksGranted: completion.booksGranted,
+      },
+    ])
+
+    expect(pick(paid.save, 'DLG-0012', 'DNODE-0022', 'DCH-0031').questCompletions).toEqual([])
   })
 
   it('keeps gifts claimable while the bag is full', () => {

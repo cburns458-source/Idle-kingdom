@@ -417,8 +417,7 @@ class DialogueResult {
   /// For `confirm_favourites`: how many of each item would come out of hearted stacks.
   final List<DialogueItemDelta> favourites;
 
-  /// Quests this choice completed, for the client's reward popup. Client-only:
-  /// left out of [toJson] because the TypeScript result has no such field.
+  /// Quests this choice completed, for the client's reward popup.
   final List<QuestArrivalCompletion> questCompletions;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -435,6 +434,7 @@ class DialogueResult {
     'noRoom': noRoom?.toJson(),
     'missing': [for (final line in missing) line.toJson()],
     'favourites': [for (final line in favourites) line.toJson()],
+    'questCompletions': [for (final completion in questCompletions) completion.toJson()],
   };
 }
 

@@ -143,6 +143,9 @@ class DialogueText {
       if (quest.status == 'active') parts.add('Quest started: ${_questName(quest.questId)}');
       if (quest.status == 'completed') parts.add('Quest complete: ${_questName(quest.questId)}');
     }
+    for (final completion in result.questCompletions) {
+      parts.addAll(completion.rewards);
+    }
     if (parts.isEmpty) return null;
     final text = parts.join('. ');
     return text.endsWith('✓') ? text : '$text.';
