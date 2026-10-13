@@ -3,6 +3,7 @@ import {
   parseRelativeDropChanceBonusPercent,
   skillRelativeDropChanceTooltipLines,
 } from '../loot/dropChance'
+import { parseSpellPowerPercent } from '../spells/spells'
 import type { EquipmentRow, GameDatabase } from '../data/types'
 
 function skillDisplayName(
@@ -72,6 +73,11 @@ export function equipmentTooltipStatLines(
         ? `Lockpick break chance -${lockpickBreakReduction}%`
         : `Lockpick break chance +${Math.abs(lockpickBreakReduction)}%`,
     )
+  }
+
+  const spellPower = parseSpellPowerPercent(equipment['Capabilities / Effects'])
+  if (spellPower > 0) {
+    lines.push(`Equipped spells +${spellPower}% stronger`)
   }
 
   return lines

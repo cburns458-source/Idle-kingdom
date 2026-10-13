@@ -113,6 +113,30 @@ void main() {
     }
   });
 
+  group('wizard tome spell power parity', () {
+    for (final fixture in loadParityFixtures('spells/tome')) {
+      test(fixture.name, () {
+        final db = databaseOf(fixture);
+        final save = saveOf(fixture);
+        expect(
+          checkParity(fixture, {
+            'stacks': equippedSpellStacks(save).map((stack) => stack.toJson()).toList(),
+            'firstEmpty': firstEmptySpellSlot(save),
+            'damageMultiplier': activeSpellDamageRangeMultiplier(db, save),
+            'doubleChance': activeSpellItemDoubleChancePercent(db, save),
+            'goldDoubleChance': activeSpellGoldDoubleChancePercent(db, save),
+            'damageReduction': activeSpellDamageReductionPercent(db, save),
+            'lifesteal': activeSpellLifestealPercent(db, save),
+            'productionDurationMultiplier': activeSpellProductionDurationMultiplier(db, save),
+            'gatheringDurationMultiplier': activeSpellGatheringDurationMultiplier(db, save),
+            'spellPowerMultiplier': equippedSpellPowerMultiplier(db, save),
+          }),
+          isNull,
+        );
+      });
+    }
+  });
+
   group('spell bonus combination parity', () {
     for (final fixture in loadParityFixtures('spells/combine')) {
       test(fixture.name, () {

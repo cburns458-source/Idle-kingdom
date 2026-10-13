@@ -28,6 +28,7 @@ import {
   combineSpellPercentBonuses,
   equippedSpellStacks,
   firstEmptySpellSlot,
+  equippedSpellPowerMultiplier,
   isSpellEquipment,
   isSpellItem,
   isSpellSlotId,
@@ -44,7 +45,7 @@ import {
 } from '../../game/spells/spells'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
-import { asJson, baseSave, gearedSave, richSave } from './saveFixtures'
+import { asJson, baseSave, gearedSave, richSave, tomeSave } from './saveFixtures'
 
 type SaveKind = 'base' | 'rich' | 'geared'
 
@@ -145,6 +146,23 @@ export const arcanaScenarios: ParityScenario[] = [
       } as unknown as JsonValue
     }),
   ),
+
+  scenario('spells/tome', 'with-spells', { source: 'content', save: asJson(tomeSave(contentDatabase())) }, () => {
+    const db = contentDatabase()
+    const save = tomeSave(db)
+    return {
+      stacks: equippedSpellStacks(save),
+      firstEmpty: firstEmptySpellSlot(save),
+      damageMultiplier: activeSpellDamageRangeMultiplier(db, save),
+      doubleChance: activeSpellItemDoubleChancePercent(db, save),
+      goldDoubleChance: activeSpellGoldDoubleChancePercent(db, save),
+      damageReduction: activeSpellDamageReductionPercent(db, save),
+      lifesteal: activeSpellLifestealPercent(db, save),
+      productionDurationMultiplier: activeSpellProductionDurationMultiplier(db, save),
+      gatheringDurationMultiplier: activeSpellGatheringDurationMultiplier(db, save),
+      spellPowerMultiplier: equippedSpellPowerMultiplier(db, save),
+    } as unknown as JsonValue
+  }),
 
   scenario(
     'spells/combine',

@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
 import '../loot/drop_chance.dart';
+import '../spells/spells.dart';
 import 'loadout.dart';
 
 String? _skillDisplayName(GameDatabase? db, String? skillId) {
@@ -84,6 +85,11 @@ List<String> equipmentTooltipStatLines(EquipmentRow? equipment, [GameDatabase? d
           ? 'Lockpick break chance -${jsNumberToString(lockpickBreakReduction)}%'
           : 'Lockpick break chance +${jsNumberToString(lockpickBreakReduction.abs())}%',
     );
+  }
+
+  final spellPower = parseSpellPowerPercent(equipment.raw['Capabilities / Effects']);
+  if (spellPower > 0) {
+    lines.add('Equipped spells +${jsNumberToString(spellPower)}% stronger');
   }
 
   return lines;

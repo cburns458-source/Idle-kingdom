@@ -12,6 +12,34 @@ const List<String> spellSlotIds = <String>['SLOT-0013', 'SLOT-0014', 'SLOT-0015'
 
 bool isSpellSlotId(String slotId) => spellSlotIds.contains(slotId);
 
+final _spellPowerPctTag = RegExp(r'^spell_power_pct=(\d+(?:\.\d+)?)$');
+
+/// Sum `spell_power_pct=N` tokens from one capability string.
+num parseSpellPowerPercent(Object? effects) {
+  num total = 0;
+  for (final tag in capabilityTags(effects)) {
+    final match = _spellPowerPctTag.firstMatch(tag);
+    if (match != null) total += jsNumber(match.group(1));
+  }
+  return total;
+}
+
+/// Multiplier from equipped gear such as the Wizard's Tome (`spell_power_pct=20`
+/// => 1.2). Same bonus types add. Does not apply unless spells are also equipped.
+num equippedSpellPowerMultiplier(GameDatabase db, PlayerSave save) {
+  num total = 0;
+  for (final stack in save.equipment.slots.values) {
+    if (stack == null || isBlank(stack.itemId)) continue;
+    final equipment = db.equipment.firstWhereOrNull((row) => row.raw['Item ID'] == stack.itemId);
+    total += parseSpellPowerPercent(equipment?.raw['Capabilities / Effects']);
+  }
+  return 1 + total / 100;
+}
+
+num _applySpellPower(GameDatabase db, PlayerSave save, num stackedPercent) {
+  return stackedPercent * equippedSpellPowerMultiplier(db, save);
+}
+
 bool isSpellEquipment(EquipmentRow? equipment) {
   if (equipment == null) return false;
   final tags = capabilityTags(equipment.raw['Capabilities / Effects']);
@@ -225,7 +253,15 @@ num _activeSpellStackedPercent(
 /// (2× Strength = +20% => 1.20).
 num activeSpellDamageRangeMultiplier(GameDatabase db, PlayerSave save) {
   return 1 +
-      _activeSpellStackedPercent(db, save, (itemId) => spellDamageRangeBonusPercent(db, itemId)) /
+      _applySpellPower(
+            db,
+            save,
+            _activeSpellStackedPercent(
+              db,
+              save,
+              (itemId) => spellDamageRangeBonusPercent(db, itemId),
+            ),
+          ) /
           100;
 }
 
@@ -233,7 +269,11 @@ num activeSpellDamageRangeMultiplier(GameDatabase db, PlayerSave save) {
 num activeSpellItemDoubleChancePercent(GameDatabase db, PlayerSave save) {
   return math.min(
     100,
-    _activeSpellStackedPercent(db, save, (itemId) => spellItemDoubleChancePercent(db, itemId)),
+    _applySpellPower(
+      db,
+      save,
+      _activeSpellStackedPercent(db, save, (itemId) => spellItemDoubleChancePercent(db, itemId)),
+    ),
   );
 }
 
@@ -241,7 +281,11 @@ num activeSpellItemDoubleChancePercent(GameDatabase db, PlayerSave save) {
 num activeSpellGoldDoubleChancePercent(GameDatabase db, PlayerSave save) {
   return math.min(
     100,
-    _activeSpellStackedPercent(db, save, (itemId) => spellGoldDoubleChancePercent(db, itemId)),
+    _applySpellPower(
+      db,
+      save,
+      _activeSpellStackedPercent(db, save, (itemId) => spellGoldDoubleChancePercent(db, itemId)),
+    ),
   );
 }
 
@@ -249,7 +293,11 @@ num activeSpellGoldDoubleChancePercent(GameDatabase db, PlayerSave save) {
 num activeSpellDamageReductionPercent(GameDatabase db, PlayerSave save) {
   return math.min(
     100,
-    _activeSpellStackedPercent(db, save, (itemId) => spellDamageReductionPercent(db, itemId)),
+    _applySpellPower(
+      db,
+      save,
+      _activeSpellStackedPercent(db, save, (itemId) => spellDamageReductionPercent(db, itemId)),
+    ),
   );
 }
 
