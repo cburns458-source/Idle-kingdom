@@ -85,6 +85,13 @@ export interface UnattendedOptions {
    * original start so chunks cannot stretch past the cap.
    */
   windowStartMs?: number
+  /**
+   * Test-only override for the step safety valve (see `maxUnattendedSteps`).
+   * Production callers never pass it, so the real cap is unchanged; tests use
+   * a small value to reach the step-limit path without simulating ~20,000
+   * steps.
+   */
+  maxStepsOverride?: number
 }
 
 export function unattendedCapMs(db: GameDatabase): number {
@@ -146,7 +153,7 @@ export function resolveUnattendedProgress(
   let combatDeaths = 0
   let crittersSpawned = 0
   let steps = 0
-  const maxSteps = maxUnattendedSteps(db)
+  const maxSteps = options.maxStepsOverride ?? maxUnattendedSteps(db)
   // Tracks how far the combat/gathering simulation's own clock has actually
   // advanced, so we can tell "ran out of step budget mid-catch-up" apart
   // from "genuinely nothing more to simulate in this window."
