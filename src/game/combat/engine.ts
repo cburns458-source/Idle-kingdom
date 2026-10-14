@@ -101,6 +101,8 @@ export interface CombatVictoryResult {
   loot: LootGrant[]
   /** Wardrobe cosmetics unlocked by this victory (e.g. Baby Dragon pet). */
   cosmeticsGranted?: { cosmeticId: string; isFirstEver: boolean }[]
+  /** Library books unlocked by this victory. Omitted when empty. */
+  booksGranted?: { bookId: string; isFirstEver: boolean }[]
   /** Drops that rolled but did not fit in the bag. Same shape as `loot`. */
   leftBehind?: LootGrant[]
   foodConsumed: boolean
@@ -602,6 +604,7 @@ export function applyCombatVictory(
     goldGained,
     loot: rewarded.loot,
     cosmeticsGranted: rewarded.cosmeticsGranted,
+    ...(rewarded.booksGranted.length > 0 ? { booksGranted: rewarded.booksGranted } : {}),
     ...(rewarded.leftBehind.length > 0 ? { leftBehind: rewarded.leftBehind } : {}),
     foodConsumed: false,
     foodHealed: 0,

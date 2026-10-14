@@ -15,6 +15,7 @@ import {
 } from '../loot/dropChance'
 import { grantCosmetic } from '../cosmetics/cosmetics'
 import { grantCritterToCollection, getCritter } from '../critters/critters'
+import { grantBook } from '../library/books'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
 import { applyRaceGoldGain, raceSkillDropChanceBonusPercent } from '../races/races'
 import { activeSpellItemDoubleChancePercent } from '../spells/spells'
@@ -151,6 +152,12 @@ export interface ActionCosmeticGrant {
   isFirstEver: boolean
 }
 
+/** A Library book unlocked by a `Book` reward entry. Never enters the bag. */
+export interface ActionBookGrant {
+  bookId: string
+  isFirstEver: boolean
+}
+
 export function resolveActionRewards(
   db: GameDatabase,
   save: PlayerSave,
@@ -161,12 +168,14 @@ export function resolveActionRewards(
   loot: LootGrant[]
   goldGained: number
   cosmeticsGranted: ActionCosmeticGrant[]
+  booksGranted: ActionBookGrant[]
   leftBehind: LootGrant[]
 } {
   let next = save
   const loot: LootGrant[] = []
   const leftBehind: LootGrant[] = []
   const cosmeticsGranted: ActionCosmeticGrant[] = []
+  const booksGranted: ActionBookGrant[] = []
   let goldGained = Number(action['Guaranteed Gold'] ?? 0)
 
   const skillDropBonus = raceSkillDropChanceBonusPercent(
@@ -247,6 +256,13 @@ export function resolveActionRewards(
           : cosmeticId
         loot.push({ itemId: cosmeticId, quantity: 1, displayName })
       }
+    } else if (picked['Reward Type'] === 'Book' && picked['Reward ID / Value']) {
+      // One-time find: once the book is in the Library the roll grants nothing.
+      const granted = grantBook(next, picked['Reward ID / Value'])
+      if (granted.granted) {
+        next = granted.save
+        booksGranted.push({ bookId: picked['Reward ID / Value'], isFirstEver: granted.isFirstEver })
+      }
     }
   }
 
@@ -268,5 +284,5 @@ export function resolveActionRewards(
     }
   }
 
-  return { save: next, loot, goldGained, cosmeticsGranted, leftBehind }
+  return { save: next, loot, goldGained, cosmeticsGranted, booksGranted, leftBehind }
 }

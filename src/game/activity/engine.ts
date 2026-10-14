@@ -450,7 +450,11 @@ export function completeGatheringAction(
   const working = save
   const pruning = isPruningToolEquipped(db, working) && PRUNABLE_SKILL_IDS.has(skillId)
   const rewarded = pruning
-    ? { ...resolvePruningRewards(db, working, action, random), cosmeticsGranted: [] as { cosmeticId: string; isFirstEver: boolean }[] }
+    ? {
+        ...resolvePruningRewards(db, working, action, random),
+        cosmeticsGranted: [] as { cosmeticId: string; isFirstEver: boolean }[],
+        booksGranted: [] as { bookId: string; isFirstEver: boolean }[],
+      }
     : resolveActionRewards(db, working, action, random)
   const fullXp = gatheringXpReward(db, working, action)
   const primarySkillId = pruning ? BOTANY_SKILL_ID : skillId
@@ -524,6 +528,7 @@ export function completeGatheringAction(
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
       cosmeticsGranted: rewarded.cosmeticsGranted,
+      ...(rewarded.booksGranted.length > 0 ? { booksGranted: rewarded.booksGranted } : {}),
       ...(rewarded.leftBehind.length > 0 ? { leftBehind: rewarded.leftBehind } : {}),
       leveledUpTo,
       damageTaken: 0,

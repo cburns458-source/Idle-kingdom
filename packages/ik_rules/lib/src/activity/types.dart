@@ -29,6 +29,7 @@ class ActionRewardBundle {
     required this.loot,
     required this.goldGained,
     this.cosmeticsGranted = const <ActionCosmeticGrant>[],
+    this.booksGranted = const <ActionBookGrant>[],
     this.leftBehind = const <LootGrant>[],
   });
 
@@ -39,6 +40,9 @@ class ActionRewardBundle {
 
   /// Wardrobe cosmetics unlocked with this reward line (e.g. Baby Dragon pet).
   final List<ActionCosmeticGrant> cosmeticsGranted;
+
+  /// Library books unlocked with this reward line.
+  final List<ActionBookGrant> booksGranted;
 
   /// Drops that rolled but did not fit in the bag. Same shape as [loot].
   final List<LootGrant> leftBehind;
@@ -53,6 +57,9 @@ class ActionRewardBundle {
     // Omit when empty so existing session parity fixtures stay byte-stable.
     if (cosmeticsGranted.isNotEmpty) {
       json['cosmeticsGranted'] = cosmeticsGranted.map((grant) => grant.toJson()).toList();
+    }
+    if (booksGranted.isNotEmpty) {
+      json['booksGranted'] = booksGranted.map((grant) => grant.toJson()).toList();
     }
     if (leftBehind.isNotEmpty) {
       json['leftBehind'] = leftBehind.map((grant) => grant.toJson()).toList();
@@ -73,6 +80,7 @@ class ActionCompletionResult {
     required this.loot,
     required this.leveledUpTo,
     this.cosmeticsGranted = const <ActionCosmeticGrant>[],
+    this.booksGranted = const <ActionBookGrant>[],
     this.leftBehind = const <LootGrant>[],
     this.damageTaken = 0,
     this.foodHealed = 0,
@@ -96,6 +104,9 @@ class ActionCompletionResult {
 
   /// Wardrobe cosmetics unlocked by this action (e.g. Baby Dragon pet).
   final List<ActionCosmeticGrant> cosmeticsGranted;
+
+  /// Library books unlocked by this action.
+  final List<ActionBookGrant> booksGranted;
 
   /// Drops that rolled but did not fit in the bag. Same shape as [loot].
   final List<LootGrant> leftBehind;
@@ -122,6 +133,8 @@ class ActionCompletionResult {
     'goldGained': goldGained,
     'loot': loot.map((grant) => grant.toJson()).toList(),
     'cosmeticsGranted': cosmeticsGranted.map((grant) => grant.toJson()).toList(),
+    if (booksGranted.isNotEmpty)
+      'booksGranted': booksGranted.map((grant) => grant.toJson()).toList(),
     if (leftBehind.isNotEmpty) 'leftBehind': leftBehind.map((grant) => grant.toJson()).toList(),
     'leveledUpTo': leveledUpTo,
     'damageTaken': damageTaken,
