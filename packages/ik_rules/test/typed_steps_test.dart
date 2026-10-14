@@ -39,7 +39,7 @@ GameDatabase _typedDatabase() {
         _launch(<String, Object?>{
           'Step ID': 'QSTP-9202',
           'Quest ID': 'QST-0001',
-          'Step Order': 3,
+          'Step Order': 4,
           'Journal Label': 'Later talk',
           'Step Type': 'Talk',
           'Step NPC': 'NPC-0001',
@@ -233,9 +233,15 @@ void main() {
   group('HandIn steps only count with their step latch (option b)', () {
     late QuestRow feast;
     setUp(() => feast = getQuest(db, 'QST-0001')!);
+    // Every save here is past the optional Cook step (QSTP-0036): it latched
+    // when the food was cooked.
 
     test('stays current when a later step is latched', () {
-      final save = withQuest('QST-0001', {'step:QSTP-0001': 1, 'step:QSTP-9202': 1});
+      final save = withQuest('QST-0001', {
+        'step:QSTP-0001': 1,
+        'step:QSTP-0036': 1,
+        'step:QSTP-9202': 1,
+      });
       expect(isStepPassed(db, save, 'QST-0001', 'QSTP-0002'), isTrue);
       expect(isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002'), isFalse);
       expect(getCurrentStepId(db, save, feast), 'QSTP-0002');
@@ -243,7 +249,11 @@ void main() {
     });
 
     test('counts as done once the step latch is written', () {
-      final save = withQuest('QST-0001', {'step:QSTP-0001': 1, 'step:QSTP-0002': 1});
+      final save = withQuest('QST-0001', {
+        'step:QSTP-0001': 1,
+        'step:QSTP-0036': 1,
+        'step:QSTP-0002': 1,
+      });
       expect(isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002'), isTrue);
       expect(getCurrentStepId(db, save, feast), 'QSTP-9202');
       expect(stepProgressGroup(db, save, 'QST-0001', 'QSTP-0002')?.done, isTrue);
@@ -252,6 +262,7 @@ void main() {
     test('stays unfinished when only a partial hand-in counter is present', () {
       final save = withQuest('QST-0001', {
         'step:QSTP-0001': 1,
+        'step:QSTP-0036': 1,
         'handIn:QSTP-0002:ITEM-0058': 4,
         'step:QSTP-9202': 1,
       });

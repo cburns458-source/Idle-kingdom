@@ -131,15 +131,15 @@ describe('quest log', () => {
     ])
   })
 
-  it('reveals the next feast step after the King is heard', () => {
+  it('reveals the hand-in once the King is heard and the food is cooked', () => {
     const save = {
       ...createNewSave(launch),
       quests: [
         {
           questId: 'QST-0001',
           status: 'active' as const,
-          progress: 2,
-          counters: { 'talk:NPC-0001': 1, 'step:QSTP-0001': 1 },
+          progress: 3,
+          counters: { 'talk:NPC-0001': 1, 'step:QSTP-0001': 1, 'step:QSTP-0036': 1 },
         },
       ],
     }
@@ -147,7 +147,8 @@ describe('quest log', () => {
     // QSTP-0002 is a HandIn step: progress lives in the King's dialogue, not Deliver lines.
     expect(row.steps).toEqual([
       { key: 'QSTP-0001', label: 'Hear what the King needs', state: 'done' },
-      { key: 'QSTP-0002', label: 'Prepare food for the feast', state: 'current' },
+      { key: 'QSTP-0036', label: 'Cook food for the feast', state: 'done' },
+      { key: 'QSTP-0002', label: 'Bring the food to the King', state: 'current' },
     ])
   })
 

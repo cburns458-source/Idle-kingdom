@@ -13,6 +13,7 @@ import { createNewSave } from '../save/saveStore'
 import { courtyardBotanyUnlocked } from '../timers/locationTimers'
 import type { PlayerSave } from '../save/types'
 import { applyGameCommand, type GameCommandResult } from '../server/authority'
+import { applyQuestProcessProgress } from './progress'
 import { latchStep } from './steps'
 import {
   acceptQuest,
@@ -332,6 +333,8 @@ describe('no_room is all-or-nothing', () => {
     const accepted = chooseDialogue(contentDb, save, 'DLG-0011', 'DNODE-0018', 'DCH-0023')
     if (!accepted.ok) throw new Error(accepted.reason)
     save = addItemToInventory(addItemToInventory(accepted.save, BAKED_POTATO, 11), COOKED_PERCH, 11)
+    // The cooking tick latches the optional Cook step (QSTP-0036).
+    save = applyQuestProcessProgress(contentDb, save, 'RCP-0001')
     const handedIn = chooseDialogue(contentDb, save, 'DLG-0012', 'DNODE-0020', 'DCH-0026')
     if (!handedIn.ok) throw new Error(handedIn.reason)
     save = fillBag(handedIn.save, 0)

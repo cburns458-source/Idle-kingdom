@@ -37,7 +37,7 @@ import {
   resetQuestProgress,
 } from './quests'
 import { formatQuestProgressLine, parseStructuredObjectives } from './objectives'
-import { getCurrentStepId, questActionProgressForActivity, questStepJournal } from './steps'
+import { getCurrentStepId, isStepLatched, questActionProgressForActivity, questStepJournal } from './steps'
 import { questLog } from '../log/log'
 import {
   CAVE_MAP_ID,
@@ -66,12 +66,16 @@ describe('quest tours', () => {
     const accepted = chooseDialogue(launch, save, 'DLG-0011', 'DNODE-0018', 'DCH-0023')
     expect(accepted.ok, accepted.reason).toBe(true)
     save = accepted.save
+    expect(isStepLatched(save, 'QST-0001', 'QSTP-0001')).toBe(true)
     expect(getCurrentStepId(launch, save, getQuest(launch, 'QST-0001')!)).toBe('QSTP-0002')
     expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
     expect(dialoguesForNpc(launch, save, 'NPC-0001')[0]).toBe('DLG-0012')
 
+    // Cook the order; the cooking tick latches the optional Cook step (QSTP-0036).
     save = addItemToInventory(save, 'ITEM-0058', 10)
     save = addItemToInventory(save, 'ITEM-0059', 10)
+    save = applyQuestProcessProgress(launch, save, 'RCP-0001')
+    expect(getCurrentStepId(launch, save, getQuest(launch, 'QST-0001')!)).toBe('QSTP-0002')
     expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
     const handed = chooseDialogue(launch, save, 'DLG-0012', 'DNODE-0020', 'DCH-0026')
     expect(handed.ok, handed.reason).toBe(true)

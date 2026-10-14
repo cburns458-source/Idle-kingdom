@@ -228,6 +228,7 @@ void main() {
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
+    expect(isStepLatched(controller.save, 'QST-0001', 'QSTP-0001'), isTrue);
     expect(
       getCurrentStepId(database.launch, controller.save, getQuest(database.launch, 'QST-0001')!),
       'QSTP-0002',

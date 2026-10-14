@@ -120,7 +120,7 @@ Every Fennel (NPC-0014) and King (NPC-0001) row in Dialogues, DialogueNodes and 
 | Step | Quest | Step Type | Step Items |
 |---|---|---|---|
 | QSTP-0001 Hear what the King needs | QST-0001 | Talk | |
-| QSTP-0002 Prepare food for the feast | QST-0001 | HandIn | ITEM-0058:10;ITEM-0059:10 |
+| QSTP-0002 Bring the food to the King | QST-0001 | HandIn | ITEM-0058:10;ITEM-0059:10 |
 | QSTP-0014 Show Fennel five potatoes | QST-0006 | Show | ITEM-0025:5 |
 | QSTP-0016 Bring Fennel the cooked potatoes | QST-0006 | Show | ITEM-0058:5 |
 | QSTP-0022 Hear Fennel's farewell | QST-0006 | Talk | |
@@ -129,6 +129,8 @@ Every Fennel (NPC-0014) and King (NPC-0001) row in Dialogues, DialogueNodes and 
 | QSTP-0035 Return to Fennel | QST-0011 | Talk | |
 
 Typed steps complete only through their dialogue action, so the panel's `Talk` no longer advances them. QSTP-0002 has no `Deliver:` Notes, because quest completion would otherwise take the food a second time. QSTP-0023 lost its `GiveOnTalk`.
+
+Between QSTP-0001 and QSTP-0002 sits the untyped Cook step QSTP-0036 ("Cook food for the feast", `Hold: ITEM-0058 x10, ITEM-0059 x10; Optional`). Holding the food clears it however it was obtained, and the `Optional` field tells the engine not to hold the quest on it: the hand-in stays reachable whether or not the player ever held the full order.
 
 ### Gifts
 Gift flags are `gift:<quest or dialogue ID>:<key>`. Every gift choice sets its flag in the same commit as the grant and rejects it with `!flag:`, so closing the window mid-conversation cannot claim twice. Quest gifts also require `!quest_done:<quest>`. A full bag refuses the grant without setting the flag, so the gift stays claimable. `/abandonquest` clears the quest's gift flags.
