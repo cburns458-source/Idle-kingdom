@@ -26,6 +26,11 @@ void main() {
       const failed = CloudSyncResult.failed('nope');
       expect(failed.pointsGained, 0);
       expect(failed.plazaPoints, 0);
+      expect(failed.pointsSpent, 0);
+    });
+
+    test('missing pointsSpent on the wire is 0', () {
+      expect(plazaResponseInt(<String, Object?>{}['pointsSpent']), 0);
     });
   });
 }

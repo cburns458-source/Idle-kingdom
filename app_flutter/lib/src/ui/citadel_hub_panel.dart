@@ -8,6 +8,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'plaza_points.dart';
 
 /// The Citadel bounty board, opened from a location the way a shop is.
 ///
@@ -67,7 +68,13 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
   }
 
   Future<void> _turnIn(BountyDefinition bounty) async {
-    await net.turnIn(bounty, controller.save, nowMs, controller.commit);
+    await net.turnIn(bounty, controller.save, nowMs, _onBountyPaid);
+  }
+
+  void _onBountyPaid(PlayerSave save, {required int pointsGained}) {
+    controller.commit(save);
+    final notice = plazaPointsGainedNotice(pointsGained);
+    if (notice != null) controller.announce(notice);
   }
 
   @override
