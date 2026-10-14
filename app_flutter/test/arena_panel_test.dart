@@ -137,9 +137,9 @@ void main() {
     expect(controller.save.plazaPoints, controller.save.rankedPvpWins > 0 ? rankedPvpWinPoints : 0);
     expect(controller.save.rankedPvpWins + controller.save.rankedPvpLosses, 1);
     if (controller.save.rankedPvpWins > 0) {
-      expect(find.text('Ranked purse: 25 plaza points.'), findsOne);
+      expect(find.text('+25 plaza points'), findsOne);
     } else {
-      expect(find.text('Ranked purse: 25 plaza points.'), findsNothing);
+      expect(find.text('+25 plaza points'), findsNothing);
       expect(find.text('Ranked fight recorded. No gold.'), findsOne);
     }
     if (find.text('Back').evaluate().isNotEmpty) {

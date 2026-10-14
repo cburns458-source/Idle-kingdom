@@ -9,6 +9,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'activity_icons_pref.dart';
 import 'bag_overflow_pref.dart';
 import 'battery_saver_pref.dart';
+import 'hosted_command.dart';
 import 'hosted_save_adopt.dart';
 import 'hud_level_pref.dart';
 import 'hud_title_pref.dart';
@@ -16,6 +17,8 @@ import 'local_player_art.dart';
 import 'map_travel_pref.dart';
 import 'quest_log_sort_pref.dart';
 import 'ui_chrome.dart';
+
+export 'hosted_command.dart';
 
 /// The last killing blow, kept so the stage can hold sprites before swapping.
 class CombatOutcomeHold {
@@ -915,6 +918,9 @@ class GameController extends ChangeNotifier {
   ///
   /// Answers null when the server accepted it, or the sentence to show.
   Future<String?> Function(String command, [Map<String, Object?> args])? submitGameCommand;
+
+  /// Hosted play that needs the server's spend/balance fields, not only a reason.
+  HostedCommandSubmit? submitHostedCommand;
 
   /// True while this device is signed in and playing the hosted save.
   ///

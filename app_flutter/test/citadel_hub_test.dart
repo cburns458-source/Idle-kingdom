@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/ui/plaza_points.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -93,6 +94,10 @@ void main() {
     expect(controller.save.gold, goldBefore);
     expect(plazaPointsOf(controller.save), greaterThan(pointsBefore));
     expect(find.textContaining('First completer! +'), findsOne);
+    expect(
+      find.text(plazaPointsGainedNotice(plazaPointsOf(controller.save) - pointsBefore)!),
+      findsOne,
+    );
     expect(find.text('Claimed'), findsOne);
   });
 }
