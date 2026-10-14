@@ -1823,12 +1823,12 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Turns [bounty] in, handing the paid save to [onPaid] to commit.
+  /// Turns [bounty] in, handing the paid save and [pointsGained] to [onPaid].
   Future<void> turnIn(
     BountyDefinition bounty,
     PlayerSave save,
     num nowMs,
-    void Function(PlayerSave save) onPaid,
+    void Function(PlayerSave save, {required int pointsGained}) onPaid,
   ) {
     return run(() async {
       final result = await turnInBounty(service, db, save, bounty, nowMs);
@@ -1836,7 +1836,7 @@ class MultiplayerController extends ChangeNotifier {
         await refreshBountyClaims(hourlyBountyBoard(nowMs).hourKey);
         return result.reason;
       }
-      onPaid(result.save!);
+      onPaid(result.save!, pointsGained: result.pointsGained);
       await refreshBountyClaims(result.claim!.hourKey);
       return bountyClaimedNotice(result.pointsGained, result.firstCompleter!);
     });

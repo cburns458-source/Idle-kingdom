@@ -115,6 +115,16 @@ class _BootGateState extends State<_BootGate> {
       final result = await multiplayer.submitGameCommand(command, args);
       return result.ok ? null : (result.reason ?? 'Try again.');
     };
+    game.submitHostedCommand = (command, [args = const <String, Object?>{}]) async {
+      final result = await multiplayer.submitGameCommand(command, args);
+      return HostedCommandReceipt(
+        reason: result.ok ? null : (result.reason ?? 'Try again.'),
+        code: result.code,
+        pointsSpent: result.pointsSpent,
+        plazaPoints: result.plazaPoints,
+        save: result.save,
+      );
+    };
     repository.onWrite = multiplayer.scheduleAccountSave;
     if (multiplayer.isSignedIn) {
       await multiplayer.resumeAccount(game.save, adopt: game.adoptAccountSave);

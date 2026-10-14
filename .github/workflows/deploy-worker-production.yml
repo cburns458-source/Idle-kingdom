@@ -34,6 +34,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Confirm environment
         run: |
@@ -48,4 +52,4 @@ jobs:
             echo "::error title=Live Worker deploy skipped::Set the CLOUDFLARE_API_TOKEN repository secret (Workers Scripts Edit) to deploy restoria-idlerpg."
             exit 1
           fi
-          npx --yes wrangler@4.148.0 deploy --env production
+          npm run deploy:production

@@ -8,6 +8,7 @@ import 'dialogue_window.dart';
 import 'floating_slot.dart';
 import 'format.dart';
 import 'item_icon.dart';
+import 'plaza_points.dart';
 import 'quantity_sheet.dart';
 
 /// A shop counter: pick what to buy, pick what to sell, then confirm once.
@@ -30,6 +31,7 @@ class _ShopPanelState extends State<ShopPanel> {
   final Map<String, num> _sells = <String, num>{};
   String? _error;
   String? _receipt;
+  bool _plazaBusy = false;
 
   GameController get controller => widget.controller;
   GameDatabase get db => controller.db;
@@ -210,6 +212,63 @@ class _ShopPanelState extends State<ShopPanel> {
     });
   }
 
+  bool get _plazaHosted {
+    return controller.hostedPlay?.call() == true && controller.submitHostedCommand != null;
+  }
+
+  /// One Hearthguard piece through hosted `plaza_shop_buy`. Never applied locally.
+  Future<void> _buyPlaza(String itemId) async {
+    if (_plazaBusy || !_plazaHosted) return;
+    _plazaBusy = true;
+    setState(() => _error = null);
+    try {
+      final blocked = noRoomFor(save, [ItemGrant(itemId: itemId, quantity: 1)], db);
+      if (blocked != null) {
+        if (!mounted) return;
+        await showDialogueBagFullPopup(context: context, noRoom: blocked);
+        return;
+      }
+      await _buyPlazaHosted(itemId);
+    } finally {
+      _plazaBusy = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  Future<void> _buyPlazaHosted(String itemId) async {
+    final receipt = await _sendHostedPlazaBuy(itemId);
+    if (!mounted) return;
+    if (!receipt.ok) {
+      await _showPlazaRefusal(receipt);
+      return;
+    }
+    final server = receipt.save;
+    if (server != null) {
+      controller.commitLoadout(server.copyWith(plazaPoints: receipt.plazaPoints));
+    }
+    final spent = plazaPointsSpentNotice(receipt.pointsSpent);
+    if (spent != null) controller.announce(spent);
+    if (!mounted) return;
+    setState(() {
+      _error = null;
+      _receipt = spent;
+    });
+  }
+
+  Future<HostedCommandReceipt> _sendHostedPlazaBuy(String itemId) {
+    return controller.submitHostedCommand!('plaza_shop_buy', <String, Object?>{'itemId': itemId});
+  }
+
+  Future<void> _showPlazaRefusal(HostedCommandReceipt receipt) async {
+    if (receipt.code == 'no_room' || receipt.noRoom != null) {
+      await showDialogueBagFullPopup(context: context, noRoom: receipt.noRoom);
+      return;
+    }
+    if (receipt.reason == null) return;
+    if (!mounted) return;
+    setState(() => _error = receipt.reason);
+  }
+
   @override
   Widget build(BuildContext context) {
     final shop = getShop(db, widget.shopId);
@@ -218,14 +277,20 @@ class _ShopPanelState extends State<ShopPanel> {
     }
     final access = canAccessShop(db, save, shop);
     final title = shop.raw['Display Name'] as String? ?? widget.shopId;
+    final plaza = isPlazaShop(shop);
     if (!access.ok) {
       return _frame(
         title: title,
+        plaza: plaza,
         child: Text(
           access.reason ?? 'You cannot trade here.',
           style: const TextStyle(color: Palette.danger),
         ),
       );
+    }
+
+    if (plaza) {
+      return _frame(title: title, plaza: true, child: _buildPlazaShop(shop));
     }
 
     final buyTotal = _total(_buys, (id) => playerBuyPrice(db, shop, id));
@@ -332,7 +397,81 @@ class _ShopPanelState extends State<ShopPanel> {
     );
   }
 
-  Widget _frame({required String title, required Widget child}) {
+  Widget _buildPlazaShop(ShopRow shop) {
+    final points = plazaPointsOf(save);
+    final stock = shopStockForPlayer(db, save, shop);
+    final Widget listed;
+    if (stock.isEmpty) {
+      listed = const MutedText('No stock listed.');
+    } else {
+      listed = _plazaList(stock, points);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const MutedText('Spend plaza points on Hearthguard gear.'),
+        if (!_plazaHosted) ...[
+          const SizedBox(height: 6),
+          const MutedText(plazaShopNeedsConnection),
+        ],
+        if (_error case final error?) ...[
+          const SizedBox(height: 6),
+          Text(
+            error,
+            style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+          ),
+        ],
+        if (_receipt case final receipt?) ...[
+          const SizedBox(height: 6),
+          Text(
+            receipt,
+            style: const TextStyle(color: Palette.gold, fontSize: GameFont.s),
+          ),
+        ],
+        const SizedBox(height: 8),
+        Expanded(child: listed),
+      ],
+    );
+  }
+
+  Widget _plazaList(List<ShopStockEntry> stock, num points) {
+    return ListView(children: [for (final entry in stock) _plazaRow(entry, points)]);
+  }
+
+  Widget _plazaRow(ShopStockEntry entry, num points) {
+    final price = plazaShopPrice(entry.itemId);
+    final item = controller.indexes.itemsById[entry.itemId];
+    final name = item?.displayName ?? entry.itemId;
+    final affordable = _plazaHosted && price != null && points >= price && !_plazaBusy;
+    final priceLabel = plazaShopPriceLabel(price);
+    return GamePanel(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        children: [
+          ItemIcon(item: item, size: 36),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.w400)),
+                MutedText(priceLabel),
+              ],
+            ),
+          ),
+          GameButton(
+            key: Key('plaza-buy-${entry.itemId}'),
+            label: 'Buy',
+            semanticLabel: 'Buy $name',
+            compact: true,
+            onPressed: affordable ? () => _buyPlaza(entry.itemId) : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _frame({required String title, required Widget child, bool plaza = false}) {
     return GamePanel(
       framed: true,
       child: Column(
@@ -346,10 +485,18 @@ class _ShopPanelState extends State<ShopPanel> {
                   style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
-              GoldAmount(
-                amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
-              ),
+              if (plaza)
+                Text(
+                  key: const Key('plaza-points-balance'),
+                  '${formatThousands(plazaPointsOf(save))} plaza points',
+                  style: const TextStyle(color: Palette.gold),
+                )
+              else
+                GoldAmount(
+                  key: const Key('shop-gold-balance'),
+                  amount: save.gold,
+                  style: const TextStyle(color: Palette.gold),
+                ),
               if (widget.onClose != null)
                 GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
             ],
