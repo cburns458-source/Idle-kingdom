@@ -38,24 +38,29 @@ class CloudSyncResult {
     this.opponent,
     this.claim,
   }) : reason = null,
-       remote = null;
+       remote = null,
+       noRoom = null;
 
-  const CloudSyncResult.failed(this.reason, {this.remote, this.winsRemaining})
-    : save = null,
-      source = null,
-      goldGained = null,
-      pointsGained = 0,
-      plazaPoints = 0,
-      pointsSpent = 0,
-      firstCompleter = null,
-      code = null,
-      fightId = null,
-      pvpOutcome = null,
-      rounds = null,
-      youMaxHp = null,
-      themMaxHp = null,
-      opponent = null,
-      claim = null;
+  const CloudSyncResult.failed(
+    this.reason, {
+    this.remote,
+    this.winsRemaining,
+    this.code,
+    this.noRoom,
+  }) : save = null,
+       source = null,
+       goldGained = null,
+       pointsGained = 0,
+       plazaPoints = 0,
+       pointsSpent = 0,
+       firstCompleter = null,
+       fightId = null,
+       pvpOutcome = null,
+       rounds = null,
+       youMaxHp = null,
+       themMaxHp = null,
+       opponent = null,
+       claim = null;
 
   final PlayerSave? save;
   final CloudSyncSource? source;
@@ -77,6 +82,7 @@ class CloudSyncResult {
 
   final bool? firstCompleter;
   final String? code;
+  final NoRoom? noRoom;
   final String? fightId;
   final num? winsRemaining;
   final String? pvpOutcome;
@@ -105,6 +111,8 @@ class CloudSyncResult {
           'ok': false,
           'reason': reason,
           if (remote != null) 'remote': remote!.toJson(),
+          if (code != null) 'code': code,
+          if (noRoom != null) 'noRoom': noRoom!.toJson(),
         };
 }
 

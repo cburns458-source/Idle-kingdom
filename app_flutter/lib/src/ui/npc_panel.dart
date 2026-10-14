@@ -4,6 +4,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../theme.dart';
+import 'bribe_popup.dart';
 import 'dialogue_text.dart';
 import 'dialogue_window.dart';
 import 'format.dart';
@@ -174,6 +175,55 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   Future<void> _bribe(NpcQuestBlock quest) async {
+    if (_busy) return;
+    final blocked = bribeForQuest(controller.db, controller.save, quest.questId);
+    if (!blocked.ok && blocked.code == 'no_room') {
+      if (!mounted) return;
+      setState(() => _error = null);
+      await showDialogueBagFullPopup(context: context, noRoom: blocked.noRoom);
+      return;
+    }
+    if (!mounted) return;
+    final paid = await showBribeConfirmPopup(
+      context: context,
+      db: controller.db,
+      save: controller.save,
+      questId: quest.questId,
+    );
+    if (!paid || !mounted) return;
+    if (_busy) return;
+    _busy = true;
+    try {
+      await _payBribe(quest);
+    } finally {
+      _releaseNextFrame();
+    }
+  }
+
+  bool _stillCanBribe(String questId) {
+    return conversation.quests.any((quest) => quest.questId == questId && quest.canBribe);
+  }
+
+  /// Hosted play waits for the server so a `not_enough_gold` refusal writes
+  /// nothing back. Offline applies locally, same as today's synced command.
+  Future<void> _payBribe(NpcQuestBlock quest) async {
+    if (!_stillCanBribe(quest.questId)) return;
+    final args = <String, Object?>{'questId': quest.questId};
+    final hosted = controller.hostedPlay?.call() == true;
+    final send = controller.submitGameCommand;
+    if (hosted && send != null) {
+      final reason = await send('quest_bribe', args);
+      if (!mounted) return;
+      if (reason != null) {
+        setState(() => _error = reason);
+        return;
+      }
+      if (!_stillCanBribe(quest.questId)) {
+        controller.announce('The purse changes hands.');
+        if (mounted) setState(() => _error = null);
+        return;
+      }
+    }
     final result = bribeForQuest(controller.db, controller.save, quest.questId);
     if (!result.ok) {
       if (result.code == 'no_room') {
@@ -182,13 +232,13 @@ class _NpcPanelState extends State<NpcPanel> {
         await showDialogueBagFullPopup(context: context, noRoom: result.noRoom);
         return;
       }
-      setState(() => _error = result.reason);
+      if (mounted) setState(() => _error = result.reason);
       return;
     }
     controller.commit(
       result.save!,
-      command: 'quest_bribe',
-      args: <String, Object?>{'questId': quest.questId},
+      command: hosted && send != null ? null : 'quest_bribe',
+      args: args,
     );
     controller.announce(result.message!);
     if (!mounted) return;

@@ -243,9 +243,12 @@ class _ShopPanelState extends State<ShopPanel> {
       return;
     }
     final server = receipt.save;
-    if (server != null) {
-      controller.commitLoadout(server.copyWith(plazaPoints: receipt.plazaPoints));
+    if (server == null) {
+      if (!mounted) return;
+      setState(() => _error = null);
+      return;
     }
+    controller.commitLoadout(server.copyWith(plazaPoints: receipt.plazaPoints));
     final spent = plazaPointsSpentNotice(receipt.pointsSpent);
     if (spent != null) controller.announce(spent);
     if (!mounted) return;

@@ -214,9 +214,18 @@ class SupabaseTransport implements RemoteTransport {
   @override
   Future<RemoteInvokeResult> invoke(String function, RemoteRow body) {
     return _retryAuth(() async {
-      final response = await client.functions.invoke(function, body: body);
-      final data = response.data;
-      return RemoteInvokeResult.ok(data is Map ? Map<String, Object?>.from(data) : null);
+      try {
+        final response = await client.functions.invoke(function, body: body);
+        final data = response.data;
+        return RemoteInvokeResult.ok(data is Map ? Map<String, Object?>.from(data) : null);
+      } on FunctionException catch (error) {
+        // A 400 `{error, code, noRoom}` must stay a body, not a bare sentence.
+        final details = error.details;
+        if (details is Map) {
+          return RemoteInvokeResult.ok(Map<String, Object?>.from(details));
+        }
+        rethrow;
+      }
     }, (reason) => RemoteInvokeResult.failed(reason));
   }
 

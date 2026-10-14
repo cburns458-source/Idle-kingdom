@@ -120,6 +120,7 @@ class _BootGateState extends State<_BootGate> {
       return HostedCommandReceipt(
         reason: result.ok ? null : (result.reason ?? 'Try again.'),
         code: result.code,
+        noRoom: result.noRoom,
         pointsSpent: result.pointsSpent,
         plazaPoints: result.plazaPoints,
         save: result.save,
