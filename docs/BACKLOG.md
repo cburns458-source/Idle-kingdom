@@ -269,7 +269,7 @@ Direction, Community = Community/Notifications).
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
 | SYS-01 | Create a dedicated dialogue system *(from UI)* | Ready for plan | P1 | none | Systems | **MVP already exists** (Citadel Guide). This item = extend it to every NPC and quest. QST-01 done (#323/#270). Still blocks QST-02/03. |
-| SYS-02 | Should there be a mechanic for moving between locations… | Done | — | OQ-01 | Design | Answered 2026-10-13 (OQ-01): travel is instant except the necessary delays. Unused travel-time setting removed in #336 (SYS-07). |
+| SYS-02 | Should there be a mechanic for moving between locations… | Answered | — | OQ-01 | Design | Answered 2026-10-13 (OQ-01): travel is instant except the necessary delays. Unused travel-time setting removed in #336 (SYS-07). |
 | SYS-03 | Maximum inventory size? | On test (decided) | — | none | Design + Econ | Decided 2026-10-13 (Conor): 84 bag slots / 168 bank slots (#332). Blocks UI-12, MEM-01 |
 | SYS-04 | Should there be defense or just health? | Needs decision | — | OQ-04 | Design + Econ | |
 | SYS-05 | Notifications system (plumbing for NTF-\*) | Ready for plan | P1 | none | Community | Today only chat bubbles exist (`notification_bubble.dart`). Blocks NTF-01..09, ADM-03. |

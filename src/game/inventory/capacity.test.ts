@@ -62,23 +62,20 @@ describe('inventory capacity', () => {
   })
 
   it('pins bag 84 and bank 168 across TS, Dart, and the edge copy', () => {
-    const sources = {
-      'capacity.ts': readFileSync(resolve(process.cwd(), 'src/game/inventory/capacity.ts'), 'utf8'),
-      'capacity.dart': readFileSync(
-        resolve(process.cwd(), 'packages/ik_rules/lib/src/inventory/capacity.dart'),
-        'utf8',
-      ),
-      'save_items.ts': readFileSync(
-        resolve(process.cwd(), 'supabase/functions/_shared/save_items.ts'),
-        'utf8',
-      ),
-    } as const
-    expect(sources['capacity.ts']).toMatch(/export const INVENTORY_SLOT_LIMIT = 84\b/)
-    expect(sources['capacity.ts']).toMatch(/export const BANK_SLOT_LIMIT = 168\b/)
-    expect(sources['capacity.dart']).toMatch(/const int inventorySlotLimit = 84;/)
-    expect(sources['capacity.dart']).toMatch(/const int bankSlotLimit = 168;/)
-    expect(sources['save_items.ts']).toMatch(/export const INVENTORY_SLOT_LIMIT = 84\b/)
-    expect(sources['save_items.ts']).toMatch(/export const BANK_SLOT_LIMIT = 168\b/)
+    expect(INVENTORY_SLOT_LIMIT).toBe(84)
+    expect(BANK_SLOT_LIMIT).toBe(168)
+    const capacityDart = readFileSync(
+      resolve(process.cwd(), 'packages/ik_rules/lib/src/inventory/capacity.dart'),
+      'utf8',
+    )
+    const saveItems = readFileSync(
+      resolve(process.cwd(), 'supabase/functions/_shared/save_items.ts'),
+      'utf8',
+    )
+    expect(capacityDart).toMatch(/const int inventorySlotLimit = 84;/)
+    expect(capacityDart).toMatch(/const int bankSlotLimit = 168;/)
+    expect(saveItems).toMatch(/export const INVENTORY_SLOT_LIMIT = 84\b/)
+    expect(saveItems).toMatch(/export const BANK_SLOT_LIMIT = 168\b/)
   })
 
   it('still accepts more of an item when the bag is full but a matching pile exists', () => {
