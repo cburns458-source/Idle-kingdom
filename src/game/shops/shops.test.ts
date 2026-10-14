@@ -179,6 +179,44 @@ describe('shops', () => {
     }
   })
 
+  it('sells every reinforced steel gear item above its steel counterpart', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const byKey = new Map(launch.Items.map((row) => [row['Internal Key'], row]))
+    const reinforced = launch.Items.filter(
+      (row) =>
+        row['Internal Key'].startsWith('reinforced_steel_') && row['Equipment Slot ID'] !== null,
+    )
+    expect(reinforced.map((row) => row['Item ID'])).toEqual([
+      'ITEM-0233',
+      'ITEM-0234',
+      'ITEM-0235',
+      'ITEM-0236',
+      'ITEM-0237',
+      'ITEM-0238',
+      'ITEM-0239',
+      'ITEM-0240',
+      'ITEM-0241',
+      'ITEM-0242',
+      'ITEM-0243',
+      'ITEM-0244',
+      'ITEM-0245',
+    ])
+    // The whole tier sits above steel, including the steel warhammer at 198.
+    const steelCeiling = Math.max(
+      ...launch.Items.filter(
+        (row) => row['Internal Key'].startsWith('steel_') && row['Equipment Slot ID'] !== null,
+      ).map((row) => row['Base Sell Value']!),
+    )
+    expect(steelCeiling).toBe(198)
+    for (const row of reinforced) {
+      const steel = byKey.get(row['Internal Key'].replace(/^reinforced_/, ''))
+      expect(steel, `${row['Item ID']} has no steel counterpart`).toBeDefined()
+      expect(row['Base Sell Value']).toBe(220)
+      expect(row['Base Sell Value']!).toBeGreaterThan(steel!['Base Sell Value']!)
+      expect(row['Base Sell Value']!).toBeGreaterThan(steelCeiling)
+    }
+  })
+
   it('stocks the Armory with bronze and iron swords and plate, and buys back at 1×', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0007')!
