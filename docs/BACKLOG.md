@@ -265,6 +265,7 @@ Direction, Community = Community/Notifications).
 | QST-07 | Thievery quest that requires lockpicking a locked door, need multiple success to complete step | Idea | P2 | SKL-01 | Writer | **Overlap:** thievery cluster (SKL-01..04) |
 | QST-08 | 'Balrog' in abandoned mine | Idea | Later | QST-05-style boss tech | Design | Abandoned Mineshaft exists (Going Deeper) |
 | QST-12 | Untradeable/quest item retrieval npc | Needs decision | P2 | OQ-05, BUG-02 | Design | Pair with BUG-02 |
+| QST-13 | Barracks Guard says only "Hmph." after Lowly Beggar | In PR | P2 | none | Writer | Content only: `QDL-0031` (QST-0003 / NPC-0012, `When: completed`); `questTalkLine` returns "Hmph." after bribe or fight, QDL-0002/QDL-0010 unchanged before. **Known gap:** `npcConversation` drops a non-giver's quest once it is no longer active, so the guard's panel falls back to his description after completion; surfacing "Hmph." there needs an engine/UI change, not content. |
 
 ### SYS: Core systems
 
