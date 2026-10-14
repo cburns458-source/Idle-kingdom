@@ -587,7 +587,7 @@ type ActionFailure = {
   stepProgress?: StepProgressGroup[]
 }
 
-/** Trimmed `No Room Line` when the cell has text; empty or missing stays unset. */
+/** Trimmed `No Room Line` when the cell has text; empty, missing, or whitespace-only stays unset so the server never sends a blank line. */
 function npcLineFromChoice(choice: DialogueChoiceRow): string | undefined {
   const line = choice['No Room Line']
   if (typeof line !== 'string') return undefined

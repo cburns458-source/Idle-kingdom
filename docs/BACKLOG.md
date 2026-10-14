@@ -123,15 +123,16 @@ Conor's rulings, dated. Immutable once written.
 | ≤ 2026-10-12 | Location art spec: square sources that crop to portrait | `docs/Master_Prompt.md` §6 |
 | ≤ 2026-10-12 | Confirm email is OFF on purpose (turning it on breaks character creation) | `docs/deployment.md`; see ADM-02 |
 | 2026-10-13 | Travel is instant except the delays below (30 s death pause, hostile-area confirm / under-level forced combat, optional walk animation, 150 ms network spinner). No timed travel mechanic. | Conor (OQ-01 / SYS-02) |
+| 2026-10-13 | Game Systems cleanup: Game Bible bag/bank caps aligned to 84/168; SYS-02 marked Answered; capacity drift test imports TS constants (Dart/edge sources still read). Travel rulings stay as the two existing log rows. | PR #354 |
 
 ### 2.1 Standing context (facts that shape open items)
 
 - ⚠️ Combat now has HP **and** DR (Damage Resistance): PR #289 "Retune enemy
   base HP and add Damage Resistance". Affects OQ-04.
-- ⚠️ Travel is instant except the delays below: 30 s death pause, hostile-area
+- ⚠️ Travel is instant except these delays: 30 s death pause, hostile-area
   confirm / under-level forced combat, optional walk animation (off by default),
   and the 150 ms network spinner. Timed travel was removed (`remove-timed-travel`).
-  Unused travel-time setting cleanup is SYS-07 (this PR; approved 2026-10-13).
+  Unused travel-time setting cleanup is SYS-07 (#336; approved 2026-10-13).
 - ⚠️ Items that already exist: Quiver (back slot, Artisanry 15), 9 bows, no
   arrows, Enchanting Tablet + Spell Tablet (Crafting → consumed by Arcana), one
   Essence item (harnessed at Wizard's Tower), Chromium and Vanadium ore/bars,
@@ -158,7 +159,7 @@ Conor decides. Open unless marked answered. OQ-03 and OQ-05 are answered; OQ-11 
 
 | ID | Question | Blocks | Context found | Status |
 |---|---|---|---|---|
-| OQ-01 | Should moving between locations be a mechanic, or instant? | MAP-01, MAP-04, SYS-02 | Answered 2026-10-13 (Conor): instant. Travel is instant except the delays below (death pause, hostile-area confirm, optional walk animation, loading spinner). Dead travel-duration constant removed. | Answered |
+| OQ-01 | Should moving between locations be a mechanic, or instant? | MAP-01, MAP-04, SYS-02 | Answered 2026-10-13 (Conor): instant. Travel is instant except these delays: death pause, hostile-area confirm, optional walk animation, loading spinner. Dead travel-duration constant removed. See decisions log 2026-10-13 (OQ-01 / SYS-02 / SYS-07). | Answered |
 | OQ-02 | Should bows require arrows? | ITM-03, ITM-04 | 9 bows, Quiver gives a Hunting XP factor, no arrow items | Open |
 | OQ-03 | Maximum inventory size? | SYS-03, UI-12, MEM-01, NTF-02 | No inventory cap key in Config; shipped as 84 bag / 168 bank | Answered 2026-10-13 (Conor): 84 bag slots / 168 bank slots (#332) |
 | OQ-04 | Defense, or just health? | SYS-04, ARC-07, ARC-08 | DR already shipped in #289, so the question is really "keep DR as the defense stat?" | Open |
@@ -214,7 +215,7 @@ Just IDs, in order. Conor re-orders this.
 ARC-03/04/07/08/09 · ITM-01/03/04/05/07 · SKL-01/03/05 · QST-03/05/07/12 ·
 MAP-01b/02/03 · SOC-01/03 · WLD-01 (once decided) · WLD-02 · TTL-00/02/03 ·
 UI-01/02/03/04/06/12 · ART-02/04/05/06 · NTF-05/07/08/09 · ADM-05 Telemetry ·
-SYS-06 clock · SYS-07 unused travel-time setting.
+SYS-06 clock.
 
 ### Later
 
@@ -270,12 +271,12 @@ Direction, Community = Community/Notifications).
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
 | SYS-01 | Create a dedicated dialogue system *(from UI)* | Ready for plan | P1 | none | Systems | **MVP already exists** (Citadel Guide). This item = extend it to every NPC and quest. QST-01 done (#323/#270). Still blocks QST-02/03. |
-| SYS-02 | Should there be a mechanic for moving between locations… | Needs decision | — | OQ-01 | Design | This PR records Conor's instant-travel ruling and removes the dead constant; test-launch also tracks that cleanup as SYS-07. |
+| SYS-02 | Should there be a mechanic for moving between locations… | Answered | — | OQ-01 | Design | Answered 2026-10-13 (OQ-01): travel is instant except the necessary delays. Unused travel-time setting removed in #336 (SYS-07). |
 | SYS-03 | Maximum inventory size? | On test (decided) | — | none | Design + Econ | Decided 2026-10-13 (Conor): 84 bag slots / 168 bank slots (#332). Blocks UI-12, MEM-01 |
 | SYS-04 | Should there be defense or just health? | Needs decision | — | OQ-04 | Design + Econ | |
 | SYS-05 | Notifications system (plumbing for NTF-\*) | Ready for plan | P1 | none | Community | Today only chat bubbles exist (`notification_bubble.dart`). Blocks NTF-01..09, ADM-03. |
 | SYS-06 | Server time clock… weather art or item *(from UI)* | Idea | P2 | none | Systems + Art | Overlaps SKL-06 (tides) and leaderboard resets (already UTC-hour based) |
-| SYS-07 | Remove the unused travel-time setting | In PR | P2 | none | Systems | Travel stays instant; no player-facing change. Approved 2026-10-13 (Conor). This PR. |
+| SYS-07 | Remove the unused travel-time setting | Done | P2 | none | Systems | Travel stays instant; no player-facing change. Approved 2026-10-13 (Conor). Shipped in #336. |
 
 ### ARC: Arcana / Enchanting / Essence / Spells
 
@@ -479,6 +480,7 @@ already done when the backlog was approved.
 | Keep map node labels inside the view on narrow phones | PR #330 (on test-launch) | 2026-10-13 |
 | test(unattended): test-only step cap so the catch-up self-heal test runs fast | PR #331 (on test-launch) | 2026-10-13 |
 | SYS-03: 84 bag slots / 168 bank slots, leftover loot | PR #332 (on test-launch) | 2026-10-13 |
+| SYS-07: unused travel-time setting removed | PR #336 (on test-launch) | 2026-10-13 |
 | BUG-04: server-authoritative ranked PvP and bounty payouts | PR #333 (on test-launch) | 2026-10-13 |
 | QST-01 Getting Started / Green Thumb dialogue | PR #323, #270 (on test-launch) | 2026-10-13 |
 | BUG-03 todo drops/recipes | solved before tracking (no fixing PR in `git log`) | 2026-10-13 |

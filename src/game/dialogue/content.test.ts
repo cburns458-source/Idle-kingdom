@@ -415,6 +415,29 @@ describe('Fennel and King dialogue content', () => {
     expect(bagCount(declined.save, BAKED_POTATO)).toBe(0)
   })
 
+  it('leaves npcLine unset on a refusal other than no_room', () => {
+    const save = picked(fresh(CITADEL_PLAZA), 'DLG-0001', 'DNODE-0001', 'DCH-0001').save
+    const again = guidePotato(save)
+    expect(again.ok).toBe(false)
+    expect(again.code).toBe('not_available')
+    expect(again.noRoom).toBeNull()
+  })
+
+  it('omits a whitespace-only No Room Line from no_room.npcLine', () => {
+    const patchedRaw = JSON.parse(JSON.stringify(rawDatabase)) as typeof rawDatabase
+    const choice = patchedRaw.DialogueChoices.find((row: { 'Choice ID': string }) => row['Choice ID'] === 'DCH-0001')
+    expect(choice).toBeDefined()
+    choice!['No Room Line'] = ' \t\n '
+    const patched = prepareDatabase(patchedRaw).launch
+    const full = fillBag({ ...createNewSave(patched, NOW), currentLocationId: CITADEL_PLAZA })
+    const refused = chooseDialogue(patched, full, 'DLG-0001', 'DNODE-0001', 'DCH-0001')
+    expect(refused.ok).toBe(false)
+    expect(refused.code).toBe('no_room')
+    expect(refused.noRoom).toEqual({ slotsNeeded: 1, slotsFree: 0 })
+    expect(refused.noRoom).not.toHaveProperty('npcLine')
+    expect(bagCount(refused.save, BAKED_POTATO)).toBe(0)
+  })
+
   it('/abandonquest clears Green Thumb gift flags so the seed can be claimed again', () => {
     let save = greenThumbActive()
     const gift = seedGift(save)

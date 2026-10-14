@@ -129,10 +129,6 @@ export function rewardsFit(
   return { fits, ...noRoomFromFit(fits, slotsNeeded, slotsFree) }
 }
 
-/**
- * `null` when every grant fits together; otherwise the `no_room` counts for
- * the whole list. Paid and claimed paths use this before changing any state.
- */
 /** The `no_room` fields only — never `fits` from [rewardsFit]. */
 export function noRoomPayload(noRoom: NoRoom): NoRoom {
   if (noRoom.reason === 'stack_full') return { reason: 'stack_full' }
@@ -144,6 +140,15 @@ export function noRoomPayload(noRoom: NoRoom): NoRoom {
   return payload
 }
 
+/**
+ * `null` when every grant fits together; otherwise the `no_room` counts for
+ * the whole list. Paid and claimed paths use this before changing any state.
+ *
+ * `slotsNeeded` is new slots the grants need — stacks already in the container
+ * cost none. `slotsFree` is empty slots at [slotLimit]. `target` is set only
+ * when the full container is the bank; omitted for the bag. [slotLimit]
+ * defaults to the bag cap (`INVENTORY_SLOT_LIMIT`).
+ */
 export function noRoomFor(
   save: PlayerSave,
   grants: readonly ItemGrant[],
