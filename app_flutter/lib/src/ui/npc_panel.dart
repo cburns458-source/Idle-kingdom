@@ -17,6 +17,30 @@ typedef NpcQuestPanelRequest = Future<QuestCompletion> Function({
   required bool useFavourites,
 });
 
+/// The sheet's Priority from which a quest-gated dialogue opens the panel.
+///
+/// The Fennel and King rows sit at 10 and 11; the ungated greetings (Citadel
+/// Guide, Quartermaster Brenna) carry no Priority and stay behind
+/// "Something else…".
+const int questDialoguePriority = 10;
+
+/// The first available dialogue whose Condition names a quest
+/// (`quest_active`, `quest_step`, `quest_done`) at [questDialoguePriority] or
+/// above, in [dialoguesForNpc] order. Null leaves the old quest panel in charge.
+String? questDialogueForNpc(GameDatabase db, PlayerSave save, String npcId) {
+  for (final dialogueId in dialoguesForNpc(db, save, npcId)) {
+    for (final row in db.dialogues) {
+      if (row.dialogueId != dialogueId) continue;
+      if ((row.priority ?? 0) < questDialoguePriority) break;
+      final gated = parseDialogueTokens(row.condition)
+          .any((token) => token.name.startsWith('quest_'));
+      if (gated) return dialogueId;
+      break;
+    }
+  }
+  return null;
+}
+
 /// Talking to somebody: Talk opens the dialogue box immediately.
 ///
 /// Every line and label comes from [npcConversation], so this widget never
@@ -57,6 +81,14 @@ class _NpcPanelState extends State<NpcPanel> {
   bool _pickingRace = false;
   String? _standaloneDialogueId;
 
+  /// Set once a standalone dialogue has been closed this visit, so the panel
+  /// underneath can be reached instead of the quest dialogue reopening.
+  bool _questDialogueDismissed = false;
+
+  /// True until a seed-triggered quest start has been committed, so the first
+  /// dialogue is chosen from the save the server will also hold.
+  bool _seedStartPending = false;
+
   /// One turn-in in flight at a time, held until the next frame so a double tap
   /// on the same button is dropped.
   bool _busy = false;
@@ -67,6 +99,29 @@ class _NpcPanelState extends State<NpcPanel> {
 
   NpcConversation get conversation =>
       npcConversation(controller.db, controller.save, widget.npc, controller.session.clock());
+
+  @override
+  void initState() {
+    super.initState();
+    if (identical(applyQuestAutoStartOnSeed(controller.db, controller.save), controller.save)) {
+      return;
+    }
+    // [npcConversation] only starts the quest on a copy. Committing here is
+    // what lets the dialogue gated on that quest step open, and the commit
+    // waits a frame because the panel is built inside the controller's
+    // listener.
+    _seedStartPending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _commitSeedStart());
+  }
+
+  void _commitSeedStart() {
+    if (!mounted) return;
+    final started = applyQuestAutoStartOnSeed(controller.db, controller.save);
+    if (!identical(started, controller.save)) {
+      controller.commit(started, command: 'quest_autostart_seed');
+    }
+    setState(() => _seedStartPending = false);
+  }
 
   void _close() {
     widget.onClose();
@@ -357,14 +412,11 @@ class _NpcPanelState extends State<NpcPanel> {
 
   @override
   Widget build(BuildContext context) {
+    if (_seedStartPending) return const SizedBox.shrink();
     final conversation = this.conversation;
 
     if (_standaloneDialogueId case final dialogueId?) {
-      return StandaloneDialogueHost(
-        controller: controller,
-        dialogueId: dialogueId,
-        onClose: () => setState(() => _standaloneDialogueId = null),
-      );
+      return _standaloneHost(dialogueId);
     }
 
     if (_whereaboutsLine case final whereaboutsLine?) {
@@ -388,6 +440,20 @@ class _NpcPanelState extends State<NpcPanel> {
     return _openingDialogue(conversation);
   }
 
+  /// Closing any standalone dialogue drops back to the panel underneath; the
+  /// quest dialogue does not reopen until the NPC is tapped again.
+  Widget _standaloneHost(String dialogueId) {
+    return StandaloneDialogueHost(
+      key: ValueKey<String>(dialogueId),
+      controller: controller,
+      dialogueId: dialogueId,
+      onClose: () => setState(() {
+        _standaloneDialogueId = null;
+        _questDialogueDismissed = true;
+      }),
+    );
+  }
+
   List<Widget> _withStandalone(List<Widget> actions) {
     final ids = dialoguesForNpc(controller.db, controller.save, widget.npc.npcId);
     if (ids.isEmpty) return actions;
@@ -403,13 +469,23 @@ class _NpcPanelState extends State<NpcPanel> {
   }
 
   Widget _openingDialogue(NpcConversation conversation) {
+    if (!_questDialogueDismissed) {
+      final questDialogueId = questDialogueForNpc(controller.db, controller.save, widget.npc.npcId);
+      if (questDialogueId != null) {
+        // Held until closed, so a choice that moves the quest on does not swap
+        // the conversation out from under its own reply.
+        _standaloneDialogueId = questDialogueId;
+        return _standaloneHost(questDialogueId);
+      }
+    }
+
     final talkQuest = conversation.quests.where((quest) => quest.canTalk).firstOrNull;
     if (talkQuest != null) {
       return _playerDialogue(
         name: conversation.name,
         line: _spokenLine(conversation, talkQuest),
         error: _error,
-        actions: [GameButton(label: 'Continue', onPressed: _commitTalk)],
+        actions: _withStandalone([GameButton(label: 'Continue', onPressed: _commitTalk)]),
       );
     }
 
@@ -457,7 +533,7 @@ class _NpcPanelState extends State<NpcPanel> {
         name: conversation.name,
         line: _spokenLine(conversation, turnInQuest),
         error: _error,
-        actions: [
+        actions: _withStandalone([
           if (turnInQuest.canBribe)
             GameButton(
               label: turnInQuest.bribeLabel,
@@ -476,7 +552,7 @@ class _NpcPanelState extends State<NpcPanel> {
             GameButton(label: 'Turn in', onPressed: () => _turnIn(turnInQuest))
           else
             GameButton(label: 'Done', onPressed: _close),
-        ],
+        ]),
       );
     }
 
@@ -488,7 +564,7 @@ class _NpcPanelState extends State<NpcPanel> {
         name: conversation.name,
         line: _spokenLine(conversation, choiceQuest),
         error: _error,
-        actions: [
+        actions: _withStandalone([
           if (choiceQuest.canBribe)
             GameButton(
               label: choiceQuest.bribeLabel,
@@ -504,7 +580,7 @@ class _NpcPanelState extends State<NpcPanel> {
               onPressed: () => _chooseCombat(choiceQuest),
             ),
           GameButton(label: 'Done', onPressed: _close),
-        ],
+        ]),
       );
     }
 
@@ -514,7 +590,7 @@ class _NpcPanelState extends State<NpcPanel> {
         name: conversation.name,
         line: _spokenLine(conversation, activeQuest),
         error: _error,
-        actions: [GameButton(label: 'Done', onPressed: _close)],
+        actions: _withStandalone([GameButton(label: 'Done', onPressed: _close)]),
       );
     }
 

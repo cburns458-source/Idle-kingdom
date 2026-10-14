@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest'
 import { beginActivitySave, generateNextAction } from '../activity/engine'
 import { addItemToInventory } from '../activity/rewards'
 import { prepareDatabase } from '../data/loadDatabase'
+import { applyQuestAutoStartOnSeed } from '../quests/progress'
+import { getQuestProgress } from '../quests/quests'
 import { createNewSave } from '../save/saveStore'
 import type { InventoryStack } from '../save/types'
 import {
@@ -128,6 +130,37 @@ describe('phase 2 authority', () => {
       random: () => 0,
     })
     expect(refused.ok).toBe(false)
+  })
+
+  it('quest_autostart_seed starts Green Thumb only once Getting Started is done, and nothing else', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const seeded = addItemToInventory(
+      { ...createNewSave(launch, START_MS), currentLocationId: 'LOC-0001' },
+      'ITEM-0324',
+      1,
+    )
+    const run = (save: typeof seeded) =>
+      applyGameCommand(rawDatabase, { command: 'quest_autostart_seed', save, nowMs: START_MS, random: () => 0 })
+
+    const early = run(seeded)
+    expect(early.ok).toBe(true)
+    if (!early.ok) return
+    expect(getQuestProgress(early.save, 'QST-0011').status).toBe('inactive')
+    expect(early.save.quests).toEqual(seeded.quests)
+
+    const ready = { ...seeded, quests: [{ questId: 'QST-0006', status: 'completed' as const, progress: 1 }] }
+    const started = run(ready)
+    expect(started.ok).toBe(true)
+    if (!started.ok) return
+    expect(getQuestProgress(started.save, 'QST-0011').status).toBe('active')
+    expect(started.save.quests).toEqual(applyQuestAutoStartOnSeed(launch, ready).quests)
+    expect(started.save.inventory).toEqual(ready.inventory)
+    expect(started.save.gold).toBe(ready.gold)
+
+    const again = run(started.save)
+    expect(again.ok).toBe(true)
+    if (!again.ok) return
+    expect(again.save.quests).toEqual(started.save.quests)
   })
 
   it('charges the founding gold for guild_create and refuses a short purse', () => {

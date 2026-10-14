@@ -23,6 +23,7 @@ import { addItemToInventory } from '../../game/activity/rewards'
 import { INVENTORY_SLOT_LIMIT } from '../../game/inventory/capacity'
 import { getSkillProgress } from '../../game/activity/xp'
 import { filterLaunchContent } from '../../game/data/validate'
+import { talkWithQuestNpc } from '../../game/npcs/conversation'
 import {
   applyQuestActionProgress,
   applyQuestAutoStartOnSeed,
@@ -456,6 +457,13 @@ export function runDialogueScript(db: GameDatabase, initial: PlayerSave, ops: Op
       case 'panelTalk':
         save = applyQuestTalkProgress(db, save, str(op, 'npcId'))
         break
+      case 'oldTalk': {
+        // The old panel's Continue (`quest_talk`).
+        const result = talkWithQuestNpc(db, save, str(op, 'npcId'))
+        out = result.ok ? { ok: true, message: result.message } : { ok: false, reason: result.reason }
+        if (result.ok) save = result.save
+        break
+      }
       case 'gather':
         save = applyQuestActionProgress(db, save, str(op, 'actionId'), Number(op.amount ?? 1))
         break
@@ -1102,6 +1110,57 @@ const CONTENT_SCRIPTS: Record<string, Op[]> = {
     { op: 'view', dialogueId: 'DLG-0011', nodeId: 'DNODE-0018' },
     feastPitch('DCH-0029'),
     npcList('NPC-0001'),
+  ],
+
+  // The seed auto-start the panel commits on open (`quest_autostart_seed` runs
+  // only this): nothing before Getting Started is done, Green Thumb once it
+  // is, never twice, and a seed kept in the bank counts.
+  'green-thumb-autostart': [
+    at(FENNEL_FARM),
+    setItem(POTATO_SEED, 1),
+    { op: 'autoStartOnSeed' },
+    npcList('NPC-0014'),
+    questRow('QST-0006', 'active', {}),
+    { op: 'autoStartOnSeed' },
+    npcList('NPC-0014'),
+    questRow('QST-0006', 'completed'),
+    { op: 'autoStartOnSeed' },
+    npcList('NPC-0014'),
+    { op: 'autoStartOnSeed' },
+    questRow('QST-0011', 'inactive'),
+    setItem(POTATO_SEED, 0),
+    { op: 'setBank', itemId: POTATO_SEED, quantity: 1 },
+    { op: 'autoStartOnSeed' },
+    npcList('NPC-0014'),
+  ],
+
+  // The old panel's Continue at a Talk step a dialogue talk_flag owns leaves
+  // the step current, so the gift, the brief and the farewell still open.
+  'old-talk-keeps-dialogue-steps': [
+    ...greenThumbStart,
+    { op: 'oldTalk', npcId: 'NPC-0014' },
+    { op: 'conditions', tokens: ['quest_step:QST-0011:QSTP-0023'] },
+    npcList('NPC-0014'),
+    seedGift,
+    { op: 'conditions', tokens: ['quest_step:QST-0011:QSTP-0024'] },
+    at(THRONE_ROOM),
+    questRow('QST-0001', 'active', {}),
+    { op: 'oldTalk', npcId: 'NPC-0001' },
+    { op: 'conditions', tokens: ['quest_step:QST-0001:QSTP-0001'] },
+    npcList('NPC-0001'),
+    feastPitch('DCH-0029'),
+    { op: 'conditions', tokens: ['quest_step:QST-0001:QSTP-0002'] },
+    at(FENNEL_FARM),
+    questRow('QST-0006', 'active', {
+      'step:QSTP-0013': 1,
+      'step:QSTP-0014': 1,
+      'step:QSTP-0015': 1,
+      'step:QSTP-0016': 1,
+    }),
+    { op: 'oldTalk', npcId: 'NPC-0014' },
+    { op: 'conditions', tokens: ['quest_step:QST-0006:QSTP-0022'] },
+    npcList('NPC-0014'),
+    choose('DLG-0006', 'DNODE-0009', 'DCH-0012'),
   ],
 
   // Visiting the Citadel: Guide and Market Master remind; they do not advance the Visit step.

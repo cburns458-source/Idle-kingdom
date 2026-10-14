@@ -38,7 +38,7 @@ import {
 } from '../npcs/conversation'
 import { completeSpecialProject } from '../projects/engine'
 import { completeQuest, type QuestFailure } from '../quests/quests'
-import { applyQuestInspectProgress } from '../quests/progress'
+import { applyQuestAutoStartOnSeed, applyQuestInspectProgress } from '../quests/progress'
 import { assignRace } from '../races/assignRace'
 import { createNewSave, parseSave } from '../save/saveStore'
 import type { AttackStyle, PlayerSave, PlayerSettings } from '../save/types'
@@ -128,6 +128,7 @@ export type GameCommandName =
   | 'dialogue_view'
   | 'quest_abandon'
   | 'quest_inspect'
+  | 'quest_autostart_seed'
   | 'complete_special_project'
   | 'mail_read'
   | 'mail_claim'
@@ -697,6 +698,10 @@ function applyExistingCommand(
       if (!target) return failed('Missing inspect.')
       return ok(applyQuestInspectProgress(db, save, target))
     }
+    case 'quest_autostart_seed':
+      // Opening an NPC persists the seed-triggered quest start that
+      // npcConversation otherwise applies to a copy only. Nothing else runs.
+      return ok(applyQuestAutoStartOnSeed(db, save))
     case 'complete_special_project': {
       const projectId = asString(args.projectId)
       const quantity = asInt(args.quantity) ?? 1
