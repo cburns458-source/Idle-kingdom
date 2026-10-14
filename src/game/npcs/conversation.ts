@@ -11,6 +11,7 @@ import {
   acceptQuest,
   ACCEPT_GOLD_FLAG,
   applyQuestBranchSkillXp,
+  asQuestRows,
   bribeQuestNpc,
   chooseQuestCombatRoute,
   completeQuest,
@@ -29,6 +30,7 @@ import {
   getQuestSteps,
   questAllStepsComplete,
   questCanTalkToNpc,
+  questTouchesNpcForSave,
   questUsesSteps,
 } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
@@ -98,6 +100,34 @@ function requiredStepIdsFromNotes(notes: string | null): string[] {
 
 function whenCompletedFromNotes(notes: string | null): boolean {
   return /(?:^|;)\s*When:\s*completed/i.test(notes ?? '')
+}
+
+/** Whether this NPC has a line written for after the quest is done. */
+function npcHasCompletedLine(db: GameDatabase, questId: string, npcId: string): boolean {
+  return (db.QuestDialogue ?? []).some(
+    (row) =>
+      row['Quest ID'] === questId &&
+      row['NPC ID'] === npcId &&
+      whenCompletedFromNotes(row.Notes ?? null),
+  )
+}
+
+/**
+ * Whether the NPC's panel lists this quest: the giver always does, anyone else
+ * only while it is active, or once it is done and they have a closing line.
+ */
+function npcShowsQuest(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+  npcId: string,
+): boolean {
+  const questId = quest['Quest ID']
+  if (isMiniquest(quest) && !questUsesSteps(db, questId)) return false
+  const isGiver = quest['NPC ID'] === npcId
+  const status = getQuestProgress(save, questId).status
+  if (isGiver || status === 'active') return questTouchesNpcForSave(db, save, quest, npcId)
+  return status === 'completed' && npcHasCompletedLine(db, questId, npcId)
 }
 
 function stepTalkLineReady(
@@ -436,13 +466,8 @@ export function npcConversation(
 ): NpcConversation {
   const npcId = npc['NPC ID']
   save = applyQuestAutoStartOnSeed(db, save)
-  const quests = questsTouchingNpc(db, save, npcId)
-    .filter((quest) => {
-      if (isMiniquest(quest) && !questUsesSteps(db, quest['Quest ID'])) return false
-      const isGiver = quest['NPC ID'] === npcId
-      const status = getQuestProgress(save, quest['Quest ID']).status
-      return isGiver || status === 'active'
-    })
+  const quests = asQuestRows(db)
+    .filter((quest) => npcShowsQuest(db, save, quest, npcId))
     .map((quest) => questBlock(db, save, quest, npcId))
   const whereabouts = whereaboutsFor(db, npcId, nowMs)
   const raceChange = npcId === VESPER_ID ? raceChangeOffer(db, save, nowMs) : undefined

@@ -22,6 +22,24 @@ export function asDatabase(db: JsonDatabase): GameDatabase {
   return db as unknown as GameDatabase
 }
 
+/** Rows to append per table, for rules the shipped content does not exercise yet. */
+export type ExtraRows = Record<string, JsonValue[]>
+
+/**
+ * The real database with [extraRows] appended, leaving the cached copy alone.
+ *
+ * Dart rebuilds this from a `content` fixture input carrying the same
+ * `extraRows`, so both sides read identical rows without inlining the file.
+ */
+export function contentDatabaseWithRows(extraRows: ExtraRows): GameDatabase {
+  const base = contentDatabase() as unknown as JsonDatabase
+  const patched: JsonDatabase = { ...base }
+  for (const [table, rows] of Object.entries(extraRows)) {
+    patched[table] = [...(base[table] ?? []), ...rows]
+  }
+  return asDatabase(patched)
+}
+
 /**
  * Smallest database that passes validation: every table present, the required
  * config keys, and the starting location. Broken variants mutate a copy.
