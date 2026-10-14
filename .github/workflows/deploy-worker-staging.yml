@@ -11,7 +11,7 @@ on:
 
 concurrency:
   group: worker-staging
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   staging:
@@ -29,6 +29,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Confirm tester key secret
         run: |
@@ -64,7 +68,7 @@ jobs:
           echo "anon_key_chars=${#SUPABASE_ANON_KEY}"
 
       - name: Deploy test-launch Worker
-        run: npx --yes wrangler@4.148.0 deploy --env staging
+        run: npm run deploy:staging
 
       - name: Confirm gate is asking for the key
         run: |
