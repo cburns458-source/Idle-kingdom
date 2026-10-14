@@ -50,6 +50,23 @@ InventoryStack _stack(String itemId, num quantity, {String? enchantmentId, bool?
       favorite: favorite,
     );
 
+const String _collectUserId = 'usr_trader';
+const String _collectStamp = '2026-01-01T00:00:00.000Z';
+
+PlayerSave _fullBag(GameDatabase db, {num gold = 10}) => _save(
+  db,
+  bag: <InventoryStack>[
+    for (var slot = 0; slot < inventorySlotLimit; slot += 1)
+      _stack('ITEM-${(slot + 1000).toString().padLeft(4, '0')}', 1),
+  ],
+  gold: gold,
+);
+
+FakeExchange _collectExchange(PlayerSave save) {
+  final row = <String, Object?>{'user_id': _collectUserId, 'payload': save.toJson()};
+  return FakeExchange(saves: <RemoteRow>[row], stamp: () => _collectStamp);
+}
+
 MarketOrder _order({int slot = 0, num quantity = 10, num filled = 0}) => MarketOrder(
   id: 'o$slot',
   side: bazaarBuy,
@@ -172,6 +189,74 @@ void main() {
       };
       expect(fakeExchangeTakeItems(payload, _machete, 1, untradeable: untradeable), isNull);
       expect(fakeExchangeTakeItems(payload, _goldenSpud, 1, untradeable: untradeable), isNotNull);
+    });
+  });
+
+  group('collection box rows', () {
+    test('refuses when no item row fits and reports no_room', () {
+      final exchange = _collectExchange(_fullBag(_database()));
+      exchange.box.add(
+        FakeExchangeCollect(
+          id: 'row-1',
+          userId: _collectUserId,
+          itemId: 'ITEM-9999',
+          quantity: 2,
+          gold: 0,
+          reason: bazaarCollectBought,
+          createdAt: _collectStamp,
+        ),
+      );
+      final result = exchange.call(
+        userId: _collectUserId,
+        username: 'Trader',
+        body: <String, Object?>{'action': 'collect'},
+      );
+      expect(result.ok, isTrue);
+      expect(result.data!['ok'], isFalse);
+      expect(result.data!['code'], 'no_room');
+      expect(result.data!['rowsLeft'], 1);
+      expect(result.data!['noRoom'], {'slotsNeeded': 1, 'slotsFree': 0});
+      expect(exchange.box, hasLength(1));
+    });
+
+    test('always collects gold and leaves item rows with no_room', () {
+      final exchange = _collectExchange(_fullBag(_database(), gold: 10));
+      exchange.box.addAll(<FakeExchangeCollect>[
+        FakeExchangeCollect(
+          id: 'gold-1',
+          userId: _collectUserId,
+          itemId: null,
+          quantity: 0,
+          gold: 25,
+          reason: bazaarCollectRefund,
+          createdAt: _collectStamp,
+        ),
+        FakeExchangeCollect(
+          id: 'row-1',
+          userId: _collectUserId,
+          itemId: 'ITEM-9999',
+          quantity: 1,
+          gold: 0,
+          reason: bazaarCollectBought,
+          createdAt: '2026-01-01T00:00:01.000Z',
+        ),
+      ]);
+      final result = exchange.call(
+        userId: _collectUserId,
+        username: 'Trader',
+        body: <String, Object?>{'action': 'collect'},
+      );
+      expect(result.ok, isTrue);
+      expect(result.data!['ok'], isTrue);
+      expect(result.data!['gold'], 25);
+      expect(result.data!['items'], 0);
+      expect(result.data!['left'], 1);
+      expect(result.data!['rowsLeft'], 1);
+      expect(result.data!['code'], 'no_room');
+      expect(result.data!['noRoom'], {'slotsNeeded': 1, 'slotsFree': 0});
+      final payload = result.data!['save']! as Map<String, Object?>;
+      expect(payload['gold'], 35);
+      expect(exchange.box.single.itemId, 'ITEM-9999');
     });
   });
 

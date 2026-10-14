@@ -379,6 +379,30 @@ void main() {
     expect(bagCount(declined.save, _bakedPotato), 0);
   });
 
+  test('leaves npcLine unset on a refusal other than no_room', () {
+    final save = picked(fresh(_citadelPlaza), 'DLG-0001', 'DNODE-0001', 'DCH-0001').save;
+    final again = guidePotato(save);
+    expect(again.ok, isFalse);
+    expect(again.code, 'not_available');
+    expect(again.noRoom, isNull);
+  });
+
+  test('omits a whitespace-only No Room Line from no_room.npcLine', () {
+    final patchedRaw = asJsonMap(jsonDecode(jsonEncode(raw)));
+    final choice = (patchedRaw['DialogueChoices']! as List<Object?>)
+        .cast<Map<String, Object?>>()
+        .singleWhere((row) => row['Choice ID'] == 'DCH-0001');
+    choice['No Room Line'] = ' \t\n ';
+    final patched = filterLaunchContent(assertGameDatabaseShape(patchedRaw));
+    final full = fillBag(createNewSave(patched, 0).copyWith(currentLocationId: _citadelPlaza));
+    final refused = chooseDialogue(patched, full, 'DLG-0001', 'DNODE-0001', 'DCH-0001');
+    expect(refused.ok, isFalse);
+    expect(refused.code, 'no_room');
+    expect(refused.noRoom?.toJson(), {'slotsNeeded': 1, 'slotsFree': 0});
+    expect(refused.noRoom?.npcLine, isNull);
+    expect(bagCount(refused.save, _bakedPotato), 0);
+  });
+
   test('/abandonquest clears Green Thumb gift flags so the seed can be claimed again', () {
     final gift = seedGift(greenThumbActive());
     expect(gift.ok, isTrue);
