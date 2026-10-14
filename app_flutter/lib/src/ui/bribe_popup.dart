@@ -6,9 +6,6 @@ import '../theme.dart';
 import 'format.dart';
 import 'game_popup.dart';
 
-/// Exact confirm copy. The fight is off only after Pay.
-const String bribeOneTimeChoice = 'This is a one-time choice. If you pay, the fight is off.';
-
 /// Gold cost, current gold, and purse names from the quest data — never hardcoded.
 class BribeQuote {
   const BribeQuote({required this.goldCost, required this.goldOwned, required this.purseNames});
@@ -86,8 +83,6 @@ Future<bool> showBribeConfirmPopup({
                   child: Text('· $name', style: const TextStyle(color: Palette.gold)),
                 ),
             ],
-            const SizedBox(height: 8),
-            const Text(bribeOneTimeChoice, style: TextStyle(height: 1.4)),
             if (!quote.canAfford) ...[
               const SizedBox(height: 8),
               Text(

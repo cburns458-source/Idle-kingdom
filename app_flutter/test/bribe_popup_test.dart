@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
-import 'package:idle_kingdoms/src/ui/bribe_popup.dart';
 import 'package:idle_kingdoms/src/ui/dialogue_text.dart';
 import 'package:idle_kingdoms/src/ui/npc_panel.dart';
 import 'package:ik_content/ik_content.dart';
@@ -90,10 +89,11 @@ void main() {
     await openBribe(tester, guardReady(gold: 300));
     await openConfirm(tester);
 
-    expect(find.text(bribeOneTimeChoice), findsOne);
+    expect(find.text('Pay the bribe?'), findsOne);
     expect(find.text('${parsed.bribeGold.round()} gold'), findsWidgets);
     expect(find.text('You have 300 gold'), findsOne);
     expect(find.text('· $_purseName'), findsOne);
+    expect(find.text('This is a one-time choice. If you pay, the fight is off.'), findsNothing);
     expect(find.textContaining('worth'), findsNothing);
     expect(find.textContaining('profit'), findsNothing);
     expect(find.text('Pay'), findsOne);
@@ -117,7 +117,7 @@ void main() {
     await tester.tap(find.byKey(const Key('bribe-cancel')));
     await tester.pumpAndSettle();
 
-    expect(find.text(bribeOneTimeChoice), findsNothing);
+    expect(find.text('Pay the bribe?'), findsNothing);
     expect(jsonEncode(controller.save.toJson()), before);
     expect(controller.save.gold, 300);
     expect(hasQuestFlag(controller.save, _questId, 'choice:bribe'), isFalse);
@@ -148,7 +148,7 @@ void main() {
     expect(inventoryCount(controller.save, _purseId), 1);
     expect(hasQuestFlag(controller.save, _questId, 'choice:bribe'), isTrue);
     expect(controller.message, 'The purse changes hands.');
-    expect(find.text(bribeOneTimeChoice), findsNothing);
+    expect(find.text('Pay the bribe?'), findsNothing);
   });
 
   testWidgets('Pay is disabled when gold is short and shows Need N gold', (tester) async {
@@ -173,7 +173,7 @@ void main() {
     expect(commands, isEmpty);
     expect(jsonEncode(controller.save.toJson()), before);
     expect(controller.save.gold, 50);
-    expect(find.text(bribeOneTimeChoice), findsOne);
+    expect(find.text('Pay the bribe?'), findsOne);
   });
 
   testWidgets('a full bag shows the bag popup before the confirm popup', (tester) async {
@@ -192,14 +192,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(DialogueText.bagFull(1)), findsOne);
-    expect(find.text(bribeOneTimeChoice), findsNothing);
+    expect(find.text('Pay the bribe?'), findsNothing);
     expectNoBank(tester);
     expect(commands, isEmpty);
     expect(jsonEncode(controller.save.toJson()), before);
 
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    expect(find.text(bribeOneTimeChoice), findsNothing);
+    expect(find.text('Pay the bribe?'), findsNothing);
     expect(controller.save.gold, 300);
   });
 
