@@ -10,6 +10,7 @@ import 'equipment_presets_bar.dart';
 import 'game_popup.dart';
 import 'item_detail_sheet.dart';
 import 'item_icon.dart';
+import 'item_label.dart';
 import 'overlay_notice.dart';
 import 'page_header.dart';
 import 'quantity_sheet.dart';
@@ -34,7 +35,8 @@ const List<String> equipmentGridOrder = <String>[
   'SLOT-0016', // Spell 4
 ];
 
-/// Bag tiles aim for 6–8 per row in the playable column.
+/// Bag tiles aim for 6–8 per row in the playable column, never under
+/// [minItemTapExtent] on a narrow phone.
 const double inventoryBagTileExtent = 52;
 const double inventoryBagTileSpacing = 4;
 const double inventoryBagIconSize = 24;
@@ -605,13 +607,7 @@ class _InventoryViewState extends State<InventoryView> {
                             style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                           ),
                         ),
-                        GameButton(
-                          label: 'Close',
-                          tone: GameButtonTone.secondary,
-                          compact: true,
-                          dense: true,
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
+                        GameCloseButton(onPressed: () => Navigator.of(context).pop()),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -653,13 +649,7 @@ class _InventoryViewState extends State<InventoryView> {
                           style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                         ),
                       ),
-                      GameButton(
-                        label: 'Close',
-                        tone: GameButtonTone.secondary,
-                        compact: true,
-                        dense: true,
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
+                      GameCloseButton(onPressed: () => Navigator.of(context).pop()),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -709,13 +699,7 @@ class _InventoryViewState extends State<InventoryView> {
                           style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                         ),
                       ),
-                      GameButton(
-                        label: 'Close',
-                        tone: GameButtonTone.secondary,
-                        compact: true,
-                        dense: true,
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
+                      GameCloseButton(onPressed: () => Navigator.of(context).pop()),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -764,37 +748,46 @@ class _InventoryViewState extends State<InventoryView> {
       children: [
         Expanded(
           child: FloatingItemWell(
-            child: GridView.builder(
-              key: const Key('inventory-bag'),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: inventoryBagTileExtent,
-                mainAxisSpacing: inventoryBagTileSpacing,
-                crossAxisSpacing: inventoryBagTileSpacing,
-              ),
-              itemCount: indexes.length,
-              itemBuilder: (context, visible) {
-                final index = indexes[visible];
-                final stack = save.inventory[index];
-                final item = controller.indexes.itemsById[stack.itemId];
-                final equippable = _isEquippable(stack.itemId);
-                return _ItemTile(
-                  item: item,
-                  quantity: stack.quantity,
-                  enchanted: stack.enchantmentId != null,
-                  favorite: isFavoriteStack(stack),
-                  selected: selling?.containsKey(index) ?? false,
-                  selecting: selling != null,
-                  iconSize: inventoryBagIconSize,
-                  onTap: () {
-                    if (selling != null) {
-                      _toggleSelection(index);
-                    } else if (equippable) {
-                      _equipAt(index);
-                    } else {
-                      _showDetail(stack: stack, inventoryIndex: index);
-                    }
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return GridView.builder(
+                  key: const Key('inventory-bag'),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: denseGridColumns(
+                      constraints.maxWidth,
+                      tile: inventoryBagTileExtent,
+                      gap: inventoryBagTileSpacing,
+                    ),
+                    mainAxisSpacing: inventoryBagTileSpacing,
+                    crossAxisSpacing: inventoryBagTileSpacing,
+                  ),
+                  itemCount: indexes.length,
+                  itemBuilder: (context, visible) {
+                    final index = indexes[visible];
+                    final stack = save.inventory[index];
+                    final item = controller.indexes.itemsById[stack.itemId];
+                    final equippable = _isEquippable(stack.itemId);
+                    return _ItemTile(
+                      item: item,
+                      quantity: stack.quantity,
+                      enchanted: stack.enchantmentId != null,
+                      enchantment: enchantmentName(db, stack.enchantmentId),
+                      favorite: isFavoriteStack(stack),
+                      selected: selling?.containsKey(index) ?? false,
+                      selecting: selling != null,
+                      iconSize: inventoryBagIconSize,
+                      onTap: () {
+                        if (selling != null) {
+                          _toggleSelection(index);
+                        } else if (equippable) {
+                          _equipAt(index);
+                        } else {
+                          _showDetail(stack: stack, inventoryIndex: index);
+                        }
+                      },
+                      onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
+                    );
                   },
-                  onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
                 );
               },
             ),
@@ -973,6 +966,7 @@ class _InventoryViewState extends State<InventoryView> {
             item: controller.indexes.itemsById[stack.itemId],
             quantity: stack.quantity,
             enchanted: stack.enchantmentId != null,
+            enchantment: enchantmentName(db, stack.enchantmentId),
             favorite: isFavoriteEquipped(stack),
             selected: false,
             selecting: false,
@@ -1190,7 +1184,8 @@ class _Stat extends StatelessWidget {
 
 /// One bag tile: art, count, and the marks for enchanted and favorite.
 /// Favorite/unfavorite lives on the hold-to-reveal sheet, not on the tile.
-/// The name lives on a tooltip so the icon can fill the cell.
+/// The name lives on a tooltip so the icon can fill the cell; an enchanted
+/// stack names its [enchantment] on the tooltip's second line.
 ///
 /// Paper-doll equipment wells stay bordered ([framedWell]); bag cells float.
 class _ItemTile extends StatelessWidget {
@@ -1203,6 +1198,7 @@ class _ItemTile extends StatelessWidget {
     required this.selecting,
     required this.onTap,
     required this.onLongPress,
+    this.enchantment,
     this.iconSize = inventoryBagIconSize,
     this.framedWell = false,
   });
@@ -1210,6 +1206,7 @@ class _ItemTile extends StatelessWidget {
   final ItemRow? item;
   final num quantity;
   final bool enchanted;
+  final String? enchantment;
   final bool favorite;
   final bool selected;
   final bool selecting;
@@ -1220,7 +1217,7 @@ class _ItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = item?.displayName ?? '?';
+    final tooltip = itemTileTooltip(item?.displayName ?? '?', enchantment);
     final marks = Stack(
       children: [
         Center(
@@ -1270,7 +1267,7 @@ class _ItemTile extends StatelessWidget {
           ? const Color(0xFF2F3A24)
           : slot;
       return Tooltip(
-        message: name,
+        message: tooltip,
         onTriggered: onLongPress,
         child: PixelInkPlate(
           onTap: onTap,
@@ -1295,7 +1292,7 @@ class _ItemTile extends StatelessWidget {
     }
 
     return FloatingItemSlot(
-      tooltip: name,
+      tooltip: tooltip,
       selected: selected,
       onTap: onTap,
       onLongPress: onLongPress,

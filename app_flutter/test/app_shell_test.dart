@@ -998,7 +998,7 @@ void main() {
     expect(controller.batterySaver, isTrue);
     expect(controller.reduceMotion, isTrue);
 
-    await tester.tap(find.widgetWithText(GameButton, 'Close'));
+    await tester.tap(find.byTooltip('Close'));
     await tester.pump();
     expect(find.byKey(const Key('battery-saver-plaque')), findsOne);
 
@@ -1015,7 +1015,7 @@ void main() {
     await tapVisible(tester, _settingsSwitch('Battery saver'));
     expect(controller.batterySaver, isFalse);
 
-    await tester.tap(find.widgetWithText(GameButton, 'Close'));
+    await tester.tap(find.byTooltip('Close'));
     await tester.pump();
     expect(find.byKey(const Key('battery-saver-plaque')), findsNothing);
   });
@@ -1249,7 +1249,7 @@ void main() {
     final frameHeight = tester.getSize(find.byType(AppShell)).height;
     expect(chatBottom, greaterThan(frameHeight * 0.4));
 
-    await tester.tap(find.widgetWithText(GameButton, 'Close').last);
+    await tester.tap(find.byTooltip('Close chat').last);
     await tester.pump();
     expect(find.byKey(const Key('chat-panel')), findsNothing);
   });
@@ -1285,14 +1285,14 @@ void main() {
     expect(find.text('Total level'), findsOne);
     expect(find.textContaining('slots'), findsNothing);
 
-    await tester.tap(find.widgetWithText(GameButton, 'Close'));
+    await tester.tap(find.byTooltip('Close'));
     await tester.pump();
     expect(find.text('Total level'), findsNothing);
     expect(find.byTooltip('Open world map'), findsOne);
 
     await openChinScreen(tester, 'Log');
     expect(find.text('Deeds unlocked on this save.'), findsOne);
-    await tester.tap(find.widgetWithText(GameButton, 'Close'));
+    await tester.tap(find.byTooltip('Close'));
     await tester.pump();
     expect(find.text('Deeds unlocked on this save.'), findsNothing);
   });

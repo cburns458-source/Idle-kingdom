@@ -1,3 +1,4 @@
+import 'package:ik_content/ik_content.dart';
 import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
@@ -9,6 +10,13 @@ List<String> _idsOf(ParityFixture fixture, String key) {
 }
 
 Object? _actionJson(NpcActionResult? result) => result?.toJson();
+
+List<Object?> _conversationsOf(GameDatabase db, PlayerSave save, List<String> npcIds) {
+  return npcIds.map((npcId) {
+    final npc = db.npcs.firstWhere((row) => row.raw['NPC ID'] == npcId);
+    return npcConversation(db, save, npc, DateTime.utc(2026, 1, 1).millisecondsSinceEpoch).toJson();
+  }).toList();
+}
 
 void main() {
   group('npc conversation parity', () {
@@ -66,18 +74,21 @@ void main() {
           return;
         }
 
-        final conversations = _idsOf(fixture, 'npcIds').map((npcId) {
-          final npc = db.npcs.firstWhere((row) => row.raw['NPC ID'] == npcId);
-          return npcConversation(
-            db,
-            save,
-            npc,
-            DateTime.utc(2026, 1, 1).millisecondsSinceEpoch,
-          ).toJson();
-        }).toList();
+        final npcIds = _idsOf(fixture, 'npcIds');
+        if (fixture.name == 'completed-line') {
+          expect(
+            checkParity(fixture, {
+              'completed': _conversationsOf(db, save, npcIds),
+              'active': _conversationsOf(db, saveOf(fixture, 'activeSave'), npcIds),
+            }),
+            isNull,
+          );
+          return;
+        }
+
         expect(
           checkParity(fixture, {
-            'conversations': conversations,
+            'conversations': _conversationsOf(db, save, npcIds),
             'pitchLines': const <String>[
               'QST-0001',
               'QST-0002',

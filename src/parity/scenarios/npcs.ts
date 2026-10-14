@@ -6,9 +6,10 @@ import {
   skillForKnowledgeNpc,
   takeMerchantTip,
 } from '../../game/npcs/conversation'
+import type { GameDatabase } from '../../game/data/types'
 import type { PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
-import { contentDatabase } from './contentDatabase'
+import { contentDatabase, contentDatabaseWithRows, type ExtraRows } from './contentDatabase'
 import { asJson, baseSave, FIXED_TIMESTAMP_MS, forgeSave, questSave } from './saveFixtures'
 
 type SaveKind = 'base' | 'forge' | 'quest'
@@ -22,6 +23,47 @@ function saveFor(kind: SaveKind): PlayerSave {
 
 function withSave(kind: SaveKind, extra: Record<string, JsonValue> = {}): JsonValue {
   return { source: 'content', save: asJson(saveFor(kind)), ...extra }
+}
+
+function conversationsFor(db: GameDatabase, save: PlayerSave, npcIds: string[]): JsonValue {
+  return npcIds.map((npcId) => {
+    const npc = db.NPCs.find((row) => row['NPC ID'] === npcId)!
+    return npcConversation(db, save, npc, FIXED_TIMESTAMP_MS)
+  }) as unknown as JsonValue
+}
+
+/**
+ * A closing line for the Barracks Guard, who only takes part in Lowly Beggar.
+ * No shipped row gives a bystander one yet, so the fixture carries its own.
+ */
+const CLOSING_LINE_ROWS: ExtraRows = {
+  QuestDialogue: [
+    {
+      'Dialogue ID': 'QDL-9001',
+      'Quest ID': 'QST-0003',
+      'NPC ID': 'NPC-0012',
+      Line: 'Hmph.',
+      Status: 'Confirmed',
+      'Release Phase': 'Launch',
+      Notes: 'When: completed',
+    },
+  ],
+}
+
+/** Giver, bystander with a closing line, bystander without one. */
+const CLOSING_LINE_NPCS = ['NPC-0011', 'NPC-0012', 'NPC-0007']
+
+/** At the barracks with Lowly Beggar in the given state. */
+function lowlyBeggarSave(status: 'active' | 'completed'): PlayerSave {
+  return {
+    ...baseSave(contentDatabase()),
+    currentLocationId: 'LOC-0017',
+    quests: [
+      status === 'completed'
+        ? { questId: 'QST-0003', status, progress: 3, counters: {} }
+        : { questId: 'QST-0003', status, progress: 1, counters: { 'talk:NPC-0011': 1 } },
+    ],
+  }
 }
 
 /** Merchants, mentors including Quill, and quest givers. */
@@ -45,14 +87,32 @@ export const npcScenarios: ParityScenario[] = [
       const db = contentDatabase()
       const save = saveFor(kind)
       return {
-        conversations: CONVERSATION_NPCS.map((npcId) => {
-          const npc = db.NPCs.find((row) => row['NPC ID'] === npcId)!
-          return npcConversation(db, save, npc, FIXED_TIMESTAMP_MS)
-        }),
+        conversations: conversationsFor(db, save, CONVERSATION_NPCS),
         pitchLines: PITCH_QUESTS.map((questId) => questPitchLine(db, questId)),
         mentorSkills: MENTOR_NPCS.map((npcId) => skillForKnowledgeNpc(npcId)),
       } as unknown as JsonValue
     }),
+  ),
+
+  // A bystander's `When: completed` line keeps the quest on their panel once it
+  // is done, and stays out of the way while it is still running.
+  scenario(
+    'npcs/conversation',
+    'completed-line',
+    {
+      source: 'content',
+      extraRows: CLOSING_LINE_ROWS,
+      save: asJson(lowlyBeggarSave('completed')),
+      activeSave: asJson(lowlyBeggarSave('active')),
+      npcIds: CLOSING_LINE_NPCS,
+    },
+    () => {
+      const db = contentDatabaseWithRows(CLOSING_LINE_ROWS)
+      return {
+        completed: conversationsFor(db, lowlyBeggarSave('completed'), CLOSING_LINE_NPCS),
+        active: conversationsFor(db, lowlyBeggarSave('active'), CLOSING_LINE_NPCS),
+      }
+    },
   ),
 
   scenario('npcs/conversation', 'merchant-tip', withSave('base'), () => {

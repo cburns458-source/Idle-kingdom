@@ -103,7 +103,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text("Mira's gear"), findsOne);
     expect(find.text('This player hides their gear.'), findsNothing);
-    await tester.tap(find.text('Close'));
+    await tester.tap(
+      find.descendant(of: find.byKey(const Key('game-popup')), matching: find.byTooltip('Close')),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Ranked'));

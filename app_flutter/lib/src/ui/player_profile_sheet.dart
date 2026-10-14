@@ -109,17 +109,10 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
           child: _loading
               ? const SizedBox(height: 120, child: Center(child: CircularProgressIndicator()))
               : profile == null
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              ? Row(
                   children: [
-                    MutedText(_loadError ?? 'That player could not be found.'),
-                    const SizedBox(height: 10),
-                    GameButton(
-                      label: 'Close',
-                      tone: GameButtonTone.secondary,
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
+                    Expanded(child: MutedText(_loadError ?? 'That player could not be found.')),
+                    GameCloseButton(onPressed: () => Navigator.of(context).pop()),
                   ],
                 )
               : _buildBody(publicProfileView(_displayProfile(profile), _skillName)),
@@ -163,12 +156,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                   style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
-              GameButton(
-                label: 'Close',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
+              GameCloseButton(onPressed: () => Navigator.of(context).pop()),
             ],
           ),
           const SizedBox(height: 8),

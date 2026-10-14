@@ -8,6 +8,7 @@ import 'game_popup.dart';
 import 'floating_slot.dart';
 import 'format.dart';
 import 'item_icon.dart';
+import 'item_label.dart';
 import 'quantity_sheet.dart';
 
 /// Player-facing `no_room` copy for this chest. Stack-full shares the bag line.
@@ -123,13 +124,17 @@ class _BankPanelState extends State<BankPanel> {
     return chest;
   }
 
-  Future<void> _deposit(int index, InventoryStack stack) async {
+  String _stackLabel(InventoryStack stack) {
     final item = controller.indexes.itemsById[stack.itemId];
     final name = item?.displayName ?? stack.itemId;
+    return enchantedItemLabel(name, enchantmentName(controller.db, stack.enchantmentId));
+  }
+
+  Future<void> _deposit(int index, InventoryStack stack) async {
     final quantity = await askQuantity(
       context,
       subtitle: 'From the bag',
-      title: name,
+      title: _stackLabel(stack),
       details: [
         'In bag: ${formatThousands(stack.quantity)}',
         'Bank slots free: ${formatThousands(bankSlotsFree(save))}',
@@ -164,12 +169,10 @@ class _BankPanelState extends State<BankPanel> {
   }
 
   Future<void> _withdraw(int index, InventoryStack stack) async {
-    final item = controller.indexes.itemsById[stack.itemId];
-    final name = item?.displayName ?? stack.itemId;
     final quantity = await askQuantity(
       context,
       subtitle: 'From the chest',
-      title: name,
+      title: _stackLabel(stack),
       details: [
         'In bank: ${formatThousands(stack.quantity)}',
         'Bag slots free: ${formatThousands(inventorySlotsFree(save))}',
@@ -301,10 +304,11 @@ class _BankPanelState extends State<BankPanel> {
   Widget _tileFor({required Key key, required InventoryStack stack, required VoidCallback onTap}) {
     final item = controller.indexes.itemsById[stack.itemId];
     final name = item?.displayName ?? stack.itemId;
+    final enchantment = enchantmentName(controller.db, stack.enchantmentId);
     final favorite = stack.favorite == true;
     return FloatingItemSlot(
       key: key,
-      tooltip: name,
+      tooltip: itemTileTooltip(name, enchantment),
       padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
       onTap: onTap,
       child: Stack(
@@ -322,11 +326,21 @@ class _BankPanelState extends State<BankPanel> {
               ),
             ],
           ),
-          if (favorite)
-            const Positioned(
+          if (enchantment != null || favorite)
+            Positioned(
               right: 0,
               top: 0,
-              child: Icon(Icons.favorite, size: 14, color: Palette.gold),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (enchantment != null)
+                    const Text(
+                      '★',
+                      style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
+                    ),
+                  if (favorite) const Icon(Icons.favorite, size: 14, color: Palette.gold),
+                ],
+              ),
             ),
         ],
       ),

@@ -262,16 +262,14 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller, onClose: () {}));
 
     expect(find.text('Inventory'), findsOne);
-    expect(find.widgetWithText(GameButton, 'Close'), findsOne);
+    expect(find.byTooltip('Close'), findsOne);
+    expect(find.text('Close'), findsNothing);
     expect(
       find.descendant(of: find.byType(GamePanel), matching: find.text('Inventory')),
       findsNothing,
     );
     expect(
-      find.descendant(
-        of: find.byType(GamePanel),
-        matching: find.widgetWithText(GameButton, 'Close'),
-      ),
+      find.descendant(of: find.byType(GamePanel), matching: find.byTooltip('Close')),
       findsNothing,
     );
     expect(
@@ -518,9 +516,11 @@ void main() {
 
     await pumpPanel(tester, InventoryView(controller: controller));
 
+    // An enchanted tile names its enchantment on the tooltip's second line.
+    const clay = 'Clay\nMinor Strength Enchantment';
     expect(find.byTooltip('Unfavorite'), findsNothing);
     expect(find.byTooltip('Favorite'), findsNothing);
-    final tile = tester.getRect(find.byTooltip('Clay'));
+    final tile = tester.getRect(find.byTooltip(clay));
     final heart = tester.getRect(find.byIcon(Icons.favorite));
     expect(heart.right, closeTo(tile.right, 12));
     expect(heart.top, closeTo(tile.top, 12));
@@ -529,7 +529,7 @@ void main() {
     expect(star.right, lessThanOrEqualTo(heart.right));
     expect(star.top, closeTo(tile.top, 12));
 
-    await tester.longPress(find.byTooltip('Clay'));
+    await tester.longPress(find.byTooltip(clay));
     await tester.pumpAndSettle();
     final popup = find.byKey(const Key('game-popup'));
     expect(find.descendant(of: popup, matching: find.byTooltip('Unfavorite')), findsOne);
@@ -539,7 +539,7 @@ void main() {
     expect(find.byIcon(Icons.favorite), findsNothing);
     expect(find.byKey(const Key('game-popup')), findsNothing);
 
-    await tester.longPress(find.byTooltip('Clay'));
+    await tester.longPress(find.byTooltip(clay));
     await tester.pumpAndSettle();
     final reopened = find.byKey(const Key('game-popup'));
     expect(find.descendant(of: reopened, matching: find.byTooltip('Favorite')), findsOne);
@@ -863,7 +863,7 @@ void main() {
     await tester.pump();
     expect(controller.autoEat, isFalse);
     expect(find.text('Auto-eat off'), findsOne);
-    await tester.tap(find.text('Close'));
+    await tester.tap(find.descendant(of: popup, matching: find.byTooltip('Close')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('inventory-eat-now')), findsNothing);
   });

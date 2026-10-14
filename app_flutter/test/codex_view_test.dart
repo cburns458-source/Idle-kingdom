@@ -48,7 +48,7 @@ void main() {
     expect(find.text('Potato'), findsWidgets);
     expect(find.text('Used in'), findsOne);
 
-    await tester.tap(find.text('Close'));
+    await tester.tap(find.byTooltip('Close'));
     await tester.pump();
     // Replace (not stack): close returns to catalog, not the previous item.
     expect(find.text('Items'), findsOne);

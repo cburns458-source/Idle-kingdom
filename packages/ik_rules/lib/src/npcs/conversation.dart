@@ -71,6 +71,24 @@ bool _whenCompletedFromNotes(String? notes) {
   return RegExp(r'(?:^|;)\s*When:\s*completed', caseSensitive: false).hasMatch(notes ?? '');
 }
 
+/// Whether this NPC has a line written for after the quest is done.
+bool _npcHasCompletedLine(GameDatabase db, String questId, String npcId) {
+  return db.questDialogue.any(
+    (row) => row.questId == questId && row.npcId == npcId && _whenCompletedFromNotes(row.notes),
+  );
+}
+
+/// Whether the NPC's panel lists this quest: the giver always does, anyone else
+/// only while it is active, or once it is done and they have a closing line.
+bool _npcShowsQuest(GameDatabase db, PlayerSave save, QuestRow quest, String npcId) {
+  final questId = jsString(quest['Quest ID']);
+  if (isMiniquest(quest) && !questUsesSteps(db, questId)) return false;
+  final isGiver = quest['NPC ID'] == npcId;
+  final status = getQuestProgress(save, questId).status;
+  if (isGiver || status == 'active') return questTouchesNpcForSave(db, save, quest, npcId);
+  return status == 'completed' && _npcHasCompletedLine(db, questId, npcId);
+}
+
 bool _stepTalkLineReady(
   GameDatabase db,
   QuestRow quest,
@@ -527,14 +545,10 @@ NpcWhereabouts? _whereaboutsFor(GameDatabase db, String npcId, num clock) {
 NpcConversation npcConversation(GameDatabase db, PlayerSave save, NpcRow npc, num nowMs) {
   final npcId = npc.raw['NPC ID'] as String;
   save = applyQuestAutoStartOnSeed(db, save);
-  final quests = <NpcQuestBlock>[];
-  for (final quest in questsTouchingNpc(db, save, npcId)) {
-    if (isMiniquest(quest) && !questUsesSteps(db, jsString(quest['Quest ID']))) continue;
-    final isGiver = quest['NPC ID'] == npcId;
-    final status = getQuestProgress(save, jsString(quest['Quest ID'])).status;
-    if (!isGiver && status != 'active') continue;
-    quests.add(_questBlock(db, save, quest, npcId));
-  }
+  final quests = <NpcQuestBlock>[
+    for (final quest in asQuestRows(db))
+      if (_npcShowsQuest(db, save, quest, npcId)) _questBlock(db, save, quest, npcId),
+  ];
   final displayName = npc.raw['Display Name'];
   final role = npc.raw['Role'];
   final description = npc.raw['Description'];
