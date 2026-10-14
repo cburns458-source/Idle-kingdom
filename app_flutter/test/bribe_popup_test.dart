@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
-import 'package:idle_kingdoms/src/session/hosted_command.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/dialogue_text.dart';
 import 'package:idle_kingdoms/src/ui/npc_panel.dart';
