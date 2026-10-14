@@ -191,6 +191,12 @@ Map<String, Object?> _runScript(GameDatabase db, PlayerSave initial, List<Object
         save = applyQuestAutoStartOnSeed(db, save);
       case 'panelTalk':
         save = applyQuestTalkProgress(db, save, str('npcId'));
+      case 'oldTalk':
+        final result = talkWithQuestNpc(db, save, str('npcId'));
+        out = result.ok
+            ? <String, Object?>{'ok': true, 'message': result.message}
+            : <String, Object?>{'ok': false, 'reason': result.reason};
+        if (result.ok) save = result.save!;
       case 'gather':
         save = applyQuestActionProgress(db, save, str('actionId'), op['amount'] as num? ?? 1);
       case 'plant':

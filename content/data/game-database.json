@@ -4590,7 +4590,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_hatchet",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4608,7 +4608,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_pickaxe",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4626,7 +4626,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_fishing_rod",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4644,7 +4644,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_harpoon",
       "Notes": "Requires the corresponding skill tier.",
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4662,7 +4662,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_sword",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4680,7 +4680,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_dagger",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4698,7 +4698,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_axe",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4716,7 +4716,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_shield",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4734,7 +4734,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_helmet",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4752,7 +4752,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_chestplate",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4770,7 +4770,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_platelegs",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4788,7 +4788,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_boots",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4806,7 +4806,7 @@
       "Description": null,
       "Icon Asset Key": "reinforced_steel_gloves",
       "Notes": null,
-      "Base Sell Value": 69,
+      "Base Sell Value": 220,
       "Tradeable": true,
       "Stackable": null
     },
@@ -33705,7 +33705,7 @@
       "Shop Type": "Armorer",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Sells bronze, iron, tungsten, and titanium swords, helmets, chestplates, and platelegs.",
+      "Description": "Sells bronze and iron swords, helmets, chestplates, and platelegs.",
       "Notes": "Player buy price = 2× Base Sell Value. Buyback uses the normal 1× general-store rate. No boots or gloves. Titanium costs more than tungsten.",
       "Entry 1 Item ID": "ITEM-0224",
       "Entry 1 Mode": "Sell",
