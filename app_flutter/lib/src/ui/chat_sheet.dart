@@ -567,13 +567,7 @@ class _ChatSheetState extends State<ChatSheet> {
           ),
           if (!widget.embedded) ...[
             const SizedBox(width: 8),
-            GameButton(
-              label: 'Close',
-              tone: GameButtonTone.secondary,
-              compact: true,
-              tooltip: 'Close chat',
-              onPressed: _close,
-            ),
+            GameCloseButton(tooltip: 'Close chat', onPressed: _close),
           ],
         ],
       ),

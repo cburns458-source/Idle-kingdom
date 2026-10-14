@@ -532,41 +532,83 @@ class GameIconButton extends StatelessWidget {
     required this.onPressed,
     this.tooltip,
     this.size = 32,
+    this.tapTarget,
     this.iconColor,
   });
 
   final IconData icon;
   final VoidCallback? onPressed;
   final String? tooltip;
+
+  /// Side of the painted chip.
   final double size;
+
+  /// Side of the tappable square the chip is centred in, when it should be
+  /// larger than the chip itself. Null keeps the tap area at [size].
+  final double? tapTarget;
 
   /// Defaults to cream parchment; pass [Palette.gold] for selected favorites.
   final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
+    final target = math.max(size, tapTarget ?? 0);
+    final plate = PixelPlate(
+      step: PixelChrome.stepTight,
+      fillColor: UiChrome.of(context).iconButtonFill,
+      material: PixelPlateMaterial.grain,
+      strokeWidth: 1.5,
+      shadow: false,
+      emboss: false,
+      child: SizedBox.square(
+        dimension: size,
+        child: Icon(icon, size: size * 0.55, color: iconColor ?? const Color(0xFFFFF4D4)),
+      ),
+    );
     final chip = Semantics(
       button: true,
       enabled: onPressed != null,
       label: tooltip,
       child: Opacity(
         opacity: onPressed == null ? 0.55 : 1,
-        child: PixelInkPlate(
-          onTap: onPressed,
-          step: PixelChrome.stepTight,
-          fillColor: UiChrome.of(context).iconButtonFill,
-          material: PixelPlateMaterial.grain,
-          strokeWidth: 1.5,
-          shadow: false,
-          child: SizedBox.square(
-            dimension: size,
-            child: Icon(icon, size: size * 0.55, color: iconColor ?? const Color(0xFFFFF4D4)),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: SizedBox.square(
+              dimension: target,
+              child: Center(child: plate),
+            ),
           ),
         ),
       ),
     );
     if (tooltip == null) return chip;
     return Tooltip(message: tooltip!, child: chip);
+  }
+}
+
+/// Smallest tappable square for the x that closes a menu.
+const double gameCloseTapTarget = 48;
+
+/// The shared x that closes a menu: a [GameIconButton] with [Icons.close], a
+/// `Close` tooltip, and a tap target at least [gameCloseTapTarget] square.
+class GameCloseButton extends StatelessWidget {
+  const GameCloseButton({super.key, required this.onPressed, this.tooltip = 'Close'});
+
+  final VoidCallback? onPressed;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return GameIconButton(
+      icon: Icons.close,
+      tooltip: tooltip,
+      tapTarget: gameCloseTapTarget,
+      onPressed: onPressed,
+    );
   }
 }
 

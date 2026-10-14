@@ -68,9 +68,19 @@ class _MailboxPopupState extends State<_MailboxPopup> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                open == null ? 'Mailbox' : open.subject,
-                style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      open == null ? 'Mailbox' : open.subject,
+                      style: const TextStyle(
+                        fontSize: gamePopupTitleSize,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+                ],
               ),
               const SizedBox(height: 8),
               Flexible(
@@ -92,30 +102,21 @@ class _MailboxPopupState extends State<_MailboxPopup> {
                         onClaim: () => _claim(open!.id),
                       ),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  if (open != null) ...[
-                    GameButton(
-                      label: 'Back',
-                      tone: GameButtonTone.secondary,
-                      compact: true,
-                      onPressed: () => setState(() {
-                        _openId = null;
-                        _notice = null;
-                      }),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    child: GameButton(
-                      label: 'Close',
-                      compact: true,
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
+              if (open != null) ...[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: GameButton(
+                    label: 'Back',
+                    tone: GameButtonTone.secondary,
+                    compact: true,
+                    onPressed: () => setState(() {
+                      _openId = null;
+                      _notice = null;
+                    }),
                   ),
-                ],
-              ),
+                ),
+              ],
             ],
           ),
         );

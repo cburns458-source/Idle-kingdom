@@ -129,14 +129,7 @@ class _TrackerViewState extends State<TrackerView> {
                         ),
                       ),
                     ),
-                    GameButton(
-                      label: 'Close',
-                      tone: GameButtonTone.secondary,
-                      compact: true,
-                      dense: true,
-                      tooltip: 'Close',
-                      onPressed: widget.onClose!,
-                    ),
+                    GameCloseButton(onPressed: widget.onClose!),
                   ],
                 ),
               )

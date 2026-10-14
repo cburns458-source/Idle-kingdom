@@ -152,14 +152,26 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const MutedText('Botany'),
-              Text(
-                'Plant a seed or sapling',
-                style: TextStyle(
-                  fontSize: gamePopupTitleSize,
-                  fontWeight: FontWeight.w400,
-                  color: chrome.panelInk,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const MutedText('Botany'),
+                        Text(
+                          'Plant a seed or sapling',
+                          style: TextStyle(
+                            fontSize: gamePopupTitleSize,
+                            fontWeight: FontWeight.w400,
+                            color: chrome.panelInk,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+                ],
               ),
               const SizedBox(height: 10),
               Flexible(
@@ -218,10 +230,6 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(
-                    child: GameButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
                     child: GameButton(
                       label: 'Clear',

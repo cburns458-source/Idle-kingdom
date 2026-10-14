@@ -21,7 +21,12 @@ const double mapNodeDotCenter = 15;
 const double mapNodeDotBoxWidth = 34;
 
 /// Map node labels: small parchment text with the overlay shadow.
+///
+/// Names the game font so the [TextPainter] that sizes a label measures the
+/// same glyphs the [Text] draws. Without it the measure ran in the fallback
+/// font, came up short, and the label broke mid-word.
 const TextStyle mapNodeLabelStyle = TextStyle(
+  fontFamily: gameFontFamily,
   fontSize: GameFont.s,
   fontWeight: FontWeight.w400,
   color: Palette.parchmentText,
@@ -30,6 +35,10 @@ const TextStyle mapNodeLabelStyle = TextStyle(
 
 /// Labels wrap to this many lines, and only then end in an ellipsis.
 const int mapNodeLabelMaxLines = 2;
+
+/// Extra width past the measured text, so a half-pixel of rounding can never
+/// push the last glyph onto a new line.
+const double mapNodeLabelSlack = 2;
 
 /// Side of the walking sprite.
 const double mapWalkerSize = 36;
@@ -185,14 +194,6 @@ class WorldMapView extends StatelessWidget {
               title: 'Map',
               onClose: onClose!,
               trailing: browseMapId != mainMapId ? _worldMapChip() : null,
-              close: browseMapId != mainMapId
-                  ? OverlayChipButton(
-                      tooltip: 'Close',
-                      onPressed: onClose!,
-                      plain: true,
-                      child: const Icon(Icons.close, size: 18, color: Palette.heading),
-                    )
-                  : null,
             ),
           )
         else if (browseMapId != mainMapId)
@@ -292,15 +293,18 @@ class _PinnedNode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final point = mapArtOffset(position, box, aspectRatio: aspectRatio);
+    // Measure with the style the Text will actually draw in: the ambient
+    // default (letter spacing and all) under the label style, as Text merges it.
+    final style = DefaultTextStyle.of(context).style.merge(mapNodeLabelStyle);
     final painter = TextPainter(
-      text: TextSpan(text: label, style: mapNodeLabelStyle),
+      text: TextSpan(text: label, style: style),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
       maxLines: mapNodeLabelMaxLines,
       ellipsis: '\u2026',
     )..layout(maxWidth: mapLabelMaxWidth(box.width));
-    final labelWidth = painter.width.ceilToDouble();
+    final labelWidth = painter.width.ceilToDouble() + mapNodeLabelSlack;
     painter.dispose();
     final dotLeft = point.dx - mapNodeDotBoxWidth / 2;
     final labelLeft = clampCentredLeft(point.dx, labelWidth, box.width);
@@ -476,13 +480,27 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
             padding: EdgeInsets.only(left: widget.layout.labelInset),
             child: SizedBox(
               width: widget.layout.labelWidth,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: mapNodeLabelMaxLines,
-                overflow: TextOverflow.ellipsis,
-                style: mapNodeLabelStyle,
-              ),
+              // A one-word name has nowhere to wrap, so it shrinks to fit
+              // rather than splitting between letters.
+              child: label.contains(' ')
+                  ? Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: mapNodeLabelMaxLines,
+                      overflow: TextOverflow.ellipsis,
+                      style: mapNodeLabelStyle,
+                    )
+                  : FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topCenter,
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: mapNodeLabelStyle,
+                      ),
+                    ),
             ),
           ),
         ],

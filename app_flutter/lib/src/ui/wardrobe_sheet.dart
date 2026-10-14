@@ -77,13 +77,7 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                     style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
                   ),
                 ),
-                GameButton(
-                  label: 'Close',
-                  tone: GameButtonTone.secondary,
-                  compact: true,
-                  tooltip: 'Close',
-                  onPressed: widget.onClose,
-                ),
+                GameCloseButton(onPressed: widget.onClose),
               ],
             ),
             Flexible(

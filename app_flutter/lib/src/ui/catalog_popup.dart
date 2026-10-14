@@ -28,7 +28,6 @@ Future<int?> showGameCatalogPopup({
   required List<CatalogPopupEntry> entries,
   String emptyMessage = 'Nothing listed yet.',
   bool selectable = false,
-  String closeLabel = 'Close',
   Rect? origin,
 }) {
   return showGamePopup<int>(
@@ -43,10 +42,25 @@ Future<int?> showGameCatalogPopup({
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                MutedText(eyebrow),
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          MutedText(eyebrow),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: gamePopupTitleSize,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 Flexible(
@@ -66,8 +80,6 @@ Future<int?> showGameCatalogPopup({
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                GameButton(label: closeLabel, onPressed: () => Navigator.of(context).pop()),
               ],
             ),
           ),

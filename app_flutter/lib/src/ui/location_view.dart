@@ -502,6 +502,18 @@ class _LocationViewState extends State<LocationView> {
                           child: RepaintBoundary(
                             child: Stack(
                               children: [
+                                // Under the panels, so an open shop, bank, or
+                                // NPC covers the strip instead of wearing it.
+                                if (controller.recentRewards.isNotEmpty)
+                                  Positioned(
+                                    top: 6,
+                                    left: 13,
+                                    right: 13,
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: RewardStrip(controller: controller),
+                                    ),
+                                  ),
                                 if (stage != null && !running && !liftArena)
                                   Positioned(
                                     top: _overlayGap,
@@ -536,16 +548,6 @@ class _LocationViewState extends State<LocationView> {
                                         card.maxHeight * 0.62,
                                       ),
                                       child: overlayPanel ?? stage,
-                                    ),
-                                  ),
-                                if (controller.recentRewards.isNotEmpty)
-                                  Positioned(
-                                    top: 6,
-                                    left: 13,
-                                    right: 13,
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: RewardStrip(controller: controller),
                                     ),
                                   ),
                                 Positioned(

@@ -52,6 +52,7 @@ void main() {
     PlayerSave seed, {
     bool? hostedPlay,
     Future<String?> Function(String command, [Map<String, Object?> args])? submitGameCommand,
+    HostedCommandSubmit? submitHostedCommand,
   }) async {
     final controller = buildController(database, seed: seed);
     addTearDown(controller.dispose);
@@ -61,7 +62,22 @@ void main() {
     await tester.pump();
     expect(find.text('Bribe 200 gold'), findsOne);
     if (submitGameCommand != null) controller.submitGameCommand = submitGameCommand;
+    if (submitHostedCommand != null) controller.submitHostedCommand = submitHostedCommand;
     return controller;
+  }
+
+  /// What the hosted `quest_bribe` answers with: the server pays from its own
+  /// copy of [save], which may hold gold the client has not seen yet.
+  HostedCommandReceipt serverBribe(PlayerSave save, {num extraGold = 0}) {
+    final paid = bribeForQuest(
+      database.launch,
+      save.copyWith(gold: save.gold + extraGold),
+      _questId,
+    );
+    if (!paid.ok) {
+      return HostedCommandReceipt(reason: paid.reason, code: paid.code, noRoom: paid.noRoom);
+    }
+    return HostedCommandReceipt(save: paid.save);
   }
 
   Future<void> openConfirm(WidgetTester tester) async {
@@ -83,7 +99,9 @@ void main() {
     }
   }
 
-  testWidgets('tapping Bribe opens the confirm popup with cost, gold, and purse', (tester) async {
+  testWidgets('tapping Bribe opens the confirm popup with cost and gold, no purse list', (
+    tester,
+  ) async {
     final quest = getQuest(database.launch, _questId)!;
     final parsed = parseStructuredObjectives(quest);
     await openBribe(tester, guardReady(gold: 300));
@@ -92,7 +110,8 @@ void main() {
     expect(find.text('Pay the bribe?'), findsOne);
     expect(find.text('${parsed.bribeGold.round()} gold'), findsWidgets);
     expect(find.text('You have 300 gold'), findsOne);
-    expect(find.text('· $_purseName'), findsOne);
+    expect(find.text('· $_purseName'), findsNothing);
+    expect(find.textContaining(_purseName), findsNothing);
     expect(find.text('This is a one-time choice. If you pay, the fight is off.'), findsNothing);
     expect(find.textContaining('worth'), findsNothing);
     expect(find.textContaining('profit'), findsNothing);
@@ -207,12 +226,17 @@ void main() {
     tester,
   ) async {
     final commands = <String>[];
-    final gate = Completer<String?>();
+    final queued = <String>[];
+    final gate = Completer<HostedCommandReceipt>();
     final controller = await openBribe(
       tester,
       guardReady(),
       hostedPlay: true,
-      submitGameCommand: (command, [args = const <String, Object?>{}]) {
+      submitGameCommand: (command, [args = const <String, Object?>{}]) async {
+        queued.add(command);
+        return null;
+      },
+      submitHostedCommand: (command, [args = const <String, Object?>{}]) {
         commands.add(command);
         return gate.future;
       },
@@ -222,6 +246,7 @@ void main() {
     await tester.pump();
 
     expect(commands, ['quest_bribe']);
+    expect(queued, isEmpty);
     expect(controller.save.gold, 300);
 
     final first = controller.save.skills.first;
@@ -238,10 +263,11 @@ void main() {
         ],
       ),
     );
-    gate.complete('Need 200 gold.');
+    gate.complete(const HostedCommandReceipt(reason: 'Need 200 gold.', code: 'not_enough_gold'));
     await tester.pumpAndSettle();
 
     expect(commands, ['quest_bribe']);
+    expect(queued, isEmpty);
     expect(controller.save.skills.first.xp, first.xp + 25);
     expect(inventoryCount(controller.save, flightItemId), 3);
     expect(controller.save.gold, 300);
@@ -253,12 +279,12 @@ void main() {
 
   testWidgets('double tap on Pay sends one quest_bribe', (tester) async {
     final commands = <String>[];
-    final gate = Completer<String?>();
+    final gate = Completer<HostedCommandReceipt>();
     final controller = await openBribe(
       tester,
       guardReady(),
       hostedPlay: true,
-      submitGameCommand: (command, [args = const <String, Object?>{}]) {
+      submitHostedCommand: (command, [args = const <String, Object?>{}]) {
         commands.add(command);
         return gate.future;
       },
@@ -278,12 +304,71 @@ void main() {
     expect(commands, ['quest_bribe']);
     expect(controller.save.gold, 300);
 
-    gate.complete(null);
+    gate.complete(serverBribe(controller.save));
     await tester.pumpAndSettle();
 
     expect(commands, ['quest_bribe']);
     expect(controller.save.gold, 100);
+    expect(inventoryCount(controller.save, _purseId), 1);
     expect(controller.message, 'The purse changes hands.');
+  });
+
+  testWidgets('a hosted Pay takes the server save as is, with commands still queued behind it', (
+    tester,
+  ) async {
+    final hostedCalls = <String>[];
+    final queued = <String>[];
+    final queuedGate = Completer<String?>();
+    final bribeGate = Completer<HostedCommandReceipt>();
+    final controller = await openBribe(
+      tester,
+      guardReady(),
+      hostedPlay: true,
+      submitGameCommand: (command, [args = const <String, Object?>{}]) {
+        queued.add(command);
+        return queuedGate.future;
+      },
+      submitHostedCommand: (command, [args = const <String, Object?>{}]) {
+        hostedCalls.add(command);
+        return bribeGate.future;
+      },
+    );
+    // A meta change is applied locally and still waiting on the server when
+    // the bribe goes out, which is when the sync layer leaves adopting the
+    // bribe's answer to the panel.
+    controller.commit(
+      controller.save.copyWith(motto: 'Paid in full'),
+      command: 'set_meta',
+      args: <String, Object?>{'motto': 'Paid in full'},
+    );
+    expect(queued, ['set_meta']);
+
+    await openConfirm(tester);
+    await tester.tap(find.byKey(const Key('bribe-pay')));
+    await tester.pump();
+    expect(hostedCalls, ['quest_bribe']);
+    expect(controller.save.gold, 300);
+    expect(inventoryCount(controller.save, _purseId), 0);
+
+    // The server's copy held 50 gold the client had not seen. It pays from
+    // that, so the answer is the only place the right balance exists.
+    bribeGate.complete(serverBribe(controller.save, extraGold: 50));
+    await tester.pumpAndSettle();
+
+    expect(controller.save.gold, 150);
+    expect(inventoryCount(controller.save, _purseId), 1);
+    expect(hasQuestFlag(controller.save, _questId, 'choice:bribe'), isTrue);
+    expect(controller.save.motto, 'Paid in full');
+    expect(controller.message, 'The purse changes hands.');
+    expect(hostedCalls, ['quest_bribe']);
+    expect(queued, ['set_meta']);
+    expect(find.text('Bribe 200 gold'), findsNothing);
+    expect(find.text('Pay the bribe?'), findsNothing);
+
+    queuedGate.complete(null);
+    await tester.pumpAndSettle();
+    expect(controller.save.gold, 150);
+    expect(inventoryCount(controller.save, _purseId), 1);
   });
 
   testWidgets('offline and signed out still pay locally', (tester) async {

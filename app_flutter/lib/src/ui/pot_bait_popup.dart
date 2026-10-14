@@ -60,14 +60,26 @@ class _PotBaitGridPopupState extends State<_PotBaitGridPopup> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const MutedText('Fishing pot'),
-              Text(
-                'Add three bait fish, or place it empty',
-                style: TextStyle(
-                  fontSize: gamePopupTitleSize,
-                  fontWeight: FontWeight.w400,
-                  color: chrome.panelInk,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const MutedText('Fishing pot'),
+                        Text(
+                          'Add three bait fish, or place it empty',
+                          style: TextStyle(
+                            fontSize: gamePopupTitleSize,
+                            fontWeight: FontWeight.w400,
+                            color: chrome.panelInk,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+                ],
               ),
               const SizedBox(height: 10),
               if (widget.options.isEmpty)
@@ -103,10 +115,6 @@ class _PotBaitGridPopupState extends State<_PotBaitGridPopup> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(
-                    child: GameButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
                     child: GameButton(
                       label: 'Clear',

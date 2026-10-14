@@ -17,7 +17,7 @@ class PageHeader extends StatelessWidget {
   final VoidCallback onClose;
   final Widget? trailing;
 
-  /// Replaces the compact text Close when a same-size chip is needed.
+  /// Replaces the close x when a different chip is needed.
   final Widget? close;
 
   /// Inventory sits 2px closer to the title so the doll is not flush on the plate.
@@ -38,14 +38,7 @@ class PageHeader extends StatelessWidget {
             ),
           ),
           if (trailing != null) ...[trailing!, const SizedBox(width: 8)],
-          close ??
-              GameButton(
-                label: 'Close',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                tooltip: 'Close',
-                onPressed: onClose,
-              ),
+          close ?? GameCloseButton(onPressed: onClose),
         ],
       ),
     );

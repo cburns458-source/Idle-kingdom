@@ -83,21 +83,25 @@ class LibraryView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  book.displayName,
-                  style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        book.displayName,
+                        style: const TextStyle(
+                          fontSize: gamePopupTitleSize,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Text(book.body, style: const TextStyle(height: 1.35)),
                   ),
-                ),
-                const SizedBox(height: 14),
-                GameButton(
-                  label: 'Close',
-                  tone: GameButtonTone.secondary,
-                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),

@@ -116,7 +116,11 @@ void main() {
     await tester.pump();
     expect(find.text('Plant a seed or sapling'), findsOne);
     expect(find.text('Plant'), findsWidgets);
-    expect(find.text('Close'), findsOne);
+    expect(
+      find.descendant(of: find.byKey(const Key('game-popup')), matching: find.byTooltip('Close')),
+      findsOne,
+    );
+    expect(find.text('Close'), findsNothing);
   });
 
   testWidgets('auto-collect with a full bag keeps the harvest and asks for room', (tester) async {
