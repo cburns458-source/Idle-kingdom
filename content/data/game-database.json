@@ -33081,6 +33081,18 @@
       "Description": "Tans animal hides into leather at the crafting workshop, for a small gold fee.",
       "Notes": "Trades hides for leather. 2 gold per leather produced.",
       "Sprite Asset Key": "npc/npc_general_store_merchant.png"
+    },
+    {
+      "NPC ID": "NPC-0020",
+      "Internal Key": "quartermaster_brenna",
+      "Display Name": "Quartermaster Brenna",
+      "Location ID": "LOC-0028",
+      "Role": "Merchant",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Description": "Keeps the Hearthguard shop stocked on Citadel Plaza.",
+      "Notes": "Merchant for SHP-0011 Hearthguard Shop.",
+      "Sprite Asset Key": "npc/npc_supply_keeper.png"
     }
   ],
   "Shops": [
@@ -34715,6 +34727,17 @@
       "Notes": "Visiting the Citadel (QSTP-0009). Reminder only; visiting the bazaar is a location visit, not a Talk step.",
       "Priority": 10,
       "Condition": "quest_active:QST-0004"
+    },
+    {
+      "Dialogue ID": "DLG-0015",
+      "Internal Key": "quartermaster_brenna",
+      "Display Name": "Quartermaster Brenna",
+      "NPC ID": "NPC-0020",
+      "Start Node ID": "DNODE-0025",
+      "Repeatable": true,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Hearthguard shop greeting. Always available. No quest actions."
     }
   ],
   "DialogueNodes": [
@@ -34906,6 +34929,14 @@
       "Node ID": "DNODE-0024",
       "Dialogue ID": "DLG-0014",
       "Line": "New around here? Browse all you like — no obligation to buy. When you're done, walk the rest of the Citadel. There's more than stalls.",
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Node ID": "DNODE-0025",
+      "Dialogue ID": "DLG-0015",
+      "Line": "Finish a bounty and I'll pay you in plaza points. Spend them here on Hearthguard gear.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -35323,6 +35354,18 @@
     {
       "Choice ID": "DCH-0034",
       "Node ID": "DNODE-0024",
+      "Label": "Thanks.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1,
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null
+    },
+    {
+      "Choice ID": "DCH-0035",
+      "Node ID": "DNODE-0025",
       "Label": "Thanks.",
       "Next Node ID": null,
       "Condition": null,
