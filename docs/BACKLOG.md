@@ -111,6 +111,7 @@ Conor's rulings, dated. Immutable once written.
 |---|---|---|
 | 2026-10-13 | Done archive tracks `test-launch`; `main` is updated later | Conor |
 | 2026-10-13 | Inventory/bank caps: 84 bag slots / 168 bank slots | PR #332, Conor (OQ-03 / SYS-03) |
+| 2026-10-13 | Travel stays instant; remove the unused travel-time setting (no player-facing change) | Conor (SYS-07) |
 | 2026-10-13 | QST-01 closed (Getting Started / Green Thumb dialogue) | PR #323, #270 |
 | 2026-10-13 | BUG-03 (todo drops/recipes) closed: solved before tracking | Conor; no fixing PR in `git log` |
 | 2026-10-13 | Ranked PvP reward exploit closed (server-authoritative payouts) | PR #333 (BUG-04) |
@@ -121,7 +122,8 @@ Conor's rulings, dated. Immutable once written.
 | 2026-10-12 | Enchanted gear sells at Wizard's Shop (2×) and general merchants (1×), not at the Bazaar | PR #301, merged 2026-10-12 08:14 PT (on test-launch; PR #302 promotes to main) |
 | ≤ 2026-10-12 | Location art spec: square sources that crop to portrait | `docs/Master_Prompt.md` §6 |
 | ≤ 2026-10-12 | Confirm email is OFF on purpose (turning it on breaks character creation) | `docs/deployment.md`; see ADM-02 |
-| 2026-10-13 | Travel is instant except these delays: 30 s death pause, hostile-area confirm / under-level forced combat, optional walk animation, 150 ms network spinner. No timed travel mechanic. Unused travel-time setting removed (no player-facing change). | Conor (OQ-01 / SYS-02 / SYS-07) |
+| 2026-10-13 | Travel is instant except the delays below (30 s death pause, hostile-area confirm / under-level forced combat, optional walk animation, 150 ms network spinner). No timed travel mechanic. | Conor (OQ-01 / SYS-02) |
+| 2026-10-13 | Game Systems cleanup: Game Bible bag/bank caps aligned to 84/168; SYS-02 marked Answered; capacity drift test imports TS constants (Dart/edge sources still read). Travel rulings stay as the two existing log rows. | PR #354 |
 
 ### 2.1 Standing context (facts that shape open items)
 
