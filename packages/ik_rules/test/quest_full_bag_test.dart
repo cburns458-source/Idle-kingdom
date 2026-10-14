@@ -379,6 +379,8 @@ void main() {
         _cookedPerch,
         11,
       );
+      // The cooking tick latches the optional Cook step (QSTP-0036).
+      save = applyQuestProcessProgress(contentDb, save, 'RCP-0001');
       final handedIn = chooseDialogue(contentDb, save, 'DLG-0012', 'DNODE-0020', 'DCH-0026');
       expect(handedIn.ok, isTrue, reason: handedIn.reason);
       save = _fillBag(handedIn.save, 0);

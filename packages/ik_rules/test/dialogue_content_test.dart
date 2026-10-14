@@ -83,6 +83,14 @@ void main() {
   String? stepOf(PlayerSave save, String questId) =>
       getCurrentStepId(db, save, getQuest(db, questId)!);
 
+  /// Ten baked potatoes and ten cooked perch in the bag, plus the cooking tick
+  /// that latches the Cook step.
+  PlayerSave cookTheOrder(PlayerSave save) => applyQuestProcessProgress(
+    db,
+    setCount(setCount(save, _bakedPotato, 10), _cookedPerch, 10),
+    'RCP-0001',
+  );
+
   List<String> choiceIds(DialogueView? view) => [
     for (final choice in view?.choices ?? const <DialogueChoiceView>[]) choice.choiceId,
   ];
@@ -280,6 +288,10 @@ void main() {
     var save = fresh(_throneRoom);
     expect(dialoguesForNpc(db, save, 'NPC-0001').first, 'DLG-0011');
     save = picked(save, 'DLG-0011', 'DNODE-0018', 'DCH-0023').save;
+    // Cook the whole order (the cooking tick latches the optional Cook step),
+    // then bank it and carry it to the King a few at a time.
+    save = cookTheOrder(save);
+    save = setCount(setCount(save, _bakedPotato, 0), _cookedPerch, 0);
     expect(stepOf(save, 'QST-0001'), 'QSTP-0002');
     expect(dialoguesForNpc(db, save, 'NPC-0001').first, 'DLG-0012');
     expect(pick(save, 'DLG-0012', 'DNODE-0020', 'DCH-0026').code, 'nothing_to_hand_in');
@@ -321,7 +333,7 @@ void main() {
 
   test('reports the quest a dialogue choice completed for the reward popup', () {
     var save = picked(fresh(_throneRoom), 'DLG-0011', 'DNODE-0018', 'DCH-0023').save;
-    save = setCount(setCount(save, _bakedPotato, 10), _cookedPerch, 10);
+    save = cookTheOrder(save);
     final handedIn = picked(save, 'DLG-0012', 'DNODE-0020', 'DCH-0026');
     expect(handedIn.questCompletions, isEmpty);
 
@@ -455,7 +467,7 @@ void main() {
       'talk:NPC-0001:QSTP-0001': 1,
       'step:QSTP-0001': 1,
     });
-    save = setCount(setCount(reload(save), _bakedPotato, 10), _cookedPerch, 10);
+    save = cookTheOrder(reload(save));
     expect(dialoguesForNpc(db, save, 'NPC-0001').first, 'DLG-0012');
     save = picked(save, 'DLG-0012', 'DNODE-0020', 'DCH-0026').save;
     save = picked(save, 'DLG-0012', 'DNODE-0022', 'DCH-0031').save;
@@ -466,6 +478,7 @@ void main() {
     final accepted = withQuest(fresh(_throneRoom), 'QST-0001', 'active', {});
     expect(choiceIds(startDialogue(db, accepted, 'DLG-0011').view), ['DCH-0029', 'DCH-0024']);
     final briefed = picked(accepted, 'DLG-0011', 'DNODE-0018', 'DCH-0029');
-    expect(stepOf(briefed.save, 'QST-0001'), 'QSTP-0002');
+    expect(isStepLatched(briefed.save, 'QST-0001', 'QSTP-0001'), isTrue);
+    expect(stepOf(briefed.save, 'QST-0001'), isNot('QSTP-0001'));
   });
 }

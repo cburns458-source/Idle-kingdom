@@ -25,6 +25,8 @@ void main() {
     var save = startedCharacter(database).copyWith(currentLocationId: 'LOC-0016');
     save = chooseDialogue(db(), save, 'DLG-0011', 'DNODE-0018', 'DCH-0023').save;
     save = addItemToInventory(addItemToInventory(save, 'ITEM-0058', 10), 'ITEM-0059', 10);
+    // The cooking tick latches the optional Cook step (QSTP-0036).
+    save = applyQuestProcessProgress(db(), save, 'RCP-0001');
     final handedIn = chooseDialogue(db(), save, 'DLG-0012', 'DNODE-0020', 'DCH-0026');
     expect(handedIn.ok, isTrue, reason: handedIn.reason);
     return handedIn.save;

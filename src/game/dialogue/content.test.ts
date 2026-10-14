@@ -6,9 +6,14 @@ import { getSkillProgress } from '../activity/xp'
 import { prepareDatabase } from '../data/loadDatabase'
 import type { DialogueChoiceRow } from '../data/types'
 import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
-import { applyQuestActionProgress, applyQuestAutoStartOnSeed, applyQuestPlantProgress } from '../quests/progress'
+import {
+  applyQuestActionProgress,
+  applyQuestAutoStartOnSeed,
+  applyQuestPlantProgress,
+  applyQuestProcessProgress,
+} from '../quests/progress'
 import { cheatAbandonQuest, completeQuest, getQuest, getQuestProgress } from '../quests/quests'
-import { getCurrentStepId } from '../quests/steps'
+import { getCurrentStepId, isStepLatched } from '../quests/steps'
 import { createNewSave, parseSave } from '../save/saveStore'
 import { courtyardBotanyUnlocked } from '../timers/locationTimers'
 import type { PlayerSave, QuestProgress } from '../save/types'
@@ -81,6 +86,12 @@ function greenThumbActive(foundSeed = POTATO_SEED): PlayerSave {
 
 function stepOf(save: PlayerSave, questId: string): string | null {
   return getCurrentStepId(db, save, getQuest(db, questId)!)
+}
+
+/** Ten baked potatoes and ten cooked perch in the bag, plus the cooking tick that latches the Cook step. */
+function cookTheOrder(save: PlayerSave): PlayerSave {
+  const cooked = setCount(setCount(save, BAKED_POTATO, 10), COOKED_PERCH, 10)
+  return applyQuestProcessProgress(db, cooked, 'RCP-0001')
 }
 
 describe('Fennel and King dialogue content', () => {
@@ -293,6 +304,10 @@ describe('Fennel and King dialogue content', () => {
     let save = fresh(THRONE_ROOM)
     expect(dialoguesForNpc(db, save, 'NPC-0001')[0]).toBe('DLG-0011')
     save = picked(save, 'DLG-0011', 'DNODE-0018', 'DCH-0023').save
+    // Cook the whole order (the cooking tick latches the optional Cook step),
+    // then bank it and carry it to the King a few at a time.
+    save = cookTheOrder(save)
+    save = setCount(setCount(save, BAKED_POTATO, 0), COOKED_PERCH, 0)
     expect(stepOf(save, 'QST-0001')).toBe('QSTP-0002')
     expect(dialoguesForNpc(db, save, 'NPC-0001')[0]).toBe('DLG-0012')
     expect(pick(save, 'DLG-0012', 'DNODE-0020', 'DCH-0026').code).toBe('nothing_to_hand_in')
@@ -343,7 +358,7 @@ describe('Fennel and King dialogue content', () => {
 
   it('reports the quest a dialogue choice completed for the reward popup', () => {
     let save = picked(fresh(THRONE_ROOM), 'DLG-0011', 'DNODE-0018', 'DCH-0023').save
-    save = setCount(setCount(save, BAKED_POTATO, 10), COOKED_PERCH, 10)
+    save = cookTheOrder(save)
     const handedIn = picked(save, 'DLG-0012', 'DNODE-0020', 'DCH-0026')
     expect(handedIn.questCompletions).toEqual([])
 
@@ -492,7 +507,7 @@ describe('Fennel and King dialogue content', () => {
       'talk:NPC-0001:QSTP-0001': 1,
       'step:QSTP-0001': 1,
     })
-    save = setCount(setCount(reload(save), BAKED_POTATO, 10), COOKED_PERCH, 10)
+    save = cookTheOrder(reload(save))
     expect(dialoguesForNpc(db, save, 'NPC-0001')[0]).toBe('DLG-0012')
     save = picked(save, 'DLG-0012', 'DNODE-0020', 'DCH-0026').save
     save = picked(save, 'DLG-0012', 'DNODE-0022', 'DCH-0031').save
@@ -505,6 +520,7 @@ describe('Fennel and King dialogue content', () => {
     const view = startDialogue(db, accepted, 'DLG-0011').view
     expect(view?.choices.map((choice) => choice.choiceId)).toEqual(['DCH-0029', 'DCH-0024'])
     const briefed = picked(accepted, 'DLG-0011', 'DNODE-0018', 'DCH-0029')
-    expect(stepOf(briefed.save, 'QST-0001')).toBe('QSTP-0002')
+    expect(isStepLatched(briefed.save, 'QST-0001', 'QSTP-0001')).toBe(true)
+    expect(stepOf(briefed.save, 'QST-0001')).not.toBe('QSTP-0001')
   })
 })

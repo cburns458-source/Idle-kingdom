@@ -36703,8 +36703,8 @@
     {
       "Step ID": "QSTP-0002",
       "Quest ID": "QST-0001",
-      "Step Order": 2,
-      "Journal Label": "Prepare food for the feast",
+      "Step Order": 3,
+      "Journal Label": "Bring the food to the King",
       "Notes": null,
       "Step Type": "HandIn",
       "Step Items": "ITEM-0058:10;ITEM-0059:10",
@@ -37016,6 +37016,18 @@
       "Step Items": null,
       "Step NPC": "NPC-0014",
       "Status": "Confirmed",
+      "Release Phase": "Launch"
+    },
+    {
+      "Step ID": "QSTP-0036",
+      "Quest ID": "QST-0001",
+      "Step Order": 2,
+      "Journal Label": "Cook food for the feast",
+      "Notes": "Hold: ITEM-0058 x10, ITEM-0059 x10; Optional",
+      "Step Type": null,
+      "Step Items": "ITEM-0058:10;ITEM-0059:10",
+      "Step NPC": null,
+      "Status": "Planned",
       "Release Phase": "Launch"
     }
   ],

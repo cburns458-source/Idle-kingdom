@@ -43,7 +43,7 @@ const rawDatabase = {
     launchRow({
       'Step ID': 'QSTP-9202',
       'Quest ID': 'QST-0001',
-      'Step Order': 3,
+      'Step Order': 4,
       'Journal Label': 'Later talk',
       'Step Type': 'Talk',
       'Step NPC': 'NPC-0001',
@@ -191,9 +191,10 @@ describe('farm patch for dialogue-only players (Green Thumb)', () => {
 
 describe('HandIn steps only count with their step latch (option b)', () => {
   const feast = () => getQuest(db, 'QST-0001')!
+  // Every save here is past the optional Cook step (QSTP-0036): it latched when the food was cooked.
 
   it('stays current when a later step is latched', () => {
-    const save = withQuest('QST-0001', { 'step:QSTP-0001': 1, 'step:QSTP-9202': 1 })
+    const save = withQuest('QST-0001', { 'step:QSTP-0001': 1, 'step:QSTP-0036': 1, 'step:QSTP-9202': 1 })
     expect(isStepPassed(db, save, 'QST-0001', 'QSTP-0002')).toBe(true)
     expect(isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002')).toBe(false)
     expect(getCurrentStepId(db, save, feast())).toBe('QSTP-0002')
@@ -201,7 +202,7 @@ describe('HandIn steps only count with their step latch (option b)', () => {
   })
 
   it('counts as done once the step latch is written', () => {
-    const save = withQuest('QST-0001', { 'step:QSTP-0001': 1, 'step:QSTP-0002': 1 })
+    const save = withQuest('QST-0001', { 'step:QSTP-0001': 1, 'step:QSTP-0036': 1, 'step:QSTP-0002': 1 })
     expect(isStepComplete(db, save, 'QST-0001', '', 'QSTP-0002')).toBe(true)
     expect(getCurrentStepId(db, save, feast())).toBe('QSTP-9202')
     expect(stepProgressGroup(db, save, 'QST-0001', 'QSTP-0002')?.done).toBe(true)
@@ -210,6 +211,7 @@ describe('HandIn steps only count with their step latch (option b)', () => {
   it('stays unfinished when only a partial hand-in counter is present', () => {
     const save = withQuest('QST-0001', {
       'step:QSTP-0001': 1,
+      'step:QSTP-0036': 1,
       'handIn:QSTP-0002:ITEM-0058': 4,
       'step:QSTP-9202': 1,
     })
