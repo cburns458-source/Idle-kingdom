@@ -217,9 +217,9 @@ class _ShopPanelState extends State<ShopPanel> {
         (controller.submitHostedCommand != null || controller.submitGameCommand != null);
   }
 
-  /// One Hearthguard piece through `plaza_shop_buy`. Bag-full is a popup first.
+  /// One Hearthguard piece through hosted `plaza_shop_buy`. Never applied locally.
   Future<void> _buyPlaza(String itemId) async {
-    if (_plazaBusy) return;
+    if (_plazaBusy || !_plazaHosted) return;
     _plazaBusy = true;
     setState(() => _error = null);
     try {
@@ -229,36 +229,11 @@ class _ShopPanelState extends State<ShopPanel> {
         await showDialogueBagFullPopup(context: context, noRoom: blocked);
         return;
       }
-      if (_plazaHosted) {
-        await _buyPlazaHosted(itemId);
-      } else {
-        await _buyPlazaLocal(itemId);
-      }
+      await _buyPlazaHosted(itemId);
     } finally {
       _plazaBusy = false;
       if (mounted) setState(() {});
     }
-  }
-
-  Future<void> _buyPlazaLocal(String itemId) async {
-    final result = purchasePlazaShopItem(db, save, itemId);
-    if (!result.ok) {
-      if (!mounted) return;
-      setState(() => _error = result.reason);
-      return;
-    }
-    controller.commitLoadout(
-      result.save!,
-      command: 'plaza_shop_buy',
-      args: <String, Object?>{'itemId': itemId},
-    );
-    final spent = plazaPointsSpentNotice(result.pointsSpent);
-    if (spent != null) controller.announce(spent);
-    if (!mounted) return;
-    setState(() {
-      _error = null;
-      _receipt = spent;
-    });
   }
 
   Future<void> _buyPlazaHosted(String itemId) async {
@@ -451,6 +426,10 @@ class _ShopPanelState extends State<ShopPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const MutedText('Spend plaza points on Hearthguard gear.'),
+        if (!_plazaHosted) ...[
+          const SizedBox(height: 6),
+          const MutedText(plazaShopNeedsConnection),
+        ],
         if (_error case final error?) ...[
           const SizedBox(height: 6),
           Text(
@@ -479,7 +458,7 @@ class _ShopPanelState extends State<ShopPanel> {
     final price = plazaShopPrice(entry.itemId);
     final item = controller.indexes.itemsById[entry.itemId];
     final name = item?.displayName ?? entry.itemId;
-    final affordable = price != null && points >= price && !_plazaBusy;
+    final affordable = _plazaHosted && price != null && points >= price && !_plazaBusy;
     final priceLabel = plazaShopPriceLabel(price);
     return GamePanel(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

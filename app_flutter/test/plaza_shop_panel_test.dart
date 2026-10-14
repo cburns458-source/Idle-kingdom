@@ -59,6 +59,32 @@ void main() {
     expect(buttons.every((button) => button.onPressed == null), isTrue);
   });
 
+  testWidgets('offline and local play disable Buy and a tap changes nothing', (tester) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    final commands = <String>[];
+    controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      commands.add(command);
+      return null;
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+
+    expect(find.text(plazaShopNeedsConnection), findsOne);
+    final buttons = tester.widgetList<GameButton>(find.widgetWithText(GameButton, 'Buy')).toList();
+    expect(buttons, hasLength(plazaShopStock.length));
+    expect(buttons.every((button) => button.onPressed == null), isTrue);
+
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pump();
+
+    expect(commands, isEmpty);
+    expect(plazaPointsOf(controller.save), 210);
+    expect(inventoryCount(controller.save, cuirassId), 0);
+    expect(find.text('-210 plaza points'), findsNothing);
+    expect(controller.message, isNull);
+  });
+
   testWidgets('a buy spends plaza points through plaza_shop_buy and updates the balance', (
     tester,
   ) async {
@@ -66,20 +92,32 @@ void main() {
     addTearDown(controller.dispose);
     final commands = <String>[];
     final args = <Map<String, Object?>>[];
+    controller.hostedPlay = () => true;
     controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return null;
+    };
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
       commands.add(command);
       args.add(commandArgs);
-      return null;
+      return HostedCommandReceipt(
+        pointsSpent: 210,
+        plazaPoints: 0,
+        save: controller.save.copyWith(
+          plazaPoints: 0,
+          inventory: const [InventoryStack(itemId: cuirassId, quantity: 1)],
+        ),
+      );
     };
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
     expect(find.text('210 plaza points'), findsWidgets);
+    expect(find.text(plazaShopNeedsConnection), findsNothing);
 
     final cuirassBuy = tester.widget<GameButton>(find.byKey(const Key('plaza-buy-$cuirassId')));
     expect(cuirassBuy.onPressed, isNotNull);
 
     await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(commands, ['plaza_shop_buy']);
     expect(args.single['itemId'], cuirassId);
@@ -103,9 +141,13 @@ void main() {
     );
     addTearDown(controller.dispose);
     final commands = <String>[];
+    controller.hostedPlay = () => true;
     controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
-      commands.add(command);
       return null;
+    };
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      commands.add(command);
+      return const HostedCommandReceipt();
     };
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
@@ -141,14 +183,29 @@ void main() {
     );
     addTearDown(controller.dispose);
     final commands = <String>[];
+    controller.hostedPlay = () => true;
     controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
-      commands.add(command);
       return null;
+    };
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      commands.add(command);
+      return HostedCommandReceipt(
+        pointsSpent: 210,
+        plazaPoints: 0,
+        save: controller.save.copyWith(
+          plazaPoints: 0,
+          inventory: [
+            const InventoryStack(itemId: cuirassId, quantity: 2),
+            for (final stack in controller.save.inventory)
+              if (stack.itemId != cuirassId) stack,
+          ],
+        ),
+      );
     };
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
     await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(commands, ['plaza_shop_buy']);
     expect(plazaPointsOf(controller.save), 0);

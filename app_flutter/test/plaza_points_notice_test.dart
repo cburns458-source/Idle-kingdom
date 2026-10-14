@@ -24,6 +24,10 @@ void main() {
     expect(plazaShopPriceLabel(210), '210 plaza points');
   });
 
+  test('offline Buy explains that plaza purchases need the server', () {
+    expect(plazaShopNeedsConnection, 'Plaza purchases need a connection to the server');
+  });
+
   group('plazaPointsSpentNotice', () {
     test('shows nothing when the field is missing or 0', () {
       expect(plazaPointsSpentNotice(null), isNull);

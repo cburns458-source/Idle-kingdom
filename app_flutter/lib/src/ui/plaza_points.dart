@@ -2,6 +2,9 @@ import 'package:ik_rules/ik_rules.dart';
 
 import 'format.dart';
 
+/// Offline, local save, and any session without a hosted server connection.
+const String plazaShopNeedsConnection = 'Plaza purchases need a connection to the server';
+
 /// Player-facing price, or why this row cannot be bought.
 String plazaShopPriceLabel(num? price) {
   if (price == null) return plazaShopUnknownItem;
