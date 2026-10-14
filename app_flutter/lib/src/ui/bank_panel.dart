@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -15,9 +13,9 @@ import 'quantity_sheet.dart';
 /// Player-facing `no_room` copy for this chest. Stack-full shares the bag line.
 String bankNoRoomMessage(NoRoom? noRoom, {int? slotsNeeded}) {
   if (noRoom?.reason == 'stack_full') return DialogueText.stackFull;
-  final n = math.max(1, slotsNeeded ?? noRoom?.slotsNeeded ?? 1);
+  final n = slotsNeeded ?? noRoom?.slotsNeeded ?? 1;
   if (noRoom?.target == 'bank') {
-    return 'Your bank is full. Make room for $n more item${n == 1 ? '' : 's'} and try again.';
+    return 'Your bank is full. Make room for ${DialogueText.moreItems(n)} and try again.';
   }
   return DialogueText.bagFull(n);
 }

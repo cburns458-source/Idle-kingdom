@@ -9,6 +9,7 @@ import 'action_stage.dart';
 import 'format.dart';
 import 'item_icon.dart';
 import 'player_gear_sheet.dart';
+import 'plaza_points.dart';
 
 enum _ArenaTab { search, ranked }
 
@@ -495,6 +496,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
   Widget _fightView() {
     final opponent = _opponent!;
     final finished = _outcome != null;
+    final rankedGain = plazaPointsGainedNotice(_rankedPointsGained);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -554,16 +556,10 @@ class _ArenaPanelState extends State<ArenaPanel> {
                         padding: EdgeInsets.only(top: 4),
                         child: MutedText(rankedPvpDailyCapMessage, textAlign: TextAlign.center),
                       )
-                    else if (_rankedFight &&
-                        _outcome == 'win' &&
-                        _rankedPointsGained != null &&
-                        _rankedPointsGained! > 0)
+                    else if (_rankedFight && _outcome == 'win' && rankedGain != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: MutedText(
-                          'Ranked purse: ${formatThousands(_rankedPointsGained!)} plaza points.',
-                          textAlign: TextAlign.center,
-                        ),
+                        child: MutedText(rankedGain, textAlign: TextAlign.center),
                       )
                     else if (_rankedFight && _outcome != 'win')
                       const Padding(

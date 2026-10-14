@@ -26,6 +26,7 @@ class CloudSyncResult {
     this.goldGained,
     this.pointsGained = 0,
     this.plazaPoints = 0,
+    this.pointsSpent = 0,
     this.firstCompleter,
     this.code,
     this.fightId,
@@ -45,6 +46,7 @@ class CloudSyncResult {
       goldGained = null,
       pointsGained = 0,
       plazaPoints = 0,
+      pointsSpent = 0,
       firstCompleter = null,
       code = null,
       fightId = null,
@@ -70,6 +72,9 @@ class CloudSyncResult {
   /// Plaza points balance after this command. Missing on the wire is 0.
   final int plazaPoints;
 
+  /// Plaza points spent by this command. Missing on the wire is 0.
+  final int pointsSpent;
+
   final bool? firstCompleter;
   final String? code;
   final String? fightId;
@@ -91,6 +96,7 @@ class CloudSyncResult {
           if (goldGained != null) 'goldGained': goldGained,
           'pointsGained': pointsGained,
           'plazaPoints': plazaPoints,
+          'pointsSpent': pointsSpent,
           if (firstCompleter != null) 'firstCompleter': firstCompleter,
           if (code != null) 'code': code,
           if (fightId != null) 'fightId': fightId,
