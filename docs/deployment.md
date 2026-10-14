@@ -9,8 +9,15 @@ own workflow; this page is the Worker, branch, DNS, and project layout.
 
 | Branch | Site | Worker | How it is published |
 | --- | --- | --- | --- |
-| `test-launch` | https://test.restoriaidle.com | `restoria-idlerpg-staging` | Push to `test-launch`, or `npx wrangler deploy --env staging` |
-| `main` | https://restoriaidle.com and https://www.restoriaidle.com | `restoria-idlerpg` | Push to `main`, or `npx wrangler deploy --env production` |
+| `test-launch` | https://test.restoriaidle.com | `restoria-idlerpg-staging` | GitHub Actions (`deploy-worker-staging.yml`) on push to `test-launch` |
+| `main` | https://restoriaidle.com and https://www.restoriaidle.com | `restoria-idlerpg` | GitHub Actions (`deploy-worker-production.yml`) on push to `main` |
+
+GitHub Actions is the only Worker deployer. Cloudflare Workers Builds is
+disconnected from both Workers. Wrangler is pinned at `4.150.0` in
+`package.json`; the workflows run `npm ci` and that local CLI (`npm run
+deploy:staging` / `deploy:production`). Do not merge Cloudflare autofix PRs
+that rename the top-level `wrangler.toml` `name` —
+`restoria-idlerpg-do-not-deploy` is an intentional sink.
 
 Going forward: implement on a branch from latest `test-launch` and playtest
 the test site. Never commit or push to `main`. Only Conor promotes
@@ -186,11 +193,16 @@ local-only preview bundle.
 
 ## GitHub Actions
 
+Actions is the only Worker deployer. Workers Builds is disconnected from both
+`restoria-idlerpg-staging` and `restoria-idlerpg`. Both Worker workflows
+install the repo-pinned wrangler (`4.150.0`) with `npm ci` rather than
+`npx wrangler@latest`.
+
 | Workflow | Trigger | Publishes |
 | --- | --- | --- |
 | `deploy-worker-staging.yml` | Push to `test-launch`, or **Run workflow** | `restoria-idlerpg-staging` only |
 | `deploy-worker-production.yml` | Push to `main`, or **Run workflow** | `restoria-idlerpg` only |
-| `deploy.yml` | Push to `test-launch` or `main` touching `supabase/functions`, `src/game`, or the content database | Edge functions to that branch's project |
+| `deploy.yml` | Push to `test-launch` or `main` touching `supabase/functions`, `src/game`, or the content database | Edge functions to that branch's project (not a Worker) |
 
 `deploy.yml` uses the same GitHub environments as the Worker workflows.
 Missing `SUPABASE_ACCESS_TOKEN` or `SUPABASE_PROJECT_REF` fails the job
