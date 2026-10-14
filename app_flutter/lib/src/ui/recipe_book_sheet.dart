@@ -101,10 +101,22 @@ class _RecipeBookBodyState extends State<_RecipeBookBody> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const MutedText('Recipe book'),
-        Text(
-          widget.title,
-          style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const MutedText('Recipe book'),
+                  Text(
+                    widget.title,
+                    style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                  ),
+                ],
+              ),
+            ),
+            GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+          ],
         ),
         if (widget.view.tabs.length > 1) ...[
           const SizedBox(height: 10),
@@ -137,8 +149,6 @@ class _RecipeBookBodyState extends State<_RecipeBookBody> {
                   itemBuilder: (context, index) => _RecipeBookRow(entry: rows[index]),
                 ),
         ),
-        const SizedBox(height: 8),
-        GameButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
       ],
     );
   }

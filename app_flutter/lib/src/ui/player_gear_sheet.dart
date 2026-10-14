@@ -89,13 +89,7 @@ class PlayerGearSheet extends StatelessWidget {
                 style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
               ),
             ),
-            if (!embedded)
-              GameButton(
-                label: 'Close',
-                tone: GameButtonTone.secondary,
-                compact: true,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
+            if (!embedded) GameCloseButton(onPressed: () => Navigator.of(context).pop()),
           ],
         ),
         const SizedBox(height: 10),

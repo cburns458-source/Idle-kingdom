@@ -194,14 +194,6 @@ class WorldMapView extends StatelessWidget {
               title: 'Map',
               onClose: onClose!,
               trailing: browseMapId != mainMapId ? _worldMapChip() : null,
-              close: browseMapId != mainMapId
-                  ? OverlayChipButton(
-                      tooltip: 'Close',
-                      onPressed: onClose!,
-                      plain: true,
-                      child: const Icon(Icons.close, size: 18, color: Palette.heading),
-                    )
-                  : null,
             ),
           )
         else if (browseMapId != mainMapId)

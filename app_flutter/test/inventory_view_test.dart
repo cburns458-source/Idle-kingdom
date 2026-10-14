@@ -262,16 +262,14 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller, onClose: () {}));
 
     expect(find.text('Inventory'), findsOne);
-    expect(find.widgetWithText(GameButton, 'Close'), findsOne);
+    expect(find.byTooltip('Close'), findsOne);
+    expect(find.text('Close'), findsNothing);
     expect(
       find.descendant(of: find.byType(GamePanel), matching: find.text('Inventory')),
       findsNothing,
     );
     expect(
-      find.descendant(
-        of: find.byType(GamePanel),
-        matching: find.widgetWithText(GameButton, 'Close'),
-      ),
+      find.descendant(of: find.byType(GamePanel), matching: find.byTooltip('Close')),
       findsNothing,
     );
     expect(
@@ -863,7 +861,7 @@ void main() {
     await tester.pump();
     expect(controller.autoEat, isFalse);
     expect(find.text('Auto-eat off'), findsOne);
-    await tester.tap(find.text('Close'));
+    await tester.tap(find.descendant(of: popup, matching: find.byTooltip('Close')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('inventory-eat-now')), findsNothing);
   });
