@@ -145,6 +145,15 @@ def main() -> None:
             action["Secondary Drop Chance"] = BOOK_FIND_CHANCE_PERCENT
             action["Secondary Reward Table ID"] = BOOK_FIND_TABLE_ID
 
+    # The guide says "a seed turns up now and then"; the item note carried a
+    # stale 10%. The rules roll PRUNING_SEED_CHANCE_PERCENT = 5 in both TS and Dart.
+    for item in db["Items"]:
+        if item["Item ID"] == "ITEM-0363":
+            item["Notes"] = (
+                "Seed Stall. No skill requirement. Converts 1/4 XP to Botany; "
+                "the usual drops are replaced by a 5% seed chance."
+            )
+
     DB_PATH.write_text(json.dumps(db, indent=2, ensure_ascii=False) + "\n")
     print("patched library books")
     print("  books: BOOK-0001, BOOK-0002 rewritten; BOOK-0003 added")

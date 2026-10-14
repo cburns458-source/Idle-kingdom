@@ -6769,7 +6769,7 @@
       "Release Phase": "Launch",
       "Description": "Hand shears that turn a harvest or woodcut into Botany practice.",
       "Icon Asset Key": "pruners",
-      "Notes": "Seed Stall. No skill requirement. Converts 1/4 XP to Botany and 10% node seeds.",
+      "Notes": "Seed Stall. No skill requirement. Converts 1/4 XP to Botany; the usual drops are replaced by a 5% seed chance.",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
