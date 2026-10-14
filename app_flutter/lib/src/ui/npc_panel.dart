@@ -204,25 +204,34 @@ class _NpcPanelState extends State<NpcPanel> {
     return conversation.quests.any((quest) => quest.questId == questId && quest.canBribe);
   }
 
-  /// Hosted play waits for the server so a `not_enough_gold` refusal writes
-  /// nothing back. Offline applies locally, same as today's synced command.
+  /// Hosted play waits for the server and takes the save it answers with, so a
+  /// `not_enough_gold` refusal writes nothing back and a paid bribe is never
+  /// worked out a second time here. Offline applies locally, same as today's
+  /// synced command.
   Future<void> _payBribe(NpcQuestBlock quest) async {
     if (!_stillCanBribe(quest.questId)) return;
     final args = <String, Object?>{'questId': quest.questId};
-    final hosted = controller.hostedPlay?.call() == true;
-    final send = controller.submitGameCommand;
-    if (hosted && send != null) {
-      final reason = await send('quest_bribe', args);
+    final hosted = controller.hostedPlay?.call() == true ? controller.submitHostedCommand : null;
+    if (hosted != null) {
+      final receipt = await hosted('quest_bribe', args);
       if (!mounted) return;
-      if (reason != null) {
-        setState(() => _error = reason);
+      if (!receipt.ok) {
+        if (receipt.code == 'no_room' || receipt.noRoom != null) {
+          setState(() => _error = null);
+          await showDialogueBagFullPopup(context: context, noRoom: receipt.noRoom);
+          return;
+        }
+        setState(() => _error = receipt.reason);
         return;
       }
-      if (!_stillCanBribe(quest.questId)) {
-        controller.announce('The purse changes hands.');
-        if (mounted) setState(() => _error = null);
-        return;
+      // The sync layer skips adopting a result while other commands are still
+      // queued behind it, so apply the server's copy here either way.
+      if (receipt.save case final server?) {
+        controller.adoptHostedSave(server, command: 'quest_bribe');
       }
+      controller.announce('The purse changes hands.');
+      setState(() => _error = null);
+      return;
     }
     final result = bribeForQuest(controller.db, controller.save, quest.questId);
     if (!result.ok) {
@@ -235,11 +244,7 @@ class _NpcPanelState extends State<NpcPanel> {
       if (mounted) setState(() => _error = result.reason);
       return;
     }
-    controller.commit(
-      result.save!,
-      command: hosted && send != null ? null : 'quest_bribe',
-      args: args,
-    );
+    controller.commit(result.save!, command: 'quest_bribe', args: args);
     controller.announce(result.message!);
     if (!mounted) return;
     setState(() => _error = null);
