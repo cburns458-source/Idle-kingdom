@@ -85,3 +85,32 @@ class FloatingItemSlot extends StatelessWidget {
 
 /// Spacing-only separators between floating social / catalog rows.
 const floatingRowGap = SizedBox(height: 6);
+
+/// Smallest cell a finger can land on reliably.
+const double minItemTapExtent = 48;
+
+/// Columns for a grid of square cells about [tile] wide, separated by [gap].
+///
+/// Picks the count whose cells come nearest to [tile] among those that keep
+/// every cell at least [minTile] wide. A max-extent grid delegate would instead
+/// let cells shrink to whatever the width happens to divide into.
+int denseGridColumns(
+  double width, {
+  required double tile,
+  required double gap,
+  double minTile = minItemTapExtent,
+}) {
+  if (!width.isFinite || width <= 0) return 1;
+  final most = ((width + gap) / (minTile + gap)).floor();
+  var best = 1;
+  var bestDistance = double.infinity;
+  for (var count = 1; count <= most; count += 1) {
+    final cell = (width - (count - 1) * gap) / count;
+    final distance = (cell - tile).abs();
+    if (distance < bestDistance) {
+      best = count;
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
