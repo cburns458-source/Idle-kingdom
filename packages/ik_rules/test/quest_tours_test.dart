@@ -90,6 +90,20 @@ void main() {
       // The beggar's turn-in line is untouched by the guard's completed row.
       expect(completed.message, isNot('Hmph.'), reason: route);
       expect(guardLine(completed.save!), 'Hmph.', reason: route);
+
+      // Back at the barracks, the guard's panel keeps the finished quest with QDL-0031.
+      final guard = npcConversation(
+        db,
+        completed.save!.copyWith(currentLocationId: 'LOC-0017'),
+        db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0012'),
+        0,
+      );
+      expect(guard.quests.map((quest) => quest.questId), ['QST-0003'], reason: route);
+      expect(guard.quests.single.status, 'completed', reason: route);
+      expect(guard.quests.single.completedNote, 'Hmph.', reason: route);
+      expect(guard.quests.single.talkLine, 'Hmph.', reason: route);
+      expect(guard.quests.single.canBribe, isFalse, reason: route);
+      expect(guard.quests.single.canChooseCombat, isFalse, reason: route);
     }
   });
 

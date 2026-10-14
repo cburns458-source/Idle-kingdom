@@ -238,6 +238,19 @@ describe('quest tours', () => {
       // The beggar's turn-in line is untouched by the guard's completed row.
       expect(completed.message).not.toBe('Hmph.')
       expect(guardLine(completed.save)).toBe('Hmph.')
+
+      // Back at the barracks, the guard's panel keeps the finished quest with QDL-0031.
+      const guard = npcConversation(
+        launch,
+        { ...completed.save, currentLocationId: 'LOC-0017' },
+        launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0012')!,
+      )
+      expect(guard.quests.map((quest) => quest.questId)).toEqual(['QST-0003'])
+      expect(guard.quests[0]!.status).toBe('completed')
+      expect(guard.quests[0]!.completedNote).toBe('Hmph.')
+      expect(guard.quests[0]!.talkLine).toBe('Hmph.')
+      expect(guard.quests[0]!.canBribe).toBe(false)
+      expect(guard.quests[0]!.canChooseCombat).toBe(false)
     }
   })
 
