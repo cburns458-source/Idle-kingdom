@@ -884,6 +884,38 @@ Wizard's Shop:
 
 Additional world shops may be attached to appropriate Locations and NPCs.
 
+12.4 PLAZA POINTS
+Plaza Points are a second currency. They reward Arena and bounty play without adding gold to the economy.
+
+Earning:
+- Ranked Arena win: 25 Plaza Points and 0 gold.
+- Ranked wins pay at most 5 times per UTC day. Later wins are still recorded but pay 0.
+- Bounty turn-in: Plaza Points equal to the bounty's former gold reward (1:1), rounded down. Bounties pay no gold.
+- Example: BNT-0001 pays 40 Plaza Points, plus 25 for first place.
+
+Rules:
+- Plaza Points are held on the character save.
+- They cannot be traded, banked, sold, or listed on the Grand Bazaar.
+- The server sets every amount from the catalog. Amounts supplied by the client are ignored.
+
+Spending:
+- Plaza Points are spent only at the Hearthguard shop (SHP-0011) in the Citadel Plaza, run by Quartermaster Brenna.
+- A purchase is refused if the player lacks the points or bag space. No points are spent on a refused purchase.
+
+Hearthguard set:
+- Hearthguard Cuirass: 210
+- Hearthguard Greaves: 170
+- Hearthguard Helm: 150
+- Hearthguard Gauntlets: 120
+- Hearthguard Boots: 120
+- Full set: 770 Plaza Points, roughly 8-12 bounties or about a week of ranked wins.
+- Set bonus: Hearthguard (5/5): +10% max HP.
+
+12.5 PRICE PRINCIPLE
+- An NPC sell price is a floor, so no item is ever worthless. It is not the item's value.
+- An item's real value is what players pay each other on the Grand Bazaar.
+- Rewards, costs, and balance must not be sized from NPC sell prices alone.
+
 ======================================================================
 13. NPCS, QUESTS, AND RECIPE DISCOVERY
 ======================================================================
