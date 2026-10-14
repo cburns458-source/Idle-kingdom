@@ -457,7 +457,8 @@ class _ActionFailure {
   final List<DialogueItemDelta> favourites;
 }
 
-/// Trimmed `No Room Line` when the cell has text; empty or missing stays unset.
+/// Trimmed `No Room Line` when the cell has text; empty, missing, or
+/// whitespace-only stays unset so the server never sends a blank line.
 String? _npcLineFromChoice(DialogueChoiceRow choice) {
   final line = choice.noRoomLine?.trim();
   return line != null && line.isNotEmpty ? line : null;

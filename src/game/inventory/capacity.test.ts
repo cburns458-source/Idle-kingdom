@@ -61,6 +61,23 @@ describe('inventory capacity', () => {
     expect(partial.save.inventory[0]?.quantity).toBe(INVENTORY_STACK_MAX)
   })
 
+  it('pins bag 84 and bank 168 across TS, Dart, and the edge copy', () => {
+    expect(INVENTORY_SLOT_LIMIT).toBe(84)
+    expect(BANK_SLOT_LIMIT).toBe(168)
+    const capacityDart = readFileSync(
+      resolve(process.cwd(), 'packages/ik_rules/lib/src/inventory/capacity.dart'),
+      'utf8',
+    )
+    const saveItems = readFileSync(
+      resolve(process.cwd(), 'supabase/functions/_shared/save_items.ts'),
+      'utf8',
+    )
+    expect(capacityDart).toMatch(/const int inventorySlotLimit = 84;/)
+    expect(capacityDart).toMatch(/const int bankSlotLimit = 168;/)
+    expect(saveItems).toMatch(/export const INVENTORY_SLOT_LIMIT = 84\b/)
+    expect(saveItems).toMatch(/export const BANK_SLOT_LIMIT = 168\b/)
+  })
+
   it('still accepts more of an item when the bag is full but a matching pile exists', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
