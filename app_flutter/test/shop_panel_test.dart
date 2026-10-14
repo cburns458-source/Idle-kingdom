@@ -59,7 +59,10 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
-    expect(find.textContaining('1 left'), findsWidgets);
+    final unit = playerBuyPrice(database.launch, getShop(database.launch, shopId)!, woodenAxeId)!;
+    // The tile reads `price · stock left today`; the pad spells it out.
+    expect(find.text('${unit}g · 1'), findsOne);
+    expect(find.textContaining('left'), findsNothing);
 
     await tester.tap(find.byTooltip('Wooden Axe'));
     await tester.pumpAndSettle();

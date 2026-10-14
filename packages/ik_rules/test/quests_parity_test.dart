@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:ik_content/ik_content.dart';
 import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
@@ -247,6 +248,116 @@ void main() {
         save = applyQuestStepUnlocks(db, setItemCount(save, 'ITEM-0058', 0));
         record('sold', save);
         expect(checkParity(fixture, {'stages': stages, 'save': save.toJson()}), isNull);
+      });
+    }
+  });
+
+  group('optional quest step parity', () {
+    const questId = 'QST-9301';
+    const kitchen = 'LOC-0023';
+    const bakedPotato = 'ITEM-0058';
+    const bakeRecipe = 'RCP-0001';
+
+    /// Content plus the fixture's test-only quest rows appended.
+    GameDatabase patchedDatabase(ParityFixture fixture) {
+      final base = asJsonMap(contentDatabaseJson());
+      final db = <String, Object?>{...base};
+      final patch = fixture.inputField<Map<String, Object?>>('patch');
+      for (final entry in patch.entries) {
+        db[entry.key] = <Object?>[
+          ...(base[entry.key] as List<Object?>? ?? const []),
+          ...entry.value! as List<Object?>,
+        ];
+      }
+      return assertGameDatabaseShape(db);
+    }
+
+    PlayerSave setItemCount(PlayerSave save, String itemId, num quantity) {
+      final cleared = save.copyWith(
+        inventory: save.inventory.where((stack) => stack.itemId != itemId).toList(),
+      );
+      return quantity > 0 ? addItemToInventory(cleared, itemId, quantity) : cleared;
+    }
+
+    PlayerSave withQuestActive(PlayerSave save) => save.copyWith(
+      quests: [
+        ...save.quests.where((row) => row.questId != questId),
+        const QuestProgress(questId: questId, status: 'active', progress: 0, counters: {}),
+      ],
+    );
+
+    Map<String, Object?> stage(GameDatabase db, String label, PlayerSave save) {
+      final quest = getQuest(db, questId)!;
+      return <String, Object?>{
+        'label': label,
+        'stepIndex': getCurrentStepIndex(db, save, quest),
+        'currentStepId': getCurrentStepId(db, save, quest),
+        'allStepsComplete': questAllStepsComplete(db, save, quest),
+        'progress': getQuestProgress(save, questId).toJson(),
+      };
+    }
+
+    Map<String, Object?> turnIn(GameDatabase db, PlayerSave save) {
+      final result = completeQuest(db, save, questId, ignoreLocation: true);
+      return result.ok
+          ? <String, Object?>{
+              'ok': true,
+              'progress': getQuestProgress(result.save!, questId).toJson(),
+            }
+          : <String, Object?>{'ok': false, 'reason': result.reason};
+    }
+
+    for (final fixture in loadParityFixtures('quests/optional-steps')) {
+      test(fixture.name, () {
+        if (fixture.name == 'parser') {
+          final db = patchedDatabase(fixture);
+          final notes = fixture.inputField<List<Object?>>('notes');
+          expect(
+            checkParity(fixture, {
+              'optional': [
+                for (final value in notes)
+                  isOptionalStep(QuestStepRow(<String, Object?>{'Notes': value})),
+              ],
+              'steps': [
+                for (final step in getQuestSteps(db, questId))
+                  <String, Object?>{'stepId': step.stepId, 'optional': isOptionalStep(step)},
+              ],
+            }),
+            isNull,
+          );
+          return;
+        }
+        final db = patchedDatabase(fixture);
+        final stages = <Object?>[];
+        var save = withQuestActive(saveOf(fixture));
+        stages.add(stage(db, 'accepted', save));
+        if (fixture.name == 'done-midway') {
+          save = applyQuestStepUnlocks(db, setItemCount(save, bakedPotato, 10));
+          stages.add(stage(db, 'held-before-visit', save));
+          save = applyQuestVisitProgress(db, setItemCount(save, bakedPotato, 0), kitchen);
+          stages.add(stage(db, 'visited', save));
+          save = applyQuestStepUnlocks(db, setItemCount(save, bakedPotato, 10));
+          stages.add(stage(db, 'held', save));
+          save = applyQuestStepUnlocks(db, setItemCount(save, bakedPotato, 0));
+          stages.add(stage(db, 'spent', save));
+          save = applyQuestProcessProgress(db, save, bakeRecipe);
+          stages.add(stage(db, 'baked', save));
+          expect(checkParity(fixture, {'stages': stages, 'turnIn': turnIn(db, save)}), isNull);
+          return;
+        }
+        final turnInEarly = turnIn(db, save);
+        save = applyQuestVisitProgress(db, save, kitchen);
+        stages.add(stage(db, 'visited', save));
+        save = applyQuestProcessProgress(db, save, bakeRecipe);
+        stages.add(stage(db, 'baked', save));
+        expect(
+          checkParity(fixture, {
+            'stages': stages,
+            'turnInEarly': turnInEarly,
+            'turnIn': turnIn(db, save),
+          }),
+          isNull,
+        );
       });
     }
   });

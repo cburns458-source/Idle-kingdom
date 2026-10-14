@@ -112,12 +112,7 @@ class _NearbyPanelState extends State<NearbyPanel> {
                 style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
               ),
             ),
-            GameButton(
-              label: 'Close',
-              tone: GameButtonTone.secondary,
-              compact: true,
-              onPressed: widget.onClose,
-            ),
+            GameCloseButton(onPressed: widget.onClose),
           ],
         ),
         const SizedBox(height: 8),

@@ -50,6 +50,63 @@ void main() {
     expect(isCosmeticUnlocked(completed.save!, 'COS-0002'), isTrue);
   });
 
+  test('the Barracks Guard says only Hmph once Lowly Beggar is done, by bribe or by fight', () {
+    String? guardLine(PlayerSave save) => questTalkLine(db, 'QST-0003', 'NPC-0012', save);
+    final gossip = contains("don't keep gossip");
+    final someoneTalked = contains('someone talked');
+
+    for (final route in const ['bribe', 'combat']) {
+      var save = _save(db, locationId: 'LOC-0034', gold: 300);
+      expect(guardLine(save), gossip, reason: route);
+      final donated = donateForQuest(db, save, 'QST-0003');
+      expect(donated.ok, isTrue, reason: route);
+      final accepted = acceptQuest(db, donated.save!, 'QST-0003');
+      expect(accepted.ok, isTrue, reason: route);
+      save = applyQuestTalkProgress(db, accepted.save!, 'NPC-0011');
+      // QDL-0002 until the merchant has been heard, QDL-0010 after; never Hmph.
+      expect(guardLine(save), gossip, reason: route);
+      save = save.copyWith(currentLocationId: 'LOC-0024');
+      save = applyQuestTalkProgress(db, save, 'NPC-0007');
+      expect(guardLine(save), someoneTalked, reason: route);
+      save = save.copyWith(currentLocationId: 'LOC-0017');
+      save = applyQuestTalkProgress(db, save, 'NPC-0012');
+      expect(guardLine(save), someoneTalked, reason: route);
+
+      if (route == 'bribe') {
+        final bribed = bribeQuestNpc(db, save, 'QST-0003');
+        expect(bribed.ok, isTrue, reason: route);
+        save = bribed.save!;
+      } else {
+        final combat = chooseQuestCombatRoute(save, 'QST-0003');
+        expect(combat.ok, isTrue, reason: route);
+        save = addItemToInventory(combat.save!, 'ITEM-0299', 1);
+      }
+      expect(guardLine(save), someoneTalked, reason: route);
+      expect(guardLine(save), isNot('Hmph.'), reason: route);
+
+      save = save.copyWith(currentLocationId: 'LOC-0034');
+      final completed = completeQuest(db, save, 'QST-0003');
+      expect(completed.ok, isTrue, reason: route);
+      // The beggar's turn-in line is untouched by the guard's completed row.
+      expect(completed.message, isNot('Hmph.'), reason: route);
+      expect(guardLine(completed.save!), 'Hmph.', reason: route);
+
+      // Back at the barracks, the guard's panel keeps the finished quest with QDL-0031.
+      final guard = npcConversation(
+        db,
+        completed.save!.copyWith(currentLocationId: 'LOC-0017'),
+        db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0012'),
+        0,
+      );
+      expect(guard.quests.map((quest) => quest.questId), ['QST-0003'], reason: route);
+      expect(guard.quests.single.status, 'completed', reason: route);
+      expect(guard.quests.single.completedNote, 'Hmph.', reason: route);
+      expect(guard.quests.single.talkLine, 'Hmph.', reason: route);
+      expect(guard.quests.single.canBribe, isFalse, reason: route);
+      expect(guard.quests.single.canChooseCombat, isFalse, reason: route);
+    }
+  });
+
   test('Harness essence unlocks on accept; Mages quarters wait for completion', () {
     var save = _save(db, locationId: 'LOC-0007');
     expect(activityVisibleForSave(db, save, 'ACT-0008'), isFalse);

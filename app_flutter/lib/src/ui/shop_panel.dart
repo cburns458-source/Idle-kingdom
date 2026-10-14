@@ -8,8 +8,33 @@ import 'dialogue_window.dart';
 import 'floating_slot.dart';
 import 'format.dart';
 import 'item_icon.dart';
+import 'item_label.dart';
 import 'plaza_points.dart';
 import 'quantity_sheet.dart';
+
+/// Shop grid cells: about this wide, with this much between them.
+const double shopTileExtent = 60;
+const double shopTileGap = 4;
+
+/// One Sell-side tile: every bag stack of [itemId] this counter will take.
+///
+/// Offers are per item, so the tile pools plain and enchanted copies. It only
+/// names the enchantment when no plain copy is behind it — the shop takes plain
+/// stacks first, so a mixed tile sells as plain until those run out.
+class _SellLine {
+  _SellLine({required this.itemId, required this.unit});
+
+  final String itemId;
+  final num unit;
+  num owned = 0;
+  bool hasPlain = false;
+  final List<String> enchantmentIds = <String>[];
+
+  List<String> enchantmentNames(GameDatabase db) {
+    if (hasPlain) return const <String>[];
+    return enchantmentIds.map((id) => enchantmentName(db, id)).nonNulls.toList();
+  }
+}
 
 /// A shop counter: pick what to buy, pick what to sell, then confirm once.
 ///
@@ -60,22 +85,27 @@ class _ShopPanelState extends State<ShopPanel> {
   }
 
   /// What this shop will take off the player, ignoring what cannot be traded.
-  List<({String itemId, num owned, num unit})> _sellable(ShopRow shop) {
+  List<_SellLine> _sellable(ShopRow shop) {
     final mode = shopEnchantedSellMode(shop);
-    final byItem = <String, ({String itemId, num owned, num unit})>{};
+    final byItem = <String, _SellLine>{};
     for (final stack in save.inventory) {
       if (isFavoriteStack(stack)) continue;
-      final enchanted = stack.enchantmentId != null && stack.enchantmentId!.trim().isNotEmpty;
+      final enchantmentId = stack.enchantmentId?.trim();
+      final enchanted = enchantmentId != null && enchantmentId.isNotEmpty;
       if (enchanted && mode == ShopEnchantedSellMode.reject) continue;
       if (!enchanted && mode == ShopEnchantedSellMode.enchantedOnly) continue;
       final unit = playerSellPrice(db, shop, stack.itemId, enchanted: enchanted);
       if (unit == null) continue;
-      final existing = byItem[stack.itemId];
-      byItem[stack.itemId] = (
-        itemId: stack.itemId,
-        owned: (existing?.owned ?? 0) + stack.quantity,
-        unit: unit,
+      final line = byItem.putIfAbsent(
+        stack.itemId,
+        () => _SellLine(itemId: stack.itemId, unit: unit),
       );
+      line.owned += stack.quantity;
+      if (!enchanted) {
+        line.hasPlain = true;
+      } else if (!line.enchantmentIds.contains(enchantmentId)) {
+        line.enchantmentIds.add(enchantmentId);
+      }
     }
     return byItem.values.toList();
   }
@@ -387,6 +417,7 @@ class _ShopPanelState extends State<ShopPanel> {
                         unit: row.unit,
                         owned: row.owned,
                         offered: _sells[row.itemId],
+                        enchantments: row.enchantmentNames(db),
                         onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
                       );
                     },
@@ -512,6 +543,10 @@ class _ShopPanelState extends State<ShopPanel> {
   }
 
   /// One stock or sell tile. [owned] is only shown on the sell side.
+  ///
+  /// The tile reads `price · count`: today's remaining stock under Buy, what the
+  /// bag holds under Sell. The name — `Item • Enchantment` when [enchantments]
+  /// is set — goes to the tooltip and to the quantity pad through [onTap].
   Widget _tileFor({
     required String itemId,
     required num? unit,
@@ -519,18 +554,20 @@ class _ShopPanelState extends State<ShopPanel> {
     num? owned,
     num? offered,
     num? remaining,
+    List<String> enchantments = const <String>[],
   }) {
     final item = controller.indexes.itemsById[itemId];
     final name = item?.displayName ?? itemId;
+    final label = enchantedItemLabel(name, enchantments.isEmpty ? null : enchantments.join(', '));
     final soldOut = remaining != null && remaining <= 0;
     final enabled = unit != null && (owned == null || owned > 0) && !soldOut;
 
     return FloatingItemSlot(
-      tooltip: name,
+      tooltip: itemTileTooltip(name, enchantments.isEmpty ? null : enchantments.join('\n')),
       selected: offered != null,
       enabled: enabled,
-      padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
-      onTap: enabled ? () => onTap(unit, name) : null,
+      padding: const EdgeInsets.fromLTRB(2, 5, 2, 4),
+      onTap: enabled ? () => onTap(unit, label) : null,
       child: Stack(
         children: [
           Column(
@@ -547,13 +584,22 @@ class _ShopPanelState extends State<ShopPanel> {
                     ? '${formatThousands(unit)}g'
                     : soldOut
                     ? 'sold out'
-                    : '${formatThousands(unit)}g · ${formatThousands(remaining)} left',
+                    : '${formatThousands(unit)}g · ${formatThousands(remaining)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: GameFont.xs, color: Palette.muted, height: 1.1),
               ),
             ],
           ),
+          if (enchantments.isNotEmpty)
+            const Positioned(
+              left: 0,
+              top: 0,
+              child: Text(
+                '★',
+                style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
+              ),
+            ),
           if (offered != null)
             Positioned(
               top: 0,
@@ -596,9 +642,6 @@ class _Column extends StatelessWidget {
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;
 
-  static const double _tileExtent = 78;
-  static const double _gap = 5;
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -617,15 +660,23 @@ class _Column extends StatelessWidget {
                     child: MutedText(empty, color: Palette.muted),
                   )
                 : RepaintBoundary(
-                    child: GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: _tileExtent,
-                        mainAxisSpacing: _gap,
-                        crossAxisSpacing: _gap,
-                        childAspectRatio: 1,
-                      ),
-                      itemCount: itemCount,
-                      itemBuilder: itemBuilder,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return GridView.builder(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: denseGridColumns(
+                              constraints.maxWidth,
+                              tile: shopTileExtent,
+                              gap: shopTileGap,
+                            ),
+                            mainAxisSpacing: shopTileGap,
+                            crossAxisSpacing: shopTileGap,
+                            childAspectRatio: 1,
+                          ),
+                          itemCount: itemCount,
+                          itemBuilder: itemBuilder,
+                        );
+                      },
                     ),
                   ),
           ),
