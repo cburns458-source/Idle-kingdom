@@ -31,6 +31,7 @@ class _ShopPanelState extends State<ShopPanel> {
   final Map<String, num> _sells = <String, num>{};
   String? _error;
   String? _receipt;
+  bool _plazaBusy = false;
 
   GameController get controller => widget.controller;
   GameDatabase get db => controller.db;
@@ -211,15 +212,35 @@ class _ShopPanelState extends State<ShopPanel> {
     });
   }
 
+  bool get _plazaHosted {
+    return controller.hostedPlay?.call() == true &&
+        (controller.submitHostedCommand != null || controller.submitGameCommand != null);
+  }
+
   /// One Hearthguard piece through `plaza_shop_buy`. Bag-full is a popup first.
   Future<void> _buyPlaza(String itemId) async {
-    final blocked = noRoomFor(save, [ItemGrant(itemId: itemId, quantity: 1)], db);
-    if (blocked != null) {
-      if (!mounted) return;
-      setState(() => _error = null);
-      await showDialogueBagFullPopup(context: context, noRoom: blocked);
-      return;
+    if (_plazaBusy) return;
+    _plazaBusy = true;
+    setState(() => _error = null);
+    try {
+      final blocked = noRoomFor(save, [ItemGrant(itemId: itemId, quantity: 1)], db);
+      if (blocked != null) {
+        if (!mounted) return;
+        await showDialogueBagFullPopup(context: context, noRoom: blocked);
+        return;
+      }
+      if (_plazaHosted) {
+        await _buyPlazaHosted(itemId);
+      } else {
+        await _buyPlazaLocal(itemId);
+      }
+    } finally {
+      _plazaBusy = false;
+      if (mounted) setState(() {});
     }
+  }
+
+  Future<void> _buyPlazaLocal(String itemId) async {
     final result = purchasePlazaShopItem(db, save, itemId);
     if (!result.ok) {
       if (!mounted) return;
@@ -240,6 +261,55 @@ class _ShopPanelState extends State<ShopPanel> {
     });
   }
 
+  Future<void> _buyPlazaHosted(String itemId) async {
+    final before = save;
+    final receipt = await _sendHostedPlazaBuy(itemId);
+    if (!mounted) return;
+    if (!receipt.ok) {
+      if (plazaPointsOf(save) != plazaPointsOf(before) || !identical(save, before)) {
+        controller.commit(before);
+      }
+      await _showPlazaRefusal(receipt.reason);
+      return;
+    }
+    final server = receipt.save;
+    if (server != null) {
+      controller.commitLoadout(server.copyWith(plazaPoints: receipt.plazaPoints));
+    } else {
+      controller.commitLoadout(save.copyWith(plazaPoints: receipt.plazaPoints));
+    }
+    final spent = plazaPointsSpentNotice(receipt.pointsSpent);
+    if (spent != null) controller.announce(spent);
+    if (!mounted) return;
+    setState(() {
+      _error = null;
+      _receipt = spent;
+    });
+  }
+
+  Future<HostedCommandReceipt> _sendHostedPlazaBuy(String itemId) async {
+    final args = <String, Object?>{'itemId': itemId};
+    final send = controller.submitHostedCommand;
+    if (send != null) return send('plaza_shop_buy', args);
+    final reason = await controller.submitGameCommand!('plaza_shop_buy', args);
+    return HostedCommandReceipt(reason: reason);
+  }
+
+  Future<void> _showPlazaRefusal(String? reason) async {
+    if (reason == null) return;
+    if (reason.contains('Inventory is full') || reason.contains('stack cannot hold')) {
+      await showDialogueBagFullPopup(
+        context: context,
+        noRoom: reason.contains('stack cannot hold')
+            ? const NoRoom(reason: 'stack_full')
+            : const NoRoom(slotsNeeded: 1, slotsFree: 0),
+      );
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _error = reason);
+  }
+
   @override
   Widget build(BuildContext context) {
     final shop = getShop(db, widget.shopId);
@@ -248,9 +318,11 @@ class _ShopPanelState extends State<ShopPanel> {
     }
     final access = canAccessShop(db, save, shop);
     final title = shop.raw['Display Name'] as String? ?? widget.shopId;
+    final plaza = isPlazaShop(shop);
     if (!access.ok) {
       return _frame(
         title: title,
+        plaza: plaza,
         child: Text(
           access.reason ?? 'You cannot trade here.',
           style: const TextStyle(color: Palette.danger),
@@ -258,8 +330,8 @@ class _ShopPanelState extends State<ShopPanel> {
       );
     }
 
-    if (isPlazaShop(shop)) {
-      return _frame(title: title, child: _buildPlazaShop(shop));
+    if (plaza) {
+      return _frame(title: title, plaza: true, child: _buildPlazaShop(shop));
     }
 
     final buyTotal = _total(_buys, (id) => playerBuyPrice(db, shop, id));
@@ -407,8 +479,8 @@ class _ShopPanelState extends State<ShopPanel> {
     final price = plazaShopPrice(entry.itemId);
     final item = controller.indexes.itemsById[entry.itemId];
     final name = item?.displayName ?? entry.itemId;
-    final affordable = price != null && points >= price;
-    final priceLabel = price == null ? '—' : '${formatThousands(price)} plaza points';
+    final affordable = price != null && points >= price && !_plazaBusy;
+    final priceLabel = plazaShopPriceLabel(price);
     return GamePanel(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
@@ -436,7 +508,7 @@ class _ShopPanelState extends State<ShopPanel> {
     );
   }
 
-  Widget _frame({required String title, required Widget child}) {
+  Widget _frame({required String title, required Widget child, bool plaza = false}) {
     return GamePanel(
       framed: true,
       child: Column(
@@ -450,7 +522,7 @@ class _ShopPanelState extends State<ShopPanel> {
                   style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
-              if (getShop(db, widget.shopId) case final shop? when isPlazaShop(shop))
+              if (plaza)
                 Text(
                   key: const Key('plaza-points-balance'),
                   '${formatThousands(plazaPointsOf(save))} plaza points',
@@ -458,6 +530,7 @@ class _ShopPanelState extends State<ShopPanel> {
                 )
               else
                 GoldAmount(
+                  key: const Key('shop-gold-balance'),
                   amount: save.gold,
                   style: const TextStyle(color: Palette.gold),
                 ),

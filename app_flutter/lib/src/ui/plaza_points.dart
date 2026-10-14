@@ -1,4 +1,12 @@
+import 'package:ik_rules/ik_rules.dart';
+
 import 'format.dart';
+
+/// Player-facing price, or why this row cannot be bought.
+String plazaShopPriceLabel(num? price) {
+  if (price == null) return plazaShopUnknownItem;
+  return '${formatThousands(price)} plaza points';
+}
 
 /// Player-facing plaza-point gain, or null when the field is missing or 0.
 String? plazaPointsGainedNotice(num? pointsGained) {

@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/dialogue_text.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
+import 'package:idle_kingdoms/src/ui/item_icon.dart';
 import 'package:idle_kingdoms/src/ui/plaza_points.dart';
 import 'package:idle_kingdoms/src/ui/shop_panel.dart';
 import 'package:ik_content/ik_content.dart';
@@ -121,5 +125,149 @@ void main() {
     expect(find.text('-210 plaza points'), findsNothing);
     expect(controller.message, isNull);
     expect(plazaPointsOf(controller.save), 210);
+  });
+
+  testWidgets('a full bag still buys when the piece can join an existing stack', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(
+        points: 210,
+        inventory: [
+          const InventoryStack(itemId: cuirassId, quantity: 1),
+          for (var index = 0; index < inventorySlotLimit - 1; index++)
+            InventoryStack(itemId: 'FILL-$index', quantity: 1),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    final commands = <String>[];
+    controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      commands.add(command);
+      return null;
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pump();
+
+    expect(commands, ['plaza_shop_buy']);
+    expect(plazaPointsOf(controller.save), 0);
+    expect(inventoryCount(controller.save, cuirassId), 2);
+    expect(controller.save.inventory, hasLength(inventorySlotLimit));
+    expect(find.text('-210 plaza points'), findsOne);
+  });
+
+  testWidgets('hosted refuse after send restores the balance and shows no -N', (tester) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    final commands = <String>[];
+    controller.hostedPlay = () => true;
+    controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return 'unused';
+    };
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      commands.add(command);
+      return const HostedCommandReceipt(reason: plazaShopInsufficientPoints);
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pumpAndSettle();
+
+    expect(commands, ['plaza_shop_buy']);
+    expect(plazaPointsOf(controller.save), 210);
+    expect(inventoryCount(controller.save, cuirassId), 0);
+    expect(find.text('-210 plaza points'), findsNothing);
+    expect(controller.message, isNull);
+    expect(find.text(plazaShopInsufficientPoints), findsOne);
+  });
+
+  testWidgets('double tap sends only one hosted buy and greys Buy while it is in flight', (
+    tester,
+  ) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    final commands = <String>[];
+    final gate = Completer<HostedCommandReceipt>();
+    controller.hostedPlay = () => true;
+    controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return null;
+    };
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) {
+      commands.add(command);
+      return gate.future;
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pump();
+
+    expect(commands, ['plaza_shop_buy']);
+    expect(plazaPointsOf(controller.save), 210);
+    expect(find.text('-210 plaza points'), findsNothing);
+    final busyButtons = tester
+        .widgetList<GameButton>(find.widgetWithText(GameButton, 'Buy'))
+        .toList();
+    expect(busyButtons.every((button) => button.onPressed == null), isTrue);
+
+    gate.complete(
+      HostedCommandReceipt(
+        pointsSpent: 210,
+        plazaPoints: 0,
+        save: controller.save.copyWith(
+          plazaPoints: 0,
+          inventory: const [InventoryStack(itemId: cuirassId, quantity: 1)],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(commands, ['plaza_shop_buy']);
+    expect(plazaPointsOf(controller.save), 0);
+    expect(find.text('-210 plaza points'), findsOne);
+  });
+
+  testWidgets('hosted success shows -N only from the server pointsSpent', (tester) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return null;
+    };
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return HostedCommandReceipt(
+        pointsSpent: 0,
+        plazaPoints: 0,
+        save: controller.save.copyWith(
+          plazaPoints: 0,
+          inventory: const [InventoryStack(itemId: cuirassId, quantity: 1)],
+        ),
+      );
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pumpAndSettle();
+
+    expect(plazaPointsOf(controller.save), 0);
+    expect(find.text('-210 plaza points'), findsNothing);
+    expect(controller.message, isNull);
+  });
+
+  testWidgets('a gold shop header still shows gold, not plaza points', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0024', gold: 1000),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: 'SHP-0001'));
+
+    expect(find.byKey(const Key('shop-gold-balance')), findsOne);
+    expect(find.byKey(const Key('plaza-points-balance')), findsNothing);
+    expect(find.byType(GoldAmount), findsOne);
+    expect(find.text('Hearthguard Shop'), findsNothing);
   });
 }
