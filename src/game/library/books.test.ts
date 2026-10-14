@@ -6,6 +6,7 @@ import { createNewSave } from '../save/saveStore'
 import { getQuest } from '../quests/quests'
 import { parseStructuredObjectives } from '../quests/objectives'
 import { validateActivityStart } from '../activity/engine'
+import { resolveActionRewards } from '../activity/rewards'
 import {
   bookUnlockNotice,
   grantBook,
@@ -67,6 +68,38 @@ describe('library books', () => {
     const green = getQuest(launch, 'QST-0011')!
     expect(parseStructuredObjectives(green).rewardBookIds).toEqual(['BOOK-0002'])
     expect(green['Display Name']).toBe('Green Thumb')
+  })
+
+  it('every book reads in the house voice: Launch, Confirmed, short, no exclamations', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    expect(launch.Books.map((row) => row['Book ID'])).toEqual(['BOOK-0001', 'BOOK-0002', 'BOOK-0003'])
+    for (const book of launch.Books) {
+      expect(book.Status).toBe('Confirmed')
+      expect(book.Body).not.toContain('!')
+      expect(book.Body.length).toBeLessThan(1200)
+    }
+  })
+
+  it('a Book reward entry unlocks the Library once, then grants nothing', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0192')!
+    expect(action['Secondary Reward Table ID']).toBe('RWT-0197')
+    expect(action['Secondary Drop Chance']).toBe(0.1)
+    const entry = launch.RewardEntries.find((row) => row['Reward Table ID'] === 'RWT-0197')!
+    expect(entry['Reward Type']).toBe('Book')
+    expect(entry['Reward ID / Value']).toBe('BOOK-0003')
+
+    // random() === 0 lands every drop roll and picks the first weighted entry.
+    const alwaysHit = () => 0
+    const first = resolveActionRewards(launch, createNewSave(launch), action, alwaysHit)
+    expect(first.booksGranted).toEqual([{ bookId: 'BOOK-0003', isFirstEver: true }])
+    expect(first.save.unlockedBookIds).toEqual(['BOOK-0003'])
+    // The book never enters the bag; only the coal does.
+    expect(first.loot.map((grant) => grant.itemId)).toEqual(['ITEM-0006'])
+
+    const again = resolveActionRewards(launch, first.save, action, alwaysHit)
+    expect(again.booksGranted).toEqual([])
+    expect(again.save.unlockedBookIds).toEqual(['BOOK-0003'])
   })
 
   it('Main Hall kitchen stays locked until Grand Feast is started', () => {

@@ -115,6 +115,7 @@ ActionRewardBundle _victoryRewardBundle(
   num goldGained,
   num nowMs, {
   List<ActionCosmeticGrant> cosmeticsGranted = const <ActionCosmeticGrant>[],
+  List<ActionBookGrant> booksGranted = const <ActionBookGrant>[],
   List<LootGrant> leftBehind = const <LootGrant>[],
 }) {
   final xpRewards = <ActionXpRewardSummary>[];
@@ -137,6 +138,7 @@ ActionRewardBundle _victoryRewardBundle(
     loot: loot,
     goldGained: goldGained,
     cosmeticsGranted: cosmeticsGranted,
+    booksGranted: booksGranted,
     leftBehind: leftBehind,
   );
 }
@@ -324,6 +326,7 @@ void _applyDueCombatOutcome(
           victory.goldGained,
           roundEnd,
           cosmeticsGranted: victory.cosmeticsGranted,
+          booksGranted: victory.booksGranted,
           leftBehind: victory.leftBehind,
         ),
       ),
@@ -545,6 +548,7 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
           loot: finished.result.loot,
           goldGained: finished.result.goldGained,
           cosmeticsGranted: finished.result.cosmeticsGranted,
+          booksGranted: finished.result.booksGranted,
           leftBehind: finished.result.leftBehind,
         ),
         damageTaken: finished.result.damageTaken,

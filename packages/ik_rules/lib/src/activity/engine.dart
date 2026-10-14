@@ -508,6 +508,7 @@ GatheringCompletion completeGatheringAction(
       goldGained: rewarded.goldGained,
       loot: rewarded.loot,
       cosmeticsGranted: rewarded.cosmeticsGranted,
+      booksGranted: rewarded.booksGranted,
       leftBehind: rewarded.leftBehind,
       leveledUpTo: leveledUpTo,
       damageTaken: 0,

@@ -8,6 +8,7 @@ import '../critters/critters.dart';
 import '../inventory/add_items.dart';
 import '../inventory/gold.dart';
 import '../js_compat.dart';
+import '../library/books.dart';
 import '../loot/drop_chance.dart';
 import '../races/races.dart';
 import '../rng/mulberry32.dart';
@@ -61,12 +62,23 @@ class ActionCosmeticGrant {
   };
 }
 
+/// A Library book unlocked by a `Book` reward entry. Never enters the bag.
+class ActionBookGrant {
+  const ActionBookGrant({required this.bookId, required this.isFirstEver});
+
+  final String bookId;
+  final bool isFirstEver;
+
+  Map<String, Object?> toJson() => <String, Object?>{'bookId': bookId, 'isFirstEver': isFirstEver};
+}
+
 class ActionRewards {
   const ActionRewards({
     required this.save,
     required this.loot,
     required this.goldGained,
     this.cosmeticsGranted = const <ActionCosmeticGrant>[],
+    this.booksGranted = const <ActionBookGrant>[],
     this.leftBehind = const <LootGrant>[],
   });
 
@@ -74,6 +86,7 @@ class ActionRewards {
   final List<LootGrant> loot;
   final num goldGained;
   final List<ActionCosmeticGrant> cosmeticsGranted;
+  final List<ActionBookGrant> booksGranted;
 
   /// Drops that rolled but did not fit in the bag. Same shape as [loot].
   final List<LootGrant> leftBehind;
@@ -115,6 +128,7 @@ ActionRewards resolveActionRewards(
   final loot = <LootGrant>[];
   final leftBehind = <LootGrant>[];
   final cosmeticsGranted = <ActionCosmeticGrant>[];
+  final booksGranted = <ActionBookGrant>[];
   var goldGained = jsNumber(action.raw['Guaranteed Gold'] ?? 0);
   final skillDropBonus = raceSkillDropChanceBonusPercent(
     db,
@@ -207,6 +221,13 @@ ActionRewards resolveActionRewards(
           ),
         );
       }
+    } else if (rewardType == 'Book' && rewardValue is String && rewardValue.isNotEmpty) {
+      // One-time find: once the book is in the Library the roll grants nothing.
+      final granted = grantBook(next, rewardValue);
+      if (granted.granted) {
+        next = granted.save;
+        booksGranted.add(ActionBookGrant(bookId: rewardValue, isFirstEver: granted.isFirstEver));
+      }
     }
   }
 
@@ -232,6 +253,7 @@ ActionRewards resolveActionRewards(
     loot: loot,
     goldGained: goldGained,
     cosmeticsGranted: cosmeticsGranted,
+    booksGranted: booksGranted,
     leftBehind: leftBehind,
   );
 }

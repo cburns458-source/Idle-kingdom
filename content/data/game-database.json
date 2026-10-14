@@ -6769,7 +6769,7 @@
       "Release Phase": "Launch",
       "Description": "Hand shears that turn a harvest or woodcut into Botany practice.",
       "Icon Asset Key": "pruners",
-      "Notes": "Seed Stall. No skill requirement. Converts 1/4 XP to Botany and 10% node seeds.",
+      "Notes": "Seed Stall. No skill requirement. Converts 1/4 XP to Botany; the usual drops are replaced by a 5% seed chance.",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -18476,8 +18476,8 @@
       "Guaranteed Gold": 0,
       "Drop Chance": 75,
       "Reward Table ID": "RWT-0155",
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
+      "Secondary Drop Chance": 0.1,
+      "Secondary Reward Table ID": "RWT-0197",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "ThieverySteal; FailDamagePercent:10",
@@ -26359,6 +26359,21 @@
       "XP Amount": null,
       "Status": "Planned",
       "Notes": "Rabbit Hide 30%."
+    },
+    {
+      "Reward Entry ID": "RWE-T01970",
+      "Reward Table ID": "RWT-0197",
+      "Reward Table Name": "Dwarven Store Page",
+      "Purpose": "Secondary output",
+      "Reward Type": "Book",
+      "Reward ID / Value": "BOOK-0003",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Confirmed",
+      "Notes": "One-time Library unlock of The Cold Forge. Grants nothing once found."
     }
   ],
   "Recipes": [
@@ -37554,19 +37569,28 @@
       "Book ID": "BOOK-0001",
       "Internal Key": "newcomers_guide",
       "Display Name": "Newcomer's Guide",
-      "Body": "Welcome to Restoria. The land does not rush you, but it does reward those who learn its rhythm.\n\nOpen the map, choose a location, and travel there. Once you arrive, look over the activities on offer. Gathering, crafting, cooking, combat, and other work all live in these lists. Each activity draws from its own pool of rewards, so what you earn depends on where you stand and what you choose to do.\n\nMaterials gather in your bag. Bring them to a workshop, a forge, a kitchen, or a workbench and shape them into tools, food, and gear. Better equipment shortens your labors and steadies your hand in a fight.\n\nWhen you want a longer chase, open the Log. Deeds, milestones, and quests wait there to mark what you have done and what still calls. When you want the kingdom’s records of items, enemies, and recipes, open the Codex.\n\nGood luck adventurer!",
+      "Body": "Welcome to Restoria. The land does not rush you, but it rewards those who learn its rhythm.\n\nOpen the map, pick a place, and travel there. Each place offers its own work: gathering, fighting, cooking, crafting. Start one and it carries on by itself, even while you are away, for up to a day.\n\nYour bag fills as you work. Carry it to a kitchen, a furnace, or a workshop and shape it into food, bars, tools, and gear. Better gear means quicker work and shorter fights. The banks in Town and the Citadel hold what you would rather not carry.\n\nBefore a fight, put food in your food slot. You eat on your own after each win when you are hurt. If you fall, you lose nothing but half a minute. Some places warn of danger before you go. Heed it, or don't.\n\nThe Log keeps your deeds, milestones, and quests. The Codex keeps the kingdom's records of items, actions, and beasts. Other adventurers walk these roads too. You will find them at the Citadel.\n\n— Ilsa Wren, wayfarer",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Granted by Getting Started (QST-0006)."
+      "Notes": "Granted by Getting Started (QST-0006). Signed by Ilsa Wren, a name only."
     },
     {
       "Book ID": "BOOK-0002",
       "Internal Key": "botanists_guide",
       "Display Name": "Botanist's Guide",
-      "Body": "Unlock a plot, plant what you carry, and let the timer run. When the bed is ready, harvest it. Often the earth returns your planting along with a share of the crop. Compost gathered from patches can be worked in when you plant, and it improves your chance of a healthy result. Seeds may shift as they grow, and mutations appear as your Botany rises. Several seeds can share one bed, even mixed kinds, while a sapling asks for the whole plot to itself.\n\nEquip pruners when you gather from woodcutting or harvesting, and the usual drops give way to a chance at seeds instead. The experience you earn from that work becomes Botany experience.\n\nTend the timers. Harvest when the ground is ready. Plant again!",
+      "Body": "Every patch wants the same three things: a seed, some compost, and time.\n\nPlant up to three seeds in a bed, mixed kinds if you like. A sapling wants the bed to itself and takes half a day. Work compost in when you plant: one for a seed, five for a sapling. Not everything you plant will live. New growers lose more than old hands do, and compost is the difference.\n\nWhen a plant lives, the earth often hands your seed back with the crop. Plant two kinds together and now and then it hands back a third kind that neither of them was. Try pairs. Keep what comes.\n\nPruners turn harvesting or woodcutting into Botany practice. The usual drops stop, a seed turns up now and then, and a quarter of the experience goes to Botany instead of the skill you were working.\n\nCompost is turned from the patches themselves. My plot here at the farm is yours whenever a bed stands empty. There are others at the castle courtyard once the king has had his feast, at the Citadel outskirts, on the mountain slopes, and at the temple. The bed in the Shallows grows only kelp and wants no compost.\n\n— Fennel",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "Granted by Green Thumb (QST-0011)."
+      "Notes": "Granted by Green Thumb (QST-0011). Signed by Fennel, who hands it over."
+    },
+    {
+      "Book ID": "BOOK-0003",
+      "Internal Key": "the_cold_forge",
+      "Display Name": "The Cold Forge",
+      "Body": "A loose page, folded into the ledger in a hand that is not the merchant's.\n\nWe were not always a shop.\n\nThe mountain was ours from the slopes to the deep pools. The forge above the shaft never went dark, and the halls under it rang from one end to the other. We cut iron and coal, and below that the rarer ores, and the sound of it was the sound of a people who did not think they could fall.\n\nThen the shaft came down. Rubble where there had been a road, and no one left who could say why. The forge above went cold waiting for ore that never came. One by one we climbed to the slopes, or went down to the town, and learned to sell what we used to make.\n\nThe store is what stayed. A counter, a few pickaxes, and a fair price for ore, so that someone would still bring it up out of the ground.\n\nIf you are reading this, your hands are in a dwarf's strongbox. Take the coal. Leave the page, or don't. But if you ever meet a smith who wants the old fire lit, give her what she asks for. Some of us still mean to rebuild.",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Anonymous dwarven lore. Rare one-time find (0.1%) while stealing from the mining merchant (ACN-0192, RWT-0197)."
     }
   ]
 }

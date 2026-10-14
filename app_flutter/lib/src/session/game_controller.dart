@@ -895,6 +895,15 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Same as [noteBookUnlocks] for books found through action reward tables.
+  void noteActionBookUnlocks(List<ActionBookGrant> grants) {
+    if (grants.isEmpty) return;
+    noteBookUnlocks([
+      for (final grant in grants)
+        QuestBookGrant(bookId: grant.bookId, isFirstEver: grant.isFirstEver),
+    ]);
+  }
+
   void dismissBookUnlock() {
     _bookUnlock = null;
     notifyListeners();
@@ -1243,6 +1252,7 @@ class GameController extends ChangeNotifier {
       ):
         noteReward(bundle);
         noteActionCosmeticUnlocks(bundle.cosmeticsGranted);
+        noteActionBookUnlocks(bundle.booksGranted);
         if (damageTaken > 0 || showZeroDamageHit) {
           _damagePopup = DamagePopup(
             amount: damageTaken,

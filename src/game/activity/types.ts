@@ -47,6 +47,8 @@ export interface ActionRewardBundle {
   goldGained: number
   /** Wardrobe cosmetics unlocked with this reward line (e.g. Baby Dragon pet). */
   cosmeticsGranted?: { cosmeticId: string; isFirstEver: boolean }[]
+  /** Library books unlocked with this reward line. Omitted when empty. */
+  booksGranted?: { bookId: string; isFirstEver: boolean }[]
   /** Drops that rolled but did not fit in the bag. Same shape as `loot`. */
   leftBehind?: LootGrant[]
 }
@@ -64,6 +66,8 @@ export interface ActionCompletionResult {
   loot: LootGrant[]
   /** Wardrobe cosmetics unlocked by this action (e.g. Baby Dragon pet). */
   cosmeticsGranted?: { cosmeticId: string; isFirstEver: boolean }[]
+  /** Library books unlocked by this action. Omitted when empty. */
+  booksGranted?: { bookId: string; isFirstEver: boolean }[]
   /** Drops that rolled but did not fit in the bag. Same shape as `loot`. */
   leftBehind?: LootGrant[]
   leveledUpTo: number | null
