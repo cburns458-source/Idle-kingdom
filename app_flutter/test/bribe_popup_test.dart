@@ -83,7 +83,9 @@ void main() {
     }
   }
 
-  testWidgets('tapping Bribe opens the confirm popup with cost, gold, and purse', (tester) async {
+  testWidgets('tapping Bribe opens the confirm popup with cost and gold, no purse list', (
+    tester,
+  ) async {
     final quest = getQuest(database.launch, _questId)!;
     final parsed = parseStructuredObjectives(quest);
     await openBribe(tester, guardReady(gold: 300));
@@ -92,7 +94,8 @@ void main() {
     expect(find.text('Pay the bribe?'), findsOne);
     expect(find.text('${parsed.bribeGold.round()} gold'), findsWidgets);
     expect(find.text('You have 300 gold'), findsOne);
-    expect(find.text('· $_purseName'), findsOne);
+    expect(find.text('· $_purseName'), findsNothing);
+    expect(find.textContaining(_purseName), findsNothing);
     expect(find.text('This is a one-time choice. If you pay, the fight is off.'), findsNothing);
     expect(find.textContaining('worth'), findsNothing);
     expect(find.textContaining('profit'), findsNothing);
