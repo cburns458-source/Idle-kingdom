@@ -1,11 +1,14 @@
 import '../combat/stats.dart';
 import '../economy/payout.dart';
+import '../economy/plaza.dart';
 import '../save/generated/save_models.dart';
 import '../skills/totals.dart';
 import '../time.dart';
 
 const num rankedPvpDailyCap = 5;
-const num rankedPvpWinGold = 1000;
+
+/// @deprecated Ranked wins pay plaza points.
+const num rankedPvpWinGold = 0;
 const String rankedPvpDailyCapCode = 'daily_cap_reached';
 const String rankedPvpDailyCapMessage =
     "You've won 5 ranked fights today. Fights still count, but rewards return tomorrow.";
@@ -139,6 +142,7 @@ class RankedPvpApplyResult {
     required this.won,
     required this.paid,
     required this.goldGained,
+    required this.pointsGained,
     required this.winsToday,
     required this.winsRemaining,
     this.code,
@@ -148,6 +152,7 @@ class RankedPvpApplyResult {
   final bool won;
   final bool paid;
   final num goldGained;
+  final num pointsGained;
   final String? code;
   final num winsToday;
   final num winsRemaining;
@@ -157,20 +162,24 @@ class RankedPvpApplyResult {
     'won': won,
     'paid': paid,
     'goldGained': goldGained,
+    'pointsGained': pointsGained,
     'winsToday': winsToday,
     'winsRemaining': winsRemaining,
     if (code != null) 'code': code,
   };
 }
 
-/// Records a ranked fight: K/D always, and 1,000 gold on a win under the daily
-/// cap of 5 wins. Search fights skip this. The sixth win still counts but pays
-/// nothing.
+/// Records a ranked fight: K/D always, and 25 plaza points on a win under the
+/// daily cap of 5 wins. Search fights skip this. The sixth win still counts but
+/// pays nothing. Gold is never granted.
 RankedPvpApplyResult applyRankedPvpResult(PlayerSave save, bool won, num nowMs) {
   final key = rankedPvpDayKey(nowMs);
   final winsToday = rankedWinsUsedToday(save, nowMs);
   final paid = won && winsToday < rankedPvpDailyCap;
-  final payout = payReward(save, Reward(type: rewardTypeGold, amount: paid ? rankedPvpWinGold : 0));
+  final payout = payReward(
+    save,
+    Reward(type: rewardTypePlazaPoints, amount: paid ? rankedPvpWinPoints : 0),
+  );
   final nextWinsToday = won ? winsToday + 1 : winsToday;
   final wins = save.rankedPvpWins < 0 ? 0 : save.rankedPvpWins.floor();
   final losses = save.rankedPvpLosses < 0 ? 0 : save.rankedPvpLosses.floor();
@@ -183,7 +192,8 @@ RankedPvpApplyResult applyRankedPvpResult(PlayerSave save, bool won, num nowMs) 
     ),
     won: won,
     paid: paid,
-    goldGained: payout.paid,
+    goldGained: 0,
+    pointsGained: payout.paid,
     code: won && !paid ? rankedPvpDailyCapCode : null,
     winsToday: nextWinsToday,
     winsRemaining: nextWinsToday > rankedPvpDailyCap ? 0 : rankedPvpDailyCap - nextWinsToday,

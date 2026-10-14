@@ -1,8 +1,10 @@
-export const SAVE_VERSION = 62
+export const SAVE_VERSION = 63
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
 export const STARTING_GOLD = 0
+/** Plaza points start at 0. Old saves migrate to 0 (grandfathered). */
+export const STARTING_PLAZA_POINTS = 0
 /** Level 1 Hunting Net — granted on older save migration only. */
 export const STARTING_HUNTING_TOOL_ID = 'ITEM-0108'
 /** Retired fishing-net item. Existing copies become the hunting Net. */
@@ -348,6 +350,11 @@ export interface PlayerSave {
   activeEquipmentPresetIndex: number
   /** Gold amount; itemized currency uses Config currency_item_id. */
   gold: number
+  /**
+   * Plaza points. Non-tradeable, not bankable, not on the Bazaar.
+   * Missing on v62 and older; migrate to 0.
+   */
+  plazaPoints: number
   quests: QuestProgress[]
   achievements: AchievementProgress[]
   statistics: PlayerStatistics

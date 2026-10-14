@@ -28,6 +28,10 @@ const Set<String> generalMerchantShopKeys = <String>{
 
 bool isWizardsShop(ShopRow shop) => shop.raw['Internal Key'] == 'wizards_shop';
 
+/// Plaza-points counter. Gold `shop_confirm` must not sell these.
+bool isPlazaShop(ShopRow shop) =>
+    shop.raw['Shop Type'] == 'Plaza Shop' || shop.raw['Internal Key'] == 'hearthguard_shop';
+
 bool isGeneralMerchantShop(ShopRow shop) {
   final key = shop.raw['Internal Key'];
   return key is String && generalMerchantShopKeys.contains(key);
@@ -215,6 +219,7 @@ ItemRow? _item(GameDatabase db, String itemId) {
 
 /// Price the player pays to buy one unit from the shop.
 num? playerBuyPrice(GameDatabase db, ShopRow shop, String itemId) {
+  if (isPlazaShop(shop)) return null;
   final base = baseSellValue(_item(db, itemId));
   if (base == null) return null;
   if (itemId == essenceItemId) return (base * essenceBuyMult).round();

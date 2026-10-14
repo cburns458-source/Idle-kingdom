@@ -85,6 +85,7 @@ describe('ranked PvP and bounty authority', () => {
         fightId: 'fight-1',
         outcome: first.pvpOutcome ?? 'loss',
         goldGained: first.goldGained ?? 0,
+        pointsGained: first.pointsGained ?? 0,
         code: first.code,
         winsRemaining: first.winsRemaining,
         rounds: first.rounds ?? [],
@@ -153,7 +154,9 @@ describe('ranked PvP and bounty authority', () => {
     expect(afterMidnight.paid).toBe(true)
     expect(afterMidnight.code).toBeUndefined()
     expect(afterMidnight.winsRemaining).toBe(RANKED_PVP_DAILY_CAP - 1)
-    expect(afterMidnight.save.gold).toBe(goldAtCap + 1000)
+    expect(afterMidnight.save.gold).toBe(goldAtCap)
+    expect(afterMidnight.pointsGained).toBe(25)
+    expect(afterMidnight.save.plazaPoints).toBe((sixth.save.plazaPoints ?? 0) + 25)
     expect(afterMidnight.save.rankedPvpFightsToday).toBe(1)
     expect(afterMidnight.save.rankedPvpDayKey).toBe('2026-08-14')
   })
@@ -167,7 +170,8 @@ describe('ranked PvP and bounty authority', () => {
     expect(first.ok).toBe(true)
     if (!first.ok) return
     expect(first.firstCompleter).toBe(true)
-    expect(first.goldGained).toBeGreaterThan(0)
+    expect(first.goldGained).toBe(0)
+    expect(first.pointsGained).toBeGreaterThan(0)
     expect(first.save.bountyClaimedIds).toContain(ready.bountyId)
 
     const repeat = command(first.save, 'bounty_turn_in', {
@@ -184,7 +188,8 @@ describe('ranked PvP and bounty authority', () => {
     expect(later.ok).toBe(true)
     if (!later.ok) return
     expect(later.firstCompleter).toBe(false)
-    expect(later.goldGained).toBeLessThan(first.goldGained ?? 0)
+    expect(later.goldGained).toBe(0)
+    expect(later.pointsGained).toBeLessThan(first.pointsGained ?? 0)
   })
 
   it('keeps the first-place bonus off a second claimer through applyBountyReward', () => {
@@ -196,7 +201,8 @@ describe('ranked PvP and bounty authority', () => {
     if (!prepared.ok) return
     const first = applyBountyReward(prepared.save, bounty, true)
     const later = applyBountyReward(prepared.save, bounty, false)
-    expect(first.goldGained).toBe(later.goldGained + bounty.firstPlaceBonusGold)
-    expect(first.goldGained).toBe(bounty.rewardGold + bounty.firstPlaceBonusGold)
+    expect(first.pointsGained).toBe((later.pointsGained ?? 0) + bounty.firstPlaceBonusGold)
+    expect(first.pointsGained).toBe(bounty.rewardGold + bounty.firstPlaceBonusGold)
+    expect(first.goldGained).toBe(0)
   })
 })

@@ -63,19 +63,27 @@ export function prepareBountyTurnIn(
 export interface BountyRewardResult {
   save: PlayerSave
   goldGained: number
+  pointsGained: number
+}
+
+/** Plaza points for a bounty. Always rounds down. */
+export function bountyPointsFor(bounty: BountyDefinition, firstCompleter: boolean): number {
+  const raw = Number(bounty.rewardGold) + (firstCompleter ? Number(bounty.firstPlaceBonusGold) : 0)
+  return Math.max(0, Math.floor(raw))
 }
 
 /**
  * Pay out a bounty a backend has accepted. Everyone eligible earns the base
- * reward; only the claim the server recorded first adds the bonus.
+ * points; only the claim the server recorded first adds the bonus. Gold is
+ * never granted. Points always round down.
  */
 export function applyBountyReward(
   save: PlayerSave,
   bounty: BountyDefinition,
   firstCompleter: boolean,
 ): BountyRewardResult {
-  const goldGained = bounty.rewardGold + (firstCompleter ? bounty.firstPlaceBonusGold : 0)
-  const payout = payReward(save, { type: 'gold', amount: goldGained })
+  const pointsGained = bountyPointsFor(bounty, firstCompleter)
+  const payout = payReward(save, { type: 'plaza_points', amount: pointsGained })
   return {
     save: {
       ...payout.save,
@@ -87,6 +95,7 @@ export function applyBountyReward(
         },
       },
     },
-    goldGained: payout.paid,
+    goldGained: 0,
+    pointsGained: payout.paid,
   }
 }

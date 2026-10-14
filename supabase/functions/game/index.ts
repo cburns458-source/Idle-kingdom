@@ -19,6 +19,7 @@ import {
   overlayPublishedPvpSnapshot,
   parseSave,
   pickRankedOpponent,
+  plazaPointsOf,
   prepareDatabase,
   pvpSnapshotRowForSave,
   rankingBoardRowsFor,
@@ -459,7 +460,9 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       written = { ok: true, version: settled.version }
       commandSave = settled.save
       bountyExtras = {
-        goldGained: settled.goldGained,
+        goldGained: 0,
+        pointsGained: settled.pointsGained,
+        plazaPoints: plazaPointsOf(settled.save as { plazaPoints?: unknown }),
         firstCompleter: settled.firstCompleter,
         claim: settled.claim,
       }
@@ -469,6 +472,24 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       written = { ok: true, version: hosted?.version ?? expected }
       commandSave = hosted ? parseSave(hosted.payload, nowMs) : result.save
       wroteSave = false
+    } else if (command === 'plaza_shop_buy' && hosted) {
+      const purchased = await settlePlazaShopPurchase(
+        admin,
+        userId,
+        args,
+        result.save,
+        expected,
+        rng.getState(),
+        nowMs,
+      )
+      if (!purchased.ok) return purchased.response
+      written = { ok: true, version: purchased.version }
+      commandSave = purchased.save
+      bountyExtras = {
+        pointsGained: 0,
+        plazaPoints: purchased.plazaPoints,
+        pointsSpent: purchased.pointsSpent,
+      }
     } else if (command === 'ranked_pvp_fight' && hosted && result.fightId) {
       const recorded = await recordRankedFight(
         admin,
@@ -533,7 +554,9 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
             fightId: result.fightId,
             rounds: result.rounds ?? [],
             pvpOutcome: result.pvpOutcome,
-            goldGained: result.goldGained ?? 0,
+            goldGained: 0,
+            pointsGained: result.pointsGained ?? 0,
+            plazaPoints: plazaPointsOf(commandSave as { plazaPoints?: unknown }),
             code: result.code,
             winsRemaining: result.winsRemaining,
             youMaxHp: result.youMaxHp,
@@ -665,6 +688,7 @@ async function loadRankedFightContext(
         fightId: string
         outcome: 'win' | 'loss'
         goldGained: number
+        pointsGained: number
         code?: string
         winsRemaining?: number
         rounds: unknown[]
@@ -684,7 +708,7 @@ async function loadRankedFightContext(
   if (requested) {
     const { data, error } = await admin
       .from('ranked_pvp_results')
-      .select('fight_id, opponent_id, outcome, gold_paid, code, rounds, you_max_hp, them_max_hp, wins_remaining')
+      .select('fight_id, opponent_id, outcome, gold_paid, points_paid, code, rounds, you_max_hp, them_max_hp, wins_remaining')
       .eq('user_id', userId)
       .eq('fight_id', requested)
       .maybeSingle()
@@ -697,7 +721,8 @@ async function loadRankedFightContext(
       existingRankedFight: {
         fightId: String(data.fight_id),
         outcome,
-        goldGained: Number(data.gold_paid ?? 0),
+        goldGained: 0,
+        pointsGained: Number(data.points_paid ?? 0),
         code: typeof data.code === 'string' ? data.code : undefined,
         winsRemaining: Number(data.wins_remaining ?? 0),
         rounds: Array.isArray(data.rounds) ? data.rounds : [],
@@ -759,6 +784,7 @@ async function recordRankedFight(
     rounds?: unknown[]
     pvpOutcome?: 'win' | 'loss'
     goldGained?: number
+    pointsGained?: number
     code?: string
     winsRemaining?: number
     youMaxHp?: number
@@ -775,7 +801,7 @@ async function recordRankedFight(
     p_fight_id: result.fightId,
     p_opponent_id: result.opponent?.userId ?? null,
     p_outcome: result.pvpOutcome,
-    p_gold_paid: result.goldGained ?? 0,
+    p_gold_paid: 0,
     p_code: result.code ?? null,
     p_rounds: result.rounds ?? [],
     p_you_max_hp: result.youMaxHp ?? 0,
@@ -827,6 +853,7 @@ async function settleBountyTurnIn(
       version: number
       save: unknown
       goldGained: number
+      pointsGained: number
       firstCompleter: boolean
       claim: Record<string, unknown>
     }
@@ -877,9 +904,60 @@ async function settleBountyTurnIn(
     ok: true,
     version: Number(answer.version ?? expectedVersion + 1),
     save: paid.save,
-    goldGained: paid.goldGained,
+    goldGained: 0,
+    pointsGained: paid.pointsGained,
     firstCompleter,
     claim: answer.claim ?? {},
+  }
+}
+
+async function settlePlazaShopPurchase(
+  admin: Client,
+  userId: string,
+  args: Record<string, unknown>,
+  preparedSave: unknown,
+  expectedVersion: number,
+  rngState: number,
+  nowMs: number,
+): Promise<
+  | { ok: true; version: number; save: unknown; plazaPoints: number; pointsSpent: number }
+  | { ok: false; response: Response }
+> {
+  const itemId = asTrimmedString(args.itemId)
+  if (!itemId) return { ok: false, response: json({ error: 'Missing item.', phase: 2 }, 400) }
+  const { data, error } = await admin.rpc('plaza_shop_purchase_hosted', {
+    p_user_id: userId,
+    p_item_id: itemId,
+    p_expected_version: expectedVersion,
+    p_payload: preparedSave,
+    p_rng_state: rngState,
+    p_now: new Date(nowMs).toISOString(),
+  })
+  if (error) return { ok: false, response: json({ error: error.message, phase: 2 }, 400) }
+  const answer = (data ?? {}) as {
+    ok?: boolean
+    reason?: string
+    conflict?: boolean
+    version?: number
+    plazaPoints?: number
+    pointsSpent?: number
+    payload?: unknown
+  }
+  if (answer.ok !== true) {
+    return {
+      ok: false,
+      response: json(
+        { error: answer.reason ?? 'The plaza shop could not complete that purchase.', phase: 2, conflict: answer.conflict },
+        answer.conflict ? 409 : 400,
+      ),
+    }
+  }
+  return {
+    ok: true,
+    version: Number(answer.version ?? expectedVersion + 1),
+    save: answer.payload ?? preparedSave,
+    plazaPoints: Number(answer.plazaPoints ?? 0),
+    pointsSpent: Number(answer.pointsSpent ?? 0),
   }
 }
 

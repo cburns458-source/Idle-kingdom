@@ -972,6 +972,16 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 62,
+    toVersion: 63,
+    migrate: (save, _) {
+      final next = _bumped(save, 63);
+      final raw = jsNumber(save['plazaPoints']);
+      next['plazaPoints'] = raw.isFinite ? (raw < 0 ? 0 : raw.floor()) : 0;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

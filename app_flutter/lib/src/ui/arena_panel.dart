@@ -48,7 +48,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
   bool _rankedApplied = false;
   List<PvpRoundResult>? _replayRounds;
   String? _rankedCode;
-  num? _rankedGoldGained;
+  num? _rankedPointsGained;
   bool _startingFight = false;
   bool _savingEquipment = false;
   bool _equipmentSaved = false;
@@ -163,7 +163,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
       _rankedApplied = false;
       _replayRounds = null;
       _rankedCode = null;
-      _rankedGoldGained = null;
+      _rankedPointsGained = null;
     });
   }
 
@@ -227,7 +227,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
       _rankedApplied = true;
       _replayRounds = result.rounds;
       _rankedCode = result.code;
-      _rankedGoldGained = result.goldGained;
+      _rankedPointsGained = result.pointsGained;
     });
   }
 
@@ -280,7 +280,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
     if (multiplayer.service.hostedCommands) return;
     final next = applyRankedPvpResult(save, outcome == 'win', controller.session.clock());
     controller.commit(next.save);
-    _rankedGoldGained = next.goldGained;
+    _rankedPointsGained = next.pointsGained;
     _rankedCode = next.code;
   }
 
@@ -326,7 +326,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
       _error = null;
       _replayRounds = null;
       _rankedCode = null;
-      _rankedGoldGained = null;
+      _rankedPointsGained = null;
     });
   }
 
@@ -474,7 +474,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         MutedText(
-          'Closest combat level. Win: ${formatThousands(rankedPvpWinGold)} gold. '
+          'Closest combat level. Win: ${formatThousands(rankedPvpWinPoints)} plaza points. '
           '${capped ? '0' : remaining} / ${formatThousands(rankedPvpDailyCap)} ranked wins left today.',
         ),
         if (capped) ...[const SizedBox(height: 6), const MutedText(rankedPvpDailyCapMessage)],
@@ -556,12 +556,12 @@ class _ArenaPanelState extends State<ArenaPanel> {
                       )
                     else if (_rankedFight &&
                         _outcome == 'win' &&
-                        _rankedGoldGained != null &&
-                        _rankedGoldGained! > 0)
+                        _rankedPointsGained != null &&
+                        _rankedPointsGained! > 0)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: MutedText(
-                          'Ranked purse: ${formatThousands(_rankedGoldGained!)} gold.',
+                          'Ranked purse: ${formatThousands(_rankedPointsGained!)} plaza points.',
                           textAlign: TextAlign.center,
                         ),
                       )

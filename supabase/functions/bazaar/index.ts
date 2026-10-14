@@ -29,6 +29,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 
 import {
+  BAZAAR_SKILL_LEVEL_INVALID_CODE,
   BAZAAR_TOTAL_LEVEL_REQUIRED,
   BAZAAR_TOTAL_LEVEL_TOO_LOW,
   BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE,
@@ -310,6 +311,9 @@ async function place(
 
   const gate = bazaarTotalLevelGate(stored.payload)
   if (!gate.ok) {
+    if (gate.code === BAZAAR_SKILL_LEVEL_INVALID_CODE) {
+      return refused(gate.error, { code: gate.code })
+    }
     return refused(gate.error, bazaarTotalLevelRefusalFields(gate))
   }
 

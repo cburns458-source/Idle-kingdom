@@ -20,7 +20,7 @@ export interface BountyRowView {
   bountyId: string
   title: string
   description: string
-  /** `3 / 10 · 120 gold (+60 first)`. */
+  /** `3 / 10 · 120 points (+60 first)`. */
   progressLine: string
   /** `First completer: Rowan`, or null while nobody has turned one in. */
   firstCompleterLine: string | null
@@ -33,7 +33,7 @@ export interface BountyRowView {
 function rewardLine(bounty: BountyDefinition, progress: number): string {
   const done = Math.min(progress, bounty.amount)
   const bonus = bounty.firstPlaceBonusGold > 0 ? ` (+${bounty.firstPlaceBonusGold} first)` : ''
-  return `${done} / ${bounty.amount} · ${bounty.rewardGold} gold${bonus}`
+  return `${done} / ${bounty.amount} · ${bounty.rewardGold} points${bonus}`
 }
 
 export function bountyRowView(
@@ -76,8 +76,8 @@ export function bountyRows(
 }
 
 /** What the turn-in says once a backend has accepted it. */
-export function bountyClaimedNotice(goldGained: number, firstCompleter: boolean): string {
+export function bountyClaimedNotice(pointsGained: number, firstCompleter: boolean): string {
   return firstCompleter
-    ? `First completer! +${goldGained} gold.`
-    : `Bounty claimed. +${goldGained} gold.`
+    ? `First completer! +${pointsGained} points.`
+    : `Bounty claimed. +${pointsGained} points.`
 }

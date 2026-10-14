@@ -190,7 +190,7 @@ class FakeExchange {
     final stored = _payload(row);
     if (stored == null) return _refused('Play a little and let the game save before trading.');
 
-    final total = bazaarPayloadTotalLevel(stored);
+    final total = _payloadTotalLevel(stored);
     if (total < bazaarTotalLevelRequired) {
       return _refused(bazaarTotalLevelTooLow, <String, Object?>{
         'code': bazaarTotalLevelTooLowCode,
@@ -860,4 +860,16 @@ Map<String, Object?>? fakeExchangeGiveGold(Map<String, Object?> payload, int amo
   final gold = fakeExchangeGold(payload);
   if (gold + amount > bazaarOfferValueCap) return null;
   return <String, Object?>{...payload, 'gold': gold + amount};
+}
+
+num _payloadTotalLevel(Map<String, Object?> payload) {
+  final skills = payload['skills'];
+  if (skills is! List) return 0;
+  var sum = 0;
+  for (final entry in skills) {
+    if (entry is! Map) continue;
+    final level = entry['level'];
+    if (level is num) sum += level.floor();
+  }
+  return sum;
 }

@@ -1,7 +1,8 @@
 import type { PlayerSave } from '../save/types'
+import { plazaPointsOf } from './plaza'
 
-/** Reward kinds the shared payout can pay. Plaza points (ECO-03) add a second kind later. */
-export type RewardType = 'gold'
+/** Reward kinds the shared payout can pay. */
+export type RewardType = 'gold' | 'plaza_points'
 
 export type Reward = {
   type: RewardType
@@ -13,17 +14,17 @@ export type RewardPayout = {
   paid: number
 }
 
-function goldAmount(amount: number): number {
+function wholeAmount(amount: number): number {
   return Math.max(0, Math.floor(Number(amount) || 0))
 }
 
 /**
  * Pays one reward into a save. Ranked PvP and bounty turn-in both go through
- * this so a later plaza-points swap only changes the gold kind.
+ * this. Plaza points round down; gold is unchanged by a points payout.
  */
 export function payReward(save: PlayerSave, reward: Reward): RewardPayout {
+  const paid = wholeAmount(reward.amount)
   if (reward.type === 'gold') {
-    const paid = goldAmount(reward.amount)
     return {
       save: {
         ...save,
@@ -32,6 +33,22 @@ export function payReward(save: PlayerSave, reward: Reward): RewardPayout {
           values: {
             ...save.statistics.values,
             gold_earned: Number(save.statistics.values.gold_earned ?? 0) + paid,
+          },
+        },
+      },
+      paid,
+    }
+  }
+  if (reward.type === 'plaza_points') {
+    const next = plazaPointsOf(save) + paid
+    return {
+      save: {
+        ...save,
+        plazaPoints: next,
+        statistics: {
+          values: {
+            ...save.statistics.values,
+            plaza_points_earned: Number(save.statistics.values.plaza_points_earned ?? 0) + paid,
           },
         },
       },

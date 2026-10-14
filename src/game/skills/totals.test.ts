@@ -15,6 +15,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     equipmentPresets: [],
     activeEquipmentPresetIndex: 0,
     gold: 0,
+    plazaPoints: 0,
     quests: [],
     achievements: [],
     statistics: { values: {} },

@@ -52,6 +52,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     equipmentPresets: createDefaultEquipmentPresets(slots.keys),
     activeEquipmentPresetIndex: 0,
     gold: startingGold,
+    plazaPoints: startingPlazaPoints,
     quests: const <QuestProgress>[],
     achievements: const <AchievementProgress>[],
     statistics: const PlayerStatistics(values: <String, num>{}),

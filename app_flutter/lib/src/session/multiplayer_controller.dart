@@ -1838,7 +1838,7 @@ class MultiplayerController extends ChangeNotifier {
       }
       onPaid(result.save!);
       await refreshBountyClaims(result.claim!.hourKey);
-      return bountyClaimedNotice(result.goldGained!, result.firstCompleter!);
+      return bountyClaimedNotice(result.pointsGained, result.firstCompleter!);
     });
   }
 

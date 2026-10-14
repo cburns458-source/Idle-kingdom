@@ -13,11 +13,19 @@ enum CloudSyncSource {
   final String wire;
 }
 
+/// Wire int that treats a missing, null, or non-numeric field as 0.
+int plazaResponseInt(Object? value) {
+  if (value is num && value.isFinite) return value.floor();
+  return 0;
+}
+
 class CloudSyncResult {
   const CloudSyncResult.ok(
     PlayerSave this.save,
     CloudSyncSource this.source, {
     this.goldGained,
+    this.pointsGained = 0,
+    this.plazaPoints = 0,
     this.firstCompleter,
     this.code,
     this.fightId,
@@ -35,6 +43,8 @@ class CloudSyncResult {
     : save = null,
       source = null,
       goldGained = null,
+      pointsGained = 0,
+      plazaPoints = 0,
       firstCompleter = null,
       code = null,
       fightId = null,
@@ -53,6 +63,13 @@ class CloudSyncResult {
   final CloudSaveRecord? remote;
 
   final num? goldGained;
+
+  /// Plaza points granted by this command. Missing on the wire is 0.
+  final int pointsGained;
+
+  /// Plaza points balance after this command. Missing on the wire is 0.
+  final int plazaPoints;
+
   final bool? firstCompleter;
   final String? code;
   final String? fightId;
@@ -72,6 +89,8 @@ class CloudSyncResult {
           'save': save!.toJson(),
           'source': source!.wire,
           if (goldGained != null) 'goldGained': goldGained,
+          'pointsGained': pointsGained,
+          'plazaPoints': plazaPoints,
           if (firstCompleter != null) 'firstCompleter': firstCompleter,
           if (code != null) 'code': code,
           if (fightId != null) 'fightId': fightId,
@@ -98,6 +117,9 @@ const int cloudSaveGoldCap = 1000000000;
 ValidationResult softValidateSave(PlayerSave save) {
   if (!save.gold.isFinite || save.gold < 0 || save.gold > cloudSaveGoldCap) {
     return const ValidationResult.failed('Cloud save gold is out of bounds.');
+  }
+  if (!save.plazaPoints.isFinite || save.plazaPoints < 0 || save.plazaPoints > cloudSaveGoldCap) {
+    return const ValidationResult.failed('Cloud save plaza points are out of bounds.');
   }
   for (final skill in save.skills) {
     if (skill.level < 1 || skill.level > 10000 || skill.xp < 0) {

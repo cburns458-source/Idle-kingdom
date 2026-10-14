@@ -1,12 +1,15 @@
 import { combatLevelOf } from '../combat/stats'
 import { payReward } from '../economy/payout'
+import { RANKED_PVP_WIN_POINTS } from '../economy/plaza'
 import type { PlayerSave } from '../save/types'
 import { totalLevel } from '../skills/totals'
 
 export { combatLevelOf }
 
 export const RANKED_PVP_DAILY_CAP = 5
-export const RANKED_PVP_WIN_GOLD = 1000
+/** @deprecated Ranked wins pay plaza points. Kept so old fixtures still import. */
+export const RANKED_PVP_WIN_GOLD = 0
+export { RANKED_PVP_WIN_POINTS } from '../economy/plaza'
 export const RANKED_PVP_DAILY_CAP_CODE = 'daily_cap_reached'
 export const RANKED_PVP_DAILY_CAP_MESSAGE =
   "You've won 5 ranked fights today. Fights still count, but rewards return tomorrow."
@@ -98,21 +101,22 @@ export type RankedPvpApplyResult = {
   won: boolean
   paid: boolean
   goldGained: number
+  pointsGained: number
   code?: typeof RANKED_PVP_DAILY_CAP_CODE
   winsToday: number
   winsRemaining: number
 }
 
 /**
- * Records a ranked fight: K/D always, and 1,000 gold on a win under the daily
- * cap of 5 wins. Search fights skip this. The sixth win still counts but pays
- * nothing.
+ * Records a ranked fight: K/D always, and 25 plaza points on a win under the
+ * daily cap of 5 wins. Search fights skip this. The sixth win still counts but
+ * pays nothing. Gold is never granted.
  */
 export function applyRankedPvpResult(save: PlayerSave, won: boolean, nowMs: number): RankedPvpApplyResult {
   const key = rankedPvpDayKey(nowMs)
   const winsToday = rankedWinsUsedToday(save, nowMs)
   const paid = won && winsToday < RANKED_PVP_DAILY_CAP
-  const payout = payReward(save, { type: 'gold', amount: paid ? RANKED_PVP_WIN_GOLD : 0 })
+  const payout = payReward(save, { type: 'plaza_points', amount: paid ? RANKED_PVP_WIN_POINTS : 0 })
   const nextWinsToday = won ? winsToday + 1 : winsToday
   return {
     save: {
@@ -124,7 +128,8 @@ export function applyRankedPvpResult(save: PlayerSave, won: boolean, nowMs: numb
     },
     won,
     paid,
-    goldGained: payout.paid,
+    goldGained: 0,
+    pointsGained: payout.paid,
     code: won && !paid ? RANKED_PVP_DAILY_CAP_CODE : undefined,
     winsToday: nextWinsToday,
     winsRemaining: Math.max(0, RANKED_PVP_DAILY_CAP - nextWinsToday),

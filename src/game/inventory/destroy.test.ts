@@ -18,6 +18,7 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     equipmentPresets: [],
     activeEquipmentPresetIndex: 0,
     gold: 0,
+    plazaPoints: 0,
     quests: [],
     achievements: [],
     statistics: { values: {} },

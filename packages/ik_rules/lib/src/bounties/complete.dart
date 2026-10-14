@@ -68,26 +68,41 @@ BountyTurnInCheck prepareBountyTurnIn(PlayerSave save, BountyDefinition bounty, 
 }
 
 class BountyRewardResult {
-  const BountyRewardResult({required this.save, required this.goldGained});
+  const BountyRewardResult({
+    required this.save,
+    required this.goldGained,
+    required this.pointsGained,
+  });
 
   final PlayerSave save;
   final num goldGained;
+  final num pointsGained;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'save': save.toJson(),
     'goldGained': goldGained,
+    'pointsGained': pointsGained,
   };
 }
 
+/// Plaza points for a bounty. Always rounds down.
+num bountyPointsFor(BountyDefinition bounty, bool firstCompleter) {
+  final raw =
+      jsNumber(bounty.rewardGold) + (firstCompleter ? jsNumber(bounty.firstPlaceBonusGold) : 0);
+  final paid = raw.floor();
+  return paid < 0 ? 0 : paid;
+}
+
 /// Pays out a bounty a backend has accepted. Everyone eligible earns the base
-/// reward; only the claim the server recorded first adds the bonus.
+/// points; only the claim the server recorded first adds the bonus. Gold is
+/// never granted. Points always round down.
 BountyRewardResult applyBountyReward(
   PlayerSave save,
   BountyDefinition bounty,
   bool firstCompleter,
 ) {
-  final goldGained = bounty.rewardGold + (firstCompleter ? bounty.firstPlaceBonusGold : 0);
-  final payout = payReward(save, Reward(type: rewardTypeGold, amount: goldGained));
+  final pointsGained = bountyPointsFor(bounty, firstCompleter);
+  final payout = payReward(save, Reward(type: rewardTypePlazaPoints, amount: pointsGained));
   return BountyRewardResult(
     save: payout.save.copyWith(
       bountyClaimedIds: <String>[...save.bountyClaimedIds, bounty.id],
@@ -98,6 +113,7 @@ BountyRewardResult applyBountyReward(
         },
       ),
     ),
-    goldGained: payout.paid,
+    goldGained: 0,
+    pointsGained: payout.paid,
   );
 }

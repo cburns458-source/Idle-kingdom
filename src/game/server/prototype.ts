@@ -42,6 +42,7 @@ export {
 } from '../pvp/matchmaking'
 export type { ArenaOpponent } from '../pvp/matchmaking'
 export { replaceUnauthorizedPayouts } from '../save/payoutGuard'
+export { plazaPointsOf, purchasePlazaShopItem } from '../economy/plaza'
 export { totalLevel } from '../skills/totals'
 
 const MEADOW_LOCATION_ID = 'LOC-0009'

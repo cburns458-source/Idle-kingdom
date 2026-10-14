@@ -109,7 +109,7 @@ void main() {
     await tester.tap(find.text('Ranked'));
     await tester.pump();
     expect(
-      find.text('Closest combat level. Win: 1,000 gold. 5 / 5 ranked wins left today.'),
+      find.text('Closest combat level. Win: 25 plaza points. 5 / 5 ranked wins left today.'),
       findsOne,
     );
     expect(find.textContaining('wins paid today'), findsNothing);
@@ -133,15 +133,13 @@ void main() {
       isTrue,
     );
     expect(controller.save.rankedPvpFightsToday, controller.save.rankedPvpWins);
-    expect(
-      controller.save.gold,
-      goldBefore + (controller.save.rankedPvpWins > 0 ? rankedPvpWinGold : 0),
-    );
+    expect(controller.save.gold, goldBefore);
+    expect(controller.save.plazaPoints, controller.save.rankedPvpWins > 0 ? rankedPvpWinPoints : 0);
     expect(controller.save.rankedPvpWins + controller.save.rankedPvpLosses, 1);
     if (controller.save.rankedPvpWins > 0) {
-      expect(find.text('Ranked purse: 1,000 gold.'), findsOne);
+      expect(find.text('Ranked purse: 25 plaza points.'), findsOne);
     } else {
-      expect(find.text('Ranked purse: 1,000 gold.'), findsNothing);
+      expect(find.text('Ranked purse: 25 plaza points.'), findsNothing);
       expect(find.text('Ranked fight recorded. No gold.'), findsOne);
     }
     if (find.text('Back').evaluate().isNotEmpty) {

@@ -59,6 +59,7 @@ import {
   plantBotanySelection,
   placeTrap,
 } from '../timers/locationTimers'
+import { plazaPointsOf, purchasePlazaShopItem } from '../economy/plaza'
 import { prepareBountyTurnIn, applyBountyReward } from '../bounties/reward'
 import { syncBountyHour } from '../bounties/progress'
 import { hourlyBountyBoard } from '../bounties/rotation'
@@ -134,6 +135,7 @@ export type GameCommandName =
   | 'apply_ranked_pvp'
   | 'ranked_pvp_fight'
   | 'bounty_turn_in'
+  | 'plaza_shop_buy'
   | 'change_race'
   | 'guild_create'
   | 'guild_create_pay'
@@ -149,6 +151,7 @@ export type ExistingRankedFight = {
   fightId: string
   outcome: 'win' | 'loss'
   goldGained: number
+  pointsGained: number
   code?: string
   winsRemaining?: number
   rounds: PvpRoundResult[]
@@ -181,6 +184,9 @@ export type GameCommandResult =
       rounds?: PvpRoundResult[]
       pvpOutcome?: 'win' | 'loss'
       goldGained?: number
+      pointsGained?: number
+      plazaPoints?: number
+      pointsSpent?: number
       code?: string
       winsRemaining?: number
       youMaxHp?: number
@@ -717,6 +723,8 @@ function applyExistingCommand(
       return resolveRankedPvpFightCommand(db, save, args, options)
     case 'bounty_turn_in':
       return resolveBountyTurnInCommand(save, args, nowMs)
+    case 'plaza_shop_buy':
+      return resolvePlazaShopBuyCommand(db, save, args)
     case 'change_race': {
       const raceId = asString(args.raceId)
       if (!raceId) return failed('Missing race.')
@@ -793,7 +801,9 @@ function resolveRankedPvpFightCommand(
       fightId: existing.fightId,
       rounds: existing.rounds,
       pvpOutcome: existing.outcome,
-      goldGained: existing.goldGained,
+      goldGained: 0,
+      pointsGained: existing.pointsGained ?? 0,
+      plazaPoints: plazaPointsOf(save),
       code: existing.code,
       winsRemaining: existing.winsRemaining,
       youMaxHp: existing.youMaxHp,
@@ -820,7 +830,9 @@ function resolveRankedPvpFightCommand(
     fightId,
     rounds: fight.rounds,
     pvpOutcome: fight.outcome,
-    goldGained: applied.goldGained,
+    goldGained: 0,
+    pointsGained: applied.pointsGained,
+    plazaPoints: plazaPointsOf(applied.save),
     code: applied.code,
     winsRemaining: applied.winsRemaining,
     youMaxHp: fight.youMaxHp,
@@ -845,9 +857,27 @@ function resolveBountyTurnInCommand(
   }
   const rewarded = applyBountyReward(prepared.save, bounty, args.firstCompleter)
   return ok(rewarded.save, {
-    goldGained: rewarded.goldGained,
+    goldGained: 0,
+    pointsGained: rewarded.pointsGained,
+    plazaPoints: plazaPointsOf(rewarded.save),
     firstCompleter: args.firstCompleter,
     bountyId,
+  })
+}
+
+function resolvePlazaShopBuyCommand(
+  db: GameDatabase,
+  save: PlayerSave,
+  args: GameCommandArgs,
+): GameCommandResult {
+  const itemId = asString(args.itemId)
+  if (!itemId) return failed('Missing item.')
+  const bought = purchasePlazaShopItem(db, save, itemId, args.points ?? args.amount ?? args.gold)
+  if (!bought.ok) return failed(bought.reason)
+  return ok(bought.save, {
+    pointsGained: 0,
+    plazaPoints: bought.plazaPoints,
+    pointsSpent: bought.pointsSpent,
   })
 }
 

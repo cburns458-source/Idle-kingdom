@@ -10,7 +10,6 @@ import {
   combatLevelOf,
   pickRankedOpponent,
   RANKED_PVP_DAILY_CAP,
-  RANKED_PVP_WIN_GOLD,
   rankedWinsRemaining,
   rankedPvpDayKey,
   rankedPvpKd,
@@ -59,7 +58,7 @@ describe('arena matchmaking', () => {
     expect(pickRankedOpponent(1, 13, [])).toBeNull()
   })
 
-  it('caps ranked wins at 5 a UTC day and pays 1000 gold only under the cap', () => {
+  it('caps ranked wins at 5 a UTC day and pays 25 plaza points only under the cap', () => {
     let save = createNewSave(launch, NOW)
     expect(combatLevelOf(save)).toBe(2)
     expect(rankedPvpDayKey(NOW)).toBe('2026-08-13')
@@ -70,7 +69,10 @@ describe('arena matchmaking', () => {
     const first = applyRankedPvpResult(save, true, NOW)
     save = first.save
     expect(first.paid).toBe(true)
-    expect(save.gold).toBe(goldBefore + RANKED_PVP_WIN_GOLD)
+    expect(first.goldGained).toBe(0)
+    expect(first.pointsGained).toBe(25)
+    expect(save.gold).toBe(goldBefore)
+    expect(save.plazaPoints).toBe(25)
     expect(save.rankedPvpWins).toBe(1)
     expect(save.rankedPvpLosses).toBe(0)
     expect(save.rankedPvpFightsToday).toBe(1)
@@ -78,7 +80,8 @@ describe('arena matchmaking', () => {
     const loss = applyRankedPvpResult(save, false, NOW)
     save = loss.save
     expect(loss.paid).toBe(false)
-    expect(save.gold).toBe(goldBefore + RANKED_PVP_WIN_GOLD)
+    expect(save.gold).toBe(goldBefore)
+    expect(save.plazaPoints).toBe(25)
     expect(rankedWinsRemaining(save, NOW)).toBe(RANKED_PVP_DAILY_CAP - 1)
     expect(canStartRankedPvp(save, NOW).ok).toBe(true)
 
@@ -123,7 +126,9 @@ describe('arena matchmaking', () => {
     expect(afterMidnight.paid).toBe(true)
     expect(afterMidnight.code).toBeUndefined()
     expect(afterMidnight.winsRemaining).toBe(RANKED_PVP_DAILY_CAP - 1)
-    expect(afterMidnight.save.gold).toBe(sixth.save.gold + RANKED_PVP_WIN_GOLD)
+    expect(afterMidnight.save.gold).toBe(sixth.save.gold)
+    expect(afterMidnight.pointsGained).toBe(25)
+    expect(afterMidnight.save.plazaPoints).toBe(sixth.save.plazaPoints + 25)
     expect(afterMidnight.save.rankedPvpFightsToday).toBe(1)
     expect(afterMidnight.save.rankedPvpDayKey).toBe('2026-08-14')
   })

@@ -132,6 +132,9 @@ ShopTransactionResult confirmShopOffer(
 }) {
   final shop = getShop(db, shopId);
   if (shop == null) return const ShopTransactionResult.failed('Shop not found.');
+  if (isPlazaShop(shop)) {
+    return const ShopTransactionResult.failed('Buy this with plaza points.');
+  }
 
   final access = canAccessShop(db, save, shop);
   if (!access.ok) return ShopTransactionResult.failed(access.reason);
