@@ -34560,6 +34560,15 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0035"
+    },
+    {
+      "Dialogue ID": "QDL-0031",
+      "Quest ID": "QST-0003",
+      "NPC ID": "NPC-0012",
+      "Line": "Hmph.",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "When: completed"
     }
   ],
   "Dialogues": [

@@ -192,6 +192,68 @@ describe('quest tours', () => {
     expect(completed.rewards.some((reward) => /25,000 Might XP/i.test(reward.label))).toBe(true)
   })
 
+  it('leaves the Barracks Guard with only Hmph once Lowly Beggar is done, by bribe or by fight', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const guardLine = (save: PlayerSave) => questTalkLine(launch, 'QST-0003', 'NPC-0012', save)
+    const gossip = /don't keep gossip/
+    const someoneTalked = /someone talked/i
+
+    for (const route of ['bribe', 'combat'] as const) {
+      let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 300 }
+      expect(guardLine(save)).toMatch(gossip)
+      const donated = donateForQuest(launch, save, 'QST-0003')
+      expect(donated.ok).toBe(true)
+      if (!donated.ok) return
+      const accepted = acceptQuest(launch, donated.save, 'QST-0003')
+      expect(accepted.ok).toBe(true)
+      if (!accepted.ok) return
+      save = applyQuestTalkProgress(launch, accepted.save, 'NPC-0011')
+      // QDL-0002 until the merchant has been heard, QDL-0010 after; never Hmph.
+      expect(guardLine(save)).toMatch(gossip)
+      save = { ...save, currentLocationId: 'LOC-0024' }
+      save = applyQuestTalkProgress(launch, save, 'NPC-0007')
+      expect(guardLine(save)).toMatch(someoneTalked)
+      save = { ...save, currentLocationId: 'LOC-0017' }
+      save = applyQuestTalkProgress(launch, save, 'NPC-0012')
+      expect(guardLine(save)).toMatch(someoneTalked)
+
+      if (route === 'bribe') {
+        const bribed = bribeQuestNpc(launch, save, 'QST-0003')
+        expect(bribed.ok).toBe(true)
+        if (!bribed.ok) return
+        save = bribed.save
+      } else {
+        const combat = chooseQuestCombatRoute(save, 'QST-0003')
+        expect(combat.ok).toBe(true)
+        if (!combat.ok) return
+        save = addItemToInventory(combat.save, 'ITEM-0299', 1)
+      }
+      expect(guardLine(save)).toMatch(someoneTalked)
+      expect(guardLine(save)).not.toBe('Hmph.')
+
+      save = { ...save, currentLocationId: 'LOC-0034' }
+      const completed = completeQuest(launch, save, 'QST-0003')
+      expect(completed.ok).toBe(true)
+      if (!completed.ok) return
+      // The beggar's turn-in line is untouched by the guard's completed row.
+      expect(completed.message).not.toBe('Hmph.')
+      expect(guardLine(completed.save)).toBe('Hmph.')
+
+      // Back at the barracks, the guard's panel keeps the finished quest with QDL-0031.
+      const guard = npcConversation(
+        launch,
+        { ...completed.save, currentLocationId: 'LOC-0017' },
+        launch.NPCs.find((row) => row['NPC ID'] === 'NPC-0012')!,
+      )
+      expect(guard.quests.map((quest) => quest.questId)).toEqual(['QST-0003'])
+      expect(guard.quests[0]!.status).toBe('completed')
+      expect(guard.quests[0]!.completedNote).toBe('Hmph.')
+      expect(guard.quests[0]!.talkLine).toBe('Hmph.')
+      expect(guard.quests[0]!.canBribe).toBe(false)
+      expect(guard.quests[0]!.canChooseCombat).toBe(false)
+    }
+  })
+
   it('lets the general store merchant hint at the barracks without requiring it', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), currentLocationId: 'LOC-0034', gold: 25 }

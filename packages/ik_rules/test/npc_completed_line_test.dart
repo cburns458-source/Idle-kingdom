@@ -11,9 +11,10 @@ const String _barracks = 'LOC-0017';
 const String _townBank = 'LOC-0034';
 const String _generalStore = 'LOC-0024';
 
-/// A closing line for the Barracks Guard, who only takes part in Lowly Beggar.
+/// The Barracks Guard's shipped closing line for Lowly Beggar.
+const String _guardClosingLineId = 'QDL-0031';
 const Map<String, Object?> _guardClosingLine = <String, Object?>{
-  'Dialogue ID': 'QDL-9001',
+  'Dialogue ID': _guardClosingLineId,
   'Quest ID': _lowlyBeggar,
   'NPC ID': _guard,
   'Line': 'Hmph.',
@@ -24,17 +25,18 @@ const Map<String, Object?> _guardClosingLine = <String, Object?>{
 
 void main() {
   late GameDatabase db;
-  late GameDatabase withLine;
+  late GameDatabase withoutLine;
 
   setUpAll(() {
     final raw = asJsonMap(contentDatabaseJson());
     db = filterLaunchContent(assertGameDatabaseShape(raw));
+    // The shipped content minus the guard's line, to show what that line alone adds.
     final patched = Map<String, Object?>.of(raw);
     patched['QuestDialogue'] = <Object?>[
-      ...raw['QuestDialogue']! as List<Object?>,
-      _guardClosingLine,
+      for (final row in raw['QuestDialogue']! as List<Object?>)
+        if ((row as Map<String, Object?>)['Dialogue ID'] != _guardClosingLineId) row,
     ];
-    withLine = filterLaunchContent(assertGameDatabaseShape(patched));
+    withoutLine = filterLaunchContent(assertGameDatabaseShape(patched));
   });
 
   NpcRow npcRow(GameDatabase database, String npcId) =>
@@ -58,9 +60,15 @@ void main() {
 
   test('keeps a bystander\u2019s closing line on the panel once the quest is done', () {
     final save = saveWith(_barracks, done);
-    expect(npcConversation(db, save, npcRow(db, _guard), 0).quests, isEmpty);
+    // Without his closing line the finished quest leaves the guard's panel.
+    expect(npcConversation(withoutLine, save, npcRow(withoutLine, _guard), 0).quests, isEmpty);
 
-    final guard = npcConversation(withLine, save, npcRow(withLine, _guard), 0);
+    // QDL-0031 ships that line, so the real content shows the block.
+    expect(
+      db.questDialogue.firstWhere((row) => row.dialogueId == _guardClosingLineId).raw,
+      _guardClosingLine,
+    );
+    final guard = npcConversation(db, save, npcRow(db, _guard), 0);
     expect(guard.quests.map((quest) => quest.questId), [_lowlyBeggar]);
     final block = guard.quests.single;
     expect(block.status, 'completed');
@@ -75,9 +83,9 @@ void main() {
     expect(guard.greeting, isNull);
 
     final beggar = npcConversation(
-      withLine,
+      db,
       save.copyWith(currentLocationId: _townBank),
-      npcRow(withLine, _beggar),
+      npcRow(db, _beggar),
       0,
     );
     expect(beggar.quests.map((quest) => quest.questId), [_lowlyBeggar]);
@@ -87,25 +95,21 @@ void main() {
 
   test('leaves a bystander\u2019s closing line out until the quest is done', () {
     final fresh = createNewSave(db, 0).copyWith(currentLocationId: _barracks);
-    expect(npcConversation(withLine, fresh, npcRow(withLine, _guard), 0).quests, isEmpty);
+    expect(npcConversation(db, fresh, npcRow(db, _guard), 0).quests, isEmpty);
 
-    final guard = npcConversation(
-      withLine,
-      saveWith(_barracks, heard),
-      npcRow(withLine, _guard),
-      0,
-    );
+    final guard = npcConversation(db, saveWith(_barracks, heard), npcRow(db, _guard), 0);
     expect(guard.quests.map((quest) => quest.questId), [_lowlyBeggar]);
     expect(guard.quests.single.status, 'active');
     expect(guard.quests.single.talkLine, contains('gossip'));
+    expect(guard.quests.single.talkLine, isNot('Hmph.'));
     expect(guard.quests.single.canBribe, isTrue);
   });
 
   test('does not surface a finished quest to a bystander whose lines were all mid-quest', () {
     final merchant = npcConversation(
-      withLine,
+      db,
       saveWith(_generalStore, done),
-      npcRow(withLine, _generalStoreMerchant),
+      npcRow(db, _generalStoreMerchant),
       0,
     );
     expect(merchant.quests, isEmpty);

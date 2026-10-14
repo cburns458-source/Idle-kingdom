@@ -24,14 +24,18 @@ function saveAt(locationId: string): PlayerSave {
   return { ...createNewSave(launch), currentLocationId: locationId }
 }
 
-/** The shipped content plus one quest line, for rows no NPC has yet. */
-function withQuestLine(row: QuestDialogueRow): GameDatabase {
-  return { ...launch, QuestDialogue: [...launch.QuestDialogue, row] }
+/** The shipped content minus one quest line, to show what that line alone adds. */
+function withoutQuestLine(dialogueId: string): GameDatabase {
+  return {
+    ...launch,
+    QuestDialogue: launch.QuestDialogue.filter((row) => row['Dialogue ID'] !== dialogueId),
+  }
 }
 
-/** A closing line for the Barracks Guard, who only takes part in Lowly Beggar. */
+/** The Barracks Guard's shipped closing line for Lowly Beggar (QDL-0031). */
+const GUARD_CLOSING_LINE_ID = 'QDL-0031'
 const GUARD_CLOSING_LINE: QuestDialogueRow = {
-  'Dialogue ID': 'QDL-9001',
+  'Dialogue ID': GUARD_CLOSING_LINE_ID,
   'Quest ID': 'QST-0003',
   'NPC ID': 'NPC-0012',
   Line: 'Hmph.',
@@ -382,10 +386,14 @@ describe('npc conversation', () => {
       ...saveAt('LOC-0017'),
       quests: [{ questId: 'QST-0003', status: 'completed' as const, progress: 3, counters: {} }],
     }
-    expect(npcConversation(launch, done, npc('NPC-0012')).quests).toEqual([])
+    // Without his closing line the finished quest leaves the guard's panel.
+    expect(npcConversation(withoutQuestLine(GUARD_CLOSING_LINE_ID), done, npc('NPC-0012')).quests).toEqual([])
 
-    const withLine = withQuestLine(GUARD_CLOSING_LINE)
-    const guard = npcConversation(withLine, done, npc('NPC-0012'))
+    // QDL-0031 ships that line, so the real content shows the block.
+    expect(launch.QuestDialogue.find((row) => row['Dialogue ID'] === GUARD_CLOSING_LINE_ID)).toEqual(
+      GUARD_CLOSING_LINE,
+    )
+    const guard = npcConversation(launch, done, npc('NPC-0012'))
     expect(guard.quests.map((quest) => quest.questId)).toEqual(['QST-0003'])
     const block = guard.quests[0]!
     expect(block.status).toBe('completed')
@@ -400,15 +408,14 @@ describe('npc conversation', () => {
     expect(guard.greeting).toBeNull()
 
     // The giver still closes the quest in their own words.
-    const beggar = npcConversation(withLine, { ...done, currentLocationId: 'LOC-0034' }, npc('NPC-0011'))
+    const beggar = npcConversation(launch, { ...done, currentLocationId: 'LOC-0034' }, npc('NPC-0011'))
     expect(beggar.quests.map((quest) => quest.questId)).toEqual(['QST-0003'])
     expect(beggar.quests[0]!.status).toBe('completed')
     expect(beggar.quests[0]!.completedNote).not.toBe('Hmph.')
   })
 
   it('leaves a bystander’s closing line out until the quest is done', () => {
-    const withLine = withQuestLine(GUARD_CLOSING_LINE)
-    expect(npcConversation(withLine, saveAt('LOC-0017'), npc('NPC-0012')).quests).toEqual([])
+    expect(npcConversation(launch, saveAt('LOC-0017'), npc('NPC-0012')).quests).toEqual([])
 
     const heard = {
       ...saveAt('LOC-0017'),
@@ -421,10 +428,11 @@ describe('npc conversation', () => {
         },
       ],
     }
-    const guard = npcConversation(withLine, heard, npc('NPC-0012'))
+    const guard = npcConversation(launch, heard, npc('NPC-0012'))
     expect(guard.quests.map((quest) => quest.questId)).toEqual(['QST-0003'])
     expect(guard.quests[0]!.status).toBe('active')
     expect(guard.quests[0]!.talkLine).toMatch(/gossip/)
+    expect(guard.quests[0]!.talkLine).not.toBe('Hmph.')
     expect(guard.quests[0]!.canBribe).toBe(true)
   })
 
@@ -434,9 +442,7 @@ describe('npc conversation', () => {
       quests: [{ questId: 'QST-0003', status: 'completed' as const, progress: 3, counters: {} }],
     }
     // The General Store merchant spoke during Lowly Beggar but has no closing line.
-    expect(npcConversation(withQuestLine(GUARD_CLOSING_LINE), done, npc('NPC-0007')).quests).toEqual(
-      [],
-    )
+    expect(npcConversation(launch, done, npc('NPC-0007')).quests).toEqual([])
   })
 
   it('lets Helge thank the player after Going Deeper', () => {

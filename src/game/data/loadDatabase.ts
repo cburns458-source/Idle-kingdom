@@ -9,7 +9,7 @@ import type { DatabaseIndexes, GameDatabase, ValidationIssue } from './types'
 import { withBankDepositBoxActivities } from '../inventory/bank'
 
 /** Bump when Launch content rows change so browsers skip stale JSON. */
-export const DATABASE_CONTENT_VERSION = '2026-10-14-tungsten-titanium-gates-2'
+export const DATABASE_CONTENT_VERSION = '2026-10-14-barracks-guard-hmph-3'
 export const DATABASE_URL = `/data/game-database.json?v=${DATABASE_CONTENT_VERSION}`
 
 export interface LoadedDatabase {
