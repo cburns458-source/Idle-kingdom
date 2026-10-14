@@ -131,10 +131,17 @@ void main() {
       expect(getQuestSteps(db, _quest).map(isOptionalStep).toList(), [false, true, false, true]);
     });
 
-    test('marks no shipped step optional', () {
+    test('marks no shipped step optional except the Grand Feast Cook step', () {
       final shipped = db.questSteps.where((step) => step.questId != _quest).toList();
       expect(shipped, isNotEmpty);
-      expect(shipped.any(isOptionalStep), isFalse);
+      expect(
+        [
+          for (final step in shipped)
+            if (isOptionalStep(step)) step.stepId,
+        ],
+        ['QSTP-0036'],
+      );
+      expect(shipped.firstWhere((step) => step.stepId == 'QSTP-0036').questId, 'QST-0001');
     });
   });
 

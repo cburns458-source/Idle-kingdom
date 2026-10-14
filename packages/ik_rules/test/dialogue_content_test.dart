@@ -479,7 +479,7 @@ void main() {
     expect(choiceIds(startDialogue(db, accepted, 'DLG-0011').view), ['DCH-0029', 'DCH-0024']);
     final briefed = picked(accepted, 'DLG-0011', 'DNODE-0018', 'DCH-0029');
     expect(isStepLatched(briefed.save, 'QST-0001', 'QSTP-0001'), isTrue);
-    expect(stepOf(briefed.save, 'QST-0001'), isNot('QSTP-0001'));
+    expect(stepOf(briefed.save, 'QST-0001'), 'QSTP-0002');
   });
 
   test('the old panel Continue cannot finish a Talk step that a dialogue talk_flag owns', () {

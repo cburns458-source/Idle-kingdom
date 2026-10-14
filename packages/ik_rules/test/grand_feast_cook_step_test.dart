@@ -19,14 +19,6 @@ const _goldenSpud = 'ITEM-0026';
 const _cooking = 'SKL-0007';
 const _bakePotato = 'RCP-0001';
 
-/// Needs the Game Systems engine change that reads `Optional` on a step's
-/// Notes: the current-step search and latching skip an unfinished optional
-/// step, and the quest completes once the required steps are done. Until it
-/// is on test-launch an unlatched Cook step holds the quest at "Cook food for
-/// the feast". Set to `false` when that engine change lands.
-const Object _needsOptionalSteps =
-    'Needs the engine change that skips an unfinished `Optional` quest step.';
-
 void main() {
   late GameDatabase db;
 
@@ -148,7 +140,7 @@ void main() {
 
   test('finishes at the King after cooking the food', () {
     var save = accept();
-    expect(stepOf(save), isNot(_briefing));
+    expect(stepOf(save), _handIn);
     expect(isStepLatched(save, _feast, _cook), isFalse);
 
     // Bake ten potatoes and ten perch; the cooking tick latches the finished step.
@@ -192,16 +184,25 @@ void main() {
     expectPaid(finishAtTheKing(save));
   });
 
-  test('finishes at the King with food that arrived in the bag without any quest tick', () {
-    var save = accept();
-    save = setCount(setCount(save, _bakedPotato, 10), _cookedPerch, 10);
-    expect(isStepLatched(save, _feast, _cook), isFalse);
-    expect(stepOf(save), _handIn);
+  test(
+    'skips cooking and still completes at QSTP-0002 with 10,000 Cooking XP and the Golden Spud',
+    () {
+      var save = accept();
+      // After the briefing the hand-in is already current; the Cook step is skipped.
+      expect(stepOf(save), _handIn);
+      expect(isStepLatched(save, _feast, _cook), isFalse);
 
-    save = finishAtTheKing(save);
-    expect(isStepLatched(save, _feast, _cook), isFalse);
-    expectPaid(save);
-  }, skip: _needsOptionalSteps);
+      // Food obtained elsewhere — no cooking tick, no step:QSTP-0036 latch.
+      save = setCount(setCount(save, _bakedPotato, 10), _cookedPerch, 10);
+      expect(isStepLatched(save, _feast, _cook), isFalse);
+      expect(stepOf(save), _handIn);
+      expect(kingChoices(save), contains('DCH-0026'));
+
+      save = finishAtTheKing(save);
+      expect(isStepLatched(save, _feast, _cook), isFalse);
+      expectPaid(save);
+    },
+  );
 
   test('hands the food in a few at a time without ever holding the full order', () {
     var save = accept();
@@ -223,7 +224,7 @@ void main() {
     save = finishAtTheKing(save);
     expect(isStepLatched(save, _feast, _cook), isFalse);
     expectPaid(save);
-  }, skip: _needsOptionalSteps);
+  });
 
   test('loads a save made before the Cook step at the hand-in with its counts kept', () {
     // Saved on the old two-step quest: briefed, six potatoes already with the
@@ -250,5 +251,5 @@ void main() {
     ]);
     save = picked(handedIn.save, 'DLG-0012', 'DNODE-0022', 'DCH-0031').save;
     expectPaid(save);
-  }, skip: _needsOptionalSteps);
+  });
 }

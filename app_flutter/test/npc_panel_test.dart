@@ -231,7 +231,7 @@ void main() {
     expect(isStepLatched(controller.save, 'QST-0001', 'QSTP-0001'), isTrue);
     expect(
       getCurrentStepId(database.launch, controller.save, getQuest(database.launch, 'QST-0001')!),
-      isNot('QSTP-0001'),
+      'QSTP-0002',
     );
     expect(find.text('Talk'), findsNothing);
     expect(find.textContaining('baked potatoes'), findsOne);

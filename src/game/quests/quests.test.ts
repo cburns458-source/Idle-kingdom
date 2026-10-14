@@ -67,7 +67,7 @@ describe('quest tours', () => {
     expect(accepted.ok, accepted.reason).toBe(true)
     save = accepted.save
     expect(isStepLatched(save, 'QST-0001', 'QSTP-0001')).toBe(true)
-    expect(getCurrentStepId(launch, save, getQuest(launch, 'QST-0001')!)).not.toBe('QSTP-0001')
+    expect(getCurrentStepId(launch, save, getQuest(launch, 'QST-0001')!)).toBe('QSTP-0002')
     expect(completeQuest(launch, save, 'QST-0001').ok).toBe(false)
     expect(dialoguesForNpc(launch, save, 'NPC-0001')[0]).toBe('DLG-0012')
 

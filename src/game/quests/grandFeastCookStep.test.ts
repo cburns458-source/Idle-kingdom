@@ -39,15 +39,6 @@ const GOLDEN_SPUD = 'ITEM-0026'
 const COOKING = 'SKL-0007'
 const BAKE_POTATO = 'RCP-0001'
 
-/**
- * Needs the Game Systems engine change that reads `Optional` on a step's
- * Notes: the current-step search and latching skip an unfinished optional
- * step, and the quest completes once the required steps are done. Until it is
- * on test-launch an unlatched Cook step holds the quest at "Cook food for the
- * feast". Switch to `it` when that engine change lands.
- */
-const itNeedsOptionalSteps = it.skip
-
 function fresh(): PlayerSave {
   return { ...createNewSave(db, NOW), currentLocationId: THRONE_ROOM }
 }
@@ -153,7 +144,7 @@ describe('The Grand Feast cook step', () => {
 
   it('finishes at the King after cooking the food', () => {
     let save = accept()
-    expect(stepOf(save)).not.toBe(BRIEFING)
+    expect(stepOf(save)).toBe(HAND_IN)
     expect(isStepLatched(save, FEAST, COOK)).toBe(false)
 
     // Bake ten potatoes and ten perch; the cooking tick latches the finished step.
@@ -194,18 +185,24 @@ describe('The Grand Feast cook step', () => {
     expectPaid(finishAtTheKing(save))
   })
 
-  itNeedsOptionalSteps('finishes at the King with food that arrived in the bag without any quest tick', () => {
+  it('skips cooking and still completes at QSTP-0002 with 10,000 Cooking XP and the Golden Spud', () => {
     let save = accept()
+    // After the briefing the hand-in is already current; the Cook step is skipped.
+    expect(stepOf(save)).toBe(HAND_IN)
+    expect(isStepLatched(save, FEAST, COOK)).toBe(false)
+
+    // Food obtained elsewhere — no cooking tick, no step:QSTP-0036 latch.
     save = setCount(setCount(save, BAKED_POTATO, 10), COOKED_PERCH, 10)
     expect(isStepLatched(save, FEAST, COOK)).toBe(false)
     expect(stepOf(save)).toBe(HAND_IN)
+    expect(kingChoices(save)).toContain('DCH-0026')
 
     save = finishAtTheKing(save)
     expect(isStepLatched(save, FEAST, COOK)).toBe(false)
     expectPaid(save)
   })
 
-  itNeedsOptionalSteps('hands the food in a few at a time without ever holding the full order', () => {
+  it('hands the food in a few at a time without ever holding the full order', () => {
     let save = accept()
     expect(stepOf(save)).toBe(HAND_IN)
     expect(chooseDialogue(db, save, 'DLG-0012', 'DNODE-0020', 'DCH-0026').code).toBe('nothing_to_hand_in')
@@ -222,7 +219,7 @@ describe('The Grand Feast cook step', () => {
     expectPaid(save)
   })
 
-  itNeedsOptionalSteps('loads a save made before the Cook step at the hand-in with its counts kept', () => {
+  it('loads a save made before the Cook step at the hand-in with its counts kept', () => {
     // Saved on the old two-step quest: briefed, six potatoes already with the
     // King, four more and the perch in the bag. The Cook step was never a step
     // for this player, so it has no latch and the bag is short of ten potatoes.

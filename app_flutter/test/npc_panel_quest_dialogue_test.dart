@@ -80,12 +80,24 @@ void main() {
     final accepted = chooseDialogue(db(), save, 'DLG-0011', 'DNODE-0018', 'DCH-0023');
     expect(accepted.ok, isTrue, reason: accepted.reason);
     save = accepted.save;
-    expect(stepOf(save, 'QST-0001'), isNot('QSTP-0001'));
+    expect(stepOf(save, 'QST-0001'), 'QSTP-0002');
     // Cook the whole order (the cooking tick latches the optional Cook step,
     // QSTP-0036), then carry only [potatoes] and [perch] to the King.
     save = addItemToInventory(addItemToInventory(save, _bakedPotato, 10), _cookedPerch, 10);
     save = applyQuestProcessProgress(db(), save, 'RCP-0001');
     expect(stepOf(save, 'QST-0001'), 'QSTP-0002');
+    return withBag(withBag(save, _bakedPotato, potatoes), _cookedPerch, perch);
+  }
+
+  /// Same as [feastCook], but the food arrived without a cooking tick — no
+  /// `step:QSTP-0036` latch. The hand-in at QSTP-0002 is already current.
+  PlayerSave feastSkipCook({int potatoes = 10, int perch = 10}) {
+    var save = startedCharacter(database).copyWith(currentLocationId: _throneRoom);
+    final accepted = chooseDialogue(db(), save, 'DLG-0011', 'DNODE-0018', 'DCH-0023');
+    expect(accepted.ok, isTrue, reason: accepted.reason);
+    save = accepted.save;
+    expect(stepOf(save, 'QST-0001'), 'QSTP-0002');
+    expect(isStepLatched(save, 'QST-0001', 'QSTP-0036'), isFalse);
     return withBag(withBag(save, _bakedPotato, potatoes), _cookedPerch, perch);
   }
 
@@ -145,6 +157,28 @@ void main() {
       await tester.pump();
       expect(find.text('Done'), findsOne);
       expect(find.text('Ah, my cook returns! Tell me the feast is ready.'), findsNothing);
+    });
+
+    testWidgets('skipping the kitchen still completes at the King with the same reward', (
+      tester,
+    ) async {
+      final controller = await openPanel(tester, feastSkipCook(), _kingId);
+      final cookingBefore = getSkillProgress(controller.save, _cooking).xp;
+
+      expect(isStepLatched(controller.save, 'QST-0001', 'QSTP-0036'), isFalse);
+      expect(stepOf(controller.save, 'QST-0001'), 'QSTP-0002');
+      expect(find.text('Ah, my cook returns! Tell me the feast is ready.'), findsOne);
+      expect(find.text('Hand in 10 Baked Potato and 10 Cooked Perch'), findsOne);
+
+      await tester.tap(find.textContaining('Hand in '));
+      await tester.pump();
+      await tester.tap(find.text("That's everything. The feast is ready."));
+      await tester.pump();
+
+      expect(getQuestProgress(controller.save, 'QST-0001').status, 'completed');
+      expect(getSkillProgress(controller.save, _cooking).xp - cookingBefore, 10000);
+      expect(bagQty(controller.save, _goldenSpud), 1);
+      expect(isStepLatched(controller.save, 'QST-0001', 'QSTP-0036'), isFalse);
     });
 
     testWidgets('a partial hand-in keeps its count across visits', (tester) async {

@@ -77,10 +77,13 @@ describe('isOptionalStep', () => {
     ])
   })
 
-  it('marks no shipped step optional', () => {
+  it('marks no shipped step optional except the Grand Feast Cook step', () => {
     const shipped = db.QuestSteps.filter((step) => step['Quest ID'] !== OPTIONAL_QUEST)
     expect(shipped.length).toBeGreaterThan(0)
-    expect(shipped.some((step) => isOptionalStep(step))).toBe(false)
+    expect(shipped.filter((step) => isOptionalStep(step)).map((step) => step['Step ID'])).toEqual([
+      'QSTP-0036',
+    ])
+    expect(shipped.find((step) => step['Step ID'] === 'QSTP-0036')?.['Quest ID']).toBe('QST-0001')
   })
 })
 

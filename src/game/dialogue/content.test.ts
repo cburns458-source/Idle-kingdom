@@ -522,7 +522,7 @@ describe('Fennel and King dialogue content', () => {
     expect(view?.choices.map((choice) => choice.choiceId)).toEqual(['DCH-0029', 'DCH-0024'])
     const briefed = picked(accepted, 'DLG-0011', 'DNODE-0018', 'DCH-0029')
     expect(isStepLatched(briefed.save, 'QST-0001', 'QSTP-0001')).toBe(true)
-    expect(stepOf(briefed.save, 'QST-0001')).not.toBe('QSTP-0001')
+    expect(stepOf(briefed.save, 'QST-0001')).toBe('QSTP-0002')
   })
 
   it('the old panel Continue cannot finish a Talk step that a dialogue talk_flag owns', () => {
