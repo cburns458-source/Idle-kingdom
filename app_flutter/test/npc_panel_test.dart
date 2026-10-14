@@ -211,7 +211,9 @@ void main() {
     expect(find.text("Thank you — Rose's Apothecary is open on the Town Map."), findsOne);
   });
 
-  testWidgets('the King pitches the feast, then asks for help after accept', (tester) async {
+  testWidgets('the King pitches the feast through his dialogue, then briefs the cook', (
+    tester,
+  ) async {
     final controller = buildController(database, seed: standing('LOC-0016'));
     addTearDown(controller.dispose);
 
@@ -219,11 +221,17 @@ void main() {
       tester,
       NpcPanel(controller: controller, npc: npcOf('NPC-0001'), onClose: () {}),
     );
+    // DLG-0011 opens ahead of the old pitch: same words, data-driven choices.
     expect(find.textContaining('My cooks have fled'), findsOne);
-    await tester.tap(find.text('Start quest: The Grand Feast'));
+    expect(find.text('Start quest: The Grand Feast'), findsNothing);
+    await tester.tap(find.text("I'll cook for the feast."));
     await tester.pump();
 
     expect(getQuestProgress(controller.save, 'QST-0001').status, 'active');
+    expect(
+      getCurrentStepId(database.launch, controller.save, getQuest(database.launch, 'QST-0001')!),
+      'QSTP-0002',
+    );
     expect(find.text('Talk'), findsNothing);
     expect(find.textContaining('baked potatoes'), findsOne);
     expect(find.textContaining('Talk to King 0 / 1'), findsNothing);
@@ -284,6 +292,8 @@ void main() {
     expect(find.text('Turn in'), findsNothing);
     expect(find.textContaining('Show Potato 0 / 5'), findsNothing);
     expect(find.textContaining('Gather five potatoes'), findsNothing);
+    // Accepting makes DLG-0002 (F1) available, and the panel opens it at once.
+    expect(find.textContaining('Dig up five and bring them here'), findsOne);
 
     controller.commit(addItemToInventory(controller.save, 'ITEM-0025', 5));
     await pumpPanel(
@@ -295,11 +305,20 @@ void main() {
         onClose: () {},
       ),
     );
-    expect(find.textContaining('You can cook them at the kitchen'), findsOne);
+    // F2 (DLG-0003) opens ahead of the old talk line; the Show step takes nothing.
+    expect(find.textContaining('You can cook them at the kitchen'), findsNothing);
+    expect(find.textContaining("Let's see what the field gave you"), findsOne);
+    await tester.tap(find.text('Show 5 Potato'));
+    await tester.pump();
+    expect(find.textContaining('take them to the kitchen in town'), findsOne);
     expect(find.textContaining('Show Potato'), findsNothing);
     expect(
       controller.save.inventory.where((stack) => stack.itemId == 'ITEM-0025').single.quantity,
       5,
+    );
+    expect(
+      getCurrentStepId(database.launch, controller.save, getQuest(database.launch, 'QST-0006')!),
+      'QSTP-0015',
     );
   });
 

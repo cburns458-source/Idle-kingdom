@@ -468,4 +468,44 @@ void main() {
     final briefed = picked(accepted, 'DLG-0011', 'DNODE-0018', 'DCH-0029');
     expect(stepOf(briefed.save, 'QST-0001'), 'QSTP-0002');
   });
+
+  test('the old panel Continue cannot finish a Talk step that a dialogue talk_flag owns', () {
+    // Green Thumb G1: the seed gift is the only way through QSTP-0023.
+    final talked = talkWithQuestNpc(db, greenThumbActive(), 'NPC-0014');
+    expect(talked.ok, isTrue, reason: talked.reason);
+    expect(stepOf(talked.save!, 'QST-0011'), 'QSTP-0023');
+    expect(dialoguesForNpc(db, talked.save!, 'NPC-0014'), ['DLG-0007']);
+    expect(getQuestProgress(talked.save!, 'QST-0011').status, 'active');
+    final gift = seedGift(talked.save!);
+    expect(gift.ok, isTrue, reason: gift.reason);
+    expect(
+      [for (final delta in gift.itemDeltas) delta.toJson()],
+      [
+        {'itemId': _potatoSeed, 'qty': 1},
+      ],
+    );
+    expect(stepOf(gift.save, 'QST-0011'), 'QSTP-0024');
+
+    // The same for the King's brief (QSTP-0001) and Fennel's farewell (QSTP-0022).
+    final accepted = withQuest(fresh(_throneRoom), 'QST-0001', 'active', {});
+    final kingTalked = talkWithQuestNpc(db, accepted, 'NPC-0001');
+    expect(kingTalked.ok, isTrue, reason: kingTalked.reason);
+    expect(stepOf(kingTalked.save!, 'QST-0001'), 'QSTP-0001');
+    expect(dialoguesForNpc(db, kingTalked.save!, 'NPC-0001'), ['DLG-0011']);
+
+    final farewell = withQuest(fresh(_farm), 'QST-0006', 'active', {
+      'step:QSTP-0013': 1,
+      'step:QSTP-0014': 1,
+      'step:QSTP-0015': 1,
+      'step:QSTP-0016': 1,
+    });
+    final fennelTalked = talkWithQuestNpc(db, farewell, 'NPC-0014');
+    expect(fennelTalked.ok, isTrue, reason: fennelTalked.reason);
+    expect(stepOf(fennelTalked.save!, 'QST-0006'), 'QSTP-0022');
+    expect(getQuestProgress(fennelTalked.save!, 'QST-0006').status, 'active');
+    expect(dialoguesForNpc(db, fennelTalked.save!, 'NPC-0014'), ['DLG-0006']);
+    expect(picked(fennelTalked.save!, 'DLG-0006', 'DNODE-0009', 'DCH-0012').bookDeltas, [
+      'BOOK-0001',
+    ]);
+  });
 }

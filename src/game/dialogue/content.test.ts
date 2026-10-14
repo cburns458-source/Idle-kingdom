@@ -6,6 +6,7 @@ import { getSkillProgress } from '../activity/xp'
 import { prepareDatabase } from '../data/loadDatabase'
 import type { DialogueChoiceRow } from '../data/types'
 import { INVENTORY_SLOT_LIMIT } from '../inventory/capacity'
+import { talkWithQuestNpc } from '../npcs/conversation'
 import { applyQuestActionProgress, applyQuestAutoStartOnSeed, applyQuestPlantProgress } from '../quests/progress'
 import { cheatAbandonQuest, completeQuest, getQuest, getQuestProgress } from '../quests/quests'
 import { getCurrentStepId } from '../quests/steps'
@@ -506,5 +507,42 @@ describe('Fennel and King dialogue content', () => {
     expect(view?.choices.map((choice) => choice.choiceId)).toEqual(['DCH-0029', 'DCH-0024'])
     const briefed = picked(accepted, 'DLG-0011', 'DNODE-0018', 'DCH-0029')
     expect(stepOf(briefed.save, 'QST-0001')).toBe('QSTP-0002')
+  })
+
+  it('the old panel Continue cannot finish a Talk step that a dialogue talk_flag owns', () => {
+    // Green Thumb G1: the seed gift is the only way through QSTP-0023.
+    const seeded = greenThumbActive()
+    const talked = talkWithQuestNpc(db, seeded, 'NPC-0014')
+    expect(talked.ok).toBe(true)
+    if (!talked.ok) return
+    expect(stepOf(talked.save, 'QST-0011')).toBe('QSTP-0023')
+    expect(dialoguesForNpc(db, talked.save, 'NPC-0014')).toEqual(['DLG-0007'])
+    expect(getQuestProgress(talked.save, 'QST-0011').status).toBe('active')
+    const gift = seedGift(talked.save)
+    expect(gift.ok, gift.reason).toBe(true)
+    expect(gift.itemDeltas).toEqual([{ itemId: POTATO_SEED, qty: 1 }])
+    expect(stepOf(gift.save, 'QST-0011')).toBe('QSTP-0024')
+
+    // The same for the King's brief (QSTP-0001) and Fennel's farewell (QSTP-0022).
+    const accepted = withQuest(fresh(THRONE_ROOM), 'QST-0001', 'active', {})
+    const kingTalked = talkWithQuestNpc(db, accepted, 'NPC-0001')
+    expect(kingTalked.ok).toBe(true)
+    if (!kingTalked.ok) return
+    expect(stepOf(kingTalked.save, 'QST-0001')).toBe('QSTP-0001')
+    expect(dialoguesForNpc(db, kingTalked.save, 'NPC-0001')).toEqual(['DLG-0011'])
+
+    const farewell = withQuest(fresh(FARM), 'QST-0006', 'active', {
+      'step:QSTP-0013': 1,
+      'step:QSTP-0014': 1,
+      'step:QSTP-0015': 1,
+      'step:QSTP-0016': 1,
+    })
+    const fennelTalked = talkWithQuestNpc(db, farewell, 'NPC-0014')
+    expect(fennelTalked.ok).toBe(true)
+    if (!fennelTalked.ok) return
+    expect(stepOf(fennelTalked.save, 'QST-0006')).toBe('QSTP-0022')
+    expect(getQuestProgress(fennelTalked.save, 'QST-0006').status).toBe('active')
+    expect(dialoguesForNpc(db, fennelTalked.save, 'NPC-0014')).toEqual(['DLG-0006'])
+    expect(picked(fennelTalked.save, 'DLG-0006', 'DNODE-0009', 'DCH-0012').bookDeltas).toEqual(['BOOK-0001'])
   })
 })
