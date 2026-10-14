@@ -520,7 +520,7 @@ Current Proficiency Levels:
 - Level 5: Tin Ore.
 - Level 20: Iron Ore.
 - Level 35: Coal.
-- Level 60: Tungsten Ore.
+- Level 55: Tungsten Ore.
 - Level 70: Titanium Ore.
 
 Essence is an Arcana resource harnessed at the Wizard's Tower (Harness essence, Arcana 1).
@@ -680,10 +680,10 @@ Level 45 - Reinforced Steel Bar:
 - Steel Bar + Coal.
 
 Level 60 - Tungsten Bar:
-- Copper Ore + Iron Ore + Tungsten Ore.
+- 2 Tungsten Ore + 1 Tin Ore.
 
 Level 70 - Titanium Bar:
-- Titanium Ore + Tin Ore.
+- 2 Titanium Ore + 1 Iron Ore + 1 Copper Ore.
 
 9.4 CRAFTING
 Crafting creates everyday components and standard crafted goods used by other skills.
