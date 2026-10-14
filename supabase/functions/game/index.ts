@@ -9,6 +9,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 import { gateDevCommand } from '../_shared/dev_gate.ts'
 import {
+  plazaShopBuyResponseExtras,
+  settlePlazaShopBuyCommand,
+  type PlazaShopBuySettlement,
+} from '../_shared/plaza_shop_edge.ts'
+import {
   applyBountyReward,
   applyDevCommand,
   applyGameCommand,
@@ -423,7 +428,30 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
         202,
       )
     }
-    if (!result.ok) {
+    let plazaPurchase: Extract<PlazaShopBuySettlement, { kind: 'purchased' }> | null = null
+    if (command === 'plaza_shop_buy' && hosted) {
+      const settled = await settlePlazaShopBuyCommand({
+        commandResult: result,
+        admin,
+        userId,
+        args,
+        expectedVersion: expected,
+        rngState: rng.getState(),
+        nowMs,
+      })
+      if (settled.kind === 'refused') {
+        const prompt =
+          'code' in result ? { code: result.code, favourites: result.favourites, noRoom: result.noRoom } : {}
+        return json(
+          withRankedWinsRemaining({ error: settled.reason, phase: 2, ...prompt }, rankedWinsLeft),
+          400,
+        )
+      }
+      if (settled.kind === 'failed') {
+        return json({ error: settled.error, phase: 2, conflict: settled.conflict }, settled.status)
+      }
+      plazaPurchase = settled
+    } else if (!result.ok) {
       const prompt =
         'code' in result ? { code: result.code, favourites: result.favourites, noRoom: result.noRoom } : {}
       return json(
@@ -472,24 +500,10 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       written = { ok: true, version: hosted?.version ?? expected }
       commandSave = hosted ? parseSave(hosted.payload, nowMs) : result.save
       wroteSave = false
-    } else if (command === 'plaza_shop_buy' && hosted) {
-      const purchased = await settlePlazaShopPurchase(
-        admin,
-        userId,
-        args,
-        result.save,
-        expected,
-        rng.getState(),
-        nowMs,
-      )
-      if (!purchased.ok) return purchased.response
-      written = { ok: true, version: purchased.version }
-      commandSave = purchased.save
-      bountyExtras = {
-        pointsGained: 0,
-        plazaPoints: purchased.plazaPoints,
-        pointsSpent: purchased.pointsSpent,
-      }
+    } else if (plazaPurchase) {
+      written = { ok: true, version: plazaPurchase.version }
+      commandSave = plazaPurchase.save
+      bountyExtras = plazaShopBuyResponseExtras(plazaPurchase)
     } else if (command === 'ranked_pvp_fight' && hosted && result.fightId) {
       const recorded = await recordRankedFight(
         admin,
@@ -908,56 +922,6 @@ async function settleBountyTurnIn(
     pointsGained: paid.pointsGained,
     firstCompleter,
     claim: answer.claim ?? {},
-  }
-}
-
-async function settlePlazaShopPurchase(
-  admin: Client,
-  userId: string,
-  args: Record<string, unknown>,
-  preparedSave: unknown,
-  expectedVersion: number,
-  rngState: number,
-  nowMs: number,
-): Promise<
-  | { ok: true; version: number; save: unknown; plazaPoints: number; pointsSpent: number }
-  | { ok: false; response: Response }
-> {
-  const itemId = asTrimmedString(args.itemId)
-  if (!itemId) return { ok: false, response: json({ error: 'Missing item.', phase: 2 }, 400) }
-  const { data, error } = await admin.rpc('plaza_shop_purchase_hosted', {
-    p_user_id: userId,
-    p_item_id: itemId,
-    p_expected_version: expectedVersion,
-    p_payload: preparedSave,
-    p_rng_state: rngState,
-    p_now: new Date(nowMs).toISOString(),
-  })
-  if (error) return { ok: false, response: json({ error: error.message, phase: 2 }, 400) }
-  const answer = (data ?? {}) as {
-    ok?: boolean
-    reason?: string
-    conflict?: boolean
-    version?: number
-    plazaPoints?: number
-    pointsSpent?: number
-    payload?: unknown
-  }
-  if (answer.ok !== true) {
-    return {
-      ok: false,
-      response: json(
-        { error: answer.reason ?? 'The plaza shop could not complete that purchase.', phase: 2, conflict: answer.conflict },
-        answer.conflict ? 409 : 400,
-      ),
-    }
-  }
-  return {
-    ok: true,
-    version: Number(answer.version ?? expectedVersion + 1),
-    save: answer.payload ?? preparedSave,
-    plazaPoints: Number(answer.plazaPoints ?? 0),
-    pointsSpent: Number(answer.pointsSpent ?? 0),
   }
 }
 

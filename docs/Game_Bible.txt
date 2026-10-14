@@ -897,9 +897,12 @@ Rules:
 - Plaza Points are held on the character save.
 - They cannot be traded, banked, sold, or listed on the Grand Bazaar.
 - The server sets every amount from the catalog. Amounts supplied by the client are ignored.
+- Payout and purchase functions are server-only. Players cannot call them directly.
+- Plaza items and plaza points have no NPC buyback.
 
 Spending:
 - Plaza Points are spent only at the Hearthguard shop (SHP-0011) in the Citadel Plaza, run by Quartermaster Brenna.
+- The Hearthguard shop is visible, but purchasing needs the upcoming plaza shop screen.
 - A purchase is refused if the player lacks the points or bag space. No points are spent on a refused purchase.
 
 Hearthguard set:
@@ -908,7 +911,7 @@ Hearthguard set:
 - Hearthguard Helm: 150
 - Hearthguard Gauntlets: 120
 - Hearthguard Boots: 120
-- Full set: 770 Plaza Points, roughly 8-12 bounties or about a week of ranked wins.
+- Full set: 770 Plaza Points, about 7-19 bounty turn-ins depending on which bounties, or about a week of ranked wins.
 - Set bonus: Hearthguard (5/5): +10% max HP.
 
 12.5 PRICE PRINCIPLE

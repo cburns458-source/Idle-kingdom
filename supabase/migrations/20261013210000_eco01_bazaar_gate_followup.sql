@@ -12,6 +12,8 @@
 --   2. Then DROP FUNCTION IF EXISTS public.bazaar_total_level_required();
 --      It does not exist in 20261013180000; this migration added it.
 --      Drop it only after step 1, and only if no later migration calls it.
+--      Remove supabase/tests/eco01_bazaar_gate_followup_test.sql along with
+--      the function.
 
 create or replace function public.bazaar_total_level_required()
 returns integer
