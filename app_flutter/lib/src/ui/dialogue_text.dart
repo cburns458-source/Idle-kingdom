@@ -20,15 +20,29 @@ class DialogueText {
   static const String bazaarCollectionFull =
       'Your bag is full. Some items are still in your collection box.';
 
-  static String bagFull(int slotsNeeded) {
+  /// "1 more item" / "3 more items". Always at least one.
+  static String moreItems(int slotsNeeded) {
     final n = math.max(1, slotsNeeded);
-    return 'Your bag is full. Make room for $n more item${n == 1 ? '' : 's'} and try again.';
+    return '$n more item${n == 1 ? '' : 's'}';
+  }
+
+  static String bagFull(int slotsNeeded) {
+    return 'Your bag is full. Make room for ${moreItems(slotsNeeded)} and try again.';
   }
 
   /// Player-facing bag `no_room` copy. Never uses the engine's `reason` string.
+  ///
+  /// Clamps [slotsNeeded] itself so a later `bagFull` change cannot drop the
+  /// minimum of one.
   static String noRoomPopup(NoRoom? noRoom, {int? slotsNeeded}) {
     if (noRoom?.reason == 'stack_full') return stackFull;
-    return bagFull(slotsNeeded ?? noRoom?.slotsNeeded ?? 1);
+    return bagFull(math.max(1, slotsNeeded ?? noRoom?.slotsNeeded ?? 1));
+  }
+
+  /// Spoken make-room line. Missing, empty, or whitespace-only is treated as absent.
+  static String? spokenNpcLine(NoRoom? noRoom) {
+    final line = noRoom?.npcLine?.trim() ?? '';
+    return line.isEmpty ? null : line;
   }
 
   String itemName(String itemId) =>
