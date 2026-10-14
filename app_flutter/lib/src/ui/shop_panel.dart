@@ -213,8 +213,7 @@ class _ShopPanelState extends State<ShopPanel> {
   }
 
   bool get _plazaHosted {
-    return controller.hostedPlay?.call() == true &&
-        (controller.submitHostedCommand != null || controller.submitGameCommand != null);
+    return controller.hostedPlay?.call() == true && controller.submitHostedCommand != null;
   }
 
   /// One Hearthguard piece through hosted `plaza_shop_buy`. Never applied locally.
@@ -237,21 +236,15 @@ class _ShopPanelState extends State<ShopPanel> {
   }
 
   Future<void> _buyPlazaHosted(String itemId) async {
-    final before = save;
     final receipt = await _sendHostedPlazaBuy(itemId);
     if (!mounted) return;
     if (!receipt.ok) {
-      if (plazaPointsOf(save) != plazaPointsOf(before) || !identical(save, before)) {
-        controller.commit(before);
-      }
-      await _showPlazaRefusal(receipt.reason);
+      await _showPlazaRefusal(receipt);
       return;
     }
     final server = receipt.save;
     if (server != null) {
       controller.commitLoadout(server.copyWith(plazaPoints: receipt.plazaPoints));
-    } else {
-      controller.commitLoadout(save.copyWith(plazaPoints: receipt.plazaPoints));
     }
     final spent = plazaPointsSpentNotice(receipt.pointsSpent);
     if (spent != null) controller.announce(spent);
@@ -262,27 +255,18 @@ class _ShopPanelState extends State<ShopPanel> {
     });
   }
 
-  Future<HostedCommandReceipt> _sendHostedPlazaBuy(String itemId) async {
-    final args = <String, Object?>{'itemId': itemId};
-    final send = controller.submitHostedCommand;
-    if (send != null) return send('plaza_shop_buy', args);
-    final reason = await controller.submitGameCommand!('plaza_shop_buy', args);
-    return HostedCommandReceipt(reason: reason);
+  Future<HostedCommandReceipt> _sendHostedPlazaBuy(String itemId) {
+    return controller.submitHostedCommand!('plaza_shop_buy', <String, Object?>{'itemId': itemId});
   }
 
-  Future<void> _showPlazaRefusal(String? reason) async {
-    if (reason == null) return;
-    if (reason.contains('Inventory is full') || reason.contains('stack cannot hold')) {
-      await showDialogueBagFullPopup(
-        context: context,
-        noRoom: reason.contains('stack cannot hold')
-            ? const NoRoom(reason: 'stack_full')
-            : const NoRoom(slotsNeeded: 1, slotsFree: 0),
-      );
+  Future<void> _showPlazaRefusal(HostedCommandReceipt receipt) async {
+    if (receipt.code == 'no_room' || receipt.noRoom != null) {
+      await showDialogueBagFullPopup(context: context, noRoom: receipt.noRoom);
       return;
     }
+    if (receipt.reason == null) return;
     if (!mounted) return;
-    setState(() => _error = reason);
+    setState(() => _error = receipt.reason);
   }
 
   @override

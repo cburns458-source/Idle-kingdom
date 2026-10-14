@@ -119,6 +119,7 @@ class _BootGateState extends State<_BootGate> {
       final result = await multiplayer.submitGameCommand(command, args);
       return HostedCommandReceipt(
         reason: result.ok ? null : (result.reason ?? 'Try again.'),
+        code: result.code,
         pointsSpent: result.pointsSpent,
         plazaPoints: result.plazaPoints,
         save: result.save,

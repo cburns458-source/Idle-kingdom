@@ -214,29 +214,124 @@ void main() {
     expect(find.text('-210 plaza points'), findsOne);
   });
 
-  testWidgets('hosted refuse after send restores the balance and shows no -N', (tester) async {
+  testWidgets('hosted refuse after send keeps in-flight progress and shows no -N', (tester) async {
     final controller = buildController(database, seed: shopper(points: 210));
     addTearDown(controller.dispose);
     final commands = <String>[];
+    final gate = Completer<HostedCommandReceipt>();
     controller.hostedPlay = () => true;
-    controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
-      return 'unused';
-    };
-    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) {
       commands.add(command);
-      return const HostedCommandReceipt(reason: plazaShopInsufficientPoints);
+      return gate.future;
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pump();
+
+    final first = controller.save.skills.first;
+    const flightItemId = 'ITEM-FLIGHT';
+    controller.commit(
+      controller.save.copyWith(
+        skills: [
+          first.copyWith(xp: first.xp + 25),
+          ...controller.save.skills.skip(1),
+        ],
+        inventory: [
+          ...controller.save.inventory,
+          const InventoryStack(itemId: flightItemId, quantity: 3),
+        ],
+      ),
+    );
+    gate.complete(const HostedCommandReceipt(reason: plazaShopInsufficientPoints));
+    await tester.pumpAndSettle();
+
+    expect(commands, ['plaza_shop_buy']);
+    expect(controller.save.skills.first.xp, first.xp + 25);
+    expect(inventoryCount(controller.save, flightItemId), 3);
+    expect(plazaPointsOf(controller.save), 210);
+    expect(inventoryCount(controller.save, cuirassId), 0);
+    expect(find.text('-210 plaza points'), findsNothing);
+    expect(controller.message, isNull);
+    expect(find.text(plazaShopInsufficientPoints), findsOne);
+  });
+
+  testWidgets('hosted no_room uses the response slot count for the bag popup', (tester) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return const HostedCommandReceipt(
+        reason: 'Inventory is full (84 slots).',
+        code: 'no_room',
+        noRoom: NoRoom(slotsNeeded: 3, slotsFree: 0),
+      );
     };
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
     await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
     await tester.pumpAndSettle();
 
-    expect(commands, ['plaza_shop_buy']);
+    expect(find.text(DialogueText.bagFull(3)), findsOne);
+    expect(find.text(DialogueText.bagFull(1)), findsNothing);
+    expect(find.text('-210 plaza points'), findsNothing);
+    expect(plazaPointsOf(controller.save), 210);
+    expect(inventoryCount(controller.save, cuirassId), 0);
+  });
+
+  testWidgets('hosted play while signed out disables Buy and a tap changes nothing', (
+    tester,
+  ) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    final commands = <String>[];
+    controller.hostedPlay = () => false;
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      commands.add(command);
+      return const HostedCommandReceipt();
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+
+    expect(find.text(plazaShopNeedsConnection), findsOne);
+    final buttons = tester.widgetList<GameButton>(find.widgetWithText(GameButton, 'Buy')).toList();
+    expect(buttons.every((button) => button.onPressed == null), isTrue);
+
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pump();
+
+    expect(commands, isEmpty);
     expect(plazaPointsOf(controller.save), 210);
     expect(inventoryCount(controller.save, cuirassId), 0);
     expect(find.text('-210 plaza points'), findsNothing);
     expect(controller.message, isNull);
-    expect(find.text(plazaShopInsufficientPoints), findsOne);
+  });
+
+  testWidgets('hosted play without submitHostedCommand disables Buy and a tap changes nothing', (
+    tester,
+  ) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    final commands = <String>[];
+    controller.hostedPlay = () => true;
+    controller.submitGameCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      commands.add(command);
+      return null;
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+
+    expect(find.text(plazaShopNeedsConnection), findsOne);
+    final buttons = tester.widgetList<GameButton>(find.widgetWithText(GameButton, 'Buy')).toList();
+    expect(buttons.every((button) => button.onPressed == null), isTrue);
+
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pump();
+
+    expect(commands, isEmpty);
+    expect(plazaPointsOf(controller.save), 210);
+    expect(inventoryCount(controller.save, cuirassId), 0);
+    expect(find.text('-210 plaza points'), findsNothing);
   });
 
   testWidgets('double tap sends only one hosted buy and greys Buy while it is in flight', (
