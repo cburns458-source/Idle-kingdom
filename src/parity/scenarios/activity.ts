@@ -83,6 +83,12 @@ const ACTIVITY_IDS = [
 
 /** A combat action, two single-drop gathers, and a gather with a secondary table. */
 const GATHERING_ACTIONS = ['ACN-0001', 'ACN-0028', 'ACN-0046', 'ACN-0018']
+
+/** Steal from the mining merchant: its secondary table is a 0.1% one-time Book find. */
+const BOOK_FIND_ACTION_ID = 'ACN-0192'
+const BOOK_FIND_BOOK_ID = 'BOOK-0003'
+/** First mulberry32 seed whose rolls land the book from the base save. */
+const BOOK_FIND_SEED = 118
 const POTION_ITEMS = ['ITEM-0070', 'ITEM-0071', 'ITEM-0072', 'ITEM-0073', 'ITEM-0100']
 
 /** Saves standing where each activity lives, so validation reaches its later gates. */
@@ -189,6 +195,39 @@ export const activityScenarios: ParityScenario[] = [
           } as unknown as JsonValue
         },
       ),
+    ),
+  ),
+
+  ...(['found', 'already-owned'] as const).map((variant) =>
+    scenario(
+      'activity/rewards',
+      `book-find-${variant}`,
+      {
+        source: 'content',
+        save: asJson(
+          variant === 'found'
+            ? saveFor('base')
+            : { ...saveFor('base'), unlockedBookIds: [BOOK_FIND_BOOK_ID] },
+        ),
+        actionId: BOOK_FIND_ACTION_ID,
+        seed: BOOK_FIND_SEED,
+      },
+      () => {
+        const db = contentDatabase()
+        const action = db.Actions.find((row) => row['Action ID'] === BOOK_FIND_ACTION_ID)!
+        const save =
+          variant === 'found'
+            ? saveFor('base')
+            : { ...saveFor('base'), unlockedBookIds: [BOOK_FIND_BOOK_ID] }
+        const rewarded = resolveActionRewards(db, save, action, mulberry32(BOOK_FIND_SEED))
+        return {
+          save: asJson(rewarded.save),
+          loot: rewarded.loot,
+          goldGained: rewarded.goldGained,
+          ...(rewarded.booksGranted.length > 0 ? { booksGranted: rewarded.booksGranted } : {}),
+          ...(rewarded.leftBehind.length > 0 ? { leftBehind: rewarded.leftBehind } : {}),
+        } as unknown as JsonValue
+      },
     ),
   ),
 

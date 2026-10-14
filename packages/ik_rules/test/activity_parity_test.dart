@@ -155,6 +155,8 @@ void main() {
             'save': rewarded.save.toJson(),
             'loot': rewarded.loot.map((grant) => grant.toJson()).toList(),
             'goldGained': rewarded.goldGained,
+            if (rewarded.booksGranted.isNotEmpty)
+              'booksGranted': rewarded.booksGranted.map((grant) => grant.toJson()).toList(),
             if (rewarded.leftBehind.isNotEmpty)
               'leftBehind': rewarded.leftBehind.map((grant) => grant.toJson()).toList(),
           }),
