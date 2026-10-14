@@ -258,11 +258,29 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
       return;
     }
     if (result.code == 'no_room') {
-      setState(() => _error = null);
+      final spoken = DialogueText.spokenNpcLine(result.noRoom);
+      setState(() {
+        _error = null;
+        if (spoken != null) _view = _withSpokenLine(_view, spoken);
+      });
       await showDialogueBagFullPopup(context: context, noRoom: result.noRoom);
       return;
     }
     setState(() => _error = _text.failure(result));
+  }
+
+  static DialogueView? _withSpokenLine(DialogueView? view, String line) {
+    if (view == null || view.line == line) return view;
+    return DialogueView(
+      dialogueId: view.dialogueId,
+      nodeId: view.nodeId,
+      speakerName: view.speakerName,
+      npcId: view.npcId,
+      line: line,
+      choices: view.choices,
+      finished: view.finished,
+      stepProgress: view.stepProgress,
+    );
   }
 
   @override

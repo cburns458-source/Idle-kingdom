@@ -121,6 +121,25 @@ void main() {
     expect(controller.hasBagOverflowBadge, isTrue);
     expect(controller.bagOverflow.identity, save.createdAt);
     expect(storage.getItem(BagOverflowPref.storageKeyFor(save.createdAt)), '1');
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(save.characterName)), isNull);
+  });
+
+  test('migrating the bag-overflow badge deletes the leftover name-keyed value', () {
+    final storage = MemorySaveStorage();
+    const createdAt = '2026-01-01T00:00:00.000Z';
+    const name = 'Tester';
+    storage.setItem(BagOverflowPref.storageKeyFor(name), '1');
+
+    final pref = BagOverflowPref.load(storage, identity: createdAt, legacyName: name);
+    expect(pref.hasBadge, isTrue);
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(createdAt)), '1');
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(name)), isNull);
+
+    storage.setItem(BagOverflowPref.storageKeyFor(name), '0');
+    final off = BagOverflowPref.load(storage, identity: 'other-save', legacyName: name);
+    expect(off.hasBadge, isFalse);
+    expect(storage.getItem(BagOverflowPref.storageKeyFor('other-save')), '0');
+    expect(storage.getItem(BagOverflowPref.storageKeyFor(name)), isNull);
   });
 
   test('the bag-overflow badge survives a rename', () {
@@ -193,6 +212,42 @@ void main() {
     expect(
       DialogueText.noRoomPopup(const NoRoom(slotsNeeded: 2, slotsFree: 0)),
       'Your bag is full. Make room for 2 more items and try again.',
+    );
+    expect(DialogueText.moreItems(1), '1 more item');
+    expect(DialogueText.moreItems(3), '3 more items');
+    expect(DialogueText.moreItems(0), '1 more item');
+    expect(DialogueText.moreItems(-4), '1 more item');
+    expect(
+      DialogueText.noRoomPopup(const NoRoom(slotsNeeded: 0, slotsFree: 0)),
+      DialogueText.bagFull(1),
+    );
+    expect(
+      DialogueText.noRoomPopup(const NoRoom(slotsNeeded: -2, slotsFree: 0)),
+      DialogueText.bagFull(1),
+    );
+    expect(
+      bankNoRoomMessage(const NoRoom(target: 'bank', slotsNeeded: 0, slotsFree: 0)),
+      'Your bank is full. Make room for 1 more item and try again.',
+    );
+    expect(
+      DialogueText.noRoomPopup(
+        const NoRoom(slotsNeeded: 1, slotsFree: 0, npcLine: 'Clear some space.'),
+      ),
+      DialogueText.bagFull(1),
+    );
+    expect(
+      bankNoRoomMessage(
+        const NoRoom(target: 'bank', slotsNeeded: 1, slotsFree: 0, npcLine: 'Clear some space.'),
+      ),
+      'Your bank is full. Make room for 1 more item and try again.',
+    );
+    expect(DialogueText.spokenNpcLine(null), isNull);
+    expect(DialogueText.spokenNpcLine(const NoRoom(slotsNeeded: 1)), isNull);
+    expect(DialogueText.spokenNpcLine(const NoRoom(npcLine: '')), isNull);
+    expect(DialogueText.spokenNpcLine(const NoRoom(npcLine: '   ')), isNull);
+    expect(
+      DialogueText.spokenNpcLine(const NoRoom(npcLine: '  Clear some space.  ')),
+      'Clear some space.',
     );
     expect(
       DialogueText(database.launch).failure(
@@ -469,6 +524,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Your bag is full. Make room for 2 more items and try again.'), findsOne);
+    expect(find.textContaining('Clear some space'), findsNothing);
     expect(controller.save.gold, 1000);
     expect(controller.save.inventory, hasLength(inventorySlotLimit));
   });
@@ -492,6 +548,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Your bag is full. Make room for 1 more item and try again.'), findsOne);
+    expect(find.textContaining('Clear some space'), findsNothing);
     expect(controller.save.bank.single.quantity, 3);
     expect(controller.save.inventory, hasLength(inventorySlotLimit));
   });
@@ -526,6 +583,7 @@ void main() {
     await pumpPopup(tester);
 
     expect(find.text('Your bag is full. Make room for 3 more items and try again.'), findsOne);
+    expect(find.textContaining('Clear some space'), findsNothing);
     expect(controller.mailboxClaimCalls, 1);
     expect(
       controller.save.mailbox.where((message) => message.id == 'mail-full').single.claimedAt,
@@ -647,13 +705,58 @@ void main() {
       StandaloneDialogueHost(controller: controller, dialogueId: 'DLG-0007', onClose: () {}),
     );
 
+    expect(
+      find.text(
+        "Oh, you've found a seed! Let me take a look... That will grow into a mighty plant one day. Practise on one of mine first.",
+      ),
+      findsOne,
+    );
     await tester.tap(find.text("I'd like that."));
     await tester.pumpAndSettle();
 
+    expect(
+      find.text(
+        "You're carrying too much for a harvest gift. Clear some space and come back to me.",
+      ),
+      findsOne,
+    );
     expect(find.text(DialogueText.bagFull(1)), findsOne);
     expect(jsonEncode(controller.save.toJson()), before);
     expect(controller.save.dialogueFlags, isNot(contains('gift:QST-0011:seed')));
     expect(controller.save.inventory.any((stack) => stack.itemId == 'ITEM-0324'), isFalse);
+  });
+
+  testWidgets('Guide potato no_room shows the make-room line under the count popup', (
+    tester,
+  ) async {
+    var save = startedCharacter(database).copyWith(currentLocationId: 'LOC-0028');
+    final inventory = [...save.inventory];
+    for (var index = 0; inventory.length < inventorySlotLimit; index++) {
+      inventory.add(InventoryStack(itemId: 'ITEM-FILL-$index', quantity: 1));
+    }
+    save = save.copyWith(inventory: inventory);
+
+    final controller = buildController(database, seed: save);
+    addTearDown(controller.dispose);
+    final before = jsonEncode(controller.save.toJson());
+    await pumpPanel(
+      tester,
+      StandaloneDialogueHost(controller: controller, dialogueId: 'DLG-0001', onClose: () {}),
+    );
+
+    expect(find.text('Welcome to the Citadel. Need a tip for the road?'), findsOne);
+    await tester.tap(find.text('Yes, please.'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text("Your pack's stuffed full, friend. Clear some space and come back to me."),
+      findsOne,
+    );
+    expect(find.text(DialogueText.bagFull(1)), findsOne);
+    expect(find.text('Welcome to the Citadel. Need a tip for the road?'), findsNothing);
+    expect(jsonEncode(controller.save.toJson()), before);
+    expect(controller.save.dialogueFlags, isNot(contains('gift:DLG-0001:potato')));
+    expect(controller.save.inventory.any((stack) => stack.itemId == 'ITEM-0058'), isFalse);
   });
 
   testWidgets('shop buy stack_full says the stack is full and never names a count', (tester) async {
@@ -734,6 +837,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(bankNoRoomMessage(const NoRoom(target: 'bank', slotsNeeded: 1))), findsOne);
+    expect(find.textContaining('Clear some space'), findsNothing);
     expect(controller.save.inventory.single.itemId, clayId);
     expect(controller.save.bank, hasLength(bankSlotLimit));
   });

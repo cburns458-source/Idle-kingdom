@@ -5,7 +5,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 /// Lives on this device — it is not written into the save — so a restart still
 /// shows the bag-tab badge until the player opens the bag. The key is the
 /// save's [createdAt], which stays put across a rename. A leftover name-keyed
-/// value from an older build is copied across once.
+/// value from an older build is copied across once and then deleted.
 class BagOverflowPref {
   BagOverflowPref({this.storage, String? identity, bool? hasBadge})
     : _identity = normalizeIdentity(identity),
@@ -46,8 +46,9 @@ class BagOverflowPref {
 
   /// Switches to [identity]'s stored badge. Does not copy the previous save's mark.
   ///
-  /// When the new key is empty, [legacyName] is read once and written under
-  /// [identity] so a rename or a rebuild from #334 still shows the badge.
+  /// When [identity] has no stored value, [legacyName] is read once, written
+  /// under [identity], and then removed so a leftover name-keyed value from an
+  /// older build still shows the badge.
   void bindTo(String? identity, {String? legacyName}) {
     _identity = normalizeIdentity(identity);
     _readOrMigrate(legacyName);
@@ -84,6 +85,7 @@ class BagOverflowPref {
       return;
     }
     storage?.setItem(storageKeyFor(_identity), legacy!);
+    storage?.removeItem(legacyKey);
     _hasBadge = legacy == '1';
   }
 }
