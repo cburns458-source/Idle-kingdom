@@ -5,11 +5,15 @@
 -- function so every layer reads 200 from bazaar_total_level_required().
 --
 -- Rollback (comments only; do not run unless reversing this change):
---   Restore bazaar_total_level_required, bazaar_payload_total_level, and
---   bazaar_orders_require_total_level from
---   20261013180000_eco01_bazaar_total_level_gate.sql (CREATE OR REPLACE).
---   DROP FUNCTION IF EXISTS public.bazaar_total_level_required(); is only
---   safe if no later migration still calls it.
+--   1. Reapply the bazaar_payload_total_level and
+--      bazaar_orders_require_total_level bodies from
+--      20261013180000_eco01_bazaar_total_level_gate.sql (CREATE OR REPLACE).
+--      Those bodies use the literal 200 and do not call the helper below.
+--   2. Then DROP FUNCTION IF EXISTS public.bazaar_total_level_required();
+--      It does not exist in 20261013180000; this migration added it.
+--      Drop it only after step 1, and only if no later migration calls it.
+--      Remove supabase/tests/eco01_bazaar_gate_followup_test.sql along with
+--      the function.
 
 create or replace function public.bazaar_total_level_required()
 returns integer
