@@ -113,6 +113,26 @@ void main() {
       expect(find.textContaining('Your bag is full'), findsNothing);
     });
 
+    testWidgets('npcLine stays off the quest panel; the count popup still shows', (tester) async {
+      const spoken = "You've no space left for a royal gift. Clear some room and return to me.";
+      await openTurnIn(
+        tester,
+        roseReady(),
+        turnInRequest: ({required questId, required useFavourites}) async {
+          return failed(
+            'no_room',
+            noRoom: const NoRoom(slotsNeeded: 2, slotsFree: 0, npcLine: spoken),
+          );
+        },
+      );
+
+      await tester.tap(find.text('Turn in'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(DialogueText.bagFull(2)), findsOne);
+      expect(find.text(spoken), findsNothing);
+    });
+
     testWidgets('stack_full says the stack is full and never names a count', (tester) async {
       final seed = roseReady();
       await openTurnIn(

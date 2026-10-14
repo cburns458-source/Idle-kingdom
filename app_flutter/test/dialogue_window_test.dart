@@ -346,6 +346,71 @@ void main() {
       expect(DialogueText.bagFull(1), 'Your bag is full. Make room for 1 more item and try again.');
     });
 
+    testWidgets('npcLine replaces the spoken line and keeps the count popup on top', (
+      tester,
+    ) async {
+      const spoken = "Your pack's stuffed full, friend. Clear some space and come back to me.";
+      var save = bag(character(), _potato, 1);
+      save = fillBag(save, 1);
+      await open(
+        tester,
+        save,
+        _gifts,
+        request: (view, choiceId, {required useFavourites}) async {
+          return failed(
+            save,
+            'no_room',
+            noRoom: const DialogueNoRoom(slotsNeeded: 2, slotsFree: 0, npcLine: spoken),
+          );
+        },
+      );
+
+      expect(find.text('DNODE-9021 line'), findsOne);
+      await tester.tap(find.text('DCH-9025 label'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(spoken), findsOne);
+      expect(find.text(DialogueText.bagFull(2)), findsOne);
+      expect(find.text('DNODE-9021 line'), findsNothing);
+
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(find.text(spoken), findsOne);
+      expect(find.text(DialogueText.bagFull(2)), findsNothing);
+      expect(find.text('DNODE-9021 line'), findsNothing);
+    });
+
+    testWidgets(
+      'missing, empty, or whitespace npcLine leaves the spoken line and shows the popup',
+      (tester) async {
+        var save = bag(character(), _potato, 1);
+        save = fillBag(save, 1);
+        for (final npcLine in [null, '', '   ']) {
+          await tester.pumpWidget(const SizedBox());
+          await open(
+            tester,
+            save,
+            _gifts,
+            request: (view, choiceId, {required useFavourites}) async {
+              return failed(
+                save,
+                'no_room',
+                noRoom: DialogueNoRoom(slotsNeeded: 2, slotsFree: 0, npcLine: npcLine),
+              );
+            },
+          );
+
+          expect(find.text('DNODE-9021 line'), findsOne);
+          await tester.tap(find.text('DCH-9025 label'));
+          await tester.pumpAndSettle();
+
+          expect(find.text('DNODE-9021 line'), findsOne);
+          expect(find.text(DialogueText.bagFull(2)), findsOne);
+          expect(find.textContaining("pack's stuffed"), findsNothing);
+        }
+      },
+    );
+
     testWidgets('stack_full says the stack is full and never names a count', (tester) async {
       var save = bag(character(), _potato, 1);
       save = fillBag(save, 1);
