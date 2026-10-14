@@ -165,6 +165,19 @@ export function dialogueStepType(step: QuestStepRow | null | undefined): Dialogu
   return raw === 'Talk' || raw === 'Show' || raw === 'HandIn' ? raw : null
 }
 
+/** Notes field that marks a step optional, e.g. `Hold: ITEM-0058 x10; Optional`. */
+export const OPTIONAL_STEP_FIELD = 'Optional'
+
+/**
+ * A step is optional when one whole semicolon-separated Notes field is exactly
+ * `Optional`. An unfinished optional step is never current and does not hold
+ * up latching or quest completion; a finished one latches like any other.
+ */
+export function isOptionalStep(step: QuestStepRow | null | undefined): boolean {
+  const notes = typeof step?.Notes === 'string' ? step.Notes : ''
+  return notes.split(';').some((field) => field.trim() === OPTIONAL_STEP_FIELD)
+}
+
 /**
  * `ITEM-x:n;ITEM-y:m` from a Show/HandIn step. Entries without a whole
  * quantity of at least 1 are skipped; repeated items are summed.
@@ -250,6 +263,7 @@ export function getCurrentStepIndex(
   const steps = getQuestSteps(db, questId)
   for (let index = 0; index < steps.length; index += 1) {
     const step = steps[index]!
+    if (isOptionalStep(step)) continue
     if (!isStepComplete(db, save, questId, step.Notes ?? '', step['Step ID'])) return index
   }
   return steps.length
@@ -313,9 +327,11 @@ export function latchStep(save: PlayerSave, questId: string, stepId: string): Pl
  * Latches completed steps and unlocks locations listed on completed steps
  * (`UnlockLocation` in step Notes).
  *
- * Steps are latched in order: the first time every step up to and including a
- * step is complete, a `step:<stepId>` = 1 counter is stored so live checks such
- * as `Hold:` cannot regress the quest later (e.g. cooking raw potatoes).
+ * Steps are latched in order: the first time every required step up to and
+ * including a step is complete, a `step:<stepId>` = 1 counter is stored so live
+ * checks such as `Hold:` cannot regress the quest later (e.g. cooking raw
+ * potatoes). An unfinished optional step is passed over instead of stopping
+ * the latching.
  */
 export function applyQuestStepUnlocks(db: GameDatabase, save: PlayerSave): PlayerSave {
   let next = save
@@ -328,7 +344,7 @@ export function applyQuestStepUnlocks(db: GameDatabase, save: PlayerSave): Playe
     for (const step of getQuestSteps(db, questId)) {
       const stepId = step['Step ID']
       if (!isStepComplete(db, next, questId, step.Notes ?? '', stepId)) {
-        latching = false
+        if (!isOptionalStep(step)) latching = false
         continue
       }
       // Typed steps latch only through their dialogue action, never by being passed.

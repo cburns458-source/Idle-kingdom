@@ -12,6 +12,7 @@ import { mailScenarios } from './mail'
 import { metaScenarios } from './meta'
 import { multiplayerScenarios } from './multiplayer'
 import { npcScenarios } from './npcs'
+import { optionalStepScenarios } from './optionalSteps'
 import { socialViewScenarios } from './socialViews'
 import { productionScenarios } from './production'
 import { projectScenarios } from './projects'
@@ -45,6 +46,7 @@ export const parityScenarios: ParityScenario[] = [
   ...projectScenarios,
   ...pvpScenarios,
   ...questScenarios,
+  ...optionalStepScenarios,
   ...dialogueScenarios,
   ...npcScenarios,
   ...bountyScenarios,

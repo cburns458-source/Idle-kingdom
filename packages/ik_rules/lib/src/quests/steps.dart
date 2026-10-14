@@ -148,6 +148,17 @@ String? dialogueStepType(QuestStepRow? step) {
   return dialogueStepTypes.contains(type) ? type : null;
 }
 
+/// Notes field that marks a step optional, e.g. `Hold: ITEM-0058 x10; Optional`.
+const String optionalStepField = 'Optional';
+
+/// A step is optional when one whole semicolon-separated Notes field is exactly
+/// `Optional`. An unfinished optional step is never current and does not hold
+/// up latching or quest completion; a finished one latches like any other.
+bool isOptionalStep(QuestStepRow? step) {
+  final notes = step?.notes ?? '';
+  return notes.split(';').any((field) => field.trim() == optionalStepField);
+}
+
 final RegExp _wholeCount = RegExp(r'^\d+$');
 
 /// `ITEM-x:n;ITEM-y:m` from a Show/HandIn step. Entries without a whole
@@ -250,6 +261,7 @@ int getCurrentStepIndex(GameDatabase db, PlayerSave save, QuestRow quest) {
   final steps = getQuestSteps(db, questId);
   for (var index = 0; index < steps.length; index++) {
     final step = steps[index];
+    if (isOptionalStep(step)) continue;
     if (!_isStepComplete(db, save, questId, step.notes ?? '', step.stepId)) return index;
   }
   return steps.length;
@@ -268,9 +280,11 @@ String stepCompleteKey(String stepId) => 'step:$stepId';
 /// Latches completed steps and unlocks locations listed on completed steps
 /// (`UnlockLocation` in step Notes).
 ///
-/// Steps are latched in order: the first time every step up to and including
-/// a step is complete, a `step:<stepId>` = 1 counter is stored so live checks
-/// such as `Hold:` cannot regress the quest later (e.g. cooking raw potatoes).
+/// Steps are latched in order: the first time every required step up to and
+/// including a step is complete, a `step:<stepId>` = 1 counter is stored so
+/// live checks such as `Hold:` cannot regress the quest later (e.g. cooking raw
+/// potatoes). An unfinished optional step is passed over instead of stopping
+/// the latching.
 PlayerSave applyQuestStepUnlocks(GameDatabase db, PlayerSave save) {
   var next = save;
   var unlocked = [...save.unlockedLocationIds];
@@ -282,7 +296,7 @@ PlayerSave applyQuestStepUnlocks(GameDatabase db, PlayerSave save) {
     for (final step in getQuestSteps(db, questId)) {
       final stepId = step.stepId;
       if (!_isStepComplete(db, next, questId, step.notes ?? '', stepId)) {
-        latching = false;
+        if (!isOptionalStep(step)) latching = false;
         continue;
       }
       // Typed steps latch only through their dialogue action, never by being passed.
