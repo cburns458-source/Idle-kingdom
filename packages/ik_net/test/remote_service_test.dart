@@ -319,6 +319,38 @@ void main() {
     expect(service.hostedSaveVersion, 5);
   });
 
+  test('game refusal code and noRoom survive into CloudSyncResult', () async {
+    final transport = _GameRefusalTransport(
+      error: 'Inventory is full (84 slots).',
+      code: 'no_room',
+      noRoom: const <String, Object?>{'slotsNeeded': 3, 'slotsFree': 0, 'reason': 'stack_full'},
+    );
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final save = createNewSave(_database(), _nowMs).copyWith(characterName: 'Hero');
+    expect((await seedHostedSave(service, transport, save)).ok, isTrue);
+
+    final refused = await service.gameCommand('plaza_shop_buy', <String, Object?>{'itemId': 'x'});
+    expect(refused.ok, isFalse);
+    expect(refused.reason, 'Inventory is full (84 slots).');
+    expect(refused.code, 'no_room');
+    expect(refused.noRoom?.toJson(), {'slotsNeeded': 3, 'slotsFree': 0, 'reason': 'stack_full'});
+  });
+
+  test('a game refusal without code or noRoom leaves them unset', () async {
+    final transport = _GameRefusalTransport(error: 'Need 200 gold.');
+    final service = await _signedIn(transport, MemorySaveStorage());
+    final save = createNewSave(_database(), _nowMs).copyWith(characterName: 'Hero');
+    expect((await seedHostedSave(service, transport, save)).ok, isTrue);
+
+    final refused = await service.gameCommand('quest_bribe', <String, Object?>{
+      'questId': 'QST-0003',
+    });
+    expect(refused.ok, isFalse);
+    expect(refused.reason, 'Need 200 gold.');
+    expect(refused.code, isNull);
+    expect(refused.noRoom, isNull);
+  });
+
   test('retries a command until the server has caught up', () async {
     final transport = _SlicedCatchUpTransport(database: _database());
     final service = await _signedIn(transport, MemorySaveStorage());
@@ -1643,6 +1675,27 @@ void main() {
 /// Answers the next [slices] `game` calls the way the function does when a
 /// long absence is only partly replayed: the slice is written and the version
 /// moves, but a sync is not caught up and a command is not applied yet.
+class _GameRefusalTransport extends FakeTransport {
+  _GameRefusalTransport({required this.error, this.code, this.noRoom});
+
+  final String error;
+  final String? code;
+  final Map<String, Object?>? noRoom;
+
+  @override
+  Future<RemoteInvokeResult> invoke(String function, RemoteRow body) async {
+    if (function == remoteGameFunction && body['action'] == 'command') {
+      return RemoteInvokeResult.ok(<String, Object?>{
+        'error': error,
+        'phase': 2,
+        if (code != null) 'code': code,
+        if (noRoom != null) 'noRoom': noRoom,
+      });
+    }
+    return super.invoke(function, body);
+  }
+}
+
 class _SlicedCatchUpTransport extends FakeTransport {
   _SlicedCatchUpTransport({super.database});
 

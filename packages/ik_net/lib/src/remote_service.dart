@@ -920,6 +920,8 @@ class RemoteMultiplayerService implements MultiplayerService {
         return CloudSyncResult.failed(
           data['error']! as String,
           winsRemaining: data['winsRemaining'] is num ? data['winsRemaining'] as num : null,
+          code: data['code'] is String ? data['code'] as String : null,
+          noRoom: _noRoomFrom(data['noRoom']),
         );
       }
       final rawSave = data['save'];

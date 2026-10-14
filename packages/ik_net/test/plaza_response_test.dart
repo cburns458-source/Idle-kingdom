@@ -1,4 +1,5 @@
 import 'package:ik_net/ik_net.dart';
+import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -22,6 +23,28 @@ void main() {
   });
 
   group('CloudSyncResult plaza fields', () {
+    test('code and noRoom survive on a failed result', () {
+      const noRoom = NoRoom(slotsNeeded: 3, slotsFree: 0, reason: 'stack_full');
+      final failed = CloudSyncResult.failed(
+        'Inventory is full (84 slots).',
+        code: 'no_room',
+        noRoom: noRoom,
+      );
+      expect(failed.ok, isFalse);
+      expect(failed.code, 'no_room');
+      expect(failed.noRoom?.toJson(), noRoom.toJson());
+      expect(failed.toJson()['code'], 'no_room');
+      expect(failed.toJson()['noRoom'], noRoom.toJson());
+    });
+
+    test('a failure without code or noRoom leaves them unset', () {
+      const failed = CloudSyncResult.failed('nope');
+      expect(failed.code, isNull);
+      expect(failed.noRoom, isNull);
+      expect(failed.toJson().containsKey('code'), isFalse);
+      expect(failed.toJson().containsKey('noRoom'), isFalse);
+    });
+
     test('missing pointsGained and plazaPoints become 0', () {
       const failed = CloudSyncResult.failed('nope');
       expect(failed.pointsGained, 0);

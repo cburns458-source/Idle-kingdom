@@ -356,6 +356,7 @@ Direction, Community = Community/Notifications).
 | UI-07 | Choose rules for use of green and gold in ui | Needs decision | P1 | none (Conor decision) | UI | `Master_Prompt.md` §6 says "gold highlights, soft green accents"; formalize it. |
 | UI-12 | Bank and inventory tabs for custom organization | Needs decision | P2 | OQ-03, MEM-01 | UI | |
 | UI-14 | Language support | Needs decision | Later | OQ-18 | UI | |
+| UI-15 | Bribe confirmation popup | In PR | P1 | none | UI | Confirm before paying a quest bribe. Network nits from #358: pass `code`/`noRoom` through `CloudSyncResult` and `HostedCommandReceipt` so the live full-bag popup uses the real slot count / `stack_full`; plaza `-N` only when `save` is present. |
 
 ### ART: Art direction and animation
 

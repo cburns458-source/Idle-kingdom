@@ -256,6 +256,64 @@ void main() {
     expect(find.text(plazaShopInsufficientPoints), findsOne);
   });
 
+  testWidgets('hosted stack_full refusal shows stack-full text', (tester) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return const HostedCommandReceipt(
+        reason: 'Inventory is full (84 slots).',
+        code: 'no_room',
+        noRoom: NoRoom(reason: 'stack_full'),
+      );
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(DialogueText.stackFull), findsOne);
+    expect(find.textContaining('more item'), findsNothing);
+    expect(find.text('-210 plaza points'), findsNothing);
+    expect(plazaPointsOf(controller.save), 210);
+    expect(inventoryCount(controller.save, cuirassId), 0);
+  });
+
+  testWidgets('hosted no_room without a slot count falls back to 1 more item', (tester) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return const HostedCommandReceipt(reason: 'Inventory is full (84 slots).', code: 'no_room');
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(DialogueText.bagFull(1)), findsOne);
+    expect(find.text(DialogueText.bagFull(3)), findsNothing);
+    expect(plazaPointsOf(controller.save), 210);
+  });
+
+  testWidgets('hosted success with no save shows no -N', (tester) async {
+    final controller = buildController(database, seed: shopper(points: 210));
+    addTearDown(controller.dispose);
+    controller.hostedPlay = () => true;
+    controller.submitHostedCommand = (command, [commandArgs = const <String, Object?>{}]) async {
+      return const HostedCommandReceipt(pointsSpent: 210, plazaPoints: 0);
+    };
+
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    await tester.tap(find.byKey(const Key('plaza-buy-$cuirassId')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('-210 plaza points'), findsNothing);
+    expect(controller.message, isNull);
+    expect(plazaPointsOf(controller.save), 210);
+    expect(inventoryCount(controller.save, cuirassId), 0);
+  });
+
   testWidgets('hosted no_room uses the response slot count for the bag popup', (tester) async {
     final controller = buildController(database, seed: shopper(points: 210));
     addTearDown(controller.dispose);
