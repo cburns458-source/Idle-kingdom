@@ -73,10 +73,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
     if (_isSelf) {
       return displayNameWithEquippedTitle(widget.controller.db, widget.controller.save, username);
     }
-    return nameWithTitle(
-      username,
-      titleForCosmeticId(widget.controller.db, _profile?.titleCosmeticId),
-    );
+    return displayNameWithPublishedTitle(widget.controller.db, username, _profile?.titleCosmeticId);
   }
 
   String _skillName(String? skillId) {

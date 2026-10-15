@@ -97,9 +97,14 @@ void main() {
     expect(displayNameWithEquippedTitle(database.launch, unequipped.save!, 'Adventurer'), 'Tester');
   });
 
-  test('an equipped faith title sits before the name', () {
+  test('an equipped faith title sits before the name from Title Placement', () {
     final save = withEquippedFaithTitle();
     final faith = religions(database.launch).first;
+    final cosmetic = database.launch.cosmetics.firstWhere(
+      (row) => row.cosmeticId == faith.titleCosmeticId,
+    );
+    expect(cosmetic.titlePlacement, 'prefix');
+    expect(titlePlacementForCosmetic(cosmetic), TitlePlacement.prefix);
     expect(titleForSave(save, database.launch)?.placement, TitlePlacement.prefix);
     final title = equippedDisplayTitle(database.launch, save);
     expect(title?.placement, TitlePlacement.prefix);
@@ -108,7 +113,15 @@ void main() {
       displayNameWithEquippedTitle(database.launch, save, 'Adventurer'),
       '${title!.text} Tester',
     );
-    expect(religionIdForTitleCosmetic(database.launch, faith.titleCosmeticId), faith.religionId);
+  });
+
+  test('a missing or unknown published title writes nothing', () {
+    expect(publishedDisplayTitle(database.launch, null), isNull);
+    expect(publishedDisplayTitle(database.launch, ''), isNull);
+    expect(publishedDisplayTitle(database.launch, 'COS-9999'), isNull);
+    expect(displayNameWithPublishedTitle(database.launch, 'Mira', null), 'Mira');
+    expect(displayNameWithPublishedTitle(database.launch, 'Mira', ''), 'Mira');
+    expect(displayNameWithPublishedTitle(database.launch, 'Mira', 'COS-9999'), 'Mira');
   });
 
   test('a locked or left faith title is hidden', () {
@@ -209,6 +222,48 @@ void main() {
 
     expect(find.text(titled), findsOne);
     expect(titled.startsWith('Oruvani '), isTrue);
+    expect(
+      displayNameWithPublishedTitle(
+        database.launch,
+        'Hero',
+        save.cosmetics.equipped[titleCosmeticSlotId],
+      ),
+      titled,
+    );
+  });
+
+  testWidgets("another player's profile shows nothing when they have no title", (tester) async {
+    final save = equipCosmetic(
+      database.launch,
+      startedCharacter(database).copyWith(characterName: 'Hero'),
+      titleCosmeticSlotId,
+      null,
+    ).save!;
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(net.dispose);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (next, {nowMs}) {});
+    expect(net.isSignedIn, isTrue, reason: net.notice);
+    await net.publishRanking(save, ignoreDebounce: true);
+    final heroId = net.session!.userId;
+    await net.signOut(save);
+
+    final rival = startedCharacter(database).copyWith(characterName: 'Rival');
+    await net.signUp('rival@example.com', 'Rival', 'secret', rival, adopt: (next, {nowMs}) {});
+    expect(net.isSignedIn, isTrue, reason: net.notice);
+    final controller = buildController(database, seed: rival);
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: heroId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hero The Undying'), findsNothing);
+    expect(find.text('Oruvani Hero'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(PlayerProfileSheet), matching: find.text('Hero')),
+      findsOne,
+    );
   });
 
   testWidgets('the player profile shows nothing extra when no title is equipped', (tester) async {
