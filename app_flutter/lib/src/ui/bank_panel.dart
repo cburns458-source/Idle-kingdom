@@ -222,6 +222,8 @@ class _BankPanelState extends State<BankPanel> {
               const Expanded(
                 child: Text(
                   'Bank',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
@@ -229,8 +231,7 @@ class _BankPanelState extends State<BankPanel> {
                 amount: save.gold,
                 style: const TextStyle(color: Palette.gold),
               ),
-              if (widget.onClose != null)
-                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+              if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),
           MutedText(

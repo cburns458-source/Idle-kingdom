@@ -196,9 +196,19 @@ describe('The Grand Feast cook step', () => {
     expect(isStepLatched(save, FEAST, COOK)).toBe(false)
     expect(stepOf(save)).toBe(HAND_IN)
     expect(kingChoices(save)).toContain('DCH-0026')
+    expect(questStepJournal(db, save, getQuest(db, FEAST)!).find((step) => step.key === COOK)).toEqual({
+      key: COOK,
+      label: 'Cook food for the feast',
+      state: 'current',
+    })
 
     save = finishAtTheKing(save)
     expect(isStepLatched(save, FEAST, COOK)).toBe(false)
+    expect(questStepJournal(db, save, getQuest(db, FEAST)!).find((step) => step.key === COOK)).toEqual({
+      key: COOK,
+      label: 'Cook food for the feast',
+      state: 'done',
+    })
     expectPaid(save)
   })
 

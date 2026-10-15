@@ -131,6 +131,37 @@ describe('quest log', () => {
     ])
   })
 
+  it('leaves a skipped cook step unticked until the feast is completed', () => {
+    const skipped = {
+      ...createNewSave(launch),
+      quests: [
+        {
+          questId: 'QST-0001',
+          status: 'active' as const,
+          progress: 2,
+          counters: { 'talk:NPC-0001': 1, 'step:QSTP-0001': 1 },
+        },
+      ],
+    }
+    const active = questLog(launch, skipped).find((entry) => entry.questId === 'QST-0001')!
+    expect(active.steps.find((step) => step.key === 'QSTP-0036')).toEqual({
+      key: 'QSTP-0036',
+      label: 'Cook food for the feast',
+      state: 'current',
+    })
+
+    const finished = {
+      ...skipped,
+      quests: [{ questId: 'QST-0001', status: 'completed' as const, progress: 10, counters: {} }],
+    }
+    const done = questLog(launch, finished).find((entry) => entry.questId === 'QST-0001')!
+    expect(done.steps.find((step) => step.key === 'QSTP-0036')).toEqual({
+      key: 'QSTP-0036',
+      label: 'Cook food for the feast',
+      state: 'done',
+    })
+  })
+
   it('reveals the hand-in once the King is heard and the food is cooked', () => {
     const save = {
       ...createNewSave(launch),

@@ -342,6 +342,8 @@ class _ArenaPanelState extends State<ArenaPanel> {
               const Expanded(
                 child: Text(
                   'Arena',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
@@ -349,8 +351,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
                 amount: save.gold,
                 style: const TextStyle(color: Palette.gold),
               ),
-              if (widget.onClose != null)
-                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+              if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),
           const MutedText('You fight in the gear you save. Combat level and race stay current.'),

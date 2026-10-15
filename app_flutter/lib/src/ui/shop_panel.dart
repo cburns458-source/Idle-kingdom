@@ -343,7 +343,7 @@ class _ShopPanelState extends State<ShopPanel> {
             'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
             style: const TextStyle(fontWeight: FontWeight.w400),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Row(
             children: [
               GameButton(
@@ -381,7 +381,7 @@ class _ShopPanelState extends State<ShopPanel> {
               style: const TextStyle(color: Palette.gold, fontSize: GameFont.s),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
           // Stock on the left, the bag on the right, so a trade is one glance.
           Expanded(
             child: Row(
@@ -516,6 +516,8 @@ class _ShopPanelState extends State<ShopPanel> {
               Expanded(
                 child: Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
@@ -531,8 +533,7 @@ class _ShopPanelState extends State<ShopPanel> {
                   amount: save.gold,
                   style: const TextStyle(color: Palette.gold),
                 ),
-              if (widget.onClose != null)
-                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+              if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),
           const SizedBox(height: 8),

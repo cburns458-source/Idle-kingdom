@@ -190,21 +190,22 @@ class _ItemDetailSheetState extends State<ItemDetailSheet> {
                     ],
                   ),
                 ),
-                if (widget.onToggleFavorite != null) ...[
-                  const SizedBox(width: 6),
-                  _FavoriteHeartButton(
-                    favorite: widget.favorite,
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      widget.onToggleFavorite!();
-                    },
-                  ),
-                ],
-                const SizedBox(width: 6),
-                GameIconButton(
-                  icon: Icons.close,
-                  tooltip: 'Close',
-                  onPressed: () => Navigator.of(context).pop(),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.onToggleFavorite != null) ...[
+                      const SizedBox(width: 6),
+                      _FavoriteHeartButton(
+                        favorite: widget.favorite,
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          widget.onToggleFavorite!();
+                        },
+                      ),
+                    ],
+                    const SizedBox(width: 6),
+                    GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+                  ],
                 ),
               ],
             ),

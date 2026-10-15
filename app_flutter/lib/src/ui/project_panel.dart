@@ -160,6 +160,8 @@ class _ProjectPickerState extends State<ProjectPicker> {
               Expanded(
                 child: Text(
                   widget.station.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
@@ -171,7 +173,7 @@ class _ProjectPickerState extends State<ProjectPicker> {
               ),
               if (widget.onClose != null) ...[
                 const SizedBox(width: 6),
-                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+                GameCloseButton(onPressed: widget.onClose),
               ],
             ],
           ),

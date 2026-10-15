@@ -120,7 +120,7 @@ class _CitadelHubPanelState extends State<CitadelHubPanel> {
                   ],
                 ),
               ),
-              GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+              GameCloseButton(onPressed: widget.onClose),
             ],
           ),
           const SizedBox(height: 10),
