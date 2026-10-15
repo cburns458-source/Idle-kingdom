@@ -165,12 +165,11 @@ void main() {
           checkParity(fixture, {
             'firstPick': religionChangeGoldCost(db, none),
             'at100': religionChangeGoldCost(db, following),
-            'at101': religionChangeGoldCost(db, _withTotalLevel(following, 101)),
+            'at104': religionChangeGoldCost(db, _withTotalLevel(following, 104)),
+            'at105': religionChangeGoldCost(db, _withTotalLevel(following, 105)),
             'at250': religionChangeGoldCost(db, _withTotalLevel(following, 250)),
             'at500': religionChangeGoldCost(db, _withTotalLevel(following, 500)),
-            'at999': religionChangeGoldCost(db, _withTotalLevel(following, 999)),
             'at1000': religionChangeGoldCost(db, _withTotalLevel(following, 1000)),
-            'at1001': religionChangeGoldCost(db, _withTotalLevel(following, 1001)),
           }),
           isNull,
         );

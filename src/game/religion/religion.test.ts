@@ -13,10 +13,11 @@ import {
   alignmentGoldGainMultiplier,
   alignmentSkillDropChanceBonusPercent,
   applyAlignmentGoldGain,
-  RELIGION_CHOOSE_TOTAL_LEVEL,
-  religionChangeGoldCost,
-  religions,
-} from './religion'
+    RELIGION_CHOOSE_TOTAL_LEVEL,
+    religionChangeGoldCost,
+    religionChangeGoldSettings,
+    religions,
+  } from './religion'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -161,6 +162,11 @@ describe('religion', () => {
     expect(applyAlignmentGoldGain(launch, afterCooldown.save, 100)).toBe(105)
   })
 
+  it('reads the multiplier and rounding step from one Config value', () => {
+    expect(launch.Config.find((row) => row.Key === 'religion_change_gold')?.Value).toBe('10:50')
+    expect(religionChangeGoldSettings(launch)).toEqual({ multiplier: 10, roundingStep: 50 })
+  })
+
   it('refuses total level 99 and charges nothing on the first pick at 100', () => {
     const save = atTemple(createNewSave(launch, NOW_MS), 99)
     const refused = chooseReligion(launch, save, WOODCUTTING_FAITH, NOW_MS)
@@ -181,25 +187,33 @@ describe('religion', () => {
     )
   })
 
-  it('costs gold on a later change from the shared exponential setting, at level boundaries', () => {
+  it('costs 1000, 2500, 5000 and 10000 gold at total levels 100, 250, 500 and 1000', () => {
     const first = chooseReligion(launch, atTemple(createNewSave(launch, NOW_MS), 100), WOODCUTTING_FAITH, NOW_MS)
     expect(first.ok).toBe(true)
     if (!first.ok) return
-    const following = first.save
-    expect(religionChangeGoldCost(launch, following)).toBe(1000)
-    expect(religionChangeGoldCost(launch, withTotalLevel(following, 101))).toBe(1000)
-    expect(religionChangeGoldCost(launch, withTotalLevel(following, 250))).toBe(1900)
-    expect(religionChangeGoldCost(launch, withTotalLevel(following, 500))).toBe(5650)
-    expect(religionChangeGoldCost(launch, withTotalLevel(following, 999))).toBe(49750)
-    expect(religionChangeGoldCost(launch, withTotalLevel(following, 1000))).toBe(50000)
-    expect(religionChangeGoldCost(launch, withTotalLevel(following, 1001))).toBe(50000)
+    expect(religionChangeGoldCost(launch, first.save)).toBe(1000)
+    expect(religionChangeGoldCost(launch, withTotalLevel(first.save, 250))).toBe(2500)
+    expect(religionChangeGoldCost(launch, withTotalLevel(first.save, 500))).toBe(5000)
+    expect(religionChangeGoldCost(launch, withTotalLevel(first.save, 1000))).toBe(10000)
 
-    const at101 = withTotalLevel(following, 101)
-    const changed = chooseReligion(launch, { ...at101, gold: 1000 }, HUNTING_FAITH, NOW_MS + WEEK_MS)
+    const changed = chooseReligion(
+      launch,
+      { ...withTotalLevel(first.save, 250), gold: 2500 },
+      HUNTING_FAITH,
+      NOW_MS + WEEK_MS,
+    )
     expect(changed.ok).toBe(true)
     if (!changed.ok) return
-    expect(changed.goldCost).toBe(1000)
+    expect(changed.goldCost).toBe(2500)
     expect(changed.save.gold).toBe(0)
+  })
+
+  it('rounds 104 down to 1000 gold and 105 up to 1050 gold', () => {
+    const first = chooseReligion(launch, atTemple(createNewSave(launch, NOW_MS), 100), WOODCUTTING_FAITH, NOW_MS)
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(religionChangeGoldCost(launch, withTotalLevel(first.save, 104))).toBe(1000)
+    expect(religionChangeGoldCost(launch, withTotalLevel(first.save, 105))).toBe(1050)
   })
 
   it('does not double-charge or reset cooldown on a same-faith retry', () => {

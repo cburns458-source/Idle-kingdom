@@ -122,6 +122,31 @@ describe('choose_religion authority', () => {
     expect(retryChange.save.gold).toBe(changed.save.gold)
   })
 
+  it('charges later changes from the player total level on the server', () => {
+    const first = applyGameCommand(rawDatabase, {
+      command: 'choose_religion',
+      args: { religionId: REL_A },
+      save: templeSave(105),
+      nowMs: NOW_MS,
+      random: () => 0,
+    })
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.save.gold).toBe(50_000)
+
+    const changed = applyGameCommand(rawDatabase, {
+      command: 'choose_religion',
+      args: { religionId: REL_B },
+      save: first.save,
+      nowMs: NOW_MS + WEEK_MS,
+      random: () => 0,
+    })
+    expect(changed.ok).toBe(true)
+    if (!changed.ok) return
+    expect(changed.goldCost).toBe(1050)
+    expect(changed.save.gold).toBe(first.save.gold - 1050)
+  })
+
   it('refuses equipping a locked faith title via set_meta', () => {
     const first = applyGameCommand(rawDatabase, {
       command: 'choose_religion',

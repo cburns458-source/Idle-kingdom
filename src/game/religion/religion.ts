@@ -4,21 +4,14 @@ import type { PlayerSave } from '../save/types'
 import { totalLevel } from '../skills/totals'
 
 export const RELIGION_CHOOSE_TOTAL_LEVEL = 100
-export const RELIGION_CHANGE_GOLD_BASE_KEY = 'religion_change_gold_base'
-export const RELIGION_CHANGE_GOLD_GROWTH_KEY = 'religion_change_gold_growth'
-export const RELIGION_CHANGE_GOLD_CAP_KEY = 'religion_change_gold_cap'
+export const RELIGION_CHANGE_GOLD_KEY = 'religion_change_gold'
 export const RELIGION_CHANGE_COOLDOWN_MS_KEY = 'religion_change_cooldown_ms'
 export const RELIGION_CHOOSE_LOCATION_ID_KEY = 'religion_choose_location_id'
 export const TEMPLE_LOCATION_ID_FALLBACK = 'LOC-0036'
-/** PLACEHOLDER: Economy will replace. Base gold at total level 100. */
-export const RELIGION_CHANGE_GOLD_BASE_FALLBACK = 1000
-/**
- * PLACEHOLDER: Economy will replace. Same IEEE double as Config
- * `religion_change_gold_growth` (`50^(1/900)`), so level 1000 ~= 50000.
- */
-export const RELIGION_CHANGE_GOLD_GROWTH_FALLBACK = 1.0043561527973446
-/** PLACEHOLDER: Economy will replace. 0 or null on the Config row means no cap. */
-export const RELIGION_CHANGE_GOLD_CAP_FALLBACK = 50000
+/** Shared Config `religion_change_gold` is `multiplier:roundingStep`. */
+export const RELIGION_CHANGE_GOLD_MULTIPLIER_FALLBACK = 10
+export const RELIGION_CHANGE_GOLD_ROUNDING_STEP_FALLBACK = 50
+export const RELIGION_CHANGE_GOLD_FALLBACK = `${RELIGION_CHANGE_GOLD_MULTIPLIER_FALLBACK}:${RELIGION_CHANGE_GOLD_ROUNDING_STEP_FALLBACK}`
 export const RELIGION_CHANGE_COOLDOWN_MS_FALLBACK = 7 * 24 * 60 * 60 * 1000
 
 export function religions(db: GameDatabase): ReligionRow[] {
@@ -186,44 +179,39 @@ export function religionChooseUnlocked(save: PlayerSave): boolean {
 }
 
 /**
- * PLACEHOLDER exponential curve for Economy to replace.
- *
- * First pick (no current faith) is free. Later changes cost
- * `min(floor(round(base * growth^(totalLevel-100)) / 50) * 50, cap)`.
- * Round is whole gold (JS `Math.round`) before the floor-to-50.
- * `growth^n` is `exp(n * ln(growth))` so TS and Dart match.
- * Cap 0 or null means no cap; missing Config uses 50000.
+ * Parse Config `religion_change_gold` (`multiplier:roundingStep`).
+ * Both TS and Dart read this one content value.
+ */
+export function religionChangeGoldSettings(db: GameDatabase): {
+  multiplier: number
+  roundingStep: number
+} {
+  const raw = configString(db, RELIGION_CHANGE_GOLD_KEY, RELIGION_CHANGE_GOLD_FALLBACK)
+  const separator = raw.indexOf(':')
+  const multiplier = Number(separator >= 0 ? raw.slice(0, separator) : raw)
+  const roundingStep = Number(separator >= 0 ? raw.slice(separator + 1) : NaN)
+  return {
+    multiplier:
+      Number.isFinite(multiplier) && multiplier >= 0
+        ? multiplier
+        : RELIGION_CHANGE_GOLD_MULTIPLIER_FALLBACK,
+    roundingStep:
+      Number.isFinite(roundingStep) && roundingStep > 0
+        ? roundingStep
+        : RELIGION_CHANGE_GOLD_ROUNDING_STEP_FALLBACK,
+  }
+}
+
+/**
+ * First pick (no current faith) is free; later changes cost
+ * `floor(multiplier × totalLevel / roundingStep) × roundingStep` gold,
+ * removed from the game. Multiplier and rounding step come from Config
+ * `religion_change_gold`.
  */
 export function religionChangeGoldCost(db: GameDatabase, save: PlayerSave): number {
   if (!save.religionId) return 0
-  const base = configNumber(db, RELIGION_CHANGE_GOLD_BASE_KEY, RELIGION_CHANGE_GOLD_BASE_FALLBACK)
-  const growth = configNumber(
-    db,
-    RELIGION_CHANGE_GOLD_GROWTH_KEY,
-    RELIGION_CHANGE_GOLD_GROWTH_FALLBACK,
-  )
-  const exponent = totalLevel(save) - RELIGION_CHOOSE_TOTAL_LEVEL
-  const raw = base * Math.exp(exponent * Math.log(growth))
-  if (!Number.isFinite(raw) || raw <= 0) {
-    const cap = religionChangeGoldCap(db)
-    if (!Number.isFinite(raw) && cap != null) return cap
-    return 0
-  }
-  const wholeGold = Math.round(raw)
-  let cost = Math.max(0, Math.floor(wholeGold / 50) * 50)
-  const cap = religionChangeGoldCap(db)
-  if (cap != null) cost = Math.min(cost, cap)
-  return cost
-}
-
-/** Positive cap, or null when Config is 0/null (uncapped). Missing row → 50000. */
-export function religionChangeGoldCap(db: GameDatabase): number | null {
-  const row = db.Config.find((entry) => entry.Key === RELIGION_CHANGE_GOLD_CAP_KEY)
-  if (!row) return RELIGION_CHANGE_GOLD_CAP_FALLBACK
-  const value = row.Value
-  if (value == null) return null
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
-  return value
+  const { multiplier, roundingStep } = religionChangeGoldSettings(db)
+  return Math.max(0, Math.floor((multiplier * totalLevel(save)) / roundingStep) * roundingStep)
 }
 
 export function religionChangeReadyAt(db: GameDatabase, save: PlayerSave): number | null {

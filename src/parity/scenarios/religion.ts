@@ -136,12 +136,11 @@ export const religionScenarios: ParityScenario[] = [
     return {
       firstPick: religionChangeGoldCost(db, none),
       at100: religionChangeGoldCost(db, following),
-      at101: religionChangeGoldCost(db, withTotalLevel(following, 101)),
+      at104: religionChangeGoldCost(db, withTotalLevel(following, 104)),
+      at105: religionChangeGoldCost(db, withTotalLevel(following, 105)),
       at250: religionChangeGoldCost(db, withTotalLevel(following, 250)),
       at500: religionChangeGoldCost(db, withTotalLevel(following, 500)),
-      at999: religionChangeGoldCost(db, withTotalLevel(following, 999)),
       at1000: religionChangeGoldCost(db, withTotalLevel(following, 1000)),
-      at1001: religionChangeGoldCost(db, withTotalLevel(following, 1001)),
     }
   }),
 

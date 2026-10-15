@@ -379,22 +379,10 @@
       "Notes": "Vesper race-change item costs for RACE-0007 (itemId:qty, comma-separated)."
     },
     {
-      "Key": "religion_change_gold_base",
-      "Value": 1000,
-      "Unit": "gold",
-      "Notes": "PLACEHOLDER: Economy will replace. Exponential change-cost base at total level 100. First pick is free."
-    },
-    {
-      "Key": "religion_change_gold_growth",
-      "Value": 1.0043561527973446,
+      "Key": "religion_change_gold",
+      "Value": "10:50",
       "Unit": null,
-      "Notes": "PLACEHOLDER: Economy will replace. Default 50^(1/900) so total level 1000 ~= 50000. cost = min(floor(round(base * growth^(level-100)) / 50) * 50, cap)."
-    },
-    {
-      "Key": "religion_change_gold_cap",
-      "Value": 50000,
-      "Unit": "gold",
-      "Notes": "PLACEHOLDER: Economy will replace. Max gold charged for a faith change. 0 or null means no cap."
+      "Notes": "Faith-change gold: floor(multiplier × totalLevel / roundingStep) × roundingStep, removed from the game. First pick is free. Format: multiplier:roundingStep."
     },
     {
       "Key": "religion_change_cooldown_ms",
