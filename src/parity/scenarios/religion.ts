@@ -64,6 +64,11 @@ export const religionScenarios: ParityScenario[] = [
     return {
       order: religions(db).map((row) => row['Religion ID']),
       names: religions(db).map((row) => religionDisplayName(db, row['Religion ID'])),
+      gods: religions(db).map((row) => row.God),
+      titleKeys: religions(db).map((row) => {
+        const cosmetic = db.Cosmetics.find((c) => c['Cosmetic ID'] === row['Title Cosmetic ID'])
+        return db.Items.find((item) => item['Item ID'] === cosmetic?.['Item ID'])?.['Internal Key'] ?? null
+      }),
       missing: religionDisplayName(db, 'REL-9999'),
       nullId: religionDisplayName(db, null),
       foundById: REL_IDS.map((id) => religionById(db, id)?.['Religion ID'] ?? null),
@@ -132,7 +137,11 @@ export const religionScenarios: ParityScenario[] = [
       firstPick: religionChangeGoldCost(db, none),
       at100: religionChangeGoldCost(db, following),
       at101: religionChangeGoldCost(db, withTotalLevel(following, 101)),
-      at99: religionChangeGoldCost(db, withTotalLevel(following, 99)),
+      at250: religionChangeGoldCost(db, withTotalLevel(following, 250)),
+      at500: religionChangeGoldCost(db, withTotalLevel(following, 500)),
+      at999: religionChangeGoldCost(db, withTotalLevel(following, 999)),
+      at1000: religionChangeGoldCost(db, withTotalLevel(following, 1000)),
+      at1001: religionChangeGoldCost(db, withTotalLevel(following, 1001)),
     }
   }),
 

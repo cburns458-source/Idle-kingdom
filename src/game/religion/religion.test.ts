@@ -84,6 +84,29 @@ describe('religion', () => {
       'Korvethan',
       'Elyndara',
     ])
+    expect(rows.map((row) => row.God)).toEqual([
+      'Oruveth',
+      'Theryvak',
+      'Ulvaryn',
+      'Azhurak',
+      'Zorvael',
+      'Gorveth',
+      'Saelun',
+    ])
+    expect(
+      rows.map((row) => {
+        const cosmetic = launch.Cosmetics.find((c) => c['Cosmetic ID'] === row['Title Cosmetic ID'])
+        return launch.Items.find((item) => item['Item ID'] === cosmetic?.['Item ID'])?.['Internal Key']
+      }),
+    ).toEqual([
+      'cosmetic_faith_vaelithra_title',
+      'cosmetic_faith_khavessa_title',
+      'cosmetic_faith_nymorai_title',
+      'cosmetic_faith_drazhkar_title',
+      'cosmetic_faith_veyrathi_title',
+      'cosmetic_faith_korvethan_title',
+      'cosmetic_faith_elyndara_title',
+    ])
     expect(rows.map((row) => row.Description)).toEqual([
       'Followers of Oruveth fell timber as stewards, knowing every stump makes room for the forest to rise again.',
       'Theryvak teaches the patience of the stalker and respect for the quarry: take only what the wild can spare.',
@@ -158,19 +181,24 @@ describe('religion', () => {
     )
   })
 
-  it('costs gold on a later change from the shared linear setting, at level boundaries', () => {
+  it('costs gold on a later change from the shared exponential setting, at level boundaries', () => {
     const first = chooseReligion(launch, atTemple(createNewSave(launch, NOW_MS), 100), WOODCUTTING_FAITH, NOW_MS)
     expect(first.ok).toBe(true)
     if (!first.ok) return
-    expect(religionChangeGoldCost(launch, first.save)).toBe(1000)
+    const following = first.save
+    expect(religionChangeGoldCost(launch, following)).toBe(1000)
+    expect(religionChangeGoldCost(launch, withTotalLevel(following, 101))).toBe(1000)
+    expect(religionChangeGoldCost(launch, withTotalLevel(following, 250))).toBe(1900)
+    expect(religionChangeGoldCost(launch, withTotalLevel(following, 500))).toBe(5650)
+    expect(religionChangeGoldCost(launch, withTotalLevel(following, 999))).toBe(49750)
+    expect(religionChangeGoldCost(launch, withTotalLevel(following, 1000))).toBe(50000)
+    expect(religionChangeGoldCost(launch, withTotalLevel(following, 1001))).toBe(50000)
 
-    const at101 = withTotalLevel(first.save, 101)
-    expect(religionChangeGoldCost(launch, at101)).toBe(1010)
-
-    const changed = chooseReligion(launch, { ...at101, gold: 1010 }, HUNTING_FAITH, NOW_MS + WEEK_MS)
+    const at101 = withTotalLevel(following, 101)
+    const changed = chooseReligion(launch, { ...at101, gold: 1000 }, HUNTING_FAITH, NOW_MS + WEEK_MS)
     expect(changed.ok).toBe(true)
     if (!changed.ok) return
-    expect(changed.goldCost).toBe(1010)
+    expect(changed.goldCost).toBe(1000)
     expect(changed.save.gold).toBe(0)
   })
 

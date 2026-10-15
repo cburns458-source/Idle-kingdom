@@ -194,12 +194,9 @@ class _FaithCost extends StatelessWidget {
   }
 }
 
-/// God name from Religion Notes (`God: Oruveth. …`). There is no God column.
+/// God name from the Religions `God` column.
 String? faithGodName(ReligionRow faith) {
-  final notes = faith.notes;
-  if (notes == null || notes.isEmpty) return null;
-  final match = RegExp(r'God:\s*([^.]*)').firstMatch(notes);
-  final name = match?.group(1)?.trim();
+  final name = faith.god?.trim();
   if (name == null || name.isEmpty) return null;
   return name;
 }

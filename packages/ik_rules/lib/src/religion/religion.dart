@@ -9,13 +9,21 @@ import '../save/generated/save_models.dart';
 import '../skills/totals.dart';
 
 const num religionChooseTotalLevel = 100;
-const String religionChangeGoldPerTotalLevelKey = 'religion_change_gold_per_total_level';
+const String religionChangeGoldBaseKey = 'religion_change_gold_base';
+const String religionChangeGoldGrowthKey = 'religion_change_gold_growth';
+const String religionChangeGoldCapKey = 'religion_change_gold_cap';
 const String religionChangeCooldownMsKey = 'religion_change_cooldown_ms';
 const String religionChooseLocationIdKey = 'religion_choose_location_id';
 const String templeLocationIdFallback = 'LOC-0036';
 
-/// PLACEHOLDER: Economy will replace this linear per-total-level gold cost.
-const num religionChangeGoldPerTotalLevelFallback = 10;
+/// PLACEHOLDER: Economy will replace. Base gold at total level 100.
+const num religionChangeGoldBaseFallback = 1000;
+
+/// PLACEHOLDER: Economy will replace. Same IEEE double as Config (`50^(1/900)`).
+const num religionChangeGoldGrowthFallback = 1.0043561527973446;
+
+/// PLACEHOLDER: Economy will replace. 0 or null on the Config row means no cap.
+const num religionChangeGoldCapFallback = 50000;
 const num religionChangeCooldownMsFallback = 7 * 24 * 60 * 60 * 1000;
 
 /// Faiths in display order.
@@ -169,18 +177,40 @@ bool religionChooseUnlocked(PlayerSave save) {
   return totalLevel(save) >= religionChooseTotalLevel;
 }
 
-/// PLACEHOLDER linear formula for Economy to replace.
+/// PLACEHOLDER exponential curve for Economy to replace.
 ///
-/// First pick (no current faith) is free; later changes cost
-/// `religion_change_gold_per_total_level × total level`, floored.
+/// First pick (no current faith) is free. Later changes cost
+/// `min(floor(round(base * growth^(totalLevel-100)) / 50) * 50, cap)`.
+/// Round is whole gold (`Math.round`, ties toward +∞) before the floor-to-50.
+/// `growth^n` is `exp(n * ln(growth))` so Dart matches TypeScript.
+/// Cap 0 or null means no cap; missing Config uses 50000.
 num religionChangeGoldCost(GameDatabase db, PlayerSave save) {
   if (isBlank(save.religionId)) return 0;
-  final perLevel = configNumber(
-    db,
-    religionChangeGoldPerTotalLevelKey,
-    religionChangeGoldPerTotalLevelFallback,
-  );
-  return math.max(0, (perLevel * totalLevel(save)).floor());
+  final base = configNumber(db, religionChangeGoldBaseKey, religionChangeGoldBaseFallback);
+  final growth = configNumber(db, religionChangeGoldGrowthKey, religionChangeGoldGrowthFallback);
+  final exponent = totalLevel(save) - religionChooseTotalLevel;
+  final raw = base * math.exp(exponent * math.log(growth));
+  if (!raw.isFinite || raw <= 0) {
+    final cap = religionChangeGoldCap(db);
+    if (!raw.isFinite && cap != null) return cap;
+    return 0;
+  }
+  // Math.round for non-negative values: ties toward +∞, not Dart banker's round.
+  final wholeGold = (raw + 0.5).floor();
+  num cost = math.max(0, (wholeGold / 50).floor() * 50);
+  final cap = religionChangeGoldCap(db);
+  if (cap != null && cost > cap) cost = cap;
+  return cost;
+}
+
+/// Positive cap, or null when Config is 0/null (uncapped). Missing row → 50000.
+num? religionChangeGoldCap(GameDatabase db) {
+  final row = db.config.firstWhereOrNull((entry) => entry.raw['Key'] == religionChangeGoldCapKey);
+  if (row == null) return religionChangeGoldCapFallback;
+  final value = row.raw['Value'];
+  if (value == null) return null;
+  if (value is! num || !value.isFinite || value <= 0) return null;
+  return value;
 }
 
 num? religionChangeReadyAt(GameDatabase db, PlayerSave save) {

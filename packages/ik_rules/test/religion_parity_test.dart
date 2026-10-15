@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
@@ -72,6 +73,17 @@ void main() {
           checkParity(fixture, {
             'order': religions(db).map((row) => row.religionId).toList(),
             'names': religions(db).map((row) => religionDisplayName(db, row.religionId)).toList(),
+            'gods': religions(db).map((row) => row.god).toList(),
+            'titleKeys': religions(db).map((row) {
+              final cosmetic = db.cosmetics
+                  .where((entry) => entry.cosmeticId == row.titleCosmeticId)
+                  .firstOrNull;
+              if (cosmetic == null) return null;
+              return db.items
+                  .where((item) => item.itemId == cosmetic.itemId)
+                  .firstOrNull
+                  ?.internalKey;
+            }).toList(),
             'missing': religionDisplayName(db, 'REL-9999'),
             'nullId': religionDisplayName(db, null),
             'foundById': _relIds.map((id) => religionById(db, id)?.religionId).toList(),
@@ -154,7 +166,11 @@ void main() {
             'firstPick': religionChangeGoldCost(db, none),
             'at100': religionChangeGoldCost(db, following),
             'at101': religionChangeGoldCost(db, _withTotalLevel(following, 101)),
-            'at99': religionChangeGoldCost(db, _withTotalLevel(following, 99)),
+            'at250': religionChangeGoldCost(db, _withTotalLevel(following, 250)),
+            'at500': religionChangeGoldCost(db, _withTotalLevel(following, 500)),
+            'at999': religionChangeGoldCost(db, _withTotalLevel(following, 999)),
+            'at1000': religionChangeGoldCost(db, _withTotalLevel(following, 1000)),
+            'at1001': religionChangeGoldCost(db, _withTotalLevel(following, 1001)),
           }),
           isNull,
         );

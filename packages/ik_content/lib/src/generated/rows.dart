@@ -813,6 +813,9 @@ class ReligionRow extends DbRow {
 
   String get displayName => stringValue('Display Name');
 
+  /// Named deity this faith follows.
+  String? get god => stringOrNull('God');
+
   String? get description => stringOrNull('Description');
 
   num? get sortOrder => numberOrNull('Sort Order');

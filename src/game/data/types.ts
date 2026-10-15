@@ -426,6 +426,8 @@ export interface ReligionRow {
   'Religion ID': string
   'Internal Key': string
   'Display Name': string
+  /** Named deity this faith follows. */
+  God: string | null
   Description: string | null
   'Sort Order': number | null
   'Icon Asset Key': string | null

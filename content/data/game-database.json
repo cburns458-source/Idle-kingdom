@@ -379,10 +379,22 @@
       "Notes": "Vesper race-change item costs for RACE-0007 (itemId:qty, comma-separated)."
     },
     {
-      "Key": "religion_change_gold_per_total_level",
-      "Value": 10,
+      "Key": "religion_change_gold_base",
+      "Value": 1000,
       "Unit": "gold",
-      "Notes": "PLACEHOLDER: Economy will replace this linear curve. Change cost = this × total level. First pick is free."
+      "Notes": "PLACEHOLDER: Economy will replace. Exponential change-cost base at total level 100. First pick is free."
+    },
+    {
+      "Key": "religion_change_gold_growth",
+      "Value": 1.0043561527973446,
+      "Unit": null,
+      "Notes": "PLACEHOLDER: Economy will replace. Default 50^(1/900) so total level 1000 ~= 50000. cost = min(floor(round(base * growth^(level-100)) / 50) * 50, cap)."
+    },
+    {
+      "Key": "religion_change_gold_cap",
+      "Value": 50000,
+      "Unit": "gold",
+      "Notes": "PLACEHOLDER: Economy will replace. Max gold charged for a faith change. 0 or null means no cap."
     },
     {
       "Key": "religion_change_cooldown_ms",
@@ -8018,7 +8030,7 @@
     },
     {
       "Item ID": "ITEM-0432",
-      "Internal Key": "cosmetic_ph_woodcutting_title",
+      "Internal Key": "cosmetic_faith_vaelithra_title",
       "Display Name": "Oruvani",
       "Category": "Cosmetic",
       "Subtype": "Title",
@@ -8036,7 +8048,7 @@
     },
     {
       "Item ID": "ITEM-0433",
-      "Internal Key": "cosmetic_ph_hunting_title",
+      "Internal Key": "cosmetic_faith_khavessa_title",
       "Display Name": "Khareth",
       "Category": "Cosmetic",
       "Subtype": "Title",
@@ -8054,7 +8066,7 @@
     },
     {
       "Item ID": "ITEM-0434",
-      "Internal Key": "cosmetic_ph_fishing_title",
+      "Internal Key": "cosmetic_faith_nymorai_title",
       "Display Name": "Nymorathen",
       "Category": "Cosmetic",
       "Subtype": "Title",
@@ -8072,7 +8084,7 @@
     },
     {
       "Item ID": "ITEM-0435",
-      "Internal Key": "cosmetic_ph_combat_title",
+      "Internal Key": "cosmetic_faith_drazhkar_title",
       "Display Name": "Drazhari",
       "Category": "Cosmetic",
       "Subtype": "Title",
@@ -8090,7 +8102,7 @@
     },
     {
       "Item ID": "ITEM-0436",
-      "Internal Key": "cosmetic_ph_gold_title",
+      "Internal Key": "cosmetic_faith_veyrathi_title",
       "Display Name": "Veyrathel",
       "Category": "Cosmetic",
       "Subtype": "Title",
@@ -8108,7 +8120,7 @@
     },
     {
       "Item ID": "ITEM-0437",
-      "Internal Key": "cosmetic_ph_mining_title",
+      "Internal Key": "cosmetic_faith_korvethan_title",
       "Display Name": "Korvathi",
       "Category": "Cosmetic",
       "Subtype": "Title",
@@ -8126,7 +8138,7 @@
     },
     {
       "Item ID": "ITEM-0438",
-      "Internal Key": "cosmetic_ph_harvesting_title",
+      "Internal Key": "cosmetic_faith_elyndara_title",
       "Display Name": "Elyndri",
       "Category": "Cosmetic",
       "Subtype": "Title",
@@ -36940,85 +36952,92 @@
       "Religion ID": "REL-0001",
       "Internal Key": "vaelithra",
       "Display Name": "Vaelithra",
+      "God": "Oruveth",
       "Description": "Followers of Oruveth fell timber as stewards, knowing every stump makes room for the forest to rise again.",
       "Sort Order": 1,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cosmetic_the_undying",
       "Title Cosmetic ID": "COS-0013",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "God: Oruveth. Follower title: Oruvani. Maps to Human Woodcutting bonus."
+      "Notes": "Follower title: Oruvani. Maps to Human Woodcutting bonus."
     },
     {
       "Religion ID": "REL-0002",
       "Internal Key": "khavessa",
       "Display Name": "Khavessa",
+      "God": "Theryvak",
       "Description": "Theryvak teaches the patience of the stalker and respect for the quarry: take only what the wild can spare.",
       "Sort Order": 2,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cosmetic_the_undying",
       "Title Cosmetic ID": "COS-0014",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "God: Theryvak. Follower title: Khareth. Maps to Wood Elf Hunting bonus."
+      "Notes": "Follower title: Khareth. Maps to Wood Elf Hunting bonus."
     },
     {
       "Religion ID": "REL-0003",
       "Internal Key": "nymorai",
       "Display Name": "Nymorai",
+      "God": "Ulvaryn",
       "Description": "Sailors and coastal folk pray to Ulvaryn, keeper of the deep, who gives back the sea's bounty and its lost things.",
       "Sort Order": 3,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cosmetic_the_undying",
       "Title Cosmetic ID": "COS-0015",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "God: Ulvaryn. Follower title: Nymorathen. Maps to High Elf Fishing bonus."
+      "Notes": "Follower title: Nymorathen. Maps to High Elf Fishing bonus."
     },
     {
       "Religion ID": "REL-0004",
       "Internal Key": "drazhkar",
       "Display Name": "Drazhkar",
+      "God": "Azhurak",
       "Description": "Azhurak honours those who endure, for discipline breeds strength and victory is only earned through struggle.",
       "Sort Order": 4,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cosmetic_the_undying",
       "Title Cosmetic ID": "COS-0016",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "God: Azhurak. Follower title: Drazhari. Maps to Orc Combat bonus."
+      "Notes": "Follower title: Drazhari. Maps to Orc Combat bonus."
     },
     {
       "Religion ID": "REL-0005",
       "Internal Key": "veyrathi",
       "Display Name": "Veyrathi",
+      "God": "Zorvael",
       "Description": "Zorvael holds that wealth is held in trust, and that generosity and wise dealing are sacred duties.",
       "Sort Order": 5,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cosmetic_the_undying",
       "Title Cosmetic ID": "COS-0017",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "God: Zorvael. Follower title: Veyrathel. Maps to Goblin gold bonus."
+      "Notes": "Follower title: Veyrathel. Maps to Goblin gold bonus."
     },
     {
       "Religion ID": "REL-0006",
       "Internal Key": "korvethan",
       "Display Name": "Korvethan",
+      "God": "Gorveth",
       "Description": "Gorveth guards the stone and its buried riches, and gives the secrets of the deep earth only to honest labour.",
       "Sort Order": 6,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cosmetic_the_undying",
       "Title Cosmetic ID": "COS-0018",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "God: Gorveth. Follower title: Korvathi. Maps to Dwarf Mining bonus."
+      "Notes": "Follower title: Korvathi. Maps to Dwarf Mining bonus."
     },
     {
       "Religion ID": "REL-0007",
       "Internal Key": "elyndara",
       "Display Name": "Elyndara",
+      "God": "Saelun",
       "Description": "Saelun turns the seasons and renews the tilled land, blessing herb, crop and orchard alike.",
       "Sort Order": 7,
-      "Icon Asset Key": null,
+      "Icon Asset Key": "cosmetic_the_undying",
       "Title Cosmetic ID": "COS-0019",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "God: Saelun. Follower title: Elyndri. Maps to Halfling Harvesting bonus."
+      "Notes": "Follower title: Elyndri. Maps to Halfling Harvesting bonus."
     }
   ],
   "ReligionBonuses": [
