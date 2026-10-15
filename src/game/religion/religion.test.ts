@@ -64,8 +64,9 @@ describe('religion', () => {
     expect(alignmentSkillDropChanceBonusPercent(launch, loaded, 'SKL-0005')).toBe(5)
   })
 
-  it('loads seven placeholder Launch faiths, one per race bonus type', () => {
-    expect(religions(launch).map((row) => row['Religion ID'])).toEqual([
+  it('loads seven Launch faiths, one per race bonus type', () => {
+    const rows = religions(launch)
+    expect(rows.map((row) => row['Religion ID'])).toEqual([
       'REL-0001',
       'REL-0002',
       'REL-0003',
@@ -74,6 +75,30 @@ describe('religion', () => {
       'REL-0006',
       'REL-0007',
     ])
+    expect(rows.map((row) => row['Display Name'])).toEqual([
+      'Vaelithra',
+      'Khavessa',
+      'Nymorai',
+      'Drazhkar',
+      'Veyrathi',
+      'Korvethan',
+      'Elyndara',
+    ])
+    expect(rows.map((row) => row.Description)).toEqual([
+      'Followers of Oruveth fell timber as stewards, knowing every stump makes room for the forest to rise again.',
+      'Theryvak teaches the patience of the stalker and respect for the quarry: take only what the wild can spare.',
+      "Sailors and coastal folk pray to Ulvaryn, keeper of the deep, who gives back the sea's bounty and its lost things.",
+      'Azhurak honours those who endure, for discipline breeds strength and victory is only earned through struggle.',
+      'Zorvael holds that wealth is held in trust, and that generosity and wise dealing are sacred duties.',
+      'Gorveth guards the stone and its buried riches, and gives the secrets of the deep earth only to honest labour.',
+      'Saelun turns the seasons and renews the tilled land, blessing herb, crop and orchard alike.',
+    ])
+    expect(
+      rows.map((row) => {
+        const cosmetic = launch.Cosmetics.find((c) => c['Cosmetic ID'] === row['Title Cosmetic ID'])
+        return launch.Items.find((item) => item['Item ID'] === cosmetic?.['Item ID'])?.['Display Name']
+      }),
+    ).toEqual(['Oruvani', 'Khareth', 'Nymorathen', 'Drazhari', 'Veyrathel', 'Korvathi', 'Elyndri'])
   })
 
   it('uses the race bonus when no faith is chosen, and never stacks both', () => {
