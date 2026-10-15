@@ -87,6 +87,13 @@ void main() {
         find.descendant(of: find.byType(FaithPickerPanel), matching: find.text(faith.displayName)),
         findsOne,
       );
+      final god = faithGodName(faith);
+      if (god != null) {
+        expect(
+          find.descendant(of: find.byType(FaithPickerPanel), matching: find.text(god)),
+          findsOne,
+        );
+      }
       for (final line in religionBonusSummaryLines(database.launch, faith.religionId)) {
         expect(
           find.descendant(of: find.byType(FaithPickerPanel), matching: find.text(line)),

@@ -194,6 +194,16 @@ class _FaithCost extends StatelessWidget {
   }
 }
 
+/// God name from Religion Notes (`God: Oruveth. …`). There is no God column.
+String? faithGodName(ReligionRow faith) {
+  final notes = faith.notes;
+  if (notes == null || notes.isEmpty) return null;
+  final match = RegExp(r'God:\s*([^.]*)').firstMatch(notes);
+  final name = match?.group(1)?.trim();
+  if (name == null || name.isEmpty) return null;
+  return name;
+}
+
 class _FaithRow extends StatelessWidget {
   const _FaithRow({
     required this.faith,
@@ -209,7 +219,7 @@ class _FaithRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final god = faith.description;
+    final god = faithGodName(faith);
     return KeyedSubtree(
       key: Key('faith-${faith.religionId}'),
       child: ConstrainedBox(
