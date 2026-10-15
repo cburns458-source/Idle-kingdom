@@ -71,12 +71,14 @@ describe('achievements and statistics', () => {
       'Ember harvest',
       'Super speed',
       'Bleeding tooth',
+      'Acolyte',
+      'Theologian',
     ])
     expect(rows.some((row) => row['Check Type'] === 'skill_all')).toBe(false)
     expect(rows.some((row) => row['Display Name'] === 'Critter collector')).toBe(false)
-    expect(rows.filter((row) => row.Difficulty === 'Easy')).toHaveLength(6)
+    expect(rows.filter((row) => row.Difficulty === 'Easy')).toHaveLength(7)
     expect(rows.filter((row) => row.Difficulty === 'Medium')).toHaveLength(6)
-    expect(rows.filter((row) => row.Difficulty === 'Hard')).toHaveLength(6)
+    expect(rows.filter((row) => row.Difficulty === 'Hard')).toHaveLength(7)
     expect(rows.filter((row) => row.Difficulty === 'Champion')).toHaveLength(5)
   })
 

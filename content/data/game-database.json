@@ -377,6 +377,36 @@
       "Value": "ITEM-0028:40,ITEM-0033:20",
       "Unit": null,
       "Notes": "Vesper race-change item costs for RACE-0007 (itemId:qty, comma-separated)."
+    },
+    {
+      "Key": "religion_change_gold_base",
+      "Value": 1000,
+      "Unit": "gold",
+      "Notes": "Approved by Conor (OQ-07). Exponential change-cost base at total level 100. First pick is free."
+    },
+    {
+      "Key": "religion_change_gold_growth",
+      "Value": 1.0043561527973446,
+      "Unit": null,
+      "Notes": "Approved by Conor (OQ-07). Default 50^(1/900) so total level 1000 ~= 50000. cost = min(floor(round(base * growth^(level-100)) / 50) * 50, cap)."
+    },
+    {
+      "Key": "religion_change_gold_cap",
+      "Value": 50000,
+      "Unit": "gold",
+      "Notes": "Approved by Conor (OQ-07). Max gold charged for a faith change. 0 or null means no cap."
+    },
+    {
+      "Key": "religion_change_cooldown_ms",
+      "Value": 604800000,
+      "Unit": "ms",
+      "Notes": "7-day server-checked cooldown between faith changes. First pick starts the cooldown."
+    },
+    {
+      "Key": "religion_choose_location_id",
+      "Value": "LOC-0036",
+      "Unit": null,
+      "Notes": "Temple. Faith is chosen and changed here. Total level >= 100 is the only gate."
     }
   ],
   "Skills": [
@@ -7996,6 +8026,132 @@
       "Notes": "Plaza shop. Hearthguard set piece. Untradeable.",
       "Base Sell Value": 0,
       "Tradeable": false,
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0432",
+      "Internal Key": "cosmetic_faith_vaelithra_title",
+      "Display Name": "Oruvani",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of an Oruvani, follower of Oruveth. Equip in the Wardrobe while following Vaelithra.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "Granted on first pick of REL-0001 (Vaelithra). Owned after switching; equippable only while following REL-0001.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0433",
+      "Internal Key": "cosmetic_faith_khavessa_title",
+      "Display Name": "Khareth",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Khareth, follower of Theryvak. Equip in the Wardrobe while following Khavessa.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "Granted on first pick of REL-0002 (Khavessa). Owned after switching; equippable only while following REL-0002.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0434",
+      "Internal Key": "cosmetic_faith_nymorai_title",
+      "Display Name": "Nymorathen",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Nymorathen, follower of Ulvaryn. Equip in the Wardrobe while following Nymorai.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "Granted on first pick of REL-0003 (Nymorai). Owned after switching; equippable only while following REL-0003.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0435",
+      "Internal Key": "cosmetic_faith_drazhkar_title",
+      "Display Name": "Drazhari",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Drazhari, follower of Azhurak. Equip in the Wardrobe while following Drazhkar.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "Granted on first pick of REL-0004 (Drazhkar). Owned after switching; equippable only while following REL-0004.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0436",
+      "Internal Key": "cosmetic_faith_veyrathi_title",
+      "Display Name": "Veyrathel",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Veyrathel, follower of Zorvael. Equip in the Wardrobe while following Veyrathi.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "Granted on first pick of REL-0005 (Veyrathi). Owned after switching; equippable only while following REL-0005.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0437",
+      "Internal Key": "cosmetic_faith_korvethan_title",
+      "Display Name": "Korvathi",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Korvathi, follower of Gorveth. Equip in the Wardrobe while following Korvethan.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "Granted on first pick of REL-0006 (Korvethan). Owned after switching; equippable only while following REL-0006.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0438",
+      "Internal Key": "cosmetic_faith_elyndara_title",
+      "Display Name": "Elyndri",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of an Elyndri, follower of Saelun. Equip in the Wardrobe while following Elyndara.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "Granted on first pick of REL-0007 (Elyndara). Owned after switching; equippable only while following REL-0007.",
       "Stackable": null
     }
   ],
@@ -35768,6 +35924,38 @@
       "Reward": null,
       "Target Skill ID": null,
       "Notes": "Harvest bleeding tooth. Action is unplaced — incomplete until placed."
+    },
+    {
+      "Achievement ID": "ACH-0050",
+      "Internal Key": "acolyte",
+      "Display Name": "Acolyte",
+      "Category": "Milestones",
+      "Difficulty": "Easy",
+      "Check Type": "religion_chosen",
+      "Target ID": null,
+      "Required Count": 1,
+      "Required Level": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Reward": null,
+      "Target Skill ID": null,
+      "Notes": "Choose a faith at the Temple."
+    },
+    {
+      "Achievement ID": "ACH-0051",
+      "Internal Key": "theologian",
+      "Display Name": "Theologian",
+      "Category": "Milestones",
+      "Difficulty": "Hard",
+      "Check Type": "religion_all",
+      "Target ID": null,
+      "Required Count": 7,
+      "Required Level": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Reward": null,
+      "Target Skill ID": null,
+      "Notes": "Have chosen all 7 faiths. Granted once; survives reload."
     }
   ],
   "CosmeticSlots": [
@@ -35907,6 +36095,69 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Baby Dragon pet. Granted once from dragon kill secondary."
+    },
+    {
+      "Cosmetic ID": "COS-0013",
+      "Item ID": "ITEM-0432",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Title Oruvani for REL-0001 (Vaelithra). Granted on first pick. Equippable only while following this faith."
+    },
+    {
+      "Cosmetic ID": "COS-0014",
+      "Item ID": "ITEM-0433",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Title Khareth for REL-0002 (Khavessa). Granted on first pick. Equippable only while following this faith."
+    },
+    {
+      "Cosmetic ID": "COS-0015",
+      "Item ID": "ITEM-0434",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Title Nymorathen for REL-0003 (Nymorai). Granted on first pick. Equippable only while following this faith."
+    },
+    {
+      "Cosmetic ID": "COS-0016",
+      "Item ID": "ITEM-0435",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Title Drazhari for REL-0004 (Drazhkar). Granted on first pick. Equippable only while following this faith."
+    },
+    {
+      "Cosmetic ID": "COS-0017",
+      "Item ID": "ITEM-0436",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Title Veyrathel for REL-0005 (Veyrathi). Granted on first pick. Equippable only while following this faith."
+    },
+    {
+      "Cosmetic ID": "COS-0018",
+      "Item ID": "ITEM-0437",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Title Korvathi for REL-0006 (Korvethan). Granted on first pick. Equippable only while following this faith."
+    },
+    {
+      "Cosmetic ID": "COS-0019",
+      "Item ID": "ITEM-0438",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Title Elyndri for REL-0007 (Elyndara). Granted on first pick. Equippable only while following this faith."
     }
   ],
   "AppearanceOptions": [
@@ -36694,6 +36945,164 @@
       "Sort Order": 8,
       "Status": "Planned",
       "Notes": null
+    }
+  ],
+  "Religions": [
+    {
+      "Religion ID": "REL-0001",
+      "Internal Key": "vaelithra",
+      "Display Name": "Vaelithra",
+      "God": "Oruveth",
+      "Description": "Followers of Oruveth fell timber as stewards, knowing every stump makes room for the forest to rise again.",
+      "Sort Order": 1,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Title Cosmetic ID": "COS-0013",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Follower title: Oruvani. Maps to Human Woodcutting bonus."
+    },
+    {
+      "Religion ID": "REL-0002",
+      "Internal Key": "khavessa",
+      "Display Name": "Khavessa",
+      "God": "Theryvak",
+      "Description": "Theryvak teaches the patience of the stalker and respect for the quarry: take only what the wild can spare.",
+      "Sort Order": 2,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Title Cosmetic ID": "COS-0014",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Follower title: Khareth. Maps to Wood Elf Hunting bonus."
+    },
+    {
+      "Religion ID": "REL-0003",
+      "Internal Key": "nymorai",
+      "Display Name": "Nymorai",
+      "God": "Ulvaryn",
+      "Description": "Sailors and coastal folk pray to Ulvaryn, keeper of the deep, who gives back the sea's bounty and its lost things.",
+      "Sort Order": 3,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Title Cosmetic ID": "COS-0015",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Follower title: Nymorathen. Maps to High Elf Fishing bonus."
+    },
+    {
+      "Religion ID": "REL-0004",
+      "Internal Key": "drazhkar",
+      "Display Name": "Drazhkar",
+      "God": "Azhurak",
+      "Description": "Azhurak honours those who endure, for discipline breeds strength and victory is only earned through struggle.",
+      "Sort Order": 4,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Title Cosmetic ID": "COS-0016",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Follower title: Drazhari. Maps to Orc Combat bonus."
+    },
+    {
+      "Religion ID": "REL-0005",
+      "Internal Key": "veyrathi",
+      "Display Name": "Veyrathi",
+      "God": "Zorvael",
+      "Description": "Zorvael holds that wealth is held in trust, and that generosity and wise dealing are sacred duties.",
+      "Sort Order": 5,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Title Cosmetic ID": "COS-0017",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Follower title: Veyrathel. Maps to Goblin gold bonus."
+    },
+    {
+      "Religion ID": "REL-0006",
+      "Internal Key": "korvethan",
+      "Display Name": "Korvethan",
+      "God": "Gorveth",
+      "Description": "Gorveth guards the stone and its buried riches, and gives the secrets of the deep earth only to honest labour.",
+      "Sort Order": 6,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Title Cosmetic ID": "COS-0018",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Follower title: Korvathi. Maps to Dwarf Mining bonus."
+    },
+    {
+      "Religion ID": "REL-0007",
+      "Internal Key": "elyndara",
+      "Display Name": "Elyndara",
+      "God": "Saelun",
+      "Description": "Saelun turns the seasons and renews the tilled land, blessing herb, crop and orchard alike.",
+      "Sort Order": 7,
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Title Cosmetic ID": "COS-0019",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Follower title: Elyndri. Maps to Halfling Harvesting bonus."
+    }
+  ],
+  "ReligionBonuses": [
+    {
+      "Religion Bonus ID": "RELB-0001",
+      "Religion ID": "REL-0001",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0006",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "+5% Woodcutting drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0002",
+      "Religion ID": "REL-0002",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0005",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "+5% Hunting drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0003",
+      "Religion ID": "REL-0003",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0003",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "+5% Fishing drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0004",
+      "Religion ID": "REL-0004",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0001",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "+5% Combat drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0005",
+      "Religion ID": "REL-0005",
+      "Bonus Type": "gold_gain_percent",
+      "Reference ID": null,
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "+5% gold from enemies and actions."
+    },
+    {
+      "Religion Bonus ID": "RELB-0006",
+      "Religion ID": "REL-0006",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0002",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "+5% Mining drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0007",
+      "Religion ID": "REL-0007",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0004",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "+5% Harvesting drop chance."
     }
   ],
   "QuestSteps": [

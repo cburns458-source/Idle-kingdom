@@ -77,15 +77,22 @@ void main() {
     expectBundled(uiRestoriaAssetPath(), 'the HUD wordmark');
   });
 
-  test('every item has a unique Icon Asset Key matching its Internal Key', () {
-    final keys = <String>{};
+  test('every item Icon Asset Key matches Internal Key or reuses another item\'s art', () {
+    final internalKeys = <String>{for (final item in db.items) item.internalKey};
     for (final item in db.items) {
-      expect(item.iconAssetKey, item.internalKey, reason: '${item.itemId} (${item.displayName})');
-      expect(
-        keys.add(item.iconAssetKey!),
-        isTrue,
-        reason: '${item.itemId} reused Icon Asset Key ${item.iconAssetKey}',
-      );
+      final key = item.iconAssetKey;
+      expect(key, isNotNull, reason: '${item.itemId} (${item.displayName}) has no Icon Asset Key');
+      expect(key, isNotEmpty, reason: '${item.itemId} (${item.displayName})');
+      // Faith titles reuse The Undying icon until Q&D ships their own art.
+      if (key != item.internalKey) {
+        expect(
+          internalKeys.contains(key),
+          isTrue,
+          reason:
+              '${item.itemId} (${item.displayName}) Icon Asset Key "$key" is not this item\'s '
+              'Internal Key and does not match another item',
+        );
+      }
       expectBundled(itemIconPath(item), 'item ${item.itemId} (${item.displayName})');
     }
   });

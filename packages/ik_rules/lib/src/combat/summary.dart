@@ -9,6 +9,7 @@ import '../equipment/loadout.dart';
 import '../js_compat.dart';
 import '../projects/enchantments.dart';
 import '../races/races.dart';
+import '../religion/religion.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
 import 'stats.dart';
@@ -167,17 +168,31 @@ List<CombatBonusLine> _activeBonuses(GameDatabase db, PlayerSave save) {
     );
   }
 
-  final raceId = save.raceId;
-  if (isNotBlank(raceId)) {
-    final raceLines = raceBonusSummaryLines(db, raceId!);
-    if (raceLines.isNotEmpty) {
+  final religionId = save.religionId;
+  if (isNotBlank(religionId)) {
+    final faithLines = religionBonusSummaryLines(db, religionId!);
+    if (faithLines.isNotEmpty) {
       bonuses.add(
         CombatBonusLine(
-          kind: 'race',
-          name: raceDisplayName(db, raceId) ?? raceId,
-          effect: raceLines.join(', '),
+          kind: 'religion',
+          name: religionDisplayName(db, religionId) ?? religionId,
+          effect: faithLines.join(', '),
         ),
       );
+    }
+  } else {
+    final raceId = save.raceId;
+    if (isNotBlank(raceId)) {
+      final raceLines = raceBonusSummaryLines(db, raceId!);
+      if (raceLines.isNotEmpty) {
+        bonuses.add(
+          CombatBonusLine(
+            kind: 'race',
+            name: raceDisplayName(db, raceId) ?? raceId,
+            effect: raceLines.join(', '),
+          ),
+        );
+      }
     }
   }
 
@@ -333,14 +348,14 @@ List<CombatStatContribution> _healthBreakdown(GameDatabase db, PlayerSave save) 
     );
   }
 
-  final raceMult = raceMaxHpMultiplier(db, save);
-  if (raceMult != 1 && isNotBlank(save.raceId)) {
-    lines.add(
-      CombatStatContribution(
-        label: raceDisplayName(db, save.raceId) ?? save.raceId!,
-        detail: _percent((raceMult - 1) * 100),
-      ),
-    );
+  final raceMult = alignmentMaxHpMultiplier(db, save);
+  if (raceMult != 1) {
+    final label = isNotBlank(save.religionId)
+        ? (religionDisplayName(db, save.religionId) ?? save.religionId!)
+        : (isNotBlank(save.raceId) ? (raceDisplayName(db, save.raceId) ?? save.raceId!) : null);
+    if (label != null) {
+      lines.add(CombatStatContribution(label: label, detail: _percent((raceMult - 1) * 100)));
+    }
   }
 
   lines.add(

@@ -1,0 +1,238 @@
+import 'dart:math' as math;
+
+import 'package:collection/collection.dart';
+import 'package:ik_content/ik_content.dart';
+
+import '../config.dart';
+import '../js_compat.dart';
+import '../save/generated/save_models.dart';
+import '../skills/totals.dart';
+
+const num religionChooseTotalLevel = 100;
+const String religionChangeGoldBaseKey = 'religion_change_gold_base';
+const String religionChangeGoldGrowthKey = 'religion_change_gold_growth';
+const String religionChangeGoldCapKey = 'religion_change_gold_cap';
+const String religionChangeCooldownMsKey = 'religion_change_cooldown_ms';
+const String religionChooseLocationIdKey = 'religion_choose_location_id';
+const String templeLocationIdFallback = 'LOC-0036';
+
+/// Approved by Conor (OQ-07). Base gold at total level 100.
+const num religionChangeGoldBaseFallback = 1000;
+
+/// Approved by Conor (OQ-07). Same IEEE double as Config (`50^(1/900)`).
+const num religionChangeGoldGrowthFallback = 1.0043561527973446;
+
+/// Approved by Conor (OQ-07). 0 or null on the Config row means no cap.
+const num religionChangeGoldCapFallback = 50000;
+const num religionChangeCooldownMsFallback = 7 * 24 * 60 * 60 * 1000;
+
+/// Faiths in display order.
+///
+/// `mergeSort` rather than `List.sort`, because rows that tie on both keys must
+/// keep their database order the way JavaScript's stable sort leaves them.
+List<ReligionRow> religions(GameDatabase db) {
+  final rows = [...db.religions];
+  mergeSort<ReligionRow>(
+    rows,
+    compare: (a, b) => jsCompareThen(
+      jsNumber(a.raw['Sort Order'] ?? 0) - jsNumber(b.raw['Sort Order'] ?? 0),
+      () => jsLocaleCompare(jsString(a.raw['Display Name']), jsString(b.raw['Display Name'])),
+    ),
+  );
+  return rows;
+}
+
+ReligionRow? religionById(GameDatabase db, String? religionId) {
+  if (isBlank(religionId)) return null;
+  return db.religions.firstWhereOrNull((row) => row.raw['Religion ID'] == religionId);
+}
+
+String? religionDisplayName(GameDatabase db, String? religionId) {
+  final displayName = religionById(db, religionId)?.raw['Display Name'];
+  return displayName is String ? displayName : null;
+}
+
+List<ReligionBonusRow> religionBonusesFor(GameDatabase db, String? religionId) {
+  if (isBlank(religionId)) return const <ReligionBonusRow>[];
+  return db.religionBonuses
+      .where((row) => row.raw['Religion ID'] == religionId && row.raw['Status'] != 'Needs Data')
+      .toList();
+}
+
+num _matchingBonusPercent(
+  Iterable<Map<String, Object?>> bonuses,
+  String bonusType, [
+  String? referenceId,
+]) {
+  num total = 0;
+  for (final bonus in bonuses) {
+    if (bonus['Bonus Type'] != bonusType) continue;
+    final rowReference = bonus['Reference ID'];
+    if (referenceId != null && rowReference != referenceId) continue;
+    if (referenceId == null && rowReference != null) continue;
+    final value = jsNumber(bonus['Bonus Value'] ?? 0);
+    if (value.isFinite) total += value;
+  }
+  return total;
+}
+
+num _totalReligionBonusPercent(
+  GameDatabase db,
+  String? religionId,
+  String bonusType, [
+  String? referenceId,
+]) {
+  return _matchingBonusPercent(
+    religionBonusesFor(db, religionId).map((row) => row.raw),
+    bonusType,
+    referenceId,
+  );
+}
+
+/// Race bonus fallback, inlined so this module does not import `races.dart`.
+num _totalRaceBonusPercent(
+  GameDatabase db,
+  String? raceId,
+  String bonusType, [
+  String? referenceId,
+]) {
+  if (isBlank(raceId)) return 0;
+  final bonuses = db.raceBonuses
+      .where((row) => row.raw['Race ID'] == raceId && row.raw['Status'] != 'Needs Data')
+      .map((row) => row.raw);
+  return _matchingBonusPercent(bonuses, bonusType, referenceId);
+}
+
+num religionSkillDropChanceBonusPercent(GameDatabase db, PlayerSave save, String skillId) {
+  return _totalReligionBonusPercent(db, save.religionId, 'skill_drop_chance_percent', skillId);
+}
+
+num religionMaxHpMultiplier(GameDatabase db, PlayerSave save) {
+  return 1 + _totalReligionBonusPercent(db, save.religionId, 'max_hp_percent') / 100;
+}
+
+num religionGoldGainMultiplier(GameDatabase db, PlayerSave save) {
+  return 1 + _totalReligionBonusPercent(db, save.religionId, 'gold_gain_percent') / 100;
+}
+
+/// Faith bonus if a faith is chosen, otherwise the race bonus. Never both.
+num alignmentSkillDropChanceBonusPercent(GameDatabase db, PlayerSave save, String skillId) {
+  if (isNotBlank(save.religionId)) {
+    return religionSkillDropChanceBonusPercent(db, save, skillId);
+  }
+  return _totalRaceBonusPercent(db, save.raceId, 'skill_drop_chance_percent', skillId);
+}
+
+num alignmentMaxHpMultiplier(GameDatabase db, PlayerSave save) {
+  if (isNotBlank(save.religionId)) return religionMaxHpMultiplier(db, save);
+  return 1 + _totalRaceBonusPercent(db, save.raceId, 'max_hp_percent') / 100;
+}
+
+num alignmentGoldGainMultiplier(GameDatabase db, PlayerSave save) {
+  if (isNotBlank(save.religionId)) return religionGoldGainMultiplier(db, save);
+  return 1 + _totalRaceBonusPercent(db, save.raceId, 'gold_gain_percent') / 100;
+}
+
+num applyAlignmentGoldGain(GameDatabase db, PlayerSave save, num baseGold) {
+  final amount = math.max(0, jsNumberOrZero(baseGold));
+  if (amount <= 0) return 0;
+  return (amount * alignmentGoldGainMultiplier(db, save)).floor();
+}
+
+List<String> religionBonusSummaryLines(GameDatabase db, String religionId) {
+  final lines = <String>[];
+  for (final bonus in religionBonusesFor(db, religionId)) {
+    final value = jsNumber(bonus.raw['Bonus Value'] ?? 0);
+    if (!value.isFinite || value == 0) continue;
+    final amount = jsNumberToString(value);
+    final bonusType = bonus.raw['Bonus Type'];
+    final reference = bonus.raw['Reference ID'];
+    if (bonusType == 'skill_drop_chance_percent' && reference is String && reference.isNotEmpty) {
+      final displayName = db.skills
+          .firstWhereOrNull((row) => row.raw['Skill ID'] == reference)
+          ?.raw['Display Name'];
+      lines.add('+$amount% ${displayName is String ? displayName : 'skill'} drop chance');
+      continue;
+    }
+    if (bonusType == 'max_hp_percent') {
+      lines.add('+$amount% maximum HP');
+      continue;
+    }
+    if (bonusType == 'gold_gain_percent') {
+      lines.add('+$amount% gold from enemies and actions');
+    }
+  }
+  return lines;
+}
+
+String religionChooseLocationId(GameDatabase db) {
+  return configString(db, religionChooseLocationIdKey, templeLocationIdFallback);
+}
+
+num religionChangeCooldownMs(GameDatabase db) {
+  return configNumber(db, religionChangeCooldownMsKey, religionChangeCooldownMsFallback);
+}
+
+bool religionChooseUnlocked(PlayerSave save) {
+  return totalLevel(save) >= religionChooseTotalLevel;
+}
+
+/// Approved by Conor (OQ-07).
+///
+/// First pick (no current faith) is free. Later changes cost
+/// `min(floor(round(base * growth^(totalLevel-100)) / 50) * 50, cap)`.
+/// Round is whole gold (`Math.round`, ties toward +∞) before the floor-to-50.
+/// `growth^n` is `exp(n * ln(growth))` so Dart matches TypeScript.
+/// Cap 0 or null means no cap; missing Config uses 50000.
+num religionChangeGoldCost(GameDatabase db, PlayerSave save) {
+  if (isBlank(save.religionId)) return 0;
+  final base = configNumber(db, religionChangeGoldBaseKey, religionChangeGoldBaseFallback);
+  final growth = configNumber(db, religionChangeGoldGrowthKey, religionChangeGoldGrowthFallback);
+  final exponent = totalLevel(save) - religionChooseTotalLevel;
+  final raw = base * math.exp(exponent * math.log(growth));
+  if (!raw.isFinite || raw <= 0) {
+    final cap = religionChangeGoldCap(db);
+    if (!raw.isFinite && cap != null) return cap;
+    return 0;
+  }
+  // Math.round for non-negative values: ties toward +∞, not Dart banker's round.
+  final wholeGold = (raw + 0.5).floor();
+  num cost = math.max(0, (wholeGold / 50).floor() * 50);
+  final cap = religionChangeGoldCap(db);
+  if (cap != null && cost > cap) cost = cap;
+  return cost;
+}
+
+/// Positive cap, or null when Config is 0/null (uncapped). Missing row → 50000.
+num? religionChangeGoldCap(GameDatabase db) {
+  final row = db.config.firstWhereOrNull((entry) => entry.raw['Key'] == religionChangeGoldCapKey);
+  if (row == null) return religionChangeGoldCapFallback;
+  final value = row.raw['Value'];
+  if (value == null) return null;
+  if (value is! num || !value.isFinite || value <= 0) return null;
+  return value;
+}
+
+num? religionChangeReadyAt(GameDatabase db, PlayerSave save) {
+  final stamp = save.religionChangedAt;
+  if (stamp == null) return null;
+  final at = jsNumber(stamp);
+  if (!at.isFinite) return null;
+  return at + religionChangeCooldownMs(db);
+}
+
+String? religionIdForTitleCosmetic(GameDatabase db, String? cosmeticId) {
+  if (isBlank(cosmeticId)) return null;
+  final row = db.religions.firstWhereOrNull(
+    (entry) => entry.raw['Title Cosmetic ID'] == cosmeticId,
+  );
+  final id = row?.raw['Religion ID'];
+  return id is String ? id : null;
+}
+
+/// Faith titles stay owned after a switch but can only be equipped while following that faith.
+bool isFaithTitleLocked(GameDatabase db, PlayerSave save, String? cosmeticId) {
+  final faithId = religionIdForTitleCosmetic(db, cosmeticId);
+  if (faithId == null) return false;
+  return save.religionId != faithId;
+}

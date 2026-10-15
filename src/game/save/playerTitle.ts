@@ -1,3 +1,4 @@
+import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from './types'
 import { STARTER_TITLE_COSMETIC_ID, TITLE_COSMETIC_SLOT_ID } from './types'
 
@@ -13,9 +14,26 @@ export interface PlayerTitle {
 export const UNDYING_TITLE: PlayerTitle = { text: 'The Undying', placement: 'suffix' }
 
 /** The title a save has earned, or null when it holds none. */
-export function titleForSave(save: PlayerSave): PlayerTitle | null {
-  if (save.hasEverDied) return null
+export function titleForSave(save: PlayerSave, db?: GameDatabase): PlayerTitle | null {
   const equipped = save.cosmetics?.equipped
+  const equippedId =
+    equipped && Object.prototype.hasOwnProperty.call(equipped, TITLE_COSMETIC_SLOT_ID)
+      ? equipped[TITLE_COSMETIC_SLOT_ID]
+      : undefined
+  if (equippedId && equippedId !== STARTER_TITLE_COSMETIC_ID) {
+    // Faith (and later) titles stay visible after the first death; Undying does not.
+    if (!db) return null
+    const cosmetic = db.Cosmetics.find((row) => row['Cosmetic ID'] === equippedId)
+    const itemId = cosmetic?.['Item ID']
+    const text =
+      typeof itemId === 'string'
+        ? db.Items.find((row) => row['Item ID'] === itemId)?.['Display Name']
+        : null
+    return typeof text === 'string' && text.length > 0
+      ? { text, placement: 'suffix' }
+      : null
+  }
+  if (save.hasEverDied) return null
   if (equipped && Object.prototype.hasOwnProperty.call(equipped, TITLE_COSMETIC_SLOT_ID)) {
     return equipped[TITLE_COSMETIC_SLOT_ID] === STARTER_TITLE_COSMETIC_ID ? UNDYING_TITLE : null
   }
@@ -34,8 +52,8 @@ export function nameWithTitle(name: string, title: PlayerTitle | null): string {
  * Falls back to [fallback] for a save that has not been named yet, which keeps
  * a title off an anonymous character.
  */
-export function displayNameForSave(save: PlayerSave, fallback: string): string {
+export function displayNameForSave(save: PlayerSave, fallback: string, db?: GameDatabase): string {
   const name = save.characterName
   if (!name) return fallback
-  return nameWithTitle(name, titleForSave(save))
+  return nameWithTitle(name, titleForSave(save, db))
 }

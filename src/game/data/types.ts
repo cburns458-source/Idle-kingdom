@@ -420,6 +420,35 @@ export interface RaceStartingItemRow {
   Notes: string | null
 }
 
+export type ReligionBonusType = RaceBonusType
+
+export interface ReligionRow {
+  'Religion ID': string
+  'Internal Key': string
+  'Display Name': string
+  /** Named deity this faith follows. */
+  God: string | null
+  Description: string | null
+  'Sort Order': number | null
+  'Icon Asset Key': string | null
+  /** Cosmetic ID granted on first pick of this faith (title slot). */
+  'Title Cosmetic ID': string | null
+  Status: RecordStatus
+  'Release Phase': ReleasePhase
+  Notes: string | null
+}
+
+export interface ReligionBonusRow {
+  'Religion Bonus ID': string
+  'Religion ID': string
+  'Bonus Type': RaceBonusType
+  /** Skill ID for skill_drop_chance_percent; null for global bonuses. */
+  'Reference ID': string | null
+  'Bonus Value': number
+  Status: RecordStatus
+  Notes: string | null
+}
+
 export interface BookRow {
   'Book ID': string
   'Internal Key': string
@@ -467,6 +496,8 @@ export interface GameDatabase {
   Races: RaceRow[]
   RaceBonuses: RaceBonusRow[]
   RaceStartingItems: RaceStartingItemRow[]
+  Religions: ReligionRow[]
+  ReligionBonuses: ReligionBonusRow[]
 }
 
 export const DATABASE_TABLES = [
@@ -506,6 +537,8 @@ export const DATABASE_TABLES = [
   'Races',
   'RaceBonuses',
   'RaceStartingItems',
+  'Religions',
+  'ReligionBonuses',
 ] as const
 
 export type DatabaseTableName = (typeof DATABASE_TABLES)[number]

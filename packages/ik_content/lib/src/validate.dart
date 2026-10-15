@@ -41,6 +41,8 @@ const Map<String, String> tableIdFields = <String, String>{
   'Races': 'Race ID',
   'RaceBonuses': 'Race Bonus ID',
   'RaceStartingItems': 'Race Starting Item ID',
+  'Religions': 'Religion ID',
+  'ReligionBonuses': 'Religion Bonus ID',
 };
 
 /// Empty after Economy aligned stew Action XP with Recipe XP.
@@ -97,6 +99,7 @@ const List<String> launchFilteredTables = <String>[
   'AppearanceOptions',
   'LocationSearches',
   'Races',
+  'Religions',
 ];
 
 enum IssueSeverity {
@@ -411,6 +414,49 @@ List<ValidationIssue> validateDatabase(GameDatabase db) {
           table: 'RaceBonuses',
           id: bonus.raceBonusId,
           message: 'Missing skill Reference ID: $referenceId',
+        ),
+      );
+    }
+  }
+
+  for (final bonus in db.religionBonuses) {
+    final religionId = bonus.raw['Religion ID'];
+    if (religionId is String && indexes.lookupById('Religions', religionId) == null) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'ReligionBonuses',
+          id: bonus.religionBonusId,
+          message: 'Missing Religion ID reference: $religionId',
+        ),
+      );
+    }
+    final referenceId = bonus.raw['Reference ID'];
+    if (bonus.raw['Bonus Type'] == 'skill_drop_chance_percent' &&
+        referenceId is String &&
+        !indexes.skillsById.containsKey(referenceId)) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'ReligionBonuses',
+          id: bonus.religionBonusId,
+          message: 'Missing skill Reference ID: $referenceId',
+        ),
+      );
+    }
+  }
+
+  for (final religion in db.religions) {
+    final titleId = religion.raw['Title Cosmetic ID'];
+    if (titleId is String &&
+        titleId.isNotEmpty &&
+        indexes.lookupById('Cosmetics', titleId) == null) {
+      issues.add(
+        ValidationIssue(
+          severity: IssueSeverity.error,
+          table: 'Religions',
+          id: religion.religionId,
+          message: 'Missing Title Cosmetic ID reference: $titleId',
         ),
       );
     }

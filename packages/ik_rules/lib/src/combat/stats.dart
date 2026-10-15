@@ -11,7 +11,7 @@ import '../js_compat.dart';
 import '../skills/skill_actions.dart';
 import '../npcs/knowledge.dart';
 import '../projects/enchantments.dart';
-import '../races/races.dart';
+import '../religion/religion.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
@@ -332,7 +332,7 @@ num playerMaxHp(GameDatabase db, PlayerSave save) {
     save,
   ).fold<num>(0, (sum, row) => sum + jsNumber(row.raw['HP Bonus'] ?? 0));
   final levelMult = combatLevelHpMultiplier(save);
-  final raceMult = raceMaxHpMultiplier(db, save);
+  final raceMult = alignmentMaxHpMultiplier(db, save);
   final enchantHpMult = 1 + equippedEnchantmentMaxHpBonusPercent(db, save) / 100;
   final setHpMult = 1 + hearthguardSetMaxHpBonusPercent(save) / 100;
   return math.max(1, _scaleStat(base + bonus, levelMult * raceMult * enchantHpMult * setHpMult));
@@ -342,7 +342,7 @@ num playerMaxHp(GameDatabase db, PlayerSave save) {
 num playerBaseMaxHp(GameDatabase db, PlayerSave save) {
   final base = configNumber(db, 'starting_max_hp', 1000);
   final levelMult = combatLevelHpMultiplier(save);
-  final raceMult = raceMaxHpMultiplier(db, save);
+  final raceMult = alignmentMaxHpMultiplier(db, save);
   return math.max(1, _scaleStat(base, levelMult * raceMult));
 }
 

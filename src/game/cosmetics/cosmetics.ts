@@ -1,5 +1,6 @@
 import type { CosmeticRow, CosmeticSlotRow, GameDatabase } from '../data/types'
 import type { EquipResult } from '../equipment/loadout'
+import { isFaithTitleLocked } from '../religion/religion'
 import type { CosmeticsState, PlayerSave } from '../save/types'
 
 export function cosmeticSlots(db: GameDatabase): CosmeticSlotRow[] {
@@ -89,6 +90,9 @@ export function equipCosmetic(
   }
   if (!current.unlocked.includes(cosmeticId)) {
     return { ok: false, reason: 'That Cosmetic has not been unlocked yet.' }
+  }
+  if (isFaithTitleLocked(db, save, cosmeticId)) {
+    return { ok: false, reason: 'Return to that faith to wear its title.' }
   }
   return {
     ok: true,

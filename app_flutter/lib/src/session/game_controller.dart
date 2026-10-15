@@ -1815,6 +1815,27 @@ class GameController extends ChangeNotifier {
     return null;
   }
 
+  /// Picks or changes faith at the Temple.
+  ///
+  /// Hosted play waits for the server and adopts that save so a retry cannot
+  /// double-charge. Offline applies locally and queues the same command.
+  Future<String?> chooseReligionAtTemple(String religionId) async {
+    final args = <String, Object?>{'religionId': religionId};
+    final hosted = hostedPlay?.call() == true ? submitHostedCommand : null;
+    if (hosted != null) {
+      final receipt = await hosted('choose_religion', args);
+      if (!receipt.ok) return receipt.reason;
+      if (receipt.save case final server?) {
+        adoptHostedSave(server, command: 'choose_religion');
+      }
+      return null;
+    }
+    final result = chooseReligion(db, save, religionId, session.clock());
+    if (!result.ok) return result.reason;
+    commit(result.save!, command: 'choose_religion', args: args);
+    return null;
+  }
+
   /// Pays the tanner to turn selected hides into leather.
   String? tanHidesWithTanner(String npcId, Map<String, num> quantities) {
     final npc = npcsAtLocation(

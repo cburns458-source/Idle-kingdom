@@ -101,6 +101,22 @@ void main() {
     expect(find.textContaining('Craft any spell'), findsWidgets);
   });
 
+  testWidgets('Acolyte and Theologian appear in the deeds list', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(420, 900));
+
+    await openLog(tester);
+
+    await tester.ensureVisible(find.text('Acolyte'));
+    expect(find.text('Acolyte'), findsOne);
+
+    await tester.tap(find.text('Hard'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Theologian'));
+    expect(find.text('Theologian'), findsOne);
+  });
+
   testWidgets('an achievement stays greyed out until it is earned', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

@@ -17,7 +17,10 @@ import { grantCosmetic } from '../cosmetics/cosmetics'
 import { grantCritterToCollection, getCritter } from '../critters/critters'
 import { grantBook } from '../library/books'
 import type { ActionRow, GameDatabase, RewardEntryRow } from '../data/types'
-import { applyRaceGoldGain, raceSkillDropChanceBonusPercent } from '../races/races'
+import {
+  alignmentSkillDropChanceBonusPercent,
+  applyAlignmentGoldGain,
+} from '../religion/religion'
 import { activeSpellItemDoubleChancePercent } from '../spells/spells'
 import type { PlayerSave } from '../save/types'
 import type { LootGrant } from './types'
@@ -178,7 +181,7 @@ export function resolveActionRewards(
   const booksGranted: ActionBookGrant[] = []
   let goldGained = Number(action['Guaranteed Gold'] ?? 0)
 
-  const skillDropBonus = raceSkillDropChanceBonusPercent(
+  const skillDropBonus = alignmentSkillDropChanceBonusPercent(
     db,
     save,
     action['Relevant Skill ID'],
@@ -270,7 +273,7 @@ export function resolveActionRewards(
   rollTable(action['Secondary Reward Table ID'], action['Secondary Drop Chance'])
   rollTable(action['Tertiary Reward Table ID'], action['Tertiary Drop Chance'])
 
-  goldGained = applyRaceGoldGain(db, save, goldGained)
+  goldGained = applyAlignmentGoldGain(db, save, goldGained)
   if (goldGained > 0) {
     next = {
       ...next,

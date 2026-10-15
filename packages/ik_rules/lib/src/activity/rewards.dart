@@ -10,7 +10,7 @@ import '../inventory/gold.dart';
 import '../js_compat.dart';
 import '../library/books.dart';
 import '../loot/drop_chance.dart';
-import '../races/races.dart';
+import '../religion/religion.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
@@ -130,7 +130,7 @@ ActionRewards resolveActionRewards(
   final cosmeticsGranted = <ActionCosmeticGrant>[];
   final booksGranted = <ActionBookGrant>[];
   var goldGained = jsNumber(action.raw['Guaranteed Gold'] ?? 0);
-  final skillDropBonus = raceSkillDropChanceBonusPercent(
+  final skillDropBonus = alignmentSkillDropChanceBonusPercent(
     db,
     save,
     jsString(action.raw['Relevant Skill ID']),
@@ -235,7 +235,7 @@ ActionRewards resolveActionRewards(
   rollTable(action.raw['Secondary Reward Table ID'], action.raw['Secondary Drop Chance']);
   rollTable(action.raw['Tertiary Reward Table ID'], action.raw['Tertiary Drop Chance']);
 
-  goldGained = applyRaceGoldGain(db, save, goldGained);
+  goldGained = applyAlignmentGoldGain(db, save, goldGained);
   if (goldGained > 0) {
     next = next.copyWith(
       gold: next.gold + goldGained,

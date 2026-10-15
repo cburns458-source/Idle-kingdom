@@ -16,7 +16,7 @@ import {
   equippedEnchantmentMaxHpBonusPercent,
 } from '../projects/enchantments'
 import { hearthguardSetMaxHpBonusPercent } from '../economy/plaza'
-import { raceMaxHpMultiplier } from '../races/races'
+import { alignmentMaxHpMultiplier } from '../religion/religion'
 import type { AttackStyle, PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
 import {
@@ -361,7 +361,7 @@ export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
   const base = configNumber(db, 'starting_max_hp', 1000)
   const bonus = equippedRows(db, save).reduce((sum, row) => sum + Number(row['HP Bonus'] ?? 0), 0)
   const levelMult = combatLevelHpMultiplier(save)
-  const raceMult = raceMaxHpMultiplier(db, save)
+  const raceMult = alignmentMaxHpMultiplier(db, save)
   const enchantHpMult = 1 + equippedEnchantmentMaxHpBonusPercent(db, save) / 100
   const setHpMult = 1 + hearthguardSetMaxHpBonusPercent(save) / 100
   return Math.max(1, scaleStat(base + bonus, levelMult * raceMult * enchantHpMult * setHpMult))
@@ -370,7 +370,7 @@ export function playerMaxHp(db: GameDatabase, save: PlayerSave): number {
 export function playerBaseMaxHp(db: GameDatabase, save: PlayerSave): number {
   const base = configNumber(db, 'starting_max_hp', 1000)
   const levelMult = combatLevelHpMultiplier(save)
-  const raceMult = raceMaxHpMultiplier(db, save)
+  const raceMult = alignmentMaxHpMultiplier(db, save)
   return Math.max(1, scaleStat(base, levelMult * raceMult))
 }
 

@@ -1,0 +1,1 @@
+{"case":"same-faith-retry","input":{"nowMs":1792022400000,"source":"content"},"module":"religion/choose","output":{"acolyte":true,"equippedTitle":"COS-0003","gold":100000,"goldCost":0,"ok":true,"religionChangeCount":1,"religionChangedAt":1792022400000,"religionHistory":["REL-0001"],"religionId":"REL-0001","theologian":false,"unlockedTitles":["COS-0013"]}}

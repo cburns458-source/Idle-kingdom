@@ -982,6 +982,34 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 63,
+    toVersion: 64,
+    migrate: (save, _) {
+      final next = _bumped(save, 64);
+      final religionId = save['religionId'];
+      next['religionId'] = religionId is String && religionId.isNotEmpty ? religionId : null;
+      // `Number(undefined)` is NaN (store null); `Number(null)` is 0.
+      if (!save.containsKey('religionChangedAt')) {
+        next['religionChangedAt'] = null;
+      } else {
+        final changedAt = jsNumber(save['religionChangedAt']);
+        next['religionChangedAt'] = changedAt.isFinite ? changedAt : null;
+      }
+      final count = jsNumber(save['religionChangeCount']);
+      next['religionChangeCount'] = count.isFinite ? (count < 0 ? 0 : count.floor()) : 0;
+      final rawHistory = save['religionHistory'];
+      final history = <String>[];
+      final seen = <String>{};
+      if (rawHistory is List) {
+        for (final id in rawHistory) {
+          if (id is String && id.isNotEmpty && seen.add(id)) history.add(id);
+        }
+      }
+      next['religionHistory'] = history;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

@@ -1,0 +1,1 @@
+{"case":"boundaries","input":{"source":"content"},"module":"religion/cost","output":{"at100":1000,"at1000":50000,"at1001":50000,"at101":1000,"at250":1900,"at500":5650,"at750":16850,"at999":49750,"firstPick":0}}
