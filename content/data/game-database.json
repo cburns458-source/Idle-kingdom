@@ -33190,7 +33190,7 @@
       "Role": "Farmer",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A farmer who lives at the farm.",
+      "Description": "",
       "Notes": "Stays after Getting Started to teach Botany (QST-0011).",
       "Sprite Asset Key": "npc/npc_fennel.png"
     },
@@ -34640,7 +34640,7 @@
       "Dialogue ID": "QDL-0021",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "It looks like you've found something special, let me take a look… Hmm that will grow into a mighty plant one day. Let me show you how, you can use one of my seeds to get practice. But first step to a successful harvest is to gather some compost.",
+      "Line": "Oh, you've found a seed! Let me take a look... That will grow into a mighty plant one day. Practise on one of mine first.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0023"
@@ -34649,7 +34649,7 @@
       "Dialogue ID": "QDL-0022",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "Smells great! Now go to the farming patch here, pick the potato seed and remember to use compost.",
+      "Line": "Did you find the compost? Let me have a sniff.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0024"
@@ -34658,7 +34658,7 @@
       "Dialogue ID": "QDL-0023",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "Well done! Now come back in a few hours to see how your crops have done, I'll do my best to keep an eye on them.",
+      "Line": "Take these seeds for your own beds, and my Botanist's Guide besides. Tend the timers, and plant again!",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "When: completed"
@@ -34712,7 +34712,7 @@
       "Dialogue ID": "QDL-0030",
       "Quest ID": "QST-0011",
       "NPC ID": "NPC-0014",
-      "Line": "Well done! Now come back in a few hours to see how your crops have done, I'll do my best to keep an eye on them.",
+      "Line": "Well done! Come back in a few hours to see how your crops have done. I'll do my best to keep an eye on them.",
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0035"

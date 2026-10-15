@@ -351,6 +351,50 @@ void main() {
     expect(find.text('Recipe Book'), findsNothing);
   });
 
+  testWidgets('a miniquest lists and ticks journal steps like a normal quest', (tester) async {
+    final active = startedCharacter(database).copyWith(
+      currentLocationId: 'LOC-0001',
+      quests: const <QuestProgress>[
+        QuestProgress(questId: 'QST-0006', status: 'completed', progress: 1),
+        QuestProgress(
+          questId: 'QST-0011',
+          status: 'active',
+          progress: 1,
+          counters: <String, num>{'talk:NPC-0014:QSTP-0023': 1, 'step:QSTP-0023': 1},
+        ),
+      ],
+    );
+    final before = logCompletion(database.launch, active).section('quests')!;
+    final finished = active.copyWith(
+      quests: const <QuestProgress>[
+        QuestProgress(questId: 'QST-0006', status: 'completed', progress: 1),
+        QuestProgress(questId: 'QST-0011', status: 'completed', progress: 1),
+      ],
+    );
+    expect(logCompletion(database.launch, finished).section('quests')!.label, before.label);
+
+    final controller = buildController(database, seed: active);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openLog(tester);
+    await tester.tap(find.text('Quests'));
+    await tester.pump();
+
+    expect(find.text('Green Thumb'), findsNothing);
+    await tester.tap(find.textContaining('Miniquests'));
+    await tester.pump();
+    expect(find.text('Green Thumb'), findsOne);
+    expect(find.text('Speak with Fennel at the farm'), findsNothing);
+
+    await tester.tap(find.text('Green Thumb'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Speak with Fennel at the farm'), findsOne);
+    expect(journalMark(tester, 'Speak with Fennel at the farm'), '✓');
+    expect(find.text('Gather compost and speak with Fennel'), findsOne);
+    expect(journalMark(tester, 'Gather compost and speak with Fennel'), '•');
+  });
+
   testWidgets('miniquests list a weekly race change once total level is high enough', (
     tester,
   ) async {

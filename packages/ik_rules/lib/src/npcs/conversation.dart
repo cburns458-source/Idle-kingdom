@@ -345,6 +345,16 @@ class NpcQuestBlock {
   };
 }
 
+/// Line spoken during a quest conversation.
+///
+/// Talk and idle quest copy only — never the NPC Description field, so content
+/// can drop that description without it coming back as a fallback.
+String questSpokenLine(NpcQuestBlock quest) {
+  final talk = quest.talkLine?.trim();
+  if (talk != null && talk.isNotEmpty) return talk;
+  return quest.idlePrompt.trim();
+}
+
 /// Merchant-only: ask where the Master Dwarf is today.
 class NpcWhereabouts {
   const NpcWhereabouts({required this.label, required this.line});

@@ -6,10 +6,12 @@ import {
 import { CRITTER_DEFS, collectionCount } from '../critters/critters'
 import type { GameDatabase } from '../data/types'
 import type { QuestRow } from '../quests/quests'
-import { hideFromQuestLog } from '../quests/miniquests'
+import { hideFromQuestLog, isMiniquest, miniQuestLog } from '../quests/miniquests'
+import type { MiniQuestLogRow } from '../quests/miniquests'
 import { questLegacyJournalSteps } from '../quests/objectives'
 import {
   asQuestRows,
+  getQuest,
   getQuestProgress,
   questCompletionRewardLabels,
   questStatusLabel,
@@ -127,32 +129,66 @@ function questRewardJournal(
   ]
 }
 
+/** Shared journal steps: the same list a normal quest and a miniquest tick. */
+export function questJournalSteps(
+  db: GameDatabase,
+  save: PlayerSave,
+  quest: QuestRow,
+): QuestLogStep[] {
+  const questId = quest['Quest ID']
+  const status = getQuestProgress(save, questId).status
+  if (status === 'active') {
+    return questUsesSteps(db, questId)
+      ? questStepJournal(db, save, quest)
+      : questLegacyJournalSteps(db, save, quest)
+  }
+  if (status === 'inactive') {
+    return questRequirementJournal(db, save, quest)
+  }
+  return [...questCompletedJournal(db, quest), ...questRewardJournal(db, quest, save)]
+}
+
 export function questLog(db: GameDatabase, save: PlayerSave): QuestLogRow[] {
   return asQuestRows(db).filter((quest) => !hideFromQuestLog(quest)).map((quest) => {
     const questId = quest['Quest ID']
     const status = getQuestProgress(save, questId).status
     const npcName =
       db.NPCs.find((npc) => npc['NPC ID'] === quest['NPC ID'])?.['Display Name'] ?? 'NPC'
-    const questRow = quest as QuestRow
-    const steps =
-      status === 'active'
-        ? questUsesSteps(db, questId)
-          ? questStepJournal(db, save, questRow)
-          : questLegacyJournalSteps(db, save, questRow)
-        : status === 'inactive'
-          ? questRequirementJournal(db, save, questRow)
-          : [
-              ...questCompletedJournal(db, questRow),
-              ...questRewardJournal(db, questRow, save),
-            ]
-
     return {
       questId,
       name: quest['Display Name'],
       detail: `${quest.Summary ?? 'No summary.'} · ${npcName}`,
       statusLabel: questStatusLabel(status),
       completed: status === 'completed',
-      steps,
+      steps: questJournalSteps(db, save, quest),
+    }
+  })
+}
+
+/** A miniquest journal row: label + repeat info, steps from [questJournalSteps]. */
+export interface MiniQuestJournalRow extends MiniQuestLogRow {
+  statusLabel: string
+  completed: boolean
+  steps: QuestLogStep[]
+}
+
+/**
+ * Miniquests in the journal. They tick through [questJournalSteps] like a
+ * normal quest; [questLog] still hides them from the completion %.
+ */
+export function miniQuestJournal(
+  db: GameDatabase,
+  save: PlayerSave,
+  nowMs: number = Date.now(),
+): MiniQuestJournalRow[] {
+  return miniQuestLog(db, save, nowMs).map((row) => {
+    const quest = getQuest(db, row.questId)
+    const status = getQuestProgress(save, row.questId).status
+    return {
+      ...row,
+      statusLabel: questStatusLabel(status),
+      completed: status === 'completed',
+      steps: quest ? questJournalSteps(db, save, quest) : [],
     }
   })
 }
@@ -274,7 +310,11 @@ function completion(section: string, done: number, total: number): LogSectionCom
 export function logCompletion(db: GameDatabase, save: PlayerSave): LogCompletion {
   const achievements = achievementLog(db, save)
   const milestones = milestoneLog(db, save)
-  const quests = questLog(db, save)
+  // Miniquest is only a label: they journal like quests, but never count here.
+  const quests = questLog(db, save).filter((row) => {
+    const quest = getQuest(db, row.questId)
+    return !quest || !isMiniquest(quest)
+  })
   const critters = critterLog(save)
 
   const sections = [

@@ -483,7 +483,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (talkQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: _spokenLine(conversation, talkQuest),
+        line: questSpokenLine(talkQuest),
         error: _error,
         actions: _withStandalone([GameButton(label: 'Continue', onPressed: _commitTalk)]),
       );
@@ -531,7 +531,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (turnInQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: _spokenLine(conversation, turnInQuest),
+        line: questSpokenLine(turnInQuest),
         error: _error,
         actions: _withStandalone([
           if (turnInQuest.canBribe)
@@ -562,7 +562,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (choiceQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: _spokenLine(conversation, choiceQuest),
+        line: questSpokenLine(choiceQuest),
         error: _error,
         actions: _withStandalone([
           if (choiceQuest.canBribe)
@@ -588,7 +588,7 @@ class _NpcPanelState extends State<NpcPanel> {
     if (activeQuest != null) {
       return _playerDialogue(
         name: conversation.name,
-        line: _spokenLine(conversation, activeQuest),
+        line: questSpokenLine(activeQuest),
         error: _error,
         actions: _withStandalone([GameButton(label: 'Done', onPressed: _close)]),
       );
@@ -806,13 +806,6 @@ class _NpcPanelState extends State<NpcPanel> {
     }
   }
 
-  String _spokenLine(NpcConversation conversation, NpcQuestBlock quest) {
-    final talk = quest.talkLine;
-    if (talk != null && talk.trim().isNotEmpty) return talk;
-    if (quest.idlePrompt.trim().isNotEmpty) return quest.idlePrompt;
-    return conversation.description;
-  }
-
   Widget _playerDialogue({
     required String name,
     required String line,
@@ -878,8 +871,10 @@ class _DialogueCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(line, style: const TextStyle(fontSize: GameFont.m)),
+          if (line.trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(line, style: const TextStyle(fontSize: GameFont.m)),
+          ],
           if (detail case final detail?) ...[const SizedBox(height: 4), MutedText(detail)],
           if (journal.isNotEmpty) ...[
             const SizedBox(height: 8),
