@@ -295,6 +295,7 @@ class _ChatSheetState extends State<ChatSheet> {
       net.selectedDmPeerId,
       net.filterChatProfanity,
       net.showGuildMilestones,
+      net.showChatTitles,
     );
     if (_linesCacheKey == key && _cachedLines != null) {
       return _cachedLines!;
@@ -305,6 +306,7 @@ class _ChatSheetState extends State<ChatSheet> {
       net.session?.userId,
       filterProfanityEnabled: net.filterChatProfanity,
       hideGuildMilestones: !net.showGuildMilestones,
+      showTitles: net.showChatTitles,
     );
     return _cachedLines!;
   }
@@ -411,7 +413,9 @@ class _ChatSheetState extends State<ChatSheet> {
                       itemCount: lines.length,
                       itemBuilder: (context, index) {
                         final line = lines[lines.length - 1 - index];
-                        final stamp = formatChatTimestamp(line.createdAt);
+                        final stamp = net.showChatTimestamps
+                            ? formatChatTimestamp(line.createdAt)
+                            : '';
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 3),
                           child: Row(

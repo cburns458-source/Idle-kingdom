@@ -1029,6 +1029,12 @@ String chatReadCursorKey(String userId, String channelKey) =>
 /// Device toggle for a channel's unread bubble. Absent means on.
 String chatNotifyStorageKey(ChatTab tab) => 'idle-kingdoms.client.chat-notify:${tab.wire}';
 
+/// Device toggle for equipped titles in chat. Absent means on.
+const String chatShowTitlesStorageKey = 'idle-kingdoms.client.show-chat-titles';
+
+/// Device toggle for chat timestamps. Absent means on.
+const String chatShowTimestampsStorageKey = 'idle-kingdoms.client.show-chat-timestamps';
+
 /// One line of a chat room.
 class ChatLineView {
   const ChatLineView({
@@ -1066,6 +1072,7 @@ List<ChatLineView> chatLines(
   String? viewerId, {
   bool filterProfanityEnabled = false,
   bool hideGuildMilestones = false,
+  bool showTitles = true,
 }) {
   return messages
       .where(
@@ -1081,7 +1088,7 @@ List<ChatLineView> chatLines(
           username:
               message.channelKey.startsWith('guild:') && isGuildSkillMilestoneBody(message.body)
               ? ''
-              : chatLineUsername(message),
+              : chatLineUsername(message, showTitles: showTitles),
           body: filterProfanityEnabled ? filterProfanity(message.body) : message.body,
           createdAt: message.createdAt,
           mine: viewerId != null && message.userId == viewerId,
@@ -1118,16 +1125,23 @@ String formatChatTimestamp(String createdAt, {DateTime? now}) {
 }
 
 /// `[TAG] Hero` in global/local, rank mark or guest smiley in guild rooms.
-String chatLineUsername(ChatMessage message) {
+String chatLineUsername(ChatMessage message, {bool showTitles = true}) {
+  final name = _chatSpeakerName(message, showTitles);
   if (message.channelKey.startsWith('guild:')) {
-    if (message.guest) return '$guildGuestChatIcon ${message.username}';
+    if (message.guest) return '$guildGuestChatIcon $name';
     final icon = message.rankIcon;
-    if (icon != null) return '$icon ${message.username}';
-    return message.username;
+    if (icon != null) return '$icon $name';
+    return name;
   }
   final tag = message.guildTag;
-  if (tag != null && tag.isNotEmpty) return '[$tag] ${message.username}';
-  return message.username;
+  if (tag != null && tag.isNotEmpty) return '[$tag] $name';
+  return name;
+}
+
+String _chatSpeakerName(ChatMessage message, bool showTitles) {
+  final title = showTitles ? message.title?.trim() ?? '' : '';
+  if (title.isEmpty) return message.username;
+  return '$title ${message.username}';
 }
 
 /// Where multiplayer data lives, as the account panel says it.

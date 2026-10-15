@@ -647,6 +647,7 @@ ChatMessage chatMessageFrom(RemoteRow row) => ChatMessage(
   guildTag: _optStr(row['guild_tag'] ?? row['guildTag']),
   rankIcon: _optStr(row['rank_icon'] ?? row['rankIcon']),
   guest: row['guest'] == true,
+  title: chatTitleFromPayload(row),
 );
 
 /// The message the send-chat function answered with.
@@ -658,6 +659,7 @@ ChatMessage? chatMessageFromFunction(RemoteRow? data) {
   final id = _str(data['id']);
   if (id.isEmpty) return null;
   return chatMessageFrom(<String, Object?>{
+    ...data,
     'id': id,
     'channel_key': data['channelKey'] ?? data['channel_key'],
     'user_id': data['userId'] ?? data['user_id'],

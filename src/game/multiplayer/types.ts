@@ -156,6 +156,39 @@ export interface ChatMessage {
   guildTag?: string
   rankIcon?: string
   guest?: boolean
+  /** Equipped title text, when the server included one. */
+  title?: string
+}
+
+/** Equipped title text from a chat payload, or null when none is usable. */
+export function readChatTitle(raw: unknown, depth = 0): string | null {
+  if (depth > 2) return null
+  if (typeof raw === 'string') {
+    const text = raw.trim()
+    return text.length > 0 ? text : null
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const record = raw as Record<string, unknown>
+  return readChatTitle(record.text ?? record.title ?? record.displayName ?? record.name, depth + 1)
+}
+
+const CHAT_TITLE_KEYS = [
+  'title',
+  'titleText',
+  'title_text',
+  'equippedTitle',
+  'equipped_title',
+  'senderTitle',
+  'sender_title',
+] as const
+
+/** First usable title on a chat row, whatever key Game Systems stamped. */
+export function chatTitleFromPayload(row: Record<string, unknown>): string | null {
+  for (const key of CHAT_TITLE_KEYS) {
+    const title = readChatTitle(row[key])
+    if (title) return title
+  }
+  return null
 }
 
 /** Leader plus four promotable ranks. */

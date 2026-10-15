@@ -77,6 +77,22 @@ class MultiplayerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// When on (default), equipped titles appear before chat sender names.
+  bool get showChatTitles => storage.getItem(chatShowTitlesStorageKey) != '0';
+
+  void setShowChatTitles(bool value) {
+    storage.setItem(chatShowTitlesStorageKey, value ? '1' : '0');
+    notifyListeners();
+  }
+
+  /// When on (default), each chat line shows its local timestamp.
+  bool get showChatTimestamps => storage.getItem(chatShowTimestampsStorageKey) != '0';
+
+  void setShowChatTimestamps(bool value) {
+    storage.setItem(chatShowTimestampsStorageKey, value ? '1' : '0');
+    notifyListeners();
+  }
+
   /// When on, the HUD prefixes the character name with `[TAG]`.
   bool get showHudGuildTag => storage.getItem(hudGuildTagStorageKey) == '1';
 

@@ -513,6 +513,18 @@ describe('chat line names', () => {
     )
   })
 
+  it('puts an equipped title before the name, and drops it when titles are hidden', () => {
+    expect(chatLineUsername(chatMessage({ title: 'The Undying' }))).toBe('The Undying Vari')
+    expect(chatLineUsername(chatMessage({ title: 'The Undying', guildTag: 'DEV' }))).toBe(
+      '[DEV] The Undying Vari',
+    )
+    expect(
+      chatLineUsername(chatMessage({ title: 'The Undying', guildTag: 'DEV' }), { showTitles: false }),
+    ).toBe('[DEV] Vari')
+    expect(chatLineUsername(chatMessage({ title: '   ' }))).toBe('Vari')
+    expect(chatLineUsername(chatMessage({}))).toBe('Vari')
+  })
+
   it('puts the rank mark before the name in guild rooms, and a smiley for guests', () => {
     expect(
       chatLineUsername(

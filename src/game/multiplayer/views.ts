@@ -694,6 +694,12 @@ export function chatNotifyStorageKey(tab: ChatTab): string {
   return `idle-kingdoms.client.chat-notify:${tab}`
 }
 
+/** Device toggle for equipped titles in chat. Absent means on. */
+export const CHAT_SHOW_TITLES_STORAGE_KEY = 'idle-kingdoms.client.show-chat-titles'
+
+/** Device toggle for chat timestamps. Absent means on. */
+export const CHAT_SHOW_TIMESTAMPS_STORAGE_KEY = 'idle-kingdoms.client.show-chat-timestamps'
+
 /** One line of a chat room. */
 export interface ChatLineView {
   messageId: string
@@ -712,7 +718,8 @@ export function chatLines(
   {
     filterProfanityEnabled = false,
     hideGuildMilestones = false,
-  }: { filterProfanityEnabled?: boolean; hideGuildMilestones?: boolean } = {},
+    showTitles = true,
+  }: { filterProfanityEnabled?: boolean; hideGuildMilestones?: boolean; showTitles?: boolean } = {},
 ): ChatLineView[] {
   return messages
     .filter(
@@ -727,7 +734,7 @@ export function chatLines(
     username:
       message.channelKey.startsWith('guild:') && isGuildSkillMilestoneBody(message.body)
         ? ''
-        : chatLineUsername(message),
+        : chatLineUsername(message, { showTitles }),
     body: filterProfanityEnabled ? filterProfanity(message.body) : message.body,
     createdAt: message.createdAt,
     mine: viewerId !== null && message.userId === viewerId,
@@ -763,16 +770,26 @@ export function formatChatTimestamp(createdAt: string, now: Date = new Date()): 
 }
 
 /** `[TAG] Hero` in global/local, rank mark or guest smiley in guild rooms. */
-export function chatLineUsername(message: ChatMessage): string {
+export function chatLineUsername(
+  message: ChatMessage,
+  { showTitles = true }: { showTitles?: boolean } = {},
+): string {
+  const name = chatSpeakerName(message, showTitles)
   if (message.channelKey.startsWith('guild:')) {
-    if (message.guest) return `${GUILD_GUEST_CHAT_ICON} ${message.username}`
+    if (message.guest) return `${GUILD_GUEST_CHAT_ICON} ${name}`
     const icon = message.rankIcon
-    if (icon) return `${icon} ${message.username}`
-    return message.username
+    if (icon) return `${icon} ${name}`
+    return name
   }
   const tag = message.guildTag
-  if (tag) return `[${tag}] ${message.username}`
-  return message.username
+  if (tag) return `[${tag}] ${name}`
+  return name
+}
+
+function chatSpeakerName(message: ChatMessage, showTitles: boolean): string {
+  const title = showTitles ? message.title?.trim() ?? '' : ''
+  if (!title) return message.username
+  return `${title} ${message.username}`
 }
 
 /** What the account panel says about where multiplayer data lives. */
