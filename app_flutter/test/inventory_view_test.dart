@@ -418,7 +418,7 @@ void main() {
 
     expect(find.text('No active bonuses.'), findsNothing);
     expect(find.textContaining('High Elf'), findsOne);
-    expect(find.textContaining('Strength Potion'), findsOne);
+    expect(find.textContaining('Strength Potion (6)'), findsOne);
   });
 
   testWidgets('equipment page lists success chance on the tool skill', (tester) async {

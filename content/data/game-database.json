@@ -2252,7 +2252,7 @@
     {
       "Item ID": "ITEM-0070",
       "Internal Key": "luck_potion",
-      "Display Name": "Luck Potion",
+      "Display Name": "Luck Potion (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -2270,7 +2270,7 @@
     {
       "Item ID": "ITEM-0071",
       "Internal Key": "speed_potion",
-      "Display Name": "Speed Potion",
+      "Display Name": "Speed Potion (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -2288,7 +2288,7 @@
     {
       "Item ID": "ITEM-0072",
       "Internal Key": "strength_potion",
-      "Display Name": "Strength Potion",
+      "Display Name": "Strength Potion (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -2306,7 +2306,7 @@
     {
       "Item ID": "ITEM-0073",
       "Internal Key": "poison_potion",
-      "Display Name": "Poison Potion",
+      "Display Name": "Poison Potion (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -4198,7 +4198,7 @@
     {
       "Item ID": "ITEM-0210",
       "Internal Key": "minor_luck_potion",
-      "Display Name": "Minor Luck Potion",
+      "Display Name": "Minor Luck Potion (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -4216,7 +4216,7 @@
     {
       "Item ID": "ITEM-0211",
       "Internal Key": "minor_strength_potion",
-      "Display Name": "Minor Strength Potion",
+      "Display Name": "Minor Strength Potion (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -4234,7 +4234,7 @@
     {
       "Item ID": "ITEM-0212",
       "Internal Key": "greater_strength_potion",
-      "Display Name": "Greater Strength Potion",
+      "Display Name": "Greater Strength Potion (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -4252,7 +4252,7 @@
     {
       "Item ID": "ITEM-0213",
       "Internal Key": "masterwork_draught",
-      "Display Name": "Masterwork Draught",
+      "Display Name": "Masterwork Draught (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -8178,7 +8178,7 @@
     {
       "Item ID": "ITEM-0439",
       "Internal Key": "fernleaf_tonic",
-      "Display Name": "Fernleaf Tonic",
+      "Display Name": "Fernleaf Tonic (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -8196,7 +8196,7 @@
     {
       "Item ID": "ITEM-0440",
       "Internal Key": "mosstole_brew",
-      "Display Name": "Mosstole Brew",
+      "Display Name": "Mosstole Brew (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -8214,7 +8214,7 @@
     {
       "Item ID": "ITEM-0441",
       "Internal Key": "augur_draught",
-      "Display Name": "Augur Draught",
+      "Display Name": "Augur Draught (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",
@@ -8232,7 +8232,7 @@
     {
       "Item ID": "ITEM-0442",
       "Internal Key": "moonblossom_elixir",
-      "Display Name": "Moonblossom Elixir",
+      "Display Name": "Moonblossom Elixir (6)",
       "Category": "Potion",
       "Subtype": "Equippable potion",
       "Associated Skill ID": "SKL-0010",

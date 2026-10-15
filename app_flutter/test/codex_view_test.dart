@@ -100,7 +100,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, CodexView(controller: controller, initialItemId: 'ITEM-0439'));
-    expect(find.text('Fernleaf Tonic'), findsWidgets);
+    expect(find.text('Fernleaf Tonic (6)'), findsWidgets);
     expect(find.text('Heals 5%, 6 uses'), findsOne);
   });
 

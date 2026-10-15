@@ -104,12 +104,14 @@ ActivePotionEffect? parsePotionEffect(
 /// Poison applies to current HP; the save key stays `enemyMaxHpDamagePercent`.
 num? enemyCurrentHpDamagePercent(ActivePotionEffect? effect) => effect?.enemyMaxHpDamagePercent;
 
+const String speedPotionItemId = 'ITEM-0071';
+
 bool isSpeedPotionItem(GameDatabase db, String? itemId) {
   if (itemId == null || itemId.isEmpty) return false;
+  if (itemId == speedPotionItemId) return true;
   final item = db.items.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
   final key = (item?.raw['Internal Key'] as String? ?? '').toLowerCase();
-  final name = (item?.raw['Display Name'] as String? ?? '').toLowerCase();
-  return key.contains('speed') || RegExp(r'\bspeed\b').hasMatch(name);
+  return key == 'speed_potion';
 }
 
 /// Speed potions do not apply to Alchemy; Masterwork and others still do.

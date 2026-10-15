@@ -114,12 +114,14 @@ export function enemyCurrentHpDamagePercent(
   return effect?.enemyMaxHpDamagePercent ?? null
 }
 
+export const SPEED_POTION_ITEM_ID = 'ITEM-0071'
+
 export function isSpeedPotionItem(db: GameDatabase, itemId: string | null | undefined): boolean {
   if (!itemId) return false
+  if (itemId === SPEED_POTION_ITEM_ID) return true
   const item = db.Items.find((row) => row['Item ID'] === itemId)
   const key = (item?.['Internal Key'] ?? '').toLowerCase()
-  const name = (item?.['Display Name'] ?? '').toLowerCase()
-  return key.includes('speed') || /\bspeed\b/.test(name)
+  return key === 'speed_potion'
 }
 
 /** Speed potions do not apply to Alchemy; Masterwork and others still do. */

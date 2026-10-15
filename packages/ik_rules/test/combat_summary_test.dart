@@ -41,7 +41,7 @@ void main() {
         'Thorns',
         'Strength Spell ×2',
         'Abundance Spell',
-        'Strength Potion',
+        'Strength Potion (6)',
         'High Elf',
       ]),
     );
@@ -63,7 +63,7 @@ void main() {
       '×1.12',
     );
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Spell'));
-    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Potion'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Potion (6)'));
     expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '124–248');
 
     final offhand = playerOffhandDamageRange(db, save);
