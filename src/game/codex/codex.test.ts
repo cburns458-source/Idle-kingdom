@@ -249,8 +249,43 @@ describe('codex index', () => {
     expect(codex.item('ITEM-0442')?.statLines).toEqual(['+30–90 damage, 6 uses'])
   })
 
-  it('leaves Obtained From empty and appends a filled cell after generated sources', () => {
-    expect(launch.Items.every((item) => !item['Obtained From'])).toBe(true)
+  it('shows code-side Obtained From notes when there is no generated data source', () => {
+    const noteTitles = (itemId: string) =>
+      (codex.item(itemId)?.obtainedFrom ?? [])
+        .filter((row) => row.kind === 'note')
+        .map((row) => row.title)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0365')?.Description).toBe(
+      'Clean water from the tap.',
+    )
+    expect(noteTitles('ITEM-0365')).toEqual(['Kitchens and apothecary stations'])
+    expect(codex.item('ITEM-0365')!.obtainedFrom.every((row) => row.kind === 'note')).toBe(true)
+    for (const itemId of [
+      'ITEM-0181',
+      'ITEM-0352',
+      'ITEM-0353',
+      'ITEM-0354',
+      'ITEM-0355',
+      'ITEM-0356',
+      'ITEM-0357',
+    ]) {
+      expect(noteTitles(itemId), itemId).toEqual(['Pot fishing'])
+      expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
+    }
+    for (const itemId of ['ITEM-0369', 'ITEM-0371', 'ITEM-0373', 'ITEM-0375']) {
+      expect(noteTitles(itemId), itemId).toEqual(['Crossbreeding seeds'])
+      expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
+    }
+    for (const itemId of ['ITEM-0370', 'ITEM-0372', 'ITEM-0374', 'ITEM-0376']) {
+      expect(noteTitles(itemId), itemId).toEqual(['Botany crops'])
+      expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
+    }
+    expect(noteTitles('ITEM-0366')).toEqual(['Kitchen Scraps'])
+    expect(codex.item('ITEM-0366')!.obtainedFrom.every((row) => row.kind === 'note')).toBe(true)
+    expect(noteTitles('ITEM-0045')).toEqual(['Tanner leather'])
+    expect(codex.item('ITEM-0045')!.obtainedFrom.every((row) => row.kind === 'note')).toBe(true)
+  })
+
+  it('appends a filled Obtained From cell after generated sources', () => {
     const patched = {
       ...launch,
       Items: launch.Items.map((item) =>

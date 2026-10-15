@@ -287,14 +287,65 @@ void main() {
     expect(codex.item('ITEM-0442')?.statLines, ['+30–90 damage, 6 uses']);
   });
 
-  test('leaves Obtained From empty and appends a filled cell after generated sources', () {
+  test('shows code-side Obtained From notes when there is no generated data source', () {
+    List<String> noteTitles(String itemId) => (codex.item(itemId)?.obtainedFrom ?? const [])
+        .where((row) => row.kind == CodexObtainKind.note)
+        .map((row) => row.title)
+        .toList();
     expect(
-      db.items.every((item) {
-        final note = item.raw['Obtained From'];
-        return note == null || (note is String && note.trim().isEmpty);
-      }),
+      db.items.firstWhere((row) => row.itemId == 'ITEM-0365').description,
+      'Clean water from the tap.',
+    );
+    expect(noteTitles('ITEM-0365'), ['Kitchens and apothecary stations']);
+    expect(
+      codex.item('ITEM-0365')!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
       isTrue,
     );
+    for (final itemId in [
+      'ITEM-0181',
+      'ITEM-0352',
+      'ITEM-0353',
+      'ITEM-0354',
+      'ITEM-0355',
+      'ITEM-0356',
+      'ITEM-0357',
+    ]) {
+      expect(noteTitles(itemId), ['Pot fishing'], reason: itemId);
+      expect(
+        codex.item(itemId)!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+        isTrue,
+        reason: itemId,
+      );
+    }
+    for (final itemId in ['ITEM-0369', 'ITEM-0371', 'ITEM-0373', 'ITEM-0375']) {
+      expect(noteTitles(itemId), ['Crossbreeding seeds'], reason: itemId);
+      expect(
+        codex.item(itemId)!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+        isTrue,
+        reason: itemId,
+      );
+    }
+    for (final itemId in ['ITEM-0370', 'ITEM-0372', 'ITEM-0374', 'ITEM-0376']) {
+      expect(noteTitles(itemId), ['Botany crops'], reason: itemId);
+      expect(
+        codex.item(itemId)!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+        isTrue,
+        reason: itemId,
+      );
+    }
+    expect(noteTitles('ITEM-0366'), ['Kitchen Scraps']);
+    expect(
+      codex.item('ITEM-0366')!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+      isTrue,
+    );
+    expect(noteTitles('ITEM-0045'), ['Tanner leather']);
+    expect(
+      codex.item('ITEM-0045')!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+      isTrue,
+    );
+  });
+
+  test('appends a filled Obtained From cell after generated sources', () {
     final raw = Map<String, Object?>.from(db.raw);
     final items = [
       for (final item in db.items)

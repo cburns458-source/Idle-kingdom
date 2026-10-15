@@ -1848,6 +1848,7 @@
       "Description": null,
       "Icon Asset Key": "leather",
       "Notes": null,
+      "Obtained From": "Tanner leather",
       "Base Sell Value": 3,
       "Tradeable": true,
       "Stackable": null
@@ -3846,6 +3847,7 @@
       "Description": null,
       "Icon Asset Key": "old_boots",
       "Notes": null,
+      "Obtained From": "Pot fishing",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6603,6 +6605,7 @@
       "Description": null,
       "Icon Asset Key": "raw_crawfish",
       "Notes": "Pot fishing catch. Fishing 14.",
+      "Obtained From": "Pot fishing",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6621,6 +6624,7 @@
       "Description": null,
       "Icon Asset Key": "raw_red_crab",
       "Notes": "Pot fishing catch. Fishing 35.",
+      "Obtained From": "Pot fishing",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6639,6 +6643,7 @@
       "Description": null,
       "Icon Asset Key": "raw_catfish",
       "Notes": "Pot fishing catch. Fishing 44. No stew.",
+      "Obtained From": "Pot fishing",
       "Base Sell Value": 3,
       "Tradeable": true,
       "Stackable": null
@@ -6657,6 +6662,7 @@
       "Description": null,
       "Icon Asset Key": "raw_dungeness_crab",
       "Notes": "Pot fishing catch. Fishing 55.",
+      "Obtained From": "Pot fishing",
       "Base Sell Value": 6,
       "Tradeable": true,
       "Stackable": null
@@ -6675,6 +6681,7 @@
       "Description": null,
       "Icon Asset Key": "raw_eel",
       "Notes": "Pot fishing catch. Fishing 64. Alchemy only; not cooked.",
+      "Obtained From": "Pot fishing",
       "Base Sell Value": 9,
       "Tradeable": true,
       "Stackable": null
@@ -6693,6 +6700,7 @@
       "Description": null,
       "Icon Asset Key": "raw_lobster",
       "Notes": "Pot fishing catch. Fishing 75.",
+      "Obtained From": "Pot fishing",
       "Base Sell Value": 24,
       "Tradeable": true,
       "Stackable": null
@@ -6834,9 +6842,10 @@
       "Functional / Source Tags": "cooking_input; kitchen_ambient",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Fresh water from the kitchen tap.",
+      "Description": "Clean water from the tap.",
       "Icon Asset Key": "water",
       "Notes": "Ambient kitchen ingredient. Infinite on-hand at a kitchen. Never consumed.",
+      "Obtained From": "Kitchens and apothecary stations",
       "Base Sell Value": 0,
       "Tradeable": true,
       "Stackable": null
@@ -6855,6 +6864,7 @@
       "Description": "Trimmings and leftover bits from the kitchen board.",
       "Icon Asset Key": "kitchen_scraps",
       "Notes": "Ambient kitchen ingredient. Infinite on-hand at a kitchen. Never consumed.",
+      "Obtained From": "Kitchen Scraps",
       "Base Sell Value": 0,
       "Tradeable": true,
       "Stackable": null
@@ -6909,6 +6919,7 @@
       "Description": "Plantable in a botany plot. Potato and carrot plots can return this seed.",
       "Icon Asset Key": "turnip_seed",
       "Notes": "BotanyPlant; Output:ITEM-0370; GrowSeconds:10800; Xp:6000; RequiresLevel:18",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6927,6 +6938,7 @@
       "Description": "Plot-only harvest. Unused for now.",
       "Icon Asset Key": "turnip",
       "Notes": null,
+      "Obtained From": "Botany crops",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6945,6 +6957,7 @@
       "Description": "Plantable in a botany plot. Grape and potato plots can return this seed.",
       "Icon Asset Key": "elder_berry_seed",
       "Notes": "BotanyPlant; Output:ITEM-0372; GrowSeconds:10800; Xp:9600; RequiresLevel:45",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6963,6 +6976,7 @@
       "Description": "Plot-only harvest. Unused for now.",
       "Icon Asset Key": "elder_berry",
       "Notes": null,
+      "Obtained From": "Botany crops",
       "Base Sell Value": 2,
       "Tradeable": true,
       "Stackable": null
@@ -6981,6 +6995,7 @@
       "Description": "Plantable in a botany plot. Fernleaf and augur weed plots can return this seed.",
       "Icon Asset Key": "hagroot_seed",
       "Notes": "BotanyPlant; Output:ITEM-0374; GrowSeconds:10800; Xp:42000; RequiresLevel:72",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6999,6 +7014,7 @@
       "Description": "Plot-only harvest. Unused for now.",
       "Icon Asset Key": "hagroot",
       "Notes": null,
+      "Obtained From": "Botany crops",
       "Base Sell Value": 48,
       "Tradeable": true,
       "Stackable": null
@@ -7017,6 +7033,7 @@
       "Description": "Plantable in a botany plot. Augur weed and moonblossom plots can return this seed.",
       "Icon Asset Key": "emberblossom_seed",
       "Notes": "BotanyPlant; Output:ITEM-0376; GrowSeconds:10800; Xp:45000; RequiresLevel:75",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -7035,6 +7052,7 @@
       "Description": "Plot-only harvest. Unused for now.",
       "Icon Asset Key": "emberblossom",
       "Notes": null,
+      "Obtained From": "Botany crops",
       "Base Sell Value": 244,
       "Tradeable": true,
       "Stackable": null
