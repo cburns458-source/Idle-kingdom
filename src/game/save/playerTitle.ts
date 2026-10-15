@@ -1,4 +1,4 @@
-import type { GameDatabase } from '../data/types'
+import type { CosmeticRow, GameDatabase } from '../data/types'
 import type { PlayerSave } from './types'
 import { STARTER_TITLE_COSMETIC_ID, TITLE_COSMETIC_SLOT_ID } from './types'
 
@@ -13,6 +13,39 @@ export interface PlayerTitle {
 /** Held from the first step until the first defeat. */
 export const UNDYING_TITLE: PlayerTitle = { text: 'The Undying', placement: 'suffix' }
 
+/** Cosmetics.Title Placement: `prefix` is prefix, anything else is suffix. */
+export function titlePlacementForCosmetic(cosmetic: CosmeticRow | undefined): TitlePlacement {
+  return cosmetic?.['Title Placement'] === 'prefix' ? 'prefix' : 'suffix'
+}
+
+/** The cosmetic ID currently in the title slot, or null when the slot is empty. */
+export function equippedTitleCosmeticId(save: PlayerSave): string | null {
+  const equipped = save.cosmetics?.equipped
+  if (!equipped || !Object.prototype.hasOwnProperty.call(equipped, TITLE_COSMETIC_SLOT_ID)) {
+    return save.hasEverDied ? null : STARTER_TITLE_COSMETIC_ID
+  }
+  const id = equipped[TITLE_COSMETIC_SLOT_ID]
+  return id && id.length > 0 ? id : null
+}
+
+/** The title a wardrobe cosmetic writes, or null when it is not a titled cosmetic. */
+export function titleForCosmeticId(
+  db: GameDatabase,
+  cosmeticId: string | null | undefined,
+): PlayerTitle | null {
+  if (!cosmeticId) return null
+  if (cosmeticId === STARTER_TITLE_COSMETIC_ID) return UNDYING_TITLE
+  const cosmetic = db.Cosmetics.find((row) => row['Cosmetic ID'] === cosmeticId)
+  const itemId = cosmetic?.['Item ID']
+  const text =
+    typeof itemId === 'string'
+      ? db.Items.find((row) => row['Item ID'] === itemId)?.['Display Name']
+      : null
+  return typeof text === 'string' && text.length > 0
+    ? { text, placement: titlePlacementForCosmetic(cosmetic) }
+    : null
+}
+
 /** The title a save has earned, or null when it holds none. */
 export function titleForSave(save: PlayerSave, db?: GameDatabase): PlayerTitle | null {
   const equipped = save.cosmetics?.equipped
@@ -23,15 +56,7 @@ export function titleForSave(save: PlayerSave, db?: GameDatabase): PlayerTitle |
   if (equippedId && equippedId !== STARTER_TITLE_COSMETIC_ID) {
     // Faith (and later) titles stay visible after the first death; Undying does not.
     if (!db) return null
-    const cosmetic = db.Cosmetics.find((row) => row['Cosmetic ID'] === equippedId)
-    const itemId = cosmetic?.['Item ID']
-    const text =
-      typeof itemId === 'string'
-        ? db.Items.find((row) => row['Item ID'] === itemId)?.['Display Name']
-        : null
-    return typeof text === 'string' && text.length > 0
-      ? { text, placement: 'suffix' }
-      : null
+    return titleForCosmeticId(db, equippedId)
   }
   if (save.hasEverDied) return null
   if (equipped && Object.prototype.hasOwnProperty.call(equipped, TITLE_COSMETIC_SLOT_ID)) {

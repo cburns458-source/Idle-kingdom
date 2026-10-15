@@ -67,10 +67,16 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
 
   bool get _isSelf => net.session?.userId == widget.userId;
 
-  /// Own card always writes the equipped title; other cards keep the username.
+  /// Own card writes the equipped title from the live save. Other cards use the
+  /// title the server published on the public profile (`titleCosmeticId`).
   String _profileName(String username) {
-    if (!_isSelf) return username;
-    return displayNameWithEquippedTitle(widget.controller.db, widget.controller.save, username);
+    if (_isSelf) {
+      return displayNameWithEquippedTitle(widget.controller.db, widget.controller.save, username);
+    }
+    return nameWithTitle(
+      username,
+      titleForCosmeticId(widget.controller.db, _profile?.titleCosmeticId),
+    );
   }
 
   String _skillName(String? skillId) {
@@ -144,6 +150,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
         publicEquipment: publicEquipmentFromSave(save),
         motto: save.motto,
         petCosmeticId: save.cosmetics.equipped[petCosmeticSlotId],
+        titleCosmeticId: equippedTitleCosmeticId(save),
       );
     }
     return profile;

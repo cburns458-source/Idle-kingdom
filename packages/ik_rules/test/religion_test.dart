@@ -47,6 +47,17 @@ void main() {
     );
   });
 
+  test('faith title cosmetics are prefix titles', () {
+    for (final faith in religions(db)) {
+      final cosmetic = db.cosmetics.firstWhere((row) => row.cosmeticId == faith.titleCosmeticId);
+      expect(cosmetic.raw['Title Placement'], 'prefix');
+      expect(titlePlacementForCosmetic(cosmetic), TitlePlacement.prefix);
+    }
+    final undying = db.cosmetics.firstWhere((row) => row.cosmeticId == starterTitleCosmeticId);
+    expect(undying.raw['Title Placement'], 'suffix');
+    expect(titlePlacementForCosmetic(undying), TitlePlacement.suffix);
+  });
+
   test('the first pick is free', () {
     final ready = _atTemple(createNewSave(db, _nowMs), 100);
     final goldBefore = ready.gold;

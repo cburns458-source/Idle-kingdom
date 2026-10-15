@@ -846,7 +846,7 @@ class FakeTransport implements RemoteTransport {
       if (at >= 0) {
         final patch = <String, Object?>{
           ...profiles[at],
-          'appearance_json': appearanceJsonForRemote(save.appearance, save.raceId),
+          'appearance_json': appearanceJsonForPlayerSave(save),
         };
         if (!missingColumns.contains(remoteEquipmentJsonColumn)) {
           patch[remoteEquipmentJsonColumn] = publicEquipmentFromSave(save)

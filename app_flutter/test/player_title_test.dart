@@ -100,6 +100,7 @@ void main() {
   test('an equipped faith title sits before the name', () {
     final save = withEquippedFaithTitle();
     final faith = religions(database.launch).first;
+    expect(titleForSave(save, database.launch)?.placement, TitlePlacement.prefix);
     final title = equippedDisplayTitle(database.launch, save);
     expect(title?.placement, TitlePlacement.prefix);
     expect(title?.text, isNotEmpty);
@@ -182,6 +183,32 @@ void main() {
     expect(find.text('Show title on HUD'), findsNothing);
     expect(find.text(titled), findsOne);
     expect(find.text('Tester The Undying'), findsNothing);
+  });
+
+  testWidgets("another player's profile shows their equipped prefix title", (tester) async {
+    final save = withEquippedFaithTitle().copyWith(characterName: 'Hero');
+    final titled = displayNameWithEquippedTitle(database.launch, save, 'Hero');
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(net.dispose);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (next, {nowMs}) {});
+    expect(net.isSignedIn, isTrue, reason: net.notice);
+    await net.publishRanking(save, ignoreDebounce: true);
+    final heroId = net.session!.userId;
+    await net.signOut(save);
+
+    final rival = startedCharacter(database).copyWith(characterName: 'Rival');
+    await net.signUp('rival@example.com', 'Rival', 'secret', rival, adopt: (next, {nowMs}) {});
+    expect(net.isSignedIn, isTrue, reason: net.notice);
+    final controller = buildController(database, seed: rival);
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: heroId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(titled), findsOne);
+    expect(titled.startsWith('Oruvani '), isTrue);
   });
 
   testWidgets('the player profile shows nothing extra when no title is equipped', (tester) async {

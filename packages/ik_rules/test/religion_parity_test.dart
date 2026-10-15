@@ -84,6 +84,13 @@ void main() {
                   .firstOrNull
                   ?.internalKey;
             }).toList(),
+            'titlePlacements': religions(db).map((row) {
+              final cosmetic = db.cosmetics
+                  .where((entry) => entry.cosmeticId == row.titleCosmeticId)
+                  .firstOrNull;
+              return cosmetic?.raw['Title Placement'];
+            }).toList(),
+            'descriptions': religions(db).map((row) => row.description).toList(),
             'missing': religionDisplayName(db, 'REL-9999'),
             'nullId': religionDisplayName(db, null),
             'foundById': _relIds.map((id) => religionById(db, id)?.religionId).toList(),

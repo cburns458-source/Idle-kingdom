@@ -1,3 +1,4 @@
+import { equippedTitleCosmeticId } from '../save/playerTitle'
 import type { PlayerSave } from '../save/types'
 import { parseSave, type SaveStorage, writeSave } from '../save/saveStore'
 import { PET_COSMETIC_SLOT_ID, SAVE_STORAGE_KEY } from '../save/types'
@@ -59,6 +60,7 @@ export async function pushCloudSave(
       username: stamped.characterName || session.username,
       motto: stamped.motto ?? null,
       petCosmeticId: stamped.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
+      titleCosmeticId: equippedTitleCosmeticId(stamped),
     })
     return { ok: true, save: stamped, source: 'uploaded' }
   }
@@ -91,11 +93,17 @@ export async function pushCloudSave(
   const payload = invoked as { save?: PlayerSave; error?: string } | null
   if (payload?.error) return { ok: false, reason: payload.error }
   const hosted = payload?.save ?? stamped
-  // Publish motto / pet onto the profile row so other players can see them
-  // (RLS blocks reading another account's cloud save).
+  const titleCosmeticId = equippedTitleCosmeticId(hosted)
+  // Publish motto / pet / title onto the profile row so other players can see
+  // them (RLS blocks reading another account's cloud save). Title rides in
+  // appearance_json so it does not need a profiles column.
   const profileRow: RemoteRow = {
     user_id: session.userId,
-    appearance_json: hosted.appearance,
+    appearance_json: {
+      ...hosted.appearance,
+      ...(hosted.raceId ? { raceId: hosted.raceId } : {}),
+      ...(titleCosmeticId ? { titleCosmeticId } : {}),
+    },
     motto: hosted.motto ?? null,
     pet_cosmetic_id: hosted.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
   }

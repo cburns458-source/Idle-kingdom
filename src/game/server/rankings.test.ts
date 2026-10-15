@@ -28,6 +28,7 @@ describe('phase 3 rankings', () => {
     const patch = rankingProfilePatch(save)
     expect(Array.isArray(patch.equipment_json)).toBe(true)
     expect(patch.motto).toBeNull()
+    expect(patch.appearance_json.titleCosmeticId).toBe('COS-0003')
   })
 
   it('strips food from a published PvP loadout', () => {

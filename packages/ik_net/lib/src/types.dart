@@ -124,6 +124,7 @@ class MultiplayerProfile {
     this.nameColor,
     this.motto,
     this.petCosmeticId,
+    this.titleCosmeticId,
     this.usernameRenamedAt,
     required this.updatedAt,
   });
@@ -142,6 +143,8 @@ class MultiplayerProfile {
     nameColor: json['nameColor'] as String?,
     motto: json['motto'] as String?,
     petCosmeticId: json['petCosmeticId'] as String?,
+    titleCosmeticId:
+        json['titleCosmeticId'] as String? ?? titleCosmeticIdFromRemote(json['appearance']),
     usernameRenamedAt: json['usernameRenamedAt'] as String?,
     updatedAt: json['updatedAt']! as String,
   );
@@ -166,6 +169,9 @@ class MultiplayerProfile {
   /// Equipped pet cosmetic ID from CSLOT-0002; null when none.
   final String? petCosmeticId;
 
+  /// Equipped title cosmetic ID from CSLOT-0003; null when none.
+  final String? titleCosmeticId;
+
   /// When the public username last changed. Null until the first weekly rename.
   final String? usernameRenamedAt;
   final String updatedAt;
@@ -183,12 +189,14 @@ class MultiplayerProfile {
     String? nameColor,
     String? motto,
     String? petCosmeticId,
+    String? titleCosmeticId,
     String? usernameRenamedAt,
     String? updatedAt,
     bool clearGuild = false,
     bool clearNameColor = false,
     bool clearMotto = false,
     bool clearPetCosmeticId = false,
+    bool clearTitleCosmeticId = false,
     bool clearUsernameRenamedAt = false,
   }) => MultiplayerProfile(
     userId: userId,
@@ -204,6 +212,7 @@ class MultiplayerProfile {
     nameColor: clearNameColor ? null : (nameColor ?? this.nameColor),
     motto: clearMotto ? null : (motto ?? this.motto),
     petCosmeticId: clearPetCosmeticId ? null : (petCosmeticId ?? this.petCosmeticId),
+    titleCosmeticId: clearTitleCosmeticId ? null : (titleCosmeticId ?? this.titleCosmeticId),
     usernameRenamedAt: clearUsernameRenamedAt
         ? null
         : (usernameRenamedAt ?? this.usernameRenamedAt),
@@ -225,6 +234,7 @@ class MultiplayerProfile {
     if (nameColor != null) 'nameColor': nameColor,
     if (motto != null) 'motto': motto,
     if (petCosmeticId != null) 'petCosmeticId': petCosmeticId,
+    if (titleCosmeticId != null) 'titleCosmeticId': titleCosmeticId,
     if (usernameRenamedAt != null) 'usernameRenamedAt': usernameRenamedAt,
     'updatedAt': updatedAt,
   };
@@ -1280,6 +1290,7 @@ class PublicPlayerProfile {
     this.publicEquipment,
     this.motto,
     this.petCosmeticId,
+    this.titleCosmeticId,
   });
 
   final String userId;
@@ -1303,6 +1314,9 @@ class PublicPlayerProfile {
   /// Equipped pet cosmetic ID; null when none.
   final String? petCosmeticId;
 
+  /// Equipped title cosmetic ID; null when none.
+  final String? titleCosmeticId;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'userId': userId,
     'username': username,
@@ -1315,6 +1329,7 @@ class PublicPlayerProfile {
     'publicEquipment': publicEquipment?.map((row) => row.toJson()).toList(),
     'motto': motto,
     'petCosmeticId': petCosmeticId,
+    'titleCosmeticId': titleCosmeticId,
   };
 }
 
@@ -1393,17 +1408,33 @@ Map<String, Object?> appearanceJsonForRemote(
   PlayerAppearance appearance, [
   String? raceId,
   bool? shareLocationWithFriends,
+  String? titleCosmeticId,
 ]) {
   return <String, Object?>{
     ...appearance.toJson(),
     if (raceId != null && raceId.isNotEmpty) 'raceId': raceId,
     if (shareLocationWithFriends != null) 'shareLocationWithFriends': shareLocationWithFriends,
+    if (titleCosmeticId != null && titleCosmeticId.isNotEmpty) 'titleCosmeticId': titleCosmeticId,
   };
 }
+
+/// Profile publish of a save: look, race, and the equipped title cosmetic.
+Map<String, Object?> appearanceJsonForPlayerSave(PlayerSave save) =>
+    appearanceJsonForRemote(save.appearance, save.raceId, null, equippedTitleCosmeticId(save));
 
 String? raceIdFromRemote(Object? value) {
   if (value is Map) {
     final id = value['raceId'];
+    if (id is String && id.isNotEmpty) return id;
+  }
+  return null;
+}
+
+/// Equipped title rides with the published look so other players can resolve it
+/// without a cloud-save read. Older rows simply omit it.
+String? titleCosmeticIdFromRemote(Object? value) {
+  if (value is Map) {
+    final id = value['titleCosmeticId'];
     if (id is String && id.isNotEmpty) return id;
   }
   return null;

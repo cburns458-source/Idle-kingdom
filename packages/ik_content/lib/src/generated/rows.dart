@@ -140,6 +140,10 @@ class CosmeticRow extends DbRow {
 
   String get cosmeticSlotId => stringValue('Cosmetic Slot ID');
 
+  /// Which side of the name a title sits on. `prefix` or `suffix`. Null / omitted
+  /// on non-title cosmetics; missing or anything else is treated as suffix.
+  String? get titlePlacement => stringOrNull('Title Placement');
+
   /// Semicolon-separated: crafting; unlock; shop_gold; shop_real_money; starter.
   String? get acquisitionTags => stringOrNull('Acquisition Tags');
 
