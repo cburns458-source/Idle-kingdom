@@ -23,6 +23,8 @@ void main() {
     return find.ancestor(of: find.text('Faith'), matching: find.byType(DockRow));
   }
 
+  Finder picker() => find.byType(FaithPickerPanel);
+
   Future<void> openOther(WidgetTester tester) async {
     final expand = find.byTooltip('Expand list');
     if (expand.evaluate().isNotEmpty) {
@@ -62,59 +64,122 @@ void main() {
     return controller;
   }
 
+  Future<void> openFaith(WidgetTester tester, ReligionRow faith) async {
+    final row = find.byKey(Key('faith-${faith.religionId}'));
+    await tester.ensureVisible(row);
+    await tester.pump();
+    await tester.tap(row);
+    await tester.pump();
+  }
+
+  test('a missing Description column reads as empty', () {
+    expect(faithDescription(const ReligionRow(<String, Object?>{})), '');
+    expect(faithDescription(const ReligionRow(<String, Object?>{'Description': null})), '');
+    expect(faithDescription(const ReligionRow(<String, Object?>{'Description': 1})), '');
+    expect(faithDescription(const ReligionRow(<String, Object?>{'Description': '  '})), '');
+    expect(
+      faithDescription(const ReligionRow(<String, Object?>{'Description': '  Stewards.  '})),
+      'Stewards.',
+    );
+  });
+
   testWidgets('the picker is locked at total level 99', (tester) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 99));
     await openOther(tester);
 
     expect(find.text('Faith'), findsOne);
     await tapFaithAction(tester, 'Choose');
-    expect(find.byType(FaithPickerPanel), findsNothing);
+    expect(picker(), findsNothing);
   });
 
-  testWidgets('the picker is open at total level 100', (tester) async {
+  testWidgets('the list is only Choose a faith… and the seven names', (tester) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 100));
     await openOther(tester);
     await tapFaithAction(tester, 'Choose');
 
-    expect(find.byType(FaithPickerPanel), findsOne);
+    expect(picker(), findsOne);
+    expect(find.descendant(of: picker(), matching: find.text('Choose a faith…')), findsOne);
+
     final faiths = religions(database.launch);
     expect(faiths, hasLength(7));
     for (final faith in faiths) {
       final row = find.byKey(Key('faith-${faith.religionId}'));
       await tester.ensureVisible(row);
       await tester.pump();
-      expect(
-        find.descendant(of: find.byType(FaithPickerPanel), matching: find.text(faith.displayName)),
-        findsOne,
-      );
+      expect(find.descendant(of: picker(), matching: find.text(faith.displayName)), findsOne);
       final god = faithGodName(faith);
       if (god != null) {
-        expect(
-          find.descendant(of: find.byType(FaithPickerPanel), matching: find.text(god)),
-          findsOne,
-        );
+        expect(find.descendant(of: picker(), matching: find.text(god)), findsNothing);
+      }
+      final description = faithDescription(faith);
+      if (description.isNotEmpty) {
+        expect(find.descendant(of: picker(), matching: find.text(description)), findsNothing);
       }
       for (final line in religionBonusSummaryLines(database.launch, faith.religionId)) {
-        expect(
-          find.descendant(of: find.byType(FaithPickerPanel), matching: find.text(line)),
-          findsWidgets,
-        );
+        expect(find.descendant(of: picker(), matching: find.text(line)), findsNothing);
       }
     }
+
+    expect(find.descendant(of: picker(), matching: find.text('Free')), findsNothing);
+    expect(find.byKey(const Key('faith-choose')), findsNothing);
   });
 
-  testWidgets('the first pick shows as free', (tester) async {
+  testWidgets('tapping a name opens its page with god, description, choose, and cost', (
+    tester,
+  ) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 100));
     await openOther(tester);
     await tapFaithAction(tester, 'Choose');
 
-    expect(
-      find.descendant(of: find.byType(FaithPickerPanel), matching: find.text('Free')),
-      findsOne,
-    );
+    final faith = religions(database.launch).first;
+    await openFaith(tester, faith);
+
+    expect(find.descendant(of: picker(), matching: find.text('Choose a faith…')), findsNothing);
+    expect(find.descendant(of: picker(), matching: find.text(faith.displayName)), findsOne);
+    final god = faithGodName(faith);
+    if (god != null) {
+      expect(find.descendant(of: picker(), matching: find.text(god)), findsOne);
+    }
+    final description = faithDescription(faith);
+    if (description.isNotEmpty) {
+      expect(find.descendant(of: picker(), matching: find.text(description)), findsOne);
+    }
+    expect(find.descendant(of: picker(), matching: find.text('Free')), findsOne);
+    expect(find.byKey(const Key('faith-choose')), findsOne);
+    expect(find.byKey(const Key('faith-back')), findsOne);
+
+    for (final other in religions(database.launch).skip(1)) {
+      expect(find.descendant(of: picker(), matching: find.text(other.displayName)), findsNothing);
+    }
   });
 
-  testWidgets('later picks show the gold cost', (tester) async {
+  testWidgets('Back returns to the name list', (tester) async {
+    await pumpTemple(tester, atTemple(startedCharacter(database), 100));
+    await openOther(tester);
+    await tapFaithAction(tester, 'Choose');
+
+    final faith = religions(database.launch).first;
+    await openFaith(tester, faith);
+    await tester.tap(find.byKey(const Key('faith-back')));
+    await tester.pump();
+
+    expect(find.descendant(of: picker(), matching: find.text('Choose a faith…')), findsOne);
+    expect(find.byKey(const Key('faith-choose')), findsNothing);
+    for (final row in religions(database.launch)) {
+      expect(find.descendant(of: picker(), matching: find.text(row.displayName)), findsOne);
+    }
+  });
+
+  testWidgets('the first pick shows as free on the faith page', (tester) async {
+    await pumpTemple(tester, atTemple(startedCharacter(database), 100));
+    await openOther(tester);
+    await tapFaithAction(tester, 'Choose');
+    await openFaith(tester, religions(database.launch).first);
+
+    expect(find.descendant(of: picker(), matching: find.text('Free')), findsOne);
+  });
+
+  testWidgets('later picks show the gold cost on the faith page', (tester) async {
     final faiths = religions(database.launch);
     final controller = await pumpTemple(
       tester,
@@ -127,23 +192,15 @@ void main() {
     );
     await openOther(tester);
     await tapFaithAction(tester, 'Change');
+    await openFaith(tester, faiths[1]);
 
     final cost = religionChangeGoldCost(database.launch, controller.save);
     expect(cost, greaterThan(0));
-    expect(
-      find.descendant(
-        of: find.byType(FaithPickerPanel),
-        matching: find.text(formatThousands(cost)),
-      ),
-      findsOne,
-    );
-    expect(
-      find.descendant(of: find.byType(FaithPickerPanel), matching: find.text('Free')),
-      findsNothing,
-    );
+    expect(find.descendant(of: picker(), matching: find.text(formatThousands(cost))), findsOne);
+    expect(find.descendant(of: picker(), matching: find.text('Free')), findsNothing);
   });
 
-  testWidgets('cooldown blocks confirm', (tester) async {
+  testWidgets('cooldown blocks choose', (tester) async {
     final faiths = religions(database.launch);
     final controller = await pumpTemple(
       tester,
@@ -159,45 +216,32 @@ void main() {
 
     final readyAt = religionChangeReadyAt(database.launch, controller.save)!;
     final remaining = formatDurationRemaining(readyAt - testStartMs);
-    expect(
-      find.descendant(of: find.byType(FaithPickerPanel), matching: find.text(remaining)),
-      findsOne,
-    );
+    expect(find.descendant(of: picker(), matching: find.text(remaining)), findsNothing);
 
-    final next = find.byKey(Key('faith-${faiths[1].religionId}'));
-    await tester.ensureVisible(next);
-    await tester.pump();
-    await tester.tap(next);
-    await tester.pump();
+    await openFaith(tester, faiths[1]);
+    expect(find.descendant(of: picker(), matching: find.text(remaining)), findsOne);
 
-    final confirm = tester.widget<GameButton>(
-      find.descendant(
-        of: find.byKey(const Key('faith-confirm')),
-        matching: find.byType(GameButton),
-      ),
+    final choose = tester.widget<GameButton>(
+      find.descendant(of: find.byKey(const Key('faith-choose')), matching: find.byType(GameButton)),
     );
-    expect(confirm.onPressed, isNull);
-    await tester.tap(find.byKey(const Key('faith-confirm')));
+    expect(choose.onPressed, isNull);
+    await tester.tap(find.byKey(const Key('faith-choose')));
     await tester.pump();
     expect(controller.save.religionId, faiths.first.religionId);
   });
 
-  testWidgets('confirming the first pick follows that faith', (tester) async {
+  testWidgets('choosing the first faith follows it', (tester) async {
     final controller = await pumpTemple(tester, atTemple(startedCharacter(database), 100));
     await openOther(tester);
     await tapFaithAction(tester, 'Choose');
 
     final faith = religions(database.launch).first;
-    final row = find.byKey(Key('faith-${faith.religionId}'));
-    await tester.ensureVisible(row);
-    await tester.pump();
-    await tester.tap(row);
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('faith-confirm')));
+    await openFaith(tester, faith);
+    await tester.tap(find.byKey(const Key('faith-choose')));
     await tester.pump();
 
     expect(controller.save.religionId, faith.religionId);
-    expect(find.byType(FaithPickerPanel), findsNothing);
+    expect(picker(), findsNothing);
   });
 
   testWidgets('at 360px wide there is no overflow and tap targets are at least 48px', (
@@ -208,7 +252,7 @@ void main() {
     await tapFaithAction(tester, 'Choose');
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(FaithPickerPanel), findsOne);
+    expect(picker(), findsOne);
 
     final faiths = religions(database.launch);
     for (final faith in faiths) {
@@ -227,7 +271,7 @@ void main() {
     await tester.pump();
     expect(tester.takeException(), isNull);
 
-    for (final key in const [Key('faith-back'), Key('faith-confirm')]) {
+    for (final key in const [Key('faith-back'), Key('faith-choose')]) {
       final size = tester.getSize(find.byKey(key));
       expect(size.height, greaterThanOrEqualTo(minItemTapExtent));
       expect(size.width, greaterThanOrEqualTo(minItemTapExtent));

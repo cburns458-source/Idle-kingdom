@@ -7,7 +7,7 @@ import '../theme.dart';
 import 'floating_slot.dart';
 import 'item_icon.dart';
 
-/// Temple overlay: the seven faiths, then a confirm step.
+/// Temple overlay: names first, then one faith's page.
 class FaithPickerPanel extends StatefulWidget {
   const FaithPickerPanel({super.key, required this.controller, this.onClose});
 
@@ -39,7 +39,7 @@ class _FaithPickerPanelState extends State<FaithPickerPanel> {
 
   bool get _cooldownBlocks => _cooldown != null;
 
-  Future<void> _confirm() async {
+  Future<void> _choose() async {
     final religionId = _pendingId;
     if (religionId == null || _busy) return;
     if (_cooldownBlocks || save.gold < _cost || save.religionId == religionId) return;
@@ -59,6 +59,20 @@ class _FaithPickerPanelState extends State<FaithPickerPanel> {
     widget.onClose?.call();
   }
 
+  void _openFaith(String religionId) {
+    setState(() {
+      _pendingId = religionId;
+      _error = null;
+    });
+  }
+
+  void _backToList() {
+    setState(() {
+      _pendingId = null;
+      _error = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -69,115 +83,192 @@ class _FaithPickerPanelState extends State<FaithPickerPanel> {
         return SizedBox.expand(
           child: GamePanel(
             framed: true,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Faith',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
-                      ),
-                    ),
-                    if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose!),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                _FaithCost(cost: _cost),
-                if (_cooldown case final cooldown?) Text(cooldown),
-                if (_error case final error?)
-                  Text(
-                    error,
-                    style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+            child: pending == null
+                ? _FaithList(
+                    faiths: faiths,
+                    currentId: save.religionId,
+                    onOpen: _openFaith,
+                    onClose: widget.onClose,
+                  )
+                : _FaithPage(
+                    faith: pending,
+                    cost: _cost,
+                    cooldown: _cooldown,
+                    error: _error,
+                    busy: _busy,
+                    following: save.religionId == pending.religionId,
+                    canChoose:
+                        !_busy &&
+                        !_cooldownBlocks &&
+                        save.gold >= _cost &&
+                        save.religionId != pending.religionId,
+                    onBack: _busy ? null : _backToList,
+                    onChoose: _choose,
+                    onClose: widget.onClose,
                   ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: pending == null
-                      ? SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              for (final faith in faiths)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: _FaithRow(
-                                    faith: faith,
-                                    bonusLines: religionBonusSummaryLines(db, faith.religionId),
-                                    current: save.religionId == faith.religionId,
-                                    onTap: save.religionId == faith.religionId
-                                        ? null
-                                        : () => setState(() {
-                                            _pendingId = faith.religionId;
-                                            _error = null;
-                                          }),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: _FaithRow(
-                                  faith: pending,
-                                  bonusLines: religionBonusSummaryLines(db, pending.religionId),
-                                  current: save.religionId == pending.religionId,
-                                  onTap: null,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: SizedBox(
-                                    key: const Key('faith-back'),
-                                    height: minItemTapExtent,
-                                    child: GameButton(
-                                      label: 'Back',
-                                      tone: GameButtonTone.secondary,
-                                      onPressed: _busy
-                                          ? null
-                                          : () => setState(() {
-                                              _pendingId = null;
-                                              _error = null;
-                                            }),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: SizedBox(
-                                    key: const Key('faith-confirm'),
-                                    height: minItemTapExtent,
-                                    child: GameButton(
-                                      label: 'Confirm',
-                                      waiting: _busy,
-                                      onPressed:
-                                          _busy ||
-                                              _cooldownBlocks ||
-                                              save.gold < _cost ||
-                                              save.religionId == pending.religionId
-                                          ? null
-                                          : _confirm,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                ),
-              ],
-            ),
           ),
         );
       },
+    );
+  }
+}
+
+class _FaithList extends StatelessWidget {
+  const _FaithList({
+    required this.faiths,
+    required this.currentId,
+    required this.onOpen,
+    required this.onClose,
+  });
+
+  final List<ReligionRow> faiths;
+  final String? currentId;
+  final ValueChanged<String> onOpen;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Choose a faith…',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+              ),
+            ),
+            if (onClose != null) GameCloseButton(onPressed: onClose!),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final faith in faiths)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _FaithNameRow(
+                      faith: faith,
+                      current: currentId == faith.religionId,
+                      onTap: () => onOpen(faith.religionId),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FaithPage extends StatelessWidget {
+  const _FaithPage({
+    required this.faith,
+    required this.cost,
+    required this.cooldown,
+    required this.error,
+    required this.busy,
+    required this.following,
+    required this.canChoose,
+    required this.onBack,
+    required this.onChoose,
+    required this.onClose,
+  });
+
+  final ReligionRow faith;
+  final num cost;
+  final String? cooldown;
+  final String? error;
+  final bool busy;
+  final bool following;
+  final bool canChoose;
+  final VoidCallback? onBack;
+  final VoidCallback onChoose;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final god = faithGodName(faith);
+    final description = faithDescription(faith);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                faith.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+              ),
+            ),
+            if (onClose != null) GameCloseButton(onPressed: onClose!),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (god != null && god.isNotEmpty)
+                  Text(
+                    god,
+                    style: TextStyle(fontSize: GameFont.m, color: UiChrome.of(context).panelInk),
+                  ),
+                if (description.isNotEmpty) ...[
+                  if (god != null && god.isNotEmpty) const SizedBox(height: 8),
+                  Text(description),
+                ],
+                const SizedBox(height: 8),
+                _FaithCost(cost: cost),
+                if (cooldown case final remaining?) Text(remaining),
+                if (error case final message?)
+                  Text(
+                    message,
+                    style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                key: const Key('faith-back'),
+                height: minItemTapExtent,
+                child: GameButton(
+                  label: 'Back',
+                  tone: GameButtonTone.secondary,
+                  onPressed: onBack,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SizedBox(
+                key: const Key('faith-choose'),
+                height: minItemTapExtent,
+                child: GameButton(
+                  label: 'Choose',
+                  waiting: busy,
+                  onPressed: canChoose && !following ? onChoose : null,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -201,22 +292,22 @@ String? faithGodName(ReligionRow faith) {
   return name;
 }
 
-class _FaithRow extends StatelessWidget {
-  const _FaithRow({
-    required this.faith,
-    required this.bonusLines,
-    required this.current,
-    required this.onTap,
-  });
+/// Lore line from the Religions `Description` column. Empty until that column lands.
+String faithDescription(ReligionRow faith) {
+  final raw = faith.raw['Description'];
+  if (raw is! String) return '';
+  return raw.trim();
+}
+
+class _FaithNameRow extends StatelessWidget {
+  const _FaithNameRow({required this.faith, required this.current, required this.onTap});
 
   final ReligionRow faith;
-  final List<String> bonusLines;
   final bool current;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final god = faithGodName(faith);
     return KeyedSubtree(
       key: Key('faith-${faith.religionId}'),
       child: ConstrainedBox(
@@ -225,24 +316,14 @@ class _FaithRow extends StatelessWidget {
           highlight: current,
           onTap: onTap,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                faith.displayName,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w400),
-              ),
-              if (god != null && god.isNotEmpty)
-                Text(
-                  god,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: GameFont.s, color: UiChrome.of(context).panelInk),
-                ),
-              for (final line in bonusLines) MutedText(line),
-            ],
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              faith.displayName,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w400),
+            ),
           ),
         ),
       ),
