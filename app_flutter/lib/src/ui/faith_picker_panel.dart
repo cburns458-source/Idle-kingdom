@@ -247,11 +247,7 @@ class _FaithPage extends StatelessWidget {
               child: SizedBox(
                 key: const Key('faith-back'),
                 height: minItemTapExtent,
-                child: GameButton(
-                  label: 'Back',
-                  tone: GameButtonTone.secondary,
-                  onPressed: onBack,
-                ),
+                child: GameButton(label: 'Back', tone: GameButtonTone.secondary, onPressed: onBack),
               ),
             ),
             const SizedBox(width: 8),

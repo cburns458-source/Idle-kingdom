@@ -8,6 +8,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'equipped_title.dart';
 import 'game_image.dart';
 import 'game_popup.dart';
 import 'item_icon.dart';
@@ -65,6 +66,12 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
   MultiplayerController get net => widget.multiplayer;
 
   bool get _isSelf => net.session?.userId == widget.userId;
+
+  /// Own card always writes the equipped title; other cards keep the username.
+  String _profileName(String username) {
+    if (!_isSelf) return username;
+    return displayNameWithEquippedTitle(widget.controller.db, widget.controller.save, username);
+  }
 
   String _skillName(String? skillId) {
     if (skillId == null) return 'Adventuring';
@@ -194,7 +201,7 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
                         children: [
                           Expanded(
                             child: Text(
-                              view.username,
+                              _profileName(view.username),
                               style: TextStyle(
                                 fontSize: GameFont.l,
                                 fontWeight: FontWeight.w400,

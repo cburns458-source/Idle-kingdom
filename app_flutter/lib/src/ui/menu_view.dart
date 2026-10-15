@@ -223,13 +223,6 @@ class _MenuViewState extends State<MenuView> {
                 ),
                 const SizedBox(height: 16),
                 _togglePanel(
-                  title: 'Show title on HUD',
-                  detail: 'Show your equipped title, like The Undying, after your name.',
-                  value: controller.showTitleOnHud,
-                  onChanged: controller.setShowTitleOnHud,
-                ),
-                const SizedBox(height: 16),
-                _togglePanel(
                   title: 'Show Eat button',
                   detail: 'Show Eat on the food item detail sheet.',
                   value: controller.showEatButton,
