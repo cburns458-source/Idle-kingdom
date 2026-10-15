@@ -49,13 +49,32 @@ export function isAtKitchen(save: PlayerSave): boolean {
   return KITCHEN_LOCATION_IDS.has(save.currentLocationId)
 }
 
+/** Alchemy stations (Facility ID -> Location ID). Water is free at each one. */
+export const ALCHEMY_STATION_LOCATION_BY_FACILITY: Readonly<Record<string, string>> = {
+  'FAC-0006': 'LOC-0026', // Rose's Apothecary (Town)
+  'FAC-0015': 'LOC-0030', // Citadel Apothecary Bench
+}
+export const ALCHEMY_STATION_LOCATION_IDS = new Set(
+  Object.values(ALCHEMY_STATION_LOCATION_BY_FACILITY),
+)
+
+export function isAtAlchemyStation(save: PlayerSave): boolean {
+  return ALCHEMY_STATION_LOCATION_IDS.has(save.currentLocationId)
+}
+
+/** True when this ingredient is free and never consumed where the player stands. */
+export function isAmbientIngredientAt(save: PlayerSave, itemId: string): boolean {
+  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save)) return true
+  return itemId === WATER_ITEM_ID && isAtAlchemyStation(save)
+}
+
 export function inventoryCount(save: PlayerSave, itemId: string): number {
   return save.inventory.find((stack) => stack.itemId === itemId)?.quantity ?? 0
 }
 
-/** Bag count, or infinite water/scraps while standing in a kitchen. */
+/** Bag count, or infinite water/scraps in a kitchen and water at an Alchemy station. */
 export function ingredientOwned(save: PlayerSave, itemId: string): number {
-  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save)) return Number.POSITIVE_INFINITY
+  if (isAmbientIngredientAt(save, itemId)) return Number.POSITIVE_INFINITY
   return inventoryCount(save, itemId)
 }
 

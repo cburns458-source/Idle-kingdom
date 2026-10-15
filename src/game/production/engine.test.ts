@@ -244,7 +244,10 @@ describe('standard production', () => {
     const save = createNewSave(launch)
     const luck = getRecipe(launch, 'RCP-0053')!
     expect(canKnowRecipe(save, launch, luck)).toBe(false)
-    expect(recipesForActivity(launch, save, 'ACT-0020')).toHaveLength(0)
+    // Fernleaf Tonic (RCP-0078) is the only level-1 Alchemy recipe.
+    expect(recipesForActivity(launch, save, 'ACT-0020').map((row) => row['Recipe ID'])).toEqual([
+      'RCP-0078',
+    ])
   })
 
   it('requires Thievery 20 as well as Crafting 20 to make lockpicks', () => {

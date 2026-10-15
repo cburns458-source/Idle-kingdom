@@ -4,7 +4,7 @@ import 'recipes.dart';
 /// Spends ingredients for `crafts` repetitions, or null when any are missing.
 ///
 /// Emptied stacks leave the bag, which is why callers must re-resolve inventory
-/// indexes afterwards. Kitchen water and scraps are not taken from the bag.
+/// indexes afterwards. Kitchen water and scraps, and water at an Alchemy station, are not taken from the bag.
 PlayerSave? removeIngredients(
   PlayerSave save,
   List<RecipeIngredient> ingredients, [
@@ -13,7 +13,7 @@ PlayerSave? removeIngredients(
   if (crafts <= 0) return save;
   final inventory = [...save.inventory];
   for (final ingredient in ingredients) {
-    if (isKitchenAmbientIngredient(ingredient.itemId) && isAtKitchen(save)) continue;
+    if (isAmbientIngredientAt(save, ingredient.itemId)) continue;
     final need = ingredient.quantity * crafts;
     final index = inventory.indexWhere((entry) => entry.itemId == ingredient.itemId);
     if (index < 0 || inventory[index].quantity < need) return null;

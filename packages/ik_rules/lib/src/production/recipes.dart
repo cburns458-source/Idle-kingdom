@@ -53,13 +53,29 @@ bool isKitchenAmbientIngredient(String itemId) => kitchenAmbientItemIds.contains
 
 bool isAtKitchen(PlayerSave save) => kitchenLocationIds.contains(save.currentLocationId);
 
+/// Alchemy stations (Facility ID -> Location ID). Water is free at each one.
+const Map<String, String> alchemyStationLocationByFacility = <String, String>{
+  'FAC-0006': 'LOC-0026', // Rose's Apothecary (Town)
+  'FAC-0015': 'LOC-0030', // Citadel Apothecary Bench
+};
+final Set<String> alchemyStationLocationIds = alchemyStationLocationByFacility.values.toSet();
+
+bool isAtAlchemyStation(PlayerSave save) =>
+    alchemyStationLocationIds.contains(save.currentLocationId);
+
+/// True when this ingredient is free and never consumed where the player stands.
+bool isAmbientIngredientAt(PlayerSave save, String itemId) {
+  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save)) return true;
+  return itemId == waterItemId && isAtAlchemyStation(save);
+}
+
 num inventoryCount(PlayerSave save, String itemId) {
   return save.inventory.firstWhereOrNull((stack) => stack.itemId == itemId)?.quantity ?? 0;
 }
 
-/// Bag count, or infinite water/scraps while standing in a kitchen.
+/// Bag count, or infinite water/scraps in a kitchen and water at an Alchemy station.
 num ingredientOwned(PlayerSave save, String itemId) {
-  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save)) return double.infinity;
+  if (isAmbientIngredientAt(save, itemId)) return double.infinity;
   return inventoryCount(save, itemId);
 }
 
