@@ -6,6 +6,7 @@ import { prepareDatabase } from '../data/loadDatabase'
 import { assignRace } from '../races/assignRace'
 import { raceSkillDropChanceBonusPercent, applyRaceGoldGain } from '../races/races'
 import { createNewSave, parseSave } from '../save/saveStore'
+import { titleForSave } from '../save/playerTitle'
 import { SAVE_VERSION, TITLE_COSMETIC_SLOT_ID, type PlayerSave } from '../save/types'
 import { totalLevel } from '../skills/totals'
 import { chooseReligion } from './chooseReligion'
@@ -122,6 +123,12 @@ describe('religion', () => {
         return launch.Items.find((item) => item['Item ID'] === cosmetic?.['Item ID'])?.['Display Name']
       }),
     ).toEqual(['Oruvani', 'Khareth', 'Nymorathen', 'Drazhari', 'Veyrathel', 'Korvathi', 'Elyndri'])
+    expect(
+      rows.map((row) => {
+        const cosmetic = launch.Cosmetics.find((c) => c['Cosmetic ID'] === row['Title Cosmetic ID'])
+        return cosmetic?.['Title Placement']
+      }),
+    ).toEqual(['prefix', 'prefix', 'prefix', 'prefix', 'prefix', 'prefix', 'prefix'])
   })
 
   it('uses the race bonus when no faith is chosen, and never stacks both', () => {
@@ -259,6 +266,7 @@ describe('religion', () => {
     const worn = equipCosmetic(launch, first.save, TITLE_COSMETIC_SLOT_ID, WOODCUTTING_TITLE)
     expect(worn.ok).toBe(true)
     if (!worn.ok) return
+    expect(titleForSave(worn.save, launch)).toEqual({ text: 'Oruvani', placement: 'prefix' })
 
     const switched = chooseReligion(launch, worn.save, HUNTING_FAITH, NOW_MS + WEEK_MS)
     expect(switched.ok).toBe(true)

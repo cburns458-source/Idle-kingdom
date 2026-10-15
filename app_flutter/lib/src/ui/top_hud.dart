@@ -8,6 +8,7 @@ import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'equipped_title.dart';
 import 'format.dart';
 import 'game_image.dart';
 import 'mailbox_popup.dart';
@@ -101,9 +102,7 @@ class TopHud extends StatelessWidget {
   Widget _buildHud(BuildContext context) {
     final save = controller.save;
     final raceName = raceDisplayName(controller.db, save.raceId) ?? 'Unsworn';
-    final characterName = controller.showTitleOnHud
-        ? displayNameForSave(save, 'Adventurer')
-        : (save.characterName ?? 'Adventurer');
+    final characterName = displayNameWithEquippedTitle(controller.db, save, 'Adventurer');
     final tag = multiplayer.showHudGuildTag ? multiplayer.guild?.tag : null;
     final title = tag != null && tag.isNotEmpty ? '[$tag] $characterName' : characterName;
     final totalsLabel = controller.hudShowTotalXp

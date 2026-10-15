@@ -10,6 +10,7 @@ import '../theme.dart';
 import 'account_auth_form.dart';
 import 'floating_slot.dart';
 import 'format.dart';
+import 'equipped_title.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
 
@@ -186,7 +187,7 @@ class _AccountPanelState extends State<AccountPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            displayNameForSave(save, 'Unnamed'),
+            displayNameWithEquippedTitle(widget.controller.db, save, 'Unnamed'),
             style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
           ),
           MutedText('Race: ${raceDisplayName(widget.controller.db, save.raceId) ?? 'Unchosen'}'),

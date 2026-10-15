@@ -304,6 +304,7 @@ describe('local multiplayer backend', () => {
     expect(profile?.publicEquipment).toEqual([
       { slotId: WEAPON_TOOL_SLOT_ID, itemId: 'ITEM-0110', quantity: 1, enchantmentId: null },
     ])
+    expect(profile?.titleCosmeticId).toBe('COS-0003')
   })
 
   it('lets an officer decide applications and remove guests, not members', () => {

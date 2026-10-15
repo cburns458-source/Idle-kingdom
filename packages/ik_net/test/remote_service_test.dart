@@ -419,7 +419,7 @@ void main() {
     expect(rows.map((row) => row['updated_at']).toSet(), hasLength(1));
     expect(
       transport.tables[RemoteTables.profiles]!.single['appearance_json'],
-      save.appearance.toJson(),
+      appearanceJsonForPlayerSave(save),
     );
 
     // A second submit updates the same rows rather than adding more.
@@ -1045,11 +1045,17 @@ void main() {
       (await _rank(hero, transport, db, save, nameColor: '#FA3', publishNameColor: true)).ok,
       isTrue,
     );
+    expect(
+      (transport.tables[RemoteTables.profiles]!.single['appearance_json']
+          as Map)['titleCosmeticId'],
+      starterTitleCosmeticId,
+    );
 
     final rival = _service(transport, MemorySaveStorage());
     await rival.signUp('rival@example.com', 'Rival', 'secret');
     final profile = await rival.publicProfile(hero.session!.userId, db: db);
     expect(profile?.motto, 'Keep the watch.');
+    expect(profile?.titleCosmeticId, starterTitleCosmeticId);
     expect(await rival.publishedNameColors(<String>[hero.session!.userId]), <String, String>{
       hero.session!.userId: '#FFAA33',
     });

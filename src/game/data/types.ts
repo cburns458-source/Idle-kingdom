@@ -337,6 +337,11 @@ export interface CosmeticRow {
   'Cosmetic ID': string
   'Item ID': string
   'Cosmetic Slot ID': string
+  /**
+   * Which side of the name a title sits on. `prefix` or `suffix`. Null / omitted
+   * on non-title cosmetics; missing or anything else is treated as suffix.
+   */
+  'Title Placement'?: 'prefix' | 'suffix' | null
   /** Semicolon-separated: crafting; unlock; shop_gold; shop_real_money; starter. */
   'Acquisition Tags': string | null
   Status: RecordStatus

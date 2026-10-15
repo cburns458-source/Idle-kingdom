@@ -629,6 +629,7 @@ class RemoteMultiplayerService implements MultiplayerService {
       petCosmeticId: save != null
           ? save.cosmetics.equipped[petCosmeticSlotId]
           : account.petCosmeticId,
+      titleCosmeticId: save != null ? equippedTitleCosmeticId(save) : account.titleCosmeticId,
     );
   }
 
@@ -723,7 +724,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     final profileRow = <String, Object?>{
       'user_id': current.userId,
       'username': current.username,
-      'appearance_json': appearanceJsonForRemote(hosted.appearance, hosted.raceId),
+      'appearance_json': appearanceJsonForPlayerSave(hosted),
       remoteMottoColumn: hosted.motto,
       remotePetCosmeticIdColumn: hosted.cosmetics.equipped[petCosmeticSlotId],
     };
@@ -855,7 +856,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     final profileRow = <String, Object?>{
       'user_id': current.userId,
       'username': current.username,
-      'appearance_json': appearanceJsonForRemote(stamped.appearance, stamped.raceId),
+      'appearance_json': appearanceJsonForPlayerSave(stamped),
     };
     if (_profilesHaveGearPrivacy != false) {
       profileRow[remoteEquipmentJsonColumn] = publicEquipmentFromSave(stamped)
@@ -1056,7 +1057,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     final profileRow = <String, Object?>{
       'user_id': current.userId,
       'username': current.username,
-      'appearance_json': appearanceJsonForRemote(save.appearance, save.raceId),
+      'appearance_json': appearanceJsonForPlayerSave(save),
       remoteMottoColumn: save.motto,
       remotePetCosmeticIdColumn: save.cosmetics.equipped[petCosmeticSlotId],
     };
@@ -1090,7 +1091,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     final profileRow = <String, Object?>{
       'user_id': current.userId,
       'username': current.username,
-      'appearance_json': appearanceJsonForRemote(save.appearance, save.raceId),
+      'appearance_json': appearanceJsonForPlayerSave(save),
     };
     if (_profilesHaveGearPrivacy != false) {
       profileRow[remoteEquipmentJsonColumn] = snapshot.equipment
