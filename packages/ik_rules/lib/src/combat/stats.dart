@@ -10,6 +10,7 @@ import '../equipment/loadout.dart';
 import '../js_compat.dart';
 import '../skills/skill_actions.dart';
 import '../npcs/knowledge.dart';
+import '../potions/effects.dart';
 import '../projects/enchantments.dart';
 import '../religion/religion.dart';
 import '../rng/mulberry32.dart';
@@ -269,6 +270,7 @@ DamageRange fishingCombatDamageRange(GameDatabase db, PlayerSave save) {
 
 DamageRange playerDamageRange(GameDatabase db, PlayerSave save) {
   final enchantBonus = equippedEnchantmentDamageBonus(db, save);
+  final potionFlat = potionFlatDamageBonus(save.activePotionEffect);
   final combined = _damageRangeMultipliers(db, save) * staffPowerMultiplier(db, save);
   final weaponId = save.equipment.slots[weaponToolSlotId]?.itemId;
   var base = _unarmedRange(db, enchantBonus);
@@ -283,6 +285,7 @@ DamageRange playerDamageRange(GameDatabase db, PlayerSave save) {
       );
     }
   }
+  base = DamageRange(min: base.min + potionFlat.min, max: base.max + potionFlat.max);
 
   // Gloves with Min Damage (Pirate Hook / Dragon Gloves) raise minimum only.
   final glovesMinBonus = _equippedRows(db, save).fold<num>(0, (sum, row) {
@@ -305,9 +308,10 @@ DamageRange? playerOffhandDamageRange(GameDatabase db, PlayerSave save) {
   if (daggerMin is! num || daggerMax is! num) return null;
 
   final enchantBonus = equippedEnchantmentDamageBonus(db, save);
+  final potionFlat = potionFlatDamageBonus(save.activePotionEffect);
   return _scaleDamageRange(
-    daggerMin + enchantBonus,
-    math.max(daggerMin, daggerMax) + enchantBonus,
+    daggerMin + enchantBonus + potionFlat.min,
+    math.max(daggerMin, daggerMax) + enchantBonus + potionFlat.max,
     _damageRangeMultipliers(db, save),
   );
 }

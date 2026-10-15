@@ -4,9 +4,11 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../equipment/loadout.dart';
+import '../equipment/specialist.dart';
 import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 import '../tags.dart';
+import '../vitals/overheal.dart';
 
 const List<String> _scopeTags = <String>[
   'one_combat_encounter',
@@ -37,6 +39,10 @@ ActivePotionEffect? parsePotionEffect(
   num? enemyMaxHpDamagePercent;
   num? relativeDropChanceBonusPercent;
   num? baseDurationReductionPercent;
+  num? instantHealMaxHpPercent;
+  num? regenMaxHpPercentPerRound;
+  num? damageBonusMin;
+  num? damageBonusMax;
 
   for (final tag in tags) {
     final damage = RegExp(r'^\+(\d+(?:\.\d+)?)%\s*damage$').firstMatch(tag);
@@ -59,6 +65,24 @@ ActivePotionEffect? parsePotionEffect(
     final duration = RegExp(r'^-(\d+(?:\.\d+)?)%\s+base\s+duration$').firstMatch(tag);
     if (duration != null) {
       baseDurationReductionPercent = jsNumber(duration.group(1));
+      continue;
+    }
+    final instantHeal = RegExp(r'^heals\s+(\d+(?:\.\d+)?)%\s+of\s+max\s+hp\s+on\s+drink$')
+        .firstMatch(tag);
+    if (instantHeal != null) {
+      instantHealMaxHpPercent = jsNumber(instantHeal.group(1));
+      continue;
+    }
+    final regen = RegExp(r'^heals\s+(\d+(?:\.\d+)?)%\s+of\s+max\s+hp\s+per\s+combat\s+round$')
+        .firstMatch(tag);
+    if (regen != null) {
+      regenMaxHpPercentPerRound = jsNumber(regen.group(1));
+      continue;
+    }
+    final flat = RegExp(r'^\+(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\s+flat\s+damage$').firstMatch(tag);
+    if (flat != null) {
+      damageBonusMin = jsNumber(flat.group(1));
+      damageBonusMax = jsNumber(flat.group(2));
     }
   }
 
@@ -69,8 +93,29 @@ ActivePotionEffect? parsePotionEffect(
     enemyMaxHpDamagePercent: enemyMaxHpDamagePercent,
     relativeDropChanceBonusPercent: relativeDropChanceBonusPercent,
     baseDurationReductionPercent: baseDurationReductionPercent,
+    instantHealMaxHpPercent: instantHealMaxHpPercent,
+    regenMaxHpPercentPerRound: regenMaxHpPercentPerRound,
+    damageBonusMin: damageBonusMin,
+    damageBonusMax: damageBonusMax,
     actionsRemaining: potionActionDuration,
   );
+}
+
+/// Poison applies to current HP; the save key stays `enemyMaxHpDamagePercent`.
+num? enemyCurrentHpDamagePercent(ActivePotionEffect? effect) => effect?.enemyMaxHpDamagePercent;
+
+bool isSpeedPotionItem(GameDatabase db, String? itemId) {
+  if (itemId == null || itemId.isEmpty) return false;
+  final item = db.items.firstWhereOrNull((row) => row.raw['Item ID'] == itemId);
+  final key = (item?.raw['Internal Key'] as String? ?? '').toLowerCase();
+  final name = (item?.raw['Display Name'] as String? ?? '').toLowerCase();
+  return key.contains('speed') || RegExp(r'\bspeed\b').hasMatch(name);
+}
+
+/// Speed potions do not apply to Alchemy; Masterwork and others still do.
+bool potionAppliesToProductionSkill(GameDatabase db, String? itemId, String skillId) {
+  if (skillId != alchemySkillId) return true;
+  return !isSpeedPotionItem(db, itemId);
 }
 
 /// Actions still covered. Older saves with no count have one action left.
@@ -192,16 +237,55 @@ num? applyPotionDropChance(num? baseChance, ActivePotionEffect? effect) {
 }
 
 /// Applies base-duration reduction from an active production potion.
-num applyPotionDurationMs(num baseDurationMs, ActivePotionEffect? effect) {
+num applyPotionDurationMs(
+  num baseDurationMs,
+  ActivePotionEffect? effect, [
+  GameDatabase? db,
+  String? skillId,
+]) {
+  if (db != null &&
+      skillId != null &&
+      effect != null &&
+      !potionAppliesToProductionSkill(db, effect.itemId, skillId)) {
+    return math.max(0, baseDurationMs);
+  }
   final reduction = effect?.baseDurationReductionPercent;
   if (reduction == null || reduction <= 0) return math.max(0, baseDurationMs);
   final factor = math.max(0.01, 1 - reduction / 100);
   return math.max(0, (baseDurationMs * factor).floor());
 }
 
+/// Instant heal: percent of max HP, capped at max HP (same ceiling as food).
+num potionInstantHealAmount(num maxHp, ActivePotionEffect? effect) {
+  final percent = effect?.instantHealMaxHpPercent;
+  if (percent == null || percent <= 0) return 0;
+  return math.max(0, (maxHp * (percent / 100)).floor());
+}
+
+num applyPotionInstantHeal(num currentHp, num maxHp, ActivePotionEffect? effect) {
+  final amount = potionInstantHealAmount(maxHp, effect);
+  if (amount <= 0) return currentHp;
+  return healTowardCeiling(currentHp, maxHp, amount, 0);
+}
+
+/// Per-round heal: percent of max HP, capped at max HP.
+num applyPotionRegenHeal(num currentHp, num maxHp, ActivePotionEffect? effect) {
+  final percent = effect?.regenMaxHpPercentPerRound;
+  if (percent == null || percent <= 0) return currentHp;
+  final amount = math.max(0, (maxHp * (percent / 100)).floor());
+  if (amount <= 0) return currentHp;
+  return healTowardCeiling(currentHp, maxHp, amount, 0);
+}
+
+({num min, num max}) potionFlatDamageBonus(ActivePotionEffect? effect) {
+  final min = effect?.damageBonusMin;
+  final max = effect?.damageBonusMax;
+  return (min: min != null && min.isFinite ? min : 0, max: max != null && max.isFinite ? max : 0);
+}
+
 /// Flat HP from the old one-shot "deals N% of enemy maximum HP" tag.
 num potionEnemyMaxHpDamage(num enemyMaxHp, ActivePotionEffect? effect) {
-  final percent = effect?.enemyMaxHpDamagePercent;
+  final percent = enemyCurrentHpDamagePercent(effect);
   if (percent == null || percent <= 0) return 0;
   return math.max(0, (enemyMaxHp * (percent / 100)).floor());
 }
@@ -214,7 +298,7 @@ num potionEnemyHpFloor(num enemyMaxHp) {
 
 /// After the player's swing: 10% of current HP, then clamp to the 10% max floor.
 num applyPotionEnemyRoundDamage(num enemyHp, num enemyMaxHp, ActivePotionEffect? effect) {
-  final percent = effect?.enemyMaxHpDamagePercent;
+  final percent = enemyCurrentHpDamagePercent(effect);
   if (percent == null || percent <= 0) return enemyHp;
   final floorHp = potionEnemyHpFloor(enemyMaxHp);
   if (enemyHp <= floorHp) return enemyHp;

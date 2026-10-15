@@ -86,13 +86,12 @@ num equippedRelativeDropChanceBonusPercent(GameDatabase db, PlayerSave save) {
 }
 
 /// Total relative drop-chance bonus from all sources (gear + active luck potion).
+/// Drop-bonus potions apply to gathering and combat loot, including gear.
 /// Same bonus types stack by addition.
 num totalRelativeDropChanceBonusPercent(GameDatabase db, PlayerSave save) {
   var total = equippedRelativeDropChanceBonusPercent(db, save);
-  final potion = save.activePotionEffect;
-  if (potion?.scope == 'one_action') {
-    total += potion?.relativeDropChanceBonusPercent ?? 0;
-  }
+  final potionBonus = save.activePotionEffect?.relativeDropChanceBonusPercent;
+  if (potionBonus != null) total += potionBonus;
   return total;
 }
 

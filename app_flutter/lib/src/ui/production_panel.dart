@@ -186,7 +186,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
   }
 
   Widget _queueRow(RecipeRow recipe) {
-    final fromMaterials = maxCraftsFromMaterials(save, recipe);
+    final fromMaterials = maxCraftsFromMaterials(db, save, recipe);
     final fromQueueCap = maxCraftsFromQueueCap(db, recipe);
     final ceiling = clampProductionQuantity(db, save, recipe, 999999);
     final quantity = _quantity.clamp(1, ceiling < 1 ? 1 : ceiling);
@@ -297,7 +297,7 @@ class _RecipeDetails extends StatelessWidget {
               IngredientChip(
                 item: controller.indexes.itemsById[ingredient.itemId],
                 need: ingredient.quantity,
-                owned: ingredientOwned(controller.save, ingredient.itemId),
+                owned: ingredientOwned(controller.db, controller.save, ingredient.itemId),
               ),
           ],
         ),

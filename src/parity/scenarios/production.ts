@@ -32,6 +32,7 @@ import {
 import type { PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
+import { addItemToInventory } from '../../game/activity/rewards'
 import { asJson, baseSave, kitchenSave, queuedProductionSave, richSave } from './saveFixtures'
 
 type SaveKind = 'base' | 'rich' | 'kitchen' | 'queued'
@@ -153,7 +154,7 @@ export const productionScenarios: ParityScenario[] = [
         ],
         materialMax: ['RCP-0001', 'RCP-0002', 'RCP-0014'].map((recipeId) => {
           const recipe = getRecipe(db, recipeId)
-          return recipe ? maxCraftsFromMaterials(save, recipe) : null
+          return recipe ? maxCraftsFromMaterials(db, save, recipe) : null
         }),
       }
     }),
@@ -176,6 +177,7 @@ export const productionScenarios: ParityScenario[] = [
   ),
 
   scenario('production/remove-ingredients', 'cases', withSave('kitchen'), () => {
+    const db = contentDatabase()
     const save = saveFor('kitchen')
     const cases: Array<{ name: string; ingredients: Array<{ itemId: string; quantity: number }>; crafts: number }> = [
       { name: 'single', ingredients: [{ itemId: 'ITEM-0025', quantity: 1 }], crafts: 1 },
@@ -194,7 +196,7 @@ export const productionScenarios: ParityScenario[] = [
     ]
     return {
       results: cases.map((entry) => {
-        const next = removeIngredients(save, entry.ingredients, entry.crafts)
+        const next = removeIngredients(db, save, entry.ingredients, entry.crafts)
         return { name: entry.name, save: next == null ? null : asJson(next) }
       }),
     } as unknown as JsonValue
@@ -270,6 +272,31 @@ export const productionScenarios: ParityScenario[] = [
     save: asJson(cancelProductionActivity(contentDatabase(), saveFor('queued'))),
     cleared: asJson(clearProductionSave(saveFor('queued'))),
   })),
+
+  scenario(
+    'production/queue',
+    'apothecary-no-water',
+    (() => {
+      const db = contentDatabase()
+      let save = { ...baseSave(db), currentLocationId: 'LOC-0026' }
+      save = addItemToInventory(save, 'ITEM-0031', 5)
+      return {
+        source: 'content',
+        save: asJson(save),
+        activityId: 'ACT-0020',
+        recipeId: 'RCP-0078',
+        quantity: 3,
+        nowMs: NOW_MS,
+      }
+    })(),
+    () => {
+      const db = contentDatabase()
+      let save = { ...baseSave(db), currentLocationId: 'LOC-0026' }
+      save = addItemToInventory(save, 'ITEM-0031', 5)
+      const queued = beginProductionQueue(db, save, 'ACT-0020', 'RCP-0078', 3, NOW_MS)
+      return (queued.ok ? { ok: true, save: asJson(queued.save) } : queued) as unknown as JsonValue
+    },
+  ),
 
   scenario('recipes/knowledge', 'all-rows', withSave('kitchen'), () => {
     const db = contentDatabase()

@@ -102,7 +102,7 @@ void main() {
             ],
             'materialMax': <String>['RCP-0001', 'RCP-0002', 'RCP-0014'].map((recipeId) {
               final recipe = getRecipe(db, recipeId);
-              return recipe == null ? null : maxCraftsFromMaterials(save, recipe);
+              return recipe == null ? null : maxCraftsFromMaterials(db, save, recipe);
             }).toList(),
           }),
           isNull,
@@ -158,9 +158,10 @@ void main() {
     for (final fixture in loadParityFixtures('production/remove-ingredients')) {
       test(fixture.name, () {
         final save = saveOf(fixture);
+        final db = databaseOf(fixture);
         final results = cases.map((entry) {
           final (name, ingredients, crafts) = entry;
-          final next = removeIngredients(save, ingredients, crafts);
+          final next = removeIngredients(db, save, ingredients, crafts);
           return <String, Object?>{'name': name, 'save': next?.toJson()};
         }).toList();
         expect(checkParity(fixture, {'results': results}), isNull);

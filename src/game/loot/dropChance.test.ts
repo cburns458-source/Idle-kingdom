@@ -47,6 +47,10 @@ describe('relative drop chance stacking', () => {
       enemyMaxHpDamagePercent: null,
       relativeDropChanceBonusPercent: 25,
       baseDurationReductionPercent: null,
+      instantHealMaxHpPercent: null,
+      regenMaxHpPercentPerRound: null,
+      damageBonusMin: null,
+      damageBonusMax: null,
       actionsRemaining: 6,
     }
     const save = {
@@ -62,6 +66,37 @@ describe('relative drop chance stacking', () => {
     }
     expect(totalRelativeDropChanceBonusPercent(launch, save)).toBe(40)
     expect(applyRelativeDropChance(50, 40)).toBe(70)
+  })
+
+  it('applies a drop-bonus potion during combat, including to gear', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const potion: ActivePotionEffect = {
+      scope: 'one_combat_encounter',
+      itemId: 'ITEM-0070',
+      damageBonusPercent: null,
+      enemyMaxHpDamagePercent: null,
+      relativeDropChanceBonusPercent: 25,
+      baseDurationReductionPercent: null,
+      instantHealMaxHpPercent: null,
+      regenMaxHpPercentPerRound: null,
+      damageBonusMin: null,
+      damageBonusMax: null,
+      actionsRemaining: 6,
+    }
+    const save = {
+      ...base,
+      activePotionEffect: potion,
+      equipment: {
+        ...base.equipment,
+        slots: {
+          ...base.equipment.slots,
+          [NECKLACE_SLOT_ID]: { itemId: 'ITEM-0180', quantity: 1 },
+        },
+      },
+    }
+    expect(totalRelativeDropChanceBonusPercent(launch, save)).toBe(40)
+    expect(applyRelativeDropChance(20, 40)).toBe(28)
   })
 
   it('applies Scythe harvesting drop chance only to harvesting actions', () => {

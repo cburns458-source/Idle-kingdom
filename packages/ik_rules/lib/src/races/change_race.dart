@@ -323,6 +323,7 @@ ChangeRaceResult changeRaceAtNpc(GameDatabase db, PlayerSave save, String raceId
   final spentItems = cost.items.isEmpty
       ? save
       : removeIngredients(
+          db,
           save,
           cost.items
               .map((item) => RecipeIngredient(itemId: item.itemId, quantity: item.quantity))

@@ -616,7 +616,7 @@ List<RecipeIngredient> _countedIngredients(List<String> itemIds) {
     ..._countedIngredients(plantedItemIds),
     if (usedCompost) RecipeIngredient(itemId: compostItemId, quantity: compostCostForSpecs(specs)),
   ];
-  final removed = removeIngredients(save, consumed);
+  final removed = removeIngredients(db, save, consumed);
   if (removed == null) {
     return (
       ok: false,
@@ -815,7 +815,7 @@ int fishingPotUsesToday(PlayerSave save, String locationId, {required num nowMs}
   if (bait.any((itemId) => !isValidPotBait(loc, fishingLevel, itemId))) {
     return (ok: false, save: null, reason: 'That bait does not match a pot catch here.');
   }
-  final removed = removeIngredients(save, [
+  final removed = removeIngredients(db, save, [
     RecipeIngredient(itemId: trapItemId, quantity: 1),
     ..._countItemIds(bait),
   ]);

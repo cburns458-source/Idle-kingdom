@@ -13,7 +13,7 @@ import '../shops/shops.dart';
 import '../spells/spells.dart';
 
 /// How an item enters the world. New kinds can be appended without rewriting pages.
-enum CodexObtainKind { action, enemy, shop, starter, quest }
+enum CodexObtainKind { action, enemy, shop, starter, quest, note }
 
 const String _goldenSpudItemId = 'ITEM-0026';
 const String _chefHatItemId = 'ITEM-0165';
@@ -697,6 +697,14 @@ class CodexIndex {
           maxQuantity: starter.quantity,
         ),
       );
+    }
+
+    // Optional Items."Obtained From" column, after generated sources.
+    for (final item in db.items) {
+      final note = item.raw['Obtained From'];
+      if (note is String && note.trim().isNotEmpty) {
+        addObtain(item.itemId, CodexObtainSource(kind: CodexObtainKind.note, title: note.trim()));
+      }
     }
 
     final itemIds = [for (final item in db.items) item.itemId];

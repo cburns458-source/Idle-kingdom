@@ -10,6 +10,7 @@ import {
   resolveCombatRound,
 } from '../../game/combat/engine'
 import { tryConsumeFoodAfterVictory } from '../../game/combat/food'
+import { parsePotionEffect } from '../../game/potions/effects'
 import { mulberry32 } from '../../game/rng/mulberry32'
 import type { PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
@@ -38,6 +39,25 @@ function poisonPotionSave(): PlayerSave {
       slots: { ...base.equipment.slots, 'SLOT-0012': { itemId: 'ITEM-0073', quantity: 2 } },
     },
   }
+}
+
+function equippedPotionSave(itemId: string, currentHp = 400): PlayerSave {
+  const base = saveFor('base')
+  return {
+    ...base,
+    currentHp,
+    equipment: {
+      slots: { ...base.equipment.slots, 'SLOT-0012': { itemId, quantity: 2 } },
+    },
+  }
+}
+
+function activePotionSave(itemId: string, currentHp = 400): PlayerSave {
+  const db = contentDatabase()
+  const base = saveFor('base')
+  const equipment = db.Equipment.find((row) => row['Item ID'] === itemId)
+  const effect = parsePotionEffect(equipment, itemId, 'one_combat_encounter')
+  return { ...base, currentHp, activePotionEffect: effect }
 }
 
 const NOW_MS = Date.parse('2026-01-01T00:00:00.000Z')
@@ -88,6 +108,38 @@ export const combatScenarios: ParityScenario[] = [
     },
   ),
 
+  scenario(
+    'combat/begin',
+    'fernleaf-tonic',
+    { source: 'content', save: asJson(equippedPotionSave('ITEM-0439')), nowIso: NOW_ISO },
+    () => {
+      const db = contentDatabase()
+      const action = db.Actions.find((row) => row['Action ID'] === 'ACN-0003')!
+      const enemy = getEnemy(db, 'ENM-0003')!
+      const save = equippedPotionSave('ITEM-0439')
+      return {
+        begun: asJson(beginCombatSave(db, save, action, enemy, NOW_ISO)),
+        cleared: asJson(clearCombatSave(beginCombatSave(db, save, action, enemy, NOW_ISO))),
+      }
+    },
+  ),
+
+  scenario(
+    'combat/begin',
+    'augur-draught',
+    { source: 'content', save: asJson(equippedPotionSave('ITEM-0441')), nowIso: NOW_ISO },
+    () => {
+      const db = contentDatabase()
+      const action = db.Actions.find((row) => row['Action ID'] === 'ACN-0003')!
+      const enemy = getEnemy(db, 'ENM-0003')!
+      const save = equippedPotionSave('ITEM-0441')
+      return {
+        begun: asJson(beginCombatSave(db, save, action, enemy, NOW_ISO)),
+        cleared: asJson(clearCombatSave(beginCombatSave(db, save, action, enemy, NOW_ISO))),
+      }
+    },
+  ),
+
   ...(['combat', 'geared'] as const).flatMap((kind) =>
     ENEMY_IDS.filter((enemyId) => enemyId !== 'ENM-9999').map((enemyId) =>
       scenario(
@@ -112,6 +164,34 @@ export const combatScenarios: ParityScenario[] = [
         },
       ),
     ),
+  ),
+
+  scenario(
+    'combat/rounds',
+    'mosstole-brew-enm-0001',
+    {
+      source: 'content',
+      save: asJson(activePotionSave('ITEM-0440')),
+      enemyId: 'ENM-0001',
+      seed: SEED,
+      rounds: ROUNDS,
+    },
+    () => {
+      const db = contentDatabase()
+      const enemy = getEnemy(db, 'ENM-0001')!
+      const random = mulberry32(SEED)
+      let save = activePotionSave('ITEM-0440')
+      let enemyHp = enemy['Maximum HP']
+      const rounds: JsonValue[] = []
+      for (let index = 0; index < ROUNDS; index += 1) {
+        const round = resolveCombatRound(db, save, enemy, enemyHp, random)
+        rounds.push(round as unknown as JsonValue)
+        enemyHp = round.enemyHp
+        save = { ...save, currentHp: round.playerHp, combatEnemyHp: round.enemyHp }
+        if (round.outcome !== 'ongoing') break
+      }
+      return { rounds, save: asJson(save) }
+    },
   ),
 
   ...(['base', 'combat', 'geared'] as const).map((kind) =>
@@ -149,6 +229,40 @@ export const combatScenarios: ParityScenario[] = [
       const result = applyCombatVictory(
         db,
         fullBagSave(db, ['ITEM-0100']),
+        action,
+        enemy,
+        mulberry32(SEED),
+        NOW_MS,
+      )
+      return {
+        save: asJson(result.save),
+        xpGained: result.xpGained,
+        goldGained: result.goldGained,
+        loot: result.loot,
+        ...(result.leftBehind?.length ? { leftBehind: result.leftBehind } : {}),
+        foodConsumed: result.foodConsumed,
+        foodHealed: result.foodHealed,
+        foodName: result.foodName,
+      } as unknown as JsonValue
+    },
+  ),
+
+  scenario(
+    'combat/victory',
+    'luck-potion-combat',
+    {
+      source: 'content',
+      save: asJson(activePotionSave('ITEM-0070')),
+      seed: SEED,
+      nowMs: NOW_MS,
+    },
+    () => {
+      const db = contentDatabase()
+      const action = db.Actions.find((row) => row['Action ID'] === 'ACN-0003')!
+      const enemy = getEnemy(db, 'ENM-0003')!
+      const result = applyCombatVictory(
+        db,
+        activePotionSave('ITEM-0070'),
         action,
         enemy,
         mulberry32(SEED),

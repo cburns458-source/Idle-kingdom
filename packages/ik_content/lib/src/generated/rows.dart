@@ -443,6 +443,10 @@ class ItemRow extends DbRow {
   String? get stackable => stringOrNull('Stackable');
 
   String? get notes => stringOrNull('Notes');
+
+  /// Optional lore/source line shown in the Codex after generated obtain
+  /// sources. Quest & Dialogue fills the cells; systems leave them empty.
+  String? get obtainedFrom => stringOrNull('Obtained From');
 }
 
 class LocationRow extends DbRow {

@@ -255,6 +255,32 @@ void main() {
     );
   });
 
+  test('leaves Obtained From empty and appends a filled cell after generated sources', () {
+    expect(
+      db.items.every((item) {
+        final note = item.raw['Obtained From'];
+        return note == null || (note is String && note.trim().isEmpty);
+      }),
+      isTrue,
+    );
+    final raw = Map<String, Object?>.from(db.raw);
+    final items = [
+      for (final item in db.items)
+        item.itemId == 'ITEM-0031'
+            ? {...item.raw, 'Obtained From': 'A hidden glade.'}
+            : Map<String, Object?>.from(item.raw),
+    ];
+    raw['Items'] = items;
+    final indexed = CodexIndex(GameDatabase(raw));
+    final sources = indexed.item('ITEM-0031')!.obtainedFrom;
+    expect(sources.last.kind, CodexObtainKind.note);
+    expect(sources.last.title, 'A hidden glade.');
+    expect(
+      sources.take(sources.length - 1).every((row) => row.kind != CodexObtainKind.note),
+      isTrue,
+    );
+  });
+
   test('labels Mother Squid and Squidling XP as Fishing', () {
     final mother = codex.enemy('ENM-0023');
     final squidling = codex.enemy('ENM-0024');

@@ -32,11 +32,11 @@ void main() {
     expect(stock.raw['Ingredient 2 Item ID'], 'ITEM-0366');
     expect(stock.raw['Ingredient 2 Quantity'], 1);
     final away = createNewSave(db, 0);
-    expect(maxCraftsFromMaterials(away, stock), 0);
+    expect(maxCraftsFromMaterials(db, away, stock), 0);
     final kitchen = away.copyWith(currentLocationId: 'LOC-0023');
-    expect(maxCraftsFromMaterials(kitchen, stock), double.infinity);
-    expect(ingredientOwned(kitchen, 'ITEM-0365'), double.infinity);
-    expect(ingredientOwned(away, 'ITEM-0365'), 0);
+    expect(maxCraftsFromMaterials(db, kitchen, stock), double.infinity);
+    expect(ingredientOwned(db, kitchen, 'ITEM-0365'), double.infinity);
+    expect(ingredientOwned(db, away, 'ITEM-0365'), 0);
     for (final recipeId in <String>[
       'RCP-0012',
       'RCP-0013',

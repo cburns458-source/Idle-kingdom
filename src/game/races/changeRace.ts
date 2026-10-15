@@ -274,7 +274,7 @@ export function changeRaceAtNpc(
   const spentItems =
     cost.items.length === 0
       ? save
-      : removeIngredients(save, cost.items)
+      : removeIngredients(db, save, cost.items)
   if (!spentItems) {
     return { ok: false, reason: 'You do not have what the weave asks.' }
   }

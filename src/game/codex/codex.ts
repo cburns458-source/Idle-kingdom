@@ -21,7 +21,7 @@ import { isSpellItem, spellTooltipLines } from '../spells/spells'
 export { INVENTORY_GROUP_ORDER, inventoryGroupLabel }
 
 /** How an item enters the world. New kinds can be appended without rewriting pages. */
-export type CodexObtainKind = 'action' | 'enemy' | 'shop' | 'starter' | 'quest'
+export type CodexObtainKind = 'action' | 'enemy' | 'shop' | 'starter' | 'quest' | 'note'
 
 const GOLDEN_SPUD_ITEM_ID = 'ITEM-0026'
 const CHEF_HAT_ITEM_ID = 'ITEM-0165'
@@ -479,6 +479,18 @@ export class CodexIndex {
         minQuantity: starter.Quantity,
         maxQuantity: starter.Quantity,
       })
+    }
+
+    // Optional Items."Obtained From" column, after generated sources.
+    for (const item of this.db.Items) {
+      const note = item['Obtained From']
+      if (typeof note === 'string' && note.trim()) {
+        addObtain(item['Item ID'], {
+          kind: 'note',
+          title: note.trim(),
+          locations: [],
+        })
+      }
     }
 
     const itemIds = this.db.Items.map((item) => item['Item ID'])

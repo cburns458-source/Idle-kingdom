@@ -12,17 +12,36 @@ import {
   productionOutputReservePerCraft,
   ALCHEMY_SKILL_ID,
 } from '../equipment/specialist'
-import { equippedSuccessChanceBonusPercent } from '../equipment/loadout'
+import { equippedSuccessChanceBonusPercent, POTION_SLOT_ID, slotStack } from '../equipment/loadout'
 import { canFitItemQuantity, INVENTORY_SLOT_LIMIT, maxAddableQuantity } from '../inventory/capacity'
 import type { GameDatabase } from '../data/types'
 import type { RecipeRow } from '../data/recipeTypes'
 import {
   applyPotionDurationMs,
+  potionAppliesToProductionSkill,
+  potionActionsRemaining,
   tickPotionAction,
   tryConsumePotionForScope,
 } from '../potions/effects'
 import type { ActivePotionEffect, PlayerSave } from '../save/types'
 import { activeSpellProductionDurationMultiplier } from '../spells/spells'
+import { removeIngredients } from './inventory'
+import { requirementsForEntity, unmetHardRequirements } from '../activity/requirements'
+import { knowsRecipe } from '../recipes/knowledge'
+import {
+  canKnowRecipe,
+  facilityIdForActivity,
+  getRecipe,
+  isAmbientIngredientAt,
+  isCompleteRecipe,
+  maxCraftsFromMaterials,
+  maxCraftsFromQueueCap,
+  recipeIngredients,
+  recipeMatchesFacility,
+} from './recipes'
+import { applyBountyProcessProgress } from '../bounties/progress'
+import { recordProductionMilestones } from '../achievements/progress'
+import { applyQuestProcessProgress } from '../quests/progress'
 
 export function productionCraftDurationMs(
   db: GameDatabase,
@@ -32,25 +51,33 @@ export function productionCraftDurationMs(
 ): number {
   const baseDurationMs = recipe['Base Duration Seconds'] * 1000
   const reduced = baseDurationMs * activeSpellProductionDurationMultiplier(db, save)
-  return applyPotionDurationMs(reduced, potionEffect)
+  return applyPotionDurationMs(reduced, potionEffect, db, recipe['Skill ID'])
 }
-import { removeIngredients } from './inventory'
-import { requirementsForEntity, unmetHardRequirements } from '../activity/requirements'
-import { knowsRecipe } from '../recipes/knowledge'
-import {
-  canKnowRecipe,
-  facilityIdForActivity,
-  getRecipe,
-  isCompleteRecipe,
-  isKitchenAmbientIngredient,
-  maxCraftsFromMaterials,
-  maxCraftsFromQueueCap,
-  recipeIngredients,
-  recipeMatchesFacility,
-} from './recipes'
-import { applyBountyProcessProgress } from '../bounties/progress'
-import { recordProductionMilestones } from '../achievements/progress'
-import { applyQuestProcessProgress } from '../quests/progress'
+
+function consumeProductionPotion(
+  db: GameDatabase,
+  save: PlayerSave,
+  skillId: string,
+): { save: PlayerSave; effect: ActivePotionEffect | null } {
+  const existing = save.activePotionEffect
+  if (existing && potionActionsRemaining(existing) > 0) {
+    if (!potionAppliesToProductionSkill(db, existing.itemId, skillId)) {
+      return { save, effect: null }
+    }
+  } else {
+    const equipped = slotStack(save, POTION_SLOT_ID)
+    if (equipped && !potionAppliesToProductionSkill(db, equipped.itemId, skillId)) {
+      return { save, effect: null }
+    }
+  }
+  return tryConsumePotionForScope(db, save, 'one_standard_production_action')
+}
+
+function tickProductionPotion(db: GameDatabase, save: PlayerSave, skillId: string): PlayerSave {
+  const effect = save.activePotionEffect
+  if (effect && !potionAppliesToProductionSkill(db, effect.itemId, skillId)) return save
+  return tickPotionAction(save)
+}
 
 export function clearProductionSave(save: PlayerSave): PlayerSave {
   return {
@@ -72,7 +99,7 @@ export function cancelProductionActivity(db: GameDatabase, save: PlayerSave): Pl
     const recipe = getRecipe(db, save.productionRecipeId)
     if (recipe) {
       for (const ingredient of recipeIngredients(recipe)) {
-        if (isKitchenAmbientIngredient(ingredient.itemId)) continue
+        if (isAmbientIngredientAt(db, save, ingredient.itemId)) continue
         next = addItemToInventory(next, ingredient.itemId, ingredient.quantity * remaining)
       }
     }
@@ -118,13 +145,13 @@ export function beginProductionQueue(
   if (crafts > maxCraftsFromQueueCap(db, recipe)) {
     return { ok: false, reason: 'That queue exceeds the 24-hour production cap.' }
   }
-  if (crafts > maxCraftsFromMaterials(save, recipe)) {
+  if (crafts > maxCraftsFromMaterials(db, save, recipe)) {
     return { ok: false, reason: 'Missing required materials for that quantity.' }
   }
 
   const ingredients = recipeIngredients(recipe)
   // Reserve/consume materials for the full queue up front so they cannot be spent elsewhere.
-  const withMaterials = removeIngredients(save, ingredients, crafts)
+  const withMaterials = removeIngredients(db, save, ingredients, crafts)
   if (!withMaterials) {
     return { ok: false, reason: 'Missing required materials.' }
   }
@@ -144,7 +171,7 @@ export function beginProductionQueue(
   }
 
   const startedAt = new Date(nowMs).toISOString()
-  const potion = tryConsumePotionForScope(db, withMaterials, 'one_standard_production_action')
+  const potion = consumeProductionPotion(db, withMaterials, recipe['Skill ID'])
   const durationMs = productionCraftDurationMs(db, potion.save, recipe, potion.effect)
   return {
     ok: true,
@@ -304,22 +331,30 @@ function finishProductionCraft(
   if (remaining <= 0) {
     return {
       save: clearProductionSave(
-        tickPotionAction({
-          ...craft.next,
-          currentActivityId: null,
-          activityStartedAt: null,
-        }),
+        tickProductionPotion(
+          db,
+          {
+            ...craft.next,
+            currentActivityId: null,
+            activityStartedAt: null,
+          },
+          recipe['Skill ID'],
+        ),
       ),
       ...tail,
     }
   }
 
   const startedAt = new Date(nowMs).toISOString()
-  const ticked = tickPotionAction({
-    ...craft.next,
-    productionQuantityRemaining: remaining,
-  })
-  const potion = tryConsumePotionForScope(db, ticked, 'one_standard_production_action')
+  const ticked = tickProductionPotion(
+    db,
+    {
+      ...craft.next,
+      productionQuantityRemaining: remaining,
+    },
+    recipe['Skill ID'],
+  )
+  const potion = consumeProductionPotion(db, ticked, recipe['Skill ID'])
   const durationMs = productionCraftDurationMs(db, potion.save, recipe, potion.effect)
   return {
     save: {

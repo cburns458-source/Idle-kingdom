@@ -224,6 +224,20 @@ describe('codex index', () => {
     ).toBe(false)
   })
 
+  it('leaves Obtained From empty and appends a filled cell after generated sources', () => {
+    expect(launch.Items.every((item) => !item['Obtained From'])).toBe(true)
+    const patched = {
+      ...launch,
+      Items: launch.Items.map((item) =>
+        item['Item ID'] === 'ITEM-0031' ? { ...item, 'Obtained From': 'A hidden glade.' } : item,
+      ),
+    }
+    const indexed = new CodexIndex(patched)
+    const sources = indexed.item('ITEM-0031')!.obtainedFrom
+    expect(sources.at(-1)).toMatchObject({ kind: 'note', title: 'A hidden glade.' })
+    expect(sources.slice(0, -1).every((row) => row.kind !== 'note')).toBe(true)
+  })
+
   it('labels Mother Squid and Squidling XP as Fishing', () => {
     const mother = codex.enemy('ENM-0023')
     const squidling = codex.enemy('ENM-0024')

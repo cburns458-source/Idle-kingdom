@@ -152,6 +152,7 @@ ProjectCompleteResult completeSpecialProject(
   final project = getProject(db, projectId)!;
   final crafts = quantity.floor();
   final withMaterials = removeIngredients(
+    db,
     save,
     projectInputsForSave(
       db,

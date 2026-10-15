@@ -17,6 +17,7 @@ import {
 } from '../projects/enchantments'
 import { hearthguardSetMaxHpBonusPercent } from '../economy/plaza'
 import { alignmentMaxHpMultiplier } from '../religion/religion'
+import { potionFlatDamageBonus } from '../potions/effects'
 import type { AttackStyle, PlayerSave } from '../save/types'
 import { configNumber } from '../activity/gathering'
 import {
@@ -291,6 +292,7 @@ export function playerDamageRange(
   nowMs: number = Date.now(),
 ): { min: number; max: number } {
   const enchantBonus = equippedEnchantmentDamageBonus(db, save)
+  const potionFlat = potionFlatDamageBonus(save.activePotionEffect)
   const combined = damageRangeMultipliers(db, save, nowMs) * staffPowerMultiplier(db, save)
   const weaponId = save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId
   let min: number
@@ -300,15 +302,15 @@ export function playerDamageRange(
     const weaponMin = weapon?.['Min Damage']
     const weaponMax = weapon?.['Max Damage']
     if (typeof weaponMin === 'number' && typeof weaponMax === 'number') {
-      min = weaponMin + enchantBonus
-      max = Math.max(weaponMin, weaponMax) + enchantBonus
+      min = weaponMin + enchantBonus + potionFlat.min
+      max = Math.max(weaponMin, weaponMax) + enchantBonus + potionFlat.max
     } else {
-      min = configNumber(db, 'unarmed_min_damage', 10) + enchantBonus
-      max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus
+      min = configNumber(db, 'unarmed_min_damage', 10) + enchantBonus + potionFlat.min
+      max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus + potionFlat.max
     }
   } else {
-    min = configNumber(db, 'unarmed_min_damage', 10) + enchantBonus
-    max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus
+    min = configNumber(db, 'unarmed_min_damage', 10) + enchantBonus + potionFlat.min
+    max = configNumber(db, 'unarmed_max_damage', 30) + enchantBonus + potionFlat.max
   }
 
   const glovesMinBonus = equippedRows(db, save).reduce((sum, row) => {
@@ -334,10 +336,11 @@ export function playerOffhandDamageRange(
   if (typeof daggerMin !== 'number' || typeof daggerMax !== 'number') return null
 
   const enchantBonus = equippedEnchantmentDamageBonus(db, save)
+  const potionFlat = potionFlatDamageBonus(save.activePotionEffect)
   const combined = damageRangeMultipliers(db, save, nowMs)
   return scaleDamageRange(
-    daggerMin + enchantBonus,
-    Math.max(daggerMin, daggerMax) + enchantBonus,
+    daggerMin + enchantBonus + potionFlat.min,
+    Math.max(daggerMin, daggerMax) + enchantBonus + potionFlat.max,
     combined,
   )
 }

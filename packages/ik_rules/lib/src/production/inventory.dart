@@ -1,3 +1,5 @@
+import 'package:ik_content/ik_content.dart';
+
 import '../save/generated/save_models.dart';
 import 'recipes.dart';
 
@@ -6,6 +8,7 @@ import 'recipes.dart';
 /// Emptied stacks leave the bag, which is why callers must re-resolve inventory
 /// indexes afterwards. Kitchen water and scraps, and water at an Alchemy station, are not taken from the bag.
 PlayerSave? removeIngredients(
+  GameDatabase db,
   PlayerSave save,
   List<RecipeIngredient> ingredients, [
   num crafts = 1,
@@ -13,7 +16,7 @@ PlayerSave? removeIngredients(
   if (crafts <= 0) return save;
   final inventory = [...save.inventory];
   for (final ingredient in ingredients) {
-    if (isAmbientIngredientAt(save, ingredient.itemId)) continue;
+    if (isAmbientIngredientAt(db, save, ingredient.itemId)) continue;
     final need = ingredient.quantity * crafts;
     final index = inventory.indexWhere((entry) => entry.itemId == ingredient.itemId);
     if (index < 0 || inventory[index].quantity < need) return null;

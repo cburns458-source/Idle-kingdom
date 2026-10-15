@@ -1,6 +1,7 @@
 import { configNumber } from '../activity/gathering'
 import type { RecipeRow } from '../data/recipeTypes'
 import type { ActivityRow, GameDatabase } from '../data/types'
+import { ALCHEMY_SKILL_ID, COOKING_SKILL_ID } from '../equipment/specialist'
 import { canKnowRecipe } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
 import { requirementsForEntity } from '../activity/requirements'
@@ -51,27 +52,39 @@ export function isKitchenAmbientIngredient(itemId: string): boolean {
   return KITCHEN_AMBIENT_ITEM_IDS.has(itemId)
 }
 
-export function isAtKitchen(save: PlayerSave): boolean {
-  return KITCHEN_LOCATION_IDS.has(save.currentLocationId)
+export function locationHasFacilitySkill(
+  db: GameDatabase,
+  locationId: string,
+  skillId: string,
+): boolean {
+  return db.Facilities.some(
+    (row) => row['Location ID'] === locationId && row['Skill ID'] === skillId,
+  )
 }
 
-/** Alchemy stations (Facility ID -> Location ID). Water is free at each one. */
-export const ALCHEMY_STATION_LOCATION_BY_FACILITY: Readonly<Record<string, string>> = {
-  'FAC-0006': 'LOC-0026', // Rose's Apothecary (Town)
-  'FAC-0015': 'LOC-0030', // Citadel Apothecary Bench
+/** Kitchen locations from data, plus any Cooking-skill facility Economy adds later. */
+export function isAtKitchen(save: PlayerSave, db?: GameDatabase): boolean {
+  if (KITCHEN_LOCATION_IDS.has(save.currentLocationId)) return true
+  return db != null && locationHasFacilitySkill(db, save.currentLocationId, COOKING_SKILL_ID)
 }
-export const ALCHEMY_STATION_LOCATION_IDS = new Set(
-  Object.values(ALCHEMY_STATION_LOCATION_BY_FACILITY),
-)
 
-export function isAtAlchemyStation(save: PlayerSave): boolean {
-  return ALCHEMY_STATION_LOCATION_IDS.has(save.currentLocationId)
+/** Locations that have an Alchemy-skill facility (Rose's Apothecary, Citadel bench, …). */
+export function alchemyStationLocationIds(db: GameDatabase): Set<string> {
+  return new Set(
+    db.Facilities.filter((row) => row['Skill ID'] === ALCHEMY_SKILL_ID)
+      .map((row) => row['Location ID'])
+      .filter((id): id is string => typeof id === 'string' && id.length > 0),
+  )
+}
+
+export function isAtAlchemyStation(db: GameDatabase, save: PlayerSave): boolean {
+  return locationHasFacilitySkill(db, save.currentLocationId, ALCHEMY_SKILL_ID)
 }
 
 /** True when this ingredient is free and never consumed where the player stands. */
-export function isAmbientIngredientAt(save: PlayerSave, itemId: string): boolean {
-  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save)) return true
-  return itemId === WATER_ITEM_ID && isAtAlchemyStation(save)
+export function isAmbientIngredientAt(db: GameDatabase, save: PlayerSave, itemId: string): boolean {
+  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save, db)) return true
+  return itemId === WATER_ITEM_ID && isAtAlchemyStation(db, save)
 }
 
 export function inventoryCount(save: PlayerSave, itemId: string): number {
@@ -79,17 +92,21 @@ export function inventoryCount(save: PlayerSave, itemId: string): number {
 }
 
 /** Bag count, or infinite water/scraps in a kitchen and water at an Alchemy station. */
-export function ingredientOwned(save: PlayerSave, itemId: string): number {
-  if (isAmbientIngredientAt(save, itemId)) return Number.POSITIVE_INFINITY
+export function ingredientOwned(db: GameDatabase, save: PlayerSave, itemId: string): number {
+  if (isAmbientIngredientAt(db, save, itemId)) return Number.POSITIVE_INFINITY
   return inventoryCount(save, itemId)
 }
 
-export function maxCraftsFromMaterials(save: PlayerSave, recipe: RecipeRow): number {
+export function maxCraftsFromMaterials(
+  db: GameDatabase,
+  save: PlayerSave,
+  recipe: RecipeRow,
+): number {
   const ingredients = recipeIngredients(recipe)
   if (ingredients.length === 0) return Number.POSITIVE_INFINITY
   let max = Number.POSITIVE_INFINITY
   for (const ingredient of ingredients) {
-    const owned = ingredientOwned(save, ingredient.itemId)
+    const owned = ingredientOwned(db, save, ingredient.itemId)
     if (!Number.isFinite(owned)) {
       if (owned === Number.POSITIVE_INFINITY) continue
       return 0
@@ -180,7 +197,7 @@ export function readyRecipesForActivity(
   activityId: string,
 ): RecipeRow[] {
   return recipesForActivity(db, save, activityId).filter(
-    (recipe) => maxCraftsFromMaterials(save, recipe) >= 1,
+    (recipe) => maxCraftsFromMaterials(db, save, recipe) >= 1,
   )
 }
 
@@ -198,7 +215,7 @@ export function clampProductionQuantity(
   if (wanted <= 0) return 0
   return Math.min(
     wanted,
-    maxCraftsFromMaterials(save, recipe),
+    maxCraftsFromMaterials(db, save, recipe),
     maxCraftsFromQueueCap(db, recipe),
   )
 }
