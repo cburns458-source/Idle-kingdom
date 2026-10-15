@@ -44,4 +44,17 @@ void main() {
     final away = base.copyWith(currentLocationId: 'LOC-0001', inventory: const []);
     expect(ingredientOwned(away, waterItemId), 0);
   });
+
+  test('water is free at every kitchen, including Riverside Manor and Giant Camp', () {
+    final base = createNewSave(db, 0);
+    for (final loc in <String>['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049']) {
+      final save = base.copyWith(currentLocationId: loc);
+      expect(ingredientOwned(save, waterItemId), double.infinity, reason: loc);
+      // Kitchen Scraps uses the same location list, so it is free here too.
+      expect(ingredientOwned(save, kitchenScrapsItemId), double.infinity, reason: loc);
+    }
+    final away = base.copyWith(currentLocationId: 'LOC-0001');
+    expect(ingredientOwned(away, waterItemId), 0);
+    expect(ingredientOwned(away, kitchenScrapsItemId), 0);
+  });
 }

@@ -48,4 +48,18 @@ describe('water at Alchemy stations', () => {
     const away = { ...base, currentLocationId: 'LOC-0001', inventory: [] }
     expect(ingredientOwned(away, WATER_ITEM_ID)).toBe(0)
   })
+
+  it('water is free at every kitchen, including Riverside Manor and Giant Camp', () => {
+    const base = createNewSave(launch)
+    const kitchens = ['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049']
+    for (const loc of kitchens) {
+      const save = { ...base, currentLocationId: loc }
+      expect(ingredientOwned(save, WATER_ITEM_ID), loc).toBe(Number.POSITIVE_INFINITY)
+      // Kitchen Scraps uses the same location list, so it is free here too.
+      expect(ingredientOwned(save, KITCHEN_SCRAPS_ITEM_ID), loc).toBe(Number.POSITIVE_INFINITY)
+    }
+    const away = { ...base, currentLocationId: 'LOC-0001' }
+    expect(ingredientOwned(away, WATER_ITEM_ID)).toBe(0)
+    expect(ingredientOwned(away, KITCHEN_SCRAPS_ITEM_ID)).toBe(0)
+  })
 })

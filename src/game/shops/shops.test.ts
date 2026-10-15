@@ -423,6 +423,55 @@ describe('shops', () => {
     expect(nextDay.ok).toBe(true)
   })
 
+  it('buys the four herb potions from the player without stocking them for sale', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0010')!
+    const potions = [
+      { itemId: 'ITEM-0439', price: 4 },
+      { itemId: 'ITEM-0440', price: 8 },
+      { itemId: 'ITEM-0441', price: 40 },
+      { itemId: 'ITEM-0442', price: 240 },
+    ]
+    const stock = shopStockEntries(shop).map((entry) => entry.itemId)
+    expect(stock).toEqual(['ITEM-0211', 'ITEM-0210', 'ITEM-0072', 'ITEM-0071', 'ITEM-0070', 'ITEM-0318'])
+
+    let save = {
+      ...createNewSave(launch),
+      currentLocationId: shop['Location ID']!,
+      gold: 0,
+    }
+    for (const [index, potion] of potions.entries()) {
+      expect(shop[`Entry ${index + 7} Item ID`]).toBe(potion.itemId)
+      expect(shop[`Entry ${index + 7} Mode`]).toBe('Buy')
+      expect(stock).not.toContain(potion.itemId)
+      expect(playerSellPrice(launch, shop, potion.itemId)).toBe(potion.price)
+      expect(launch.Items.find((row) => row['Item ID'] === potion.itemId)!['Base Sell Value']).toBe(
+        potion.price,
+      )
+
+      const buyFromShop = confirmShopOffer(
+        launch,
+        { ...save, gold: 10_000 },
+        'SHP-0010',
+        { buys: [{ itemId: potion.itemId, quantity: 1 }], sells: [] },
+      )
+      expect(buyFromShop.ok, potion.itemId).toBe(false)
+
+      save = addItemToInventory(save, potion.itemId, 1)
+      const sold = confirmShopOffer(launch, save, 'SHP-0010', {
+        buys: [],
+        sells: [{ itemId: potion.itemId, quantity: 1 }],
+      })
+      expect(sold.ok, potion.itemId).toBe(true)
+      if (!sold.ok) return
+      save = sold.save
+    }
+    expect(save.gold).toBe(4 + 8 + 40 + 240)
+    expect(save.inventory.filter((stack) => potions.some((potion) => potion.itemId === stack.itemId))).toEqual(
+      [],
+    )
+  })
+
   it('refuses a new item with no_room and leaves gold untouched', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const gold = 10_000

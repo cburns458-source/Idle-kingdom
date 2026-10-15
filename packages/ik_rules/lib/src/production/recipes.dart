@@ -47,7 +47,13 @@ List<RecipeIngredient> recipeIngredients(RecipeRow recipe) {
 const String waterItemId = 'ITEM-0365';
 const String kitchenScrapsItemId = 'ITEM-0366';
 const Set<String> kitchenAmbientItemIds = <String>{waterItemId, kitchenScrapsItemId};
-const Set<String> kitchenLocationIds = <String>{'LOC-0023', 'LOC-0015', 'LOC-0030'};
+const Set<String> kitchenLocationIds = <String>{
+  'LOC-0023', // Town Kitchen
+  'LOC-0015', // Castle Kitchen
+  'LOC-0030', // Citadel Kitchen
+  'LOC-0053', // Riverside Manor
+  'LOC-0049', // Giant Camp
+};
 
 bool isKitchenAmbientIngredient(String itemId) => kitchenAmbientItemIds.contains(itemId);
 

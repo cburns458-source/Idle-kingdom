@@ -39,7 +39,13 @@ export function recipeIngredients(recipe: RecipeRow): RecipeIngredient[] {
 export const WATER_ITEM_ID = 'ITEM-0365'
 export const KITCHEN_SCRAPS_ITEM_ID = 'ITEM-0366'
 export const KITCHEN_AMBIENT_ITEM_IDS = new Set([WATER_ITEM_ID, KITCHEN_SCRAPS_ITEM_ID])
-export const KITCHEN_LOCATION_IDS = new Set(['LOC-0023', 'LOC-0015', 'LOC-0030'])
+export const KITCHEN_LOCATION_IDS = new Set([
+  'LOC-0023', // Town Kitchen
+  'LOC-0015', // Castle Kitchen
+  'LOC-0030', // Citadel Kitchen
+  'LOC-0053', // Riverside Manor
+  'LOC-0049', // Giant Camp
+])
 
 export function isKitchenAmbientIngredient(itemId: string): boolean {
   return KITCHEN_AMBIENT_ITEM_IDS.has(itemId)
