@@ -582,7 +582,7 @@ void main() {
       fennel,
       0,
     ).quests.singleWhere((quest) => quest.questId == 'QST-0011');
-    expect(greenThumb(save).talkLine, contains('something special'));
+    expect(greenThumb(save).talkLine, contains('found a seed'));
 
     final firstTalk = chooseDialogue(db, save, 'DLG-0007', 'DNODE-0011', 'DCH-0014');
     expect(firstTalk.ok, isTrue, reason: firstTalk.reason);
@@ -622,7 +622,7 @@ void main() {
 
     save = addItemToInventory(save, 'ITEM-0377', 1);
     save = applyQuestActionProgress(db, save, 'ACN-0199', 1);
-    expect(greenThumb(save).talkLine, contains('Smells great'));
+    expect(greenThumb(save).talkLine, contains('Did you find the compost'));
     expect(farmBotanyUnlocked(db, save), isTrue);
     expect(getCurrentStepId(db, save, quest), 'QSTP-0024');
     expect(inventoryCount(save, 'ITEM-0324'), 2);
@@ -649,7 +649,7 @@ void main() {
 
     final finished = chooseDialogue(db, save, 'DLG-0010', 'DNODE-0016', 'DCH-0021');
     expect(finished.ok, isTrue, reason: finished.reason);
-    expect(finished.message, contains('keep an eye on them'));
+    expect(finished.message, contains("Botanist's Guide"));
     expect(getQuestProgress(finished.save, 'QST-0011').status, 'completed');
     expect(questLog(db, finished.save).any((row) => row.questId == 'QST-0011'), isFalse);
     final finishedJournal = miniQuestJournal(

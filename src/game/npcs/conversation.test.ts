@@ -472,8 +472,8 @@ describe('npc conversation', () => {
     )!
     expect(block.talkLine).toBeNull()
     expect(questSpokenLine(block)).toBe('')
-    expect(questSpokenLine(block)).not.toBe(fennel.Description)
-    expect(fennel.Description).toBe('A farmer who lives at the farm.')
+    expect(questSpokenLine(block)).not.toBe('A farmer who lives at the farm.')
+    expect(fennel.Description).toBe('')
   })
 
   it('offers the tanner on hides in the bag', () => {

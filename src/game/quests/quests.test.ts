@@ -899,7 +899,7 @@ describe('quest tours', () => {
     })
     const questsBeforeMini = logCompletion(launch, save).sections.find((row) => row.section === 'quests')!
     expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.talkLine).toMatch(
-      /something special/i,
+      /found a seed/i,
     )
 
     const firstTalk = chooseDialogue(launch, save, 'DLG-0007', 'DNODE-0011', 'DCH-0014')
@@ -941,7 +941,7 @@ describe('quest tours', () => {
     save = addItemToInventory(save, 'ITEM-0377', 1)
     save = applyQuestActionProgress(launch, save, 'ACN-0199', 1)
     expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.talkLine).toMatch(
-      /Smells great/i,
+      /Did you find the compost/i,
     )
     expect(farmBotanyUnlocked(launch, save)).toBe(true)
     expect(getCurrentStepId(launch, save, quest)).toBe('QSTP-0024')
@@ -968,7 +968,7 @@ describe('quest tours', () => {
 
     const finished = chooseDialogue(launch, save, 'DLG-0010', 'DNODE-0016', 'DCH-0021')
     expect(finished.ok, finished.reason).toBe(true)
-    expect(finished.message).toMatch(/keep an eye on them/i)
+    expect(finished.message).toMatch(/Botanist's Guide/i)
     expect(finished.message).not.toMatch(/^Thank you/)
     expect(getQuestProgress(finished.save, 'QST-0011').status).toBe('completed')
     expect(questLog(launch, finished.save).some((row) => row.questId === 'QST-0011')).toBe(false)
