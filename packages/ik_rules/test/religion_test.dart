@@ -32,12 +32,19 @@ void main() {
     db = filterLaunchContent(assertGameDatabaseShape(contentDatabaseJson()));
   });
 
-  test('reads the multiplier and rounding step from one Config value', () {
-    final row = db.config.firstWhere((entry) => entry.raw['Key'] == religionChangeGoldKey);
-    expect(row.raw['Value'], '10:50');
-    final settings = religionChangeGoldSettings(db);
-    expect(settings.multiplier, 10);
-    expect(settings.roundingStep, 50);
+  test('reads exponential change-cost settings from Config', () {
+    expect(
+      db.config.firstWhere((entry) => entry.raw['Key'] == religionChangeGoldBaseKey).raw['Value'],
+      1000,
+    );
+    expect(
+      db.config.firstWhere((entry) => entry.raw['Key'] == religionChangeGoldGrowthKey).raw['Value'],
+      1.0043561527973446,
+    );
+    expect(
+      db.config.firstWhere((entry) => entry.raw['Key'] == religionChangeGoldCapKey).raw['Value'],
+      50000,
+    );
   });
 
   test('the first pick is free', () {
@@ -50,7 +57,7 @@ void main() {
     expect(religionChangeGoldCost(db, ready), 0);
   });
 
-  test('costs 1000, 2500, 5000 and 10000 gold at total levels 100, 250, 500 and 1000', () {
+  test('costs gold on a later change from the shared exponential setting, at level boundaries', () {
     final first = chooseReligion(
       db,
       _atTemple(createNewSave(db, _nowMs), 100),
@@ -60,31 +67,22 @@ void main() {
     expect(first.ok, isTrue);
     final following = first.save!;
     expect(religionChangeGoldCost(db, following), 1000);
-    expect(religionChangeGoldCost(db, _withTotalLevel(following, 250)), 2500);
-    expect(religionChangeGoldCost(db, _withTotalLevel(following, 500)), 5000);
-    expect(religionChangeGoldCost(db, _withTotalLevel(following, 1000)), 10000);
+    expect(religionChangeGoldCost(db, _withTotalLevel(following, 101)), 1000);
+    expect(religionChangeGoldCost(db, _withTotalLevel(following, 250)), 1900);
+    expect(religionChangeGoldCost(db, _withTotalLevel(following, 500)), 5650);
+    expect(religionChangeGoldCost(db, _withTotalLevel(following, 750)), 16850);
+    expect(religionChangeGoldCost(db, _withTotalLevel(following, 999)), 49750);
+    expect(religionChangeGoldCost(db, _withTotalLevel(following, 1000)), 50000);
+    expect(religionChangeGoldCost(db, _withTotalLevel(following, 1001)), 50000);
 
     final changed = chooseReligion(
       db,
-      _withTotalLevel(following, 250).copyWith(gold: 2500),
+      _withTotalLevel(following, 101).copyWith(gold: 1000),
       _huntingFaith,
       _nowMs + _weekMs,
     );
     expect(changed.ok, isTrue);
-    expect(changed.goldCost, 2500);
+    expect(changed.goldCost, 1000);
     expect(changed.save!.gold, 0);
-  });
-
-  test('rounds 104 down to 1000 gold and 105 up to 1050 gold', () {
-    final first = chooseReligion(
-      db,
-      _atTemple(createNewSave(db, _nowMs), 100),
-      _woodcuttingFaith,
-      _nowMs,
-    );
-    expect(first.ok, isTrue);
-    final following = first.save!;
-    expect(religionChangeGoldCost(db, _withTotalLevel(following, 104)), 1000);
-    expect(religionChangeGoldCost(db, _withTotalLevel(following, 105)), 1050);
   });
 }

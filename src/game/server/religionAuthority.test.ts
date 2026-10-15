@@ -143,8 +143,8 @@ describe('choose_religion authority', () => {
     })
     expect(changed.ok).toBe(true)
     if (!changed.ok) return
-    expect(changed.goldCost).toBe(1050)
-    expect(changed.save.gold).toBe(first.save.gold - 1050)
+    expect(changed.goldCost).toBe(1000)
+    expect(changed.save.gold).toBe(first.save.gold - 1000)
   })
 
   it('refuses equipping a locked faith title via set_meta', () => {
