@@ -170,8 +170,11 @@ class _WardrobeSheetState extends State<WardrobeSheet> {
                           _CosmeticTile(
                             label: tile.name,
                             selected: tile.equipped,
+                            locked: isFaithTitleLocked(controller.db, save, tile.cosmeticId),
                             item: controller.indexes.itemsById[tile.itemId],
-                            onTap: () => _equip(slot.slotId, tile.cosmeticId),
+                            onTap: isFaithTitleLocked(controller.db, save, tile.cosmeticId)
+                                ? null
+                                : () => _equip(slot.slotId, tile.cosmeticId),
                           ),
                       ],
                     ),
@@ -201,50 +204,55 @@ class _CosmeticTile extends StatelessWidget {
   const _CosmeticTile({
     required this.label,
     required this.selected,
-    required this.onTap,
+    this.onTap,
     this.item,
+    this.locked = false,
   });
 
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final ItemRow? item;
+  final bool locked;
+
+  static const dimAlpha = 0.45;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.zero /* pixel step 3 */,
-      child: Container(
-        width: 92,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        decoration: chromeSlotFill(
-          context,
-          color: selected
-              ? Color.lerp(UiChrome.of(context).slot, UiChrome.of(context).embossFace, 0.18)
-              : UiChrome.of(context).slot,
-          border: Border.all(
-            color: selected ? UiChrome.of(context).embossFace : Palette.edge,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            if (item != null)
-              ItemIcon(item: item, size: 34)
-            else
-              const SizedBox(height: 34, child: Center(child: Icon(Icons.block, size: 20))),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: GameFont.s),
-            ),
-          ],
+    final tile = Container(
+      width: 92,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      decoration: chromeSlotFill(
+        context,
+        color: selected
+            ? Color.lerp(UiChrome.of(context).slot, UiChrome.of(context).embossFace, 0.18)
+            : UiChrome.of(context).slot,
+        border: Border.all(
+          color: selected ? UiChrome.of(context).embossFace : Palette.edge,
+          width: selected ? 2 : 1,
         ),
       ),
+      child: Column(
+        children: [
+          if (item != null)
+            ItemIcon(item: item, size: 34)
+          else
+            const SizedBox(height: 34, child: Center(child: Icon(Icons.block, size: 20))),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: GameFont.s),
+          ),
+        ],
+      ),
+    );
+    return InkWell(
+      onTap: locked ? null : onTap,
+      borderRadius: BorderRadius.zero /* pixel step 3 */,
+      child: locked ? Opacity(opacity: dimAlpha, child: tile) : tile,
     );
   }
 }

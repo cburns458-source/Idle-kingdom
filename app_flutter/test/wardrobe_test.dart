@@ -135,6 +135,49 @@ void main() {
     expect(tester.getTopLeft(find.text('None')).dy, greaterThan(tester.getBottomLeft(portrait).dy));
   });
 
+  testWidgets('a left faith title stays listed, greyed, and cannot be equipped', (tester) async {
+    final faiths = religions(database.launch);
+    final left = faiths.first;
+    final current = faiths[1];
+    final leftTitle = left.titleCosmeticId!;
+    final currentTitle = current.titleCosmeticId!;
+    final base = startedCharacter(database);
+    final controller = buildController(
+      database,
+      seed: base.copyWith(
+        religionId: current.religionId,
+        religionHistory: <String>[left.religionId, current.religionId],
+        cosmetics: base.cosmetics.copyWith(
+          unlocked: <String>{...base.cosmetics.unlocked, leftTitle, currentTitle}.toList(),
+        ),
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openWardrobe(tester);
+    await tester.tap(find.text('Titles'));
+    await tester.pump();
+
+    final leftName = wardrobeSlotView(
+      database.launch,
+      controller.save,
+      titleCosmeticSlotId,
+    )!.tiles.firstWhere((tile) => tile.cosmeticId == leftTitle).name;
+    expect(find.text(leftName), findsOne);
+    expect(isFaithTitleLocked(database.launch, controller.save, leftTitle), isTrue);
+
+    final faded = tester.widget<Opacity>(
+      find.ancestor(of: find.text(leftName), matching: find.byType(Opacity)),
+    );
+    expect(faded.opacity, 0.45);
+
+    final before = equippedCosmeticId(controller.save, titleCosmeticSlotId);
+    await tester.tap(find.text(leftName));
+    await tester.pump();
+    expect(equippedCosmeticId(controller.save, titleCosmeticSlotId), before);
+    expect(equippedCosmeticId(controller.save, titleCosmeticSlotId), isNot(leftTitle));
+  });
+
   testWidgets('buying a cosmetic pops the unlock and adds it to the wardrobe', (tester) async {
     final controller = buildController(
       database,

@@ -28,6 +28,7 @@ import 'botany_plant_popup.dart';
 import 'pot_bait_popup.dart';
 import 'tracker_view.dart';
 import 'temple_stage.dart';
+import 'faith_picker_panel.dart';
 
 /// Whatever the player has open on top of the location, if anything.
 sealed class LocationPanel {
@@ -73,6 +74,11 @@ class CitadelHubOpen extends LocationPanel {
   const CitadelHubOpen(this.tab);
 
   final CitadelHubTab tab;
+}
+
+/// Temple faith picker.
+class FaithOpen extends LocationPanel {
+  const FaithOpen();
 }
 
 /// Pushes [panel], replacing any already-open panel of the same type.
@@ -613,7 +619,8 @@ class _LocationViewState extends State<LocationView> {
         panel is BankOpen ||
         panel is GuildHallOpen ||
         panel is CitadelHubOpen ||
-        panel is TannerOpen;
+        panel is TannerOpen ||
+        panel is FaithOpen;
   }
 
   /// Pins a location overlay to the stage slot above the activity band.
@@ -670,6 +677,8 @@ class _LocationViewState extends State<LocationView> {
           multiplayer: widget.multiplayer,
           onClose: _closePanel,
         );
+      case FaithOpen():
+        return FaithPickerPanel(controller: controller, onClose: _closePanel);
     }
   }
 
@@ -691,6 +700,7 @@ class _LocationViewState extends State<LocationView> {
     add('People', [..._people(locationId), ..._npcThievery(locationId)]);
     add('Bank', [..._bank(), ..._bankThievery(locationId)]);
     add('Other', [
+      ..._faith(),
       ..._blessing(),
       ..._stations(locationId),
       ..._arena(),
@@ -956,6 +966,24 @@ class _LocationViewState extends State<LocationView> {
           controller: controller,
           activity: activity,
           onOpenWorkshop: (buttonContext) => _openWorkshop(activity, buttonContext),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _faith() {
+    if (controller.save.currentLocationId != religionChooseLocationId(controller.db)) {
+      return const [];
+    }
+    final unlocked = religionChooseUnlocked(controller.save);
+    return [
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: _InteractionCard(
+          title: 'Faith',
+          actionLabel: controller.save.religionId == null ? 'Choose' : 'Change',
+          tone: GameButtonTone.primary,
+          onPressed: unlocked ? () => _openPanel(const FaithOpen()) : null,
         ),
       ),
     ];
