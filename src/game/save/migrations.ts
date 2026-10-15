@@ -281,6 +281,10 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
               enemyMaxHpDamagePercent: null,
               relativeDropChanceBonusPercent: null,
               baseDurationReductionPercent: null,
+              instantHealMaxHpPercent: null,
+              regenMaxHpPercentPerRound: null,
+              damageBonusMin: null,
+              damageBonusMax: null,
               actionsRemaining: 1,
             }
           : null)
@@ -1055,6 +1059,33 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         religionChangeCount: Math.max(0, Math.floor(Number(raw.religionChangeCount) || 0)),
         religionHistory: history,
         saveVersion: 64,
+      }
+    },
+  },
+  {
+    fromVersion: 64,
+    toVersion: 65,
+    migrate: (save) => {
+      const effect = save.activePotionEffect
+      if (!effect) return { ...save, saveVersion: 65 }
+      const raw = effect as ActivePotionEffect & {
+        instantHealMaxHpPercent?: number | null
+        regenMaxHpPercentPerRound?: number | null
+        damageBonusMin?: number | null
+        damageBonusMax?: number | null
+      }
+      return {
+        ...save,
+        activePotionEffect: {
+          ...effect,
+          instantHealMaxHpPercent:
+            typeof raw.instantHealMaxHpPercent === 'number' ? raw.instantHealMaxHpPercent : null,
+          regenMaxHpPercentPerRound:
+            typeof raw.regenMaxHpPercentPerRound === 'number' ? raw.regenMaxHpPercentPerRound : null,
+          damageBonusMin: typeof raw.damageBonusMin === 'number' ? raw.damageBonusMin : null,
+          damageBonusMax: typeof raw.damageBonusMax === 'number' ? raw.damageBonusMax : null,
+        },
+        saveVersion: 65,
       }
     },
   },

@@ -35,7 +35,28 @@ num productionCraftDurationMs(
 ) {
   final baseDurationMs = jsNumber(recipe.raw['Base Duration Seconds']) * 1000;
   final reduced = baseDurationMs * activeSpellProductionDurationMultiplier(db, save);
-  return applyPotionDurationMs(reduced, potionEffect);
+  return applyPotionDurationMs(reduced, potionEffect, db, jsString(recipe.raw['Skill ID']));
+}
+
+PotionConsumption _consumeProductionPotion(GameDatabase db, PlayerSave save, String skillId) {
+  final existing = save.activePotionEffect;
+  if (existing != null && potionActionsRemaining(existing) > 0) {
+    if (!potionAppliesToProductionSkill(db, existing.itemId, skillId)) {
+      return PotionConsumption(save: save, consumed: false, effect: null, potionName: null);
+    }
+  } else {
+    final equipped = slotStack(save, potionSlotId);
+    if (equipped != null && !potionAppliesToProductionSkill(db, equipped.itemId, skillId)) {
+      return PotionConsumption(save: save, consumed: false, effect: null, potionName: null);
+    }
+  }
+  return tryConsumePotionForScope(db, save, 'one_standard_production_action');
+}
+
+PlayerSave _tickProductionPotion(GameDatabase db, PlayerSave save, String skillId) {
+  final effect = save.activePotionEffect;
+  if (effect != null && !potionAppliesToProductionSkill(db, effect.itemId, skillId)) return save;
+  return tickPotionAction(save);
 }
 
 PlayerSave clearProductionSave(PlayerSave save) {
@@ -57,7 +78,7 @@ PlayerSave cancelProductionActivity(GameDatabase db, PlayerSave save) {
     final recipe = getRecipe(db, save.productionRecipeId!);
     if (recipe != null) {
       for (final ingredient in recipeIngredients(recipe)) {
-        if (isKitchenAmbientIngredient(ingredient.itemId)) continue;
+        if (isAmbientIngredientAt(db, save, ingredient.itemId)) continue;
         next = addItemToInventory(next, ingredient.itemId, ingredient.quantity * remaining);
       }
     }
@@ -109,12 +130,12 @@ ProductionQueueResult beginProductionQueue(
   if (crafts > maxCraftsFromQueueCap(db, recipe)) {
     return const ProductionQueueResult.failed('That queue exceeds the 24-hour production cap.');
   }
-  if (crafts > maxCraftsFromMaterials(save, recipe)) {
+  if (crafts > maxCraftsFromMaterials(db, save, recipe)) {
     return const ProductionQueueResult.failed('Missing required materials for that quantity.');
   }
 
   // Reserve/consume materials for the full queue up front so they cannot be spent elsewhere.
-  final withMaterials = removeIngredients(save, recipeIngredients(recipe), crafts);
+  final withMaterials = removeIngredients(db, save, recipeIngredients(recipe), crafts);
   if (withMaterials == null) {
     return const ProductionQueueResult.failed('Missing required materials.');
   }
@@ -135,7 +156,8 @@ ProductionQueueResult beginProductionQueue(
   }
 
   final startedAt = isoFromMs(nowMs);
-  final potion = tryConsumePotionForScope(db, withMaterials, 'one_standard_production_action');
+  final skillId = jsString(recipe.raw['Skill ID']);
+  final potion = _consumeProductionPotion(db, withMaterials, skillId);
   return ProductionQueueResult.ok(
     potion.save.copyWith(
       currentActivityId: activityId,
@@ -295,10 +317,15 @@ ProductionCraftResult _finishProductionCraft(
   required ActionRewardBundle reward,
 }) {
   final remaining = (save.productionQuantityRemaining ?? 1) - 1;
+  final skillId = jsString(recipe.raw['Skill ID']);
   if (remaining <= 0) {
     return ProductionCraftResult(
       save: clearProductionSave(
-        tickPotionAction(next.copyWith(currentActivityId: null, activityStartedAt: null)),
+        _tickProductionPotion(
+          db,
+          next.copyWith(currentActivityId: null, activityStartedAt: null),
+          skillId,
+        ),
       ),
       finishedQueue: true,
       xpGained: xpGained,
@@ -309,8 +336,12 @@ ProductionCraftResult _finishProductionCraft(
     );
   }
 
-  final ticked = tickPotionAction(next.copyWith(productionQuantityRemaining: remaining));
-  final potion = tryConsumePotionForScope(db, ticked, 'one_standard_production_action');
+  final ticked = _tickProductionPotion(
+    db,
+    next.copyWith(productionQuantityRemaining: remaining),
+    skillId,
+  );
+  final potion = _consumeProductionPotion(db, ticked, skillId);
   return ProductionCraftResult(
     save: potion.save.copyWith(
       productionQuantityRemaining: remaining,

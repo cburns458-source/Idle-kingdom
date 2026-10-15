@@ -130,6 +130,10 @@ export function gearedSave(db: GameDatabase): PlayerSave {
       enemyMaxHpDamagePercent: null,
       relativeDropChanceBonusPercent: null,
       baseDurationReductionPercent: null,
+      instantHealMaxHpPercent: null,
+      regenMaxHpPercentPerRound: null,
+      damageBonusMin: null,
+      damageBonusMax: null,
       actionsRemaining: 6,
     },
   }

@@ -224,10 +224,17 @@ PlayerSave beginCombatSave(
   String nowIso,
 ) {
   final potion = tryConsumePotionForScope(db, save, 'one_combat_encounter');
+  final effect = potion.effect ?? potion.save.activePotionEffect;
+  final maxHp = playerMaxHp(db, potion.save);
+  final healedHp = applyPotionInstantHeal(potion.save.currentHp, maxHp, effect);
   final enemyMaxHp = enemyEncounterMaxHp(db, potion.save, enemy);
   final startedAtMs = jsDateParse(nowIso);
   final atMs = startedAtMs.toDouble().isFinite ? startedAtMs : 0;
-  return openCombatRoundClock(db, potion.save, atMs).copyWith(
+  return openCombatRoundClock(
+    db,
+    potion.save.copyWith(maxHp: maxHp, currentHp: healedHp),
+    atMs,
+  ).copyWith(
     currentActionId: action.raw['Action ID'] as String?,
     actionStartedAt: nowIso,
     actionDurationMs: null,
@@ -240,7 +247,7 @@ PlayerSave beginCombatSave(
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
-    activePotionEffect: potion.effect ?? potion.save.activePotionEffect,
+    activePotionEffect: effect,
     deathPauseUntil: null,
   );
 }
@@ -369,7 +376,7 @@ CombatRoundResult resolveCombatRound(
     }
   }
 
-  final poisonPercent = save.activePotionEffect?.enemyMaxHpDamagePercent;
+  final poisonPercent = enemyCurrentHpDamagePercent(save.activePotionEffect);
   if (poisonPercent != null && poisonPercent > 0) {
     if (lockpickCombat || nextEnemyHp <= 0) {
       poisonHit = 0;
@@ -412,8 +419,10 @@ CombatRoundResult resolveCombatRound(
   final damageDealt = playerHit + (offhandHit ?? 0) + (staffHit ?? 0);
   final lifestealHealed = lifestealHealAmount(db, save, damageDealt);
   final hpAfterLifesteal = _applyLifestealHeal(db, save, save.currentHp, damageDealt);
+  final playerMax = playerMaxHp(db, save);
+  final hpAfterRegen = applyPotionRegenHeal(hpAfterLifesteal, playerMax, save.activePotionEffect);
   final enemyHpAfterPlayer = nextEnemyHp;
-  final playerHpAfterPlayer = hpAfterLifesteal;
+  final playerHpAfterPlayer = hpAfterRegen;
 
   if (nextEnemyHp <= 0 && !bossAddsTriggered) {
     return CombatRoundResult(
@@ -434,7 +443,7 @@ CombatRoundResult resolveCombatRound(
       enemyHpAfterPlayer: enemyHpAfterPlayer,
       playerHpAfterPlayer: playerHpAfterPlayer,
       enemyHp: 0,
-      playerHp: hpAfterLifesteal,
+      playerHp: hpAfterRegen,
       outcome: 'victory',
       lifestealHealed: lifestealHealed,
     );
@@ -459,7 +468,7 @@ CombatRoundResult resolveCombatRound(
       enemyHpAfterPlayer: enemyHpAfterPlayer,
       playerHpAfterPlayer: playerHpAfterPlayer,
       enemyHp: bossPendingHp ?? nextEnemyHp,
-      playerHp: hpAfterLifesteal,
+      playerHp: hpAfterRegen,
       outcome: 'ongoing',
       lifestealHealed: lifestealHealed,
     );
@@ -484,7 +493,7 @@ CombatRoundResult resolveCombatRound(
       enemyHpAfterPlayer: enemyHpAfterPlayer,
       playerHpAfterPlayer: playerHpAfterPlayer,
       enemyHp: nextEnemyHp,
-      playerHp: hpAfterLifesteal,
+      playerHp: hpAfterRegen,
       outcome: 'ongoing',
       lifestealHealed: lifestealHealed,
     );
@@ -495,7 +504,7 @@ CombatRoundResult resolveCombatRound(
   var enemyRaw = rollDamage(enemyRange.min, enemyRange.max, random);
   if (rampage) enemyRaw *= 2;
   final enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor);
-  final playerHp = math.max(0, hpAfterLifesteal - enemyHit);
+  final playerHp = math.max(0, hpAfterRegen - enemyHit);
 
   final thornsPercent = equippedEnchantmentThornsPercent(db, save);
   num thornsHit = thornsPercent > 0 ? (enemyHit * thornsPercent / 100).round() : 0;

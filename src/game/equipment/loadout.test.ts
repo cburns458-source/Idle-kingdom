@@ -125,6 +125,68 @@ describe('equipment loadout', () => {
     expect(unequipped.save.inventory.find((stack) => stack.itemId === 'ITEM-0070')?.quantity).toBe(4)
   })
 
+  function withDrunkPotion(save: PlayerSave, itemId: string, remaining = 3): PlayerSave {
+    return {
+      ...save,
+      activePotionEffect: {
+        scope: 'one_standard_production_action',
+        itemId,
+        damageBonusPercent: null,
+        enemyMaxHpDamagePercent: null,
+        relativeDropChanceBonusPercent: itemId === 'ITEM-0070' ? 25 : null,
+        baseDurationReductionPercent: itemId === 'ITEM-0071' ? 10 : null,
+        instantHealMaxHpPercent: null,
+        regenMaxHpPercentPerRound: null,
+        damageBonusMin: null,
+        damageBonusMax: null,
+        actionsRemaining: remaining,
+      },
+    }
+  }
+
+  it('discards the active potion and leftover doses on unequip, returning nothing', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0070', 4)
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0070')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = withDrunkPotion(equipped.save, 'ITEM-0070', 5)
+    const bankBefore = save.bank ?? []
+
+    const unequipped = unequipSlot(save, POTION_SLOT_ID)
+    expect(unequipped.ok).toBe(true)
+    if (!unequipped.ok) return
+    expect(unequipped.save.equipment.slots[POTION_SLOT_ID]).toBeNull()
+    expect(unequipped.save.activePotionEffect).toBeNull()
+    expect(unequipped.save.inventory.find((stack) => stack.itemId === 'ITEM-0070')).toBeUndefined()
+    expect(unequipped.save.bank ?? []).toEqual(bankBefore)
+  })
+
+  it('discards the active potion when a different bottle is equipped over it', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let save = createNewSave(launch)
+    save = addItemToInventory(save, 'ITEM-0070', 3)
+    save = addItemToInventory(save, 'ITEM-0071', 2)
+    const equipped = equipItemFromInventory(launch, save, 'ITEM-0070')
+    expect(equipped.ok).toBe(true)
+    if (!equipped.ok) return
+    save = withDrunkPotion(equipped.save, 'ITEM-0070', 4)
+    const bankBefore = save.bank ?? []
+
+    const swapped = equipItemFromInventory(launch, save, 'ITEM-0071')
+    expect(swapped.ok).toBe(true)
+    if (!swapped.ok) return
+    expect(swapped.save.equipment.slots[POTION_SLOT_ID]).toEqual({
+      itemId: 'ITEM-0071',
+      quantity: 2,
+    })
+    expect(swapped.save.activePotionEffect).toBeNull()
+    expect(swapped.save.inventory.find((stack) => stack.itemId === 'ITEM-0070')).toBeUndefined()
+    expect(swapped.save.inventory.find((stack) => stack.itemId === 'ITEM-0071')).toBeUndefined()
+    expect(swapped.save.bank ?? []).toEqual(bankBefore)
+  })
+
   it('blocks equipping gear below required skill level', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 64
+export const SAVE_VERSION = 65
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -50,9 +50,21 @@ export interface ActivePotionEffect {
   scope: PotionConsumeScope
   itemId: string
   damageBonusPercent: number | null
+  /**
+   * Poison: percent of the enemy's *current* HP after each swing.
+   * Stored on saves as `enemyMaxHpDamagePercent` (legacy name).
+   */
   enemyMaxHpDamagePercent: number | null
   relativeDropChanceBonusPercent: number | null
   baseDurationReductionPercent: number | null
+  /** Instant heal: percent of the player's max HP applied when the bottle is drunk. */
+  instantHealMaxHpPercent: number | null
+  /** Regen: percent of the player's max HP healed each combat round. */
+  regenMaxHpPercentPerRound: number | null
+  /** Flat bonus added to the player's minimum damage. */
+  damageBonusMin: number | null
+  /** Flat bonus added to the player's maximum damage. */
+  damageBonusMax: number | null
   /**
    * Actions still covered by this bottle. Missing on older saves, which
    * are treated as one action left — the old one-shot behaviour.

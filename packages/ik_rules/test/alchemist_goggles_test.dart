@@ -81,4 +81,64 @@ void main() {
 
     expect(confirmShopOffer(db, save, 'SHP-0010', one, nowMs: now + dayMs).ok, isTrue);
   });
+
+  test('buys the four herb potions from the player without stocking them for sale', () {
+    final shop = getShop(db, 'SHP-0010')!;
+    const potions = <({String itemId, int price})>[
+      (itemId: 'ITEM-0439', price: 4),
+      (itemId: 'ITEM-0440', price: 8),
+      (itemId: 'ITEM-0441', price: 40),
+      (itemId: 'ITEM-0442', price: 240),
+    ];
+    final stock = shopStockEntries(shop).map((entry) => entry.itemId).toList();
+    expect(stock, [
+      'ITEM-0211',
+      'ITEM-0210',
+      'ITEM-0072',
+      'ITEM-0071',
+      'ITEM-0070',
+      alchemistGogglesItemId,
+    ]);
+
+    var save = createNewSave(db, now).copyWith(currentLocationId: shop.locationId, gold: 0);
+    for (var i = 0; i < potions.length; i += 1) {
+      final potion = potions[i];
+      expect(shop.raw['Entry ${i + 7} Mode'], 'Buy', reason: potion.itemId);
+      expect(shop.raw['Entry ${i + 7} Item ID'], potion.itemId);
+      expect(stock.contains(potion.itemId), isFalse, reason: potion.itemId);
+      expect(playerSellPrice(db, shop, potion.itemId), potion.price);
+      expect(
+        db.items.singleWhere((row) => row.raw['Item ID'] == potion.itemId).raw['Base Sell Value'],
+        potion.price,
+      );
+
+      expect(
+        confirmShopOffer(
+          db,
+          save.copyWith(gold: 10000),
+          'SHP-0010',
+          ShopOffer(buys: <ShopOfferLine>[ShopOfferLine(itemId: potion.itemId, quantity: 1)]),
+          nowMs: now,
+        ).ok,
+        isFalse,
+        reason: potion.itemId,
+      );
+
+      save = addItemToInventory(save, potion.itemId, 1);
+      final sold = confirmShopOffer(
+        db,
+        save,
+        'SHP-0010',
+        ShopOffer(sells: <ShopOfferLine>[ShopOfferLine(itemId: potion.itemId, quantity: 1)]),
+        nowMs: now,
+      );
+      expect(sold.ok, isTrue, reason: potion.itemId);
+      save = sold.save!;
+    }
+    expect(save.gold, 4 + 8 + 40 + 240);
+    expect(
+      save.inventory.where((stack) => potions.any((potion) => potion.itemId == stack.itemId)),
+      isEmpty,
+    );
+  });
 }

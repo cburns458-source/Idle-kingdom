@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../activity/requirements.dart';
 import '../config.dart';
+import '../equipment/specialist.dart';
 import '../js_compat.dart';
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
@@ -47,28 +48,64 @@ List<RecipeIngredient> recipeIngredients(RecipeRow recipe) {
 const String waterItemId = 'ITEM-0365';
 const String kitchenScrapsItemId = 'ITEM-0366';
 const Set<String> kitchenAmbientItemIds = <String>{waterItemId, kitchenScrapsItemId};
-const Set<String> kitchenLocationIds = <String>{'LOC-0023', 'LOC-0015', 'LOC-0030'};
+const Set<String> kitchenLocationIds = <String>{
+  'LOC-0023', // Town Kitchen
+  'LOC-0015', // Castle Kitchen
+  'LOC-0030', // Citadel Kitchen
+  'LOC-0053', // Riverside Manor
+  'LOC-0049', // Giant Camp
+};
 
 bool isKitchenAmbientIngredient(String itemId) => kitchenAmbientItemIds.contains(itemId);
 
-bool isAtKitchen(PlayerSave save) => kitchenLocationIds.contains(save.currentLocationId);
+bool locationHasFacilitySkill(GameDatabase db, String locationId, String skillId) {
+  return db.facilities.any(
+    (row) => row.raw['Location ID'] == locationId && row.raw['Skill ID'] == skillId,
+  );
+}
+
+/// Kitchen locations from data, plus any Cooking-skill facility Economy adds later.
+bool isAtKitchen(PlayerSave save, [GameDatabase? db]) {
+  if (kitchenLocationIds.contains(save.currentLocationId)) return true;
+  return db != null && locationHasFacilitySkill(db, save.currentLocationId, cookingSkillId);
+}
+
+/// Locations that have an Alchemy-skill facility (Rose's Apothecary, Citadel bench, …).
+Set<String> alchemyStationLocationIds(GameDatabase db) {
+  return {
+    for (final row in db.facilities)
+      if (row.raw['Skill ID'] == alchemySkillId)
+        if (row.raw['Location ID'] is String && (row.raw['Location ID'] as String).isNotEmpty)
+          row.raw['Location ID'] as String,
+  };
+}
+
+bool isAtAlchemyStation(GameDatabase db, PlayerSave save) {
+  return locationHasFacilitySkill(db, save.currentLocationId, alchemySkillId);
+}
+
+/// True when this ingredient is free and never consumed where the player stands.
+bool isAmbientIngredientAt(GameDatabase db, PlayerSave save, String itemId) {
+  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save, db)) return true;
+  return itemId == waterItemId && isAtAlchemyStation(db, save);
+}
 
 num inventoryCount(PlayerSave save, String itemId) {
   return save.inventory.firstWhereOrNull((stack) => stack.itemId == itemId)?.quantity ?? 0;
 }
 
-/// Bag count, or infinite water/scraps while standing in a kitchen.
-num ingredientOwned(PlayerSave save, String itemId) {
-  if (isKitchenAmbientIngredient(itemId) && isAtKitchen(save)) return double.infinity;
+/// Bag count, or infinite water/scraps in a kitchen and water at an Alchemy station.
+num ingredientOwned(GameDatabase db, PlayerSave save, String itemId) {
+  if (isAmbientIngredientAt(db, save, itemId)) return double.infinity;
   return inventoryCount(save, itemId);
 }
 
-num maxCraftsFromMaterials(PlayerSave save, RecipeRow recipe) {
+num maxCraftsFromMaterials(GameDatabase db, PlayerSave save, RecipeRow recipe) {
   final ingredients = recipeIngredients(recipe);
   if (ingredients.isEmpty) return double.infinity;
   num max = double.infinity;
   for (final ingredient in ingredients) {
-    final owned = ingredientOwned(save, ingredient.itemId);
+    final owned = ingredientOwned(db, save, ingredient.itemId);
     if (!owned.isFinite) {
       if (owned.isInfinite && owned > 0) continue;
       return 0;
@@ -163,7 +200,7 @@ List<RecipeRow> readyRecipesForActivity(GameDatabase db, PlayerSave save, String
     db,
     save,
     activityId,
-  ).where((recipe) => maxCraftsFromMaterials(save, recipe) >= 1).toList();
+  ).where((recipe) => maxCraftsFromMaterials(db, save, recipe) >= 1).toList();
 }
 
 /// Every recipe at this station, including locked and unknown ones.
@@ -186,6 +223,6 @@ num clampProductionQuantity(GameDatabase db, PlayerSave save, RecipeRow recipe, 
   if (wanted <= 0) return 0;
   return math.min(
     wanted,
-    math.min(maxCraftsFromMaterials(save, recipe), maxCraftsFromQueueCap(db, recipe)),
+    math.min(maxCraftsFromMaterials(db, save, recipe), maxCraftsFromQueueCap(db, recipe)),
   );
 }

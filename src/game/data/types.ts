@@ -69,6 +69,16 @@ export interface ItemRow {
    */
   Stackable?: string | null
   Notes: string | null
+  /**
+   * Optional lore/source line shown in the Codex after generated obtain
+   * sources. Quest & Dialogue fills the cells; systems leave them empty.
+   */
+  'Obtained From'?: string | null
+  /**
+   * When true, the Codex omits the item. Missing or false means listed.
+   * Inventory, shops, and recipes are unchanged.
+   */
+  Retired?: boolean | null
 }
 
 export interface EquipmentRow {

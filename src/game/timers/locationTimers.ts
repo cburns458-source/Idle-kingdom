@@ -571,7 +571,7 @@ export function plantBotanySelection(
     ...countedIngredients(plantedItemIds),
     ...(usedCompost ? [{ itemId: COMPOST_ITEM_ID, quantity: compostCostForSpecs(specs) }] : []),
   ]
-  const removed = removeIngredients(save, consumed)
+  const removed = removeIngredients(db, save, consumed)
   if (!removed) {
     return {
       ok: false,
@@ -757,7 +757,7 @@ export function placeTrap(
     }
   }
   const consumed = [{ itemId: trapItemId, quantity: 1 }, ...countItemIds(bait)]
-  const removed = removeIngredients(save, consumed)
+  const removed = removeIngredients(db, save, consumed)
   if (!removed) {
     return { ok: false, reason: bait.length > 0 ? 'You do not have that bait.' : 'You do not have a fishing pot.' }
   }

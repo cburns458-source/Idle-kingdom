@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 64;
+const int saveVersion = 65;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -134,6 +134,10 @@ class ActivePotionEffect {
     this.enemyMaxHpDamagePercent,
     this.relativeDropChanceBonusPercent,
     this.baseDurationReductionPercent,
+    this.instantHealMaxHpPercent,
+    this.regenMaxHpPercentPerRound,
+    this.damageBonusMin,
+    this.damageBonusMax,
     this.actionsRemaining,
   });
 
@@ -145,6 +149,10 @@ class ActivePotionEffect {
       enemyMaxHpDamagePercent: json['enemyMaxHpDamagePercent'] as num?,
       relativeDropChanceBonusPercent: json['relativeDropChanceBonusPercent'] as num?,
       baseDurationReductionPercent: json['baseDurationReductionPercent'] as num?,
+      instantHealMaxHpPercent: json['instantHealMaxHpPercent'] as num?,
+      regenMaxHpPercentPerRound: json['regenMaxHpPercentPerRound'] as num?,
+      damageBonusMin: json['damageBonusMin'] as num?,
+      damageBonusMax: json['damageBonusMax'] as num?,
       actionsRemaining: json['actionsRemaining'] as num?,
     );
   }
@@ -155,11 +163,25 @@ class ActivePotionEffect {
 
   final num? damageBonusPercent;
 
+  /// Poison: percent of the enemy's *current* HP after each swing.
+  /// Stored on saves as `enemyMaxHpDamagePercent` (legacy name).
   final num? enemyMaxHpDamagePercent;
 
   final num? relativeDropChanceBonusPercent;
 
   final num? baseDurationReductionPercent;
+
+  /// Instant heal: percent of the player's max HP applied when the bottle is drunk.
+  final num? instantHealMaxHpPercent;
+
+  /// Regen: percent of the player's max HP healed each combat round.
+  final num? regenMaxHpPercentPerRound;
+
+  /// Flat bonus added to the player's minimum damage.
+  final num? damageBonusMin;
+
+  /// Flat bonus added to the player's maximum damage.
+  final num? damageBonusMax;
 
   /// Actions still covered by this bottle. Missing on older saves, which
   /// are treated as one action left — the old one-shot behaviour.
@@ -173,6 +195,10 @@ class ActivePotionEffect {
       'enemyMaxHpDamagePercent': enemyMaxHpDamagePercent,
       'relativeDropChanceBonusPercent': relativeDropChanceBonusPercent,
       'baseDurationReductionPercent': baseDurationReductionPercent,
+      'instantHealMaxHpPercent': instantHealMaxHpPercent,
+      'regenMaxHpPercentPerRound': regenMaxHpPercentPerRound,
+      'damageBonusMin': damageBonusMin,
+      'damageBonusMax': damageBonusMax,
       'actionsRemaining': actionsRemaining,
     };
   }
@@ -184,6 +210,10 @@ class ActivePotionEffect {
     Object? enemyMaxHpDamagePercent = _unset,
     Object? relativeDropChanceBonusPercent = _unset,
     Object? baseDurationReductionPercent = _unset,
+    Object? instantHealMaxHpPercent = _unset,
+    Object? regenMaxHpPercentPerRound = _unset,
+    Object? damageBonusMin = _unset,
+    Object? damageBonusMax = _unset,
     Object? actionsRemaining = _unset,
   }) {
     return ActivePotionEffect(
@@ -201,6 +231,14 @@ class ActivePotionEffect {
       baseDurationReductionPercent: baseDurationReductionPercent == _unset
           ? this.baseDurationReductionPercent
           : baseDurationReductionPercent as num?,
+      instantHealMaxHpPercent: instantHealMaxHpPercent == _unset
+          ? this.instantHealMaxHpPercent
+          : instantHealMaxHpPercent as num?,
+      regenMaxHpPercentPerRound: regenMaxHpPercentPerRound == _unset
+          ? this.regenMaxHpPercentPerRound
+          : regenMaxHpPercentPerRound as num?,
+      damageBonusMin: damageBonusMin == _unset ? this.damageBonusMin : damageBonusMin as num?,
+      damageBonusMax: damageBonusMax == _unset ? this.damageBonusMax : damageBonusMax as num?,
       actionsRemaining: actionsRemaining == _unset
           ? this.actionsRemaining
           : actionsRemaining as num?,

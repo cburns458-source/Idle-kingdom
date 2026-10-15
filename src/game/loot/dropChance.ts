@@ -89,6 +89,7 @@ export function equippedRelativeDropChanceBonusPercent(
 
 /**
  * Total relative drop-chance bonus from all sources (gear + active luck potion).
+ * Drop-bonus potions apply to gathering and combat loot, including gear.
  * Same bonus types stack by addition.
  */
 export function totalRelativeDropChanceBonusPercent(
@@ -96,9 +97,8 @@ export function totalRelativeDropChanceBonusPercent(
   save: PlayerSave,
 ): number {
   let total = equippedRelativeDropChanceBonusPercent(db, save)
-  if (save.activePotionEffect?.scope === 'one_action') {
-    total += save.activePotionEffect.relativeDropChanceBonusPercent ?? 0
-  }
+  const potionBonus = save.activePotionEffect?.relativeDropChanceBonusPercent
+  if (potionBonus) total += potionBonus
   return total
 }
 

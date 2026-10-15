@@ -14,15 +14,23 @@ void main() {
     codex = CodexIndex(db);
   });
 
-  test('lists every launch item and enemy except pets, cosmetics, and quest items', () {
+  test('lists every launch item and enemy except pets, cosmetics, quest, and retired items', () {
     final catalogIds = db.items
-        .where((row) => includeInCodexCatalog(category: row.category, subtype: row.subtype))
+        .where(
+          (row) => includeInCodexCatalog(
+            category: row.category,
+            subtype: row.subtype,
+            retired: row.retired == true,
+          ),
+        )
         .map((row) => row.itemId)
         .toSet();
     expect(codex.items.map((row) => row.itemId).toSet(), catalogIds);
     expect(catalogIds.contains('ITEM-0299'), isFalse);
     expect(catalogIds.contains('ITEM-0296'), isFalse);
     expect(catalogIds.contains('ITEM-0320'), isFalse);
+    expect(catalogIds.contains('ITEM-0383'), isFalse);
+    expect(catalogIds.contains('ITEM-0192'), isFalse);
     expect(codex.item('ITEM-0299')?.displayName, 'Stolen Coin Purse');
     expect(codex.item('ITEM-0296')?.displayName, "Traveler's Tunic");
     expect(codex.item('ITEM-0320')?.displayName, 'Chick Pet');
@@ -252,6 +260,131 @@ void main() {
     expect(
       codex.items.any((row) => row.obtainedFrom.any((source) => source.actionId == 'ACN-0036')),
       isFalse,
+    );
+  });
+
+  test('hides retired items from the catalog and keeps lookup for inventory', () {
+    expect(codex.items.any((row) => row.itemId == 'ITEM-0383'), isFalse);
+    expect(codex.items.any((row) => row.itemId == 'ITEM-0192'), isFalse);
+    expect(
+      codex.itemsMatching(query: 'willow log').map((row) => row.itemId),
+      isNot(contains('ITEM-0383')),
+    );
+    expect(
+      codex.itemsMatching(query: 'cooked baby giant squid').map((row) => row.itemId),
+      isNot(contains('ITEM-0192')),
+    );
+    expect(codex.item('ITEM-0383')?.displayName, 'Willow Log');
+    expect(codex.item('ITEM-0192')?.displayName, 'Cooked Baby Giant Squid');
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0383').retired, isTrue);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0192').retired, isTrue);
+  });
+
+  test('shows generated potion effect lines on codex item pages', () {
+    expect(codex.item('ITEM-0439')?.statLines, ['Heals 5%, 6 uses']);
+    expect(codex.item('ITEM-0440')?.statLines, ['Heals 3% each round, 6 uses']);
+    expect(codex.item('ITEM-0441')?.statLines, ['+10–30 damage, 6 uses']);
+    expect(codex.item('ITEM-0442')?.statLines, ['+30–90 damage, 6 uses']);
+  });
+
+  test('shows code-side Obtained From notes when there is no generated data source', () {
+    List<String> noteTitles(String itemId) => (codex.item(itemId)?.obtainedFrom ?? const [])
+        .where((row) => row.kind == CodexObtainKind.note)
+        .map((row) => row.title)
+        .toList();
+    expect(
+      db.items.firstWhere((row) => row.itemId == 'ITEM-0365').description,
+      'Clean water from the tap.',
+    );
+    expect(noteTitles('ITEM-0365'), ['Kitchens and apothecary stations']);
+    expect(
+      codex.item('ITEM-0365')!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+      isTrue,
+    );
+    for (final itemId in [
+      'ITEM-0181',
+      'ITEM-0352',
+      'ITEM-0353',
+      'ITEM-0354',
+      'ITEM-0355',
+      'ITEM-0356',
+      'ITEM-0357',
+    ]) {
+      expect(noteTitles(itemId), ['Pot fishing'], reason: itemId);
+      expect(
+        codex.item(itemId)!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+        isTrue,
+        reason: itemId,
+      );
+    }
+    for (final itemId in ['ITEM-0369', 'ITEM-0371', 'ITEM-0373', 'ITEM-0375']) {
+      expect(noteTitles(itemId), ['Crossbreeding seeds'], reason: itemId);
+      expect(
+        codex.item(itemId)!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+        isTrue,
+        reason: itemId,
+      );
+    }
+    final source = assertGameDatabaseShape(contentDatabaseJson());
+    final sourceCodex = CodexIndex(source);
+    for (final itemId in ['ITEM-0331', 'ITEM-0332', 'ITEM-0335', 'ITEM-0338', 'ITEM-0349']) {
+      final row = source.items.firstWhere((item) => item.itemId == itemId);
+      expect(row.obtainedFrom, 'Crossbreeding seeds', reason: itemId);
+      expect(row.retired, isNot(isTrue), reason: itemId);
+      expect(
+        includeInCodexCatalog(
+          category: row.category,
+          subtype: row.subtype,
+          retired: row.retired == true,
+        ),
+        isTrue,
+        reason: itemId,
+      );
+      expect(
+        (sourceCodex.item(itemId)?.obtainedFrom ?? const [])
+            .where((entry) => entry.kind == CodexObtainKind.note)
+            .map((entry) => entry.title)
+            .toList(),
+        ['Crossbreeding seeds'],
+        reason: itemId,
+      );
+    }
+    for (final itemId in ['ITEM-0370', 'ITEM-0372', 'ITEM-0374', 'ITEM-0376']) {
+      expect(noteTitles(itemId), ['Botany crops'], reason: itemId);
+      expect(
+        codex.item(itemId)!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+        isTrue,
+        reason: itemId,
+      );
+    }
+    expect(noteTitles('ITEM-0366'), ['Kitchen Scraps']);
+    expect(
+      codex.item('ITEM-0366')!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+      isTrue,
+    );
+    expect(noteTitles('ITEM-0045'), ['Tanner leather']);
+    expect(
+      codex.item('ITEM-0045')!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
+      isTrue,
+    );
+  });
+
+  test('appends a filled Obtained From cell after generated sources', () {
+    final raw = Map<String, Object?>.from(db.raw);
+    final items = [
+      for (final item in db.items)
+        item.itemId == 'ITEM-0031'
+            ? {...item.raw, 'Obtained From': 'A hidden glade.'}
+            : Map<String, Object?>.from(item.raw),
+    ];
+    raw['Items'] = items;
+    final indexed = CodexIndex(GameDatabase(raw));
+    final sources = indexed.item('ITEM-0031')!.obtainedFrom;
+    expect(sources.last.kind, CodexObtainKind.note);
+    expect(sources.last.title, 'A hidden glade.');
+    expect(
+      sources.take(sources.length - 1).every((row) => row.kind != CodexObtainKind.note),
+      isTrue,
     );
   });
 

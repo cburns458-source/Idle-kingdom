@@ -141,7 +141,7 @@ export function completeSpecialProject(
   const project = getProject(db, projectId)!
   const crafts = Math.floor(quantity)
   const inputs = projectInputsForSave(save, project)
-  const withMaterials = removeIngredients(save, inputs, crafts)
+  const withMaterials = removeIngredients(db, save, inputs, crafts)
   if (!withMaterials) {
     return { ok: false, reason: 'Missing required materials.' }
   }

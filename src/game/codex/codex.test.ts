@@ -10,11 +10,11 @@ const rawDatabase = JSON.parse(
 )
 
 describe('codex index', () => {
-  const { launch } = prepareDatabase(rawDatabase)
+  const { launch, source } = prepareDatabase(rawDatabase)
   const sorter = new InventorySorter(launch)
   const codex = new CodexIndex(launch)
 
-  it('lists every launch item and enemy except pets, cosmetics, and quest items', () => {
+  it('lists every launch item and enemy except pets, cosmetics, quest, and retired items', () => {
     const catalogIds = new Set(
       launch.Items.filter((row) => includeInCodexCatalog(row)).map((row) => row['Item ID']),
     )
@@ -22,6 +22,8 @@ describe('codex index', () => {
     expect(catalogIds.has('ITEM-0299')).toBe(false)
     expect(catalogIds.has('ITEM-0296')).toBe(false)
     expect(catalogIds.has('ITEM-0320')).toBe(false)
+    expect(catalogIds.has('ITEM-0383')).toBe(false)
+    expect(catalogIds.has('ITEM-0192')).toBe(false)
     expect(codex.item('ITEM-0299')?.displayName).toBe('Stolen Coin Purse')
     expect(codex.item('ITEM-0296')?.displayName).toBe("Traveler's Tunic")
     expect(codex.item('ITEM-0320')?.displayName).toBe('Chick Pet')
@@ -222,6 +224,91 @@ describe('codex index', () => {
     expect(
       codex.items.some((row) => row.obtainedFrom.some((source) => source.actionId === 'ACN-0036')),
     ).toBe(false)
+  })
+
+  it('hides retired items from the catalog and keeps lookup for inventory', () => {
+    expect(codex.items.some((row) => row.itemId === 'ITEM-0383')).toBe(false)
+    expect(codex.items.some((row) => row.itemId === 'ITEM-0192')).toBe(false)
+    expect(codex.itemsMatching(undefined, 'willow log').map((row) => row.itemId)).not.toContain(
+      'ITEM-0383',
+    )
+    expect(codex.itemsMatching(undefined, 'cooked baby giant squid').map((row) => row.itemId)).not.toContain(
+      'ITEM-0192',
+    )
+    expect(codex.item('ITEM-0383')?.displayName).toBe('Willow Log')
+    expect(codex.item('ITEM-0192')?.displayName).toBe('Cooked Baby Giant Squid')
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0383')?.Retired).toBe(true)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0192')?.Retired).toBe(true)
+    expect(source.Items.find((row) => row['Item ID'] === 'ITEM-0384')?.Retired).toBe(true)
+  })
+
+  it('shows generated potion effect lines on codex item pages', () => {
+    expect(codex.item('ITEM-0439')?.statLines).toEqual(['Heals 5%, 6 uses'])
+    expect(codex.item('ITEM-0440')?.statLines).toEqual(['Heals 3% each round, 6 uses'])
+    expect(codex.item('ITEM-0441')?.statLines).toEqual(['+10–30 damage, 6 uses'])
+    expect(codex.item('ITEM-0442')?.statLines).toEqual(['+30–90 damage, 6 uses'])
+  })
+
+  it('shows code-side Obtained From notes when there is no generated data source', () => {
+    const noteTitles = (itemId: string) =>
+      (codex.item(itemId)?.obtainedFrom ?? [])
+        .filter((row) => row.kind === 'note')
+        .map((row) => row.title)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0365')?.Description).toBe(
+      'Clean water from the tap.',
+    )
+    expect(noteTitles('ITEM-0365')).toEqual(['Kitchens and apothecary stations'])
+    expect(codex.item('ITEM-0365')!.obtainedFrom.every((row) => row.kind === 'note')).toBe(true)
+    for (const itemId of [
+      'ITEM-0181',
+      'ITEM-0352',
+      'ITEM-0353',
+      'ITEM-0354',
+      'ITEM-0355',
+      'ITEM-0356',
+      'ITEM-0357',
+    ]) {
+      expect(noteTitles(itemId), itemId).toEqual(['Pot fishing'])
+      expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
+    }
+    for (const itemId of ['ITEM-0369', 'ITEM-0371', 'ITEM-0373', 'ITEM-0375']) {
+      expect(noteTitles(itemId), itemId).toEqual(['Crossbreeding seeds'])
+      expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
+    }
+    const sourceCodex = new CodexIndex(source)
+    for (const itemId of ['ITEM-0331', 'ITEM-0332', 'ITEM-0335', 'ITEM-0338', 'ITEM-0349']) {
+      const row = source.Items.find((item) => item['Item ID'] === itemId)
+      expect(row?.['Obtained From'], itemId).toBe('Crossbreeding seeds')
+      expect(row?.Retired, itemId).not.toBe(true)
+      expect(includeInCodexCatalog(row!), itemId).toBe(true)
+      expect(
+        (sourceCodex.item(itemId)?.obtainedFrom ?? [])
+          .filter((entry) => entry.kind === 'note')
+          .map((entry) => entry.title),
+        itemId,
+      ).toEqual(['Crossbreeding seeds'])
+    }
+    for (const itemId of ['ITEM-0370', 'ITEM-0372', 'ITEM-0374', 'ITEM-0376']) {
+      expect(noteTitles(itemId), itemId).toEqual(['Botany crops'])
+      expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
+    }
+    expect(noteTitles('ITEM-0366')).toEqual(['Kitchen Scraps'])
+    expect(codex.item('ITEM-0366')!.obtainedFrom.every((row) => row.kind === 'note')).toBe(true)
+    expect(noteTitles('ITEM-0045')).toEqual(['Tanner leather'])
+    expect(codex.item('ITEM-0045')!.obtainedFrom.every((row) => row.kind === 'note')).toBe(true)
+  })
+
+  it('appends a filled Obtained From cell after generated sources', () => {
+    const patched = {
+      ...launch,
+      Items: launch.Items.map((item) =>
+        item['Item ID'] === 'ITEM-0031' ? { ...item, 'Obtained From': 'A hidden glade.' } : item,
+      ),
+    }
+    const indexed = new CodexIndex(patched)
+    const sources = indexed.item('ITEM-0031')!.obtainedFrom
+    expect(sources.at(-1)).toMatchObject({ kind: 'note', title: 'A hidden glade.' })
+    expect(sources.slice(0, -1).every((row) => row.kind !== 'note')).toBe(true)
   })
 
   it('labels Mother Squid and Squidling XP as Fishing', () => {

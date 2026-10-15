@@ -12,6 +12,9 @@ import type { PlayerSave } from '../save/types'
 import type { LootGrant } from '../activity/types'
 import {
   applyPotionEnemyRoundDamage,
+  applyPotionInstantHeal,
+  applyPotionRegenHeal,
+  enemyCurrentHpDamagePercent,
   tickPotionAction,
   tryConsumePotionForScope,
 } from '../potions/effects'
@@ -155,10 +158,15 @@ export function beginCombatSave(
   nowIso: string = new Date().toISOString(),
 ): PlayerSave {
   const potion = tryConsumePotionForScope(db, save, 'one_combat_encounter')
+  const effect = potion.effect ?? potion.save.activePotionEffect
+  const maxHp = playerMaxHp(db, potion.save)
+  const healedHp = applyPotionInstantHeal(potion.save.currentHp, maxHp, effect)
   const startedAtMs = Date.parse(nowIso)
   const atMs = Number.isFinite(startedAtMs) ? startedAtMs : Date.now()
   return {
     ...potion.save,
+    maxHp,
+    currentHp: healedHp,
     currentActionId: action['Action ID'],
     actionStartedAt: nowIso,
     actionDurationMs: null,
@@ -172,7 +180,7 @@ export function beginCombatSave(
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
-    activePotionEffect: potion.effect ?? potion.save.activePotionEffect,
+    activePotionEffect: effect,
     deathPauseUntil: null,
   }
 }
@@ -306,7 +314,7 @@ export function resolveCombatRound(
     }
   }
 
-  const poisonPercent = save.activePotionEffect?.enemyMaxHpDamagePercent
+  const poisonPercent = enemyCurrentHpDamagePercent(save.activePotionEffect)
   if (poisonPercent != null && poisonPercent > 0) {
     if (lockpickCombat || nextEnemyHp <= 0) {
       poisonHit = 0
@@ -354,8 +362,10 @@ export function resolveCombatRound(
   const damageDealt = playerHit + (offhandHit ?? 0) + (staffHit ?? 0)
   const lifestealHealed = lifestealHealAmount(db, save, damageDealt)
   const hpAfterLifesteal = applyLifestealHeal(db, save, save.currentHp, damageDealt)
+  const playerMax = playerMaxHp(db, save)
+  const hpAfterRegen = applyPotionRegenHeal(hpAfterLifesteal, playerMax, save.activePotionEffect)
   const enemyHpAfterPlayer = nextEnemyHp
-  const playerHpAfterPlayer = hpAfterLifesteal
+  const playerHpAfterPlayer = hpAfterRegen
 
   if (nextEnemyHp <= 0 && !bossAddsTriggered) {
     return {
@@ -376,7 +386,7 @@ export function resolveCombatRound(
       enemyHpAfterPlayer,
       playerHpAfterPlayer,
       enemyHp: 0,
-      playerHp: hpAfterLifesteal,
+      playerHp: hpAfterRegen,
       outcome: 'victory',
       lifestealHealed,
     }
@@ -401,7 +411,7 @@ export function resolveCombatRound(
       enemyHpAfterPlayer,
       playerHpAfterPlayer,
       enemyHp: bossPendingHp ?? nextEnemyHp,
-      playerHp: hpAfterLifesteal,
+      playerHp: hpAfterRegen,
       outcome: 'ongoing',
       lifestealHealed,
     }
@@ -426,7 +436,7 @@ export function resolveCombatRound(
       enemyHpAfterPlayer,
       playerHpAfterPlayer,
       enemyHp: nextEnemyHp,
-      playerHp: hpAfterLifesteal,
+      playerHp: hpAfterRegen,
       outcome: 'ongoing',
       lifestealHealed,
     }
@@ -437,7 +447,7 @@ export function resolveCombatRound(
   let enemyRaw = rollDamage(enemyRange.min, enemyRange.max, random)
   if (rampage) enemyRaw *= 2
   const enemyHit = applyMitigation(enemyRaw, playerDamageReduction(db, save), floor)
-  const playerHp = Math.max(0, hpAfterLifesteal - enemyHit)
+  const playerHp = Math.max(0, hpAfterRegen - enemyHit)
 
   const thornsPercent = equippedEnchantmentThornsPercent(db, save)
   let thornsHit = thornsPercent > 0 ? Math.round((enemyHit * thornsPercent) / 100) : 0

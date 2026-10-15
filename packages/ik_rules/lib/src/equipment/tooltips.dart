@@ -5,6 +5,8 @@ import 'package:ik_content/ik_content.dart';
 
 import '../js_compat.dart';
 import '../loot/drop_chance.dart';
+import '../potions/effects.dart';
+import '../save/generated/save_models.dart';
 import '../spells/spells.dart';
 import 'loadout.dart';
 
@@ -15,6 +17,44 @@ String? _skillDisplayName(GameDatabase? db, String? skillId) {
       .firstWhereOrNull((skill) => skill.raw['Skill ID'] == skillId)
       ?.raw['Display Name'];
   return name is String && name.isNotEmpty ? name : skillId;
+}
+
+/// Potion effect line from capability tags, always including the 6-use duration.
+List<String> potionTooltipStatLines(EquipmentRow? equipment, String itemId) {
+  final effect = parsePotionEffect(equipment, itemId);
+  if (effect == null) return const <String>[];
+  final parts = <String>[];
+  final instant = effect.instantHealMaxHpPercent;
+  if (instant != null && instant > 0) {
+    parts.add('Heals ${jsNumberToString(instant)}%');
+  }
+  final regen = effect.regenMaxHpPercentPerRound;
+  if (regen != null && regen > 0) {
+    parts.add('Heals ${jsNumberToString(regen)}% each round');
+  }
+  final flatMin = effect.damageBonusMin;
+  final flatMax = effect.damageBonusMax;
+  if (flatMin != null && flatMax != null && (flatMin > 0 || flatMax > 0)) {
+    parts.add('+${jsNumberToString(flatMin)}–${jsNumberToString(flatMax)} damage');
+  }
+  final damage = effect.damageBonusPercent;
+  if (damage != null && damage > 0) {
+    parts.add('+${jsNumberToString(damage)}% damage');
+  }
+  final drop = effect.relativeDropChanceBonusPercent;
+  if (drop != null && drop > 0) {
+    parts.add('+${jsNumberToString(drop)}% relative Drop Chance');
+  }
+  final duration = effect.baseDurationReductionPercent;
+  if (duration != null && duration > 0) {
+    parts.add('-${jsNumberToString(duration)}% base duration');
+  }
+  final poison = enemyCurrentHpDamagePercent(effect);
+  if (poison != null && poison > 0) {
+    parts.add('Deals ${jsNumberToString(poison)}% of enemy current HP each round');
+  }
+  parts.add('$potionActionDuration uses');
+  return <String>[parts.join(', ')];
 }
 
 /// Combat-facing equipment stats for hold tooltips.
@@ -71,9 +111,17 @@ List<String> equipmentTooltipStatLines(EquipmentRow? equipment, [GameDatabase? d
     );
   }
 
-  final dropBonus = parseRelativeDropChanceBonusPercent(equipment.raw['Capabilities / Effects']);
-  if (dropBonus > 0) {
-    lines.add('+${jsNumberToString(dropBonus)}% relative Drop Chance');
+  final itemId = equipment.raw['Item ID'];
+  final potionLines = itemId is String
+      ? potionTooltipStatLines(equipment, itemId)
+      : const <String>[];
+  if (potionLines.isNotEmpty) {
+    lines.addAll(potionLines);
+  } else {
+    final dropBonus = parseRelativeDropChanceBonusPercent(equipment.raw['Capabilities / Effects']);
+    if (dropBonus > 0) {
+      lines.add('+${jsNumberToString(dropBonus)}% relative Drop Chance');
+    }
   }
   lines.addAll(skillRelativeDropChanceTooltipLines(equipment.raw['Capabilities / Effects']));
   final lockpickBreakReduction = parseLockpickBreakChanceReductionPercent(

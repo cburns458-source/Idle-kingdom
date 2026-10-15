@@ -231,11 +231,30 @@ String? templeHandsRefusal(PlayerSave save, String slotId) {
   return 'The monks keep your hands empty at the Temple.';
 }
 
+/// Changing away from the drunk bottle (unequip or a different potion) discards
+/// that effect. Same-item top-ups keep it.
+bool discardsActivePotion(PlayerSave save, String? nextPotionItemId) {
+  final effect = save.activePotionEffect;
+  if (effect == null) return false;
+  return nextPotionItemId != effect.itemId;
+}
+
+PlayerSave withoutActivePotion(PlayerSave save) {
+  if (save.activePotionEffect == null) return save;
+  return save.copyWith(activePotionEffect: null);
+}
+
 /// Unequips a slot, returning any equipped stack to inventory.
 ///
 /// Blocked (not performed) when the bag has no room for the returned item, so
 /// gear is never silently destroyed.
+///
+/// An active potion is the exception: unequipping the potion slot discards the
+/// drunk bottle and every leftover dose. Nothing returns to the bag or bank.
 EquipResult unequipSlot(PlayerSave save, String slotId) {
+  if (isPotionSlot(slotId) && discardsActivePotion(save, null)) {
+    return EquipResult.ok(withoutActivePotion(_setSlot(save, slotId, null)));
+  }
   final equipped = slotStack(save, slotId);
   if (equipped == null || equipped.quantity <= 0) {
     return EquipResult.ok(_setSlot(save, slotId, null));
@@ -369,17 +388,19 @@ EquipResult equipInventoryIndex(
         : 0;
     final keepFavorite = favorite || current?.favorite == true;
     next = _removeInventoryAtIndex(next, index, moveQty);
-    return EquipResult.ok(
-      _setSlot(
-        next,
-        slotId,
-        EquippedStack(
-          itemId: itemId,
-          quantity: existingQty + moveQty,
-          favorite: keepFavorite ? true : null,
-        ),
+    var equippedSave = _setSlot(
+      next,
+      slotId,
+      EquippedStack(
+        itemId: itemId,
+        quantity: existingQty + moveQty,
+        favorite: keepFavorite ? true : null,
       ),
     );
+    if (isPotionSlot(slotId) && discardsActivePotion(save, itemId)) {
+      equippedSave = withoutActivePotion(equippedSave);
+    }
+    return EquipResult.ok(equippedSave);
   }
 
   if (current != null) {

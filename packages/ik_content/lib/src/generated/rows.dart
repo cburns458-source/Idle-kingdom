@@ -443,6 +443,14 @@ class ItemRow extends DbRow {
   String? get stackable => stringOrNull('Stackable');
 
   String? get notes => stringOrNull('Notes');
+
+  /// Optional lore/source line shown in the Codex after generated obtain
+  /// sources. Quest & Dialogue fills the cells; systems leave them empty.
+  String? get obtainedFrom => stringOrNull('Obtained From');
+
+  /// When true, the Codex omits the item. Missing or false means listed.
+  /// Inventory, shops, and recipes are unchanged.
+  bool? get retired => boolOrNull('Retired');
 }
 
 class LocationRow extends DbRow {

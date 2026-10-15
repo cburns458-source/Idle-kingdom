@@ -1010,6 +1010,26 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return next;
     },
   ),
+  SaveMigration(
+    fromVersion: 64,
+    toVersion: 65,
+    migrate: (save, _) {
+      final next = _bumped(save, 65);
+      final effect = asObject(save['activePotionEffect']);
+      if (effect == null) return next;
+      final patched = copySave(effect);
+      patched['instantHealMaxHpPercent'] = effect['instantHealMaxHpPercent'] is num
+          ? effect['instantHealMaxHpPercent']
+          : null;
+      patched['regenMaxHpPercentPerRound'] = effect['regenMaxHpPercentPerRound'] is num
+          ? effect['regenMaxHpPercentPerRound']
+          : null;
+      patched['damageBonusMin'] = effect['damageBonusMin'] is num ? effect['damageBonusMin'] : null;
+      patched['damageBonusMax'] = effect['damageBonusMax'] is num ? effect['damageBonusMax'] : null;
+      next['activePotionEffect'] = patched;
+      return next;
+    },
+  ),
 ];
 
 /// Thrown when a save cannot be brought to the current version.

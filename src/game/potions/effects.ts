@@ -1,4 +1,5 @@
 import { POTION_SLOT_ID, slotStack } from '../equipment/loadout'
+import { ALCHEMY_SKILL_ID } from '../equipment/specialist'
 import type { EquipmentRow, GameDatabase } from '../data/types'
 import {
   POTION_ACTION_DURATION,
@@ -6,6 +7,7 @@ import {
   type PlayerSave,
   type PotionConsumeScope,
 } from '../save/types'
+import { healTowardCeiling } from '../vitals/overheal'
 
 export function capabilityTags(effects: string | null | undefined): string[] {
   if (typeof effects !== 'string') return []
@@ -45,6 +47,10 @@ export function parsePotionEffect(
   let enemyMaxHpDamagePercent: number | null = null
   let relativeDropChanceBonusPercent: number | null = null
   let baseDurationReductionPercent: number | null = null
+  let instantHealMaxHpPercent: number | null = null
+  let regenMaxHpPercentPerRound: number | null = null
+  let damageBonusMin: number | null = null
+  let damageBonusMax: number | null = null
 
   for (const tag of tags) {
     const damage = tag.match(/^\+(\d+(?:\.\d+)?)%\s*damage$/)
@@ -67,6 +73,22 @@ export function parsePotionEffect(
     const duration = tag.match(/^-(\d+(?:\.\d+)?)%\s+base\s+duration$/)
     if (duration) {
       baseDurationReductionPercent = Number(duration[1])
+      continue
+    }
+    const instantHeal = tag.match(/^heals\s+(\d+(?:\.\d+)?)%\s+of\s+max\s+hp\s+on\s+drink$/)
+    if (instantHeal) {
+      instantHealMaxHpPercent = Number(instantHeal[1])
+      continue
+    }
+    const regen = tag.match(/^heals\s+(\d+(?:\.\d+)?)%\s+of\s+max\s+hp\s+per\s+combat\s+round$/)
+    if (regen) {
+      regenMaxHpPercentPerRound = Number(regen[1])
+      continue
+    }
+    const flat = tag.match(/^\+(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\s+flat\s+damage$/)
+    if (flat) {
+      damageBonusMin = Number(flat[1])
+      damageBonusMax = Number(flat[2])
     }
   }
 
@@ -77,8 +99,39 @@ export function parsePotionEffect(
     enemyMaxHpDamagePercent,
     relativeDropChanceBonusPercent,
     baseDurationReductionPercent,
+    instantHealMaxHpPercent,
+    regenMaxHpPercentPerRound,
+    damageBonusMin,
+    damageBonusMax,
     actionsRemaining: POTION_ACTION_DURATION,
   }
+}
+
+/** Poison applies to current HP; the save key stays `enemyMaxHpDamagePercent`. */
+export function enemyCurrentHpDamagePercent(
+  effect: ActivePotionEffect | null | undefined,
+): number | null {
+  return effect?.enemyMaxHpDamagePercent ?? null
+}
+
+export const SPEED_POTION_ITEM_ID = 'ITEM-0071'
+
+export function isSpeedPotionItem(db: GameDatabase, itemId: string | null | undefined): boolean {
+  if (!itemId) return false
+  if (itemId === SPEED_POTION_ITEM_ID) return true
+  const item = db.Items.find((row) => row['Item ID'] === itemId)
+  const key = (item?.['Internal Key'] ?? '').toLowerCase()
+  return key === 'speed_potion'
+}
+
+/** Speed potions do not apply to Alchemy; Masterwork and others still do. */
+export function potionAppliesToProductionSkill(
+  db: GameDatabase,
+  itemId: string | null | undefined,
+  skillId: string,
+): boolean {
+  if (skillId !== ALCHEMY_SKILL_ID) return true
+  return !isSpeedPotionItem(db, itemId)
 }
 
 /** Actions still covered. Older saves with no count have one action left. */
@@ -206,11 +259,61 @@ export function applyPotionDropChance(
 export function applyPotionDurationMs(
   baseDurationMs: number,
   effect: ActivePotionEffect | null | undefined,
+  db?: GameDatabase,
+  skillId?: string,
 ): number {
+  if (db && skillId && effect && !potionAppliesToProductionSkill(db, effect.itemId, skillId)) {
+    return Math.max(0, baseDurationMs)
+  }
   const reduction = effect?.baseDurationReductionPercent
   if (reduction == null || reduction <= 0) return Math.max(0, baseDurationMs)
   const factor = Math.max(0.01, 1 - reduction / 100)
   return Math.max(0, Math.floor(baseDurationMs * factor))
+}
+
+/** Instant heal: percent of max HP, capped at max HP (same ceiling as food). */
+export function potionInstantHealAmount(
+  maxHp: number,
+  effect: ActivePotionEffect | null | undefined,
+): number {
+  const percent = effect?.instantHealMaxHpPercent
+  if (percent == null || percent <= 0) return 0
+  return Math.max(0, Math.floor(maxHp * (percent / 100)))
+}
+
+export function applyPotionInstantHeal(
+  currentHp: number,
+  maxHp: number,
+  effect: ActivePotionEffect | null | undefined,
+): number {
+  const amount = potionInstantHealAmount(maxHp, effect)
+  if (amount <= 0) return currentHp
+  return healTowardCeiling(currentHp, maxHp, amount, 0)
+}
+
+/** Per-round heal: percent of max HP, capped at max HP. */
+export function applyPotionRegenHeal(
+  currentHp: number,
+  maxHp: number,
+  effect: ActivePotionEffect | null | undefined,
+): number {
+  const percent = effect?.regenMaxHpPercentPerRound
+  if (percent == null || percent <= 0) return currentHp
+  const amount = Math.max(0, Math.floor(maxHp * (percent / 100)))
+  if (amount <= 0) return currentHp
+  return healTowardCeiling(currentHp, maxHp, amount, 0)
+}
+
+export function potionFlatDamageBonus(effect: ActivePotionEffect | null | undefined): {
+  min: number
+  max: number
+} {
+  const min = effect?.damageBonusMin
+  const max = effect?.damageBonusMax
+  return {
+    min: typeof min === 'number' && Number.isFinite(min) ? min : 0,
+    max: typeof max === 'number' && Number.isFinite(max) ? max : 0,
+  }
 }
 
 /** Flat HP from the old one-shot "deals N% of enemy maximum HP" tag. */
@@ -218,7 +321,7 @@ export function potionEnemyMaxHpDamage(
   enemyMaxHp: number,
   effect: ActivePotionEffect | null | undefined,
 ): number {
-  const percent = effect?.enemyMaxHpDamagePercent
+  const percent = enemyCurrentHpDamagePercent(effect)
   if (percent == null || percent <= 0) return 0
   return Math.max(0, Math.floor(enemyMaxHp * (percent / 100)))
 }
@@ -238,7 +341,7 @@ export function applyPotionEnemyRoundDamage(
   enemyMaxHp: number,
   effect: ActivePotionEffect | null | undefined,
 ): number {
-  const percent = effect?.enemyMaxHpDamagePercent
+  const percent = enemyCurrentHpDamagePercent(effect)
   if (percent == null || percent <= 0) return enemyHp
   const floorHp = potionEnemyHpFloor(enemyMaxHp)
   if (enemyHp <= floorHp) return enemyHp

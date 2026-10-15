@@ -386,6 +386,15 @@ EquipResult applyEquipmentPreset(
     }
   }
 
+  final nextPotionItemId = worn[potionSlotId]?.itemId;
+  final discardPotion = discardsActivePotion(working, nextPotionItemId);
+  if (discardPotion) {
+    final wornPotion = working.equipment.slots[potionSlotId];
+    if (wornPotion != null && wornPotion.quantity > 0) {
+      _takeFromPool(pool, wornPotion);
+    }
+  }
+
   var bagProbe = working.copyWith(
     equipment: EquipmentLoadout(
       slots: <String, EquippedStack?>{for (final id in slotIds) id: null},
@@ -412,7 +421,7 @@ EquipResult applyEquipmentPreset(
   }
 
   return EquipResult.ok(
-    working.copyWith(
+    (discardPotion ? withoutActivePotion(working) : working).copyWith(
       equipment: EquipmentLoadout(slots: worn),
       inventory: bagProbe.inventory,
       activeEquipmentPresetIndex: index,

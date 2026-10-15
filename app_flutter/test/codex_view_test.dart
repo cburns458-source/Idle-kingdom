@@ -76,6 +76,34 @@ void main() {
     expect(find.text('Nothing in the Codex matches.'), findsOne);
   });
 
+  testWidgets('hides retired items from the item catalog', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller));
+    await tester.enterText(find.byType(TextField), 'willow log');
+    await tester.pump();
+    expect(find.byKey(const Key('codex-item-ITEM-0383')), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'cinnamon log');
+    await tester.pump();
+    expect(find.byKey(const Key('codex-item-ITEM-0384')), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'cooked baby giant squid');
+    await tester.pump();
+    expect(find.byKey(const Key('codex-item-ITEM-0192')), findsNothing);
+    expect(find.text('Nothing in the Codex matches.'), findsOne);
+  });
+
+  testWidgets('shows generated potion effect lines on a codex item page', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+
+    await pumpPanel(tester, CodexView(controller: controller, initialItemId: 'ITEM-0439'));
+    expect(find.text('Fernleaf Tonic (6)'), findsWidgets);
+    expect(find.text('Heals 5%, 6 uses'), findsOne);
+  });
+
   testWidgets('opens a mining action with gem drops kept off the ore pool', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);

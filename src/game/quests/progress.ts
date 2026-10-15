@@ -322,7 +322,7 @@ export function applyQuestOfferingArrival(
     const questId = quest['Quest ID']
     if (hasQuestFlag(next, questId, `visit:${locationId}`)) continue
     if (inventoryCount(next, current.offeringItemId) < 1) continue
-    const removed = removeIngredients(next, [{ itemId: current.offeringItemId, quantity: 1 }], 1)
+    const removed = removeIngredients(db, next, [{ itemId: current.offeringItemId, quantity: 1 }], 1)
     if (!removed) continue
     next = setQuestFlag(removed, questId, `visit:${locationId}`)
     message = FOREST_OFFERING_PLACED_MESSAGE

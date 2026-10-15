@@ -7,6 +7,7 @@ import '../activity/xp.dart';
 import '../config.dart';
 import '../equipment/loadout.dart';
 import '../js_compat.dart';
+import '../potions/effects.dart';
 import '../projects/enchantments.dart';
 import '../races/races.dart';
 import '../religion/religion.dart';
@@ -223,15 +224,28 @@ String _potionEffect(ActivePotionEffect potion) {
   final parts = <String>[];
   final damage = potion.damageBonusPercent;
   if (damage != null && damage > 0) parts.add('${_percent(damage)} damage');
-  final poison = potion.enemyMaxHpDamagePercent;
+  final poison = enemyCurrentHpDamagePercent(potion);
   if (poison != null && poison > 0) {
     parts.add('deals ${jsNumberToString(poison)}% of enemy current HP after each swing');
   }
   final drop = potion.relativeDropChanceBonusPercent;
-  if (drop != null && drop > 0) parts.add('${_percent(drop)} relative drop chance');
+  if (drop != null && drop > 0) parts.add('${_percent(drop)} Luck bonus');
   final duration = potion.baseDurationReductionPercent;
   if (duration != null && duration > 0) {
     parts.add('-${jsNumberToString(duration)}% base duration');
+  }
+  final instant = potion.instantHealMaxHpPercent;
+  if (instant != null && instant > 0) {
+    parts.add('heals ${jsNumberToString(instant)}% of max HP on drink');
+  }
+  final regen = potion.regenMaxHpPercentPerRound;
+  if (regen != null && regen > 0) {
+    parts.add('heals ${jsNumberToString(regen)}% of max HP each round');
+  }
+  final flatMin = potion.damageBonusMin;
+  final flatMax = potion.damageBonusMax;
+  if (flatMin != null && flatMax != null && (flatMin > 0 || flatMax > 0)) {
+    parts.add('+${jsNumberToString(flatMin)}–${jsNumberToString(flatMax)} damage');
   }
   final scope = switch (potion.scope) {
     'one_combat_encounter' => 'this combat',
@@ -249,6 +263,17 @@ List<CombatStatContribution> _damageMultiplierLines(GameDatabase db, PlayerSave 
   final enchantBonus = equippedEnchantmentDamageBonus(db, save);
   if (enchantBonus != 0) {
     lines.add(CombatStatContribution(label: 'Enchantments', detail: _signed(enchantBonus)));
+  }
+  final potionFlat = potionFlatDamageBonus(save.activePotionEffect);
+  if (potionFlat.min != 0 || potionFlat.max != 0) {
+    lines.add(
+      CombatStatContribution(
+        label: save.activePotionEffect == null
+            ? 'Potion'
+            : _itemName(db, save.activePotionEffect!.itemId),
+        detail: '${_signed(potionFlat.min)}–${_signed(potionFlat.max)}',
+      ),
+    );
   }
   final enchantMult = equippedEnchantmentDamageRangeMultiplier(db, save);
   if (enchantMult != 1) {
