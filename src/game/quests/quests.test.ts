@@ -6,7 +6,13 @@ import { addItemToInventory } from '../activity/rewards'
 import { raiseSkillToMinimumLevel } from '../activity/xp'
 import { prepareDatabase } from '../data/loadDatabase'
 import { chooseDialogue, dialoguesForNpc } from '../dialogue/engine'
-import { chooseCombatForQuest, npcConversation, questTalkLine, talkWithQuestNpc } from '../npcs/conversation'
+import {
+  chooseCombatForQuest,
+  npcConversation,
+  questSpokenLine,
+  questTalkLine,
+  talkWithQuestNpc,
+} from '../npcs/conversation'
 import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { specialProductionStationsVisibleAt } from '../projects/projects'
 import { isCosmeticUnlocked } from '../cosmetics/cosmetics'
@@ -38,7 +44,7 @@ import {
 } from './quests'
 import { formatQuestProgressLine, parseStructuredObjectives } from './objectives'
 import { getCurrentStepId, isStepLatched, questActionProgressForActivity, questStepJournal } from './steps'
-import { questLog } from '../log/log'
+import { logCompletion, miniQuestJournal, questJournalSteps, questLog } from '../log/log'
 import {
   CAVE_MAP_ID,
   FOREST_MAP_ID,
@@ -883,6 +889,15 @@ describe('quest tours', () => {
     expect(farmBotanyUnlocked(launch, save)).toBe(false)
     expect(canPlantBotanySeed(launch, save, 'ITEM-0324').ok).toBe(false)
     expect(miniQuestLog(launch, save).some((row) => row.questId === 'QST-0011')).toBe(true)
+    const startedJournal = miniQuestJournal(launch, save).find((row) => row.questId === 'QST-0011')!
+    expect(startedJournal.steps).toEqual(questJournalSteps(launch, save, quest))
+    expect(startedJournal.steps).toEqual(questStepJournal(launch, save, quest))
+    expect(startedJournal.steps[0]).toEqual({
+      key: 'QSTP-0023',
+      label: 'Speak with Fennel at the farm',
+      state: 'current',
+    })
+    const questsBeforeMini = logCompletion(launch, save).sections.find((row) => row.section === 'quests')!
     expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.talkLine).toMatch(
       /something special/i,
     )
@@ -902,6 +917,26 @@ describe('quest tours', () => {
     expect(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')?.idlePrompt).toBe(
       '',
     )
+    expect(
+      questSpokenLine(npcConversation(launch, save, fennel).quests.find((row) => row.questId === 'QST-0011')!),
+    ).toBe('')
+    expect(miniQuestJournal(launch, save).find((row) => row.questId === 'QST-0011')!.steps).toEqual(
+      questStepJournal(launch, save, quest),
+    )
+    expect(
+      miniQuestJournal(launch, save)
+        .find((row) => row.questId === 'QST-0011')!
+        .steps.find((step) => step.key === 'QSTP-0023'),
+    ).toEqual({ key: 'QSTP-0023', label: 'Speak with Fennel at the farm', state: 'done' })
+    expect(
+      miniQuestJournal(launch, save)
+        .find((row) => row.questId === 'QST-0011')!
+        .steps.find((step) => step.key === 'QSTP-0024'),
+    ).toEqual({
+      key: 'QSTP-0024',
+      label: 'Gather compost and speak with Fennel',
+      state: 'current',
+    })
 
     save = addItemToInventory(save, 'ITEM-0377', 1)
     save = applyQuestActionProgress(launch, save, 'ACN-0199', 1)
@@ -936,6 +971,25 @@ describe('quest tours', () => {
     expect(finished.message).toMatch(/keep an eye on them/i)
     expect(finished.message).not.toMatch(/^Thank you/)
     expect(getQuestProgress(finished.save, 'QST-0011').status).toBe('completed')
+    expect(questLog(launch, finished.save).some((row) => row.questId === 'QST-0011')).toBe(false)
+    const finishedJournal = miniQuestJournal(launch, finished.save).find((row) => row.questId === 'QST-0011')!
+    expect(finishedJournal.completed).toBe(true)
+    expect(finishedJournal.steps).toEqual(questJournalSteps(launch, finished.save, quest))
+    expect(finishedJournal.steps.filter((step) => step.key.startsWith('QSTP-'))).toEqual(
+      questStepJournal(launch, finished.save, quest),
+    )
+    const questsAfterMini = logCompletion(launch, finished.save).sections.find((row) => row.section === 'quests')!
+    expect(questsAfterMini.done).toBe(questsBeforeMini.done)
+    expect(questsAfterMini.total).toBe(questsBeforeMini.total)
+    const feastDone = {
+      ...finished.save,
+      quests: [
+        ...finished.save.quests.filter((row) => row.questId !== 'QST-0001'),
+        { questId: 'QST-0001', status: 'completed' as const, progress: 10 },
+      ],
+    }
+    const questsAfterFeast = logCompletion(launch, feastDone).sections.find((row) => row.section === 'quests')!
+    expect(questsAfterFeast.done).toBe(questsBeforeMini.done + 1)
     expect(finished.save.unlockedBookIds).toContain('BOOK-0002')
     expect(inventoryCount(finished.save, 'ITEM-0324')).toBe(4)
     expect(inventoryCount(finished.save, 'ITEM-0339')).toBe(3)

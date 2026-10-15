@@ -420,4 +420,113 @@ void main() {
       });
     }
   });
+
+  group('miniquest journal parity', () {
+    const optionalMiniquest = 'QST-9302';
+    const optionalHold = 'QSTP-9312';
+    const kitchen = 'LOC-0023';
+    const bakeRecipe = 'RCP-0001';
+
+    GameDatabase patchedDatabase(ParityFixture fixture) {
+      final base = asJsonMap(contentDatabaseJson());
+      final db = <String, Object?>{...base};
+      final patch = fixture.inputField<Map<String, Object?>>('patch');
+      for (final entry in patch.entries) {
+        db[entry.key] = <Object?>[
+          ...(base[entry.key] as List<Object?>? ?? const []),
+          ...entry.value! as List<Object?>,
+        ];
+      }
+      return assertGameDatabaseShape(db);
+    }
+
+    Map<String, Object?> questsSection(GameDatabase db, PlayerSave save) {
+      final section = logCompletion(db, save).section('quests')!;
+      return <String, Object?>{
+        'done': section.done,
+        'total': section.total,
+        'percent': section.percent,
+      };
+    }
+
+    Map<String, Object?> journalSnapshot(GameDatabase db, PlayerSave save, String questId) {
+      final quest = getQuest(db, questId)!;
+      final row = miniQuestJournal(
+        db,
+        save,
+        0,
+      ).firstWhereOrNull((entry) => entry.questId == questId);
+      return <String, Object?>{
+        'inQuestLog': questLog(db, save).any((entry) => entry.questId == questId),
+        'journal': row?.toJson(),
+        'sharedSteps': [for (final step in questJournalSteps(db, save, quest)) step.toJson()],
+        'stepJournal': [for (final step in questStepJournal(db, save, quest)) step.toJson()],
+      };
+    }
+
+    for (final fixture in loadParityFixtures('quests/miniquest-journal')) {
+      test(fixture.name, () {
+        if (fixture.name == 'green-thumb') {
+          final db = databaseOf(fixture);
+          var save = saveOf(fixture).copyWith(
+            currentLocationId: 'LOC-0001',
+            inventory: const [InventoryStack(itemId: 'ITEM-0324', quantity: 1)],
+            quests: const [QuestProgress(questId: 'QST-0006', status: 'completed', progress: 1)],
+          );
+          save = applyQuestAutoStartOnSeed(db, save);
+          final before = questsSection(db, save);
+          final miniDone = save.copyWith(
+            quests: [
+              for (final row in save.quests)
+                if (row.questId == 'QST-0011') row.copyWith(status: 'completed') else row,
+            ],
+          );
+          final feastDone = miniDone.copyWith(
+            quests: [
+              ...miniDone.quests.where((row) => row.questId != 'QST-0001'),
+              const QuestProgress(questId: 'QST-0001', status: 'completed', progress: 10),
+            ],
+          );
+          expect(
+            checkParity(fixture, {
+              'active': journalSnapshot(db, save, 'QST-0011'),
+              'completed': journalSnapshot(db, miniDone, 'QST-0011'),
+              'completionBefore': before,
+              'completionAfterMiniquest': questsSection(db, miniDone),
+              'completionAfterFeast': questsSection(db, feastDone),
+            }),
+            isNull,
+          );
+          return;
+        }
+
+        final db = patchedDatabase(fixture);
+        var save = saveOf(fixture).copyWith(
+          quests: const [
+            QuestProgress(questId: optionalMiniquest, status: 'active', progress: 0, counters: {}),
+          ],
+        );
+        save = applyQuestVisitProgress(db, save, kitchen);
+        save = applyQuestProcessProgress(db, save, bakeRecipe);
+        final holdStep = db.questSteps.firstWhere((row) => row.stepId == optionalHold);
+        final before = questsSection(db, save);
+        final finished = completeQuest(db, save, optionalMiniquest, ignoreLocation: true);
+        expect(
+          checkParity(fixture, {
+            'holdOptional': isOptionalStep(holdStep),
+            'skipped': journalSnapshot(db, save, optionalMiniquest),
+            'completionBefore': before,
+            'completed': finished.ok
+                ? <String, Object?>{
+                    'ok': true,
+                    'snapshot': journalSnapshot(db, finished.save!, optionalMiniquest),
+                    'completion': questsSection(db, finished.save!),
+                  }
+                : <String, Object?>{'ok': false, 'reason': finished.reason},
+          }),
+          isNull,
+        );
+      });
+    }
+  });
 }

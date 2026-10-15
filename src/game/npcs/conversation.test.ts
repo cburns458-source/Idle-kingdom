@@ -7,7 +7,9 @@ import type { GameDatabase, QuestDialogueRow } from '../data/types'
 import { createNewSave } from '../save/saveStore'
 import { completeQuest } from '../quests/quests'
 import type { PlayerSave } from '../save/types'
-import { npcConversation, learnMentorProjects, takeMerchantTip } from './conversation'
+import { applyQuestAutoStartOnSeed } from '../quests/progress'
+import { chooseDialogue } from '../dialogue/engine'
+import { npcConversation, learnMentorProjects, questSpokenLine, takeMerchantTip } from './conversation'
 
 const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
@@ -452,6 +454,26 @@ describe('npc conversation', () => {
     }
     const helge = npcConversation(launch, save, npc('NPC-0015'))
     expect(helge.quests[0]!.completedNote).toMatch(/rebuild our empire/)
+  })
+
+  it('does not fall back to the NPC description during a Green Thumb gap', () => {
+    const fennel = npc('NPC-0014')
+    let save: PlayerSave = {
+      ...saveAt('LOC-0001'),
+      inventory: [{ itemId: 'ITEM-0324', quantity: 1 }],
+      quests: [{ questId: 'QST-0006', status: 'completed', progress: 1 }],
+    }
+    save = applyQuestAutoStartOnSeed(launch, save)
+    const firstTalk = chooseDialogue(launch, save, 'DLG-0007', 'DNODE-0011', 'DCH-0014')
+    expect(firstTalk.ok).toBe(true)
+    if (!firstTalk.ok) return
+    const block = npcConversation(launch, firstTalk.save, fennel).quests.find(
+      (row) => row.questId === 'QST-0011',
+    )!
+    expect(block.talkLine).toBeNull()
+    expect(questSpokenLine(block)).toBe('')
+    expect(questSpokenLine(block)).not.toBe(fennel.Description)
+    expect(fennel.Description).toBe('A farmer who lives at the farm.')
   })
 
   it('offers the tanner on hides in the bag', () => {

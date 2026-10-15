@@ -17,6 +17,7 @@ import { socialViewScenarios } from './socialViews'
 import { productionScenarios } from './production'
 import { projectScenarios } from './projects'
 import { pvpScenarios } from './pvp'
+import { miniquestJournalScenarios } from './miniquests'
 import { questScenarios } from './quests'
 import { raceScenarios } from './races'
 import { religionScenarios } from './religion'
@@ -48,6 +49,7 @@ export const parityScenarios: ParityScenario[] = [
   ...projectScenarios,
   ...pvpScenarios,
   ...questScenarios,
+  ...miniquestJournalScenarios,
   ...optionalStepScenarios,
   ...dialogueScenarios,
   ...npcScenarios,

@@ -273,6 +273,18 @@ export interface NpcQuestBlock {
   idlePrompt: string
 }
 
+/**
+ * Line spoken during a quest conversation.
+ *
+ * Talk and idle quest copy only — never the NPC Description field, so content
+ * can drop that description without it coming back as a fallback.
+ */
+export function questSpokenLine(quest: NpcQuestBlock): string {
+  const talk = quest.talkLine?.trim()
+  if (talk) return talk
+  return quest.idlePrompt.trim()
+}
+
 /** Merchant-only: ask where the Master Dwarf is today. */
 export interface NpcWhereabouts {
   label: string

@@ -168,7 +168,7 @@ class _LogViewState extends State<LogView> {
             child: ListenableBuilder(
               listenable: controller.secondsProgress,
               builder: (context, _) =>
-                  _MiniquestList(rows: miniQuestLog(db, save, controller.session.clock())),
+                  _MiniquestList(rows: miniQuestJournal(db, save, controller.session.clock())),
             ),
           ),
         Expanded(child: _logList(db, save)),
@@ -506,7 +506,7 @@ class _QuestJournalRow extends StatelessWidget {
 class _MiniquestList extends StatelessWidget {
   const _MiniquestList({required this.rows});
 
-  final List<MiniQuestLogRow> rows;
+  final List<MiniQuestJournalRow> rows;
 
   @override
   Widget build(BuildContext context) {
@@ -523,35 +523,105 @@ class _MiniquestList extends StatelessWidget {
         for (final row in rows)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: GamePanel(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    row.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      color: row.ready
-                          ? UiChrome.of(context).embossFace
-                          : UiChrome.of(context).panelInk,
-                    ),
-                  ),
-                  MutedText(row.detail),
-                  const SizedBox(height: 4),
-                  Text(
-                    row.repeatable
-                        ? (row.repeatEveryLabel == null
-                              ? row.repeatLabel
-                              : '${row.repeatLabel} · ${row.repeatEveryLabel}')
-                        : row.repeatLabel,
-                    style: TextStyle(fontSize: GameFont.s, color: UiChrome.of(context).embossFace),
-                  ),
-                ],
-              ),
-            ),
+            child: _MiniquestJournalRow(row: row),
           ),
       ],
+    );
+  }
+}
+
+class _MiniquestJournalRow extends StatelessWidget {
+  const _MiniquestJournalRow({required this.row});
+
+  final MiniQuestJournalRow row;
+
+  String get _repeatText {
+    if (!row.repeatable) return row.repeatLabel;
+    if (row.repeatEveryLabel == null) return row.repeatLabel;
+    return '${row.repeatLabel} · ${row.repeatEveryLabel}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chrome = UiChrome.of(context);
+    final titleColor = row.completed || row.ready ? chrome.embossFace : chrome.panelInk;
+    final subtitle = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MutedText(row.detail),
+        const SizedBox(height: 4),
+        Text(
+          _repeatText,
+          style: TextStyle(fontSize: GameFont.s, color: chrome.embossFace),
+        ),
+      ],
+    );
+
+    if (row.steps.isEmpty) {
+      return GamePanel(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              row.name,
+              style: TextStyle(fontWeight: FontWeight.w400, color: titleColor),
+            ),
+            subtitle,
+          ],
+        ),
+      );
+    }
+
+    return GamePanel(
+      padding: EdgeInsets.zero,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+            childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            title: Text(
+              row.name,
+              style: TextStyle(fontWeight: FontWeight.w400, color: titleColor),
+            ),
+            subtitle: subtitle,
+            trailing: MutedText(row.statusLabel),
+            children: [
+              for (final step in row.steps)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: step.state == 'header'
+                      ? Text(
+                          step.label,
+                          style: TextStyle(fontWeight: FontWeight.w600, color: chrome.panelInk),
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              step.state == 'done' ? '✓' : '•',
+                              style: TextStyle(
+                                color: step.state == 'done' ? Palette.softGreen : chrome.embossFace,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                step.label,
+                                style: TextStyle(
+                                  color: step.state == 'done' ? chrome.panelMuted : chrome.panelInk,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

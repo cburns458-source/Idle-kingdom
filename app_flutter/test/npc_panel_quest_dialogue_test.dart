@@ -265,6 +265,7 @@ void main() {
       await tester.tap(find.text("I'll find some compost."));
       await tester.pump();
       expect(find.text('Done'), findsOne);
+      expect(find.text('A farmer who lives at the farm.'), findsNothing);
     });
 
     testWidgets('the committed start is the one the server rules produce', (tester) async {

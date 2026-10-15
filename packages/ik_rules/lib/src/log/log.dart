@@ -193,6 +193,21 @@ List<QuestJournalStep> _questRewardJournal(GameDatabase db, QuestRow quest, Play
   ];
 }
 
+/// Shared journal steps: the same list a normal quest and a miniquest tick.
+List<QuestJournalStep> questJournalSteps(GameDatabase db, PlayerSave save, QuestRow quest) {
+  final questId = jsString(quest['Quest ID']);
+  final status = getQuestProgress(save, questId).status;
+  if (status == 'active') {
+    return questUsesSteps(db, questId)
+        ? questStepJournal(db, save, quest)
+        : questLegacyJournalSteps(db, save, quest);
+  }
+  if (status == 'inactive') {
+    return questRequirementJournal(db, save, quest);
+  }
+  return [...questCompletedJournal(db, quest), ..._questRewardJournal(db, quest, save)];
+}
+
 List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
   return asQuestRows(db).where((quest) => !hideFromQuestLog(quest)).map((quest) {
     final questId = jsString(quest['Quest ID']);
@@ -202,13 +217,6 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
         ? npc!.raw['Display Name']! as String
         : 'NPC';
     final summary = quest['Summary'];
-    final steps = status == 'active'
-        ? questUsesSteps(db, questId)
-              ? questStepJournal(db, save, quest)
-              : questLegacyJournalSteps(db, save, quest)
-        : status == 'inactive'
-        ? questRequirementJournal(db, save, quest)
-        : [...questCompletedJournal(db, quest), ..._questRewardJournal(db, quest, save)];
 
     return QuestLogRow(
       questId: questId,
@@ -218,9 +226,75 @@ List<QuestLogRow> questLog(GameDatabase db, PlayerSave save) {
       statusLabel: questStatusLabel(status),
       completed: status == 'completed',
       available: status != 'inactive' || questAvailableForSave(db, save, quest),
-      steps: steps,
+      steps: questJournalSteps(db, save, quest),
     );
   }).toList();
+}
+
+/// A miniquest journal row: label + repeat info, steps from [questJournalSteps].
+class MiniQuestJournalRow {
+  const MiniQuestJournalRow({
+    required this.questId,
+    required this.name,
+    required this.detail,
+    required this.repeatable,
+    required this.repeatEveryLabel,
+    required this.repeatLabel,
+    required this.ready,
+    required this.statusLabel,
+    required this.completed,
+    required this.steps,
+  });
+
+  final String questId;
+  final String name;
+  final String detail;
+  final bool repeatable;
+  final String? repeatEveryLabel;
+  final String repeatLabel;
+  final bool ready;
+  final String statusLabel;
+  final bool completed;
+  final List<QuestJournalStep> steps;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'questId': questId,
+    'name': name,
+    'detail': detail,
+    'repeatable': repeatable,
+    'repeatEveryLabel': repeatEveryLabel,
+    'repeatLabel': repeatLabel,
+    'ready': ready,
+    'statusLabel': statusLabel,
+    'completed': completed,
+    'steps': steps.map((step) => step.toJson()).toList(),
+  };
+}
+
+List<QuestJournalStep> _miniquestJournalSteps(GameDatabase db, PlayerSave save, String questId) {
+  final quest = getQuest(db, questId);
+  if (quest == null) return const <QuestJournalStep>[];
+  return questJournalSteps(db, save, quest);
+}
+
+/// Miniquests in the journal. They tick through [questJournalSteps] like a
+/// normal quest; [questLog] still hides them from the completion %.
+List<MiniQuestJournalRow> miniQuestJournal(GameDatabase db, PlayerSave save, num nowMs) {
+  return [
+    for (final row in miniQuestLog(db, save, nowMs))
+      MiniQuestJournalRow(
+        questId: row.questId,
+        name: row.name,
+        detail: row.detail,
+        repeatable: row.repeatable,
+        repeatEveryLabel: row.repeatEveryLabel,
+        repeatLabel: row.repeatLabel,
+        ready: row.ready,
+        statusLabel: questStatusLabel(getQuestProgress(save, row.questId).status),
+        completed: getQuestProgress(save, row.questId).status == 'completed',
+        steps: _miniquestJournalSteps(db, save, row.questId),
+      ),
+  ];
 }
 
 /// Filter and sort a [questLog] for the journal organizer controls.
@@ -416,7 +490,11 @@ class LogCompletion {
 LogCompletion logCompletion(GameDatabase db, PlayerSave save) {
   final achievements = achievementLog(db, save);
   final milestones = milestoneLog(db, save);
-  final quests = questLog(db, save);
+  // Miniquest is only a label: they journal like quests, but never count here.
+  final quests = questLog(db, save).where((row) {
+    final quest = getQuest(db, row.questId);
+    return quest == null || !isMiniquest(quest);
+  }).toList();
   final critters = critterLog(save);
 
   final sections = <LogSectionCompletion>[

@@ -556,6 +556,23 @@ void main() {
     expect(getQuestProgress(save, 'QST-0011').status, 'active');
     expect(questLog(db, save).any((row) => row.questId == 'QST-0011'), isFalse);
     expect(miniQuestLog(db, save, 0).any((row) => row.questId == 'QST-0011'), isTrue);
+    final startedJournal = miniQuestJournal(
+      db,
+      save,
+      0,
+    ).singleWhere((row) => row.questId == 'QST-0011');
+    expect(startedJournal.steps.map((step) => step.toJson()).toList(), [
+      for (final step in questJournalSteps(db, save, quest)) step.toJson(),
+    ]);
+    expect(startedJournal.steps.map((step) => step.toJson()).toList(), [
+      for (final step in questStepJournal(db, save, quest)) step.toJson(),
+    ]);
+    expect(startedJournal.steps.first.toJson(), {
+      'key': 'QSTP-0023',
+      'label': 'Speak with Fennel at the farm',
+      'state': 'current',
+    });
+    final questsBeforeMini = logCompletion(db, save).section('quests')!;
     expect(farmBotanyUnlocked(db, save), isFalse);
 
     final fennel = db.npcs.firstWhere((row) => row.raw['NPC ID'] == 'NPC-0014');
@@ -577,6 +594,31 @@ void main() {
     expect(greenThumb(save).canTalk, isFalse);
     expect(greenThumb(save).talkLine, isNull);
     expect(greenThumb(save).idlePrompt, '');
+    expect(questSpokenLine(greenThumb(save)), '');
+    expect(
+      miniQuestJournal(
+        db,
+        save,
+        0,
+      ).singleWhere((row) => row.questId == 'QST-0011').steps.map((step) => step.toJson()),
+      [for (final step in questStepJournal(db, save, quest)) step.toJson()],
+    );
+    expect(
+      miniQuestJournal(db, save, 0)
+          .singleWhere((row) => row.questId == 'QST-0011')
+          .steps
+          .singleWhere((step) => step.key == 'QSTP-0023')
+          .toJson(),
+      {'key': 'QSTP-0023', 'label': 'Speak with Fennel at the farm', 'state': 'done'},
+    );
+    expect(
+      miniQuestJournal(db, save, 0)
+          .singleWhere((row) => row.questId == 'QST-0011')
+          .steps
+          .singleWhere((step) => step.key == 'QSTP-0024')
+          .toJson(),
+      {'key': 'QSTP-0024', 'label': 'Gather compost and speak with Fennel', 'state': 'current'},
+    );
 
     save = addItemToInventory(save, 'ITEM-0377', 1);
     save = applyQuestActionProgress(db, save, 'ACN-0199', 1);
@@ -609,6 +651,26 @@ void main() {
     expect(finished.ok, isTrue, reason: finished.reason);
     expect(finished.message, contains('keep an eye on them'));
     expect(getQuestProgress(finished.save, 'QST-0011').status, 'completed');
+    expect(questLog(db, finished.save).any((row) => row.questId == 'QST-0011'), isFalse);
+    final finishedJournal = miniQuestJournal(
+      db,
+      finished.save,
+      0,
+    ).singleWhere((row) => row.questId == 'QST-0011');
+    expect(finishedJournal.completed, isTrue);
+    expect(finishedJournal.steps.map((step) => step.toJson()).toList(), [
+      for (final step in questJournalSteps(db, finished.save, quest)) step.toJson(),
+    ]);
+    final questsAfterMini = logCompletion(db, finished.save).section('quests')!;
+    expect(questsAfterMini.done, questsBeforeMini.done);
+    expect(questsAfterMini.total, questsBeforeMini.total);
+    final feastDone = finished.save.copyWith(
+      quests: [
+        ...finished.save.quests.where((row) => row.questId != 'QST-0001'),
+        const QuestProgress(questId: 'QST-0001', status: 'completed', progress: 10),
+      ],
+    );
+    expect(logCompletion(db, feastDone).section('quests')!.done, questsBeforeMini.done + 1);
     expect(isBookUnlocked(finished.save, 'BOOK-0002'), isTrue);
     expect(inventoryCount(finished.save, 'ITEM-0324'), 4);
     expect(inventoryCount(finished.save, 'ITEM-0339'), 3);
