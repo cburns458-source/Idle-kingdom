@@ -107,4 +107,18 @@ describe('equipment tooltips', () => {
     const tome = launch.Equipment.find((row) => row['Equipment ID'] === 'EQP-0067')
     expect(equipmentTooltipStatLines(tome)).toEqual(['Equipped spells +20% stronger'])
   })
+
+  it('generates potion effect lines from capability tags, including 6 uses', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const line = (itemId: string) =>
+      equipmentTooltipStatLines(launch.Equipment.find((row) => row['Item ID'] === itemId))
+    expect(line('ITEM-0439')).toEqual(['Heals 5%, 6 uses'])
+    expect(line('ITEM-0440')).toEqual(['Heals 3% each round, 6 uses'])
+    expect(line('ITEM-0441')).toEqual(['+10–30 damage, 6 uses'])
+    expect(line('ITEM-0442')).toEqual(['+30–90 damage, 6 uses'])
+    expect(line('ITEM-0070')).toEqual(['+25% relative Drop Chance, 6 uses'])
+    expect(line('ITEM-0071')).toEqual(['-10% base duration, 6 uses'])
+    expect(line('ITEM-0072')).toEqual(['+10% damage, 6 uses'])
+    expect(line('ITEM-0073')).toEqual(['Deals 10% of enemy current HP each round, 6 uses'])
+  })
 })

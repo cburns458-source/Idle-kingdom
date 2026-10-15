@@ -77,11 +77,28 @@ bool _includeQuestRewardAsObtainSource(String? category, String itemId) {
   return category == 'Tool' || category == 'Weapon' || category == 'Armor';
 }
 
-/// Pets, cosmetics, and quest-key items stay in the database; they stay out of the Codex.
-bool includeInCodexCatalog({String? category, String? subtype}) {
+/// Pets, cosmetics, quest-key items, and retired rows stay in the database; they stay out of the Codex.
+bool includeInCodexCatalog({String? category, String? subtype, bool retired = false}) {
+  if (retired) return false;
   if (subtype == 'Pet') return false;
   if (category == 'Cosmetic' || category == 'Quest') return false;
   return true;
+}
+
+bool _includeCodexItem(CodexItemEntry item) {
+  return includeInCodexCatalog(
+    category: item.category,
+    subtype: item.subtype,
+    retired: item.retired,
+  );
+}
+
+bool _includeItemRowInCodex(ItemRow item) {
+  return includeInCodexCatalog(
+    category: item.category,
+    subtype: item.subtype,
+    retired: item.retired == true,
+  );
 }
 
 /// A clickable item mention on a Codex page.
@@ -228,6 +245,7 @@ class CodexItemEntry {
     this.category,
     this.subtype,
     this.description,
+    this.retired = false,
     required this.group,
     required this.groupLabel,
     this.statLines = const <String>[],
@@ -241,6 +259,7 @@ class CodexItemEntry {
   final String? category;
   final String? subtype;
   final String? description;
+  final bool retired;
   final int group;
   final String groupLabel;
   final List<String> statLines;
@@ -254,6 +273,7 @@ class CodexItemEntry {
     if (category != null) 'category': category,
     if (subtype != null) 'subtype': subtype,
     if (description != null) 'description': description,
+    if (retired) 'retired': true,
     'group': group,
     'groupLabel': groupLabel,
     'statLines': statLines,
@@ -717,7 +737,7 @@ class CodexIndex {
     for (final itemId in itemIds) {
       final item = db.items.firstWhere((row) => row.itemId == itemId);
       final group = _sorter.groupOf(itemId);
-      if (includeInCodexCatalog(category: item.category, subtype: item.subtype)) {
+      if (_includeItemRowInCodex(item)) {
         _itemOrder.add(itemId);
       }
       _items[itemId] = CodexItemEntry(
@@ -726,6 +746,7 @@ class CodexIndex {
         category: item.category,
         subtype: item.subtype,
         description: item.description,
+        retired: item.retired == true,
         group: group,
         groupLabel: inventoryGroupLabel(group),
         statLines: [
@@ -825,10 +846,7 @@ class CodexIndex {
         skillName: skills[action.relevantSkillId],
         level: action.proficiencyLevel,
         locations: locations,
-        target:
-            targetId != null &&
-                targetItem != null &&
-                includeInCodexCatalog(category: targetItem.category, subtype: targetItem.subtype)
+        target: targetId != null && targetItem != null && _includeCodexItem(targetItem)
             ? CodexItemRef(itemId: targetId, displayName: targetItem.displayName)
             : null,
         tables: tables,
@@ -944,10 +962,7 @@ List<CodexItemRef> _catalogTableDrops(List<CodexItemRef> drops, Map<String, Code
     for (final drop in drops)
       if (drop.itemId != _goldenSpudItemId &&
           items[drop.itemId] != null &&
-          includeInCodexCatalog(
-            category: items[drop.itemId]!.category,
-            subtype: items[drop.itemId]!.subtype,
-          ))
+          _includeCodexItem(items[drop.itemId]!))
         drop,
   ];
 }
@@ -1000,7 +1015,7 @@ List<CodexActionDropTable> _catalogActionTables(
     if (drop.itemId == _goldenSpudItemId) return false;
     final item = items[drop.itemId];
     if (item == null) return false;
-    return includeInCodexCatalog(category: item.category, subtype: item.subtype);
+    return _includeCodexItem(item);
   }
 
   final out = <CodexActionDropTable>[];

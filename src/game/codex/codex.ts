@@ -82,13 +82,16 @@ function includeQuestRewardAsObtainSource(category: string | null | undefined, i
   return category === 'Tool' || category === 'Weapon' || category === 'Armor'
 }
 
-/** Pets, cosmetics, and quest-key items stay in the database; they stay out of the Codex. */
+/** Pets, cosmetics, quest-key items, and retired rows stay in the database; they stay out of the Codex. */
 export function includeInCodexCatalog(item: {
   Category?: string | null
   Subtype?: string | null
   category?: string | null
   subtype?: string | null
+  Retired?: boolean | null
+  retired?: boolean | null
 }): boolean {
+  if (item.Retired === true || item.retired === true) return false
   const subtype = item.Subtype ?? item.subtype
   const category = item.Category ?? item.category
   if (subtype === 'Pet') return false
@@ -148,6 +151,7 @@ export interface CodexItemEntry {
   category?: string | null
   subtype?: string | null
   description?: string | null
+  retired?: boolean
   group: number
   groupLabel: string
   statLines: string[]
@@ -505,6 +509,7 @@ export class CodexIndex {
         category: item.Category,
         subtype: item.Subtype,
         description: item.Description,
+        retired: item.Retired === true,
         group,
         groupLabel: inventoryGroupLabel(group),
         statLines: [

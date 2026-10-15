@@ -14,15 +14,23 @@ void main() {
     codex = CodexIndex(db);
   });
 
-  test('lists every launch item and enemy except pets, cosmetics, and quest items', () {
+  test('lists every launch item and enemy except pets, cosmetics, quest, and retired items', () {
     final catalogIds = db.items
-        .where((row) => includeInCodexCatalog(category: row.category, subtype: row.subtype))
+        .where(
+          (row) => includeInCodexCatalog(
+            category: row.category,
+            subtype: row.subtype,
+            retired: row.retired == true,
+          ),
+        )
         .map((row) => row.itemId)
         .toSet();
     expect(codex.items.map((row) => row.itemId).toSet(), catalogIds);
     expect(catalogIds.contains('ITEM-0299'), isFalse);
     expect(catalogIds.contains('ITEM-0296'), isFalse);
     expect(catalogIds.contains('ITEM-0320'), isFalse);
+    expect(catalogIds.contains('ITEM-0383'), isFalse);
+    expect(catalogIds.contains('ITEM-0192'), isFalse);
     expect(codex.item('ITEM-0299')?.displayName, 'Stolen Coin Purse');
     expect(codex.item('ITEM-0296')?.displayName, "Traveler's Tunic");
     expect(codex.item('ITEM-0320')?.displayName, 'Chick Pet');
@@ -253,6 +261,30 @@ void main() {
       codex.items.any((row) => row.obtainedFrom.any((source) => source.actionId == 'ACN-0036')),
       isFalse,
     );
+  });
+
+  test('hides retired items from the catalog and keeps lookup for inventory', () {
+    expect(codex.items.any((row) => row.itemId == 'ITEM-0383'), isFalse);
+    expect(codex.items.any((row) => row.itemId == 'ITEM-0192'), isFalse);
+    expect(
+      codex.itemsMatching(query: 'willow log').map((row) => row.itemId),
+      isNot(contains('ITEM-0383')),
+    );
+    expect(
+      codex.itemsMatching(query: 'cooked baby giant squid').map((row) => row.itemId),
+      isNot(contains('ITEM-0192')),
+    );
+    expect(codex.item('ITEM-0383')?.displayName, 'Willow Log');
+    expect(codex.item('ITEM-0192')?.displayName, 'Cooked Baby Giant Squid');
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0383').retired, isTrue);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0192').retired, isTrue);
+  });
+
+  test('shows generated potion effect lines on codex item pages', () {
+    expect(codex.item('ITEM-0439')?.statLines, ['Heals 5%, 6 uses']);
+    expect(codex.item('ITEM-0440')?.statLines, ['Heals 3% each round, 6 uses']);
+    expect(codex.item('ITEM-0441')?.statLines, ['+10–30 damage, 6 uses']);
+    expect(codex.item('ITEM-0442')?.statLines, ['+30–90 damage, 6 uses']);
   });
 
   test('leaves Obtained From empty and appends a filled cell after generated sources', () {

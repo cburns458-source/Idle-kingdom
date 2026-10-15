@@ -66,4 +66,38 @@ void main() {
 
     expect(find.text('Compare'), findsNothing);
   });
+
+  testWidgets('potion tooltips generate the effect line from tags', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database)
+          .copyWith(inventory: const [InventoryStack(itemId: 'ITEM-0439', quantity: 1)]),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      ItemDetailSheet(controller: controller, itemId: 'ITEM-0439', quantity: 1),
+    );
+
+    expect(find.text('Fernleaf Tonic'), findsOneWidget);
+    expect(find.text('Heals 5%, 6 uses'), findsOneWidget);
+  });
+
+  testWidgets('flat-damage potion tooltips show the range and 6 uses', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database)
+          .copyWith(inventory: const [InventoryStack(itemId: 'ITEM-0441', quantity: 1)]),
+    );
+    addTearDown(controller.dispose);
+
+    await pumpPanel(
+      tester,
+      ItemDetailSheet(controller: controller, itemId: 'ITEM-0441', quantity: 1),
+    );
+
+    expect(find.text('Augur Draught'), findsOneWidget);
+    expect(find.text('+10–30 damage, 6 uses'), findsOneWidget);
+  });
 }

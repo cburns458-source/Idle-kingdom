@@ -3884,7 +3884,8 @@
       "Notes": "Legacy cooked squid. Replaced in cooking ladder by Cooked Marlin.",
       "Base Sell Value": 2500,
       "Tradeable": true,
-      "Stackable": null
+      "Stackable": null,
+      "Retired": true
     },
     {
       "Item ID": "ITEM-0193",
@@ -7162,7 +7163,8 @@
       "Notes": "Retired gather drop; willow trees drop Willow Branches.",
       "Base Sell Value": 1,
       "Tradeable": true,
-      "Stackable": null
+      "Stackable": null,
+      "Retired": true
     },
     {
       "Item ID": "ITEM-0384",
@@ -7180,7 +7182,8 @@
       "Notes": "Retired gather drop; cinnamon trees drop Cinnamon Bark.. Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 3,
       "Tradeable": true,
-      "Stackable": null
+      "Stackable": null,
+      "Retired": true
     },
     {
       "Item ID": "ITEM-0385",

@@ -74,6 +74,11 @@ export interface ItemRow {
    * sources. Quest & Dialogue fills the cells; systems leave them empty.
    */
   'Obtained From'?: string | null
+  /**
+   * When true, the Codex omits the item. Missing or false means listed.
+   * Inventory, shops, and recipes are unchanged.
+   */
+  Retired?: boolean | null
 }
 
 export interface EquipmentRow {

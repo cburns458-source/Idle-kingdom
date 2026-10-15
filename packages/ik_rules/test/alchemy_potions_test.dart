@@ -165,4 +165,14 @@ void main() {
     expect(migrated.activePotionEffect?.regenMaxHpPercentPerRound, isNull);
     expect(applyPotionEnemyRoundDamage(1000, 1000, migrated.activePotionEffect), 900);
   });
+
+  test('generates potion tooltip lines from capability tags', () {
+    expect(equipmentTooltipStatLines(equipment('ITEM-0439'), db), ['Heals 5%, 6 uses']);
+    expect(equipmentTooltipStatLines(equipment('ITEM-0440'), db), ['Heals 3% each round, 6 uses']);
+    expect(equipmentTooltipStatLines(equipment('ITEM-0441'), db), ['+10–30 damage, 6 uses']);
+    expect(equipmentTooltipStatLines(equipment('ITEM-0442'), db), ['+30–90 damage, 6 uses']);
+    expect(equipmentTooltipStatLines(equipment('ITEM-0070'), db), [
+      '+25% relative Drop Chance, 6 uses',
+    ]);
+  });
 }
