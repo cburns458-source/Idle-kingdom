@@ -869,6 +869,7 @@ MultiplayerProfile? multiplayerProfileFromRemote(RemoteRow? row) {
     nameColor: normalizeNameColorHex(_optStr(row['name_color'])),
     motto: _optStr(row['motto']),
     petCosmeticId: _optStr(row['pet_cosmetic_id']),
+    titleCosmeticId: titleCosmeticIdFromRemote(row['appearance_json']),
     usernameRenamedAt: _optStr(row['username_renamed_at']),
     updatedAt: _str(row['updated_at']),
   );

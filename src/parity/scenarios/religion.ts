@@ -69,6 +69,11 @@ export const religionScenarios: ParityScenario[] = [
         const cosmetic = db.Cosmetics.find((c) => c['Cosmetic ID'] === row['Title Cosmetic ID'])
         return db.Items.find((item) => item['Item ID'] === cosmetic?.['Item ID'])?.['Internal Key'] ?? null
       }),
+      titlePlacements: religions(db).map((row) => {
+        const cosmetic = db.Cosmetics.find((c) => c['Cosmetic ID'] === row['Title Cosmetic ID'])
+        return cosmetic?.['Title Placement'] ?? null
+      }),
+      descriptions: religions(db).map((row) => row.Description),
       missing: religionDisplayName(db, 'REL-9999'),
       nullId: religionDisplayName(db, null),
       foundById: REL_IDS.map((id) => religionById(db, id)?.['Religion ID'] ?? null),

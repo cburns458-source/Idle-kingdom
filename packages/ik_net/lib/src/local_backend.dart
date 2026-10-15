@@ -314,10 +314,12 @@ class LocalMultiplayerBackend {
     String? nameColor,
     String? motto,
     String? petCosmeticId,
+    String? titleCosmeticId,
     String? usernameRenamedAt,
     bool clearNameColor = false,
     bool clearMotto = false,
     bool clearPetCosmeticId = false,
+    bool clearTitleCosmeticId = false,
     bool clearUsernameRenamedAt = false,
   }) {
     final db = _db();
@@ -333,10 +335,12 @@ class LocalMultiplayerBackend {
       nameColor: nameColor,
       motto: motto,
       petCosmeticId: petCosmeticId,
+      titleCosmeticId: titleCosmeticId,
       usernameRenamedAt: usernameRenamedAt,
       clearNameColor: clearNameColor,
       clearMotto: clearMotto,
       clearPetCosmeticId: clearPetCosmeticId,
+      clearTitleCosmeticId: clearTitleCosmeticId,
       clearUsernameRenamedAt: clearUsernameRenamedAt,
       updatedAt: _nowIso(),
     );
@@ -518,6 +522,8 @@ class LocalMultiplayerBackend {
                   clearMotto: save.motto == null,
                   petCosmeticId: save.cosmetics.equipped[petCosmeticSlotId],
                   clearPetCosmeticId: save.cosmetics.equipped[petCosmeticSlotId] == null,
+                  titleCosmeticId: equippedTitleCosmeticId(save),
+                  clearTitleCosmeticId: equippedTitleCosmeticId(save) == null,
                   updatedAt: updatedAt,
                 )
               : row,
@@ -1676,6 +1682,7 @@ class LocalMultiplayerBackend {
       petCosmeticId: save != null
           ? save.cosmetics.equipped[petCosmeticSlotId]
           : profile.petCosmeticId,
+      titleCosmeticId: save != null ? equippedTitleCosmeticId(save) : profile.titleCosmeticId,
     );
   }
 

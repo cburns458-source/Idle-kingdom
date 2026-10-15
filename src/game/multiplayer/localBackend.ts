@@ -1,3 +1,4 @@
+import { equippedTitleCosmeticId } from '../save/playerTitle'
 import {
   DEFAULT_BEARD_ID,
   DEFAULT_EXPRESSION_ID,
@@ -418,6 +419,7 @@ export class LocalMultiplayerBackend {
         | 'nameColor'
         | 'motto'
         | 'petCosmeticId'
+        | 'titleCosmeticId'
       >
     >,
   ): MultiplayerProfile | null {
@@ -514,6 +516,7 @@ export class LocalMultiplayerBackend {
               : row.nameColor,
             motto: save.motto ?? null,
             petCosmeticId: save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null,
+            titleCosmeticId: equippedTitleCosmeticId(save),
             updatedAt,
           }
         : row,
@@ -1423,6 +1426,8 @@ export class LocalMultiplayerBackend {
         save != null
           ? (save.cosmetics.equipped[PET_COSMETIC_SLOT_ID] ?? null)
           : (profile.petCosmeticId ?? null),
+      titleCosmeticId:
+        save != null ? equippedTitleCosmeticId(save) : (profile.titleCosmeticId ?? null),
     }
   }
 

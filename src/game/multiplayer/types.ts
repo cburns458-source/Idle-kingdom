@@ -110,6 +110,8 @@ export interface MultiplayerProfile {
   motto?: string | null
   /** Equipped pet cosmetic ID from CSLOT-0002; null when none. */
   petCosmeticId?: string | null
+  /** Equipped title cosmetic ID from CSLOT-0003; null when none. */
+  titleCosmeticId?: string | null
   updatedAt: string
 }
 
@@ -449,6 +451,8 @@ export interface PublicPlayerProfile {
   motto?: string | null
   /** Equipped pet cosmetic ID; null when none. */
   petCosmeticId?: string | null
+  /** Equipped title cosmetic ID; null when none. */
+  titleCosmeticId?: string | null
 }
 
 /** Citadel Plaza — hub presence / Nearby listing target. */

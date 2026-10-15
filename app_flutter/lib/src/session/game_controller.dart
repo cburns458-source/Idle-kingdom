@@ -12,7 +12,6 @@ import 'battery_saver_pref.dart';
 import 'hosted_command.dart';
 import 'hosted_save_adopt.dart';
 import 'hud_level_pref.dart';
-import 'hud_title_pref.dart';
 import 'local_player_art.dart';
 import 'map_travel_pref.dart';
 import 'quest_log_sort_pref.dart';
@@ -129,7 +128,6 @@ class GameController extends ChangeNotifier {
     LocalPlayerArt? localArt,
     MapTravelPref? mapTravel,
     HudLevelPref? hudLevel,
-    HudTitlePref? hudTitle,
     ActivityIconsPref? activityIcons,
     UiChromePref? uiChrome,
     BatterySaverPref? batterySaverPref,
@@ -138,7 +136,6 @@ class GameController extends ChangeNotifier {
   }) : localArt = localArt ?? LocalPlayerArt(),
        mapTravel = mapTravel ?? MapTravelPref(),
        hudLevel = hudLevel ?? HudLevelPref(),
-       hudTitle = hudTitle ?? HudTitlePref(),
        activityIcons = activityIcons ?? ActivityIconsPref(),
        uiChrome = uiChrome ?? UiChromePref(),
        batterySaverPref = batterySaverPref ?? BatterySaverPref(),
@@ -158,9 +155,6 @@ class GameController extends ChangeNotifier {
 
   /// Client-only HUD toggle between total level and total XP.
   final HudLevelPref hudLevel;
-
-  /// Client-only HUD toggle for the equipped character title.
-  final HudTitlePref hudTitle;
 
   /// Client-only toggle for skill and shop icons on the map location popup.
   final ActivityIconsPref activityIcons;
@@ -768,15 +762,6 @@ class GameController extends ChangeNotifier {
     );
     notifyListeners();
     return null;
-  }
-
-  /// Whether the HUD identity line includes the equipped title.
-  bool get showTitleOnHud => hudTitle.showTitle;
-
-  void setShowTitleOnHud(bool value) {
-    if (hudTitle.showTitle == value) return;
-    hudTitle.setShowTitle(value);
-    notifyListeners();
   }
 
   /// Whether the map location popup shows skill and shop icons under the name.

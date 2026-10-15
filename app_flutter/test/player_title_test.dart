@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:idle_kingdoms/src/ui/equipped_title.dart';
+import 'package:idle_kingdoms/src/ui/player_profile_sheet.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -11,18 +13,24 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
-  testWidgets('a new character carries The Undying', (tester) async {
+  PlayerSave withEquippedFaithTitle({int faithIndex = 0}) {
+    final faith = religions(database.launch)[faithIndex];
+    final titleId = faith.titleCosmeticId!;
+    final base = grantCosmetic(
+      startedCharacter(database),
+      titleId,
+    ).save.copyWith(religionId: faith.religionId, religionHistory: <String>[faith.religionId]);
+    return equipCosmetic(database.launch, base, titleCosmeticSlotId, titleId).save!;
+  }
+
+  testWidgets('a new character carries The Undying on the HUD', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
     expect(controller.save.hasEverDied, isFalse);
     expect(find.text('Tester The Undying'), findsWidgets);
-
-    controller.setShowTitleOnHud(false);
-    await tester.pump();
-    expect(find.text('Tester The Undying'), findsNothing);
-    expect(find.text('Tester'), findsWidgets);
+    expect(find.text('Show title on HUD'), findsNothing);
   });
 
   testWidgets('being beaten in the world costs the title for good', (tester) async {
@@ -77,6 +85,7 @@ void main() {
   test('an unnamed save is never given a title', () {
     final nameless = startedCharacter(database).copyWith(characterName: null);
     expect(displayNameForSave(nameless, 'Adventurer'), 'Adventurer');
+    expect(displayNameWithEquippedTitle(database.launch, nameless, 'Adventurer'), 'Adventurer');
   });
 
   test('unequipping The Undying hides it from the name', () {
@@ -85,5 +94,199 @@ void main() {
     expect(unequipped.ok, isTrue);
     expect(titleForSave(unequipped.save!), isNull);
     expect(displayNameForSave(unequipped.save!, 'Adventurer'), 'Tester');
+    expect(displayNameWithEquippedTitle(database.launch, unequipped.save!, 'Adventurer'), 'Tester');
+  });
+
+  test('an equipped faith title sits before the name from Title Placement', () {
+    final save = withEquippedFaithTitle();
+    final faith = religions(database.launch).first;
+    final cosmetic = database.launch.cosmetics.firstWhere(
+      (row) => row.cosmeticId == faith.titleCosmeticId,
+    );
+    expect(cosmetic.titlePlacement, 'prefix');
+    expect(titlePlacementForCosmetic(cosmetic), TitlePlacement.prefix);
+    expect(titleForSave(save, database.launch)?.placement, TitlePlacement.prefix);
+    final title = equippedDisplayTitle(database.launch, save);
+    expect(title?.placement, TitlePlacement.prefix);
+    expect(title?.text, isNotEmpty);
+    expect(
+      displayNameWithEquippedTitle(database.launch, save, 'Adventurer'),
+      '${title!.text} Tester',
+    );
+  });
+
+  test('a missing or unknown published title writes nothing', () {
+    expect(publishedDisplayTitle(database.launch, null), isNull);
+    expect(publishedDisplayTitle(database.launch, ''), isNull);
+    expect(publishedDisplayTitle(database.launch, 'COS-9999'), isNull);
+    expect(displayNameWithPublishedTitle(database.launch, 'Mira', null), 'Mira');
+    expect(displayNameWithPublishedTitle(database.launch, 'Mira', ''), 'Mira');
+    expect(displayNameWithPublishedTitle(database.launch, 'Mira', 'COS-9999'), 'Mira');
+  });
+
+  test('a locked or left faith title is hidden', () {
+    final save = withEquippedFaithTitle();
+    final titleId = religions(database.launch).first.titleCosmeticId!;
+    final locked = save.copyWith(religionId: religions(database.launch)[1].religionId);
+    expect(isFaithTitleLocked(database.launch, locked, titleId), isTrue);
+    expect(equippedDisplayTitle(database.launch, locked), isNull);
+    expect(displayNameWithEquippedTitle(database.launch, locked, 'Adventurer'), 'Tester');
+
+    final firstSkill = save.skills.first;
+    final switched = chooseReligion(
+      database.launch,
+      save.copyWith(
+        currentLocationId: religionChooseLocationId(database.launch),
+        gold: 100000,
+        skills: <SkillProgress>[
+          firstSkill.copyWith(level: firstSkill.level + (100 - totalLevel(save))),
+          ...save.skills.skip(1),
+        ],
+      ),
+      religions(database.launch)[1].religionId,
+      testStartMs,
+    );
+    expect(switched.ok, isTrue);
+    expect(equippedDisplayTitle(database.launch, switched.save!), isNull);
+    expect(displayNameWithEquippedTitle(database.launch, switched.save!, 'Adventurer'), 'Tester');
+  });
+
+  testWidgets('the HUD writes the prefix title before the name', (tester) async {
+    final save = withEquippedFaithTitle();
+    final titled = displayNameWithEquippedTitle(database.launch, save, 'Adventurer');
+    final controller = buildController(database, seed: save);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    expect(find.text(titled), findsWidgets);
+    expect(titled, isNot('Tester'));
+    expect(titled.endsWith(' Tester'), isTrue);
+  });
+
+  testWidgets('unequipping hides the title on the HUD', (tester) async {
+    final controller = buildController(database, seed: withEquippedFaithTitle());
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+
+    final titled = displayNameWithEquippedTitle(database.launch, controller.save, 'Adventurer');
+    expect(find.text(titled), findsWidgets);
+
+    controller.commit(
+      equipCosmetic(database.launch, controller.save, titleCosmeticSlotId, null).save!,
+    );
+    await tester.pump();
+
+    expect(find.text(titled), findsNothing);
+    expect(find.text('Tester'), findsWidgets);
+  });
+
+  testWidgets('the player profile always shows the equipped title', (tester) async {
+    final save = withEquippedFaithTitle();
+    final titled = displayNameWithEquippedTitle(database.launch, save, 'Tester');
+    final controller = buildController(database, seed: save);
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: net.session!.userId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Show title on HUD'), findsNothing);
+    expect(find.text(titled), findsOne);
+    expect(find.text('Tester The Undying'), findsNothing);
+  });
+
+  testWidgets("another player's profile shows their equipped prefix title", (tester) async {
+    final save = withEquippedFaithTitle().copyWith(characterName: 'Hero');
+    final titled = displayNameWithEquippedTitle(database.launch, save, 'Hero');
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(net.dispose);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (next, {nowMs}) {});
+    expect(net.isSignedIn, isTrue, reason: net.notice);
+    await net.publishRanking(save, ignoreDebounce: true);
+    final heroId = net.session!.userId;
+    await net.signOut(save);
+
+    final rival = startedCharacter(database).copyWith(characterName: 'Rival');
+    await net.signUp('rival@example.com', 'Rival', 'secret', rival, adopt: (next, {nowMs}) {});
+    expect(net.isSignedIn, isTrue, reason: net.notice);
+    final controller = buildController(database, seed: rival);
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: heroId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(titled), findsOne);
+    expect(titled.startsWith('Oruvani '), isTrue);
+    expect(
+      displayNameWithPublishedTitle(
+        database.launch,
+        'Hero',
+        save.cosmetics.equipped[titleCosmeticSlotId],
+      ),
+      titled,
+    );
+  });
+
+  testWidgets("another player's profile shows nothing when they have no title", (tester) async {
+    final save = equipCosmetic(
+      database.launch,
+      startedCharacter(database).copyWith(characterName: 'Hero'),
+      titleCosmeticSlotId,
+      null,
+    ).save!;
+    final net = buildMultiplayer(database, signedIn: false);
+    addTearDown(net.dispose);
+    await net.signUp('hero@example.com', 'Hero', 'secret', save, adopt: (next, {nowMs}) {});
+    expect(net.isSignedIn, isTrue, reason: net.notice);
+    await net.publishRanking(save, ignoreDebounce: true);
+    final heroId = net.session!.userId;
+    await net.signOut(save);
+
+    final rival = startedCharacter(database).copyWith(characterName: 'Rival');
+    await net.signUp('rival@example.com', 'Rival', 'secret', rival, adopt: (next, {nowMs}) {});
+    expect(net.isSignedIn, isTrue, reason: net.notice);
+    final controller = buildController(database, seed: rival);
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: heroId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hero The Undying'), findsNothing);
+    expect(find.text('Oruvani Hero'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(PlayerProfileSheet), matching: find.text('Hero')),
+      findsOne,
+    );
+  });
+
+  testWidgets('the player profile shows nothing extra when no title is equipped', (tester) async {
+    final unequipped = equipCosmetic(
+      database.launch,
+      startedCharacter(database),
+      titleCosmeticSlotId,
+      null,
+    ).save!;
+    final controller = buildController(database, seed: unequipped);
+    final net = buildMultiplayer(database);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    await pumpPanel(
+      tester,
+      PlayerProfileSheet(controller: controller, multiplayer: net, userId: net.session!.userId),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tester The Undying'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(PlayerProfileSheet), matching: find.text('Tester')),
+      findsOne,
+    );
   });
 }

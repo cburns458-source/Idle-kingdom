@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/activity_icons_pref.dart';
 import 'package:idle_kingdoms/src/session/hud_level_pref.dart';
-import 'package:idle_kingdoms/src/session/hud_title_pref.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:idle_kingdoms/src/ui/top_hud.dart';
@@ -33,21 +32,6 @@ void main() {
     pref.toggle();
     expect(pref.showTotalXp, isFalse);
     expect(storage.getItem(HudLevelPref.storageKey), '0');
-  });
-
-  test('the HUD title toggle stays on this device and defaults on', () {
-    final storage = MemorySaveStorage();
-    final pref = HudTitlePref.load(storage);
-    expect(pref.showTitle, isTrue);
-
-    pref.setShowTitle(false);
-    expect(pref.showTitle, isFalse);
-    expect(storage.getItem(HudTitlePref.storageKey), '0');
-    expect(HudTitlePref.load(storage).showTitle, isFalse);
-
-    pref.setShowTitle(true);
-    expect(pref.showTitle, isTrue);
-    expect(storage.getItem(HudTitlePref.storageKey), '1');
   });
 
   test('activity icons stay on this device and default on', () {

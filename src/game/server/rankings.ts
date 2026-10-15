@@ -5,6 +5,7 @@ import { leaderboardRowsFor, remoteUsername } from '../multiplayer/remote'
 import { buildLeaderboardSnapshot } from '../multiplayer/snapshots'
 import { publicEquipmentFromSave } from '../multiplayer/types'
 import { parseSave } from '../save/saveStore'
+import { equippedTitleCosmeticId } from '../save/playerTitle'
 import { PET_COSMETIC_SLOT_ID, type PlayerSave } from '../save/types'
 import { totalLevel } from '../skills/totals'
 
@@ -27,9 +28,11 @@ export type PvpSnapshotRow = {
 }
 
 function appearanceJsonForSave(save: PlayerSave): Record<string, unknown> {
+  const titleCosmeticId = equippedTitleCosmeticId(save)
   return {
     ...save.appearance,
     ...(save.raceId ? { raceId: save.raceId } : {}),
+    ...(titleCosmeticId ? { titleCosmeticId } : {}),
   }
 }
 

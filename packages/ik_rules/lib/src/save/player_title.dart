@@ -62,6 +62,38 @@ String? chatTitleFromSavePayload(Object? payload, [GameDatabase? db]) {
   return undyingTitle.text;
 }
 
+/// Cosmetics.Title Placement: `prefix` is prefix, anything else is suffix.
+TitlePlacement titlePlacementForCosmetic(CosmeticRow? cosmetic) {
+  return cosmetic?.raw['Title Placement'] == 'prefix'
+      ? TitlePlacement.prefix
+      : TitlePlacement.suffix;
+}
+
+/// The cosmetic ID currently in the title slot, or null when the slot is empty.
+String? equippedTitleCosmeticId(PlayerSave save) {
+  final equipped = save.cosmetics.equipped;
+  if (!equipped.containsKey(titleCosmeticSlotId)) {
+    return save.hasEverDied ? null : starterTitleCosmeticId;
+  }
+  final id = equipped[titleCosmeticSlotId];
+  if (id == null || id.isEmpty) return null;
+  return id;
+}
+
+/// The title a wardrobe cosmetic writes, or null when it is not a titled cosmetic.
+PlayerTitle? titleForCosmeticId(GameDatabase db, String? cosmeticId) {
+  if (cosmeticId == null || cosmeticId.isEmpty) return null;
+  if (cosmeticId == starterTitleCosmeticId) return undyingTitle;
+  final cosmetic = db.cosmetics.firstWhereOrNull((row) => row.raw['Cosmetic ID'] == cosmeticId);
+  final itemId = cosmetic?.raw['Item ID'];
+  if (itemId is! String) return null;
+  final text = db.items
+      .firstWhereOrNull((row) => row.raw['Item ID'] == itemId)
+      ?.raw['Display Name'];
+  if (text is! String || text.isEmpty) return null;
+  return PlayerTitle(text: text, placement: titlePlacementForCosmetic(cosmetic));
+}
+
 /// The title a save has earned, or null when it holds none.
 PlayerTitle? titleForSave(PlayerSave save, [GameDatabase? db]) {
   final equipped = save.cosmetics.equipped;
@@ -71,16 +103,7 @@ PlayerTitle? titleForSave(PlayerSave save, [GameDatabase? db]) {
   if (equippedId != null && equippedId != starterTitleCosmeticId) {
     // Faith (and later) titles stay visible after the first death; Undying does not.
     if (db == null) return null;
-    final cosmetic = db.cosmetics.firstWhereOrNull((row) => row.raw['Cosmetic ID'] == equippedId);
-    final itemId = cosmetic?.raw['Item ID'];
-    if (itemId is! String) return null;
-    final text = db.items
-        .firstWhereOrNull((row) => row.raw['Item ID'] == itemId)
-        ?.raw['Display Name'];
-    if (text is String && text.isNotEmpty) {
-      return PlayerTitle(text: text, placement: TitlePlacement.suffix);
-    }
-    return null;
+    return titleForCosmeticId(db, equippedId);
   }
   if (save.hasEverDied) return null;
   if (equipped.containsKey(titleCosmeticSlotId)) {
