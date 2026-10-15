@@ -4,6 +4,7 @@ import type { LeaderboardSnapshotValues } from './snapshots'
 import {
   boardCarriesExperience,
   boardHidesZeroes,
+  chatTitleFromPayload,
   playerAppearanceFromRemote,
   type ChatMessage,
   type CloudSaveRecord,
@@ -248,8 +249,10 @@ export function chatMessageFrom(row: RemoteRow): ChatMessage {
   }
   const guildTag = str(row.guild_tag ?? row.guildTag)
   const rankIcon = str(row.rank_icon ?? row.rankIcon)
+  const title = chatTitleFromPayload(row)
   if (guildTag) message.guildTag = guildTag
   if (rankIcon) message.rankIcon = rankIcon
+  if (title) message.title = title
   if (row.guest === true) message.guest = true
   return message
 }
@@ -265,6 +268,7 @@ export function chatMessageFromFunction(data: RemoteRow | null): ChatMessage | n
   const id = str(data.id)
   if (!id) return null
   return chatMessageFrom({
+    ...data,
     id,
     channel_key: data.channelKey ?? data.channel_key,
     user_id: data.userId ?? data.user_id,

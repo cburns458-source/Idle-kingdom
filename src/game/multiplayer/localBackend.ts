@@ -10,6 +10,7 @@ import {
   type PlayerAppearance,
   type PlayerSave,
 } from '../save/types'
+import { chatTitleForSave } from '../save/playerTitle'
 import { pendingAccountUsername, isUnclaimedAccountUsername, remoteUsername } from './remote'
 import { totalLevel } from '../skills/totals'
 import { PRESENCE_AWAY_TTL_SECONDS } from './config'
@@ -242,6 +243,8 @@ export interface LocalBackendPorts {
 export class LocalMultiplayerBackend {
   private storage: Storage
   private ports: LocalBackendPorts
+  /** Catalog used to resolve non-starter chat titles from the sender's save. */
+  gameDatabase?: GameDatabase
 
   constructor(storage: Storage = localStorage, ports?: Partial<LocalBackendPorts>) {
     this.storage = storage
@@ -482,6 +485,7 @@ export class LocalMultiplayerBackend {
     save: PlayerSave,
     options?: { nameColor?: string | null; publishNameColor?: boolean },
   ): void {
+    this.gameDatabase = dbGame
     const profile = this.getProfile(userId)
     if (!profile) return
     const snapshot = buildLeaderboardSnapshot(dbGame, save)
@@ -643,6 +647,9 @@ export class LocalMultiplayerBackend {
     if (memberGuild?.tag) message.guildTag = memberGuild.tag
     if (rankIcon) message.rankIcon = rankIcon
     if (guest) message.guest = true
+    const save = db.saves.find((row) => row.userId === session.userId)?.payload
+    const title = save ? chatTitleForSave(save, this.gameDatabase) : null
+    if (title) message.title = title
     db.messages.push(message)
     db.lastChatAt[stampKey] = message.createdAt
     this.write(db)

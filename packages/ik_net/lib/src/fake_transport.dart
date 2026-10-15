@@ -640,6 +640,15 @@ class FakeTransport implements RemoteTransport {
     return 'Adventurer';
   }
 
+  /// Matches send-chat: equipped title from the hosted save, never the request.
+  String? _chatTitleForSender(FakeAccount sender) {
+    for (final save in tables[RemoteTables.saves] ?? const <RemoteRow>[]) {
+      if (save['user_id'] != sender.userId) continue;
+      return chatTitleFromSavePayload(save['payload'], database);
+    }
+    return null;
+  }
+
   num _clockMs() => nowMs?.call() ?? DateTime.parse(startIso).millisecondsSinceEpoch;
 
   String _clockIso() =>
@@ -1276,7 +1285,8 @@ class FakeTransport implements RemoteTransport {
         'created_at': stamp(),
       };
       tables[RemoteTables.chat]!.add(row);
-      return RemoteInvokeResult.ok(<String, Object?>{...row});
+      // Title is stamped on the function payload, not a chat_messages column.
+      return RemoteInvokeResult.ok(<String, Object?>{...row, 'title': _chatTitleForSender(sender)});
     });
   }
 

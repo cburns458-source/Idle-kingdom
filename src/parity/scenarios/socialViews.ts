@@ -17,6 +17,8 @@ import {
   chatLines,
   chatLocalLocationId,
   chatNotifyStorageKey,
+  CHAT_SHOW_TIMESTAMPS_STORAGE_KEY,
+  CHAT_SHOW_TITLES_STORAGE_KEY,
   chatReadCursorKey,
   chatTabs,
   citadelVisitorSubtitle,
@@ -376,6 +378,16 @@ export const socialViewScenarios: ParityScenario[] = [
       createdAt: '2026-08-12T21:00:13.000Z',
       guest: true,
     }
+    const titled: ChatMessage = {
+      id: 'msg_7',
+      channelKey: 'global',
+      userId: 'usr_3',
+      username: 'Mira',
+      body: 'The watch is set.',
+      createdAt: '2026-08-12T21:00:14.000Z',
+      guildTag: 'WCH',
+      title: 'The Undying',
+    }
     return {
       tabIds: CHAT_TABS,
       plain: chatTabs({
@@ -424,12 +436,16 @@ export const socialViewScenarios: ParityScenario[] = [
       cursorKey: dmReadCursorKey('usr_0001'),
       readCursorKey: chatReadCursorKey('usr_0001', 'global'),
       notifyKeys: CHAT_TABS.map(chatNotifyStorageKey),
+      showTitlesKey: CHAT_SHOW_TITLES_STORAGE_KEY,
+      showTimestampsKey: CHAT_SHOW_TIMESTAMPS_STORAGE_KEY,
       lines: chatLines(messages, 'usr_1'),
       linesAnonymous: chatLines(messages, null),
       prefixed: chatLines([tagged], 'usr_1'),
       filtered: chatLines([rude], null, { filterProfanityEnabled: true }),
       guildRank: chatLines([ranked], 'usr_1'),
       guestLine: chatLines([guest], null),
+      titled: chatLines([titled], 'usr_1'),
+      titledHidden: chatLines([titled], 'usr_1', { showTitles: false }),
     } as unknown as JsonValue
   }),
 

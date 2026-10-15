@@ -321,6 +321,53 @@ describe('remote chat', () => {
     })
   })
 
+  it('reads an equipped title when the row has one, and ignores junk', () => {
+    expect(
+      chatMessageFrom({
+        id: 'msg_3',
+        channel_key: 'global',
+        user_id: 'usr-3',
+        username: 'Mira',
+        body: 'Hold',
+        created_at: '2026-08-12T21:00:02.000Z',
+        title: 'The Undying',
+      }).title,
+    ).toBe('The Undying')
+    expect(
+      chatMessageFrom({
+        id: 'msg_3',
+        channel_key: 'global',
+        user_id: 'usr-3',
+        username: 'Mira',
+        body: 'Hold',
+        created_at: '2026-08-12T21:00:02.000Z',
+        equipped_title: { text: 'Sir', placement: 'prefix' },
+      }).title,
+    ).toBe('Sir')
+    expect(
+      chatMessageFrom({
+        id: 'msg_3',
+        channel_key: 'global',
+        user_id: 'usr-3',
+        username: 'Mira',
+        body: 'Hold',
+        created_at: '2026-08-12T21:00:02.000Z',
+        title: '   ',
+      }).title,
+    ).toBeUndefined()
+    expect(
+      chatMessageFrom({
+        id: 'msg_3',
+        channel_key: 'global',
+        user_id: 'usr-3',
+        username: 'Mira',
+        body: 'Hold',
+        created_at: '2026-08-12T21:00:02.000Z',
+        title: 12,
+      }).title,
+    ).toBeUndefined()
+  })
+
   it('reads guild tag, rank, and guest flags when the row has them', () => {
     expect(
       chatMessageFrom({

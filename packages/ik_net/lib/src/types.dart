@@ -449,6 +449,7 @@ class ChatMessage {
     this.guildTag,
     this.rankIcon,
     this.guest = false,
+    this.title,
   });
 
   factory ChatMessage.fromJson(Map<String, Object?> json) => ChatMessage(
@@ -461,6 +462,7 @@ class ChatMessage {
     guildTag: json['guildTag'] as String?,
     rankIcon: json['rankIcon'] as String?,
     guest: json['guest'] as bool? ?? false,
+    title: chatTitleFromPayload(json),
   );
 
   final String id;
@@ -479,6 +481,9 @@ class ChatMessage {
   /// True when the speaker is a guest of the guild room, not a member.
   final bool guest;
 
+  /// Equipped title text, when the server included one.
+  final String? title;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'id': id,
     'channelKey': channelKey,
@@ -489,7 +494,42 @@ class ChatMessage {
     if (guildTag != null) 'guildTag': guildTag,
     if (rankIcon != null) 'rankIcon': rankIcon,
     if (guest) 'guest': true,
+    if (title != null) 'title': title,
   };
+}
+
+/// Equipped title text from a chat payload, or null when none is usable.
+String? readChatTitle(Object? raw, [int depth = 0]) {
+  if (depth > 2) return null;
+  if (raw is String) {
+    final text = raw.trim();
+    return text.isEmpty ? null : text;
+  }
+  if (raw is Map) {
+    return readChatTitle(
+      raw['text'] ?? raw['title'] ?? raw['displayName'] ?? raw['name'],
+      depth + 1,
+    );
+  }
+  return null;
+}
+
+/// First usable title on a chat row, whatever key Game Systems stamped.
+String? chatTitleFromPayload(Map<dynamic, dynamic> row) {
+  const keys = <String>[
+    'title',
+    'titleText',
+    'title_text',
+    'equippedTitle',
+    'equipped_title',
+    'senderTitle',
+    'sender_title',
+  ];
+  for (final key in keys) {
+    final title = readChatTitle(row[key]);
+    if (title != null) return title;
+  }
+  return null;
 }
 
 /// Leader plus four promotable ranks.

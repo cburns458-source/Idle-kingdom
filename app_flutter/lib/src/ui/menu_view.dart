@@ -286,42 +286,43 @@ class _MenuViewState extends State<MenuView> {
                         const SizedBox(height: 16),
                         _NameColorField(multiplayer: widget.multiplayer),
                         const SizedBox(height: 16),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Chat notifications',
-                            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
-                          ),
+                        _togglePanel(
+                          title: 'Show titles',
+                          value: widget.multiplayer.showChatTitles,
+                          onChanged: widget.multiplayer.setShowChatTitles,
                         ),
-                        const SizedBox(height: 6),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: MutedText(
-                            'Show a bubble on the chat icon and on the channel tab when a new line arrives.',
-                          ),
+                        const SizedBox(height: 16),
+                        _togglePanel(
+                          title: 'Timestamps',
+                          value: widget.multiplayer.showChatTimestamps,
+                          onChanged: widget.multiplayer.setShowChatTimestamps,
                         ),
-                        const SizedBox(height: 10),
-                        for (final tab in chatTabOrder) ...[
-                          GamePanel(
-                            framed: true,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _chatNotifyLabel(tab),
-                                    style: const TextStyle(fontWeight: FontWeight.w400),
-                                  ),
-                                ),
-                                GameSwitch(
-                                  value: widget.multiplayer.chatNotifyEnabled(tab),
-                                  onChanged: (value) =>
-                                      widget.multiplayer.setChatNotifyEnabled(tab, value),
+                        const SizedBox(height: 16),
+                        GamePanel(
+                          framed: true,
+                          child: Column(
+                            children: [
+                              for (final tab in chatTabOrder) ...[
+                                if (tab != chatTabOrder.first) const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _chatNotifyLabel(tab),
+                                        style: const TextStyle(fontWeight: FontWeight.w400),
+                                      ),
+                                    ),
+                                    GameSwitch(
+                                      value: widget.multiplayer.chatNotifyEnabled(tab),
+                                      onChanged: (value) =>
+                                          widget.multiplayer.setChatNotifyEnabled(tab, value),
+                                    ),
+                                  ],
                                 ),
                               ],
-                            ),
+                            ],
                           ),
-                          if (tab != chatTabOrder.last) const SizedBox(height: 10),
-                        ],
+                        ),
                         const SizedBox(height: 16),
                         _chatPrivacyRow(
                           title: 'Private messages',
@@ -352,7 +353,7 @@ class _MenuViewState extends State<MenuView> {
 
   Widget _togglePanel({
     required String title,
-    required String detail,
+    String? detail,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
@@ -361,13 +362,15 @@ class _MenuViewState extends State<MenuView> {
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
-                MutedText(detail),
-              ],
-            ),
+            child: detail == null
+                ? Text(title, style: const TextStyle(fontWeight: FontWeight.w400))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(fontWeight: FontWeight.w400)),
+                      MutedText(detail),
+                    ],
+                  ),
           ),
           GameSwitch(value: value, onChanged: onChanged),
         ],

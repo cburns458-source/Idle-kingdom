@@ -25,6 +25,43 @@ class PlayerTitle {
 /// Held from the first step until the first defeat.
 const PlayerTitle undyingTitle = PlayerTitle(text: 'The Undying', placement: TitlePlacement.suffix);
 
+/// Equipped title text for chat, or null when the save holds none.
+String? chatTitleForSave(PlayerSave save, [GameDatabase? db]) => titleForSave(save, db)?.text;
+
+/// Equipped title text from a stored save payload.
+///
+/// Missing or unreadable payloads are untitled. A payload that is a save — even
+/// an older one that never wrote the title slot — uses the same rules as
+/// [titleForSave].
+String? chatTitleFromSavePayload(Object? payload, [GameDatabase? db]) {
+  if (payload is PlayerSave) return chatTitleForSave(payload, db);
+  if (payload is! Map) return null;
+  final cosmetics = payload['cosmetics'];
+  Map<dynamic, dynamic>? equipped;
+  if (cosmetics is Map) {
+    final raw = cosmetics['equipped'];
+    if (raw is Map) equipped = raw;
+  }
+  final slotWritten = equipped?.containsKey(titleCosmeticSlotId) ?? false;
+  final equippedId = slotWritten ? equipped![titleCosmeticSlotId] : null;
+  final equippedStr = equippedId is String && equippedId.isNotEmpty ? equippedId : null;
+  if (equippedStr != null && equippedStr != starterTitleCosmeticId) {
+    if (db == null) return null;
+    final cosmetic = db.cosmetics.firstWhereOrNull((row) => row.raw['Cosmetic ID'] == equippedStr);
+    final itemId = cosmetic?.raw['Item ID'];
+    if (itemId is! String) return null;
+    final text = db.items
+        .firstWhereOrNull((row) => row.raw['Item ID'] == itemId)
+        ?.raw['Display Name'];
+    return text is String && text.isNotEmpty ? text : null;
+  }
+  if (payload['hasEverDied'] == true) return null;
+  if (slotWritten) {
+    return equippedStr == starterTitleCosmeticId ? undyingTitle.text : null;
+  }
+  return undyingTitle.text;
+}
+
 /// Cosmetics.Title Placement: `prefix` is prefix, anything else is suffix.
 TitlePlacement titlePlacementForCosmetic(CosmeticRow? cosmetic) {
   return cosmetic?.raw['Title Placement'] == 'prefix'

@@ -491,6 +491,8 @@ void main() {
             'cursorKey': dmReadCursorKey('usr_0001'),
             'readCursorKey': chatReadCursorKey('usr_0001', 'global'),
             'notifyKeys': chatTabOrder.map(chatNotifyStorageKey).toList(),
+            'showTitlesKey': chatShowTitlesStorageKey,
+            'showTimestampsKey': chatShowTimestampsStorageKey,
             'lines': _rows(chatLines(messages, 'usr_1')),
             'linesAnonymous': _rows(chatLines(messages, null)),
             'prefixed': _rows(
@@ -547,6 +549,38 @@ void main() {
                   guest: true,
                 ),
               ], null),
+            ),
+            'titled': _rows(
+              chatLines(const <ChatMessage>[
+                ChatMessage(
+                  id: 'msg_7',
+                  channelKey: 'global',
+                  userId: 'usr_3',
+                  username: 'Mira',
+                  body: 'The watch is set.',
+                  createdAt: '2026-08-12T21:00:14.000Z',
+                  guildTag: 'WCH',
+                  title: 'The Undying',
+                ),
+              ], 'usr_1'),
+            ),
+            'titledHidden': _rows(
+              chatLines(
+                const <ChatMessage>[
+                  ChatMessage(
+                    id: 'msg_7',
+                    channelKey: 'global',
+                    userId: 'usr_3',
+                    username: 'Mira',
+                    body: 'The watch is set.',
+                    createdAt: '2026-08-12T21:00:14.000Z',
+                    guildTag: 'WCH',
+                    title: 'The Undying',
+                  ),
+                ],
+                'usr_1',
+                showTitles: false,
+              ),
             ),
           }),
           isNull,

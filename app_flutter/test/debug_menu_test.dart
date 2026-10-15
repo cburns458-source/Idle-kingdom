@@ -28,6 +28,17 @@ void main() {
     expect(net.showGuildMilestones, isFalse);
   });
 
+  test('chat titles and timestamps start shown and can be hidden', () {
+    final net = buildMultiplayer(database);
+    addTearDown(net.dispose);
+    expect(net.showChatTitles, isTrue);
+    expect(net.showChatTimestamps, isTrue);
+    net.setShowChatTitles(false);
+    net.setShowChatTimestamps(false);
+    expect(net.showChatTitles, isFalse);
+    expect(net.showChatTimestamps, isFalse);
+  });
+
   test('developer slash lines parse without posting', () {
     expect(parseDevCommandLine('hello'), isNull);
     final give = parseDevCommandLine('/give potato 5');

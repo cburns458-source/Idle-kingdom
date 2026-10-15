@@ -13,6 +13,23 @@ export interface PlayerTitle {
 /** Held from the first step until the first defeat. */
 export const UNDYING_TITLE: PlayerTitle = { text: 'The Undying', placement: 'suffix' }
 
+/** Equipped title text for chat, or null when the save holds none. */
+export function chatTitleForSave(save: PlayerSave, db?: GameDatabase): string | null {
+  return titleForSave(save, db)?.text ?? null
+}
+
+/**
+ * Equipped title text from a stored save payload.
+ *
+ * Missing or unreadable payloads are untitled. A payload that is a save — even
+ * an older one that never wrote the title slot — uses the same rules as
+ * [titleForSave].
+ */
+export function chatTitleFromSavePayload(payload: unknown, db?: GameDatabase): string | null {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null
+  return chatTitleForSave(payload as PlayerSave, db)
+}
+
 /** Cosmetics.Title Placement: `prefix` is prefix, anything else is suffix. */
 export function titlePlacementForCosmetic(cosmetic: CosmeticRow | undefined): TitlePlacement {
   return cosmetic?.['Title Placement'] === 'prefix' ? 'prefix' : 'suffix'

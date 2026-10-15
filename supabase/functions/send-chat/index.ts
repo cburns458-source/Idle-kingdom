@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
+import { chatTitleFromSavePayload } from '../_shared/player_title.ts'
 
 const MAX_BODY = 240
 const COOLDOWN_MS = 2000
@@ -95,6 +96,7 @@ Deno.serve(async (req) => {
 
   const admin = connect(supabaseUrl, serviceKey)
   const username = await resolveUsername(admin, user.id, user.user_metadata)
+  const title = await resolveChatTitle(admin, user.id)
 
   const cooled = await enforceCooldown(admin, user.id, channelKey)
   if (cooled) return cooled
@@ -211,7 +213,8 @@ Deno.serve(async (req) => {
     last_sent_at: new Date().toISOString(),
   })
 
-  return json(inserted, 200)
+  // Title is computed from the hosted save. It is not a chat_messages column.
+  return json({ ...inserted, title }, 200)
 })
 
 async function enforceCooldown(
@@ -331,13 +334,21 @@ async function resolveUsername(
   if (fromProfile) return fromProfile
   const fromMeta = publicChatUsername(metadata?.username)
   if (fromMeta) return fromMeta
-  const { data: save } = await admin.from('player_saves').select('payload').eq('user_id', userId).maybeSingle()
-  const payload = save?.payload
+  const payload = await loadSavePayload(admin, userId)
   const characterName =
     payload && typeof payload === 'object' && payload !== null && 'characterName' in payload
       ? publicChatUsername((payload as { characterName?: unknown }).characterName)
       : ''
   return characterName || 'Adventurer'
+}
+
+async function resolveChatTitle(admin: Client, userId: string): Promise<string | null> {
+  return chatTitleFromSavePayload(await loadSavePayload(admin, userId), rawDatabase)
+}
+
+async function loadSavePayload(admin: Client, userId: string): Promise<unknown> {
+  const { data: save } = await admin.from('player_saves').select('payload').eq('user_id', userId).maybeSingle()
+  return save?.payload
 }
 
 function cors(): HeadersInit {
