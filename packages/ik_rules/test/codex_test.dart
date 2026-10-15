@@ -325,6 +325,30 @@ void main() {
         reason: itemId,
       );
     }
+    final source = assertGameDatabaseShape(contentDatabaseJson());
+    final sourceCodex = CodexIndex(source);
+    for (final itemId in ['ITEM-0331', 'ITEM-0332', 'ITEM-0335', 'ITEM-0338', 'ITEM-0349']) {
+      final row = source.items.firstWhere((item) => item.itemId == itemId);
+      expect(row.obtainedFrom, 'Crossbreeding seeds', reason: itemId);
+      expect(row.retired, isNot(isTrue), reason: itemId);
+      expect(
+        includeInCodexCatalog(
+          category: row.category,
+          subtype: row.subtype,
+          retired: row.retired == true,
+        ),
+        isTrue,
+        reason: itemId,
+      );
+      expect(
+        (sourceCodex.item(itemId)?.obtainedFrom ?? const [])
+            .where((entry) => entry.kind == CodexObtainKind.note)
+            .map((entry) => entry.title)
+            .toList(),
+        ['Crossbreeding seeds'],
+        reason: itemId,
+      );
+    }
     for (final itemId in ['ITEM-0370', 'ITEM-0372', 'ITEM-0374', 'ITEM-0376']) {
       expect(noteTitles(itemId), ['Botany crops'], reason: itemId);
       expect(

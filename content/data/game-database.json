@@ -6243,6 +6243,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "ancient_sapling",
       "Notes": "Retired from Botany planting.",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6261,6 +6262,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "wild_root_seed",
       "Notes": "Retired from Botany planting.",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6315,6 +6317,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "wild_berry_seed",
       "Notes": "Retired from Botany planting.",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6369,6 +6372,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "starroot_seed",
       "Notes": "Retired from Botany planting.",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null
@@ -6423,6 +6427,7 @@
       "Description": "Plantable in the Courtyard plot after The Grand Feast.",
       "Icon Asset Key": "mushroom_spore",
       "Notes": "Retired from Botany planting.",
+      "Obtained From": "Crossbreeding seeds",
       "Base Sell Value": 1,
       "Tradeable": true,
       "Stackable": null

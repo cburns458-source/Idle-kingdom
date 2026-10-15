@@ -275,6 +275,19 @@ describe('codex index', () => {
       expect(noteTitles(itemId), itemId).toEqual(['Crossbreeding seeds'])
       expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
     }
+    const sourceCodex = new CodexIndex(source)
+    for (const itemId of ['ITEM-0331', 'ITEM-0332', 'ITEM-0335', 'ITEM-0338', 'ITEM-0349']) {
+      const row = source.Items.find((item) => item['Item ID'] === itemId)
+      expect(row?.['Obtained From'], itemId).toBe('Crossbreeding seeds')
+      expect(row?.Retired, itemId).not.toBe(true)
+      expect(includeInCodexCatalog(row!), itemId).toBe(true)
+      expect(
+        (sourceCodex.item(itemId)?.obtainedFrom ?? [])
+          .filter((entry) => entry.kind === 'note')
+          .map((entry) => entry.title),
+        itemId,
+      ).toEqual(['Crossbreeding seeds'])
+    }
     for (const itemId of ['ITEM-0370', 'ITEM-0372', 'ITEM-0374', 'ITEM-0376']) {
       expect(noteTitles(itemId), itemId).toEqual(['Botany crops'])
       expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
