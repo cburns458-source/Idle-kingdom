@@ -16,13 +16,13 @@ const String religionChangeCooldownMsKey = 'religion_change_cooldown_ms';
 const String religionChooseLocationIdKey = 'religion_choose_location_id';
 const String templeLocationIdFallback = 'LOC-0036';
 
-/// PLACEHOLDER: Economy will replace. Base gold at total level 100.
+/// Approved by Conor (OQ-07). Base gold at total level 100.
 const num religionChangeGoldBaseFallback = 1000;
 
-/// PLACEHOLDER: Economy will replace. Same IEEE double as Config (`50^(1/900)`).
+/// Approved by Conor (OQ-07). Same IEEE double as Config (`50^(1/900)`).
 const num religionChangeGoldGrowthFallback = 1.0043561527973446;
 
-/// PLACEHOLDER: Economy will replace. 0 or null on the Config row means no cap.
+/// Approved by Conor (OQ-07). 0 or null on the Config row means no cap.
 const num religionChangeGoldCapFallback = 50000;
 const num religionChangeCooldownMsFallback = 7 * 24 * 60 * 60 * 1000;
 
@@ -177,7 +177,7 @@ bool religionChooseUnlocked(PlayerSave save) {
   return totalLevel(save) >= religionChooseTotalLevel;
 }
 
-/// PLACEHOLDER exponential curve for Economy to replace.
+/// Approved by Conor (OQ-07).
 ///
 /// First pick (no current faith) is free. Later changes cost
 /// `min(floor(round(base * growth^(totalLevel-100)) / 50) * 50, cap)`.

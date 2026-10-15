@@ -10,14 +10,14 @@ export const RELIGION_CHANGE_GOLD_CAP_KEY = 'religion_change_gold_cap'
 export const RELIGION_CHANGE_COOLDOWN_MS_KEY = 'religion_change_cooldown_ms'
 export const RELIGION_CHOOSE_LOCATION_ID_KEY = 'religion_choose_location_id'
 export const TEMPLE_LOCATION_ID_FALLBACK = 'LOC-0036'
-/** PLACEHOLDER: Economy will replace. Base gold at total level 100. */
+/** Approved by Conor (OQ-07). Base gold at total level 100. */
 export const RELIGION_CHANGE_GOLD_BASE_FALLBACK = 1000
 /**
- * PLACEHOLDER: Economy will replace. Same IEEE double as Config
+ * Approved by Conor (OQ-07). Same IEEE double as Config
  * `religion_change_gold_growth` (`50^(1/900)`), so level 1000 ~= 50000.
  */
 export const RELIGION_CHANGE_GOLD_GROWTH_FALLBACK = 1.0043561527973446
-/** PLACEHOLDER: Economy will replace. 0 or null on the Config row means no cap. */
+/** Approved by Conor (OQ-07). 0 or null on the Config row means no cap. */
 export const RELIGION_CHANGE_GOLD_CAP_FALLBACK = 50000
 export const RELIGION_CHANGE_COOLDOWN_MS_FALLBACK = 7 * 24 * 60 * 60 * 1000
 
@@ -186,7 +186,7 @@ export function religionChooseUnlocked(save: PlayerSave): boolean {
 }
 
 /**
- * PLACEHOLDER exponential curve for Economy to replace.
+ * Approved by Conor (OQ-07).
  *
  * First pick (no current faith) is free. Later changes cost
  * `min(floor(round(base * growth^(totalLevel-100)) / 50) * 50, cap)`.
