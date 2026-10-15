@@ -12,12 +12,40 @@ import 'support/harness.dart';
 void main() {
   late LoadedDatabase database;
 
+  const throneRoom = 'LOC-0016';
+  const feastId = 'QST-0001';
+  const cookStep = 'QSTP-0036';
+  const bakedPotato = 'ITEM-0058';
+  const cookedPerch = 'ITEM-0059';
+  const bakePotato = 'RCP-0001';
+
   setUpAll(() {
     database = loadDatabaseFromRepo();
   });
 
   Future<void> openLog(WidgetTester tester) async {
     await openChinScreen(tester, 'Log');
+  }
+
+  PlayerSave afterKingBriefing() {
+    final save = startedCharacter(database).copyWith(currentLocationId: throneRoom);
+    final accepted = chooseDialogue(database.launch, save, 'DLG-0011', 'DNODE-0018', 'DCH-0023');
+    expect(accepted.ok, isTrue, reason: accepted.reason);
+    return accepted.save;
+  }
+
+  Future<void> openFeastJournal(WidgetTester tester) async {
+    await openLog(tester);
+    await tester.tap(find.text('Quests'));
+    await tester.pump();
+    await tester.tap(find.text('The Grand Feast'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+
+  String journalMark(WidgetTester tester, String label) {
+    final row = find.ancestor(of: find.text(label), matching: find.byType(Row)).first;
+    return tester.widget<Text>(find.descendant(of: row, matching: find.byType(Text)).first).data!;
   }
 
   testWidgets('log journal copy uses panel ink on wood and stone plates', (tester) async {
@@ -179,6 +207,58 @@ void main() {
     expect(find.text('Hear what the King needs'), findsOne);
     expect(find.text('Talk to King 0 / 1'), findsOne);
     expect(find.text('Prepare food for the feast'), findsNothing);
+  });
+
+  testWidgets('a skipped optional quest step stays unticked while the quest is in progress', (
+    tester,
+  ) async {
+    final save = afterKingBriefing();
+    expect(isStepLatched(save, feastId, cookStep), isFalse);
+    final controller = buildController(database, seed: save);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openFeastJournal(tester);
+
+    expect(find.text('Cook food for the feast'), findsOne);
+    expect(journalMark(tester, 'Cook food for the feast'), '•');
+    expect(journalMark(tester, 'Hear what the King needs'), '✓');
+    expect(journalMark(tester, 'Bring the food to the King'), '•');
+  });
+
+  testWidgets('a cooked optional quest step ticks immediately', (tester) async {
+    var save = afterKingBriefing();
+    save = addItemToInventory(addItemToInventory(save, bakedPotato, 10), cookedPerch, 10);
+    save = applyQuestProcessProgress(database.launch, save, bakePotato);
+    expect(isStepLatched(save, feastId, cookStep), isTrue);
+    final controller = buildController(database, seed: save);
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openFeastJournal(tester);
+
+    expect(journalMark(tester, 'Cook food for the feast'), '✓');
+    expect(journalMark(tester, 'Hear what the King needs'), '✓');
+    expect(journalMark(tester, 'Bring the food to the King'), '•');
+  });
+
+  testWidgets('a skipped optional quest step ticks once the whole quest is completed', (
+    tester,
+  ) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        quests: const <QuestProgress>[
+          QuestProgress(questId: feastId, status: 'completed', progress: 10),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller);
+    await openFeastJournal(tester);
+
+    expect(isStepLatched(controller.save, feastId, cookStep), isFalse);
+    expect(journalMark(tester, 'Cook food for the feast'), '✓');
+    expect(journalMark(tester, 'Hear what the King needs'), '✓');
+    expect(journalMark(tester, 'Bring the food to the King'), '✓');
   });
 
   testWidgets('completed quests list the turn-in rewards after the steps', (tester) async {

@@ -377,14 +377,21 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
   final steps = getQuestSteps(db, questId);
   if (steps.isEmpty) return const <QuestJournalStep>[];
 
-  final currentIndex = getCurrentStepIndex(db, save, quest);
-  if (currentIndex >= steps.length) {
+  if (getQuestProgress(save, questId).status == 'completed') {
     return questCompletedJournal(db, quest);
   }
 
-  return steps.take(currentIndex + 1).toList().asMap().entries.expand((entry) {
+  final currentIndex = getCurrentStepIndex(db, save, quest);
+  final shown = currentIndex >= steps.length ? steps : steps.take(currentIndex + 1).toList();
+
+  return shown.asMap().entries.expand((entry) {
     final step = entry.value;
-    final done = entry.key < currentIndex;
+    final latched = isStepLatched(save, questId, step.stepId);
+    final passed = currentIndex >= steps.length || entry.key < currentIndex;
+    // A skipped optional step stays current until the player actually did it
+    // (latch) or the whole quest is completed.
+    final done = latched || (passed && !isOptionalStep(step));
+    final skippedOptional = isOptionalStep(step) && passed && !latched;
     final head = QuestJournalStep(
       key: step.stepId,
       label: step.journalLabel,
@@ -397,6 +404,8 @@ List<QuestJournalStep> questStepJournal(GameDatabase db, PlayerSave save, QuestR
             questId,
             step.notes ?? '',
           ).where((line) => line.key.startsWith('action:')).toList()
+        : skippedOptional
+        ? const <QuestProgressLine>[]
         : _journalProgressLines(db, save, questId, step.notes ?? '');
     final progress = progressSource
         .map(

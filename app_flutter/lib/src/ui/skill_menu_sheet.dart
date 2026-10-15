@@ -114,11 +114,7 @@ class _SkillMenuBodyState extends State<_SkillMenuBody> {
                 onPressed: _openRecipeBook,
               ),
             const SizedBox(width: 6),
-            GameIconButton(
-              icon: Icons.close,
-              tooltip: 'Close',
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+            GameCloseButton(onPressed: () => Navigator.of(context).pop()),
           ],
         ),
         if (widget.view.tabs.length > 1) ...[

@@ -382,13 +382,20 @@ export function questStepJournal(
   const steps = getQuestSteps(db, questId)
   if (steps.length === 0) return []
 
-  const currentIndex = getCurrentStepIndex(db, save, quest)
-  if (currentIndex >= steps.length) {
+  if (getQuestProgress(save, questId).status === 'completed') {
     return questCompletedJournal(db, quest)
   }
 
-  return steps.slice(0, currentIndex + 1).flatMap((step, index) => {
-    const done = index < currentIndex
+  const currentIndex = getCurrentStepIndex(db, save, quest)
+  const shown = currentIndex >= steps.length ? steps : steps.slice(0, currentIndex + 1)
+
+  return shown.flatMap((step, index) => {
+    const latched = isStepLatched(save, questId, step['Step ID'])
+    const passed = currentIndex >= steps.length || index < currentIndex
+    // A skipped optional step stays current until the player actually did it
+    // (latch) or the whole quest is completed.
+    const done = latched || (passed && !isOptionalStep(step))
+    const skippedOptional = isOptionalStep(step) && passed && !latched
     const head = {
       key: step['Step ID'],
       label: step['Journal Label'],
@@ -398,7 +405,9 @@ export function questStepJournal(
       ? stepProgressLines(db, save, questId, step.Notes ?? '', step['Step ID']).filter((line) =>
           line.key.startsWith('action:'),
         )
-      : journalProgressLines(db, save, questId, step.Notes ?? '')
+      : skippedOptional
+        ? []
+        : journalProgressLines(db, save, questId, step.Notes ?? '')
     const progress = progressSource.map((line) => ({
       key: line.key,
       label: formatQuestProgressLine(line),

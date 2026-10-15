@@ -101,6 +101,8 @@ class _TannerPanelState extends State<TannerPanel> {
               const Expanded(
                 child: Text(
                   'Tanner',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
@@ -108,8 +110,7 @@ class _TannerPanelState extends State<TannerPanel> {
                 amount: save.gold,
                 style: const TextStyle(color: Palette.gold),
               ),
-              if (widget.onClose != null)
-                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+              if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),
           const SizedBox(height: 8),

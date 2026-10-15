@@ -125,6 +125,8 @@ class _ProductionPickerState extends State<ProductionPicker> {
               Expanded(
                 child: Text(
                   widget.activity.contextualName ?? widget.activity.internalKey,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
@@ -136,7 +138,7 @@ class _ProductionPickerState extends State<ProductionPicker> {
               ),
               if (widget.onClose != null) ...[
                 const SizedBox(width: 6),
-                GameIconButton(icon: Icons.close, tooltip: 'Close', onPressed: widget.onClose),
+                GameCloseButton(onPressed: widget.onClose),
               ],
             ],
           ),

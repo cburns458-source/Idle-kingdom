@@ -197,9 +197,25 @@ void main() {
       expect(isStepLatched(save, _feast, _cook), isFalse);
       expect(stepOf(save), _handIn);
       expect(kingChoices(save), contains('DCH-0026'));
+      expect(
+        questStepJournal(
+          db,
+          save,
+          getQuest(db, _feast)!,
+        ).firstWhere((step) => step.key == _cook).toJson(),
+        {'key': _cook, 'label': 'Cook food for the feast', 'state': 'current'},
+      );
 
       save = finishAtTheKing(save);
       expect(isStepLatched(save, _feast, _cook), isFalse);
+      expect(
+        questStepJournal(
+          db,
+          save,
+          getQuest(db, _feast)!,
+        ).firstWhere((step) => step.key == _cook).toJson(),
+        {'key': _cook, 'label': 'Cook food for the feast', 'state': 'done'},
+      );
       expectPaid(save);
     },
   );
