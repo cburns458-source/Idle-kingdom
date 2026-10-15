@@ -72,6 +72,9 @@ class LocalMultiplayerBackend {
   final SaveStorage storage;
   final LocalBackendPorts ports;
 
+  /// Catalog used to resolve non-starter chat titles from the sender's save.
+  GameDatabase? gameDatabase;
+
   LocalDb _db() {
     final raw = storage.getItem(multiplayerLocalDbKey);
     if (raw == null || raw.isEmpty) return LocalDb.empty();
@@ -481,6 +484,7 @@ class LocalMultiplayerBackend {
     String? nameColor,
     bool publishNameColor = false,
   }) {
+    gameDatabase = gameDb;
     if (getProfile(userId) == null) return;
     final snapshot = buildLeaderboardSnapshot(gameDb, save);
     final db = _db();
@@ -673,6 +677,7 @@ class LocalMultiplayerBackend {
         guest = true;
       }
     }
+    final save = db.saves.firstWhereOrNull((row) => row.userId == session.userId)?.payload;
     final message = ChatMessage(
       id: _newId('msg'),
       channelKey: key,
@@ -683,6 +688,7 @@ class LocalMultiplayerBackend {
       guildTag: memberGuild?.tag,
       rankIcon: rankIcon,
       guest: guest,
+      title: save == null ? null : chatTitleForSave(save, gameDatabase),
     );
     db.messages.add(message);
     db.lastChatAt[stampKey] = message.createdAt;
@@ -1707,6 +1713,7 @@ class LocalMultiplayerBackend {
 
   /// Puts The Watch and its three static members on this device.
   void ensureDemoWorld(GameDatabase gameDb) {
+    gameDatabase = gameDb;
     final db = _db();
     applyDemoWorld(db, gameDb, nowMs: _now(), nowIso: _nowIso());
     _write(db);

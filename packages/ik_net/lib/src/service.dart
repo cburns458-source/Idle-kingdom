@@ -404,6 +404,7 @@ class LocalMultiplayerService implements MultiplayerService {
 
   @override
   Future<CloudSyncResult> pushSave(GameDatabase db, PlayerSave save, {bool force = false}) async {
+    _backend.gameDatabase = db;
     final current = session;
     if (current == null) {
       return const CloudSyncResult.failed('Sign in to sync cloud saves.');

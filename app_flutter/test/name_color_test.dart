@@ -43,7 +43,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final name = tester.widget<Text>(find.text('Vari: '));
+    final name = tester.widget<Text>(find.text('The Undying Vari: '));
     expect(name.style?.color, const Color(0xFFFFAA33));
   });
 
@@ -110,7 +110,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final name = tester.widget<Text>(find.text('Vari: '));
+    final name = tester.widget<Text>(find.text('The Undying Vari: '));
     expect(name.style?.color, const Color(0xFFFFAA33));
   });
 

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { prepareDatabase } from '../data/loadDatabase'
 import { createNewSave } from '../save/saveStore'
 import { WEAPON_TOOL_SLOT_ID, equipStackToSlot } from '../equipment/loadout'
+import { TITLE_COSMETIC_SLOT_ID } from '../save/types'
 import { LocalMultiplayerBackend } from './localBackend'
 import { filterProfanity } from './moderation'
 import { isPendingAccountUsername } from './remote'
@@ -41,7 +42,11 @@ describe('local multiplayer backend', () => {
 
     const chat = backend.sendChat(signed.session, { kind: 'global' }, 'Hello world')
     expect(chat.ok).toBe(true)
+    if (chat.ok) expect(chat.message.title).toBe('The Undying')
     expect(backend.listChat({ kind: 'global' }, signed.session.userId)).toHaveLength(1)
+    expect(backend.listChat({ kind: 'global' }, signed.session.userId)[0]?.title).toBe(
+      'The Undying',
+    )
 
     const guild = backend.createGuild(
       signed.session,
@@ -119,6 +124,7 @@ describe('local multiplayer backend', () => {
     expect(stored.ok).toBe(true)
     if (!stored.ok) return
     expect(stored.message.body).toBe('what the fuck')
+    expect(stored.message.title).toBeUndefined()
 
     const slur = backend.sendChat(signed.session, { kind: 'global' }, 'nigger')
     expect(slur.ok).toBe(false)
@@ -348,5 +354,46 @@ describe('local multiplayer backend', () => {
     expect(kickMember.reason).toBe('Only the leader can remove members.')
     expect(backend.removeGuildMember(leader.session.userId, guildId, hopeful.session.userId).ok).toBe(true)
     expect(backend.guildMembers(guildId)).toHaveLength(2)
+  })
+
+  it('stamps the equipped title from the sender save, not a client field', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const backend = new LocalMultiplayerBackend()
+    backend.gameDatabase = launch
+    const signed = backend.signUp('hero@example.com', 'Hero', 'secret')
+    expect(signed.ok).toBe(true)
+    if (!signed.ok) return
+
+    const untitled = backend.sendChat(signed.session, { kind: 'global' }, 'No save yet')
+    expect(untitled.ok).toBe(true)
+    if (untitled.ok) expect(untitled.message.title).toBeUndefined()
+
+    const living = createNewSave(launch)
+    living.characterName = 'Hero'
+    expect(backend.writeCloudSave(signed.session.userId, living).ok).toBe(true)
+    const undying = backend.sendChat(signed.session, { kind: 'local', locationId: 'LOC-0001' }, 'Hi')
+    expect(undying.ok).toBe(true)
+    if (undying.ok) expect(undying.message.title).toBe('The Undying')
+
+    const dead = { ...living, hasEverDied: true, updatedAt: new Date(Date.now() + 1000).toISOString() }
+    expect(backend.writeCloudSave(signed.session.userId, dead).ok).toBe(true)
+    const lost = backend.sendChat(signed.session, { kind: 'local', locationId: 'LOC-0002' }, 'Still here')
+    expect(lost.ok).toBe(true)
+    if (lost.ok) expect(lost.message.title).toBeUndefined()
+
+    const faith = {
+      ...living,
+      hasEverDied: true,
+      updatedAt: new Date(Date.now() + 2000).toISOString(),
+      cosmetics: {
+        ...living.cosmetics,
+        unlocked: [...living.cosmetics.unlocked, 'COS-0013'],
+        equipped: { ...living.cosmetics.equipped, [TITLE_COSMETIC_SLOT_ID]: 'COS-0013' },
+      },
+    }
+    expect(backend.writeCloudSave(signed.session.userId, faith).ok).toBe(true)
+    const oruvani = backend.sendChat(signed.session, { kind: 'local', locationId: 'LOC-0003' }, 'Hold')
+    expect(oruvani.ok).toBe(true)
+    if (oruvani.ok) expect(oruvani.message.title).toBe('Oruvani')
   })
 })
