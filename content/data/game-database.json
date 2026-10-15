@@ -8019,7 +8019,7 @@
     {
       "Item ID": "ITEM-0432",
       "Internal Key": "cosmetic_ph_woodcutting_title",
-      "Display Name": "PLACEHOLDER: Woodcutting",
+      "Display Name": "Oruvani",
       "Category": "Cosmetic",
       "Subtype": "Title",
       "Status": "Confirmed",
@@ -8028,16 +8028,16 @@
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
       "Tradeable": true,
-      "Icon Asset Key": "cosmetic_ph_woodcutting_title",
-      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of an Oruvani, follower of Oruveth. Equip in the Wardrobe while following Vaelithra.",
       "Functional / Source Tags": "cosmetic; title; religion",
-      "Notes": "PLACEHOLDER. Granted on first pick of REL-0001. Owned after switching; equippable only while following REL-0001.",
+      "Notes": "Granted on first pick of REL-0001 (Vaelithra). Owned after switching; equippable only while following REL-0001.",
       "Stackable": null
     },
     {
       "Item ID": "ITEM-0433",
       "Internal Key": "cosmetic_ph_hunting_title",
-      "Display Name": "PLACEHOLDER: Hunting",
+      "Display Name": "Khareth",
       "Category": "Cosmetic",
       "Subtype": "Title",
       "Status": "Confirmed",
@@ -8046,16 +8046,16 @@
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
       "Tradeable": true,
-      "Icon Asset Key": "cosmetic_ph_hunting_title",
-      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Khareth, follower of Theryvak. Equip in the Wardrobe while following Khavessa.",
       "Functional / Source Tags": "cosmetic; title; religion",
-      "Notes": "PLACEHOLDER. Granted on first pick of REL-0002. Owned after switching; equippable only while following REL-0002.",
+      "Notes": "Granted on first pick of REL-0002 (Khavessa). Owned after switching; equippable only while following REL-0002.",
       "Stackable": null
     },
     {
       "Item ID": "ITEM-0434",
       "Internal Key": "cosmetic_ph_fishing_title",
-      "Display Name": "PLACEHOLDER: Fishing",
+      "Display Name": "Nymorathen",
       "Category": "Cosmetic",
       "Subtype": "Title",
       "Status": "Confirmed",
@@ -8064,16 +8064,16 @@
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
       "Tradeable": true,
-      "Icon Asset Key": "cosmetic_ph_fishing_title",
-      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Nymorathen, follower of Ulvaryn. Equip in the Wardrobe while following Nymorai.",
       "Functional / Source Tags": "cosmetic; title; religion",
-      "Notes": "PLACEHOLDER. Granted on first pick of REL-0003. Owned after switching; equippable only while following REL-0003.",
+      "Notes": "Granted on first pick of REL-0003 (Nymorai). Owned after switching; equippable only while following REL-0003.",
       "Stackable": null
     },
     {
       "Item ID": "ITEM-0435",
       "Internal Key": "cosmetic_ph_combat_title",
-      "Display Name": "PLACEHOLDER: Combat",
+      "Display Name": "Drazhari",
       "Category": "Cosmetic",
       "Subtype": "Title",
       "Status": "Confirmed",
@@ -8082,16 +8082,16 @@
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
       "Tradeable": true,
-      "Icon Asset Key": "cosmetic_ph_combat_title",
-      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Drazhari, follower of Azhurak. Equip in the Wardrobe while following Drazhkar.",
       "Functional / Source Tags": "cosmetic; title; religion",
-      "Notes": "PLACEHOLDER. Granted on first pick of REL-0004. Owned after switching; equippable only while following REL-0004.",
+      "Notes": "Granted on first pick of REL-0004 (Drazhkar). Owned after switching; equippable only while following REL-0004.",
       "Stackable": null
     },
     {
       "Item ID": "ITEM-0436",
       "Internal Key": "cosmetic_ph_gold_title",
-      "Display Name": "PLACEHOLDER: Gold",
+      "Display Name": "Veyrathel",
       "Category": "Cosmetic",
       "Subtype": "Title",
       "Status": "Confirmed",
@@ -8100,16 +8100,16 @@
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
       "Tradeable": true,
-      "Icon Asset Key": "cosmetic_ph_gold_title",
-      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Veyrathel, follower of Zorvael. Equip in the Wardrobe while following Veyrathi.",
       "Functional / Source Tags": "cosmetic; title; religion",
-      "Notes": "PLACEHOLDER. Granted on first pick of REL-0005. Owned after switching; equippable only while following REL-0005.",
+      "Notes": "Granted on first pick of REL-0005 (Veyrathi). Owned after switching; equippable only while following REL-0005.",
       "Stackable": null
     },
     {
       "Item ID": "ITEM-0437",
       "Internal Key": "cosmetic_ph_mining_title",
-      "Display Name": "PLACEHOLDER: Mining",
+      "Display Name": "Korvathi",
       "Category": "Cosmetic",
       "Subtype": "Title",
       "Status": "Confirmed",
@@ -8118,16 +8118,16 @@
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
       "Tradeable": true,
-      "Icon Asset Key": "cosmetic_ph_mining_title",
-      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of a Korvathi, follower of Gorveth. Equip in the Wardrobe while following Korvethan.",
       "Functional / Source Tags": "cosmetic; title; religion",
-      "Notes": "PLACEHOLDER. Granted on first pick of REL-0006. Owned after switching; equippable only while following REL-0006.",
+      "Notes": "Granted on first pick of REL-0006 (Korvethan). Owned after switching; equippable only while following REL-0006.",
       "Stackable": null
     },
     {
       "Item ID": "ITEM-0438",
       "Internal Key": "cosmetic_ph_harvesting_title",
-      "Display Name": "PLACEHOLDER: Harvesting",
+      "Display Name": "Elyndri",
       "Category": "Cosmetic",
       "Subtype": "Title",
       "Status": "Confirmed",
@@ -8136,10 +8136,10 @@
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
       "Tradeable": true,
-      "Icon Asset Key": "cosmetic_ph_harvesting_title",
-      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Icon Asset Key": "cosmetic_the_undying",
+      "Description": "The title of an Elyndri, follower of Saelun. Equip in the Wardrobe while following Elyndara.",
       "Functional / Source Tags": "cosmetic; title; religion",
-      "Notes": "PLACEHOLDER. Granted on first pick of REL-0007. Owned after switching; equippable only while following REL-0007.",
+      "Notes": "Granted on first pick of REL-0007 (Elyndara). Owned after switching; equippable only while following REL-0007.",
       "Stackable": null
     }
   ],
@@ -36091,7 +36091,7 @@
       "Acquisition Tags": "religion",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER title for REL-0001. Q&D will replace names."
+      "Notes": "Title Oruvani for REL-0001 (Vaelithra). Granted on first pick. Equippable only while following this faith."
     },
     {
       "Cosmetic ID": "COS-0014",
@@ -36100,7 +36100,7 @@
       "Acquisition Tags": "religion",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER title for REL-0002. Q&D will replace names."
+      "Notes": "Title Khareth for REL-0002 (Khavessa). Granted on first pick. Equippable only while following this faith."
     },
     {
       "Cosmetic ID": "COS-0015",
@@ -36109,7 +36109,7 @@
       "Acquisition Tags": "religion",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER title for REL-0003. Q&D will replace names."
+      "Notes": "Title Nymorathen for REL-0003 (Nymorai). Granted on first pick. Equippable only while following this faith."
     },
     {
       "Cosmetic ID": "COS-0016",
@@ -36118,7 +36118,7 @@
       "Acquisition Tags": "religion",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER title for REL-0004. Q&D will replace names."
+      "Notes": "Title Drazhari for REL-0004 (Drazhkar). Granted on first pick. Equippable only while following this faith."
     },
     {
       "Cosmetic ID": "COS-0017",
@@ -36127,7 +36127,7 @@
       "Acquisition Tags": "religion",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER title for REL-0005. Q&D will replace names."
+      "Notes": "Title Veyrathel for REL-0005 (Veyrathi). Granted on first pick. Equippable only while following this faith."
     },
     {
       "Cosmetic ID": "COS-0018",
@@ -36136,7 +36136,7 @@
       "Acquisition Tags": "religion",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER title for REL-0006. Q&D will replace names."
+      "Notes": "Title Korvathi for REL-0006 (Korvethan). Granted on first pick. Equippable only while following this faith."
     },
     {
       "Cosmetic ID": "COS-0019",
@@ -36145,7 +36145,7 @@
       "Acquisition Tags": "religion",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER title for REL-0007. Q&D will replace names."
+      "Notes": "Title Elyndri for REL-0007 (Elyndara). Granted on first pick. Equippable only while following this faith."
     }
   ],
   "AppearanceOptions": [
@@ -36938,87 +36938,87 @@
   "Religions": [
     {
       "Religion ID": "REL-0001",
-      "Internal Key": "ph_woodcutting",
-      "Display Name": "PLACEHOLDER: Woodcutting Faith",
-      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Internal Key": "vaelithra",
+      "Display Name": "Vaelithra",
+      "Description": "Followers of Oruveth fell timber as stewards, knowing every stump makes room for the forest to rise again.",
       "Sort Order": 1,
       "Icon Asset Key": null,
       "Title Cosmetic ID": "COS-0013",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Human Woodcutting bonus."
+      "Notes": "God: Oruveth. Follower title: Oruvani. Maps to Human Woodcutting bonus."
     },
     {
       "Religion ID": "REL-0002",
-      "Internal Key": "ph_hunting",
-      "Display Name": "PLACEHOLDER: Hunting Faith",
-      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Internal Key": "khavessa",
+      "Display Name": "Khavessa",
+      "Description": "Theryvak teaches the patience of the stalker and respect for the quarry: take only what the wild can spare.",
       "Sort Order": 2,
       "Icon Asset Key": null,
       "Title Cosmetic ID": "COS-0014",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Wood Elf Hunting bonus."
+      "Notes": "God: Theryvak. Follower title: Khareth. Maps to Wood Elf Hunting bonus."
     },
     {
       "Religion ID": "REL-0003",
-      "Internal Key": "ph_fishing",
-      "Display Name": "PLACEHOLDER: Fishing Faith",
-      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Internal Key": "nymorai",
+      "Display Name": "Nymorai",
+      "Description": "Sailors and coastal folk pray to Ulvaryn, keeper of the deep, who gives back the sea's bounty and its lost things.",
       "Sort Order": 3,
       "Icon Asset Key": null,
       "Title Cosmetic ID": "COS-0015",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to High Elf Fishing bonus."
+      "Notes": "God: Ulvaryn. Follower title: Nymorathen. Maps to High Elf Fishing bonus."
     },
     {
       "Religion ID": "REL-0004",
-      "Internal Key": "ph_combat",
-      "Display Name": "PLACEHOLDER: Combat Faith",
-      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Internal Key": "drazhkar",
+      "Display Name": "Drazhkar",
+      "Description": "Azhurak honours those who endure, for discipline breeds strength and victory is only earned through struggle.",
       "Sort Order": 4,
       "Icon Asset Key": null,
       "Title Cosmetic ID": "COS-0016",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Orc Combat bonus."
+      "Notes": "God: Azhurak. Follower title: Drazhari. Maps to Orc Combat bonus."
     },
     {
       "Religion ID": "REL-0005",
-      "Internal Key": "ph_gold",
-      "Display Name": "PLACEHOLDER: Gold Faith",
-      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Internal Key": "veyrathi",
+      "Display Name": "Veyrathi",
+      "Description": "Zorvael holds that wealth is held in trust, and that generosity and wise dealing are sacred duties.",
       "Sort Order": 5,
       "Icon Asset Key": null,
       "Title Cosmetic ID": "COS-0017",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Goblin gold bonus."
+      "Notes": "God: Zorvael. Follower title: Veyrathel. Maps to Goblin gold bonus."
     },
     {
       "Religion ID": "REL-0006",
-      "Internal Key": "ph_mining",
-      "Display Name": "PLACEHOLDER: Mining Faith",
-      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Internal Key": "korvethan",
+      "Display Name": "Korvethan",
+      "Description": "Gorveth guards the stone and its buried riches, and gives the secrets of the deep earth only to honest labour.",
       "Sort Order": 6,
       "Icon Asset Key": null,
       "Title Cosmetic ID": "COS-0018",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Dwarf Mining bonus."
+      "Notes": "God: Gorveth. Follower title: Korvathi. Maps to Dwarf Mining bonus."
     },
     {
       "Religion ID": "REL-0007",
-      "Internal Key": "ph_harvesting",
-      "Display Name": "PLACEHOLDER: Harvesting Faith",
-      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Internal Key": "elyndara",
+      "Display Name": "Elyndara",
+      "Description": "Saelun turns the seasons and renews the tilled land, blessing herb, crop and orchard alike.",
       "Sort Order": 7,
       "Icon Asset Key": null,
       "Title Cosmetic ID": "COS-0019",
       "Status": "Confirmed",
       "Release Phase": "Launch",
-      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Halfling Harvesting bonus."
+      "Notes": "God: Saelun. Follower title: Elyndri. Maps to Halfling Harvesting bonus."
     }
   ],
   "ReligionBonuses": [
@@ -37029,7 +37029,7 @@
       "Reference ID": "SKL-0006",
       "Bonus Value": 5,
       "Status": "Confirmed",
-      "Notes": "PLACEHOLDER +5% Woodcutting drop chance."
+      "Notes": "+5% Woodcutting drop chance."
     },
     {
       "Religion Bonus ID": "RELB-0002",
@@ -37038,7 +37038,7 @@
       "Reference ID": "SKL-0005",
       "Bonus Value": 5,
       "Status": "Confirmed",
-      "Notes": "PLACEHOLDER +5% Hunting drop chance."
+      "Notes": "+5% Hunting drop chance."
     },
     {
       "Religion Bonus ID": "RELB-0003",
@@ -37047,7 +37047,7 @@
       "Reference ID": "SKL-0003",
       "Bonus Value": 5,
       "Status": "Confirmed",
-      "Notes": "PLACEHOLDER +5% Fishing drop chance."
+      "Notes": "+5% Fishing drop chance."
     },
     {
       "Religion Bonus ID": "RELB-0004",
@@ -37056,7 +37056,7 @@
       "Reference ID": "SKL-0001",
       "Bonus Value": 5,
       "Status": "Confirmed",
-      "Notes": "PLACEHOLDER +5% Combat drop chance."
+      "Notes": "+5% Combat drop chance."
     },
     {
       "Religion Bonus ID": "RELB-0005",
@@ -37065,7 +37065,7 @@
       "Reference ID": null,
       "Bonus Value": 5,
       "Status": "Confirmed",
-      "Notes": "PLACEHOLDER +5% gold from enemies and actions."
+      "Notes": "+5% gold from enemies and actions."
     },
     {
       "Religion Bonus ID": "RELB-0006",
@@ -37074,7 +37074,7 @@
       "Reference ID": "SKL-0002",
       "Bonus Value": 5,
       "Status": "Confirmed",
-      "Notes": "PLACEHOLDER +5% Mining drop chance."
+      "Notes": "+5% Mining drop chance."
     },
     {
       "Religion Bonus ID": "RELB-0007",
@@ -37083,7 +37083,7 @@
       "Reference ID": "SKL-0004",
       "Bonus Value": 5,
       "Status": "Confirmed",
-      "Notes": "PLACEHOLDER +5% Harvesting drop chance."
+      "Notes": "+5% Harvesting drop chance."
     }
   ],
   "QuestSteps": [
