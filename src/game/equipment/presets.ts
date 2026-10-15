@@ -8,10 +8,13 @@ import type {
   PlayerSave,
 } from '../save/types'
 import {
+  discardsActivePotion,
   isStackableConsumableSlot,
   isTwoHandedItem,
   OFFHAND_SLOT_ID,
+  POTION_SLOT_ID,
   WEAPON_TOOL_SLOT_ID,
+  withoutActivePotion,
   type EquipResult,
 } from './loadout'
 
@@ -365,6 +368,13 @@ export function applyEquipmentPreset(
     }
   }
 
+  const nextPotionItemId = worn[POTION_SLOT_ID]?.itemId ?? null
+  const discardPotion = discardsActivePotion(working, nextPotionItemId)
+  if (discardPotion) {
+    const wornPotion = working.equipment.slots[POTION_SLOT_ID]
+    if (wornPotion && wornPotion.quantity > 0) takeFromPool(pool, wornPotion)
+  }
+
   // Remaining pool must fit in an empty-equipment bag (slots cleared).
   let bagProbe: PlayerSave = {
     ...working,
@@ -397,7 +407,7 @@ export function applyEquipmentPreset(
   return {
     ok: true,
     save: {
-      ...working,
+      ...(discardPotion ? withoutActivePotion(working) : working),
       equipment: { slots: worn },
       inventory: bagProbe.inventory,
       activeEquipmentPresetIndex: index,

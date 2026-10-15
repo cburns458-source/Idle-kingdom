@@ -238,11 +238,35 @@ export function templeHandsRefusal(save: PlayerSave, slotId: string): string | n
 }
 
 /**
+ * Changing away from the drunk bottle (unequip or a different potion) discards
+ * that effect. Same-item top-ups keep it.
+ */
+export function discardsActivePotion(
+  save: PlayerSave,
+  nextPotionItemId: string | null | undefined,
+): boolean {
+  const effect = save.activePotionEffect
+  if (!effect) return false
+  return nextPotionItemId !== effect.itemId
+}
+
+export function withoutActivePotion(save: PlayerSave): PlayerSave {
+  if (save.activePotionEffect == null) return save
+  return { ...save, activePotionEffect: null }
+}
+
+/**
  * Unequip a slot, returning any equipped stack to inventory.
  * Blocked (not performed) when the bag has no room for the returned item, so
  * gear is never silently destroyed.
+ *
+ * An active potion is the exception: unequipping the potion slot discards the
+ * drunk bottle and every leftover dose. Nothing returns to the bag or bank.
  */
 export function unequipSlot(save: PlayerSave, slotId: string): EquipResult {
+  if (isPotionSlot(slotId) && discardsActivePotion(save, null)) {
+    return { ok: true, save: withoutActivePotion(setSlot(save, slotId, null)) }
+  }
   const equipped = slotStack(save, slotId)
   if (!equipped || equipped.quantity <= 0) {
     return { ok: true, save: setSlot(save, slotId, null) }
@@ -401,6 +425,11 @@ export function applyDesiredLoadout(
     })
   }
 
+  const desiredPotion = slots.find((slot) => slot.slotId === POTION_SLOT_ID)
+  const nextPotionItemId =
+    desiredPotion && desiredPotion.quantity > 0 ? desiredPotion.itemId : null
+  const discardPotion = discardsActivePotion(save, nextPotionItemId)
+
   for (const [slotId, current] of Object.entries(save.equipment.slots)) {
     if (!current || current.quantity <= 0) continue
     const desired = slots.find((slot) => slot.slotId === slotId)
@@ -411,6 +440,7 @@ export function applyDesiredLoadout(
     const kept = same ? Math.min(current.quantity, desired.quantity) : 0
     const returning = current.quantity - kept
     if (returning <= 0) continue
+    if (discardPotion && isPotionSlot(slotId)) continue
     addPiece(released, {
       itemId: current.itemId,
       enchantmentId: current.enchantmentId ?? null,
@@ -481,6 +511,7 @@ export function applyDesiredLoadout(
     ...working,
     equipment: { ...working.equipment, slots: nextSlots },
   }
+  if (discardPotion) next = withoutActivePotion(next)
   if (
     activeEquipmentPresetIndex != null &&
     activeEquipmentPresetIndex >= 0 &&
@@ -598,13 +629,17 @@ export function equipInventoryIndex(
       current?.itemId === itemId && !current.enchantmentId ? current.quantity : 0
     const keepFavorite = favorite || current?.favorite === true
     next = removeInventoryAtIndex(next, index, moveQty)
+    let equippedSave = setSlot(next, slotId, {
+      itemId,
+      quantity: existingQty + moveQty,
+      ...(keepFavorite ? { favorite: true } : {}),
+    })
+    if (isPotionSlot(slotId) && discardsActivePotion(save, itemId)) {
+      equippedSave = withoutActivePotion(equippedSave)
+    }
     return {
       ok: true,
-      save: setSlot(next, slotId, {
-        itemId,
-        quantity: existingQty + moveQty,
-        ...(keepFavorite ? { favorite: true } : {}),
-      }),
+      save: equippedSave,
     }
   }
 

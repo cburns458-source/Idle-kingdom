@@ -175,4 +175,49 @@ void main() {
       '+25% relative Drop Chance, 6 uses',
     ]);
   });
+
+  PlayerSave withDrunkPotion(PlayerSave save, String itemId, [num remaining = 3]) {
+    return save.copyWith(
+      activePotionEffect: ActivePotionEffect(
+        scope: 'one_standard_production_action',
+        itemId: itemId,
+        relativeDropChanceBonusPercent: itemId == 'ITEM-0070' ? 25 : null,
+        baseDurationReductionPercent: itemId == 'ITEM-0071' ? 10 : null,
+        actionsRemaining: remaining,
+      ),
+    );
+  }
+
+  test('discards the active potion and leftover doses on unequip, returning nothing', () {
+    var save = addItemToInventory(createNewSave(db, 0), 'ITEM-0070', 4);
+    final equipped = equipItemFromInventory(db, save, 'ITEM-0070');
+    expect(equipped.ok, isTrue);
+    save = withDrunkPotion(equipped.save!, 'ITEM-0070', 5);
+    final bankBefore = save.bank;
+
+    final unequipped = unequipSlot(save, potionSlotId);
+    expect(unequipped.ok, isTrue);
+    expect(slotStack(unequipped.save!, potionSlotId), isNull);
+    expect(unequipped.save!.activePotionEffect, isNull);
+    expect(unequipped.save!.inventory.where((stack) => stack.itemId == 'ITEM-0070'), isEmpty);
+    expect(unequipped.save!.bank, bankBefore);
+  });
+
+  test('discards the active potion when a different bottle is equipped over it', () {
+    var save = addItemToInventory(createNewSave(db, 0), 'ITEM-0070', 3);
+    save = addItemToInventory(save, 'ITEM-0071', 2);
+    final equipped = equipItemFromInventory(db, save, 'ITEM-0070');
+    expect(equipped.ok, isTrue);
+    save = withDrunkPotion(equipped.save!, 'ITEM-0070', 4);
+    final bankBefore = save.bank;
+
+    final swapped = equipItemFromInventory(db, save, 'ITEM-0071');
+    expect(swapped.ok, isTrue);
+    expect(slotStack(swapped.save!, potionSlotId)?.itemId, 'ITEM-0071');
+    expect(slotStack(swapped.save!, potionSlotId)?.quantity, 2);
+    expect(swapped.save!.activePotionEffect, isNull);
+    expect(swapped.save!.inventory.where((stack) => stack.itemId == 'ITEM-0070'), isEmpty);
+    expect(swapped.save!.inventory.where((stack) => stack.itemId == 'ITEM-0071'), isEmpty);
+    expect(swapped.save!.bank, bankBefore);
+  });
 }

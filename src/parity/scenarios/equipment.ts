@@ -20,6 +20,8 @@ import {
 } from '../../game/equipment/loadout'
 import { equipmentForItemId, equipmentTooltipStatLines } from '../../game/equipment/tooltips'
 import { withRecalculatedVitals } from '../../game/equipment/vitals'
+import { addItemToInventory } from '../../game/activity/rewards'
+import { parsePotionEffect } from '../../game/potions/effects'
 import type { EquippedStack, PlayerSave } from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
@@ -60,6 +62,20 @@ function saveFor(kind: SaveKind): PlayerSave {
 
 function withSave(kind: SaveKind, extra: Record<string, JsonValue> = {}): JsonValue {
   return { source: 'content', save: asJson(saveFor(kind)), ...extra }
+}
+
+/** Luck potions in the slot, Speed in the bag, and a drunk Luck bottle still running. */
+function activePotionLoadoutSave(): PlayerSave {
+  const db = contentDatabase()
+  let save = addItemToInventory(baseSave(db), 'ITEM-0070', 4)
+  save = addItemToInventory(save, 'ITEM-0071', 2)
+  const equipped = equipItemFromInventory(db, save, 'ITEM-0070')
+  save = equipped.ok ? equipped.save : save
+  const effect = parsePotionEffect(
+    db.Equipment.find((row) => row['Item ID'] === 'ITEM-0070'),
+    'ITEM-0070',
+  )
+  return { ...save, activePotionEffect: effect }
 }
 
 function resultJson(result: EquipResult): JsonValue {
@@ -138,6 +154,26 @@ export const equipmentScenarios: ParityScenario[] = [
       withSave('geared', { slotId }),
       () => resultJson(unequipSlot(saveFor('geared'), slotId)),
     ),
+  ),
+
+  scenario(
+    'equipment/unequip',
+    'potion-discards-active',
+    (() => {
+      const save = activePotionLoadoutSave()
+      return { source: 'content', save: asJson(save), slotId: 'SLOT-0012' }
+    })(),
+    () => resultJson(unequipSlot(activePotionLoadoutSave(), 'SLOT-0012')),
+  ),
+
+  scenario(
+    'equipment/equip-item',
+    'potion-swap-discards-active',
+    (() => {
+      const save = activePotionLoadoutSave()
+      return { source: 'content', save: asJson(save), itemId: 'ITEM-0071' }
+    })(),
+    () => resultJson(equipItemFromInventory(contentDatabase(), activePotionLoadoutSave(), 'ITEM-0071')),
   ),
 
   scenario('equipment/force-set', 'replaces-weapon', withSave('geared'), () => ({
