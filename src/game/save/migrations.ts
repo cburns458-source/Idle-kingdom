@@ -1029,6 +1029,35 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
       saveVersion: 63,
     }),
   },
+  {
+    fromVersion: 63,
+    toVersion: 64,
+    migrate: (save) => {
+      const raw = save as PlayerSave & {
+        religionId?: unknown
+        religionChangedAt?: unknown
+        religionChangeCount?: unknown
+        religionHistory?: unknown
+      }
+      const religionId = typeof raw.religionId === 'string' && raw.religionId.length > 0 ? raw.religionId : null
+      const changedAt = Number(raw.religionChangedAt)
+      const history = Array.isArray(raw.religionHistory)
+        ? [
+            ...new Set(
+              raw.religionHistory.filter((id): id is string => typeof id === 'string' && id.length > 0),
+            ),
+          ]
+        : []
+      return {
+        ...save,
+        religionId,
+        religionChangedAt: Number.isFinite(changedAt) ? changedAt : null,
+        religionChangeCount: Math.max(0, Math.floor(Number(raw.religionChangeCount) || 0)),
+        religionHistory: history,
+        saveVersion: 64,
+      }
+    },
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

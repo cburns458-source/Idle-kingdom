@@ -408,6 +408,25 @@ function holdsMilestone(
       return lifetimeCount(values, 'spell_projects') >= count
     case 'gold':
       return lifetimeCount(values, 'gold_earned') >= count
+    case 'religion_chosen':
+      return (
+        (Array.isArray(save.religionHistory) && save.religionHistory.length >= count) ||
+        save.religionId != null ||
+        Number(save.religionChangeCount ?? 0) >= count
+      )
+    case 'religion_all': {
+      const owned = new Set(
+        (Array.isArray(save.religionHistory) ? save.religionHistory : []).filter(
+          (id): id is string => typeof id === 'string' && id.length > 0,
+        ),
+      )
+      const known = db.Religions.map((row) => row['Religion ID']).filter(
+        (id): id is string => typeof id === 'string' && id.length > 0,
+      )
+      if (known.length === 0) return false
+      const needed = Number.isFinite(count) && count > 0 ? count : known.length
+      return known.filter((id) => owned.has(id)).length >= needed
+    }
     case 'skill_all':
       if (typeof required !== 'number') return false
       return db.Skills.every((skill) => getSkillProgress(save, skill['Skill ID']).level >= required)

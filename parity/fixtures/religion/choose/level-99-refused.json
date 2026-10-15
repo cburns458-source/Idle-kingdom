@@ -1,0 +1,1 @@
+{"case":"level-99-refused","input":{"nowMs":1792022400000,"source":"content"},"module":"religion/choose","output":{"ok":false,"reason":"Reach total level 100 to choose a faith."}}

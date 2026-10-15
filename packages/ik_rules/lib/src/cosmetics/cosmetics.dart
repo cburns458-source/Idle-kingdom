@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../equipment/loadout.dart';
+import '../religion/religion.dart';
 import '../save/generated/save_models.dart';
 
 List<CosmeticSlotRow> cosmeticSlots(GameDatabase db) => db.cosmeticSlots;
@@ -73,6 +74,9 @@ EquipResult equipCosmetic(GameDatabase db, PlayerSave save, String slotId, Strin
   }
   if (!current.unlocked.contains(cosmeticId)) {
     return const EquipResult.failed('That Cosmetic has not been unlocked yet.');
+  }
+  if (isFaithTitleLocked(db, save, cosmeticId)) {
+    return const EquipResult.failed('Return to that faith to wear its title.');
   }
   return EquipResult.ok(
     save.copyWith(cosmetics: current.copyWith(equipped: {...current.equipped, slotId: cosmeticId})),

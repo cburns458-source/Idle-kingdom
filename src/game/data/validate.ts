@@ -64,6 +64,8 @@ const TABLE_ID_FIELDS: Record<string, string> = {
   Races: 'Race ID',
   RaceBonuses: 'Race Bonus ID',
   RaceStartingItems: 'Race Starting Item ID',
+  Religions: 'Religion ID',
+  ReligionBonuses: 'Religion Bonus ID',
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -370,6 +372,42 @@ export function validateDatabase(db: GameDatabase): ValidationIssue[] {
     }
   }
 
+  for (const bonus of db.ReligionBonuses) {
+    const religionId = bonus['Religion ID']
+    if (typeof religionId === 'string' && !lookupById(indexes, 'Religions', religionId)) {
+      issues.push({
+        severity: 'error',
+        table: 'ReligionBonuses',
+        id: bonus['Religion Bonus ID'],
+        message: `Missing Religion ID reference: ${religionId}`,
+      })
+    }
+    if (
+      bonus['Bonus Type'] === 'skill_drop_chance_percent' &&
+      typeof bonus['Reference ID'] === 'string' &&
+      !indexes.skillsById.has(bonus['Reference ID'])
+    ) {
+      issues.push({
+        severity: 'error',
+        table: 'ReligionBonuses',
+        id: bonus['Religion Bonus ID'],
+        message: `Missing skill Reference ID: ${bonus['Reference ID']}`,
+      })
+    }
+  }
+
+  for (const religion of db.Religions) {
+    const titleId = religion['Title Cosmetic ID']
+    if (typeof titleId === 'string' && titleId.length > 0 && !lookupById(indexes, 'Cosmetics', titleId)) {
+      issues.push({
+        severity: 'error',
+        table: 'Religions',
+        id: religion['Religion ID'],
+        message: `Missing Title Cosmetic ID reference: ${titleId}`,
+      })
+    }
+  }
+
   for (const starter of db.RaceStartingItems) {
     const raceId = starter['Race ID']
     if (typeof raceId === 'string' && !lookupById(indexes, 'Races', raceId)) {
@@ -473,6 +511,8 @@ export function filterLaunchContent(db: GameDatabase): GameDatabase {
     Races: db.Races.filter(hasLaunchPhase),
     RaceBonuses: db.RaceBonuses,
     RaceStartingItems: db.RaceStartingItems,
+    Religions: db.Religions.filter(hasLaunchPhase),
+    ReligionBonuses: db.ReligionBonuses,
   }
 }
 

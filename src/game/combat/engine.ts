@@ -28,7 +28,7 @@ import {
 import { applyBountyDefeatProgress } from '../bounties/progress'
 import { applyQuestDefeatProgress } from '../quests/progress'
 import { creditLootTracker, creditXpAwards } from '../trackers/trackers'
-import { applyRaceGoldGain } from '../races/races'
+import { applyAlignmentGoldGain } from '../religion/religion'
 import { equippedWeaponIsLockpick, itemHasCapability, WEAPON_TOOL_SLOT_ID } from '../equipment/loadout'
 import { currentHpAfterMaxChange } from '../equipment/vitals'
 import { ARCANA_SKILL_ID } from '../npcs/knowledge'
@@ -552,7 +552,7 @@ export function applyCombatVictory(
   next = rewarded.save
   let goldGained = rewarded.goldGained
   if (goldRoll > 0) {
-    const racedGold = applyRaceGoldGain(db, save, goldRoll)
+    const racedGold = applyAlignmentGoldGain(db, save, goldRoll)
     next = { ...next, gold: next.gold + racedGold }
     goldGained += racedGold
   }

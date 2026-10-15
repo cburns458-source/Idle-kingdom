@@ -16,7 +16,7 @@ import '../js_compat.dart';
 import '../potions/effects.dart';
 import '../projects/enchantments.dart';
 import '../quests/progress.dart';
-import '../races/races.dart';
+import '../religion/religion.dart';
 import '../rng/mulberry32.dart';
 import '../cosmetics/cosmetics.dart';
 import '../save/generated/save_models.dart';
@@ -600,7 +600,7 @@ CombatVictoryResult applyCombatVictory(
   next = rewarded.save;
   var goldGained = rewarded.goldGained;
   if (goldRoll > 0) {
-    final racedGold = applyRaceGoldGain(db, save, goldRoll);
+    final racedGold = applyAlignmentGoldGain(db, save, goldRoll);
     next = next.copyWith(gold: next.gold + racedGold);
     goldGained += racedGold;
   }

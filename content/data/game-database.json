@@ -377,6 +377,24 @@
       "Value": "ITEM-0028:40,ITEM-0033:20",
       "Unit": null,
       "Notes": "Vesper race-change item costs for RACE-0007 (itemId:qty, comma-separated)."
+    },
+    {
+      "Key": "religion_change_gold_per_total_level",
+      "Value": 10,
+      "Unit": "gold",
+      "Notes": "PLACEHOLDER: Economy will replace this linear curve. Change cost = this × total level. First pick is free."
+    },
+    {
+      "Key": "religion_change_cooldown_ms",
+      "Value": 604800000,
+      "Unit": "ms",
+      "Notes": "7-day server-checked cooldown between faith changes. First pick starts the cooldown."
+    },
+    {
+      "Key": "religion_choose_location_id",
+      "Value": "LOC-0036",
+      "Unit": null,
+      "Notes": "Temple. Faith is chosen and changed here. Total level >= 100 is the only gate."
     }
   ],
   "Skills": [
@@ -7996,6 +8014,132 @@
       "Notes": "Plaza shop. Hearthguard set piece. Untradeable.",
       "Base Sell Value": 0,
       "Tradeable": false,
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0432",
+      "Internal Key": "cosmetic_ph_woodcutting_title",
+      "Display Name": "PLACEHOLDER: Woodcutting",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_ph_woodcutting_title",
+      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "PLACEHOLDER. Granted on first pick of REL-0001. Owned after switching; equippable only while following REL-0001.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0433",
+      "Internal Key": "cosmetic_ph_hunting_title",
+      "Display Name": "PLACEHOLDER: Hunting",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_ph_hunting_title",
+      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "PLACEHOLDER. Granted on first pick of REL-0002. Owned after switching; equippable only while following REL-0002.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0434",
+      "Internal Key": "cosmetic_ph_fishing_title",
+      "Display Name": "PLACEHOLDER: Fishing",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_ph_fishing_title",
+      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "PLACEHOLDER. Granted on first pick of REL-0003. Owned after switching; equippable only while following REL-0003.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0435",
+      "Internal Key": "cosmetic_ph_combat_title",
+      "Display Name": "PLACEHOLDER: Combat",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_ph_combat_title",
+      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "PLACEHOLDER. Granted on first pick of REL-0004. Owned after switching; equippable only while following REL-0004.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0436",
+      "Internal Key": "cosmetic_ph_gold_title",
+      "Display Name": "PLACEHOLDER: Gold",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_ph_gold_title",
+      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "PLACEHOLDER. Granted on first pick of REL-0005. Owned after switching; equippable only while following REL-0005.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0437",
+      "Internal Key": "cosmetic_ph_mining_title",
+      "Display Name": "PLACEHOLDER: Mining",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_ph_mining_title",
+      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "PLACEHOLDER. Granted on first pick of REL-0006. Owned after switching; equippable only while following REL-0006.",
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0438",
+      "Internal Key": "cosmetic_ph_harvesting_title",
+      "Display Name": "PLACEHOLDER: Harvesting",
+      "Category": "Cosmetic",
+      "Subtype": "Title",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": true,
+      "Icon Asset Key": "cosmetic_ph_harvesting_title",
+      "Description": "PLACEHOLDER faith title. Q&D will replace. Equip in the Wardrobe while following this faith.",
+      "Functional / Source Tags": "cosmetic; title; religion",
+      "Notes": "PLACEHOLDER. Granted on first pick of REL-0007. Owned after switching; equippable only while following REL-0007.",
       "Stackable": null
     }
   ],
@@ -35768,6 +35912,38 @@
       "Reward": null,
       "Target Skill ID": null,
       "Notes": "Harvest bleeding tooth. Action is unplaced — incomplete until placed."
+    },
+    {
+      "Achievement ID": "ACH-0050",
+      "Internal Key": "acolyte",
+      "Display Name": "Acolyte",
+      "Category": "Milestones",
+      "Difficulty": "Easy",
+      "Check Type": "religion_chosen",
+      "Target ID": null,
+      "Required Count": 1,
+      "Required Level": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Reward": null,
+      "Target Skill ID": null,
+      "Notes": "Choose a faith at the Temple."
+    },
+    {
+      "Achievement ID": "ACH-0051",
+      "Internal Key": "theologian",
+      "Display Name": "Theologian",
+      "Category": "Milestones",
+      "Difficulty": "Hard",
+      "Check Type": "religion_all",
+      "Target ID": null,
+      "Required Count": 7,
+      "Required Level": null,
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Reward": null,
+      "Target Skill ID": null,
+      "Notes": "Have chosen all 7 faiths. Granted once; survives reload."
     }
   ],
   "CosmeticSlots": [
@@ -35907,6 +36083,69 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Baby Dragon pet. Granted once from dragon kill secondary."
+    },
+    {
+      "Cosmetic ID": "COS-0013",
+      "Item ID": "ITEM-0432",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER title for REL-0001. Q&D will replace names."
+    },
+    {
+      "Cosmetic ID": "COS-0014",
+      "Item ID": "ITEM-0433",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER title for REL-0002. Q&D will replace names."
+    },
+    {
+      "Cosmetic ID": "COS-0015",
+      "Item ID": "ITEM-0434",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER title for REL-0003. Q&D will replace names."
+    },
+    {
+      "Cosmetic ID": "COS-0016",
+      "Item ID": "ITEM-0435",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER title for REL-0004. Q&D will replace names."
+    },
+    {
+      "Cosmetic ID": "COS-0017",
+      "Item ID": "ITEM-0436",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER title for REL-0005. Q&D will replace names."
+    },
+    {
+      "Cosmetic ID": "COS-0018",
+      "Item ID": "ITEM-0437",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER title for REL-0006. Q&D will replace names."
+    },
+    {
+      "Cosmetic ID": "COS-0019",
+      "Item ID": "ITEM-0438",
+      "Cosmetic Slot ID": "CSLOT-0003",
+      "Acquisition Tags": "religion",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER title for REL-0007. Q&D will replace names."
     }
   ],
   "AppearanceOptions": [
@@ -36694,6 +36933,157 @@
       "Sort Order": 8,
       "Status": "Planned",
       "Notes": null
+    }
+  ],
+  "Religions": [
+    {
+      "Religion ID": "REL-0001",
+      "Internal Key": "ph_woodcutting",
+      "Display Name": "PLACEHOLDER: Woodcutting Faith",
+      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Sort Order": 1,
+      "Icon Asset Key": null,
+      "Title Cosmetic ID": "COS-0013",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Human Woodcutting bonus."
+    },
+    {
+      "Religion ID": "REL-0002",
+      "Internal Key": "ph_hunting",
+      "Display Name": "PLACEHOLDER: Hunting Faith",
+      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Sort Order": 2,
+      "Icon Asset Key": null,
+      "Title Cosmetic ID": "COS-0014",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Wood Elf Hunting bonus."
+    },
+    {
+      "Religion ID": "REL-0003",
+      "Internal Key": "ph_fishing",
+      "Display Name": "PLACEHOLDER: Fishing Faith",
+      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Sort Order": 3,
+      "Icon Asset Key": null,
+      "Title Cosmetic ID": "COS-0015",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to High Elf Fishing bonus."
+    },
+    {
+      "Religion ID": "REL-0004",
+      "Internal Key": "ph_combat",
+      "Display Name": "PLACEHOLDER: Combat Faith",
+      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Sort Order": 4,
+      "Icon Asset Key": null,
+      "Title Cosmetic ID": "COS-0016",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Orc Combat bonus."
+    },
+    {
+      "Religion ID": "REL-0005",
+      "Internal Key": "ph_gold",
+      "Display Name": "PLACEHOLDER: Gold Faith",
+      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Sort Order": 5,
+      "Icon Asset Key": null,
+      "Title Cosmetic ID": "COS-0017",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Goblin gold bonus."
+    },
+    {
+      "Religion ID": "REL-0006",
+      "Internal Key": "ph_mining",
+      "Display Name": "PLACEHOLDER: Mining Faith",
+      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Sort Order": 6,
+      "Icon Asset Key": null,
+      "Title Cosmetic ID": "COS-0018",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Dwarf Mining bonus."
+    },
+    {
+      "Religion ID": "REL-0007",
+      "Internal Key": "ph_harvesting",
+      "Display Name": "PLACEHOLDER: Harvesting Faith",
+      "Description": "PLACEHOLDER. Q&D will replace this description.",
+      "Sort Order": 7,
+      "Icon Asset Key": null,
+      "Title Cosmetic ID": "COS-0019",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "PLACEHOLDER. Q&D will replace names/titles. Maps to Halfling Harvesting bonus."
+    }
+  ],
+  "ReligionBonuses": [
+    {
+      "Religion Bonus ID": "RELB-0001",
+      "Religion ID": "REL-0001",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0006",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "PLACEHOLDER +5% Woodcutting drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0002",
+      "Religion ID": "REL-0002",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0005",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "PLACEHOLDER +5% Hunting drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0003",
+      "Religion ID": "REL-0003",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0003",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "PLACEHOLDER +5% Fishing drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0004",
+      "Religion ID": "REL-0004",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0001",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "PLACEHOLDER +5% Combat drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0005",
+      "Religion ID": "REL-0005",
+      "Bonus Type": "gold_gain_percent",
+      "Reference ID": null,
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "PLACEHOLDER +5% gold from enemies and actions."
+    },
+    {
+      "Religion Bonus ID": "RELB-0006",
+      "Religion ID": "REL-0006",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0002",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "PLACEHOLDER +5% Mining drop chance."
+    },
+    {
+      "Religion Bonus ID": "RELB-0007",
+      "Religion ID": "REL-0007",
+      "Bonus Type": "skill_drop_chance_percent",
+      "Reference ID": "SKL-0004",
+      "Bonus Value": 5,
+      "Status": "Confirmed",
+      "Notes": "PLACEHOLDER +5% Harvesting drop chance."
     }
   ],
   "QuestSteps": [

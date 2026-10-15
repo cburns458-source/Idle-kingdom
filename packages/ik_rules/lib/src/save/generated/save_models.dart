@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 63;
+const int saveVersion = 64;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1098,6 +1098,10 @@ class PlayerSave {
     this.characterName,
     this.motto,
     this.raceId,
+    this.religionId,
+    this.religionChangedAt,
+    required this.religionChangeCount,
+    required this.religionHistory,
     required this.attackStyle,
     required this.skills,
     required this.inventory,
@@ -1192,6 +1196,10 @@ class PlayerSave {
       characterName: json['characterName'] as String?,
       motto: json['motto'] as String?,
       raceId: json['raceId'] as String?,
+      religionId: json['religionId'] as String?,
+      religionChangedAt: json['religionChangedAt'] as num?,
+      religionChangeCount: json['religionChangeCount'] as num,
+      religionHistory: listOf(json['religionHistory'], (Object? entry) => entry as String),
       attackStyle: json['attackStyle'] as String,
       skills: listOf(json['skills'], (Object? entry) => SkillProgress.fromJson(asJsonMap(entry))),
       inventory: listOf(
@@ -1338,6 +1346,18 @@ class PlayerSave {
 
   /// Selected playable Race ID; null until first-run (or one-time) race picker completes.
   final String? raceId;
+
+  /// Selected faith; null until the first Temple pick. No faith keeps the race bonus.
+  final String? religionId;
+
+  /// Epoch ms of the last successful faith pick or change (server clock).
+  final num? religionChangedAt;
+
+  /// How many times a faith has been chosen, including the first pick.
+  final num religionChangeCount;
+
+  /// Faith IDs ever chosen. Used for Theologian and for owned-but-locked titles.
+  final List<String> religionHistory;
 
   /// Global attack style for Might/Vitality XP routing and stance bonuses.
   final String attackStyle;
@@ -1597,6 +1617,10 @@ class PlayerSave {
       'characterName': characterName,
       'motto': motto,
       'raceId': raceId,
+      'religionId': religionId,
+      'religionChangedAt': religionChangedAt,
+      'religionChangeCount': religionChangeCount,
+      'religionHistory': religionHistory,
       'attackStyle': attackStyle,
       'skills': skills.map((entry) => entry.toJson()).toList(),
       'inventory': inventory.map((entry) => entry.toJson()).toList(),
@@ -1691,6 +1715,10 @@ class PlayerSave {
     Object? characterName = _unset,
     Object? motto = _unset,
     Object? raceId = _unset,
+    Object? religionId = _unset,
+    Object? religionChangedAt = _unset,
+    num? religionChangeCount,
+    List<String>? religionHistory,
     String? attackStyle,
     List<SkillProgress>? skills,
     List<InventoryStack>? inventory,
@@ -1783,6 +1811,12 @@ class PlayerSave {
       characterName: characterName == _unset ? this.characterName : characterName as String?,
       motto: motto == _unset ? this.motto : motto as String?,
       raceId: raceId == _unset ? this.raceId : raceId as String?,
+      religionId: religionId == _unset ? this.religionId : religionId as String?,
+      religionChangedAt: religionChangedAt == _unset
+          ? this.religionChangedAt
+          : religionChangedAt as num?,
+      religionChangeCount: religionChangeCount ?? this.religionChangeCount,
+      religionHistory: religionHistory ?? this.religionHistory,
       attackStyle: attackStyle ?? this.attackStyle,
       skills: skills ?? this.skills,
       inventory: inventory ?? this.inventory,

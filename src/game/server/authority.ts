@@ -40,6 +40,8 @@ import { completeSpecialProject } from '../projects/engine'
 import { completeQuest, type QuestFailure } from '../quests/quests'
 import { applyQuestAutoStartOnSeed, applyQuestInspectProgress } from '../quests/progress'
 import { assignRace } from '../races/assignRace'
+import { chooseReligion } from '../religion/chooseReligion'
+import { equipCosmetic } from '../cosmetics/cosmetics'
 import { createNewSave, parseSave } from '../save/saveStore'
 import type { AttackStyle, PlayerSave, PlayerSettings } from '../save/types'
 import { CHARACTER_NAME_MAX_LENGTH, MOTTO_MAX_LENGTH } from '../save/types'
@@ -138,6 +140,7 @@ export type GameCommandName =
   | 'bounty_turn_in'
   | 'plaza_shop_buy'
   | 'change_race'
+  | 'choose_religion'
   | 'guild_create'
   | 'guild_create_pay'
   | 'guild_pay_hall_debt'
@@ -445,7 +448,7 @@ function applyExistingCommand(
 
   switch (command) {
     case 'set_meta':
-      return ok(applyMeta(save, args))
+      return applyMeta(db, save, args)
     case 'travel': {
       const destinationId = asString(args.destinationId)
       const browseMapId = asString(args.browseMapId) ?? destinationId
@@ -735,6 +738,13 @@ function applyExistingCommand(
       if (!raceId) return failed('Missing race.')
       return unwrap(changeRaceWithNpc(db, save, raceId, nowMs))
     }
+    case 'choose_religion': {
+      const religionId = asString(args.religionId)
+      if (!religionId) return failed('Missing faith.')
+      const chosen = chooseReligion(db, save, religionId, nowMs)
+      if (!chosen.ok) return failed(chosen.reason)
+      return chosen.goldCost > 0 ? ok(chosen.save, { goldCost: chosen.goldCost }) : ok(chosen.save)
+    }
     case 'guild_create':
     case 'guild_create_pay': {
       const refusal = createGuildRefusalFor(asString(args.name) ?? '', asString(args.tag) ?? '', save.gold)
@@ -886,7 +896,7 @@ function resolvePlazaShopBuyCommand(
   })
 }
 
-function applyMeta(save: PlayerSave, args: GameCommandArgs): PlayerSave {
+function applyMeta(db: GameDatabase, save: PlayerSave, args: GameCommandArgs): GameCommandResult {
   let next = save
   if (typeof args.characterName === 'string') {
     const name = args.characterName.trim().slice(0, CHARACTER_NAME_MAX_LENGTH)
@@ -906,13 +916,15 @@ function applyMeta(save: PlayerSave, args: GameCommandArgs): PlayerSave {
     next = { ...next, appearance: { ...next.appearance, ...(args.appearance as PlayerSave['appearance']) } }
   }
   if (args.equippedCosmetics && typeof args.equippedCosmetics === 'object') {
-    next = {
-      ...next,
-      cosmetics: {
-        ...next.cosmetics,
-        equipped: args.equippedCosmetics as PlayerSave['cosmetics']['equipped'],
-      },
+    const equipped = args.equippedCosmetics as Record<string, unknown>
+    let cosmeticsSave = next
+    for (const [slotId, rawId] of Object.entries(equipped)) {
+      const cosmeticId = typeof rawId === 'string' && rawId.length > 0 ? rawId : null
+      const equippedSlot = equipCosmetic(db, cosmeticsSave, slotId, cosmeticId)
+      if (!equippedSlot.ok) return failed(equippedSlot.reason)
+      cosmeticsSave = equippedSlot.save
     }
+    next = cosmeticsSave
   }
   if (typeof args.inventoryFavoriteIndex === 'number') {
     const index = Math.trunc(args.inventoryFavoriteIndex)
@@ -954,7 +966,7 @@ function applyMeta(save: PlayerSave, args: GameCommandArgs): PlayerSave {
   if (args.xpTrackerPausedAtMs === null || typeof args.xpTrackerPausedAtMs === 'number') {
     next = { ...next, xpTrackerPausedAtMs: args.xpTrackerPausedAtMs as number | null }
   }
-  return next
+  return ok(next)
 }
 
 function applyCombatSettings(save: PlayerSave, args: GameCommandArgs): PlayerSave {

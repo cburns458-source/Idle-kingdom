@@ -344,6 +344,22 @@ bool _holdsMilestone(
       return _lifetimeCount(values, 'spell_projects') >= count;
     case 'gold':
       return _lifetimeCount(values, 'gold_earned') >= count;
+    case 'religion_chosen':
+      return save.religionHistory.length >= count ||
+          isNotBlank(save.religionId) ||
+          jsNumber(save.religionChangeCount) >= count;
+    case 'religion_all':
+      final owned = <String>{
+        for (final id in save.religionHistory)
+          if (id.isNotEmpty) id,
+      };
+      final known = <String>[
+        for (final row in db.religions)
+          if (row.religionId.isNotEmpty) row.religionId,
+      ];
+      if (known.isEmpty) return false;
+      final needed = count.isFinite && count > 0 ? count : known.length;
+      return known.where(owned.contains).length >= needed;
     case 'skill_all':
       if (required is! num) return false;
       return db.skills.every((skill) => getSkillProgress(save, skill.skillId).level >= required);

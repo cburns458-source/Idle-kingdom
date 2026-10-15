@@ -785,6 +785,50 @@ class RecipeRow extends DbRow {
   num? get ingredient4Quantity => numberOrNull('Ingredient 4 Quantity');
 }
 
+class ReligionBonusRow extends DbRow {
+  const ReligionBonusRow(super.raw);
+
+  String get religionBonusId => stringValue('Religion Bonus ID');
+
+  String get religionId => stringValue('Religion ID');
+
+  String get bonusType => stringValue('Bonus Type');
+
+  /// Skill ID for skill_drop_chance_percent; null for global bonuses.
+  String? get referenceId => stringOrNull('Reference ID');
+
+  num get bonusValue => numberValue('Bonus Value');
+
+  String get status => stringValue('Status');
+
+  String? get notes => stringOrNull('Notes');
+}
+
+class ReligionRow extends DbRow {
+  const ReligionRow(super.raw);
+
+  String get religionId => stringValue('Religion ID');
+
+  String get internalKey => stringValue('Internal Key');
+
+  String get displayName => stringValue('Display Name');
+
+  String? get description => stringOrNull('Description');
+
+  num? get sortOrder => numberOrNull('Sort Order');
+
+  String? get iconAssetKey => stringOrNull('Icon Asset Key');
+
+  /// Cosmetic ID granted on first pick of this faith (title slot).
+  String? get titleCosmeticId => stringOrNull('Title Cosmetic ID');
+
+  String get status => stringValue('Status');
+
+  String get releasePhase => stringValue('Release Phase');
+
+  String? get notes => stringOrNull('Notes');
+}
+
 class RequirementRow extends DbRow {
   const RequirementRow(super.raw);
 
@@ -932,6 +976,8 @@ const List<String> databaseTables = <String>[
   'Races',
   'RaceBonuses',
   'RaceStartingItems',
+  'Religions',
+  'ReligionBonuses',
 ];
 
 /// Typed view over the parsed `game-database.json` root object.
@@ -1049,6 +1095,14 @@ class GameDatabase {
     raw,
     'RaceStartingItems',
     RaceStartingItemRow.new,
+  );
+
+  late final List<ReligionRow> religions = typedRows(raw, 'Religions', ReligionRow.new);
+
+  late final List<ReligionBonusRow> religionBonuses = typedRows(
+    raw,
+    'ReligionBonuses',
+    ReligionBonusRow.new,
   );
 
   /// Raw row maps for [table], for code that works across tables.

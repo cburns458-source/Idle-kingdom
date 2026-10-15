@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 63
+export const SAVE_VERSION = 64
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -333,6 +333,14 @@ export interface PlayerSave {
   motto: string | null
   /** Selected playable Race ID; null until first-run (or one-time) race picker completes. */
   raceId: string | null
+  /** Selected faith; null until the first Temple pick. No faith keeps the race bonus. */
+  religionId: string | null
+  /** Epoch ms of the last successful faith pick or change (server clock). */
+  religionChangedAt: number | null
+  /** How many times a faith has been chosen, including the first pick. */
+  religionChangeCount: number
+  /** Faith IDs ever chosen. Used for Theologian and for owned-but-locked titles. */
+  religionHistory: string[]
   /** Global attack style for Might/Vitality XP routing and stance bonuses. */
   attackStyle: AttackStyle
   skills: SkillProgress[]

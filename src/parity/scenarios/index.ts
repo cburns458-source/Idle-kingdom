@@ -19,6 +19,7 @@ import { projectScenarios } from './projects'
 import { pvpScenarios } from './pvp'
 import { questScenarios } from './quests'
 import { raceScenarios } from './races'
+import { religionScenarios } from './religion'
 import { rngScenarios } from './rng'
 import { saveScenarios } from './save'
 import { sessionScenarios } from './session'
@@ -41,6 +42,7 @@ export const parityScenarios: ParityScenario[] = [
   ...equipmentScenarios,
   ...arcanaScenarios,
   ...raceScenarios,
+  ...religionScenarios,
   ...combatStatScenarios,
   ...productionScenarios,
   ...projectScenarios,
