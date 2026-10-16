@@ -72,6 +72,25 @@ void main() {
     expect(_service(transport, storage).session?.userId, service.session!.userId);
   });
 
+  test('a stored local: session is ignored and cleared', () {
+    final storage = MemorySaveStorage();
+    SessionStore(storage).write(
+      const MultiplayerSession(
+        userId: 'usr_local',
+        email: 'old@example.com',
+        username: 'LocalHero',
+        accessToken: 'local:usr_local',
+      ),
+    );
+    expect(storage.getItem(multiplayerSessionKey), isNotNull);
+
+    final service = _service(FakeTransport(), storage);
+
+    expect(service.isSignedIn, isFalse);
+    expect(service.session, isNull);
+    expect(storage.getItem(multiplayerSessionKey), isNull);
+  });
+
   test('refuses sign-up when the project created the user without a session', () async {
     final transport = FakeTransport()..omitSignUpSession = true;
     final service = _service(transport, MemorySaveStorage());

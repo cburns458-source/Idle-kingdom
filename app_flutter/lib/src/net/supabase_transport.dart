@@ -1,11 +1,11 @@
 import 'package:ik_net/ik_net.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// The Supabase project this build talks to, or null for local play.
+/// The Supabase project this build talks to, or null when none was compiled in.
 ///
 /// Supplied at build time the way the web client reads its Vite variables:
 /// `flutter run --dart-define=SUPABASE_URL=… --dart-define=SUPABASE_ANON_KEY=…`.
-/// A build with neither runs entirely on the device, which is the default.
+/// A build with neither refuses to start.
 RemoteBackendConfig? remoteBackendConfigFromEnvironment() => RemoteBackendConfig.from(
   url: const String.fromEnvironment('SUPABASE_URL'),
   anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),

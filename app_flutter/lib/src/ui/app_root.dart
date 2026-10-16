@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -18,14 +18,67 @@ import '../session/hud_level_pref.dart';
 import '../session/map_travel_pref.dart';
 import '../session/multiplayer_controller.dart';
 import '../session/quest_log_sort_pref.dart';
-import '../storage/legacy_browser_save.dart';
 import '../storage/prefs_store.dart';
-import '../storage/save_adoption.dart';
 import '../theme.dart';
 import 'app_shell.dart';
 
+/// Shown when this binary was built without a hosted backend.
+const String bootNoServerMessage = 'This build has no server';
+
+/// Shown while startup cannot reach the hosted backend.
+const String bootRetryMessage = "Can't reach server, retrying…";
+
+/// Connects this device to the hosted backend named by [config].
+typedef BackendConnect = Future<MultiplayerService> Function(
+  RemoteBackendConfig config,
+  SaveStorage storage,
+);
+
+/// Opens the hosted project and returns the remote service.
+Future<MultiplayerService> connectRemoteBackend(
+  RemoteBackendConfig config,
+  SaveStorage storage,
+) async {
+  final transport = await SupabaseTransport.connect(config);
+  return RemoteMultiplayerService(transport: transport, storage: storage);
+}
+
+/// Deletes a leftover device save from an old local build. Never imported.
+void discardLeftoverDeviceSave(SaveStorage storage) {
+  storage.removeItem(saveStorageKey);
+}
+
 class IdleKingdomsApp extends StatelessWidget {
-  const IdleKingdomsApp({super.key});
+  const IdleKingdomsApp({
+    super.key,
+    this.multiplayerService,
+    this.backendConfig,
+    this.connectBackend,
+    this.retryDelay,
+    this.storage,
+    this.database,
+    this.clock,
+  });
+
+  /// Tests inject a ready service so boot skips the hosted connect.
+  final MultiplayerService? multiplayerService;
+
+  /// Tests override the compile-time backend config.
+  final RemoteBackendConfig? Function()? backendConfig;
+
+  /// Tests replace [SupabaseTransport.connect].
+  final BackendConnect? connectBackend;
+
+  /// Tests replace the startup backoff wait.
+  final Future<void> Function(int failedAttempt)? retryDelay;
+
+  /// Tests inject storage so leftover-delete can be asserted.
+  final SaveStorage? storage;
+
+  /// Tests inject the shared database so boot does not read the asset bundle.
+  final LoadedDatabase? database;
+
+  final num Function()? clock;
 
   @override
   Widget build(BuildContext context) {
@@ -40,20 +93,45 @@ class IdleKingdomsApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: const _BootGate(),
+      home: BootGate(
+        multiplayerService: multiplayerService,
+        backendConfig: backendConfig,
+        connectBackend: connectBackend,
+        retryDelay: retryDelay,
+        storage: storage,
+        database: database,
+        clock: clock,
+      ),
     );
   }
 }
 
-/// Loads the content and the save, then hands both to the shell.
-class _BootGate extends StatefulWidget {
-  const _BootGate();
+/// Loads the content and the hosted backend, then hands both to the shell.
+class BootGate extends StatefulWidget {
+  const BootGate({
+    super.key,
+    this.multiplayerService,
+    this.backendConfig,
+    this.connectBackend,
+    this.retryDelay,
+    this.storage,
+    this.database,
+    this.clock,
+  });
+
+  final MultiplayerService? multiplayerService;
+  final RemoteBackendConfig? Function()? backendConfig;
+  final BackendConnect? connectBackend;
+  final Future<void> Function(int failedAttempt)? retryDelay;
+  final SaveStorage? storage;
+  final LoadedDatabase? database;
+  final num Function()? clock;
 
   @override
-  State<_BootGate> createState() => _BootGateState();
+  State<BootGate> createState() => _BootGateState();
 }
 
-/// The game and its optional multiplayer half, both ready to use.
+/// The game and its multiplayer half, both ready to use.
 class _BootedGame {
   const _BootedGame({required this.game, required this.multiplayer});
 
@@ -61,17 +139,84 @@ class _BootedGame {
   final MultiplayerController multiplayer;
 }
 
-class _BootGateState extends State<_BootGate> {
-  late final Future<_BootedGame> _boot = _bootGame();
-  _BootedGame? _booted;
+enum _BootPhase { loading, noServer, retrying, ready }
 
-  Future<_BootedGame> _bootGame() async {
-    final database = await loadBundledDatabase();
-    final storage = await PrefsStore.open();
-    num clock() => DateTime.now().millisecondsSinceEpoch;
-    // A leftover device file is offered once if the account has no character.
-    adoptForeignSave(storage, readLegacyBrowserSave(saveStorageKey), clock());
-    final leftover = _namedLeftover(storage, clock());
+class _BootGateState extends State<BootGate> {
+  _BootPhase _phase = _BootPhase.loading;
+  _BootedGame? _booted;
+  bool _started = false;
+  Completer<void>? _retryHold;
+  Timer? _retryTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _started = true;
+    unawaited(_bootLoop());
+  }
+
+  Future<void> _bootLoop() async {
+    final database = widget.database ?? await loadBundledDatabase();
+    final storage = widget.storage ?? await PrefsStore.open();
+    discardLeftoverDeviceSave(storage);
+
+    final injected = widget.multiplayerService;
+    if (injected != null) {
+      await _finishBoot(database, storage, injected);
+      return;
+    }
+
+    final config = (widget.backendConfig ?? remoteBackendConfigFromEnvironment)();
+    if (config == null) {
+      if (mounted) setState(() => _phase = _BootPhase.noServer);
+      return;
+    }
+
+    var attempt = 0;
+    while (mounted) {
+      try {
+        final connect = widget.connectBackend ?? connectRemoteBackend;
+        final service = await connect(config, storage);
+        await _finishBoot(database, storage, service);
+        return;
+      } on Object {
+        attempt += 1;
+        if (!mounted) return;
+        setState(() => _phase = _BootPhase.retrying);
+        await _waitRetry(attempt);
+      }
+    }
+  }
+
+  Future<void> _waitRetry(int attempt) {
+    final hold = Completer<void>();
+    _retryHold = hold;
+    final custom = widget.retryDelay;
+    if (custom != null) {
+      unawaited(
+        custom(attempt).then((_) {
+          if (!hold.isCompleted) hold.complete();
+        }),
+      );
+    } else {
+      final exp = attempt <= 1 ? 0 : attempt - 1;
+      final ms = min(15000, 1000 * (1 << min(exp, 4)));
+      _retryTimer?.cancel();
+      _retryTimer = Timer(Duration(milliseconds: ms), () {
+        if (!hold.isCompleted) hold.complete();
+      });
+    }
+    return hold.future.then((_) {
+      _retryHold = null;
+    });
+  }
+
+  Future<void> _finishBoot(
+    LoadedDatabase database,
+    SaveStorage storage,
+    MultiplayerService service,
+  ) async {
+    num clock() => widget.clock?.call() ?? DateTime.now().millisecondsSinceEpoch;
     // The playable save lives in memory. The account row is the source of truth.
     final repository = SaveRepository(storage: MemorySaveStorage(), clock: clock);
     final session = GameSession(
@@ -93,22 +238,26 @@ class _BootGateState extends State<_BootGate> {
       questLogSort: QuestLogSortPref.load(storage),
       bagOverflow: BagOverflowPref.load(storage),
     )..adoptBoot(boot);
-    final backend = await _multiplayerService(storage);
-    _ensureDemoWorld(backend.service, database.launch);
+    _clearOldDemoWorld(service);
     final multiplayer = MultiplayerController(
       database: database,
-      service: backend.service,
+      service: service,
       storage: storage,
       clock: clock,
-      cloudUnavailable: backend.cloudUnavailable,
     );
-    multiplayer.pendingLeftover = leftover;
     multiplayer.onAccountCleared = game.resetUnsigned;
-    multiplayer.onAccountSaveReady = () => storage.removeItem(saveStorageKey);
+    multiplayer.onAccountSaveReady = () => discardLeftoverDeviceSave(storage);
     multiplayer.onHostedSave = game.adoptHostedSave;
     multiplayer.currentSave = () => game.save;
     multiplayer.onQuietMessage = game.announce;
     game.hostedPlay = () => multiplayer.isSignedIn;
+    game.playDisconnected = () => multiplayer.disconnected;
+    var lastDisconnected = multiplayer.disconnected;
+    multiplayer.addListener(() {
+      if (!_started || lastDisconnected == multiplayer.disconnected) return;
+      lastDisconnected = multiplayer.disconnected;
+      game.notifyListeners();
+    });
     game.submitGameCommand = (command, [args = const <String, Object?>{}]) async {
       final result = await multiplayer.submitGameCommand(command, args);
       return result.ok ? null : (result.reason ?? 'Try again.');
@@ -140,49 +289,30 @@ class _BootGateState extends State<_BootGate> {
     if (multiplayer.isSignedIn) {
       await multiplayer.resumeAccount(game.save, adopt: game.adoptAccountSave);
     }
-    final booted = _BootedGame(game: game, multiplayer: multiplayer);
-    _booted = booted;
-    return booted;
+    if (!mounted) {
+      game.dispose();
+      multiplayer.dispose();
+      return;
+    }
+    setState(() {
+      _booted = _BootedGame(game: game, multiplayer: multiplayer);
+      _phase = _BootPhase.ready;
+    });
   }
 
-  /// The hosted backend when this build was given one, otherwise this device.
-  ///
-  /// A project that cannot be reached must not stop the game starting, so a
-  /// failed connection falls back to local play rather than throwing.
-  Future<({MultiplayerService service, bool cloudUnavailable})> _multiplayerService(
-    SaveStorage storage,
-  ) async {
-    final config = remoteBackendConfigFromEnvironment();
-    if (config == null) {
-      return (service: LocalMultiplayerService(storage: storage), cloudUnavailable: false);
-    }
-    try {
-      final transport = await SupabaseTransport.connect(config);
-      return (
-        service: RemoteMultiplayerService(transport: transport, storage: storage),
-        cloudUnavailable: false,
-      );
-    } on Object {
-      return (service: LocalMultiplayerService(storage: storage), cloudUnavailable: true);
-    }
-  }
-
-  /// Seeds the practice guild and its three characters, on this device only.
-  ///
-  /// A build with a real backend gets none of it: those accounts exist so the
-  /// social screens have something in them offline, and on a live game they are
-  /// strangers nobody can sign in as. A device that played an offline build
-  /// before has them in storage already, so a live build sweeps them out.
-  void _ensureDemoWorld(MultiplayerService service, GameDatabase db) {
-    if (service is LocalMultiplayerService) {
-      service.ensureDemoWorld(db);
-    } else if (service is RemoteMultiplayerService) {
+  /// Sweeps practice-guild rows an older offline build left on this device.
+  void _clearOldDemoWorld(MultiplayerService service) {
+    if (service is RemoteMultiplayerService) {
       service.local.clearDemoWorld();
     }
   }
 
   @override
   void dispose() {
+    _started = false;
+    _retryTimer?.cancel();
+    final hold = _retryHold;
+    if (hold != null && !hold.isCompleted) hold.complete();
     _booted?.game.dispose();
     _booted?.multiplayer.dispose();
     super.dispose();
@@ -190,22 +320,15 @@ class _BootGateState extends State<_BootGate> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<_BootedGame>(
-      future: _boot,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _BootMessage(text: 'Could not start the game.\n${snapshot.error}');
-        }
-        final booted = snapshot.data;
-        if (booted == null) {
-          return DecoratedBox(
-            decoration: woodShellDecoration(),
-            child: const Center(child: CircularProgressIndicator(color: Palette.gold)),
-          );
-        }
-        return AppShell(controller: booted.game, multiplayer: booted.multiplayer);
-      },
-    );
+    return switch (_phase) {
+      _BootPhase.noServer => const _BootMessage(text: bootNoServerMessage),
+      _BootPhase.retrying => const _BootMessage(text: bootRetryMessage),
+      _BootPhase.ready => AppShell(controller: _booted!.game, multiplayer: _booted!.multiplayer),
+      _BootPhase.loading => DecoratedBox(
+        decoration: woodShellDecoration(),
+        child: const Center(child: CircularProgressIndicator(color: Palette.gold)),
+      ),
+    };
   }
 }
 
@@ -225,19 +348,6 @@ class _BootMessage extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-PlayerSave? _namedLeftover(SaveStorage storage, num nowMs) {
-  final raw = storage.getItem(saveStorageKey);
-  if (raw == null || raw.isEmpty) return null;
-  try {
-    final save = parseSave(jsonDecode(raw), nowMs);
-    final name = save.characterName?.trim() ?? '';
-    if (name.isEmpty || save.raceId == null) return null;
-    return save;
-  } on Object {
-    return null;
   }
 }
 

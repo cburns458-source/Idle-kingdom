@@ -48,6 +48,7 @@ class RemoteMultiplayerService implements MultiplayerService {
        ),
        _sessions = SessionStore(storage),
        _local = LocalMultiplayerService(storage: storage, ports: ports) {
+    _discardLocalSession();
     _guilds = RemoteGuildBackend(
       transport: this.transport,
       sessionOf: () => session,
@@ -204,11 +205,29 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   num _nowMs() => _local.backend.ports.nowMs();
 
-  @override
-  MultiplayerSession? get session => _sessions.read();
+  /// A leftover `local:` token is from an old offline build sharing this key.
+  /// It is never a hosted session, so it must not count as signed in.
+  static bool _isLocalSessionToken(String token) => token.startsWith('local:');
+
+  void _discardLocalSession() {
+    final current = _sessions.read();
+    if (current != null && _isLocalSessionToken(current.accessToken)) {
+      _sessions.write(null);
+    }
+  }
 
   @override
-  bool get isSignedIn => _sessions.isSignedIn;
+  MultiplayerSession? get session {
+    final current = _sessions.read();
+    if (current != null && _isLocalSessionToken(current.accessToken)) {
+      _sessions.write(null);
+      return null;
+    }
+    return current;
+  }
+
+  @override
+  bool get isSignedIn => session != null;
 
   @override
   bool get hostedCommands => true;
