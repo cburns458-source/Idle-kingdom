@@ -44,6 +44,8 @@ function titleTextForCosmetic(cosmeticId: string, catalog: TitleCatalog): string
   const cosmetic = (catalog.Cosmetics ?? []).find((row) => row['Cosmetic ID'] === cosmeticId)
   const itemId = cosmetic?.['Item ID']
   if (typeof itemId !== 'string') return null
+  // Faith titles (cosmetic_faith_*_title) set Title Placement = prefix; chat
+  // stores the display name and the client writes it before the speaker's name.
   const text = (catalog.Items ?? []).find((row) => row['Item ID'] === itemId)?.['Display Name']
   return typeof text === 'string' && text.length > 0 ? text : null
 }

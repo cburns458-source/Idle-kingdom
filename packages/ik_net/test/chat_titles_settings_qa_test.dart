@@ -85,7 +85,7 @@ void main() {
     expect(spoofedUntitled.ok, isTrue);
     expect(chatMessageFromFunction(spoofedUntitled.data)!.title, isNull);
     expect(spoofedUntitled.data!['title'], isNull);
-    expect(transport.tables[RemoteTables.chat]!.last.containsKey('title'), isFalse);
+    expect(transport.tables[RemoteTables.chat]!.last['title'], isNull);
 
     final living = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
     expect((await seedHostedSave(service, transport, living)).ok, isTrue);
@@ -101,11 +101,12 @@ void main() {
     expect(stamped.title, 'The Undying');
     expect(stamped.body, 'Hi');
     expect(spoofed.data!['title'], 'The Undying');
-    expect(transport.tables[RemoteTables.chat]!.last.containsKey('title'), isFalse);
+    expect(transport.tables[RemoteTables.chat]!.last['title'], 'The Undying');
 
     final honest = await service.sendChat(const ChatChannel.local('LOC-0002'), 'Hold');
     expect(honest.ok, isTrue);
     expect(honest.message!.title, 'The Undying');
+    expect(remoteChatColumns.contains('title'), isTrue);
   });
 
   test('chat puts the title before the name, and the name alone when none', () {

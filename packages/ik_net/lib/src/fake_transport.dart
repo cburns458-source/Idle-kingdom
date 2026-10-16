@@ -1283,10 +1283,11 @@ class FakeTransport implements RemoteTransport {
         'username': _publicChatUsername(sender),
         'body': body['body'],
         'created_at': stamp(),
+        // Equipped title from the hosted save. A client-supplied title is ignored.
+        'title': _chatTitleForSender(sender),
       };
       tables[RemoteTables.chat]!.add(row);
-      // Title is stamped on the function payload, not a chat_messages column.
-      return RemoteInvokeResult.ok(<String, Object?>{...row, 'title': _chatTitleForSender(sender)});
+      return RemoteInvokeResult.ok(<String, Object?>{...row});
     });
   }
 

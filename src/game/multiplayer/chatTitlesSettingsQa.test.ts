@@ -8,6 +8,7 @@ import { chatTitleForSave, chatTitleFromSavePayload } from '../save/playerTitle'
 import { STARTER_TITLE_COSMETIC_ID, TITLE_COSMETIC_SLOT_ID, type PlayerSave } from '../save/types'
 import { chatTitleFromSavePayload as edgeChatTitleFromSavePayload } from '../../../supabase/functions/_shared/player_title.ts'
 import { LocalMultiplayerBackend } from './localBackend'
+import { REMOTE_CHAT_COLUMNS } from './remote'
 import { MULTIPLAYER_LOCAL_DB_KEY } from './types'
 import {
   CHAT_SHOW_TIMESTAMPS_STORAGE_KEY,
@@ -130,7 +131,12 @@ describe('QA: chat titles from the sender save', () => {
     expect(source).toContain('return json({ ...inserted, title }, 200)')
     const insertBlock = source.match(/\.insert\(\{([^}]+)\}\)/)?.[1] ?? ''
     expect(insertBlock).toContain('channel_key: channelKey')
-    expect(insertBlock).not.toContain('title')
+    expect(insertBlock).toContain('title')
+    expect(source).toContain(
+      ".select('id, channel_key, user_id, username, body, created_at, guild_tag, rank_icon, guest, title')",
+    )
+
+    expect(REMOTE_CHAT_COLUMNS).toContain('title')
 
     const client = readFileSync(resolve(process.cwd(), 'src/game/multiplayer/chat.ts'), 'utf8')
     expect(client).toContain('body: { channelKey: chatChannelKey(channel), body }')
