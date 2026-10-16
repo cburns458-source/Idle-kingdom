@@ -7,6 +7,7 @@ import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
+import '../tutorial/tutorial.dart';
 import 'xp.dart';
 
 /// Requirement types the runtime knows how to evaluate. Unknown types fail closed.
@@ -202,6 +203,7 @@ bool isQuestGateRequirement(String type) {
 
 /// Hide gated activities until their quest flag, access, or item condition is met.
 bool activityVisibleForSave(GameDatabase db, PlayerSave save, String activityId) {
+  if (!isTutorialActivityAllowed(save, activityId)) return false;
   return entityVisibleForSave(db, save, 'Activity', activityId);
 }
 

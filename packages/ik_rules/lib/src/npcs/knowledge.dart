@@ -6,6 +6,7 @@ import '../js_compat.dart';
 import '../quests/miniquests.dart';
 import '../quests/quests.dart';
 import '../save/generated/save_models.dart';
+import '../tutorial/tutorial.dart';
 import 'roaming.dart';
 import 'tanner.dart';
 
@@ -40,6 +41,7 @@ String? npcHideAfterQuestId(NpcRow npc) {
 }
 
 bool npcVisibleForSave(NpcRow npc, PlayerSave save) {
+  if (!isTutorialNpcAllowed(save, npc.npcId)) return false;
   if (!meetsTotalLevelRequirement(save, npc.notes)) return false;
   final questId = npcHideAfterQuestId(npc);
   if (questId == null) return true;

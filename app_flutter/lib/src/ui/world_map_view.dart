@@ -12,6 +12,7 @@ import '../theme.dart';
 import 'game_image.dart';
 import 'page_header.dart';
 import 'player_sprite.dart';
+import 'tutorial_spotlight.dart';
 
 /// How far below the top of a node widget its dot centre sits: the 8px of top
 /// padding plus half of the 14px dot.
@@ -441,7 +442,7 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
     final isSelected = widget.isSelected;
     final label = mapNodeLabel(location, widget.browseMapId);
     final fill = isHere ? Palette.gold : Palette.parchmentText;
-    return GestureDetector(
+    Widget node = GestureDetector(
       onTap: _handleTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -506,6 +507,10 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
         ],
       ),
     );
+    if (location.locationId == tutorialTownGatewayLocationId) {
+      node = TutorialAnchor(id: TutorialSpotlightId.mapTown, child: node);
+    }
+    return node;
   }
 
   Widget _mapDot({required Color fill, required Color border, required double width}) {

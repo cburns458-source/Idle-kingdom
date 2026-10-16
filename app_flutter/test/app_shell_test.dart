@@ -1300,23 +1300,32 @@ void main() {
   testWidgets('Fennel dimmed welcome does not start Getting Started', (tester) async {
     final controller = buildController(
       database,
-      seed: startedCharacter(database).copyWith(hasSeenFennelIntro: false),
+      seed: tutorialCharacter(database).copyWith(hasSeenFennelIntro: false),
     );
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
 
     expect(find.text('Fennel'), findsOne);
     expect(find.textContaining('Welcome to the lands'), findsOne);
-    expect(getQuestProgress(controller.save, 'QST-0006').status, 'inactive');
+    // Race pick already accepted Getting Started; the welcome tap must not
+    // complete or reset it.
+    expect(getQuestProgress(controller.save, 'QST-0006').status, 'active');
 
     await tester.tap(find.text('OK'));
     await tester.pump();
 
     expect(controller.save.hasSeenFennelIntro, isTrue);
     expect(find.textContaining('Welcome to the lands'), findsNothing);
-    expect(getQuestProgress(controller.save, 'QST-0006').status, 'inactive');
-    await selectLocationBandTab(tester, 'People');
-    expect(find.text('Fennel'), findsOne);
+    expect(getQuestProgress(controller.save, 'QST-0006').status, 'active');
+    expect(
+      npcsAtLocationForSave(
+        database.launch,
+        controller.save,
+        'LOC-0001',
+        testStartMs,
+      ).map((npc) => npc.npcId),
+      contains('NPC-0014'),
+    );
   });
 }
 

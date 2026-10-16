@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 66
+export const SAVE_VERSION = 67
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -564,6 +564,20 @@ export interface PlayerSave {
    * after [MailMessage.sentAt].
    */
   mailbox: MailMessage[]
+  /**
+   * Tutorial (QST-0006) guaranteed potato gathers already used (0–5).
+   * Missing on v66; migrate to 0.
+   */
+  tutorialGuaranteedGathers: number
+  /**
+   * Tutorial guaranteed potato cooks already used (0–5). Missing on v66.
+   */
+  tutorialGuaranteedCooks: number
+  /**
+   * `deathPauseUntil` already granted Fennel's tutorial food top-up for.
+   * Missing on v66; migrate to null.
+   */
+  tutorialFoodGrantDeathAt: string | null
 }
 
 export interface SaveMigration {

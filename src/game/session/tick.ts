@@ -33,6 +33,7 @@ import type { PlayerSave } from '../save/types'
 import { notePlayerDamaged } from '../vitals/regen'
 import type { SessionEvent } from './events'
 import { guildHallCompanyActive } from '../guild/rooms'
+import { shouldStopTutorialCombatAfterKill } from '../tutorial/tutorial'
 
 export interface SessionTickResult {
   save: PlayerSave
@@ -332,6 +333,7 @@ function applyDueCombatOutcome(
       return
     }
 
+    const stopTutorialCombat = shouldStopTutorialCombatAfterKill(before, enemy['Enemy ID'])
     const victory = applyCombatVictory(
       db,
       { ...before, combatEnemyHp: 0, currentHp: round.playerHp },
@@ -373,6 +375,7 @@ function applyDueCombatOutcome(
       enemyId: enemy['Enemy ID'],
       enemyName: enemy['Display Name'],
     })
+    if (stopTutorialCombat) return
     continueActivity(
       db,
       out,

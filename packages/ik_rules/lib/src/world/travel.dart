@@ -8,6 +8,7 @@ import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
+import '../tutorial/tutorial.dart';
 import '../activity/xp.dart' show getSkillProgress;
 import '../skills/skill_actions.dart' show fishingSkillId;
 import 'constants.dart';
@@ -36,8 +37,11 @@ bool _locationOpenForSave(
   String? currentLocationId,
   PlayerSave? save,
 ]) {
-  if (isLocationUnlocked(unlockedLocationIds, location, currentLocationId)) return true;
   final locationId = jsString(location.raw['Location ID']);
+  if (save != null && !isTutorialLocationAllowed(save, locationId)) {
+    return false;
+  }
+  if (isLocationUnlocked(unlockedLocationIds, location, currentLocationId)) return true;
   if (thicketCompletionLocationIds.contains(locationId) &&
       save != null &&
       save.quests.any(
@@ -61,12 +65,15 @@ List<LocationRow> locationsForMapView(
   PlayerSave? save,
 ]) {
   if (mapId == mainMapId) {
-    return db.locations
-        .where(
-          (location) =>
-              location.raw['Map ID'] == mainMapId && !locationHiddenOnMap(location, mapId),
-        )
-        .toList();
+    return db.locations.where((location) {
+      if (location.raw['Map ID'] != mainMapId || locationHiddenOnMap(location, mapId)) {
+        return false;
+      }
+      if (save != null && !isTutorialLocationAllowed(save, jsString(location.raw['Location ID']))) {
+        return false;
+      }
+      return true;
+    }).toList();
   }
 
   if (isBrowsableEmptyMap(mapId)) return <LocationRow>[];
@@ -172,6 +179,9 @@ TravelArrivalSave applyTravelArrivalResult(
   num nowMs,
 ) {
   if (isDeathPaused(save, nowMs)) {
+    return TravelArrivalSave(save: save, questCompletions: const <QuestArrivalCompletion>[]);
+  }
+  if (!isTutorialLocationAllowed(save, destinationLocationId)) {
     return TravelArrivalSave(save: save, questCompletions: const <QuestArrivalCompletion>[]);
   }
   final stopped = stopPrimaryActivityNow(db, save, nowMs);

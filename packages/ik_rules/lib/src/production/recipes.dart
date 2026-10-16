@@ -9,6 +9,7 @@ import '../equipment/specialist.dart';
 import '../js_compat.dart';
 import '../recipes/knowledge.dart';
 import '../save/generated/save_models.dart';
+import '../tutorial/tutorial.dart';
 
 /// One material line of a recipe.
 class RecipeIngredient {
@@ -181,7 +182,8 @@ List<RecipeRow> recipesForActivity(GameDatabase db, PlayerSave save, String acti
         (recipe) =>
             isCompleteRecipe(recipe) &&
             recipeMatchesFacility(jsString(recipe.raw['Facility ID']), facilityId) &&
-            canKnowRecipe(save, db, recipe),
+            canKnowRecipe(save, db, recipe) &&
+            isTutorialRecipeAllowed(save, recipe.recipeId),
       )
       .toList();
   mergeSort(

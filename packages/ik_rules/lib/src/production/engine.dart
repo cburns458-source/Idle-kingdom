@@ -24,6 +24,7 @@ import '../spells/spells.dart';
 import '../trackers/trackers.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import '../tutorial/tutorial.dart';
 import 'inventory.dart';
 import 'recipes.dart';
 
@@ -213,12 +214,14 @@ ProductionCraftResult? completeProductionCraft(
   // costs them: rolling before the output means a full bag cannot save them.
   final craftLevel = getSkillProgress(save, skillId).level;
   final successBonus = equippedSuccessChanceBonusPercent(db, save, skillId);
-  if (!rollProductionSuccess(
-    craftLevel,
-    random,
-    jsNumber(recipe.raw['Proficiency Level']),
-    successBonus,
-  )) {
+  final tutorialCook = shouldGuaranteeTutorialCook(save, jsString(recipe.raw['Recipe ID']));
+  if (!tutorialCook &&
+      !rollProductionSuccess(
+        craftLevel,
+        random,
+        jsNumber(recipe.raw['Proficiency Level']),
+        successBonus,
+      )) {
     final ruinedName = db.items
         .firstWhereOrNull((item) => item.raw['Item ID'] == outputItemId)
         ?.raw['Display Name'];
@@ -259,6 +262,7 @@ ProductionCraftResult? completeProductionCraft(
   final granted = addItemToInventoryExact(save, outputItemId, outputQty);
   if (!granted.ok) return null;
   var next = granted.save!;
+  if (tutorialCook) next = noteTutorialGuaranteedCook(next, recipeId);
 
   final xpGained = jsNumber(recipe.raw['XP Reward']);
   final xpApplied = applyXp(next, db, skillId, xpGained);

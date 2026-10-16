@@ -126,6 +126,7 @@ TravelPlan planTravel(
 /// screen even when the player is not standing next to it.
 TravelPlan planGuildHallTravel(GameDatabase db, PlayerSave save, num nowMs, RandomFn random) {
   if (isDeathPaused(save, nowMs)) return const TravelBlocked();
+  if (!isTutorialGuildHallAllowed(save)) return const TravelBlocked();
   return TravelInstant(
     _arrivalOf(db, applyHostileTravelArrival(db, save, guildHallLocationId, nowMs, random)),
   );

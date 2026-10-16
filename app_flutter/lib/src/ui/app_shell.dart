@@ -38,6 +38,8 @@ import 'playable_frame.dart';
 import 'social_alert.dart';
 import 'social_view.dart';
 import 'top_hud.dart';
+import 'tutorial_spotlight.dart';
+import 'dialogue_window.dart';
 import 'timers_view.dart';
 import 'tracker_view.dart';
 import 'wardrobe_sheet.dart';
@@ -603,6 +605,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
   }
 
   void _selectScreen(GameScreen screen) {
+    if (isTutorialLocked(controller.save) &&
+        screen != GameScreen.location &&
+        screen != GameScreen.map &&
+        screen != GameScreen.character &&
+        screen != GameScreen.menu) {
+      return;
+    }
     if (screen == GameScreen.account) screen = GameScreen.menu;
     if (screen != GameScreen.codex) _codexItemId = null;
     if (screen == GameScreen.character) {
@@ -1086,246 +1095,306 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
       );
     }
     final save = controller.save;
+    final hint = tutorialHudHint(controller.db, save);
+    final autoDialogueId = tutorialAutoDialogueId(save);
     multiplayer.syncChatSurface(
       open: _chatOpen || sideChat,
       locationId: save.currentLocationId,
       citadelHub: _inCitadel,
     );
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Column(
-          children: [
-            ListenableBuilder(
-              listenable: multiplayer,
-              builder: (context, _) {
-                if (!multiplayer.cloudUnavailable) return const SizedBox.shrink();
-                return const Material(
-                  color: Palette.danger,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: Text(
-                      'Cloud unavailable — progress is not syncing.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: GameFont.s),
+    _enforceTutorialScreens();
+    return TutorialAnchorsScope(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Column(
+            children: [
+              ListenableBuilder(
+                listenable: multiplayer,
+                builder: (context, _) {
+                  if (!multiplayer.cloudUnavailable) return const SizedBox.shrink();
+                  return const Material(
+                    color: Palette.danger,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      child: Text(
+                        'Cloud unavailable — progress is not syncing.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white, fontSize: GameFont.s),
+                      ),
                     ),
+                  );
+                },
+              ),
+              RepaintBoundary(
+                child: TopHud(
+                  controller: controller,
+                  multiplayer: multiplayer,
+                  onOpenWardrobe: _openWardrobe,
+                  onOpenMailbox: _openMailbox,
+                  onOpenSettings: () => _selectScreen(
+                    _screen == GameScreen.menu ? GameScreen.location : GameScreen.menu,
                   ),
-                );
-              },
-            ),
-            RepaintBoundary(
-              child: TopHud(
-                controller: controller,
-                multiplayer: multiplayer,
-                onOpenWardrobe: _openWardrobe,
-                onOpenMailbox: _openMailbox,
-                onOpenSettings: () => _selectScreen(
-                  _screen == GameScreen.menu ? GameScreen.location : GameScreen.menu,
+                  batterySaver: controller.batterySaver,
                 ),
-                batterySaver: controller.batterySaver,
+              ),
+              if (hint != null) TutorialHintBar(hint: hint, onTap: () => _followTutorialHint(hint)),
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  clipBehavior: Clip.none,
+                  children: [
+                    OutOfSight(
+                      hidden: _screen != GameScreen.location || _wardrobeOpen,
+                      child: locationChild,
+                    ),
+                    if (_screen != GameScreen.location) _sheetLayer(context),
+                    if (_wardrobeOpen)
+                      _PageLayer(
+                        motion: _PageMotion.slideDown,
+                        child: WardrobeSheet(
+                          controller: controller,
+                          onClose: () => setState(() => _wardrobeOpen = false),
+                        ),
+                      ),
+                    if (_toastText case final text?)
+                      Positioned(
+                        top: 10,
+                        left: 12,
+                        right: 12,
+                        child: OverlayNotice(
+                          key: _toastKey,
+                          text: text,
+                          tone:
+                              controller.activityError != null || controller.productionInventoryFull
+                              ? Palette.danger
+                              : Palette.gold,
+                          onDismissed: controller.clearMessages,
+                        ),
+                      ),
+                    if (controller.batterySaver && _screen == GameScreen.location && !_wardrobeOpen)
+                      Positioned(
+                        left: 8,
+                        bottom: 10,
+                        child: _BatterySaverPlaque(
+                          onOpenSettings: () => _selectScreen(GameScreen.menu),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              RepaintBoundary(
+                child: BottomNav(
+                  screen: _screen,
+                  locationName: controller.location?.displayName ?? 'Unknown',
+                  onSelect: _selectScreen,
+                  controller: controller,
+                  multiplayer: multiplayer,
+                  nowMs: controller.session.clock,
+                  showMenu: showMenu,
+                ),
+              ),
+            ],
+          ),
+          if (!sideChat)
+            Positioned(
+              right: 12,
+              bottom: _screen == GameScreen.map ? chatLauncherBottomOnMap : chatLauncherBottom,
+              child: ListenableBuilder(
+                listenable: multiplayer,
+                builder: (context, _) {
+                  if (multiplayer.hideChatBubble) return const SizedBox.shrink();
+                  return ChatLauncher(
+                    open: _chatOpen,
+                    multiplayer: multiplayer,
+                    onToggle: () {
+                      if (_chatOpen) {
+                        _closeChat();
+                        return;
+                      }
+                      // Open first — do not wait on history fetch / name-color lookups.
+                      setState(() => _chatOpen = true);
+                      if (multiplayer.canSeeSocialPages) {
+                        unawaited(
+                          multiplayer.selectChatTab(
+                            multiplayer.chatTab,
+                            save.currentLocationId,
+                            citadelHub: _inCitadel,
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
               ),
             ),
-            Expanded(
+          if (!sideChat && _chatOpen)
+            Positioned.fill(
               child: Stack(
-                fit: StackFit.expand,
-                clipBehavior: Clip.none,
                 children: [
-                  OutOfSight(
-                    hidden: _screen != GameScreen.location || _wardrobeOpen,
-                    child: locationChild,
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _closeChat,
+                    child: const ColoredBox(color: Color(0x00000000)),
                   ),
-                  if (_screen != GameScreen.location) _sheetLayer(context),
-                  if (_wardrobeOpen)
-                    _PageLayer(
-                      motion: _PageMotion.slideDown,
-                      child: WardrobeSheet(
-                        controller: controller,
-                        onClose: () => setState(() => _wardrobeOpen = false),
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 50 + MediaQuery.viewInsetsOf(context).bottom,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.sizeOf(context).height * 0.48,
+                      ),
+                      child: Material(
+                        key: const Key('chat-panel'),
+                        color: UiChrome.of(context).board,
+                        elevation: 12,
+                        shadowColor: const Color(0x73000000),
+                        clipBehavior: Clip.antiAlias,
+                        shape: PixelSteppedBorder(
+                          step: 3,
+                          side: BorderSide(
+                            color: UiChrome.of(context).embossFace.withValues(alpha: 0.55),
+                          ),
+                        ),
+                        child: DecoratedBox(
+                          decoration: chromeBoardFill(context, textureOpacity: 0.4),
+                          child: ChatSheet(
+                            controller: controller,
+                            multiplayer: multiplayer,
+                            locationId: save.currentLocationId,
+                            citadelHub: _inCitadel,
+                            onClose: _closeChat,
+                            onOpenCodexItem: (itemId) {
+                              _closeChat();
+                              _openCodexItem(itemId);
+                            },
+                          ),
+                        ),
                       ),
                     ),
-                  if (_toastText case final text?)
-                    Positioned(
-                      top: 10,
-                      left: 12,
-                      right: 12,
-                      child: OverlayNotice(
-                        key: _toastKey,
-                        text: text,
-                        tone: controller.activityError != null || controller.productionInventoryFull
-                            ? Palette.danger
-                            : Palette.gold,
-                        onDismissed: controller.clearMessages,
-                      ),
-                    ),
-                  if (controller.batterySaver && _screen == GameScreen.location && !_wardrobeOpen)
-                    Positioned(
-                      left: 8,
-                      bottom: 10,
-                      child: _BatterySaverPlaque(
-                        onOpenSettings: () => _selectScreen(GameScreen.menu),
-                      ),
-                    ),
+                  ),
                 ],
               ),
             ),
-            RepaintBoundary(
-              child: BottomNav(
-                screen: _screen,
-                locationName: controller.location?.displayName ?? 'Unknown',
-                onSelect: _selectScreen,
-                controller: controller,
-                multiplayer: multiplayer,
-                nowMs: controller.session.clock,
-                showMenu: showMenu,
+          if (controller.switchSpinner &&
+              _walkFromId == null &&
+              (controller.pendingSwitch == 'travel' ||
+                  controller.pendingSwitch == 'travel_guild_hall'))
+            const Positioned.fill(child: GameWaitVeil(label: 'Travelling…')),
+          if (controller.returningFromAway)
+            const ReturningOverlay()
+          else if (controller.awaySummary case final summary?)
+            AwaySummarySheet(summary: summary, onDismiss: controller.dismissAwaySummary),
+          if (controller.autoEquip case final proposal?)
+            AutoEquipPrompt(controller: controller, proposal: proposal),
+          if (controller.cosmeticUnlock case final notice?)
+            WardrobeUnlockPopup(
+              notice: notice,
+              item: notice.itemId == null ? null : controller.indexes.itemsById[notice.itemId!],
+              onClose: controller.dismissCosmeticUnlock,
+            ),
+          if (controller.bookUnlock case final notice?)
+            LibraryUnlockPopup(notice: notice, onClose: controller.dismissBookUnlock),
+          if (controller.discoveryNotice case final notice?)
+            SocialAlertOverlay(message: notice, onClose: controller.dismissDiscoveryNotice),
+          if (_socialAlertEntry == null && _socialAlertMessage != null)
+            SocialAlertOverlay(message: _socialAlertMessage!, onClose: _dismissSocialAlert),
+          if (autoDialogueId == null && hint?.spotlight != null)
+            Positioned.fill(child: TutorialSpotlight(target: hint!.spotlight)),
+          if (autoDialogueId != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: StandaloneDialogueHost(
+                  controller: controller,
+                  dialogueId: autoDialogueId,
+                  docked: true,
+                  onClose: () => setState(() {}),
+                ),
               ),
             ),
-          ],
-        ),
-        if (!sideChat)
-          Positioned(
-            right: 12,
-            bottom: _screen == GameScreen.map ? chatLauncherBottomOnMap : chatLauncherBottom,
-            child: ListenableBuilder(
-              listenable: multiplayer,
-              builder: (context, _) {
-                if (multiplayer.hideChatBubble) return const SizedBox.shrink();
-                return ChatLauncher(
-                  open: _chatOpen,
-                  multiplayer: multiplayer,
-                  onToggle: () {
-                    if (_chatOpen) {
-                      _closeChat();
-                      return;
-                    }
-                    // Open first — do not wait on history fetch / name-color lookups.
-                    setState(() => _chatOpen = true);
-                    if (multiplayer.canSeeSocialPages) {
-                      unawaited(
-                        multiplayer.selectChatTab(
-                          multiplayer.chatTab,
-                          save.currentLocationId,
-                          citadelHub: _inCitadel,
-                        ),
-                      );
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-        if (!sideChat && _chatOpen)
-          Positioned.fill(
-            child: Stack(
-              children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _closeChat,
-                  child: const ColoredBox(color: Color(0x00000000)),
-                ),
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 50 + MediaQuery.viewInsetsOf(context).bottom,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.sizeOf(context).height * 0.48,
-                    ),
-                    child: Material(
-                      key: const Key('chat-panel'),
-                      color: UiChrome.of(context).board,
-                      elevation: 12,
-                      shadowColor: const Color(0x73000000),
-                      clipBehavior: Clip.antiAlias,
-                      shape: PixelSteppedBorder(
-                        step: 3,
-                        side: BorderSide(
-                          color: UiChrome.of(context).embossFace.withValues(alpha: 0.55),
-                        ),
-                      ),
-                      child: DecoratedBox(
-                        decoration: chromeBoardFill(context, textureOpacity: 0.4),
-                        child: ChatSheet(
-                          controller: controller,
-                          multiplayer: multiplayer,
-                          locationId: save.currentLocationId,
-                          citadelHub: _inCitadel,
-                          onClose: _closeChat,
-                          onOpenCodexItem: (itemId) {
-                            _closeChat();
-                            _openCodexItem(itemId);
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        if (controller.switchSpinner &&
-            _walkFromId == null &&
-            (controller.pendingSwitch == 'travel' ||
-                controller.pendingSwitch == 'travel_guild_hall'))
-          const Positioned.fill(child: GameWaitVeil(label: 'Travelling…')),
-        if (controller.returningFromAway)
-          const ReturningOverlay()
-        else if (controller.awaySummary case final summary?)
-          AwaySummarySheet(summary: summary, onDismiss: controller.dismissAwaySummary),
-        if (controller.autoEquip case final proposal?)
-          AutoEquipPrompt(controller: controller, proposal: proposal),
-        if (controller.cosmeticUnlock case final notice?)
-          WardrobeUnlockPopup(
-            notice: notice,
-            item: notice.itemId == null ? null : controller.indexes.itemsById[notice.itemId!],
-            onClose: controller.dismissCosmeticUnlock,
-          ),
-        if (controller.bookUnlock case final notice?)
-          LibraryUnlockPopup(notice: notice, onClose: controller.dismissBookUnlock),
-        if (controller.discoveryNotice case final notice?)
-          SocialAlertOverlay(message: notice, onClose: controller.dismissDiscoveryNotice),
-        if (_socialAlertEntry == null && _socialAlertMessage != null)
-          SocialAlertOverlay(message: _socialAlertMessage!, onClose: _dismissSocialAlert),
-        if (fennelIntroPending(save))
-          Positioned.fill(
-            child: Stack(
-              children: [
-                const ModalBarrier(dismissible: false, color: Color(0xB3120C08)),
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: GamePanel(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Fennel',
-                            style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(fennelWelcome, style: TextStyle(fontSize: GameFont.m)),
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: GameButton(
-                              label: 'OK',
-                              onPressed: () => controller.commit(
-                                save.copyWith(hasSeenFennelIntro: true),
-                                command: 'set_meta',
-                                args: <String, Object?>{'hasSeenFennelIntro': true},
+          if (fennelIntroPending(save))
+            Positioned.fill(
+              child: Stack(
+                children: [
+                  const ModalBarrier(dismissible: false, color: Color(0xB3120C08)),
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: GamePanel(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'Fennel',
+                              style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(fennelWelcome, style: TextStyle(fontSize: GameFont.m)),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: GameButton(
+                                label: 'OK',
+                                onPressed: () => controller.commit(
+                                  save.copyWith(hasSeenFennelIntro: true),
+                                  command: 'set_meta',
+                                  args: <String, Object?>{'hasSeenFennelIntro': true},
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
+  }
+
+  static const Set<GameScreen> _tutorialAllowedScreens = {
+    GameScreen.location,
+    GameScreen.map,
+    GameScreen.character,
+    GameScreen.menu,
+  };
+
+  void _enforceTutorialScreens() {
+    if (!isTutorialLocked(controller.save)) return;
+    if (_tutorialAllowedScreens.contains(_screen)) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!isTutorialLocked(controller.save)) return;
+      if (_tutorialAllowedScreens.contains(_screen)) return;
+      _popToLocation();
+    });
+  }
+
+  void _followTutorialHint(TutorialHudHint hint) {
+    if (hint.spotlight == TutorialSpotlightId.sword ||
+        hint.spotlight == TutorialSpotlightId.shield ||
+        hint.spotlight == TutorialSpotlightId.foodSlot) {
+      _selectScreen(GameScreen.character);
+      return;
+    }
+    if (hint.spotlight == TutorialSpotlightId.mapTown) {
+      _showMap();
+      return;
+    }
+    if (hint.locationId != controller.save.currentLocationId) {
+      _travelTo(hint.locationId);
+      return;
+    }
+    _popToLocation();
   }
 
   Widget _coveringPage() {
