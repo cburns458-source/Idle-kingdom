@@ -16,11 +16,20 @@ enum _ArenaTab { search, ranked }
 /// Citadel arena: search any stored player by name, or take a ranked match
 /// against whoever is closest in combat level.
 class ArenaPanel extends StatefulWidget {
-  const ArenaPanel({super.key, required this.controller, required this.multiplayer, this.onClose});
+  const ArenaPanel({
+    super.key,
+    required this.controller,
+    required this.multiplayer,
+    this.onClose,
+    this.guildmatesOnly = false,
+  });
 
   final GameController controller;
   final MultiplayerController multiplayer;
   final VoidCallback? onClose;
+
+  /// Boxing Ring: the same screen, limited to guildmates. Ranked stays hidden.
+  final bool guildmatesOnly;
 
   @override
   State<ArenaPanel> createState() => _ArenaPanelState();
@@ -90,12 +99,16 @@ class _ArenaPanelState extends State<ArenaPanel> {
 
   Future<void> _loadOpponents() async {
     try {
-      final rows = await multiplayer.service.listArenaOpponents();
+      final rows = widget.guildmatesOnly
+          ? await multiplayer.service.hallBoxingOpponents()
+          : await multiplayer.service.listArenaOpponents();
       final own = await multiplayer.service.ownPvpSnapshot();
       if (!mounted) return;
       setState(() {
         _all = rows;
-        _matches = searchArenaOpponents(rows, _search.text);
+        _matches = widget.guildmatesOnly && _search.text.trim().isEmpty
+            ? rows
+            : searchArenaOpponents(rows, _search.text);
         _ownLoadout = own;
         _equipmentSaved = own != null;
         _loading = false;
@@ -111,7 +124,11 @@ class _ArenaPanelState extends State<ArenaPanel> {
   }
 
   void _filter() {
-    setState(() => _matches = searchArenaOpponents(_all, _search.text));
+    setState(() {
+      _matches = widget.guildmatesOnly && _search.text.trim().isEmpty
+          ? _all
+          : searchArenaOpponents(_all, _search.text);
+    });
   }
 
   Future<void> _viewOpponentGear(ArenaOpponent opponent) async {
@@ -381,42 +398,55 @@ class _ArenaPanelState extends State<ArenaPanel> {
               ? 'Loadout saved. Others will fight this gear at your current combat level.'
               : 'Save the gear you fight in. Search and ranked ignore anyone who has not saved.',
         ),
+        if (!widget.guildmatesOnly) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: GameButton(
+                  label: 'Search',
+                  tone: _tab == _ArenaTab.search
+                      ? GameButtonTone.primary
+                      : GameButtonTone.secondary,
+                  onPressed: () => setState(() => _tab = _ArenaTab.search),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GameButton(
+                  label: 'Ranked',
+                  tone: _tab == _ArenaTab.ranked
+                      ? GameButtonTone.primary
+                      : GameButtonTone.secondary,
+                  onPressed: () => setState(() => _tab = _ArenaTab.ranked),
+                ),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: GameButton(
-                label: 'Search',
-                tone: _tab == _ArenaTab.search ? GameButtonTone.primary : GameButtonTone.secondary,
-                onPressed: () => setState(() => _tab = _ArenaTab.search),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: GameButton(
-                label: 'Ranked',
-                tone: _tab == _ArenaTab.ranked ? GameButtonTone.primary : GameButtonTone.secondary,
-                onPressed: () => setState(() => _tab = _ArenaTab.ranked),
-              ),
-            ),
-          ],
+        Expanded(
+          child: widget.guildmatesOnly || _tab == _ArenaTab.search
+              ? _searchLobby()
+              : _rankedLobby(),
         ),
-        const SizedBox(height: 10),
-        Expanded(child: _tab == _ArenaTab.search ? _searchLobby() : _rankedLobby()),
       ],
     );
   }
 
   Widget _searchLobby() {
+    final waitingOnName = !widget.guildmatesOnly && _search.text.trim().isEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const MutedText('Search by name. No gold, no rank.'),
-        const SizedBox(height: 8),
+        if (!widget.guildmatesOnly) ...[
+          const MutedText('Search by name. No gold, no rank.'),
+          const SizedBox(height: 8),
+        ],
         Expanded(
           child: _loading
               ? const Align(alignment: Alignment.topLeft, child: MutedText('Loading players…'))
-              : _search.text.trim().isEmpty
+              : waitingOnName
               ? const Align(
                   alignment: Alignment.topLeft,
                   child: MutedText('Type a name to find someone.'),

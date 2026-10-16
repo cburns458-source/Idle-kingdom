@@ -48,7 +48,9 @@ class BankOpen extends LocationPanel {
 
 /// The Citadel arena: search by name or ranked by combat level.
 class ArenaOpen extends LocationPanel {
-  const ArenaOpen();
+  const ArenaOpen({this.guildmatesOnly = false});
+
+  final bool guildmatesOnly;
 }
 
 /// The per-guild hall: storehouse, gold chip-in, and unlocked rooms.
@@ -673,24 +675,20 @@ class _LocationViewState extends State<LocationView> {
       case ShopOpen(shopId: final shopId):
         return ShopPanel(controller: controller, shopId: shopId, onClose: _closePanel);
       case BankOpen():
-        return BankPanel(
-          controller: controller,
-          multiplayer: widget.multiplayer,
-          onClose: _closePanel,
-        );
-      case ArenaOpen():
+        return BankPanel(controller: controller, onClose: _closePanel);
+      case ArenaOpen(:final guildmatesOnly):
         return ArenaPanel(
           key: _arenaPanelKey,
           controller: controller,
           multiplayer: widget.multiplayer,
           onClose: _closePanel,
+          guildmatesOnly: guildmatesOnly,
         );
       case GuildHallOpen():
         return GuildHallPanel(
           controller: controller,
           multiplayer: widget.multiplayer,
           onClose: _closePanel,
-          onOpenBank: () => _openPanel(const BankOpen(), nest: true),
         );
       case NpcOpen(npc: final npc):
         return NpcPanel(
@@ -1164,6 +1162,16 @@ class _LocationViewState extends State<LocationView> {
           onPressed: () => _openPanel(const GuildHallOpen()),
         ),
       ),
+      if (_hall?.boxingUnlocked == true)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _InteractionCard(
+            title: 'Boxing Ring',
+            actionLabel: 'Fight',
+            tone: GameButtonTone.primary,
+            onPressed: () => _openPanel(const ArenaOpen(guildmatesOnly: true)),
+          ),
+        ),
     ];
   }
 

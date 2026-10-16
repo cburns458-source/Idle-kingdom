@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
+import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/guild_bank_view.dart';
+import 'package:idle_kingdoms/src/ui/guild_hall_gold_bar.dart';
 import 'package:idle_kingdoms/src/ui/guild_hall_panel.dart';
+import 'package:idle_kingdoms/src/ui/guild_log_list.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
@@ -73,7 +77,7 @@ void main() {
     expect(find.text('Debt'), findsNothing);
     await tester.tap(find.text('Chip in'));
     await tester.pump();
-    expect(find.text('Chip in gold'), findsOne);
+    expect(find.widgetWithText(GameButton, 'Chip in'), findsWidgets);
   });
 
   testWidgets('a new hall offers the store house and chip-in, and nothing else', (tester) async {
@@ -94,10 +98,47 @@ void main() {
     expect(find.text('Debt'), findsNothing);
     expect(find.text('Bank'), findsNothing);
     expect(find.text('Boxing'), findsNothing);
-
-    // The first step is named, with its materials and how far along they are.
     expect(find.text('Build the Hall'), findsOne);
     expect(find.textContaining('Cedar log 0 / 1,000'), findsOne);
+    expect(find.text('Counting Room'), findsOne);
+    expect(find.text('Boxing Ring'), findsOne);
+    expect(find.text('Indoor Garden'), findsOne);
+    expect(find.text('Arcana Station'), findsOne);
+    expect(find.text('Monster Cage'), findsOne);
+  });
+
+  testWidgets('the gold bar has Sys marks and counts remaining gold down', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database)
+          .copyWith(currentLocationId: guildHallLocationId, gold: 25000),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const Key('guild-gold-bar')), findsOne);
+    expect(find.byKey(const Key('guild-gold-mark-10000')), findsOne);
+    expect(find.byKey(const Key('guild-gold-mark-40000')), findsOne);
+    expect(find.byKey(const Key('guild-gold-mark-130000')), findsOne);
+    expect(find.byKey(const Key('guild-gold-mark-400000')), findsOne);
+    expect(find.byKey(const Key('guild-gold-mark-1000000')), findsOne);
+    expect(find.byKey(const Key('guild-gold-remaining')), findsOne);
+    expect(guildHallGoldRemainingLabel(0), '1,000,000');
+    expect(tester.widget<GuildHallGoldBar>(find.byType(GuildHallGoldBar)).contributed, 0);
+
+    final chipped = await net.service.payGuildDebt(controller.save, 10000);
+    expect(chipped.ok, isTrue, reason: chipped.reason);
+    expect(chipped.hall!.goldContributed, 10000);
+    expect(guildHallGoldRemainingLabel(chipped.hall!.goldContributed), '990,000');
+
+    await pumpPanel(tester, const GuildHallGoldBar(contributed: 10000));
+    expect(tester.widget<GuildHallGoldBar>(find.byType(GuildHallGoldBar)).contributed, 10000);
+    expect(find.text('990,000'), findsOne);
   });
 
   testWidgets('the store house takes donations and never gives them back', (tester) async {
@@ -151,7 +192,7 @@ void main() {
     expect(find.textContaining('Fernleaf'), findsNothing);
   });
 
-  testWidgets('a finished counting room adds a Bank that opens the bank screen', (tester) async {
+  testWidgets('a finished counting room adds a Bank tab with Up for grabs', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database)
@@ -173,23 +214,119 @@ void main() {
       InventoryStack(itemId: 'ITEM-0006', quantity: 6320),
     ]);
 
-    var opened = 0;
-    await pumpPanel(
-      tester,
-      GuildHallPanel(controller: controller, multiplayer: net, onOpenBank: () => opened += 1),
-    );
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
     await tester.pump();
     await tester.pump();
 
     expect(find.text('Bank'), findsOne);
-    // The ring waits on the third tier.
     expect(find.text('Boxing'), findsNothing);
 
     await tester.tap(find.text('Bank'));
     await tester.pump();
-    await tester.tap(find.text('Open the bank'));
+    expect(find.text('Up for grabs'), findsOne);
+    expect(find.text('Open the bank'), findsNothing);
+  });
+
+  testWidgets('guild bank greys Out and Move when the player cannot use them', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: guildHallLocationId,
+        inventory: const [InventoryStack(itemId: 'ITEM-0026', quantity: 2)],
+      ),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+    final hall = GuildHallState(
+      guildId: net.guildId ?? 'g1',
+      goldContributed: 10000,
+      goldContributedBy: const <String, num>{},
+      storehouse: const <InventoryStack>[],
+      completedTiers: const <String>[guildHallTierBuild, guildHallTierBank],
+      bank: const GuildBankState(
+        items: <GuildBankItem>[
+          GuildBankItem(id: 'gb1', itemId: 'ITEM-0026', quantity: 3, section: guildBankSectionMain),
+        ],
+      ),
+    );
+
+    await pumpPanel(
+      tester,
+      GamePanel(
+        child: SizedBox(
+          height: 600,
+          child: GuildBankView(
+            controller: controller,
+            multiplayer: net,
+            hall: hall,
+            canDeposit: false,
+            canWithdraw: false,
+            canMove: false,
+            onHallChanged: (_) {},
+          ),
+        ),
+      ),
+    );
     await tester.pump();
-    expect(opened, 1);
+
+    final out = tester.widget<GameButton>(find.byKey(const Key('guild-bank-out-gb1')));
+    final move = tester.widget<GameButton>(find.byKey(const Key('guild-bank-move-gb1')));
+    final inn = tester.widget<GameButton>(find.byKey(const Key('guild-bank-in-0')));
+    expect(out.onPressed, isNull);
+    expect(move.onPressed, isNull);
+    expect(inn.onPressed, isNull);
+    expect(find.text('Reach total level 200'), findsNothing);
+    expect(find.textContaining('cannot'), findsNothing);
+  });
+
+  testWidgets('the guild log lists newest first with an icon per kind', (tester) async {
+    await pumpPanel(
+      tester,
+      const GamePanel(
+        child: SizedBox(
+          height: 400,
+          child: GuildLogList(
+            entries: <GuildLogEntry>[
+              GuildLogEntry(
+                id: 'old',
+                guildId: 'g1',
+                kind: guildLogKindJoin,
+                createdAt: '2026-10-16T01:00:00.000Z',
+                actorUsername: 'Ash',
+                message: 'Ash joined the guild.',
+              ),
+              GuildLogEntry(
+                id: 'new',
+                guildId: 'g1',
+                kind: guildLogKindTierComplete,
+                createdAt: '2026-10-16T03:00:00.000Z',
+                actorUsername: 'Ash',
+                message: 'The counting room is open for business.',
+                tierId: guildHallTierBank,
+              ),
+              GuildLogEntry(
+                id: 'mid',
+                guildId: 'g1',
+                kind: guildLogKindDonation,
+                createdAt: '2026-10-16T02:00:00.000Z',
+                actorUsername: 'Ash',
+                message: 'Ash chipped in gold.',
+                gold: 400,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('guild-log-list')), findsOne);
+    expect(find.byKey(const Key('guild-log-icon-tier_complete')), findsOne);
+    expect(find.byKey(const Key('guild-log-icon-donation')), findsOne);
+    expect(find.byKey(const Key('guild-log-icon-join')), findsOne);
+    final newest = tester.getTopLeft(find.text('The counting room is open for business.'));
+    final oldest = tester.getTopLeft(find.text('Ash joined the guild.'));
+    expect(newest.dy, lessThan(oldest.dy));
   });
 }
 

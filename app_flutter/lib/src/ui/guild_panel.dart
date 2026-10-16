@@ -6,8 +6,9 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'catalog_popup.dart';
-import 'format.dart';
 import 'game_popup.dart';
+import 'guild_log_list.dart';
+import 'guild_permissions_table.dart';
 import 'page_header.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
@@ -371,12 +372,7 @@ class _GuildPanelState extends State<GuildPanel> {
             );
           }
           if (index == 7) {
-            return const Padding(
-              padding: EdgeInsets.only(top: 4, bottom: 10),
-              child: MutedText(
-                'Each guild has its own hall: donate materials, chip in gold, and unlock rooms.',
-              ),
-            );
+            return const SizedBox(height: 10);
           }
           var i = index - 8;
           if (guestGuild != null) {
@@ -591,25 +587,11 @@ class _GuildPanelState extends State<GuildPanel> {
             const SizedBox(height: 8),
             Expanded(
               child: entries.isEmpty
-                  ? const MutedText('Nothing logged yet.')
-                  : ListView.builder(
-                      itemCount: entries.length,
-                      itemBuilder: (context, index) {
-                        final row = entries[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                row.message.isNotEmpty ? row.message : _guildLogFallback(row),
-                                style: const TextStyle(fontWeight: FontWeight.w400),
-                              ),
-                              MutedText(row.actorUsername),
-                            ],
-                          ),
-                        );
-                      },
+                  ? const SizedBox.shrink()
+                  : GuildLogList(
+                      entries: entries,
+                      itemName: (itemId) =>
+                          widget.controller.indexes.itemsById[itemId]?.displayName ?? itemId,
                     ),
             ),
           ],
@@ -618,31 +600,10 @@ class _GuildPanelState extends State<GuildPanel> {
     );
   }
 
-  String _guildLogFallback(GuildLogEntry row) {
-    switch (row.kind) {
-      case guildLogKindDonation:
-        final gold = row.gold > 0 ? '${formatThousands(row.gold)} gold' : '';
-        final items = row.items
-            .map((item) => '${formatThousands(item.quantity)} ${item.itemId}')
-            .join(', ');
-        return [gold, items].where((part) => part.isNotEmpty).join(' · ');
-      case guildLogKindJoin:
-        return '${row.actorUsername} joined the guild.';
-      case guildLogKindLeave:
-        return '${row.actorUsername} left the guild.';
-      case guildLogKindRankChange:
-        return '${row.actorUsername} is now ${row.role ?? 'a member'}.';
-      case guildLogKindTierComplete:
-        return guildHallTierFinishLine(row.tierId ?? '') ?? row.tierId ?? '';
-      default:
-        return row.kind;
-    }
-  }
-
   Future<void> _openSettingsSheet(GuildRecord guild) async {
     final settings = await showGamePopup<_GuildSettings>(
       context: context,
-      maxWidth: 360,
+      maxWidth: 480,
       maxHeight: 560,
       builder: (context) => GamePopupCard(child: _GuildSettingsSheet(guild: guild)),
     );
@@ -1632,47 +1593,12 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
               ),
             ],
             const SizedBox(height: 12),
-            const Text('Hall permissions', style: TextStyle(fontWeight: FontWeight.w400)),
-            const MutedText(
-              'The leader always may. Check a rank to allow deposit, withdraw, or Up for grabs.',
+            GuildPermissionsTable(
+              table: _permissions,
+              canEdit: true,
+              rankLabels: widget.guild.rankLabels,
+              onChanged: (next) => setState(() => _permissions = next),
             ),
-            const SizedBox(height: 6),
-            for (final action in guildPermissionActions) ...[
-              Text(
-                action.replaceAll('_', ' '),
-                style: const TextStyle(fontWeight: FontWeight.w400),
-              ),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final rank in guildPermissionRanks)
-                    FilterChip(
-                      label: Text(rank),
-                      selected: _permissions.ranksFor(action).contains(rank),
-                      onSelected: rank == 'leader'
-                          ? null
-                          : (selected) {
-                              setState(() {
-                                final current = [..._permissions.ranksFor(action)];
-                                if (selected) {
-                                  if (!current.contains(rank)) current.add(rank);
-                                } else {
-                                  current.remove(rank);
-                                }
-                                if (!current.contains('leader')) current.insert(0, 'leader');
-                                _permissions = GuildPermissionTable(
-                                  ranksByAction: <String, List<String>>{
-                                    ..._permissions.ranksByAction,
-                                    action: current,
-                                  },
-                                );
-                              });
-                            },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 6),
-            ],
             const SizedBox(height: 6),
             GameButton(
               label: 'Save settings',
