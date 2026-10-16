@@ -99,8 +99,10 @@ bool bazaarItemBound(GameDatabase? db, String itemId) {
 /// Why the exchange will not take [itemId] on either side, or null when it will.
 ///
 /// What the server answers a buy or a sell order for an item it does not carry,
-/// before it touches the save.
+/// before it touches the save. A deleted item is refused first, so a leftover
+/// Regular Bow or Ancient Binding cannot be listed or bid on.
 String? bazaarItemRefusal(GameDatabase db, String itemId) {
+  if (!db.items.any((row) => row.itemId == itemId)) return bazaarUnknownItem;
   if (bazaarItemBound(db, itemId)) return bazaarBoundItem;
   if (!bazaarItemTradable(db, itemId)) return bazaarUntradableItem;
   return null;
@@ -112,6 +114,7 @@ const String bazaarFavoriteNotTraded = 'Unfavourite the stack to sell it.';
 const String bazaarNothingToSell = 'There is nothing there to sell.';
 const String bazaarUntradableItem = 'Nobody at the Bazaar deals in that.';
 const String bazaarBoundItem = "That stays with you; it can't be traded.";
+const String bazaarUnknownItem = 'That item is no longer in the game.';
 
 /// Local play has no other players in it, so there is no book to read.
 const String bazaarHostedOnly = 'The Bazaar opens once you are playing on an account.';

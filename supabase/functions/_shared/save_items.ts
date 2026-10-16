@@ -60,6 +60,7 @@ export type ItemCatalog = {
 
 export const BOUND_ITEM_REFUSAL = "That stays with you; it can't be traded."
 export const UNTRADABLE_ITEM_REFUSAL = 'Nobody at the Bazaar deals in that.'
+export const UNKNOWN_ITEM_REFUSAL = 'That item is no longer in the game.'
 
 export function itemCatalog(database: unknown): ItemCatalog {
   const rows =
@@ -92,9 +93,10 @@ export function isTradableItem(itemId: string, catalog?: ItemCatalog): boolean {
  * Why the exchange will not take [itemId] on either side, or null when it will.
  *
  * Checked before any escrow, for sell and buy orders alike, so a forged request
- * for a bound item moves no gold and no items.
+ * for a bound or deleted item moves no gold and no items.
  */
 export function itemRefusal(itemId: string, catalog: ItemCatalog): string | null {
+  if (!catalog.knownIds.has(itemId)) return UNKNOWN_ITEM_REFUSAL
   if (!isTradableItem(itemId, catalog)) return BOUND_ITEM_REFUSAL
   if (itemId === GOLD_ITEM_ID) return UNTRADABLE_ITEM_REFUSAL
   const value = catalog.sellValues.get(itemId)

@@ -140,6 +140,14 @@ void main() {
       expect(bazaarItemRefusal(db, _gold), bazaarUntradableItem);
     });
 
+    test('refuses buy and sell orders for an item gone from the database', () {
+      final db = _database();
+      expect(bazaarItemRefusal(db, removedRegularBowItemId), bazaarUnknownItem);
+      expect(bazaarItemRefusal(db, removedAncientBindingItemId), bazaarUnknownItem);
+      expect(bazaarItemRefusal(db, 'ITEM-9999'), bazaarUnknownItem);
+      expect(bazaarUnknownItem, 'That item is no longer in the game.');
+    });
+
     test('says a bound stack stays with you, after the older reasons', () {
       final db = _database();
       expect(bazaarStackRefusal(_stack(_machete, 1), db), bazaarBoundItem);
@@ -312,6 +320,39 @@ void main() {
       final stack = inventory.single! as Map<Object?, Object?>;
       expect(stack['itemId'], _ironOre);
       expect(stack['quantity'], 13);
+    });
+
+    test('refuses to list or bid on an item gone from the database', () {
+      final db = _database();
+      final save = _save(
+        db,
+        bag: <InventoryStack>[_stack(removedRegularBowItemId, 1), _stack(_ironOre, 5)],
+        gold: 500,
+      );
+      final exchange = _collectExchange(save, database: () => db);
+      for (final side in <String>[bazaarSell, bazaarBuy]) {
+        for (final itemId in <String>[removedRegularBowItemId, removedAncientBindingItemId]) {
+          final result = exchange.call(
+            userId: _collectUserId,
+            username: 'Trader',
+            body: <String, Object?>{
+              'action': 'place',
+              'side': side,
+              'itemId': itemId,
+              'unitPrice': 10,
+              'quantity': 1,
+            },
+          );
+          expect(result.ok, isTrue, reason: '$side $itemId');
+          expect(result.data!['ok'], isFalse, reason: '$side $itemId');
+          expect(result.data!['error'], bazaarUnknownItem, reason: '$side $itemId');
+        }
+      }
+      expect(exchange.orders, isEmpty);
+      final payload = exchange.saves.single['payload']! as Map<String, Object?>;
+      expect(payload['gold'], 500);
+      final inventory = payload['inventory']! as List<Object?>;
+      expect(inventory, hasLength(2));
     });
   });
 

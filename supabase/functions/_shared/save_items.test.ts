@@ -16,6 +16,7 @@ import {
   BANK_SLOT_LIMIT,
   INVENTORY_SLOT_LIMIT,
   UNTRADABLE_ITEM_REFUSAL,
+  UNKNOWN_ITEM_REFUSAL,
   collectNoRoomReason,
   collectRows,
   giveGold,
@@ -140,9 +141,17 @@ describe('items the exchange will not carry', () => {
     expect(itemRefusal(IRON_ORE, CATALOG)).toBeNull()
   })
 
+  it('refuses buy and sell orders for an item gone from the catalog', () => {
+    // Side-independent and before escrow, matching a forged listing of a
+    // deleted Regular Bow or Ancient Binding.
+    expect(itemRefusal('ITEM-0135', CATALOG)).toBe(UNKNOWN_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-0290', CATALOG)).toBe(UNKNOWN_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-9999', CATALOG)).toBe(UNKNOWN_ITEM_REFUSAL)
+    expect(UNKNOWN_ITEM_REFUSAL).toBe('That item is no longer in the game.')
+  })
+
   it('checks Base Sell Value the way the client does', () => {
     expect(itemRefusal(GOLD_ITEM_ID, CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
-    expect(itemRefusal('ITEM-9999', CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
     // The Undying: a starter title worth nothing, so a shop would not price it.
     expect(itemRefusal('ITEM-0301', CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
     const catalog = itemCatalog({

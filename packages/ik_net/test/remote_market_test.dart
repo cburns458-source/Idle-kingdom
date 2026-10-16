@@ -392,8 +392,44 @@ void main() {
         unitPrice: 10,
         quantity: 1,
       );
-      expect(refused.reason, bazaarUntradableItem);
+      expect(refused.reason, bazaarUnknownItem);
       expect(_stored(project, buyer).gold, 5000);
+    });
+
+    test('refuses to list or bid on a deleted item, and moves nothing', () async {
+      final project = _project();
+      final db = _database();
+      final trader = await _trader(
+        project,
+        db,
+        'trader@example.com',
+        'Trader',
+        bag: <InventoryStack>[_stack(removedRegularBowItemId, 1), _stack(_ironOre, 5)],
+        gold: 5000,
+      );
+      final before = _stored(project, trader);
+
+      for (final side in <BazaarSide>[bazaarSell, bazaarBuy]) {
+        for (final itemId in <String>[removedRegularBowItemId, removedAncientBindingItemId]) {
+          final refused = await trader.placeBazaarOffer(
+            db,
+            _stored(project, trader),
+            side: side,
+            itemId: itemId,
+            unitPrice: 10,
+            quantity: 1,
+          );
+          expect(refused.ok, isFalse, reason: '$side $itemId');
+          expect(refused.reason, bazaarUnknownItem, reason: '$side $itemId');
+        }
+      }
+      final after = _stored(project, trader);
+      expect(after.gold, before.gold);
+      expect(
+        after.inventory.map((stack) => stack.toJson()),
+        before.inventory.map((stack) => stack.toJson()),
+      );
+      expect(project.exchange.orders, isEmpty);
     });
 
     test('does not trade with itself, so a slot cannot be used to move gold', () async {
