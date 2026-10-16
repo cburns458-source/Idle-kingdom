@@ -31,6 +31,7 @@ import {
   applyQuestTalkProgress,
 } from '../../game/quests/progress'
 import { cheatAbandonQuest, completeQuest } from '../../game/quests/quests'
+import { applyTutorialCowKill, TUTORIAL_COW_ENEMY_ID, withTutorialFlag } from '../../game/tutorial/tutorial'
 import { migrateSave } from '../../game/save/migrations'
 import { parseSave } from '../../game/save/saveStore'
 import type { PlayerSave, QuestProgress } from '../../game/save/types'
@@ -473,6 +474,15 @@ export function runDialogueScript(db: GameDatabase, initial: PlayerSave, ops: Op
       case 'skill':
         out = json(getSkillProgress(save, str(op, 'skillId')))
         break
+      case 'setFlag':
+        save = withTutorialFlag(save, str(op, 'flag'), op.on !== false)
+        break
+      case 'tutorialCowKill': {
+        const result = applyTutorialCowKill(db, save, TUTORIAL_COW_ENEMY_ID)
+        out = { completed: result.completed }
+        save = result.save
+        break
+      }
       default:
         throw new Error(`Unknown dialogue script op: ${String(op.op)}`)
     }
@@ -953,8 +963,10 @@ const CONTENT_SCRIPTS: Record<string, Op[]> = {
     setItem(BAKED_POTATO, 0),
     { op: 'reload' },
     npcList('NPC-0014'),
+    { op: 'tutorialCowKill' },
+    choose('DLG-0006', 'DNODE-0026', 'DCH-0036'),
     choose('DLG-0006', 'DNODE-0009', 'DCH-0012'),
-    choose('DLG-0006', 'DNODE-0009', 'DCH-0012'),
+    choose('DLG-0006', 'DNODE-0010', 'DCH-0013'),
     npcList('NPC-0014'),
   ],
 
@@ -980,7 +992,6 @@ const CONTENT_SCRIPTS: Record<string, Op[]> = {
     }),
     { op: 'reload' },
     npcList('NPC-0014'),
-    choose('DLG-0006', 'DNODE-0009', 'DCH-0012'),
   ],
 
   // Green Thumb end to end: 1 gifted seed + quest completion (3 + 3 + Guide), each once.
@@ -1160,7 +1171,6 @@ const CONTENT_SCRIPTS: Record<string, Op[]> = {
     { op: 'oldTalk', npcId: 'NPC-0014' },
     { op: 'conditions', tokens: ['quest_step:QST-0006:QSTP-0022'] },
     npcList('NPC-0014'),
-    choose('DLG-0006', 'DNODE-0009', 'DCH-0012'),
   ],
 
   // Visiting the Citadel: Guide and Market Master remind; they do not advance the Visit step.

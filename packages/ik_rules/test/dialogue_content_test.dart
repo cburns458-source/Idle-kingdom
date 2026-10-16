@@ -102,7 +102,13 @@ void main() {
         for (final row in db.dialogues)
           if (row.npcId == 'NPC-0014' || row.npcId == 'NPC-0001') row.dialogueId,
       ],
-      [for (var id = 2; id <= 12; id++) 'DLG-${id.toString().padLeft(4, '0')}'],
+      [
+        for (var id = 2; id <= 12; id++) 'DLG-${id.toString().padLeft(4, '0')}',
+        'DLG-0016',
+        'DLG-0017',
+        'DLG-0018',
+        'DLG-0019',
+      ],
     );
   });
 
@@ -206,7 +212,7 @@ void main() {
     ];
     expect(
       [for (final row in handOuts) row['Choice ID']],
-      ['DCH-0001', 'DCH-0012', 'DCH-0014', 'DCH-0021', 'DCH-0030', 'DCH-0031'],
+      ['DCH-0001', 'DCH-0014', 'DCH-0021', 'DCH-0030', 'DCH-0031'],
     );
     for (final row in handOuts) {
       final line = row['No Room Line'] as String;
@@ -446,9 +452,7 @@ void main() {
       'step:QSTP-0016': 1,
     });
     expect(stepOf(reload(shown), 'QST-0006'), 'QSTP-0022');
-    final done = picked(shown, 'DLG-0006', 'DNODE-0009', 'DCH-0012');
-    expect(done.bookDeltas, ['BOOK-0001']);
-    expect(getQuestProgress(done.save, 'QST-0006').status, 'completed');
+    expect(dialoguesForNpc(db, shown, 'NPC-0014'), ['DLG-0016']);
 
     final oldSeed = withQuest(
       withQuest(fresh(_farm), 'QST-0006', 'completed'),
@@ -499,7 +503,8 @@ void main() {
     );
     expect(stepOf(gift.save, 'QST-0011'), 'QSTP-0024');
 
-    // The same for the King's brief (QSTP-0001) and Fennel's farewell (QSTP-0022).
+    // The same for the King's brief (QSTP-0001). Getting Started's last step is
+    // a Defeat, not a Talk, so the old panel cannot finish it.
     final accepted = withQuest(fresh(_throneRoom), 'QST-0001', 'active', {});
     final kingTalked = talkWithQuestNpc(db, accepted, 'NPC-0001');
     expect(kingTalked.ok, isTrue, reason: kingTalked.reason);
@@ -516,9 +521,6 @@ void main() {
     expect(fennelTalked.ok, isTrue, reason: fennelTalked.reason);
     expect(stepOf(fennelTalked.save!, 'QST-0006'), 'QSTP-0022');
     expect(getQuestProgress(fennelTalked.save!, 'QST-0006').status, 'active');
-    expect(dialoguesForNpc(db, fennelTalked.save!, 'NPC-0014'), ['DLG-0006']);
-    expect(picked(fennelTalked.save!, 'DLG-0006', 'DNODE-0009', 'DCH-0012').bookDeltas, [
-      'BOOK-0001',
-    ]);
+    expect(dialoguesForNpc(db, fennelTalked.save!, 'NPC-0014'), ['DLG-0016']);
   });
 }

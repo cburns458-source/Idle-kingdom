@@ -14,6 +14,7 @@ import '../combat/food.dart';
 import '../equipment/loadout.dart';
 import '../inventory/add_items.dart';
 import '../js_compat.dart';
+import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
@@ -35,6 +36,7 @@ const String tutorialPotatoRecipeId = 'RCP-0001';
 const String tutorialCowEnemyId = 'ENM-0001';
 const String tutorialStarterSwordId = 'ITEM-0124';
 const String tutorialStarterShieldId = 'ITEM-0145';
+const String tutorialStarterSlingId = 'ITEM-0225';
 const String tutorialWeaponSlotId = 'SLOT-0001';
 const String tutorialOffhandSlotId = 'SLOT-0002';
 const num tutorialGatherGuaranteeCount = 5;
@@ -226,7 +228,7 @@ ActionRow? tutorialForcedAction(GameDatabase db, PlayerSave save, String activit
 }
 
 num _bagCount(PlayerSave save, String itemId) {
-  var total = 0;
+  num total = 0;
   for (final stack in save.inventory) {
     if (stack.itemId == itemId) total += math.max(0, jsNumber(stack.quantity).floor());
   }
@@ -240,7 +242,7 @@ num _edibleQuantity(GameDatabase db, String itemId, num quantity) {
 
 /// Food in the bag, bank, or food slot. Banking/selling to look empty does not work.
 bool tutorialHasAnyFood(GameDatabase db, PlayerSave save) {
-  var total = 0;
+  num total = 0;
   for (final stack in save.inventory) {
     total += _edibleQuantity(db, stack.itemId, stack.quantity);
   }
@@ -356,7 +358,8 @@ TutorialCowKillResult applyTutorialCowKill(GameDatabase db, PlayerSave save, Str
     return TutorialCowKillResult(save: _stopRunningAction(save), completed: true);
   }
 
-  var next = applyQuestStepUnlocks(db, save);
+  var next = applyQuestDefeatProgress(db, save, enemyId);
+  next = applyQuestStepUnlocks(db, next);
   final finished = completeQuest(db, next, tutorialQuestId, ignoreLocation: true);
   if (!finished.ok || finished.save == null) {
     return TutorialCowKillResult(save: _stopRunningAction(next), completed: false);
@@ -369,11 +372,23 @@ TutorialCowKillResult applyTutorialCowKill(GameDatabase db, PlayerSave save, Str
   return TutorialCowKillResult(save: next, completed: true);
 }
 
+/// Fennel lines that open themselves: food, lock-back, loss, then farewell.
+String? tutorialAutoDialogueId(PlayerSave save) {
+  if (hasTutorialFlag(save, tutorialFoodGrantFlag)) return 'DLG-0018';
+  if (hasTutorialFlag(save, tutorialLockbackFlag)) return 'DLG-0019';
+  if (hasTutorialFlag(save, tutorialLossFlag)) return 'DLG-0017';
+  if (hasTutorialFlag(save, tutorialFarewellFlag)) return 'DLG-0006';
+  return null;
+}
+
 bool isTutorialSwordEquipped(PlayerSave save) =>
     slotStack(save, tutorialWeaponSlotId)?.itemId == tutorialStarterSwordId;
 
-bool isTutorialShieldEquipped(PlayerSave save) =>
-    slotStack(save, tutorialOffhandSlotId)?.itemId == tutorialStarterShieldId;
+/// Shield for most races; Goblins (RACE-0005) start with a sling in the same slot.
+bool isTutorialShieldEquipped(PlayerSave save) {
+  final itemId = slotStack(save, tutorialOffhandSlotId)?.itemId;
+  return itemId == tutorialStarterShieldId || itemId == tutorialStarterSlingId;
+}
 
 TutorialHudHint? tutorialHudHint(GameDatabase db, PlayerSave save) {
   if (hasTutorialFlag(save, tutorialFarewellFlag)) return null;
@@ -430,8 +445,11 @@ TutorialHudHint? tutorialHudHint(GameDatabase db, PlayerSave save) {
       );
     }
     if (!isTutorialShieldEquipped(save)) {
-      return const TutorialHudHint(
-        label: 'Equip your shield',
+      final slingReady =
+          _bagCount(save, tutorialStarterSlingId) > 0 &&
+          _bagCount(save, tutorialStarterShieldId) == 0;
+      return TutorialHudHint(
+        label: slingReady ? 'Equip your sling' : 'Equip your shield',
         locationId: tutorialFarmLocationId,
         spotlight: TutorialSpotlightId.shield,
       );

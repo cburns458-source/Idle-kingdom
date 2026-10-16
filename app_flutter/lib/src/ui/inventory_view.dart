@@ -14,6 +14,7 @@ import 'item_label.dart';
 import 'overlay_notice.dart';
 import 'page_header.dart';
 import 'quantity_sheet.dart';
+import 'tutorial_spotlight.dart';
 
 /// Paper-doll order: 4 columns × 4 rows, spells down the right-hand column.
 const List<String> equipmentGridOrder = <String>[
@@ -936,7 +937,7 @@ class _InventoryViewState extends State<InventoryView> {
   Widget _slotTile(String slotId) {
     final stack = save.equipment.slots[slotId];
     final slot = db.equipmentSlots.where((row) => row.slotId == slotId).firstOrNull;
-    return KeyedSubtree(
+    Widget tile = KeyedSubtree(
       key: Key('equipment-slot-$slotId'),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -978,6 +979,16 @@ class _InventoryViewState extends State<InventoryView> {
         },
       ),
     );
+    final spotlight = switch (slotId) {
+      tutorialWeaponSlotId => TutorialSpotlightId.sword,
+      tutorialOffhandSlotId => TutorialSpotlightId.shield,
+      foodSlotId => TutorialSpotlightId.foodSlot,
+      _ => null,
+    };
+    if (spotlight != null) {
+      tile = TutorialAnchor(id: spotlight, child: tile);
+    }
+    return tile;
   }
 
   Widget _combatStats({

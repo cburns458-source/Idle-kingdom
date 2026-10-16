@@ -37,9 +37,19 @@ function withTotalLevel(save: PlayerSave, target: number): PlayerSave {
 
 function seasoned(save: PlayerSave): PlayerSave {
   return withTotalLevel(
-    { ...save, currentLocationId: 'LOC-0015' },
+    finishGettingStarted({ ...save, currentLocationId: 'LOC-0015' }),
     RACE_CHANGE_TOTAL_LEVEL,
   )
+}
+
+function finishGettingStarted(save: PlayerSave): PlayerSave {
+  return {
+    ...save,
+    quests: [
+      ...save.quests.filter((row) => row.questId !== 'QST-0006'),
+      { questId: 'QST-0006', status: 'completed', progress: 1 },
+    ],
+  }
 }
 
 function payFor(save: PlayerSave, raceId: string): PlayerSave {
@@ -67,9 +77,9 @@ describe('Vesper race change', () => {
     expect(npcsAtLocationForSave(launch, ready, 'LOC-0015').map((npc) => npc['NPC ID'])).toContain(
       VESPER_ID,
     )
-    expect(miniQuestLog(launch, ready, NOW).map((row) => row.questId)).toEqual([
+    expect(miniQuestLog(launch, ready, NOW).map((row) => row.questId)).toContain(
       RACE_CHANGE_MINIQUEST_ID,
-    ])
+    )
   })
 
   it('keeps the miniquest out of the quest journal', () => {

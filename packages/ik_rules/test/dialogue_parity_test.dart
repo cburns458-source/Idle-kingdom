@@ -205,6 +205,12 @@ Map<String, Object?> _runScript(GameDatabase db, PlayerSave initial, List<Object
         ], usedCompost: op['compost'] == true);
       case 'skill':
         out = getSkillProgress(save, str('skillId')).toJson();
+      case 'setFlag':
+        save = withTutorialFlag(save, str('flag'), op['on'] != false);
+      case 'tutorialCowKill':
+        final kill = applyTutorialCowKill(db, save, tutorialCowEnemyId);
+        out = <String, Object?>{'completed': kill.completed};
+        save = kill.save;
       default:
         throw StateError('Unknown dialogue script op: ${op['op']}');
     }

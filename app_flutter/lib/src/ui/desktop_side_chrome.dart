@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
@@ -64,7 +65,9 @@ class DesktopMenuRail extends StatelessWidget {
                 const SizedBox(height: 2),
                 const MutedText('Codex, Library, Timers, and social pages.'),
                 const SizedBox(height: 12),
-                for (final item in nestMenuItems)
+                for (final item in nestMenuItems.where(
+                  (entry) => !isTutorialLocked(controller.save),
+                ))
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Badged(

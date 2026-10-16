@@ -214,8 +214,7 @@ ProductionCraftResult? completeProductionCraft(
   // costs them: rolling before the output means a full bag cannot save them.
   final craftLevel = getSkillProgress(save, skillId).level;
   final successBonus = equippedSuccessChanceBonusPercent(db, save, skillId);
-  final recipeId = jsString(recipe.raw['Recipe ID']);
-  final tutorialCook = shouldGuaranteeTutorialCook(save, recipeId);
+  final tutorialCook = shouldGuaranteeTutorialCook(save, jsString(recipe.raw['Recipe ID']));
   if (!tutorialCook &&
       !rollProductionSuccess(
         craftLevel,
