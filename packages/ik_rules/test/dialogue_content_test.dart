@@ -108,6 +108,7 @@ void main() {
         'DLG-0017',
         'DLG-0018',
         'DLG-0019',
+        'DLG-0020',
       ],
     );
   });
@@ -133,6 +134,60 @@ void main() {
       final owner = flag.split(':')[1];
       if (owner.startsWith('QST-')) expect(conditions, contains('!quest_done:$owner'));
     }
+  });
+
+  test('keeps Getting Started Fennel lines for equip, cow win/loss, food, and lock-back', () {
+    String nodeLine(String nodeId) =>
+        db.dialogueNodes.where((row) => row.nodeId == nodeId).single.line;
+    const sword =
+        "That cow's been trouble all week. Put on your sword and shield before you go near her.";
+    const dagger = "That cow's been trouble all week. Grab your dagger before you go near her.";
+    expect(nodeLine('DNODE-0008'), sword);
+    expect(nodeLine('DNODE-0027'), sword);
+    expect(nodeLine('DNODE-0031'), dagger);
+    expect(nodeLine('DNODE-0032'), dagger);
+    expect(nodeLine('DNODE-0026'), 'Well, that settles that.');
+    expect(nodeLine('DNODE-0028'), "She got you, didn't she? Dust off and try again.");
+    expect(nodeLine('DNODE-0029'), 'Out of food? Here, eat these and get back out there.');
+    expect(nodeLine('DNODE-0030'), "Back so soon? Let's finish what we started.");
+    expect(
+      db.dialogues.where((row) => row.dialogueId == 'DLG-0016').single.condition,
+      'quest_step:QST-0006:QSTP-0022;!has_item:ITEM-0125',
+    );
+    expect(
+      db.dialogues.where((row) => row.dialogueId == 'DLG-0020').single.condition,
+      'quest_step:QST-0006:QSTP-0022;has_item:ITEM-0125',
+    );
+
+    final combat = withQuest(fresh(_farm), 'QST-0006', 'active', {
+      'step:QSTP-0013': 1,
+      'step:QSTP-0014': 1,
+      'step:QSTP-0015': 1,
+      'step:QSTP-0016': 1,
+    });
+    expect(dialoguesForNpc(db, combat, 'NPC-0014'), ['DLG-0016']);
+    expect(startDialogue(db, combat, 'DLG-0016').view?.line, sword);
+    expect(startDialogue(db, combat, 'DLG-0020').ok, isFalse);
+
+    final goblin = setCount(combat, 'ITEM-0125', 1);
+    expect(dialoguesForNpc(db, goblin, 'NPC-0014'), ['DLG-0020']);
+    expect(startDialogue(db, goblin, 'DLG-0020').view?.line, dagger);
+    expect(startDialogue(db, goblin, 'DLG-0016').ok, isFalse);
+
+    final cooked = setCount(
+      withQuest(fresh(_farm), 'QST-0006', 'active', {
+        'step:QSTP-0013': 1,
+        'step:QSTP-0014': 1,
+        'step:QSTP-0015': 1,
+      }),
+      _bakedPotato,
+      5,
+    );
+    expect(picked(cooked, 'DLG-0005', 'DNODE-0007', 'DCH-0009').view?.line, sword);
+    expect(
+      picked(setCount(cooked, 'ITEM-0125', 1), 'DLG-0005', 'DNODE-0007', 'DCH-0041').view?.line,
+      dagger,
+    );
   });
 
   test('keeps a Fennel planting reminder on QSTP-0034', () {

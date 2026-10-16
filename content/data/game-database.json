@@ -35277,7 +35277,7 @@
     {
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Getting Started combat step (QSTP-0022). Equip reminder.",
+      "Notes": "Getting Started combat step (QSTP-0022). Equip reminder when the player is not carrying a Wooden dagger.",
       "Dialogue ID": "DLG-0016",
       "Internal Key": "fennel_getting_started_combat",
       "Display Name": "Fennel",
@@ -35285,12 +35285,12 @@
       "Start Node ID": "DNODE-0027",
       "Repeatable": true,
       "Priority": 10,
-      "Condition": "quest_step:QST-0006:QSTP-0022"
+      "Condition": "quest_step:QST-0006:QSTP-0022;!has_item:ITEM-0125"
     },
     {
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Played after dying to the tutorial cow. Draft line.",
+      "Notes": "Played after dying to the tutorial cow.",
       "Dialogue ID": "DLG-0017",
       "Internal Key": "fennel_getting_started_loss",
       "Display Name": "Fennel",
@@ -35325,6 +35325,19 @@
       "Repeatable": true,
       "Priority": 40,
       "Condition": "flag:tutorial:lockback"
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Getting Started combat step (QSTP-0022). Wooden dagger equip reminder, gated on has_item:ITEM-0125 because dialogue has no race token.",
+      "Dialogue ID": "DLG-0020",
+      "Internal Key": "fennel_getting_started_combat_goblin",
+      "Display Name": "Fennel",
+      "NPC ID": "NPC-0014",
+      "Start Node ID": "DNODE-0032",
+      "Repeatable": true,
+      "Priority": 11,
+      "Condition": "quest_step:QST-0006:QSTP-0022;has_item:ITEM-0125"
     }
   ],
   "DialogueNodes": [
@@ -35567,6 +35580,22 @@
       "Node ID": "DNODE-0030",
       "Dialogue ID": "DLG-0019",
       "Line": "Back so soon? Let's finish what we started."
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Node ID": "DNODE-0031",
+      "Dialogue ID": "DLG-0005",
+      "Line": "That cow's been trouble all week. Grab your dagger before you go near her."
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Node ID": "DNODE-0032",
+      "Dialogue ID": "DLG-0020",
+      "Line": "That cow's been trouble all week. Grab your dagger before you go near her."
     }
   ],
   "DialogueChoices": [
@@ -35672,12 +35701,13 @@
       "Node ID": "DNODE-0007",
       "Label": "Five baked potatoes, as promised.",
       "Next Node ID": "DNODE-0008",
-      "Condition": "step_ready:QST-0006:QSTP-0016",
+      "Condition": "step_ready:QST-0006:QSTP-0016;!has_item:ITEM-0125",
       "Action": "show_items:QST-0006:QSTP-0016",
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Show step. Nothing is taken."
+      "Notes": "Show step. Nothing is taken. Hidden when carrying a Wooden dagger so the goblin follow-up is the only show choice.",
+      "Hidden": true
     },
     {
       "Choice ID": "DCH-0010",
@@ -36060,6 +36090,43 @@
       "Next Node ID": null,
       "Condition": null,
       "Action": "clear_flag:tutorial:lockback",
+      "Sort Order": 1
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Show step goblin follow-up. Nothing is taken. Hidden unless carrying a Wooden dagger.",
+      "Choice ID": "DCH-0041",
+      "Node ID": "DNODE-0007",
+      "Label": "Five baked potatoes, as promised.",
+      "Next Node ID": "DNODE-0031",
+      "Condition": "step_ready:QST-0006:QSTP-0016;has_item:ITEM-0125",
+      "Action": "show_items:QST-0006:QSTP-0016",
+      "Hidden": true,
+      "Sort Order": 1
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Choice ID": "DCH-0042",
+      "Node ID": "DNODE-0031",
+      "Label": "Thank you, Fennel.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Choice ID": "DCH-0043",
+      "Node ID": "DNODE-0032",
+      "Label": "I'll handle her.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
       "Sort Order": 1
     }
   ],

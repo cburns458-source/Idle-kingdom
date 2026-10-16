@@ -115,6 +115,7 @@ describe('Fennel and King dialogue content', () => {
       'DLG-0017',
       'DLG-0018',
       'DLG-0019',
+      'DLG-0020',
     ])
     const ids = new Set(shipped.map((row) => row['Dialogue ID']))
     const nodes = rawDatabase.DialogueNodes.filter((row: { 'Dialogue ID': string }) => ids.has(row['Dialogue ID']))
@@ -142,6 +143,55 @@ describe('Fennel and King dialogue content', () => {
   it('never mentions the bank or says items must be in the bag', () => {
     const lines = db.DialogueNodes.map((row) => row.Line)
     expect(lines.filter((line) => /\bbank\b|\bbag\b|\bpack\b|inventory/i.test(line))).toEqual([])
+  })
+
+  it('keeps Getting Started Fennel lines for equip, cow win/loss, food, and lock-back', () => {
+    const nodeLine = (nodeId: string) => db.DialogueNodes.find((row) => row['Node ID'] === nodeId)?.Line
+    const SWORD = "That cow's been trouble all week. Put on your sword and shield before you go near her."
+    const DAGGER = "That cow's been trouble all week. Grab your dagger before you go near her."
+    expect(nodeLine('DNODE-0008')).toBe(SWORD)
+    expect(nodeLine('DNODE-0027')).toBe(SWORD)
+    expect(nodeLine('DNODE-0031')).toBe(DAGGER)
+    expect(nodeLine('DNODE-0032')).toBe(DAGGER)
+    expect(nodeLine('DNODE-0026')).toBe('Well, that settles that.')
+    expect(nodeLine('DNODE-0028')).toBe("She got you, didn't she? Dust off and try again.")
+    expect(nodeLine('DNODE-0029')).toBe('Out of food? Here, eat these and get back out there.')
+    expect(nodeLine('DNODE-0030')).toBe("Back so soon? Let's finish what we started.")
+    expect(db.Dialogues.find((row) => row['Dialogue ID'] === 'DLG-0016')?.Condition).toBe(
+      'quest_step:QST-0006:QSTP-0022;!has_item:ITEM-0125',
+    )
+    expect(db.Dialogues.find((row) => row['Dialogue ID'] === 'DLG-0020')?.Condition).toBe(
+      'quest_step:QST-0006:QSTP-0022;has_item:ITEM-0125',
+    )
+
+    const combat = withQuest(fresh(FARM), 'QST-0006', 'active', {
+      'step:QSTP-0013': 1,
+      'step:QSTP-0014': 1,
+      'step:QSTP-0015': 1,
+      'step:QSTP-0016': 1,
+    })
+    expect(dialoguesForNpc(db, combat, 'NPC-0014')).toEqual(['DLG-0016'])
+    expect(startDialogue(db, combat, 'DLG-0016').view?.line).toBe(SWORD)
+    expect(startDialogue(db, combat, 'DLG-0020').ok).toBe(false)
+
+    const goblin = setCount(combat, 'ITEM-0125', 1)
+    expect(dialoguesForNpc(db, goblin, 'NPC-0014')).toEqual(['DLG-0020'])
+    expect(startDialogue(db, goblin, 'DLG-0020').view?.line).toBe(DAGGER)
+    expect(startDialogue(db, goblin, 'DLG-0016').ok).toBe(false)
+
+    const cooked = setCount(
+      withQuest(fresh(FARM), 'QST-0006', 'active', {
+        'step:QSTP-0013': 1,
+        'step:QSTP-0014': 1,
+        'step:QSTP-0015': 1,
+      }),
+      BAKED_POTATO,
+      5,
+    )
+    const shown = picked(cooked, 'DLG-0005', 'DNODE-0007', 'DCH-0009')
+    expect(shown.view?.line).toBe(SWORD)
+    const goblinShown = picked(setCount(cooked, 'ITEM-0125', 1), 'DLG-0005', 'DNODE-0007', 'DCH-0041')
+    expect(goblinShown.view?.line).toBe(DAGGER)
   })
 
   it('keeps a Fennel planting reminder on QSTP-0034', () => {
