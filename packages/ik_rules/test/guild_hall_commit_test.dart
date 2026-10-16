@@ -131,4 +131,96 @@ void main() {
     expect(committed.storehouse, isEmpty);
     expect(committed.completedTiers, isEmpty);
   });
+
+  test('does not treat catch-up ore, food, arrows, or gold as hall credit', () {
+    const hostedInventory = <InventoryStack>[
+      InventoryStack(itemId: 'ITEM-0003', quantity: 10),
+      InventoryStack(itemId: 'ITEM-0058', quantity: 5),
+      InventoryStack(itemId: 'ITEM-ARROWS', quantity: 8),
+      InventoryStack(itemId: 'ITEM-0015', quantity: 3),
+    ];
+    const caughtUpInventory = <InventoryStack>[
+      InventoryStack(itemId: 'ITEM-0003', quantity: 7),
+      InventoryStack(itemId: 'ITEM-0058', quantity: 3),
+      InventoryStack(itemId: 'ITEM-ARROWS', quantity: 5),
+      InventoryStack(itemId: 'ITEM-0015', quantity: 3),
+    ];
+    final afterInventory = <InventoryStack>[
+      InventoryStack(itemId: 'ITEM-0003', quantity: 7),
+      InventoryStack(itemId: 'ITEM-0058', quantity: 3),
+      InventoryStack(itemId: 'ITEM-ARROWS', quantity: 5),
+      InventoryStack(itemId: 'ITEM-0015', quantity: 2),
+    ];
+
+    final naive = commitGuildHallFromPlayerSaves(
+      previousGold: 100,
+      nextGold: 90,
+      previousInventory: hostedInventory,
+      nextInventory: afterInventory,
+      hallGoldContributed: 0,
+      userId: 'u1',
+    );
+    expect(naive.ok, isTrue);
+    expect(naive.goldTaken, 10);
+    expect(naive.storehouse.map((stack) => (stack.itemId, stack.quantity)), <(String, num)>[
+      ('ITEM-0003', 3),
+      ('ITEM-0058', 2),
+      ('ITEM-ARROWS', 3),
+      ('ITEM-0015', 1),
+    ]);
+
+    final fromCaughtUp = commitGuildHallFromPlayerSaves(
+      previousGold: 130,
+      nextGold: 90,
+      previousInventory: caughtUpInventory,
+      nextInventory: afterInventory,
+      hallGoldContributed: 0,
+      userId: 'u1',
+    );
+    expect(fromCaughtUp.ok, isTrue);
+    expect(fromCaughtUp.goldTaken, 40);
+    expect(fromCaughtUp.storehouse.map((stack) => (stack.itemId, stack.quantity)), <(String, num)>[
+      ('ITEM-0015', 1),
+    ]);
+  });
+
+  test('refuses gold past the cap instead of truncating it', () {
+    final overpay = commitGuildHallFromPlayerSaves(
+      previousGold: 500,
+      nextGold: 200,
+      previousInventory: const <InventoryStack>[],
+      nextInventory: const <InventoryStack>[],
+      hallGoldContributed: 999900,
+      userId: 'u1',
+    );
+    expect(overpay.ok, isFalse);
+    expect(overpay.reason, 'That would go past the gold cap.');
+
+    final atCap = commitGuildHallFromPlayerSaves(
+      previousGold: 80,
+      nextGold: 70,
+      previousInventory: const <InventoryStack>[],
+      nextInventory: const <InventoryStack>[],
+      hallGoldContributed: guildHallGoldCap,
+      userId: 'u1',
+    );
+    expect(atCap.ok, isFalse);
+    expect(atCap.reason, 'The gold total is already at its cap.');
+  });
+
+  test('refuses a bank change that does not match the save', () {
+    final refused = commitGuildHallFromPlayerSaves(
+      previousGold: 40,
+      nextGold: 40,
+      previousInventory: const <InventoryStack>[InventoryStack(itemId: 'ITEM-0015', quantity: 5)],
+      nextInventory: const <InventoryStack>[InventoryStack(itemId: 'ITEM-0015', quantity: 5)],
+      hallGoldContributed: 0,
+      userId: 'u1',
+      proposal: const GuildHallCommitProposal(
+        bankItems: <InventoryStack>[InventoryStack(itemId: 'ITEM-0015', quantity: 1)],
+      ),
+    );
+    expect(refused.ok, isFalse);
+    expect(refused.reason, guildHallBankMismatchRefusal);
+  });
 }

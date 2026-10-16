@@ -10,7 +10,7 @@ import { withBankDepositBoxActivities } from '../inventory/bank'
 import { withGuildHallRoomActivities } from '../guild/rooms'
 
 /** Bump when Launch content rows change so browsers skip stale JSON. */
-export const DATABASE_CONTENT_VERSION = '2026-10-16-alchemy-prices'
+export const DATABASE_CONTENT_VERSION = '2026-10-16-guild-hall-rooms'
 export const DATABASE_URL = `/data/game-database.json?v=${DATABASE_CONTENT_VERSION}`
 
 export interface LoadedDatabase {

@@ -9,7 +9,12 @@ import { getQuestProgress } from '../quests/quests'
 import { createNewSave } from '../save/saveStore'
 import type { InventoryStack } from '../save/types'
 import { commitGuildHallFromPlayerSaves } from '../guild/commit'
-import { emptyGuildHallState, normalizeGuildHallState } from '../guild/economy'
+import {
+  emptyGuildHallState,
+  GUILD_HALL_GOLD_CAP_REFUSAL,
+  GUILD_HALL_GOLD_OVERPAY_REFUSAL,
+  normalizeGuildHallState,
+} from '../guild/economy'
 import { GUILD_HALL_GOLD_CAP } from '../guild/hall'
 import {
   applyGameCommand,
@@ -226,7 +231,7 @@ describe('phase 2 authority', () => {
     if (cedar.ok) expect(cedar.hall?.storehouse).toEqual([{ itemId: 'ITEM-0015', quantity: 1 }])
   })
 
-  it('chips gold into one running total, refuses a short purse, and spends the remainder once', () => {
+  it('chips gold into one running total and refuses a short purse, overpay, or a full cap', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const hall = normalizeGuildHallState({
       goldContributed: 999_900,
@@ -246,10 +251,24 @@ describe('phase 2 authority', () => {
       guildRole: 'member',
     })
     expect(short.ok).toBe(false)
+    if (!short.ok) expect(short.reason).toBe('Not enough gold.')
+
+    const overpay = applyGameCommand(rawDatabase, {
+      command: 'guild_chip_in_hall_gold',
+      args: { amount: 200 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      userId: 'u1',
+      guildRole: 'member',
+    })
+    expect(overpay).toEqual({ ok: false, reason: GUILD_HALL_GOLD_OVERPAY_REFUSAL })
+    expect(save.gold).toBe(500)
 
     const first = applyGameCommand(rawDatabase, {
       command: 'guild_chip_in_hall_gold',
-      args: { amount: 200 },
+      args: { amount: 100 },
       save,
       nowMs: START_MS,
       random: () => 0,
@@ -274,10 +293,22 @@ describe('phase 2 authority', () => {
       userId: 'u1',
       guildRole: 'member',
     })
-    expect(second.ok).toBe(true)
-    if (!second.ok) return
-    expect(second.goldChipped).toBe(0)
-    expect(second.save.gold).toBe(400)
+    expect(second).toEqual({ ok: false, reason: GUILD_HALL_GOLD_CAP_REFUSAL })
+    expect(first.save.gold).toBe(400)
+  })
+
+  it('refuses a hall gold chip-in when the guild role is missing', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const refused = applyGameCommand(rawDatabase, {
+      command: 'guild_chip_in_hall_gold',
+      args: { amount: 10 },
+      save: { ...createNewSave(launch, START_MS), gold: 50 },
+      nowMs: START_MS,
+      random: () => 0,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+    })
+    expect(refused).toEqual({ ok: false, reason: 'Recruits cannot chip in gold.' })
   })
 
   it('ignores a forged hall payload that claims the gold cap without deducting gold', () => {
@@ -311,6 +342,8 @@ describe('phase 2 authority', () => {
         storehouse: honest.hall?.storehouse,
       },
     })
+    expect(forged.ok).toBe(true)
+    if (!forged.ok) return
     expect(forged.goldTaken).toBe(0)
     expect(forged.hall.goldContributed).toBe(0)
     expect(forged.hall.completedTiers).toEqual([])
@@ -634,5 +667,122 @@ describe('phase 2 authority', () => {
       if (!stopped.ok) return
       expect(stopped.save.currentActivityId).toBeNull()
     })
+  })
+
+  it('does not treat catch-up ore, food, arrows, or gold as a hall donation', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    let hosted = {
+      ...createNewSave(launch, START_MS),
+      currentLocationId: 'LOC-0001',
+      gold: 100,
+      inventory: [
+        { itemId: 'ITEM-0003', quantity: 10 },
+        { itemId: 'ITEM-0058', quantity: 5 },
+        { itemId: 'ITEM-ARROWS', quantity: 8 },
+        { itemId: 'ITEM-0015', quantity: 3 },
+      ],
+    }
+    hosted = beginActivitySave(hosted, 'ACT-0021', new Date(START_MS).toISOString())
+    const generated = generateNextAction(launch, hosted, 'ACT-0021', () => 0.1, START_MS)
+    hosted = {
+      ...generated!.save,
+      unattendedProgressAt: new Date(START_MS).toISOString(),
+      gold: 100,
+      inventory: [
+        { itemId: 'ITEM-0003', quantity: 10 },
+        { itemId: 'ITEM-0058', quantity: 5 },
+        { itemId: 'ITEM-ARROWS', quantity: 8 },
+        { itemId: 'ITEM-0015', quantity: 3 },
+      ],
+    }
+
+    const later = START_MS + 30_000
+    const caughtUp = applyGameCommand(rawDatabase, {
+      command: 'set_meta',
+      args: {},
+      save: hosted,
+      nowMs: later,
+      random: () => 0.1,
+    })
+    expect(caughtUp.ok).toBe(true)
+    if (!caughtUp.ok) return
+    expect(caughtUp.saveBeforeCommand).toBeDefined()
+
+    const cedarIndex = caughtUp.save.inventory.findIndex((stack) => stack.itemId === 'ITEM-0015')
+    expect(cedarIndex).toBeGreaterThanOrEqual(0)
+    const donated = applyGameCommand(rawDatabase, {
+      command: 'guild_donate_hall_item',
+      args: { inventoryIndex: cedarIndex, itemId: 'ITEM-0015', quantity: 1 },
+      save: hosted,
+      nowMs: later,
+      random: () => 0.1,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+      guildRole: 'member',
+    })
+    expect(donated.ok).toBe(true)
+    if (!donated.ok) return
+    expect(donated.saveBeforeCommand?.gold).toBe(caughtUp.save.gold)
+    expect(donated.saveBeforeCommand?.inventory).toEqual(caughtUp.save.inventory)
+    expect(donated.hall?.storehouse).toEqual([{ itemId: 'ITEM-0015', quantity: 1 }])
+
+    const fromCaughtUp = commitGuildHallFromPlayerSaves({
+      previousGold: donated.saveBeforeCommand!.gold,
+      nextGold: donated.save.gold,
+      previousInventory: donated.saveBeforeCommand!.inventory,
+      nextInventory: donated.save.inventory,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+    })
+    expect(fromCaughtUp.ok).toBe(true)
+    if (!fromCaughtUp.ok) return
+    expect(fromCaughtUp.goldTaken).toBe(0)
+    expect(fromCaughtUp.hall.storehouse).toEqual([{ itemId: 'ITEM-0015', quantity: 1 }])
+
+    const chipped = applyGameCommand(rawDatabase, {
+      command: 'guild_chip_in_hall_gold',
+      args: { amount: 10 },
+      save: hosted,
+      nowMs: later,
+      random: () => 0.1,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+      guildRole: 'member',
+    })
+    expect(chipped.ok).toBe(true)
+    if (!chipped.ok) return
+    expect(chipped.goldChipped).toBe(10)
+    expect(chipped.save.gold).toBe(chipped.saveBeforeCommand!.gold - 10)
+
+    const rightGold = commitGuildHallFromPlayerSaves({
+      previousGold: chipped.saveBeforeCommand!.gold,
+      nextGold: chipped.save.gold,
+      previousInventory: chipped.saveBeforeCommand!.inventory,
+      nextInventory: chipped.save.inventory,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+    })
+    expect(rightGold.ok).toBe(true)
+    if (!rightGold.ok) return
+    expect(rightGold.goldTaken).toBe(10)
+
+    const naive = commitGuildHallFromPlayerSaves({
+      previousGold: hosted.gold,
+      nextGold: chipped.save.gold,
+      previousInventory: hosted.inventory,
+      nextInventory: chipped.save.inventory,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+    })
+    expect(naive.ok).toBe(true)
+    if (!naive.ok) return
+    const naiveIds = new Set(naive.hall.storehouse.map((stack) => stack.itemId))
+    if (hosted.gold !== chipped.saveBeforeCommand!.gold) {
+      expect(naive.goldTaken).not.toBe(10)
+    }
+    const catchUpConsumedOre =
+      (hosted.inventory.find((stack) => stack.itemId === 'ITEM-0003')?.quantity ?? 0) >
+      (chipped.saveBeforeCommand!.inventory.find((stack) => stack.itemId === 'ITEM-0003')?.quantity ?? 0)
+    if (catchUpConsumedOre) expect(naiveIds.has('ITEM-0003')).toBe(true)
   })
 })

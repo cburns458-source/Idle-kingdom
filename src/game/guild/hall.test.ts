@@ -40,6 +40,7 @@ describe('guild hall tiers', () => {
   it('recruits cannot chip in gold; member and above can', () => {
     expect(canChipInGuildGold('recruit')).toBe(false)
     expect(canPayGuildDebt('recruit')).toBe(false)
+    expect(canChipInGuildGold('')).toBe(false)
     expect(canChipInGuildGold('member')).toBe(true)
     expect(canChipInGuildGold('leader')).toBe(true)
   })

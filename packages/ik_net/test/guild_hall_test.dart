@@ -47,6 +47,11 @@ void main() {
     expect(short.ok, isFalse);
     expect(short.reason, guildHallNotEnoughGold);
 
+    final overpay = backend.payGuildDebt(leader.userId, save, guildHallGoldCap + 1);
+    expect(overpay.ok, isFalse);
+    expect(overpay.reason, guildHallGoldOverpayRefusal);
+    expect(overpay.save, isNull);
+
     final paid = backend.payGuildDebt(leader.userId, save, guildHallGoldCap);
     expect(paid.ok, isTrue);
     expect(paid.paidOffJustNow, isTrue);
@@ -55,9 +60,9 @@ void main() {
     expect(paid.save!.gold, save.gold - guildHallGoldCap);
 
     final again = backend.payGuildDebt(leader.userId, paid.save!, 10);
-    expect(again.ok, isTrue);
-    expect(again.goldChipped, 0);
-    expect(again.save!.gold, paid.save!.gold);
+    expect(again.ok, isFalse);
+    expect(again.reason, guildHallGoldCapRefusal);
+    expect(paid.save!.gold, save.gold - guildHallGoldCap);
   });
 
   test('a donation fills the store house and stays there until a tier is met', () {
@@ -376,6 +381,7 @@ void main() {
         completedTiers: <String>[guildHallTierBuild, guildHallTierBank],
       ),
     );
+    expect(forged.ok, isTrue);
     expect(forged.goldTaken, 0);
     expect(forged.goldContributed, 0);
     expect(forged.completedTiers, isEmpty);

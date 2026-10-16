@@ -1,6 +1,13 @@
 import type { InventoryStack } from '../save/types'
 import { GUILD_HALL_GOLD_CAP, settleGuildHallTiers } from './hall'
-import { normalizeGuildHallState, type GuildHallState } from './economy'
+import {
+  GUILD_HALL_GOLD_CAP_REFUSAL,
+  GUILD_HALL_GOLD_OVERPAY_REFUSAL,
+  normalizeGuildHallState,
+  type GuildHallState,
+} from './economy'
+
+export const GUILD_HALL_BANK_MISMATCH_REFUSAL = 'The guild bank change did not match the save.'
 
 type StackLike = {
   itemId: string
@@ -28,12 +35,15 @@ export type GuildHallCommitInput = {
   userId: string
 }
 
-export type GuildHallCommitResult = {
-  goldTaken: number
-  hall: GuildHallState
-  bankItems: StackLike[]
-  finishedNow: string[]
-}
+export type GuildHallCommitResult =
+  | {
+      ok: true
+      goldTaken: number
+      hall: GuildHallState
+      bankItems: StackLike[]
+      finishedNow: string[]
+    }
+  | { ok: false; reason: string }
 
 const KEY_SEP = '\u001f'
 
@@ -123,15 +133,22 @@ export function takeFromGuildHallStorehouse(
 }
 
 /**
- * Hall gold, storehouse, and finished tiers from what the hosted save actually
- * lost. A payload that names `goldContributed` / `completedTiers` is ignored.
+ * Hall gold, storehouse, and finished tiers from the save immediately before
+ * the hall command versus after it. Catch-up must already be applied to
+ * `previous*`. A payload that names `goldContributed` / `completedTiers` is
+ * ignored. Over-cap gold and a mismatched bank are refused, not truncated.
  */
 export function commitGuildHallFromPlayerSaves(input: GuildHallCommitInput): GuildHallCommitResult {
   const current = normalizeGuildHallState(input.hall)
-  const goldTaken = Math.min(
-    goldTakenFromPlayerSaves(input.previousGold, input.nextGold),
-    Math.max(0, GUILD_HALL_GOLD_CAP - current.goldContributed),
-  )
+  const remaining = Math.max(0, GUILD_HALL_GOLD_CAP - current.goldContributed)
+  const goldDelta = goldTakenFromPlayerSaves(input.previousGold, input.nextGold)
+  if (goldDelta > remaining) {
+    return {
+      ok: false,
+      reason: remaining <= 0 ? GUILD_HALL_GOLD_CAP_REFUSAL : GUILD_HALL_GOLD_OVERPAY_REFUSAL,
+    }
+  }
+  const goldTaken = goldDelta
   const goldContributed = current.goldContributed + goldTaken
   const goldContributedBy = { ...current.goldContributedBy }
   if (goldTaken > 0 && input.userId) {
@@ -146,14 +163,15 @@ export function commitGuildHallFromPlayerSaves(input: GuildHallCommitInput): Gui
   const proposedStore = qtyByKey(input.proposed?.storehouse ?? current.storehouse)
 
   let storehouse = [...current.storehouse]
-  let bankAccepted = true
   for (const key of allKeys(previousInv, nextInv, oldBank, proposedBank, oldStore, proposedStore)) {
     const lost = Math.max(0, qtyOf(previousInv, key) - qtyOf(nextInv, key))
     const gained = Math.max(0, qtyOf(nextInv, key) - qtyOf(previousInv, key))
     const bankGain = Math.min(Math.max(0, qtyOf(proposedBank, key) - qtyOf(oldBank, key)), lost)
     const bankLoss = Math.min(Math.max(0, qtyOf(oldBank, key) - qtyOf(proposedBank, key)), gained)
     const expectedBank = qtyOf(oldBank, key) + bankGain - bankLoss
-    if (qtyOf(proposedBank, key) !== expectedBank) bankAccepted = false
+    if (qtyOf(proposedBank, key) !== expectedBank) {
+      return { ok: false, reason: GUILD_HALL_BANK_MISMATCH_REFUSAL }
+    }
     const donated = lost - bankGain
     const withdrawn = Math.min(
       gained - bankLoss,
@@ -173,9 +191,10 @@ export function commitGuildHallFromPlayerSaves(input: GuildHallCommitInput): Gui
     completedTiers: settled.completedTiers,
   })
   return {
+    ok: true,
     goldTaken,
     hall,
-    bankItems: bankAccepted ? (input.proposed?.bankItems ?? input.previousBankItems ?? []) : (input.previousBankItems ?? []),
+    bankItems: input.proposed?.bankItems ?? input.previousBankItems ?? [],
     finishedNow: settled.finishedNow.map((tier) => tier.id),
   }
 }

@@ -1,11 +1,13 @@
--- Guild hall writes take gold and materials from the hosted save delta.
+-- Guild hall writes take gold and materials from the save delta.
 --
 -- guild_commit_hall used to write p_hall.gold_contributed (capped at 1M) and
 -- p_hall.completed_tiers as-is. A modified client that reached this RPC could
--- unlock every room without paying. The running total is now previous save
--- gold minus new save gold. Storehouse stacks are items that left the bag
--- (and did not go into the bank). Tiers settle here from that gold and those
--- stacks. Claimed totals are ignored.
+-- unlock every room without paying. The running total is now gold the save
+-- lost between p_before (caught-up, immediately before the hall command) and
+-- p_payload. Storehouse stacks are items that left that bag (and did not go
+-- into the bank). Tiers settle here from that gold and those stacks. Claimed
+-- totals are ignored. Gold past the 1M cap and a mismatched bank are refused
+-- rather than truncated or kept.
 
 create or replace function public.guild_hall_gold_taken_from_saves(p_before jsonb, p_after jsonb)
 returns numeric
@@ -264,6 +266,7 @@ set search_path = ''
 as $$
 declare
   v_taken numeric;
+  v_remaining numeric;
   v_gold numeric;
   v_by jsonb;
   v_store jsonb;
@@ -284,15 +287,21 @@ declare
   v_bank_loss numeric;
   v_donated numeric;
   v_withdrawn numeric;
-  v_bank_ok boolean := true;
   v_settled jsonb;
 begin
-  v_taken := least(
-    1000000 - greatest(0, coalesce((p_current ->> 'gold_contributed')::numeric, 0)),
-    public.guild_hall_gold_taken_from_saves(p_before, p_after)
+  v_remaining := greatest(
+    0,
+    1000000 - greatest(0, coalesce((p_current ->> 'gold_contributed')::numeric, 0))
   );
-  if v_taken < 0 then
-    v_taken := 0;
+  v_taken := public.guild_hall_gold_taken_from_saves(p_before, p_after);
+  if v_taken > v_remaining then
+    return jsonb_build_object(
+      'ok', false,
+      'reason', case
+        when v_remaining <= 0 then 'The gold total is already at its cap.'
+        else 'That would go past the gold cap.'
+      end
+    );
   end if;
   v_gold := least(
     1000000,
@@ -346,7 +355,10 @@ begin
     );
     if coalesce((v_prop_bank ->> v_key)::numeric, 0)
        is distinct from (coalesce((v_old_bank ->> v_key)::numeric, 0) + v_bank_gain - v_bank_loss) then
-      v_bank_ok := false;
+      return jsonb_build_object(
+        'ok', false,
+        'reason', 'The guild bank change did not match the save.'
+      );
     end if;
     v_donated := v_lost - v_bank_gain;
     v_withdrawn := least(
@@ -363,9 +375,7 @@ begin
     end if;
   end loop;
 
-  if v_bank_ok then
-    v_bank := coalesce(p_proposed -> 'bank_items', v_bank);
-  end if;
+  v_bank := coalesce(p_proposed -> 'bank_items', v_bank);
 
   v_settled := public.guild_hall_settle_tiers(
     v_store,
@@ -374,6 +384,7 @@ begin
   );
 
   return jsonb_build_object(
+    'ok', true,
     'gold_taken', v_taken,
     'gold_contributed', v_gold,
     'gold_contributed_by', v_by,
@@ -385,12 +396,14 @@ end;
 $$;
 
 comment on function public.guild_hall_apply_save_deltas(jsonb, jsonb, jsonb, jsonb, uuid) is
-  'Hall gold, storehouse, and tiers from hosted save deltas. Ignores claimed gold_contributed and completed_tiers.';
+  'Hall gold, storehouse, and tiers from the caught-up save versus the post-command save. Ignores claimed gold_contributed and completed_tiers. Refuses over-cap gold and a mismatched bank.';
 
 revoke all on function public.guild_hall_apply_save_deltas(jsonb, jsonb, jsonb, jsonb, uuid)
   from public, anon, authenticated;
 grant execute on function public.guild_hall_apply_save_deltas(jsonb, jsonb, jsonb, jsonb, uuid)
   to service_role;
+
+drop function if exists public.guild_commit_hall(uuid, integer, bigint, jsonb, bigint, timestamptz, jsonb, jsonb);
 
 create or replace function public.guild_commit_hall(
   p_user_id uuid,
@@ -400,6 +413,7 @@ create or replace function public.guild_commit_hall(
   p_rng_state bigint,
   p_now timestamptz,
   p_hall jsonb,
+  p_before jsonb,
   p_log jsonb default '[]'::jsonb
 )
 returns jsonb
@@ -410,15 +424,18 @@ as $$
 declare
   v_member public.guild_members;
   v_hall public.guild_halls;
-  v_old_payload jsonb;
   v_old_version integer;
   v_version integer;
   v_applied jsonb;
   v_gold numeric;
+  v_taken numeric;
   v_entry jsonb;
 begin
   if p_user_id is null then
     return jsonb_build_object('ok', false, 'reason', 'Sign in first.');
+  end if;
+  if p_before is null then
+    return jsonb_build_object('ok', false, 'reason', 'Caught-up save missing.');
   end if;
 
   select * into v_member
@@ -449,8 +466,8 @@ begin
     return jsonb_build_object('ok', false, 'conflict', 'hall', 'reason', 'Hall changed. Sync and retry.');
   end if;
 
-  select payload, version
-    into v_old_payload, v_old_version
+  select version
+    into v_old_version
     from public.player_saves
    where user_id = p_user_id
    for update;
@@ -462,7 +479,7 @@ begin
   end if;
 
   v_applied := public.guild_hall_apply_save_deltas(
-    v_old_payload,
+    p_before,
     p_payload,
     jsonb_build_object(
       'gold_contributed', v_hall.gold_contributed,
@@ -474,7 +491,14 @@ begin
     coalesce(p_hall, '{}'::jsonb),
     p_user_id
   );
+  if coalesce((v_applied ->> 'ok')::boolean, false) is not true then
+    return jsonb_build_object(
+      'ok', false,
+      'reason', coalesce(v_applied ->> 'reason', 'Could not update the hall.')
+    );
+  end if;
   v_gold := coalesce((v_applied ->> 'gold_contributed')::numeric, 0);
+  v_taken := coalesce((v_applied ->> 'gold_taken')::numeric, 0);
 
   update public.player_saves
      set payload = p_payload,
@@ -507,6 +531,9 @@ begin
   if jsonb_typeof(p_log) = 'array' then
     for v_entry in select * from jsonb_array_elements(p_log)
     loop
+      if coalesce(v_entry ->> 'kind', '') = 'donation' then
+        v_entry := jsonb_set(coalesce(v_entry, '{}'::jsonb), '{gold}', to_jsonb(v_taken));
+      end if;
       perform public.guild_append_log(v_member.guild_id, v_entry);
     end loop;
   end if;
@@ -515,14 +542,14 @@ begin
     'ok', true,
     'version', v_version,
     'hall_revision', v_hall.hall_revision,
-    'gold_taken', coalesce((v_applied ->> 'gold_taken')::numeric, 0),
+    'gold_taken', v_taken,
     'gold_contributed', v_gold,
     'completed_tiers', v_hall.completed_tiers
   );
 end;
 $$;
 
-revoke all on function public.guild_commit_hall(uuid, integer, bigint, jsonb, bigint, timestamptz, jsonb, jsonb)
+revoke all on function public.guild_commit_hall(uuid, integer, bigint, jsonb, bigint, timestamptz, jsonb, jsonb, jsonb)
   from public, anon, authenticated;
-grant execute on function public.guild_commit_hall(uuid, integer, bigint, jsonb, bigint, timestamptz, jsonb, jsonb)
+grant execute on function public.guild_commit_hall(uuid, integer, bigint, jsonb, bigint, timestamptz, jsonb, jsonb, jsonb)
   to service_role;

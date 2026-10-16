@@ -1162,6 +1162,7 @@ async function commitGuildHall(
   hallContext: HallContext,
   result: {
     save: unknown
+    saveBeforeCommand?: unknown
     hall?: {
       goldContributed: number
       goldContributedBy: Record<string, number>
@@ -1177,18 +1178,23 @@ async function commitGuildHall(
 ): Promise<{ ok: true; version: number } | { ok: false; response: Response }> {
   const hall = result.hall
   if (!hall) return { ok: false, response: json({ error: 'Guild hall not found.', phase: 2 }, 400) }
+  if (result.saveBeforeCommand == null) {
+    return { ok: false, response: json({ error: 'Caught-up save missing.', phase: 2 }, 400) }
+  }
   const logs = (result.logEntries ?? []).map((entry) => ({
     ...entry,
     actor_username: entry.actor_username || hallContext.username,
   }))
   // Gold totals and completed tiers in this payload are hints only.
-  // guild_commit_hall credits gold the hosted save lost, materials that left
-  // the bag, and settles tiers itself. A forged gold_contributed is ignored.
+  // guild_commit_hall diffs the caught-up save from right before the hall
+  // command against the post-command save. Catch-up consumption is not a
+  // donation. A forged gold_contributed is ignored.
   const { data, error } = await admin.rpc('guild_commit_hall', {
     p_user_id: userId,
     p_expected_save_version: expectedVersion,
     p_expected_hall_revision: hallContext.hallRevision,
     p_payload: result.save,
+    p_before: result.saveBeforeCommand,
     p_rng_state: rngState,
     p_now: new Date(nowMs).toISOString(),
     p_hall: {

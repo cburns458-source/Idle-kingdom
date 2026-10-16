@@ -215,6 +215,8 @@ export type GameCommandResult =
   | {
       ok: true
       save: PlayerSave
+      /** Hosted save after catch-up, before this intent. Hall SQL diffs this. */
+      saveBeforeCommand?: PlayerSave
       hall?: GuildHallState
       bank?: GuildBankState
       logEntries?: Array<Record<string, unknown>>
@@ -534,7 +536,9 @@ function applyExistingCommand(
   save = advanceSession(db, unattended.save, nowMs, random, {
     guildmatesInHall: options.guildmatesInHall,
   }).save
+  const saveBeforeCommand = save
 
+  const commanded = ((): GameCommandResult => {
   switch (command) {
     case 'set_meta':
       return applyMeta(db, save, args)
@@ -865,7 +869,10 @@ function applyExistingCommand(
     case 'guild_pay_hall_debt':
     case 'guild_chip_in_hall_gold': {
       if (!options.hall || !options.userId) return failed('Join a guild first.')
-      if (options.guildRole && !canChipInGuildGold(options.guildRole) && !canPayGuildDebt(options.guildRole)) {
+      if (
+        !canChipInGuildGold(options.guildRole ?? '') &&
+        !canPayGuildDebt(options.guildRole ?? '')
+      ) {
         return failed('Recruits cannot chip in gold.')
       }
       const amount = asNumber(args.amount)
@@ -1006,6 +1013,8 @@ function applyExistingCommand(
     default:
       return failed('Unknown command.')
   }
+  })()
+  return commanded.ok ? { ...commanded, saveBeforeCommand } : commanded
 }
 
 function resolveRankedPvpFightCommand(

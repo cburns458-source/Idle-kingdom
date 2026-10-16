@@ -27,6 +27,8 @@ describe('game function hall commit (forged payload)', () => {
         completedTiers: [GUILD_HALL_TIER_BUILD],
       },
     })
+    expect(committed.ok).toBe(true)
+    if (!committed.ok) return
     expect(committed.goldTaken).toBe(0)
     expect(committed.hall.goldContributed).toBe(0)
     expect(committed.hall.completedTiers).toEqual([])
@@ -42,6 +44,8 @@ describe('game function hall commit (forged payload)', () => {
       userId: 'forged-client',
       proposed: { goldContributed: GUILD_HALL_GOLD_CAP },
     })
+    expect(committed.ok).toBe(true)
+    if (!committed.ok) return
     expect(committed.goldTaken).toBe(250)
     expect(committed.hall.goldContributed).toBe(250)
   })

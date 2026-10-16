@@ -7,6 +7,7 @@ LocationRow _loc(String id) => LocationRow({'Location ID': id});
 void main() {
   test('recruits cannot chip in gold; member and above can', () {
     expect(canPayGuildDebt('recruit'), isFalse);
+    expect(canChipInGuildGold(''), isFalse);
     expect(canChipInGuildGold('member'), isTrue);
     expect(canChipInGuildGold('veteran'), isTrue);
     expect(canChipInGuildGold('officer'), isTrue);

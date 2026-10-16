@@ -27,8 +27,14 @@ class GuildHallCommitProposal {
   final List<InventoryStack> bankItems;
 }
 
+const String guildHallBankMismatchRefusal = 'The guild bank change did not match the save.';
+const String _goldCapRefusal = 'The gold total is already at its cap.';
+const String _goldOverpayRefusal = 'That would go past the gold cap.';
+
 class GuildHallCommitResult {
   const GuildHallCommitResult({
+    this.ok = true,
+    this.reason,
     required this.goldTaken,
     required this.goldContributed,
     required this.goldContributedBy,
@@ -38,6 +44,20 @@ class GuildHallCommitResult {
     required this.finishedNow,
   });
 
+  factory GuildHallCommitResult.failed(String reason) => GuildHallCommitResult(
+    ok: false,
+    reason: reason,
+    goldTaken: 0,
+    goldContributed: 0,
+    goldContributedBy: const <String, num>{},
+    storehouse: const <InventoryStack>[],
+    completedTiers: const <String>[],
+    bankItems: const <InventoryStack>[],
+    finishedNow: const <String>[],
+  );
+
+  final bool ok;
+  final String? reason;
   final num goldTaken;
   final num goldContributed;
   final Map<String, num> goldContributedBy;
@@ -128,7 +148,9 @@ List<InventoryStack> takeFromGuildHallStorehouse(
   return left;
 }
 
-/// Hall gold, storehouse, and finished tiers from what the hosted save lost.
+/// Hall gold, storehouse, and finished tiers from the save immediately before
+/// the hall command versus after it. Catch-up must already be applied to the
+/// previous gold and inventory. Over-cap gold and a mismatched bank are refused.
 ///
 /// [proposal.goldContributed] and [proposal.completedTiers] are never written.
 GuildHallCommitResult commitGuildHallFromPlayerSaves({
@@ -145,8 +167,11 @@ GuildHallCommitResult commitGuildHallFromPlayerSaves({
   String userId = '',
 }) {
   final room = guildHallGoldRemaining(hallGoldContributed);
-  var goldTaken = goldTakenFromPlayerSaves(previousGold, nextGold);
-  if (goldTaken > room) goldTaken = room;
+  final goldDelta = goldTakenFromPlayerSaves(previousGold, nextGold);
+  if (goldDelta > room) {
+    return GuildHallCommitResult.failed(room <= 0 ? _goldCapRefusal : _goldOverpayRefusal);
+  }
+  final goldTaken = goldDelta;
   final goldContributed = hallGoldContributed + goldTaken;
   final goldContributedBy = <String, num>{...hallGoldContributedBy};
   if (goldTaken > 0 && userId.isNotEmpty) {
@@ -161,7 +186,6 @@ GuildHallCommitResult commitGuildHallFromPlayerSaves({
   final proposedStore = qtyByKey(proposal.storehouse);
 
   var storehouse = <InventoryStack>[...hallStorehouse];
-  var bankAccepted = true;
   for (final key in _allKeys(<Map<String, num>>[
     previousInv,
     nextInv,
@@ -183,7 +207,9 @@ GuildHallCommitResult commitGuildHallFromPlayerSaves({
         ? gainedQty
         : (bankLossRaw < 0 ? 0 : bankLossRaw);
     final expectedBank = _qtyOf(oldBank, key) + bankGain - bankLoss;
-    if (_qtyOf(proposedBank, key) != expectedBank) bankAccepted = false;
+    if (_qtyOf(proposedBank, key) != expectedBank) {
+      return GuildHallCommitResult.failed(guildHallBankMismatchRefusal);
+    }
     final donated = lostQty - bankGain;
     final proposedStoreLoss = _qtyOf(oldStore, key) - _qtyOf(proposedStore, key);
     final withdrawnCap = proposedStoreLoss < 0 ? 0 : proposedStoreLoss;
@@ -215,7 +241,7 @@ GuildHallCommitResult commitGuildHallFromPlayerSaves({
     goldContributedBy: goldContributedBy,
     storehouse: settled.storehouse,
     completedTiers: settled.completedTiers,
-    bankItems: bankAccepted ? proposal.bankItems : previousBankItems,
+    bankItems: proposal.bankItems,
     finishedNow: settled.finishedNow.map((tier) => tier.id).toList(),
   );
 }

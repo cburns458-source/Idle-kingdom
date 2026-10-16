@@ -13,6 +13,7 @@ import {
 export const GUILD_HALL_FINISHED_REFUSAL = 'The hall is finished.'
 export const GUILD_HALL_UNNEEDED_REFUSAL = 'The hall does not need that.'
 export const GUILD_HALL_GOLD_CAP_REFUSAL = 'The gold total is already at its cap.'
+export const GUILD_HALL_GOLD_OVERPAY_REFUSAL = 'That would go past the gold cap.'
 export const GUILD_HALL_NOT_ENOUGH_GOLD = 'Not enough gold.'
 
 export type GuildHallState = {
@@ -72,7 +73,7 @@ function withSettledHall(hall: GuildHallState, storehouse: InventoryStack[], com
   })
 }
 
-/** Chip gold into the one running total. Caps at 1M; refuses a short purse. */
+/** Chip gold into the one running total. Refuses a short purse, a full cap, or an overpay. */
 export function chipInGuildHallGold(
   hall: GuildHallState,
   userId: string,
@@ -84,9 +85,12 @@ export function chipInGuildHallGold(
   if (save.gold < want) return { ok: false, reason: GUILD_HALL_NOT_ENOUGH_GOLD }
   const remaining = guildHallGoldChipInCap(hall.goldContributed)
   if (remaining <= 0) {
-    return { ok: true, save, hall: normalizeGuildHallState(hall), goldChipped: 0 }
+    return { ok: false, reason: GUILD_HALL_GOLD_CAP_REFUSAL }
   }
-  const pay = Math.min(want, remaining)
+  if (want > remaining) {
+    return { ok: false, reason: GUILD_HALL_GOLD_OVERPAY_REFUSAL }
+  }
+  const pay = want
   const goldContributed = hall.goldContributed + pay
   const goldContributedBy = { ...hall.goldContributedBy }
   goldContributedBy[userId] = (goldContributedBy[userId] ?? 0) + pay

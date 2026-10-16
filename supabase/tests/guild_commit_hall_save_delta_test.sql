@@ -8,6 +8,11 @@ declare
   v_forged jsonb;
   v_paid jsonb;
   v_materials jsonb;
+  v_naive jsonb;
+  v_caught jsonb;
+  v_overpay jsonb;
+  v_cap jsonb;
+  v_bank jsonb;
 begin
   v_forged := public.guild_hall_apply_save_deltas(
     '{"gold": 500, "inventory": []}'::jsonb,
@@ -16,6 +21,9 @@ begin
     '{"gold_contributed": 1000000, "completed_tiers": ["build_the_hall", "hall_bank", "hall_boxing_ring", "hall_indoor_garden", "hall_arcana_station", "hall_monster_cage"], "storehouse": []}'::jsonb,
     '00000000-0000-0000-0000-000000000001'
   );
+  if coalesce((v_forged ->> 'ok')::boolean, false) is not true then
+    raise exception 'honest empty delta should succeed: %', v_forged;
+  end if;
   if (v_forged ->> 'gold_taken')::numeric <> 0 then
     raise exception 'forged gold_contributed was credited: %', v_forged;
   end if;
@@ -59,6 +67,83 @@ begin
   end if;
   if public.guild_hall_gold_taken_from_saves('{"gold":80}'::jsonb, '{"gold":30}'::jsonb) <> 50 then
     raise exception 'gold taken should be 50';
+  end if;
+
+  -- Hosted (pre-catch-up) vs after the hall command wrongly credits catch-up
+  -- ore, food, arrows, and gold. Compare against the caught-up save instead.
+  v_naive := public.guild_hall_apply_save_deltas(
+    '{"gold": 100, "inventory": [{"itemId":"ITEM-0003","quantity":10},{"itemId":"ITEM-0058","quantity":5},{"itemId":"ITEM-ARROWS","quantity":8},{"itemId":"ITEM-0015","quantity":3}]}'::jsonb,
+    '{"gold": 90, "inventory": [{"itemId":"ITEM-0003","quantity":7},{"itemId":"ITEM-0058","quantity":3},{"itemId":"ITEM-ARROWS","quantity":5},{"itemId":"ITEM-0015","quantity":2}]}'::jsonb,
+    '{"gold_contributed": 0, "gold_contributed_by": {}, "storehouse": [], "completed_tiers": [], "bank_items": []}'::jsonb,
+    '{}'::jsonb,
+    '00000000-0000-0000-0000-000000000001'
+  );
+  if (v_naive ->> 'gold_taken')::numeric <> 10 then
+    raise exception 'naive hosted delta gold should be 10: %', v_naive;
+  end if;
+  if jsonb_array_length(v_naive -> 'storehouse') <> 4 then
+    raise exception 'naive hosted delta should donate catch-up stacks: %', v_naive;
+  end if;
+
+  v_caught := public.guild_hall_apply_save_deltas(
+    '{"gold": 130, "inventory": [{"itemId":"ITEM-0003","quantity":7},{"itemId":"ITEM-0058","quantity":3},{"itemId":"ITEM-ARROWS","quantity":5},{"itemId":"ITEM-0015","quantity":3}]}'::jsonb,
+    '{"gold": 90, "inventory": [{"itemId":"ITEM-0003","quantity":7},{"itemId":"ITEM-0058","quantity":3},{"itemId":"ITEM-ARROWS","quantity":5},{"itemId":"ITEM-0015","quantity":2}]}'::jsonb,
+    '{"gold_contributed": 0, "gold_contributed_by": {}, "storehouse": [], "completed_tiers": [], "bank_items": []}'::jsonb,
+    '{}'::jsonb,
+    '00000000-0000-0000-0000-000000000001'
+  );
+  if coalesce((v_caught ->> 'ok')::boolean, false) is not true then
+    raise exception 'caught-up delta should succeed: %', v_caught;
+  end if;
+  if (v_caught ->> 'gold_taken')::numeric <> 40 then
+    raise exception 'caught-up chip-in should take 40: %', v_caught;
+  end if;
+  if jsonb_array_length(v_caught -> 'storehouse') <> 1
+     or (v_caught -> 'storehouse' -> 0 ->> 'itemId') <> 'ITEM-0015'
+     or (v_caught -> 'storehouse' -> 0 ->> 'quantity')::numeric <> 1 then
+    raise exception 'caught-up delta should only donate cedar: %', v_caught;
+  end if;
+
+  v_overpay := public.guild_hall_apply_save_deltas(
+    '{"gold": 500, "inventory": []}'::jsonb,
+    '{"gold": 200, "inventory": []}'::jsonb,
+    '{"gold_contributed": 999900, "gold_contributed_by": {}, "storehouse": [], "completed_tiers": [], "bank_items": []}'::jsonb,
+    '{}'::jsonb,
+    '00000000-0000-0000-0000-000000000001'
+  );
+  if coalesce((v_overpay ->> 'ok')::boolean, true) is not false then
+    raise exception 'over-cap gold should be refused: %', v_overpay;
+  end if;
+  if (v_overpay ->> 'reason') <> 'That would go past the gold cap.' then
+    raise exception 'over-cap reason: %', v_overpay;
+  end if;
+
+  v_cap := public.guild_hall_apply_save_deltas(
+    '{"gold": 80, "inventory": []}'::jsonb,
+    '{"gold": 70, "inventory": []}'::jsonb,
+    '{"gold_contributed": 1000000, "gold_contributed_by": {}, "storehouse": [], "completed_tiers": [], "bank_items": []}'::jsonb,
+    '{}'::jsonb,
+    '00000000-0000-0000-0000-000000000001'
+  );
+  if coalesce((v_cap ->> 'ok')::boolean, true) is not false then
+    raise exception 'gold at cap should be refused: %', v_cap;
+  end if;
+  if (v_cap ->> 'reason') <> 'The gold total is already at its cap.' then
+    raise exception 'cap reason: %', v_cap;
+  end if;
+
+  v_bank := public.guild_hall_apply_save_deltas(
+    '{"gold": 40, "inventory": [{"itemId":"ITEM-0015","quantity":5}]}'::jsonb,
+    '{"gold": 40, "inventory": [{"itemId":"ITEM-0015","quantity":5}]}'::jsonb,
+    '{"gold_contributed": 0, "gold_contributed_by": {}, "storehouse": [], "completed_tiers": [], "bank_items": []}'::jsonb,
+    '{"bank_items": [{"itemId":"ITEM-0015","quantity":1}]}'::jsonb,
+    '00000000-0000-0000-0000-000000000001'
+  );
+  if coalesce((v_bank ->> 'ok')::boolean, true) is not false then
+    raise exception 'mismatched bank should be refused: %', v_bank;
+  end if;
+  if (v_bank ->> 'reason') <> 'The guild bank change did not match the save.' then
+    raise exception 'bank reason: %', v_bank;
   end if;
 end;
 $$;

@@ -29,6 +29,7 @@ String guildPrivateMessageFromInput(String raw) => _cut(raw.trim(), guildPrivate
 const String guildHallFinishedRefusal = 'The hall is finished.';
 const String guildHallUnneededRefusal = 'The hall does not need that.';
 const String guildHallGoldCapRefusal = 'The gold total is already at its cap.';
+const String guildHallGoldOverpayRefusal = 'That would go past the gold cap.';
 const String guildHallNotEnoughGold = 'Not enough gold.';
 
 String _cut(String raw, int length) => raw.length > length ? raw.substring(0, length) : raw;
@@ -125,6 +126,8 @@ GuildProject contributedProject(GuildProject project, num amount) {
 }
 
 /// The hall and the payer's save after gold chips into the running total.
+///
+/// Refuses a short purse, a full cap, or an amount past the remaining room.
 GuildHallActionResult chipInGuildHallGold(
   GuildHallState hall,
   String userId,
@@ -136,10 +139,13 @@ GuildHallActionResult chipInGuildHallGold(
   if (save.gold < want) return const GuildHallActionResult.failed(guildHallNotEnoughGold);
   final remaining = guildHallGoldChipInCap(hall.goldContributed);
   if (remaining <= 0) {
-    return GuildHallActionResult.ok(hall, save: save, goldChipped: 0);
+    return const GuildHallActionResult.failed(guildHallGoldCapRefusal);
+  }
+  if (want > remaining) {
+    return const GuildHallActionResult.failed(guildHallGoldOverpayRefusal);
   }
 
-  final pay = math.min(want, remaining);
+  final pay = want;
   final goldContributed = hall.goldContributed + pay;
   final paidBy = <String, num>{...hall.goldContributedBy};
   paidBy[userId] = (paidBy[userId] ?? 0) + pay;
