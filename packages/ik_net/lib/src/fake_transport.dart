@@ -112,6 +112,9 @@ class FakeTransport implements RemoteTransport {
   /// Emails a magic link was requested for.
   List<String> get magicLinks => _project.magicLinks;
 
+  /// When true, every call fails as a dropped fetch until a test clears it.
+  bool unreachable = false;
+
   /// The reason the next call of any kind should fail with, used once.
   String? failNextWith;
 
@@ -173,6 +176,7 @@ class FakeTransport implements RemoteTransport {
   String _nextId(String prefix) => '${prefix}_${(_project.ids += 1).toString().padLeft(4, '0')}';
 
   String? _takeFailure(String call) {
+    if (unreachable) return 'Failed to fetch';
     final named = failOnce.remove(call);
     if (named != null) return named;
     final reason = failNextWith;

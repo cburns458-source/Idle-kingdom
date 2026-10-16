@@ -276,10 +276,14 @@ class _NpcPanelState extends State<NpcPanel> {
 
   /// Hosted play waits for the server and takes the save it answers with, so a
   /// `not_enough_gold` refusal writes nothing back and a paid bribe is never
-  /// worked out a second time here. Offline applies locally, same as today's
-  /// synced command.
+  /// worked out a second time here. Without a hosted session the bribe is
+  /// refused; it is never applied locally.
   Future<void> _payBribe(NpcQuestBlock quest) async {
     if (!_stillCanBribe(quest.questId)) return;
+    if (controller.playBlocked) {
+      setState(() => _error = controller.playBlockReason);
+      return;
+    }
     final args = <String, Object?>{'questId': quest.questId};
     final hosted = controller.hostedPlay?.call() == true ? controller.submitHostedCommand : null;
     if (hosted != null) {
@@ -301,6 +305,10 @@ class _NpcPanelState extends State<NpcPanel> {
       }
       controller.announce('The purse changes hands.');
       setState(() => _error = null);
+      return;
+    }
+    if (controller.hostedPlay != null) {
+      setState(() => _error = GameController.needsConnectionReason);
       return;
     }
     final result = bribeForQuest(controller.db, controller.save, quest.questId);

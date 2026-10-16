@@ -140,15 +140,16 @@ void restoreTestSession(
   SessionStore(storage).write(result.session);
 }
 
-/// A multiplayer controller over the local backend and an in-memory store.
+/// A multiplayer controller over the local test-harness backend.
 ///
-/// [testAccount] is always registered first. [signedIn] then restores that
-/// session so shell tests play as an existing player, not a guest.
+/// Production boot never creates [LocalMultiplayerService]. Tests inject this
+/// fake instead. [testAccount] is always registered first. [signedIn] then
+/// restores that session so shell tests play as an existing player, not a guest.
 MultiplayerController buildMultiplayer(
   LoadedDatabase database, {
   TestClock? clock,
   bool signedIn = true,
-  bool cloudUnavailable = false,
+  bool disconnected = false,
   TestAccount account = testAccount,
 }) {
   final testClock = clock ?? TestClock();
@@ -171,9 +172,32 @@ MultiplayerController buildMultiplayer(
     service: service,
     storage: storage,
     clock: testClock.read,
-    cloudUnavailable: cloudUnavailable,
+    disconnected: disconnected,
   );
   return net;
+}
+
+/// Wires the production hosted-play hooks between a controller and its net.
+void wireHostedPlay(GameController game, MultiplayerController net) {
+  game.hostedPlay = () => net.isSignedIn;
+  game.playDisconnected = () => net.disconnected;
+  game.submitGameCommand = (command, [args = const <String, Object?>{}]) async {
+    final result = await net.submitGameCommand(command, args);
+    return result.ok ? null : (result.reason ?? 'Try again.');
+  };
+  game.submitHostedCommand = (command, [args = const <String, Object?>{}]) async {
+    final result = await net.submitGameCommand(command, args);
+    return HostedCommandReceipt(
+      reason: result.ok ? null : (result.reason ?? 'Try again.'),
+      code: result.code,
+      noRoom: result.noRoom,
+      pointsSpent: result.pointsSpent,
+      plazaPoints: result.plazaPoints,
+      save: result.save,
+    );
+  };
+  net.onHostedSave = game.adoptHostedSave;
+  net.currentSave = () => game.save;
 }
 
 /// Signs the already-registered [account] in through the controller, not the form.
@@ -205,6 +229,7 @@ MultiplayerController buildRemoteMultiplayer(
   LoadedDatabase database, {
   required FakeTransport transport,
   TestClock? clock,
+  Future<void> Function(int failedAttempt)? reconnectDelay,
 }) {
   transport.database ??= database.launch;
   final testClock = clock ?? TestClock();
@@ -220,6 +245,7 @@ MultiplayerController buildRemoteMultiplayer(
     service: service,
     storage: storage,
     clock: testClock.read,
+    reconnectDelay: reconnectDelay,
   );
   return net;
 }

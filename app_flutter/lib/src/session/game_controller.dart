@@ -737,6 +737,7 @@ class GameController extends ChangeNotifier {
 
   /// Manual eat from the bag or food slot. Returns a refusal, or null on success.
   String? eatFood({int? inventoryIndex}) {
+    if (playBlocked) return playBlockReason;
     final stack =
         inventoryIndex != null && inventoryIndex >= 0 && inventoryIndex < save.inventory.length
         ? save.inventory[inventoryIndex]
@@ -918,11 +919,28 @@ class GameController extends ChangeNotifier {
 
   /// True while this device is signed in and playing the hosted save.
   ///
-  /// Offline play applies a start or a travel on the tap. Signed-in play
-  /// waits for the server, then applies that answer.
+  /// The local-apply branch under [startActivity] is the test-harness path
+  /// only. Production always wires this and waits for the server.
   bool Function()? hostedPlay;
 
+  /// True while the hosted session cannot reach the server.
+  bool Function()? playDisconnected;
+
   bool get playsHosted => hostedPlay?.call() == true && submitGameCommand != null;
+
+  bool get disconnected => playDisconnected?.call() == true;
+
+  /// Signed-out production play, or a mid-session drop.
+  bool get playBlocked {
+    if (disconnected) return true;
+    if (hostedPlay != null && hostedPlay!() != true) return true;
+    return false;
+  }
+
+  String get playBlockReason => disconnected ? needsConnectionReason : 'Sign in to play.';
+
+  /// Player-facing refusal when an action needs the hosted backend.
+  static const String needsConnectionReason = 'Needs a connection';
 
   /// Activity and travel commands still waiting on the hosted save.
   ///
@@ -947,7 +965,7 @@ class GameController extends ChangeNotifier {
   bool _switchSpinner = false;
   Timer? _switchSpinnerTimer;
 
-  bool get switchBusy => _switchInFlight > 0;
+  bool get switchBusy => _switchInFlight > 0 || disconnected;
 
   /// True once a switch has waited [switchSpinnerDelay].
   bool get switchSpinner => _switchSpinner;
@@ -1000,6 +1018,7 @@ class GameController extends ChangeNotifier {
   }
 
   void _queueCommand(String command, [Map<String, Object?> args = const <String, Object?>{}]) {
+    if (disconnected) return;
     final pending = submitGameCommand?.call(command, args);
     if (pending == null || !hostedSwitchCommands.contains(command)) return;
     _armSwitch(command, target: args['activityId'] as String?);
@@ -1073,6 +1092,10 @@ class GameController extends ChangeNotifier {
     String? command,
     Map<String, Object?> args = const <String, Object?>{},
   }) {
+    if (playBlocked) {
+      report(playBlockReason);
+      return;
+    }
     if (command != null && hostedSwitchCommands.contains(command) && switchBusy) return;
     if (command != null && hostedSwitchCommands.contains(command) && playsHosted) {
       final target = args['activityId'] as String?;
@@ -1128,6 +1151,7 @@ class GameController extends ChangeNotifier {
   void tick() {
     // Tear-down can dispose while a shell ticker is still queued.
     if (!_alive) return;
+    if (disconnected) return;
     if (save.combatEnemyId != null) {
       _liveEnemyHp = save.combatEnemyHp;
     }
@@ -1332,6 +1356,10 @@ class GameController extends ChangeNotifier {
   /// When the only thing missing is a tool the bag already holds, this asks
   /// rather than refuses: [autoEquip] carries the offer until it is answered.
   void startActivity(String activityId, {bool allowAutoEquip = true, bool queueCommand = true}) {
+    if (queueCommand && playBlocked) {
+      report(playBlockReason);
+      return;
+    }
     if (queueCommand && switchBusy) return;
     final result = requestActivityStart(db, save, activityId, session.clock(), _random);
     if (!result.ok) {
@@ -1394,6 +1422,10 @@ class GameController extends ChangeNotifier {
   /// The second start cannot ask again: the tool is on, and if that was not
   /// enough the player deserves the reason instead of another prompt.
   void confirmAutoEquip() {
+    if (playBlocked) {
+      report(playBlockReason);
+      return;
+    }
     if (switchBusy) return;
     final proposal = _autoEquip;
     if (proposal == null) return;
@@ -1625,6 +1657,10 @@ class GameController extends ChangeNotifier {
   }
 
   void stopActivity() {
+    if (playBlocked) {
+      report(playBlockReason);
+      return;
+    }
     if (switchBusy) return;
     final result = requestActivityStop(db, save, session.clock());
     if (!result.ok) {
@@ -1650,10 +1686,14 @@ class GameController extends ChangeNotifier {
 
   /// Travels to [destinationId], reporting whether the request was accepted.
   ///
-  /// [onArrived] runs once the location has changed: immediately offline, and
-  /// after the server answers when signed in. A walk calls [deferArrival]
-  /// first so that answer waits for [releaseArrival].
+  /// Signed-in play waits for the server. The local apply below is the
+  /// test-harness path only. A walk calls [deferArrival] first so that
+  /// answer waits for [releaseArrival].
   bool travelTo(String destinationId, String browseMapId, {void Function()? onArrived}) {
+    if (playBlocked) {
+      report(playBlockReason);
+      return false;
+    }
     if (switchBusy) return false;
     final claimedSling = save.claimedKingswoodsSling;
     final ownedSling = saveOwnsSling(save);
@@ -1676,6 +1716,7 @@ class GameController extends ChangeNotifier {
       }
       return true;
     }
+    // Test-harness only. Production always wires [hostedPlay].
     final plan = session.travelTo(destinationId, browseMapId);
     switch (plan) {
       case TravelBlocked():
@@ -1694,6 +1735,10 @@ class GameController extends ChangeNotifier {
 
   /// Travels into the player's guild hall from the Guilds screen.
   bool travelToGuildHall({void Function()? onArrived}) {
+    if (playBlocked) {
+      report(playBlockReason);
+      return false;
+    }
     if (switchBusy) return false;
     final claimedSling = save.claimedKingswoodsSling;
     final ownedSling = saveOwnsSling(save);
@@ -1716,6 +1761,7 @@ class GameController extends ChangeNotifier {
       }
       return true;
     }
+    // Test-harness only. Production always wires [hostedPlay].
     final plan = session.travelToGuildHall();
     switch (plan) {
       case TravelBlocked():
@@ -1803,8 +1849,10 @@ class GameController extends ChangeNotifier {
   /// Picks or changes faith at the Temple.
   ///
   /// Hosted play waits for the server and adopts that save so a retry cannot
-  /// double-charge. Offline applies locally and queues the same command.
+  /// double-charge. Without a hosted session this refuses with
+  /// [needsConnectionReason].
   Future<String?> chooseReligionAtTemple(String religionId) async {
+    if (playBlocked) return playBlockReason;
     final args = <String, Object?>{'religionId': religionId};
     final hosted = hostedPlay?.call() == true ? submitHostedCommand : null;
     if (hosted != null) {
@@ -1815,6 +1863,8 @@ class GameController extends ChangeNotifier {
       }
       return null;
     }
+    // Test-harness only. Production always wires [hostedPlay].
+    if (hostedPlay != null) return needsConnectionReason;
     final result = chooseReligion(db, save, religionId, session.clock());
     if (!result.ok) return result.reason;
     commit(result.save!, command: 'choose_religion', args: args);

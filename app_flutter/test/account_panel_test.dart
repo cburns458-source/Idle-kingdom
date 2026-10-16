@@ -106,18 +106,16 @@ void main() {
     expect(net.notice, 'Magic link sent.');
   });
 
-  testWidgets('creating an account against the backend uploads a named leftover', (tester) async {
+  testWidgets('creating an account does not upload a leftover device save', (tester) async {
     final transport = FakeTransport();
     final net = buildRemoteMultiplayer(database, transport: transport);
     await pumpAccount(tester, net);
 
     await submit(tester, 'Create account');
 
-    expect(net.notice, contains('Account created for'));
-    expect(find.text('Signed in as Tester'), findsOne);
-    expect(transport.tables[RemoteTables.saves], hasLength(1));
-    // First sign-in of the day posts the boards once. The save upload itself does not.
-    expect(transport.tables[RemoteTables.leaderboard], isNotEmpty);
+    expect(net.notice, contains('Account created'));
+    expect(net.isSignedIn, isTrue);
+    expect(transport.tables[RemoteTables.saves], isEmpty);
   });
 
   testWidgets('creating an account does one social sync and does not overlap fetches', (

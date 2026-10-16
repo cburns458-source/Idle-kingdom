@@ -262,7 +262,8 @@ void main() {
     );
     addTearDown(controller.dispose);
     controller.setMapTravelAnimation(false);
-    expect(controller.travelTo('LOC-0001', mainMapId), isTrue);
+    final plan = controller.session.travelTo('LOC-0001', mainMapId);
+    expect(plan, isA<TravelInstant>());
     expect(controller.save.currentLocationId, 'LOC-0001');
 
     final stale = controller.save.copyWith(currentLocationId: 'LOC-0009');
@@ -292,7 +293,8 @@ void main() {
     controller.startActivity('ACT-0021');
     expect(controller.recentRewards.single.id, 'kept');
 
-    expect(controller.travelTo('LOC-0001', mainMapId), isTrue);
+    expect(controller.session.travelTo('LOC-0001', mainMapId), isA<TravelInstant>());
+    expect(controller.save.currentLocationId, 'LOC-0001');
     expect(controller.recentRewards.single.id, 'kept');
   });
 
