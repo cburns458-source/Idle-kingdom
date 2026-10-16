@@ -418,6 +418,31 @@ void main() {
     expect(backend.guildHall(created.guild!.id)!.bank.items, isEmpty);
   });
 
+  test('a rank without permission is refused on bank withdraw and on move to Up for grabs', () {
+    final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
+    final opened = _openCountingRoom(backend, database);
+    var save = opened.save;
+    final ironIndex = save.inventory.indexWhere((stack) => stack.itemId == 'ITEM-0026');
+    expect(ironIndex, greaterThanOrEqualTo(0));
+    final deposited = backend.depositGuildBank(opened.leader.userId, save, ironIndex, 3);
+    expect(deposited.ok, isTrue, reason: deposited.reason);
+    save = deposited.save!;
+
+    final member = backend.signUp('member@example.com', 'Member', 'secret').session!;
+    backend.applyToGuild(member, opened.guildId, '');
+    backend.setMemberRole(opened.leader.userId, opened.guildId, member.userId, guildRoleMember);
+    final memberSave = _withTotalLevel(createNewSave(database, 1), 200);
+    backend.writeCloudSave(member.userId, memberSave);
+
+    final withdrawn = backend.withdrawGuildBank(member.userId, memberSave, 'ITEM-0026', 1);
+    expect(withdrawn.ok, isFalse);
+    expect(withdrawn.reason, 'You cannot withdraw from the guild bank.');
+
+    final moved = backend.moveHallBankToUpForGrabs(member.userId, memberSave, 'ITEM-0026', 3);
+    expect(moved.ok, isFalse);
+    expect(moved.reason, 'You cannot move items to Up for grabs.');
+  });
+
   test('a forged hall payload that claims the gold cap is ignored unless the save paid', () {
     final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
     final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;
@@ -468,4 +493,54 @@ PlayerSave _withTotalLevel(PlayerSave save, num target) {
       ...save.skills.skip(1),
     ],
   );
+}
+
+({LocalMultiplayerBackend backend, MultiplayerSession leader, PlayerSave save, String guildId})
+_openCountingRoom(LocalMultiplayerBackend backend, GameDatabase database) {
+  final leader = backend.signUp('leader-bank@example.com', 'Leader', 'secret').session!;
+  var save = _withTotalLevel(
+    createNewSave(database, 1).copyWith(
+      gold: guildCreateGoldCost + 10000,
+      inventory: const [
+        InventoryStack(itemId: 'ITEM-0015', quantity: 1000),
+        InventoryStack(itemId: 'ITEM-0095', quantity: 100),
+        InventoryStack(itemId: 'ITEM-0017', quantity: 24000),
+        InventoryStack(itemId: 'ITEM-0002', quantity: 10000),
+        InventoryStack(itemId: 'ITEM-0006', quantity: 6320),
+        InventoryStack(itemId: 'ITEM-0026', quantity: 3),
+      ],
+    ),
+    200,
+  );
+  backend.writeCloudSave(leader.userId, save);
+  final created = backend.createGuild(
+    leader,
+    const CreateGuildInput(
+      name: 'Oak',
+      tag: 'OAK',
+      description: '',
+      emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+    ),
+    save.gold,
+  );
+  save = save.copyWith(gold: save.gold - created.goldCost!);
+  GuildHallActionResult? last;
+  var hall = backend.guildHall(created.guild!.id)!;
+  while (true) {
+    hall = last?.hall ?? hall;
+    final index = save.inventory.indexWhere(
+      (stack) => guildHallDonationCap(hall.completedTiers, hall.storehouse, stack.itemId) > 0,
+    );
+    if (index < 0) break;
+    last = backend.contributeHallItem(
+      leader.userId,
+      save,
+      index,
+      guildHallDonationCap(hall.completedTiers, hall.storehouse, save.inventory[index].itemId),
+    );
+    save = last.save!;
+  }
+  save = backend.payGuildDebt(leader.userId, save, 10000).save!;
+  expect(backend.guildHall(created.guild!.id)!.bankUnlocked, isTrue);
+  return (backend: backend, leader: leader, save: save, guildId: created.guild!.id);
 }

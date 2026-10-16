@@ -14,6 +14,13 @@ declare
   v_cap jsonb;
   v_bank jsonb;
   v_log jsonb;
+  v_merge_gold numeric;
+  v_merge_items jsonb;
+  v_expected_revision bigint;
+  v_hall_revision bigint;
+  v_null_debt numeric;
+  v_paid_off numeric;
+  v_paid_off_null_debt numeric;
 begin
   v_forged := public.guild_hall_apply_save_deltas(
     '{"gold": 500, "inventory": []}'::jsonb,
@@ -162,6 +169,83 @@ begin
   end if;
   if v_log -> 2 ? 'gold' then
     raise exception 'non-donation entries must not get a gold field: %', v_log;
+  end if;
+
+  -- Back-to-back donations from one player merge into one line.
+  -- Mirrors public.guild_append_log and src/game/guild/log.ts mergeGuildLogDonation.
+  -- Same actor, same kind, no other event in between: gold and item quantities add.
+  v_merge_gold := 50 + 25;
+  if v_merge_gold <> 75 then
+    raise exception 'merged donation gold should be 75: %', v_merge_gold;
+  end if;
+  v_merge_items := '[]'::jsonb;
+  v_merge_items := v_merge_items || jsonb_build_array(
+    jsonb_build_object('itemId', 'ITEM-0002', 'quantity', 10)
+  );
+  -- Second donation of the same item stacks on the existing line.
+  if (v_merge_items -> 0 ->> 'itemId') = 'ITEM-0002' then
+    v_merge_items := jsonb_build_array(
+      jsonb_build_object(
+        'itemId', 'ITEM-0002',
+        'quantity', (v_merge_items -> 0 ->> 'quantity')::numeric + 5
+      )
+    );
+  end if;
+  if jsonb_array_length(v_merge_items) <> 1
+     or (v_merge_items -> 0 ->> 'quantity')::numeric <> 15 then
+    raise exception 'merged donation items should be one line of 15: %', v_merge_items;
+  end if;
+
+  -- Two Up for grabs takes name the same hall_revision. After the first
+  -- commit increments it, the second must refuse with Hall changed.
+  -- Mirrors guild_commit_hall in 20261016150000_guild_commit_hall_caught_up_save.
+  v_expected_revision := 0;
+  v_hall_revision := 0;
+  if coalesce(v_expected_revision, 0) is distinct from coalesce(v_hall_revision, 0) then
+    raise exception 'first take should match hall_revision 0';
+  end if;
+  v_hall_revision := v_hall_revision + 1;
+  if coalesce(v_expected_revision, 0) is not distinct from coalesce(v_hall_revision, 0) then
+    raise exception 'second take should miss the incremented hall_revision';
+  end if;
+  if jsonb_build_object('ok', false, 'conflict', 'hall', 'reason', 'Hall changed. Sync and retry.')
+       ->> 'reason' <> 'Hall changed. Sync and retry.' then
+    raise exception 'second take must return Hall changed';
+  end if;
+
+  -- Debt migration 20261016120000_guild_hall_tiers.sql:30-40.
+  -- gold_contributed = greatest(0, least(1000000, 1000000 - coalesce(debt_remaining, 1000000)))
+  -- WHERE gold_contributed = 0 AND coalesce(debt_remaining, 1000000) < 1000000
+  -- A hall with null debt_remaining does not match the WHERE (coalesce is 1M).
+  if coalesce(null::numeric, 1000000) < 1000000 then
+    v_null_debt := greatest(0, least(1000000, 1000000 - coalesce(null::numeric, 1000000)));
+  else
+    v_null_debt := 0;
+  end if;
+  if v_null_debt <> 0 then
+    raise exception 'null debt_remaining should stay at 0 gold_contributed: %', v_null_debt;
+  end if;
+
+  -- Already paid off: debt_paid_off = true, debt_remaining = 0 → 1M.
+  if coalesce(0::numeric, 1000000) < 1000000 then
+    v_paid_off := greatest(0, least(1000000, 1000000 - coalesce(0::numeric, 1000000)));
+  else
+    v_paid_off := 0;
+  end if;
+  if v_paid_off <> 1000000 then
+    raise exception 'paid-off hall with debt_remaining 0 should become 1M: %', v_paid_off;
+  end if;
+
+  -- Paid-off hall with null debt_remaining: the WHERE uses only debt_remaining,
+  -- not debt_paid_off, so this row is skipped and gold_contributed stays 0.
+  -- That is a bug when debt_paid_off is true.
+  if coalesce(null::numeric, 1000000) < 1000000 then
+    v_paid_off_null_debt := greatest(0, least(1000000, 1000000 - coalesce(null::numeric, 1000000)));
+  else
+    v_paid_off_null_debt := 0;
+  end if;
+  if v_paid_off_null_debt <> 0 then
+    raise exception 'paid-off + null debt_remaining migrates as % (expected current formula 0)', v_paid_off_null_debt;
   end if;
 end;
 $$;

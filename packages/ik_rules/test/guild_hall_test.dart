@@ -14,6 +14,11 @@ void main() {
     expect(canChipInGuildGold('leader'), isTrue);
   });
 
+  test('an empty or missing role cannot chip in gold', () {
+    expect(canChipInGuildGold(''), isFalse);
+    expect(canPayGuildDebt(''), isFalse);
+  });
+
   test('a hall is built in six steps, in order', () {
     expect(guildHallTiers.map((tier) => tier.id), <String>[
       guildHallTierBuild,
@@ -134,6 +139,120 @@ void main() {
     expect(guildHallBankUnlocked(withGold.completedTiers), isTrue);
   });
 
+  test('each room finishes only when its gold mark and its materials are both in', () {
+    const rooms =
+        <
+          ({
+            String id,
+            num gold,
+            List<String> prior,
+            List<InventoryStack> materials,
+            String missingItem,
+          })
+        >[
+          (
+            id: guildHallTierBank,
+            gold: 10000,
+            prior: <String>[guildHallTierBuild],
+            materials: <InventoryStack>[
+              InventoryStack(itemId: 'ITEM-0017', quantity: 24000),
+              InventoryStack(itemId: 'ITEM-0002', quantity: 10000),
+              InventoryStack(itemId: 'ITEM-0006', quantity: 6320),
+            ],
+            missingItem: 'ITEM-0017',
+          ),
+          (
+            id: guildHallTierBoxing,
+            gold: 40000,
+            prior: <String>[guildHallTierBuild, guildHallTierBank],
+            materials: <InventoryStack>[
+              InventoryStack(itemId: 'ITEM-0002', quantity: 14000),
+              InventoryStack(itemId: 'ITEM-0095', quantity: 13160),
+              InventoryStack(itemId: 'ITEM-0017', quantity: 13160),
+            ],
+            missingItem: 'ITEM-0002',
+          ),
+          (
+            id: guildHallTierGarden,
+            gold: 130000,
+            prior: <String>[guildHallTierBuild, guildHallTierBank, guildHallTierBoxing],
+            materials: <InventoryStack>[
+              InventoryStack(itemId: 'ITEM-0016', quantity: 20000),
+              InventoryStack(itemId: 'ITEM-0002', quantity: 8320),
+              InventoryStack(itemId: 'ITEM-0377', quantity: 12000),
+            ],
+            missingItem: 'ITEM-0016',
+          ),
+          (
+            id: guildHallTierArcana,
+            gold: 400000,
+            prior: <String>[
+              guildHallTierBuild,
+              guildHallTierBank,
+              guildHallTierBoxing,
+              guildHallTierGarden,
+            ],
+            materials: <InventoryStack>[
+              InventoryStack(itemId: 'ITEM-0011', quantity: 16000),
+              InventoryStack(itemId: 'ITEM-0018', quantity: 16000),
+              InventoryStack(itemId: 'ITEM-0002', quantity: 8320),
+            ],
+            missingItem: 'ITEM-0011',
+          ),
+          (
+            id: guildHallTierCage,
+            gold: 1000000,
+            prior: <String>[
+              guildHallTierBuild,
+              guildHallTierBank,
+              guildHallTierBoxing,
+              guildHallTierGarden,
+              guildHallTierArcana,
+            ],
+            materials: <InventoryStack>[
+              InventoryStack(itemId: 'ITEM-0077', quantity: 10000),
+              InventoryStack(itemId: 'ITEM-0076', quantity: 12000),
+              InventoryStack(itemId: 'ITEM-0006', quantity: 18320),
+            ],
+            missingItem: 'ITEM-0077',
+          ),
+        ];
+
+    expect(guildHallGoldMarks, rooms.map((room) => room.gold));
+
+    for (final room in rooms) {
+      final missingGold = settleGuildHallTiers(room.materials, room.prior, room.gold - 1);
+      expect(missingGold.completedTiers, room.prior);
+      expect(missingGold.finishedNow, isEmpty);
+
+      final shortMaterials = [
+        for (final stack in room.materials)
+          if (stack.itemId != room.missingItem) stack,
+      ];
+      final missingMaterials = settleGuildHallTiers(shortMaterials, room.prior, room.gold);
+      expect(missingMaterials.completedTiers, room.prior);
+      expect(missingMaterials.finishedNow, isEmpty);
+
+      final both = settleGuildHallTiers(room.materials, room.prior, room.gold);
+      expect(both.completedTiers, <String>[...room.prior, room.id]);
+      expect(both.finishedNow.map((tier) => tier.id), <String>[room.id]);
+      expect(both.storehouse, isEmpty);
+    }
+  });
+
+  test('settles a mix of enchanted and unenchanted storehouse stacks the same way TS does', () {
+    final settled = settleGuildHallTiers(const <InventoryStack>[
+      InventoryStack(itemId: 'ITEM-0015', quantity: 600),
+      InventoryStack(itemId: 'ITEM-0015', quantity: 500, enchantmentId: 'ENC-0001'),
+      InventoryStack(itemId: 'ITEM-0095', quantity: 100),
+    ], const <String>[]);
+    expect(settled.finishedNow.map((tier) => tier.id), <String>[guildHallTierBuild]);
+    expect(settled.completedTiers, <String>[guildHallTierBuild]);
+    expect(settled.storehouse.single.itemId, 'ITEM-0015');
+    expect(settled.storehouse.single.quantity, 100);
+    expect(settled.storehouse.single.enchantmentId, 'ENC-0001');
+  });
+
   test('a step already finished is not paid for twice', () {
     final settled = settleGuildHallTiers(
       const <InventoryStack>[
@@ -222,11 +341,59 @@ void main() {
     expect(merged.merged, isTrue);
     expect(merged.entry!.gold, 75);
     expect(merged.entry!.items.single.quantity, 15);
+
+    final otherItem = mergeGuildLogDonation(
+      first,
+      first.copyWith(
+        gold: 0,
+        items: const <GuildLogDonationItem>[GuildLogDonationItem(itemId: 'ITEM-0015', quantity: 3)],
+      ),
+    );
+    expect(otherItem.merged, isTrue);
+    expect(otherItem.entry!.items.map((row) => (row.itemId, row.quantity)), <(String, num)>[
+      ('ITEM-0002', 10),
+      ('ITEM-0015', 3),
+    ]);
+
+    const otherKind = GuildLogEntry(
+      id: '2',
+      guildId: 'g',
+      kind: guildLogKindTierComplete,
+      createdAt: 't',
+      actorUserId: 'u1',
+      actorUsername: 'Ada',
+      message: '',
+    );
+    expect(mergeGuildLogDonation(otherKind, first).merged, isFalse);
+    expect(
+      mergeGuildLogDonation(
+        first,
+        first.copyWith(gold: 1, items: const <GuildLogDonationItem>[]),
+      ).merged,
+      isTrue,
+    );
+    const noActor = GuildLogEntry(
+      id: '3',
+      guildId: 'g',
+      kind: guildLogKindDonation,
+      createdAt: 't',
+      actorUsername: 'Ada',
+      message: '',
+      gold: 1,
+    );
+    expect(mergeGuildLogDonation(noActor, first).merged, isFalse);
   });
 
   test('applies a flat 5% company XP bonus', () {
     expect(applyGuildHallCompanyXp(1000, false), 1000);
     expect(applyGuildHallCompanyXp(1000, true), 1050);
+  });
+
+  test('floors the hall +5% company XP bonus', () {
+    expect(applyGuildHallCompanyXp(101, true), 106);
+    expect(applyGuildHallCompanyXp(19, true), 19);
+    expect(applyGuildHallCompanyXp(1, true), 1);
+    expect(applyGuildHallCompanyXp(20, true), 21);
   });
 
   test('only the guild hall location offers hall services', () {
