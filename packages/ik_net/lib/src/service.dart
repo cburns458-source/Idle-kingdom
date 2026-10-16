@@ -164,6 +164,12 @@ abstract interface class MultiplayerService {
 
   Future<ActionResult> setGuildEmblem(String guildId, GuildEmblem emblem);
 
+  /// Sets the hall banner. Leaders and officers only; emblem/border must be unlocked.
+  Future<ActionResult> setGuildBanner(String guildId, GuildBanner banner);
+
+  /// Current/target progress for every guild achievement, including unlocked rows.
+  Future<List<GuildAchievementProgress>> guildAchievementProgress(String guildId);
+
   /// Sets the public guild motto (`guilds.description`).
   Future<ActionResult> setGuildMotto(String guildId, String motto);
 
@@ -807,6 +813,18 @@ class LocalMultiplayerService implements MultiplayerService {
     final current = session;
     if (current == null) return const ActionResult.failed('Sign in required.');
     return _backend.setGuildEmblem(current.userId, guildId, emblem);
+  }
+
+  @override
+  Future<ActionResult> setGuildBanner(String guildId, GuildBanner banner) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.setGuildBanner(current.userId, guildId, banner);
+  }
+
+  @override
+  Future<List<GuildAchievementProgress>> guildAchievementProgress(String guildId) async {
+    return _backend.guildAchievementProgress(guildId);
   }
 
   @override

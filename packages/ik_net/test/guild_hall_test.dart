@@ -443,6 +443,77 @@ void main() {
     expect(moved.reason, 'You cannot move items to Up for grabs.');
   });
 
+  test('hall donations unlock guild achievements and banner cosmetics stay server-checked', () {
+    final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
+    final leader = backend.signUp('leader-ach@example.com', 'Leader', 'secret').session!;
+    var save = createNewSave(database, 1).copyWith(
+      gold: guildCreateGoldCost + 1000,
+      inventory: const [
+        InventoryStack(itemId: 'ITEM-0015', quantity: 1000),
+        InventoryStack(itemId: 'ITEM-0095', quantity: 100),
+      ],
+    );
+    backend.writeCloudSave(leader.userId, save);
+    final created = backend.createGuild(
+      leader,
+      const CreateGuildInput(
+        name: 'Oak Ach',
+        tag: 'ACH',
+        description: '',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      save.gold,
+    );
+    save = save.copyWith(gold: save.gold - created.goldCost!);
+    final guildId = created.guild!.id;
+    expect(
+      backend.guildAchievementProgress(guildId).map((row) => row.id).toList(),
+      contains('gach_foundations'),
+    );
+    expect(
+      backend
+          .setGuildBanner(
+            leader.userId,
+            guildId,
+            const GuildBanner(background: 'wine', accent: 'ivory', emblem: 'emblem_foundations'),
+          )
+          .reason,
+      guildBannerEmblemRefusal,
+    );
+
+    final donated = backend.contributeHallItem(leader.userId, save, 0, 1000);
+    expect(donated.ok, isTrue);
+    save = donated.save!;
+    final rest = backend.contributeHallItem(leader.userId, save, 0, 100);
+    expect(rest.ok, isTrue);
+    expect(backend.guildHall(guildId)!.completedTiers, contains(guildHallTierBuild));
+    expect(
+      backend.getGuild(guildId)!.achievements.map((row) => row.achievementId),
+      contains('gach_foundations'),
+    );
+    expect(
+      backend
+          .setGuildBanner(
+            leader.userId,
+            guildId,
+            const GuildBanner(background: 'wine', accent: 'ivory', emblem: 'emblem_foundations'),
+          )
+          .ok,
+      isTrue,
+    );
+    expect(backend.getGuild(guildId)!.banner.emblem, 'emblem_foundations');
+    expect(
+      backend
+          .setGuildBanner(
+            leader.userId,
+            guildId,
+            const GuildBanner(background: 'gold', accent: 'ivory'),
+          )
+          .reason,
+      guildBannerColourRefusal,
+    );
+  });
+
   test('a forged hall payload that claims the gold cap is ignored unless the save paid', () {
     final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
     final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;

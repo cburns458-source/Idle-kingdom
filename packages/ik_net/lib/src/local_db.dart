@@ -340,4 +340,6 @@ GuildRecord normalizeGuild(GuildRecord raw) => GuildRecord(
   rankIconTheme: normalizeRankIconTheme(raw.rankIconTheme),
   skillMilestoneSettings: raw.skillMilestoneSettings,
   permissions: raw.permissions ?? defaultGuildPermissionTable(),
+  banner: raw.banner,
+  achievements: raw.achievements,
 );

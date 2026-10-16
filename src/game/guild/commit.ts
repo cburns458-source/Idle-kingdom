@@ -1,5 +1,6 @@
 import type { InventoryStack } from '../save/types'
 import { GUILD_HALL_GOLD_CAP, settleGuildHallTiers } from './hall'
+import { withGuildHallDonor } from './achievements'
 import {
   GUILD_HALL_GOLD_CAP_REFUSAL,
   GUILD_HALL_GOLD_OVERPAY_REFUSAL,
@@ -163,6 +164,7 @@ export function commitGuildHallFromPlayerSaves(input: GuildHallCommitInput): Gui
   const proposedStore = qtyByKey(input.proposed?.storehouse ?? current.storehouse)
 
   let storehouse = [...current.storehouse]
+  let donatedAny = goldTaken > 0
   for (const key of allKeys(previousInv, nextInv, oldBank, proposedBank, oldStore, proposedStore)) {
     const lost = Math.max(0, qtyOf(previousInv, key) - qtyOf(nextInv, key))
     const gained = Math.max(0, qtyOf(nextInv, key) - qtyOf(previousInv, key))
@@ -178,7 +180,10 @@ export function commitGuildHallFromPlayerSaves(input: GuildHallCommitInput): Gui
       Math.max(0, qtyOf(oldStore, key) - qtyOf(proposedStore, key)),
     )
     const { itemId, enchantmentId } = parseQtyKey(key)
-    if (donated > 0) storehouse = addToGuildHallStorehouse(storehouse, itemId, donated, enchantmentId)
+    if (donated > 0) {
+      donatedAny = true
+      storehouse = addToGuildHallStorehouse(storehouse, itemId, donated, enchantmentId)
+    }
     if (withdrawn > 0) storehouse = takeFromGuildHallStorehouse(storehouse, itemId, withdrawn, enchantmentId)
   }
 
@@ -187,6 +192,7 @@ export function commitGuildHallFromPlayerSaves(input: GuildHallCommitInput): Gui
     ...current,
     goldContributed,
     goldContributedBy,
+    donatedBy: donatedAny ? withGuildHallDonor(current.donatedBy, input.userId) : current.donatedBy,
     storehouse: settled.storehouse,
     completedTiers: settled.completedTiers,
   })

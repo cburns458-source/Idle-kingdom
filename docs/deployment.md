@@ -186,6 +186,11 @@ Checklist, in order:
    that passes `p_before` is on `restoria-idlerpg`. This file and
    `20261016140000` must land before or together with that function.
    Status: applied on test Oct 16 2026 (file `20261016150000`); live pending.
+7. [ ] `20261016170000_guild_achievements_and_banner.sql` (SOC-01). Guild
+   achievement unlocks, hall `donated_by`, and `guilds.banner`. Apply to test
+   with this PR; live only after Conor merges `test-launch` into `main`.
+   Status: applied on test Oct 16 2026 (file `20261016170000`, MCP
+   `guild_achievements_and_banner` plus engine follow-ups); live pending.
 
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16

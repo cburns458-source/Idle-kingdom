@@ -54,6 +54,7 @@ export 'src/equipment/presets.dart';
 export 'src/equipment/specialist.dart' hide essenceItemId, huntingSkillId;
 export 'src/equipment/tooltips.dart';
 export 'src/equipment/vitals.dart';
+export 'src/guild/achievements.dart';
 export 'src/guild/bank.dart';
 export 'src/guild/commit.dart';
 export 'src/guild/hall.dart';

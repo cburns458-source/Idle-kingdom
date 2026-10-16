@@ -283,6 +283,10 @@ describe('phase 2 authority', () => {
     expect(first.save.gold).toBe(400)
     expect(first.goldChipped).toBe(save.gold - first.save.gold)
     expect(first.hall?.goldContributed).toBe(1_000_000)
+    expect(first.achievementsUnlocked).toEqual(
+      expect.arrayContaining(['gach_gold_100k', 'gach_gold_500k']),
+    )
+    expect(first.achievementProgress?.find((row) => row.id === 'gach_gold_500k')?.unlocked).toBe(true)
 
     const second = applyGameCommand(rawDatabase, {
       command: 'guild_chip_in_hall_gold',

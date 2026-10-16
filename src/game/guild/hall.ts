@@ -17,7 +17,7 @@ export function canPayGuildDebt(role: string): boolean {
   return canChipInGuildGold(role)
 }
 
-/** Running gold total members chip into. Caps chip-ins; never a stored coffer. */
+/** Running gold total members chip into. Caps chip-ins; not a stored gold pool. */
 export const GUILD_HALL_GOLD_CAP = 1_000_000
 
 /** @deprecated The old 1M debt is the same cap as the running gold total. */
@@ -249,6 +249,20 @@ export function guildHallTierMet(tier: GuildHallTier, storehouse: InventoryStack
 
 export function guildHallTierGoldMet(tier: GuildHallTier, goldContributed: number): boolean {
   return goldContributed >= tier.goldThreshold
+}
+
+/** How many items a finished tier spent from the storehouse. Bank deposits do not count. */
+export function guildHallTierMaterialCount(tier: GuildHallTier): number {
+  return tier.cost.reduce((sum, cost) => sum + cost.quantity, 0)
+}
+
+/** Materials spent finishing the named hall tiers. Storehouse leftovers do not count. */
+export function guildHallMaterialsSpent(completedTiers: string[]): number {
+  let spent = 0
+  for (const tier of GUILD_HALL_TIERS) {
+    if (completedTiers.includes(tier.id)) spent += guildHallTierMaterialCount(tier)
+  }
+  return spent
 }
 
 /**

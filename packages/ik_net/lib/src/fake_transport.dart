@@ -212,6 +212,7 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.guildApplications: <String>['guild_id', 'user_id'],
     RemoteTables.guildGuests: <String>['guild_id', 'user_id'],
     RemoteTables.guildHalls: <String>['guild_id'],
+    RemoteTables.guildAchievements: <String>['guild_id', 'achievement_id'],
     RemoteTables.guildLogEntries: <String>['id'],
     RemoteTables.guildProjects: <String>['id'],
     RemoteTables.guildChallenges: <String>['id'],
@@ -235,7 +236,9 @@ class FakeTransport implements RemoteTransport {
       'id': _nextId('gld'),
       'created_at': stamp(),
       'permissions': defaultGuildPermissionTable().toJson(),
+      'banner': defaultGuildBanner.toJson(),
     },
+    RemoteTables.guildAchievements => <String, Object?>{'unlocked_at': stamp()},
     RemoteTables.guildLogEntries => <String, Object?>{'id': _nextId('glg'), 'created_at': stamp()},
     RemoteTables.guildMembers => <String, Object?>{'joined_at': stamp()},
     RemoteTables.guildApplications => <String, Object?>{
@@ -599,6 +602,10 @@ class FakeTransport implements RemoteTransport {
         if (blocked != null) return blocked;
       }
       stored[i] = next;
+      if (table == RemoteTables.guildMembers) {
+        final guildId = next['guild_id'];
+        if (guildId is String) _unlockFakeGuildAchievements(guildId);
+      }
     }
     return null;
   }
@@ -979,7 +986,7 @@ class FakeTransport implements RemoteTransport {
           : null;
       result = itemId != null && bazaarItemBound(database, itemId)
           ? const GuildHallActionResult.failed(bazaarBoundItem)
-          : donateToGuildHall(hall, save, index, _asNum(args['quantity']));
+          : donateToGuildHall(hall, save, index, _asNum(args['quantity']), userId: userId);
     } else if (command == 'guild_bank_deposit') {
       final index = _asNum(args['inventoryIndex']).toInt();
       final itemId = index >= 0 && index < save.inventory.length
@@ -1041,6 +1048,7 @@ class FakeTransport implements RemoteTransport {
     if (!result.ok) return RemoteInvokeResult.failed(result.reason ?? 'Guild hall action failed.');
     final nextHall = result.hall!.copyWith(hallRevision: hall.hallRevision + 1);
     halls[at] = <String, Object?>{...halls[at], ...guildHallRowFor(nextHall)};
+    _unlockFakeGuildAchievements('${membership['guild_id']}');
     if (result.goldChipped > 0 || result.donatedItem != null) {
       _appendGuildLog('${membership['guild_id']}', <String, Object?>{
         'kind': guildLogKindDonation,
@@ -1412,6 +1420,47 @@ class FakeTransport implements RemoteTransport {
       final reason = _takeFailure('rpc:$function');
       if (reason != null) return RemoteInvokeResult.failed(reason);
 
+      if (function == RemoteRpcs.guildSetBanner) {
+        final guildId = args['p_guild'];
+        final me = _current?.userId;
+        if (me == null) {
+          return RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'reason': 'Sign in first.'});
+        }
+        final guilds = tables[RemoteTables.guilds]!;
+        final at = guilds.indexWhere((row) => row['id'] == guildId);
+        if (at < 0) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': 'That guild could not be found.',
+          });
+        }
+        final membership = _membershipFor(me);
+        final role = '${membership?['role'] ?? ''}';
+        final leaderId = '${guilds[at]['leader_id']}';
+        final manager = me == leaderId || role == guildRoleOfficer;
+        if (!manager || membership?['guild_id'] != guildId) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': guildBannerRoleRefusal,
+          });
+        }
+        final unlocks = tables[RemoteTables.guildAchievements]!
+            .where((row) => row['guild_id'] == guildId)
+            .map((row) => '${row['achievement_id'] ?? ''}');
+        final parsed = normalizeGuildBanner(args['p_banner'], unlocks);
+        if (!parsed.ok || parsed.banner == null) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': parsed.reason ?? guildBannerColourRefusal,
+          });
+        }
+        guilds[at] = <String, Object?>{...guilds[at], 'banner': parsed.banner!.toJson()};
+        return RemoteInvokeResult.ok(<String, Object?>{
+          'ok': true,
+          'banner': parsed.banner!.toJson(),
+        });
+      }
+
       if (function == RemoteRpcs.guildSetMotto) {
         final guildId = args['p_guild'];
         final motto = guildMottoFromInput('${args['p_motto'] ?? ''}');
@@ -1614,6 +1663,48 @@ class FakeTransport implements RemoteTransport {
   /// PostgREST's answer for a function the project has not created.
   static String _missingRpc(String function) =>
       'Could not find the function public.$function in the schema cache';
+
+  void _unlockFakeGuildAchievements(String guildId) {
+    GuildHallState hall = GuildHallState.fresh(guildId);
+    for (final row in tables[RemoteTables.guildHalls]!) {
+      if (row['guild_id'] == guildId) {
+        hall = guildHallFrom(row);
+        break;
+      }
+    }
+    var strong = 0;
+    for (final row in tables[RemoteTables.guildMembers]!) {
+      if (row['guild_id'] == guildId && _asNum(row['total_level']) >= guildAchievementMemberLevel) {
+        strong += 1;
+      }
+    }
+    final unlocked = <String, String>{
+      for (final row in tables[RemoteTables.guildAchievements]!)
+        if (row['guild_id'] == guildId &&
+            row['achievement_id'] is String &&
+            row['unlocked_at'] is String)
+          row['achievement_id'] as String: row['unlocked_at'] as String,
+    };
+    final evaluated = evaluateGuildAchievements(
+      GuildAchievementSnapshot(
+        completedTiers: hall.completedTiers,
+        goldContributed: hall.goldContributed,
+        goldContributedBy: hall.goldContributedBy,
+        donatedBy: hall.donatedBy,
+        membersAtLevel500: strong,
+        unlocked: unlocked,
+      ),
+      stamp(),
+    );
+    final stored = tables.putIfAbsent(RemoteTables.guildAchievements, () => <RemoteRow>[]);
+    for (final id in evaluated.newlyUnlocked) {
+      stored.add(<String, Object?>{
+        'guild_id': guildId,
+        'achievement_id': id,
+        'unlocked_at': evaluated.unlocked[id] ?? stamp(),
+      });
+    }
+  }
 
   static RemoteRow _refused(String reason) => <String, Object?>{'ok': false, 'reason': reason};
 
@@ -2240,6 +2331,7 @@ class _FakeProject {
     RemoteTables.guildApplications: <RemoteRow>[],
     RemoteTables.guildGuests: <RemoteRow>[],
     RemoteTables.guildHalls: <RemoteRow>[],
+    RemoteTables.guildAchievements: <RemoteRow>[],
     RemoteTables.guildLogEntries: <RemoteRow>[],
     RemoteTables.guildProjects: <RemoteRow>[],
     RemoteTables.guildChallenges: <RemoteRow>[],

@@ -16,7 +16,7 @@ bool canChipInGuildGold(String role) {
 /// Recruits cannot chip in gold. Member and every rank above can.
 bool canPayGuildDebt(String role) => canChipInGuildGold(role);
 
-/// Running gold total members chip into. Caps chip-ins; never a stored coffer.
+/// Running gold total members chip into. Caps chip-ins; not a stored gold pool.
 const num guildHallGoldCap = 1000000;
 
 /// The old 1M debt is the same cap as the running gold total.
@@ -252,6 +252,24 @@ bool guildHallTierMet(GuildHallTier tier, List<InventoryStack> storehouse) {
 
 bool guildHallTierGoldMet(GuildHallTier tier, num goldContributed) {
   return goldContributed >= tier.goldThreshold;
+}
+
+/// How many items a finished tier spent from the storehouse. Bank deposits do not count.
+num guildHallTierMaterialCount(GuildHallTier tier) {
+  num spent = 0;
+  for (final cost in tier.cost) {
+    spent += cost.quantity;
+  }
+  return spent;
+}
+
+/// Materials spent finishing the named hall tiers. Storehouse leftovers do not count.
+num guildHallMaterialsSpent(List<String> completedTiers) {
+  num spent = 0;
+  for (final tier in guildHallTiers) {
+    if (completedTiers.contains(tier.id)) spent += guildHallTierMaterialCount(tier);
+  }
+  return spent;
 }
 
 /// The storehouse once a finished tier has taken its materials out of it.

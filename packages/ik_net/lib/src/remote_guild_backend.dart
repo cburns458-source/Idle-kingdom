@@ -100,9 +100,47 @@ class RemoteGuildBackend {
         orderBy: 'name',
       );
     }
+    if (!result.ok && remoteMissingGuildBannerColumn(result.reason)) {
+      clearReadProblem?.call(remoteMissingGuildBannerColumn);
+      result = await transport.select(
+        RemoteTables.guilds,
+        columns: remoteGuildColumnsWithoutBanner,
+        equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
+        orderBy: 'name',
+      );
+    }
     if (result.ok) _guildsHaveSkillMilestones ??= true;
     if (!result.ok) return const <GuildRecord>[];
-    return result.rows!.map(guildRecordFrom).toList();
+    final guilds = result.rows!.map(guildRecordFrom).toList();
+    return _withAchievements(guilds);
+  }
+
+  Future<List<GuildRecord>> _withAchievements(List<GuildRecord> guilds) async {
+    if (guilds.isEmpty) return guilds;
+    final result = await transport.select(
+      RemoteTables.guildAchievements,
+      columns: remoteGuildAchievementColumns,
+    );
+    if (!result.ok || result.rows == null) {
+      if (remoteMissingGuildAchievementsTable(result.reason)) {
+        clearReadProblem?.call(remoteMissingGuildAchievementsTable);
+      }
+      return guilds;
+    }
+    final byGuild = <String, List<GuildAchievementUnlock>>{};
+    for (final row in result.rows!) {
+      final guildId = row['guild_id'];
+      final id = row['achievement_id'];
+      final at = row['unlocked_at'];
+      if (guildId is! String || id is! String || at is! String) continue;
+      byGuild
+          .putIfAbsent(guildId, () => <GuildAchievementUnlock>[])
+          .add(GuildAchievementUnlock(achievementId: id, unlockedAt: at));
+    }
+    return [
+      for (final guild in guilds)
+        guild.copyWith(achievements: byGuild[guild.id] ?? const <GuildAchievementUnlock>[]),
+    ];
   }
 
   Future<GuildRecord?> guildById(String guildId) async {
@@ -709,6 +747,44 @@ class RemoteGuildBackend {
     refusal: 'Only the leader can edit the banner.',
   );
 
+  Future<ActionResult> setGuildBanner(String guildId, GuildBanner banner) async {
+    final current = sessionOf();
+    if (current == null) return const ActionResult.failed('Sign in first.');
+    final result = await transport.rpc(RemoteRpcs.guildSetBanner, <String, Object?>{
+      'p_guild': guildId,
+      'p_banner': banner.toJson(),
+    });
+    if (!result.ok) return ActionResult.failed(result.reason ?? 'Try again.');
+    final answer = result.data ?? const <String, Object?>{};
+    if (answer['ok'] == true) return const ActionResult.ok();
+    final reason = answer['reason'];
+    return ActionResult.failed(reason is String && reason.isNotEmpty ? reason : 'Try again.');
+  }
+
+  Future<List<GuildAchievementProgress>> guildAchievementProgress(String guildId) async {
+    final guild = await guildById(guildId);
+    final hall = await guildHall(guildId);
+    final members = await guildMembers(guildId);
+    var strong = 0;
+    for (final member in members) {
+      if (member.totalLevel >= guildAchievementMemberLevel) strong += 1;
+    }
+    return evaluateGuildAchievements(
+      GuildAchievementSnapshot(
+        completedTiers: hall?.completedTiers ?? const <String>[],
+        goldContributed: hall?.goldContributed ?? 0,
+        goldContributedBy: hall?.goldContributedBy ?? const <String, num>{},
+        donatedBy: hall?.donatedBy ?? const <String, bool>{},
+        membersAtLevel500: strong,
+        unlocked: <String, String>{
+          for (final row in guild?.achievements ?? const <GuildAchievementUnlock>[])
+            row.achievementId: row.unlockedAt,
+        },
+      ),
+      nowIso(),
+    ).progress;
+  }
+
   Future<ActionResult> setGuildMotto(String guildId, String motto) async {
     final current = sessionOf();
     if (current == null) return const ActionResult.failed('Sign in first.');
@@ -814,12 +890,21 @@ class RemoteGuildBackend {
 
   Future<GuildHallState?> guildHall(String guildId) async {
     if (await guildById(guildId) == null) return null;
-    final result = await transport.select(
+    var result = await transport.select(
       RemoteTables.guildHalls,
       columns: remoteGuildHallColumns,
       equals: <String, Object?>{'guild_id': guildId},
       limit: 1,
     );
+    if (!result.ok && remoteMissingGuildHallDonatedByColumn(result.reason)) {
+      clearReadProblem?.call(remoteMissingGuildHallDonatedByColumn);
+      result = await transport.select(
+        RemoteTables.guildHalls,
+        columns: remoteGuildHallColumnsWithoutDonatedBy,
+        equals: <String, Object?>{'guild_id': guildId},
+        limit: 1,
+      );
+    }
     if (result.ok) {
       final row = result.single;
       // A guild made before the hall table, or one whose row was never written,
@@ -899,7 +984,7 @@ class RemoteGuildBackend {
     final hall = await guildHall(membership.guildId);
     if (hall == null) return const GuildHallActionResult.failed(remoteGuildMissing);
 
-    final given = donateToGuildHall(hall, save, inventoryIndex, quantity);
+    final given = donateToGuildHall(hall, save, inventoryIndex, quantity, userId: current.userId);
     if (!given.ok) return given;
     final stack = save.inventory[inventoryIndex];
 

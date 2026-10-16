@@ -1422,6 +1422,14 @@ class RemoteMultiplayerService implements MultiplayerService {
       _guilds.setGuildEmblem(guildId, emblem);
 
   @override
+  Future<ActionResult> setGuildBanner(String guildId, GuildBanner banner) =>
+      _guilds.setGuildBanner(guildId, banner);
+
+  @override
+  Future<List<GuildAchievementProgress>> guildAchievementProgress(String guildId) =>
+      _guilds.guildAchievementProgress(guildId);
+
+  @override
   Future<ActionResult> setGuildMotto(String guildId, String motto) =>
       _guilds.setGuildMotto(guildId, motto);
 

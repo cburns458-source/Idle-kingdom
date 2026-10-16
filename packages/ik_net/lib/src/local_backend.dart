@@ -530,6 +530,14 @@ class LocalMultiplayerBackend {
         )
         .toList();
     _overlayPvpLiveStats(db, userId, save);
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership != null) {
+      db.members = [
+        for (final row in db.members)
+          if (row.userId == userId) row.copyWith(totalLevel: totalLevel(save)) else row,
+      ];
+      _unlockGuildAchievements(db, membership.guildId);
+    }
     _write(db);
   }
 
@@ -949,6 +957,7 @@ class LocalMultiplayerBackend {
       ),
     );
     _logJoin(db, guild.id, session.userId, snapshot.username, guildRoleLeader);
+    _unlockGuildAchievements(db, guild.id);
     db.profiles = _withGuild(db.profiles, session.userId, guild);
     db.projects.add(
       GuildProject(
@@ -1067,6 +1076,7 @@ class LocalMultiplayerBackend {
           .where((row) => !(row.guildId == guildId && row.userId == session.userId))
           .toList();
       _logJoin(db, guild.id, session.userId, snapshot.username, guildRoleRecruit);
+      _unlockGuildAchievements(db, guild.id);
       _write(db);
       return const ApplyToGuildResult.ok(joined: true);
     }
@@ -1221,6 +1231,7 @@ class LocalMultiplayerBackend {
           .where((row) => !(row.guildId == guild.id && row.userId == application.userId))
           .toList();
       _logJoin(db, guild.id, application.userId, snapshot.username, guildRoleRecruit);
+      _unlockGuildAchievements(db, guild.id);
     }
     _write(db);
     return const ActionResult.ok();
@@ -1374,6 +1385,57 @@ class LocalMultiplayerBackend {
     return const ActionResult.ok();
   }
 
+  ActionResult setGuildBanner(String actorId, String guildId, Object? banner) {
+    final guild = getGuild(guildId);
+    if (guild == null) return const ActionResult.failed('That guild could not be found.');
+    final role = guildMembers(guildId)
+        .where((row) => row.userId == actorId)
+        .map((row) => row.role)
+        .firstOrNull;
+    if (!isGuildOfficerOrLeader(guild, actorId, role)) {
+      return const ActionResult.failed(guildBannerRoleRefusal);
+    }
+    final parsed = normalizeGuildBanner(
+      banner is GuildBanner ? banner.toJson() : banner,
+      guild.achievements.map((row) => row.achievementId),
+    );
+    if (!parsed.ok || parsed.banner == null) {
+      return ActionResult.failed(parsed.reason ?? guildBannerColourRefusal);
+    }
+    final db = _db();
+    final index = db.guilds.indexWhere((row) => row.id == guildId);
+    if (index < 0) return const ActionResult.failed('That guild could not be found.');
+    db.guilds[index] = db.guilds[index].copyWith(banner: parsed.banner);
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  List<GuildAchievementProgress> guildAchievementProgress(String guildId) {
+    final db = _db();
+    _unlockGuildAchievements(db, guildId);
+    _write(db);
+    final guild = getGuild(guildId);
+    final hall = guildHall(guildId) ?? GuildHallState.fresh(guildId);
+    var strong = 0;
+    for (final member in guildMembers(guildId)) {
+      if (member.totalLevel >= guildAchievementMemberLevel) strong += 1;
+    }
+    return evaluateGuildAchievements(
+      GuildAchievementSnapshot(
+        completedTiers: hall.completedTiers,
+        goldContributed: hall.goldContributed,
+        goldContributedBy: hall.goldContributedBy,
+        donatedBy: hall.donatedBy,
+        membersAtLevel500: strong,
+        unlocked: <String, String>{
+          for (final row in guild?.achievements ?? const <GuildAchievementUnlock>[])
+            row.achievementId: row.unlockedAt,
+        },
+      ),
+      _nowIso(),
+    ).progress;
+  }
+
   ActionResult setGuildMotto(String actorId, String guildId, String motto) {
     final guild = getGuild(guildId);
     if (guild == null) return const ActionResult.failed('That guild could not be found.');
@@ -1491,6 +1553,41 @@ class LocalMultiplayerBackend {
   void _putHall(LocalDb db, GuildHallState hall) {
     db.halls = db.halls.where((row) => row.guildId != hall.guildId).toList();
     db.halls.add(hall.copyWith(hallRevision: hall.hallRevision + 1));
+    _unlockGuildAchievements(db, hall.guildId);
+  }
+
+  void _unlockGuildAchievements(LocalDb db, String guildId) {
+    final hallIndex = db.halls.indexWhere((row) => row.guildId == guildId);
+    final hall = hallIndex >= 0 ? db.halls[hallIndex] : GuildHallState.fresh(guildId);
+    var strong = 0;
+    for (final member in db.members.where((row) => row.guildId == guildId)) {
+      if (_memberSnapshot(db, member.userId, member.username).totalLevel >=
+          guildAchievementMemberLevel) {
+        strong += 1;
+      }
+    }
+    final guildIndex = db.guilds.indexWhere((row) => row.id == guildId);
+    if (guildIndex < 0) return;
+    final unlocked = <String, String>{
+      for (final row in db.guilds[guildIndex].achievements) row.achievementId: row.unlockedAt,
+    };
+    final evaluated = evaluateGuildAchievements(
+      GuildAchievementSnapshot(
+        completedTiers: hall.completedTiers,
+        goldContributed: hall.goldContributed,
+        goldContributedBy: hall.goldContributedBy,
+        donatedBy: hall.donatedBy,
+        membersAtLevel500: strong,
+        unlocked: unlocked,
+      ),
+      _nowIso(),
+    );
+    db.guilds[guildIndex] = db.guilds[guildIndex].copyWith(
+      achievements: [
+        for (final entry in evaluated.unlocked.entries)
+          GuildAchievementUnlock(achievementId: entry.key, unlockedAt: entry.value),
+      ],
+    );
   }
 
   void _appendHallLogs(LocalDb db, String guildId, String userId, GuildHallActionResult result) {
@@ -1619,6 +1716,7 @@ class LocalMultiplayerBackend {
       save,
       inventoryIndex,
       quantity,
+      userId: userId,
     );
     if (!given.ok) return given;
     _putHall(db, given.hall!);

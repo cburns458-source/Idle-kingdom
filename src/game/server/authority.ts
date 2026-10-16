@@ -24,6 +24,10 @@ import {
   normalizeGuildHallState,
   type GuildHallState,
 } from '../guild/economy'
+import {
+  evaluateGuildAchievements,
+  type GuildAchievementProgress,
+} from '../guild/achievements'
 import { canChipInGuildGold, canPayGuildDebt, guildHallTierFinishLine } from '../guild/hall'
 import {
   depositToGuildBank,
@@ -204,6 +208,8 @@ export type GameCommandContext = {
   userId?: string
   guildRole?: string
   totalLevel?: number
+  membersAtLevel500?: number
+  unlockedAchievements?: Record<string, string>
   guildmatesInHall?: boolean
   nextId?: () => string
   opponentSave?: PlayerSave
@@ -224,6 +230,8 @@ export type GameCommandResult =
       goldCost?: number
       goldChipped?: number
       tiersFinishedNow?: string[]
+      achievementsUnlocked?: string[]
+      achievementProgress?: GuildAchievementProgress[]
       view?: DialogueView | null
       questCompletions?: QuestArrivalCompletion[]
       fightId?: string
@@ -360,6 +368,32 @@ function refuseHallGarden(save: PlayerSave, hall: GuildHallState | undefined): s
   if (save.currentLocationId !== GUILD_HALL_LOCATION_ID) return null
   if (guildHallGardenPatchOpen(hall?.completedTiers ?? [])) return null
   return 'The indoor garden is not built yet.'
+}
+
+function withHallAchievements(
+  extra: Omit<Extract<GameCommandResult, { ok: true }>, 'ok' | 'save'>,
+  options: GameCommandContext,
+  nowMs: number,
+  hall?: GuildHallState,
+): Omit<Extract<GameCommandResult, { ok: true }>, 'ok' | 'save'> {
+  if (!hall) return extra
+  const evaluated = evaluateGuildAchievements(
+    {
+      completedTiers: hall.completedTiers,
+      goldContributed: hall.goldContributed,
+      goldContributedBy: hall.goldContributedBy,
+      donatedBy: hall.donatedBy,
+      membersAtLevel500: options.membersAtLevel500 ?? 0,
+      unlocked: options.unlockedAchievements,
+    },
+    new Date(nowMs).toISOString(),
+  )
+  return {
+    ...extra,
+    hall,
+    achievementsUnlocked: evaluated.newlyUnlocked,
+    achievementProgress: evaluated.progress,
+  }
 }
 
 function hallLogEntries(
@@ -880,12 +914,20 @@ function applyExistingCommand(
       if (amount == null) return failed('Choose an amount.')
       const paid = chipInGuildHallGold(options.hall, options.userId, save, amount)
       return paid.ok
-        ? ok(paid.save, {
-            hall: paid.hall,
-            goldChipped: paid.goldChipped,
-            tiersFinishedNow: paid.tiersFinishedNow,
-            logEntries: hallLogEntries(options, paid),
-          })
+        ? ok(
+            paid.save,
+            withHallAchievements(
+              {
+                hall: paid.hall,
+                goldChipped: paid.goldChipped,
+                tiersFinishedNow: paid.tiersFinishedNow,
+                logEntries: hallLogEntries(options, paid),
+              },
+              options,
+              nowMs,
+              paid.hall,
+            ),
+          )
         : failed(paid.reason)
     }
     case 'guild_donate_hall_item': {
@@ -896,13 +938,21 @@ function applyExistingCommand(
       const resolved = resolveStackIndex(save.inventory, index, asString(args.itemId), enchantmentArg(args))
       if (resolved == null) return failed('That stack is not there.')
       if (!isItemTradeable(db, save.inventory[resolved].itemId)) return failed(UNTRADEABLE_ITEM_REFUSAL)
-      const donated = donateToGuildHall(options.hall, save, resolved, quantity)
+      const donated = donateToGuildHall(options.hall, save, resolved, quantity, options.userId)
       return donated.ok
-        ? ok(donated.save, {
-            hall: donated.hall,
-            tiersFinishedNow: donated.tiersFinishedNow,
-            logEntries: hallLogEntries(options, donated),
-          })
+        ? ok(
+            donated.save,
+            withHallAchievements(
+              {
+                hall: donated.hall,
+                tiersFinishedNow: donated.tiersFinishedNow,
+                logEntries: hallLogEntries(options, donated),
+              },
+              options,
+              nowMs,
+              donated.hall,
+            ),
+          )
         : failed(donated.reason)
     }
     case 'guild_withdraw_hall_item': {

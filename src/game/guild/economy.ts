@@ -1,6 +1,7 @@
 import { addItemToInventoryExact } from '../activity/rewards'
 import { stackIsUnbankableGold } from '../inventory/bank'
 import type { InventoryStack, PlayerSave } from '../save/types'
+import { withGuildHallDonor } from './achievements'
 import {
   goldContributedFromDebtRemaining,
   guildHallDonationCap,
@@ -19,6 +20,8 @@ export const GUILD_HALL_NOT_ENOUGH_GOLD = 'Not enough gold.'
 export type GuildHallState = {
   goldContributed: number
   goldContributedBy: Record<string, number>
+  /** Members who donated hall materials (gold donors also live on goldContributedBy). */
+  donatedBy: Record<string, boolean>
   storehouse: InventoryStack[]
   completedTiers: string[]
   /** Kept in sync with the running total so older rows still load. */
@@ -45,9 +48,11 @@ export function normalizeGuildHallState(hall: Partial<GuildHallState> & { storeh
       ? Math.max(0, Math.min(GUILD_HALL_GOLD_CAP, hall.goldContributed))
       : goldContributedFromDebtRemaining(hall.debtRemaining ?? GUILD_HALL_GOLD_CAP)
   const goldContributedBy = hall.goldContributedBy ?? hall.debtPaidBy ?? {}
+  const donatedBy = { ...(hall.donatedBy ?? {}) }
   return {
     goldContributed,
     goldContributedBy,
+    donatedBy,
     storehouse: hall.storehouse ?? [],
     completedTiers: hall.completedTiers ?? [],
     debtRemaining: Math.max(0, GUILD_HALL_GOLD_CAP - goldContributed),
@@ -98,6 +103,7 @@ export function chipInGuildHallGold(
     ...hall,
     goldContributed,
     goldContributedBy,
+    donatedBy: withGuildHallDonor(hall.donatedBy, userId),
   })
   const settled = settleGuildHallTiers(nextHall.storehouse, nextHall.completedTiers, nextHall.goldContributed)
   return {
@@ -125,6 +131,7 @@ export function donateToGuildHall(
   save: PlayerSave,
   inventoryIndex: number,
   quantity: number,
+  userId?: string,
 ): GuildHallActionResult {
   const current = normalizeGuildHallState(hall)
   if (inventoryIndex < 0 || inventoryIndex >= save.inventory.length) {
@@ -162,10 +169,15 @@ export function donateToGuildHall(
   else nextInventory[inventoryIndex] = { ...stack, quantity: stack.quantity - takenQty }
 
   const settled = settleGuildHallTiers(added.save.inventory, current.completedTiers, current.goldContributed)
+  const donatedHall = withSettledHall(
+    { ...current, donatedBy: withGuildHallDonor(current.donatedBy, userId) },
+    settled.storehouse,
+    settled.completedTiers,
+  )
   return {
     ok: true,
     save: { ...save, inventory: nextInventory },
-    hall: withSettledHall(current, settled.storehouse, settled.completedTiers),
+    hall: donatedHall,
     tiersFinishedNow: settled.finishedNow.map((tier) => tier.id),
     donatedItem: { itemId: stack.itemId, quantity: takenQty },
   }

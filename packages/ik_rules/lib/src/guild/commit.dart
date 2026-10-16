@@ -1,4 +1,5 @@
 import '../save/generated/save_models.dart';
+import 'achievements.dart';
 import 'hall.dart';
 
 const String _keySep = '\u001f';
@@ -38,6 +39,7 @@ class GuildHallCommitResult {
     required this.goldTaken,
     required this.goldContributed,
     required this.goldContributedBy,
+    this.donatedBy = const <String, bool>{},
     required this.storehouse,
     required this.completedTiers,
     required this.bankItems,
@@ -61,6 +63,7 @@ class GuildHallCommitResult {
   final num goldTaken;
   final num goldContributed;
   final Map<String, num> goldContributedBy;
+  final Map<String, bool> donatedBy;
   final List<InventoryStack> storehouse;
   final List<String> completedTiers;
   final List<InventoryStack> bankItems;
@@ -160,6 +163,7 @@ GuildHallCommitResult commitGuildHallFromPlayerSaves({
   required List<InventoryStack> nextInventory,
   required num hallGoldContributed,
   Map<String, num> hallGoldContributedBy = const <String, num>{},
+  Map<String, bool> hallDonatedBy = const <String, bool>{},
   List<InventoryStack> hallStorehouse = const <InventoryStack>[],
   List<String> hallCompletedTiers = const <String>[],
   List<InventoryStack> previousBankItems = const <InventoryStack>[],
@@ -186,6 +190,8 @@ GuildHallCommitResult commitGuildHallFromPlayerSaves({
   final proposedStore = qtyByKey(proposal.storehouse);
 
   var storehouse = <InventoryStack>[...hallStorehouse];
+  var donatedAny = goldTaken > 0;
+  var donatedBy = Map<String, bool>.from(hallDonatedBy);
   for (final key in _allKeys(<Map<String, num>>[
     previousInv,
     nextInv,
@@ -217,6 +223,7 @@ GuildHallCommitResult commitGuildHallFromPlayerSaves({
     final withdrawn = withdrawnWant < withdrawnCap ? withdrawnWant : withdrawnCap;
     final parsed = _parseQtyKey(key);
     if (donated > 0) {
+      donatedAny = true;
       storehouse = addToGuildHallStorehouse(
         storehouse,
         parsed.itemId,
@@ -235,10 +242,14 @@ GuildHallCommitResult commitGuildHallFromPlayerSaves({
   }
 
   final settled = settleGuildHallTiers(storehouse, hallCompletedTiers, goldContributed);
+  if (donatedAny && userId.isNotEmpty) {
+    donatedBy = withGuildHallDonor(donatedBy, userId);
+  }
   return GuildHallCommitResult(
     goldTaken: goldTaken,
     goldContributed: goldContributed,
     goldContributedBy: goldContributedBy,
+    donatedBy: donatedBy,
     storehouse: settled.storehouse,
     completedTiers: settled.completedTiers,
     bankItems: proposal.bankItems,

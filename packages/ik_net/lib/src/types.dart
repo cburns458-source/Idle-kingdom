@@ -672,6 +672,23 @@ class GuildEmblem {
   Map<String, Object?> toJson() => <String, Object?>{'color': color, 'symbol': symbol};
 }
 
+class GuildAchievementUnlock {
+  const GuildAchievementUnlock({required this.achievementId, required this.unlockedAt});
+
+  factory GuildAchievementUnlock.fromJson(Map<String, Object?> json) => GuildAchievementUnlock(
+    achievementId: json['achievementId'] as String? ?? json['achievement_id'] as String? ?? '',
+    unlockedAt: json['unlockedAt'] as String? ?? json['unlocked_at'] as String? ?? '',
+  );
+
+  final String achievementId;
+  final String unlockedAt;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'achievementId': achievementId,
+    'unlockedAt': unlockedAt,
+  };
+}
+
 class GuildRecord {
   const GuildRecord({
     required this.id,
@@ -687,6 +704,8 @@ class GuildRecord {
     this.rankIconTheme = guildRankIconThemeStripes,
     this.skillMilestoneSettings = defaultGuildSkillMilestoneSettings,
     this.permissions,
+    this.banner = defaultGuildBanner,
+    this.achievements = const <GuildAchievementUnlock>[],
   });
 
   factory GuildRecord.fromJson(Map<String, Object?> json) => GuildRecord(
@@ -703,6 +722,8 @@ class GuildRecord {
     rankIconTheme: normalizeRankIconTheme(json['rankIconTheme'] as String?),
     skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(json['skillMilestoneSettings']),
     permissions: normalizeGuildPermissionTable(json['permissions']),
+    banner: _bannerFromJson(json['banner']),
+    achievements: _achievementsFromJson(json['achievements']),
   );
 
   final String id;
@@ -729,6 +750,12 @@ class GuildRecord {
   /// Per-rank hall/bank actions. Null means the default table.
   final GuildPermissionTable? permissions;
 
+  /// Cosmetic hall banner: palette ids plus an unlocked emblem and border.
+  final GuildBanner banner;
+
+  /// Server-side unlocks, each once, with [GuildAchievementUnlock.unlockedAt].
+  final List<GuildAchievementUnlock> achievements;
+
   GuildRecord copyWith({
     String? name,
     String? tag,
@@ -740,6 +767,8 @@ class GuildRecord {
     String? rankIconTheme,
     GuildSkillMilestoneSettings? skillMilestoneSettings,
     GuildPermissionTable? permissions,
+    GuildBanner? banner,
+    List<GuildAchievementUnlock>? achievements,
   }) => GuildRecord(
     id: id,
     name: name ?? this.name,
@@ -754,6 +783,8 @@ class GuildRecord {
     rankIconTheme: rankIconTheme ?? this.rankIconTheme,
     skillMilestoneSettings: skillMilestoneSettings ?? this.skillMilestoneSettings,
     permissions: permissions ?? this.permissions,
+    banner: banner ?? this.banner,
+    achievements: achievements ?? this.achievements,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -770,7 +801,26 @@ class GuildRecord {
     if (rankIconTheme != guildRankIconThemeStripes) 'rankIconTheme': rankIconTheme,
     'skillMilestoneSettings': skillMilestoneSettings.toJson(),
     'permissions': (permissions ?? defaultGuildPermissionTable()).toJson(),
+    if (banner.background != defaultGuildBanner.background ||
+        banner.accent != defaultGuildBanner.accent ||
+        banner.emblem != null ||
+        banner.border != null)
+      'banner': banner.toJson(),
+    if (achievements.isNotEmpty) 'achievements': achievements.map((row) => row.toJson()).toList(),
   };
+}
+
+GuildBanner _bannerFromJson(Object? raw) => readGuildBanner(raw);
+
+List<GuildAchievementUnlock> _achievementsFromJson(Object? raw) {
+  if (raw is! List) return const <GuildAchievementUnlock>[];
+  return [
+    for (final entry in raw)
+      if (entry is Map<String, Object?>)
+        GuildAchievementUnlock.fromJson(entry)
+      else if (entry is Map)
+        GuildAchievementUnlock.fromJson(asJsonMap(entry)),
+  ];
 }
 
 /// A guild in the browser list, where the size matters as much as the name.
@@ -1005,12 +1055,26 @@ Map<String, num> _goldMap(Object? raw) {
   };
 }
 
+bool _donatedFlag(Object? value) {
+  if (value == true || value == 'true') return true;
+  if (value is num) return value > 0;
+  return false;
+}
+
+Map<String, bool> _donatedByMap(Object? raw) {
+  if (raw is! Map) return const <String, bool>{};
+  return <String, bool>{
+    for (final entry in raw.entries)
+      if (entry.key is String && _donatedFlag(entry.value)) entry.key as String: true,
+  };
+}
+
 /// Per-guild hall: a storehouse, one running gold total, and how far the guild
 /// has built.
 ///
-/// Members chip gold into [goldContributed] (capped at 1M). There is no stored
-/// coffer. The storehouse is the material donation ledger; a finished tier
-/// spends what it asked for.
+/// Members chip gold into [goldContributed] (capped at 1M). That is a running
+/// total, not a stored pool. The storehouse is the material donation ledger; a
+/// finished tier spends what it asked for.
 class GuildHallState {
   const GuildHallState({
     required this.guildId,
@@ -1018,6 +1082,7 @@ class GuildHallState {
     required this.goldContributedBy,
     required this.storehouse,
     required this.completedTiers,
+    this.donatedBy = const <String, bool>{},
     this.hallRevision = 0,
     this.bank = const GuildBankState(),
   });
@@ -1050,6 +1115,7 @@ class GuildHallState {
                 .map((entry) => InventoryStack.fromJson(asJsonMap(entry)))
                 .toList()
           : const <InventoryStack>[],
+      donatedBy: _donatedByMap(json['donatedBy']),
       completedTiers: json['completedTiers'] is List
           ? (json['completedTiers']! as List).whereType<String>().toList()
           : const <String>[],
@@ -1070,6 +1136,7 @@ class GuildHallState {
   final String guildId;
   final num goldContributed;
   final Map<String, num> goldContributedBy;
+  final Map<String, bool> donatedBy;
   final List<InventoryStack> storehouse;
 
   /// Tier ids the guild has finished, in the order it finished them.
@@ -1090,6 +1157,7 @@ class GuildHallState {
   GuildHallState copyWith({
     num? goldContributed,
     Map<String, num>? goldContributedBy,
+    Map<String, bool>? donatedBy,
     List<InventoryStack>? storehouse,
     List<String>? completedTiers,
     num? hallRevision,
@@ -1108,6 +1176,7 @@ class GuildHallState {
       guildId: guildId,
       goldContributed: nextGold,
       goldContributedBy: nextBy,
+      donatedBy: donatedBy ?? this.donatedBy,
       storehouse: storehouse ?? this.storehouse,
       completedTiers: completedTiers ?? this.completedTiers,
       hallRevision: hallRevision ?? this.hallRevision,
@@ -1119,6 +1188,7 @@ class GuildHallState {
     'guildId': guildId,
     'goldContributed': goldContributed,
     'goldContributedBy': <String, Object?>{...goldContributedBy},
+    if (donatedBy.isNotEmpty) 'donatedBy': <String, Object?>{...donatedBy},
     'storehouse': storehouse.map((row) => row.toJson()).toList(),
     'completedTiers': completedTiers,
     'hallRevision': hallRevision,

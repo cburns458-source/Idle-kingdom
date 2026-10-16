@@ -149,7 +149,11 @@ GuildHallActionResult chipInGuildHallGold(
   final goldContributed = hall.goldContributed + pay;
   final paidBy = <String, num>{...hall.goldContributedBy};
   paidBy[userId] = (paidBy[userId] ?? 0) + pay;
-  final next = hall.copyWith(goldContributed: goldContributed, goldContributedBy: paidBy);
+  final next = hall.copyWith(
+    goldContributed: goldContributed,
+    goldContributedBy: paidBy,
+    donatedBy: withGuildHallDonor(hall.donatedBy, userId),
+  );
   final settled = settleGuildHallTiers(next.storehouse, next.completedTiers, next.goldContributed);
   return GuildHallActionResult.ok(
     next.copyWith(storehouse: settled.storehouse, completedTiers: settled.completedTiers),
@@ -177,8 +181,9 @@ GuildHallActionResult donateToGuildHall(
   GuildHallState hall,
   PlayerSave save,
   int inventoryIndex,
-  num quantity,
-) {
+  num quantity, {
+  String userId = '',
+}) {
   if (inventoryIndex < 0 || inventoryIndex >= save.inventory.length) {
     return const GuildHallActionResult.failed('That stack is not there.');
   }
@@ -222,7 +227,11 @@ GuildHallActionResult donateToGuildHall(
     hall.goldContributed,
   );
   return GuildHallActionResult.ok(
-    hall.copyWith(storehouse: settled.storehouse, completedTiers: settled.completedTiers),
+    hall.copyWith(
+      storehouse: settled.storehouse,
+      completedTiers: settled.completedTiers,
+      donatedBy: withGuildHallDonor(hall.donatedBy, userId),
+    ),
     save: save.copyWith(inventory: nextInventory),
     tiersFinishedNow: settled.finishedNow.map((tier) => tier.id).toList(),
     donatedItem: GuildLogDonationItem(itemId: stack.itemId, quantity: takenQty),

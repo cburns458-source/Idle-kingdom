@@ -33,6 +33,7 @@ class RemoteTables {
   static const String guildApplications = 'guild_applications';
   static const String guildGuests = 'guild_guests';
   static const String guildHalls = 'guild_halls';
+  static const String guildAchievements = 'guild_achievements';
   static const String guildHallTiers = 'guild_hall_tiers';
   static const String guildLogEntries = 'guild_log_entries';
   static const String guildProjects = 'guild_projects';
@@ -59,6 +60,7 @@ class RemoteRpcs {
   static const String guildLeave = 'guild_leave';
   static const String guildKick = 'guild_kick';
   static const String guildSetMotto = 'guild_set_motto';
+  static const String guildSetBanner = 'guild_set_banner';
   static const String guildSetMessage = 'guild_set_message';
   static const String guildSetPermissions = 'guild_set_permissions';
 
@@ -252,6 +254,30 @@ bool remoteMissingGuildSkillMilestoneColumn(String? reason) {
   final lower = reason.toLowerCase();
   if (!lower.contains('does not exist')) return false;
   return lower.contains('skill_milestone_settings');
+}
+
+/// True when [reason] is a project that has not added `guilds.banner`.
+bool remoteMissingGuildBannerColumn(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('banner')) return false;
+  return lower.contains('does not exist') || lower.contains('schema cache');
+}
+
+/// True when [reason] is a project that has not added `guild_halls.donated_by`.
+bool remoteMissingGuildHallDonatedByColumn(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('donated_by')) return false;
+  return lower.contains('does not exist') || lower.contains('schema cache');
+}
+
+/// True when [reason] is a project that has not created `guild_achievements`.
+bool remoteMissingGuildAchievementsTable(String? reason) {
+  if (reason == null || reason.isEmpty) return false;
+  final lower = reason.toLowerCase();
+  if (!lower.contains('guild_achievements')) return false;
+  return lower.contains('schema cache') || lower.contains('does not exist');
 }
 
 /// True when PostgREST refused a `profiles` column — either it is not in

@@ -406,6 +406,9 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       guildPermissions: hallContext?.permissions,
       userId,
       guildRole: hallContext?.role,
+      totalLevel: hallContext?.totalLevel,
+      membersAtLevel500: hallContext?.membersAtLevel500,
+      unlockedAchievements: hallContext?.unlockedAchievements,
       guildmatesInHall: hallContext?.guildmatesInHall,
       nextId: () => crypto.randomUUID(),
       windowStartMs,
@@ -575,6 +578,12 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
           }
         : {}),
       ...bountyExtras,
+      ...(Array.isArray(result.achievementsUnlocked) && result.achievementsUnlocked.length > 0
+        ? { achievementsUnlocked: result.achievementsUnlocked }
+        : {}),
+      ...(Array.isArray(result.achievementProgress)
+        ? { achievementProgress: result.achievementProgress }
+        : {}),
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Command failed.'
@@ -964,6 +973,7 @@ async function publishPhase3Rows(
       .update(rankingProfilePatch(hosted))
       .eq('user_id', userId)
     if (profileError) return { ok: false, response: json({ error: profileError.message, phase: 3 }, 500) }
+    await admin.from('guild_members').update({ total_level: totalLevel(hosted) }).eq('user_id', userId)
   }
   if (command === 'save_pvp_equipment') {
     const { data: profile } = await admin.from('profiles').select('username').eq('user_id', userId).maybeSingle()
@@ -1071,10 +1081,13 @@ type HallContext = {
   hallRevision: number
   permissions: Record<string, string[]>
   guildmatesInHall: boolean
+  membersAtLevel500: number
+  unlockedAchievements: Record<string, string>
   bank: { items: unknown[] }
   hall: {
     goldContributed: number
     goldContributedBy: Record<string, number>
+    donatedBy: Record<string, boolean>
     debtRemaining: number
     debtPaidOff: boolean
     debtPaidBy: Record<string, number>
@@ -1117,6 +1130,22 @@ async function loadHallContext(admin: Client, userId: string): Promise<HallConte
       ? Number(hall.gold_contributed)
       : Math.max(0, 1_000_000 - Number(hall.debt_remaining ?? 1_000_000))
   const goldContributedBy = (hall.gold_contributed_by ?? hall.debt_paid_by ?? {}) as Record<string, number>
+  const donatedBy = (hall.donated_by ?? {}) as Record<string, boolean>
+  const { count: strongCount } = await admin
+    .from('guild_members')
+    .select('user_id', { count: 'exact', head: true })
+    .eq('guild_id', member.guild_id)
+    .gte('total_level', 500)
+  const { data: unlockRows } = await admin
+    .from('guild_achievements')
+    .select('achievement_id, unlocked_at')
+    .eq('guild_id', member.guild_id)
+  const unlockedAchievements: Record<string, string> = {}
+  for (const row of unlockRows ?? []) {
+    const id = String(row.achievement_id ?? '')
+    const at = row.unlocked_at
+    if (id && typeof at === 'string') unlockedAchievements[id] = at
+  }
   const { data: mates } = await admin
     .from('guild_members')
     .select('user_id')
@@ -1141,10 +1170,13 @@ async function loadHallContext(admin: Client, userId: string): Promise<HallConte
     hallRevision: Number(hall.hall_revision ?? 0),
     permissions: (guild?.permissions ?? {}) as Record<string, string[]>,
     guildmatesInHall,
+    membersAtLevel500: Number(strongCount ?? 0),
+    unlockedAchievements,
     bank: { items: Array.isArray(hall.bank_items) ? hall.bank_items : [] },
     hall: {
       goldContributed,
       goldContributedBy,
+      donatedBy,
       debtRemaining: Math.max(0, 1_000_000 - goldContributed),
       debtPaidOff: goldContributed >= 1_000_000,
       debtPaidBy: goldContributedBy,
