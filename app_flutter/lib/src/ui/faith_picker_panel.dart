@@ -160,6 +160,7 @@ class _FaithList extends StatelessWidget {
                     child: _FaithNameRow(
                       faith: faith,
                       bonuses: faithBonusViews(db, faith.religionId),
+                      flavour: faithFlavourLine(faith),
                       current: currentId == faith.religionId,
                       onTap: () => onOpen(faith.religionId),
                     ),
@@ -204,6 +205,7 @@ class _FaithPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final god = faithGodName(faith);
     final bonuses = faithBonusViews(db, faith.religionId);
+    final flavour = faithFlavourLine(faith);
     final description = faithDescription(faith);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -235,6 +237,10 @@ class _FaithPage extends StatelessWidget {
                 if (bonuses.isNotEmpty) ...[
                   if (god != null && god.isNotEmpty) const SizedBox(height: 12),
                   _FaithBonusList(religionId: faith.religionId, bonuses: bonuses),
+                ],
+                if (flavour.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(flavour, key: Key('faith-flavour-${faith.religionId}')),
                 ],
                 if (description.isNotEmpty) ...[const SizedBox(height: 12), Text(description)],
                 const SizedBox(height: 12),
@@ -302,6 +308,21 @@ String faithDescription(ReligionRow faith) {
   final raw = faith.raw['Description'];
   if (raw is! String) return '';
   return raw.trim();
+}
+
+/// Quest flavour keyed by Religions `Display Name`. Names must match the data.
+const Map<String, String> faithFlavourByName = <String, String>{
+  'Vaelithra': 'Bow to the god Oruveth and receive their guidance in tending the forest.',
+  'Khavessa': 'Bow to the god Theryvak and receive their guidance in the patient hunt.',
+  'Nymorai': 'Bow to the god Ulvaryn and receive their guidance on the waters.',
+  'Drazhkar': 'Bow to the god Azhurak and receive their guidance in battle.',
+  'Korvethan': 'Bow to the god Gorveth and receive their guidance in the deep stone.',
+  'Elyndara': 'Bow to the god Saelun and receive their guidance in the harvest.',
+  'Veyrathi': 'Bow to the god Zorvael and receive their guidance in fortune.',
+};
+
+String faithFlavourLine(ReligionRow faith) {
+  return faithFlavourByName[faith.displayName] ?? '';
 }
 
 /// One faith bonus, split into amount, optional skill, and stat from the row.
@@ -395,12 +416,14 @@ class _FaithNameRow extends StatelessWidget {
   const _FaithNameRow({
     required this.faith,
     required this.bonuses,
+    required this.flavour,
     required this.current,
     required this.onTap,
   });
 
   final ReligionRow faith;
   final List<FaithBonusView> bonuses;
+  final String flavour;
   final bool current;
   final VoidCallback onTap;
 
@@ -426,6 +449,14 @@ class _FaithNameRow extends StatelessWidget {
               if (bonuses.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 _FaithBonusList(religionId: faith.religionId, bonuses: bonuses, compact: true),
+              ],
+              if (flavour.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  flavour,
+                  key: Key('faith-flavour-${faith.religionId}'),
+                  style: const TextStyle(fontSize: GameFont.s),
+                ),
               ],
             ],
           ),

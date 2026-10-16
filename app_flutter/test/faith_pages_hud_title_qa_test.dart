@@ -142,6 +142,7 @@ void main() {
       if (description.isNotEmpty) {
         expect(find.descendant(of: picker(), matching: find.text(description)), findsNothing);
       }
+      expected.add(faithFlavourLine(faith));
       for (final bonus in faithBonusViews(db(), faith.religionId)) {
         expected.add(bonus.amountLabel);
         expected.add(bonus.detailLine);
@@ -187,11 +188,16 @@ void main() {
       final descriptionTop = tester
           .getTopLeft(find.descendant(of: picker(), matching: find.text(description)))
           .dy;
+      final flavour = faithFlavourLine(faith);
+      expect(flavour, isNotEmpty);
+      final flavourTop = tester
+          .getTopLeft(find.descendant(of: picker(), matching: find.text(flavour)))
+          .dy;
       expect(headerTop, lessThan(godTop));
       expect(godTop + 8, lessThan(amountTop));
       expect(amountTop, lessThan(detailTop));
-      expect(detailTop + 8, lessThan(descriptionTop));
-      expect(find.byKey(Key('faith-flavour-${faith.religionId}')), findsNothing);
+      expect(detailTop + 8, lessThan(flavourTop));
+      expect(flavourTop + 8, lessThan(descriptionTop));
 
       await tester.tap(find.byKey(const Key('faith-back')));
       await tester.pump();
