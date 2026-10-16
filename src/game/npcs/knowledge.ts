@@ -5,6 +5,7 @@ import { getQuestProgress } from '../quests/quests'
 import type { PlayerSave } from '../save/types'
 import { npcLocationAt } from './roaming'
 import { tannerNpcAtLocation } from './tanner'
+import { isTutorialNpcAllowed } from '../tutorial/tutorial'
 
 export const MASTER_DWARF_ID = 'NPC-0003'
 export const ARCHMAGE_ID = 'NPC-0004'
@@ -36,6 +37,7 @@ export function npcHideAfterQuestId(npc: NpcRow): string | null {
 }
 
 export function npcVisibleForSave(npc: NpcRow, save: PlayerSave): boolean {
+  if (!isTutorialNpcAllowed(save, npc['NPC ID'])) return false
   if (!meetsTotalLevelRequirement(save, npc.Notes ?? null)) return false
   const questId = npcHideAfterQuestId(npc)
   if (!questId) return true

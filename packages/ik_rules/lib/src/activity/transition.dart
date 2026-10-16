@@ -8,6 +8,7 @@ import '../production/recipes.dart';
 import '../rng/mulberry32.dart';
 import '../save/generated/save_models.dart';
 import '../time.dart';
+import '../tutorial/tutorial.dart';
 import 'engine.dart';
 import 'requirements.dart';
 import '../world/hostility.dart';
@@ -210,6 +211,9 @@ ActivityChangeResult requestProductionStart(
 
   final validation = validateActivityStart(db, save, activityId);
   if (!validation.ok) return ActivityChangeResult.failed(validation.reason);
+  if (!isTutorialRecipeAllowed(save, recipeId)) {
+    return const ActivityChangeResult.failed('Not available yet.');
+  }
 
   var next = save;
   if (hasRunningPrimaryActivity(save) || save.activityTransition != null) {

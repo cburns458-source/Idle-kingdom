@@ -1704,6 +1704,9 @@ class LocalMultiplayerBackend {
     if (!guildHallBankUnlocked(hall.completedTiers)) {
       return const GuildHallActionResult.failed('The counting room is not built yet.');
     }
+    if (!guildMayWithdrawAtLevel(totalLevel(save))) {
+      return const GuildHallActionResult.failed(guildBankLevelTakeRefusal);
+    }
     final taken = takeGuildBankUpForGrabs(hall.bank, save, itemId, quantity, enchantmentId);
     if (!taken.ok) return GuildHallActionResult.failed(taken.reason ?? 'Could not take.');
     final next = hall.copyWith(bank: taken.bank);

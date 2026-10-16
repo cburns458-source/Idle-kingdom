@@ -22,6 +22,7 @@ import { inventoryCount } from '../production/recipes'
 import {
   applyQuestActionProgress,
   applyQuestAutoStartOnSeed,
+  applyQuestDefeatProgress,
   applyQuestLocationProgressResult,
   applyQuestProcessProgress,
   applyQuestTalkProgress,
@@ -29,6 +30,7 @@ import {
   FOREST_OFFERING_PLACED_MESSAGE,
   hasQuestFlag,
 } from './progress'
+import { applyTutorialCowKill } from '../tutorial/tutorial'
 import {
   acceptQuest,
   applyQuestAutoCompleteOnAction,
@@ -404,13 +406,14 @@ describe('quest tours', () => {
     expect(advice.ok, advice.reason).toBe(true)
     expect(advice.itemDeltas).toEqual([])
     expect(getQuestProgress(advice.save, 'QST-0006').status).toBe('active')
-    expect(npcConversation(launch, advice.save, fennel).quests[0]?.talkLine).toMatch(
-      /Good luck on your adventure/i,
-    )
+    expect(npcConversation(launch, advice.save, fennel).quests[0]?.talkLine).toMatch(/sword and shield/i)
 
-    const finished = chooseDialogue(launch, advice.save, 'DLG-0006', 'DNODE-0009', 'DCH-0012')
-    expect(finished.ok, finished.reason).toBe(true)
-    expect(finished.bookDeltas).toEqual(['BOOK-0001'])
+    const finished = applyTutorialCowKill(
+      launch,
+      applyQuestDefeatProgress(launch, advice.save, 'ENM-0001', 1),
+      'ENM-0001',
+    )
+    expect(finished.completed).toBe(true)
     expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
     expect(
       npcConversation(launch, finished.save, fennel).quests.find((row) => row.questId === 'QST-0006')

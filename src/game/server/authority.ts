@@ -38,6 +38,7 @@ import {
   guildMay,
   guildMayWithdrawAtLevel,
   GUILD_BANK_LEVEL_WITHDRAW_REFUSAL,
+  GUILD_BANK_LEVEL_TAKE_REFUSAL,
   type GuildPermissionTable,
 } from '../guild/permissions'
 import { guildHallGardenPatchOpen, guildHallRoomActivityVisible } from '../guild/rooms'
@@ -972,6 +973,8 @@ function applyExistingCommand(
       if (!guildHallBankUnlocked(options.hall.completedTiers)) {
         return failed('The counting room is not built yet.')
       }
+      const takeLevel = options.totalLevel ?? totalLevel(save)
+      if (!guildMayWithdrawAtLevel(takeLevel)) return failed(GUILD_BANK_LEVEL_TAKE_REFUSAL)
       const itemId = asString(args.itemId)
       const quantity = asNumber(args.quantity)
       if (!itemId || quantity == null) return failed('Missing take.')

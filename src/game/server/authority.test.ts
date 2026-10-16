@@ -16,6 +16,7 @@ import {
   normalizeGuildHallState,
 } from '../guild/economy'
 import { GUILD_HALL_GOLD_CAP } from '../guild/hall'
+import { GUILD_BANK_LEVEL_TAKE_REFUSAL } from '../guild/permissions'
 import {
   applyGameCommand,
   CATCHING_UP_REASON,
@@ -311,6 +312,21 @@ describe('phase 2 authority', () => {
     expect(refused).toEqual({ ok: false, reason: 'Recruits cannot chip in gold.' })
   })
 
+  it('refuses a hall gold chip-in when the guild role is empty', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const refused = applyGameCommand(rawDatabase, {
+      command: 'guild_chip_in_hall_gold',
+      args: { amount: 10 },
+      save: { ...createNewSave(launch, START_MS), gold: 50 },
+      nowMs: START_MS,
+      random: () => 0,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+      guildRole: '',
+    })
+    expect(refused).toEqual({ ok: false, reason: 'Recruits cannot chip in gold.' })
+  })
+
   it('ignores a forged hall payload that claims the gold cap without deducting gold', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const save = { ...createNewSave(launch, START_MS), gold: 500 }
@@ -482,6 +498,21 @@ describe('phase 2 authority', () => {
     })
     expect(moved.ok).toBe(true)
     if (!moved.ok) return
+    const tooLow = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_take_up_for_grabs',
+      args: { itemId: 'ITEM-0015', quantity: 2 },
+      save: moved.save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: moved.bank,
+      userId: 'u2',
+      guildRole: 'recruit',
+      totalLevel: 199,
+    })
+    expect(tooLow.ok).toBe(false)
+    if (!tooLow.ok) expect(tooLow.reason).toBe(GUILD_BANK_LEVEL_TAKE_REFUSAL)
+
     const first = applyGameCommand(rawDatabase, {
       command: 'guild_bank_take_up_for_grabs',
       args: { itemId: 'ITEM-0015', quantity: 2 },
@@ -492,7 +523,7 @@ describe('phase 2 authority', () => {
       guildBank: moved.bank,
       userId: 'u2',
       guildRole: 'recruit',
-      totalLevel: 1,
+      totalLevel: 200,
     })
     expect(first.ok).toBe(true)
     if (!first.ok) return
@@ -506,8 +537,140 @@ describe('phase 2 authority', () => {
       guildBank: first.bank,
       userId: 'u3',
       guildRole: 'member',
+      totalLevel: 200,
     })
     expect(second.ok).toBe(false)
+  })
+
+  it('a member under total level 200 is refused on Up for grabs Take', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = normalizeGuildHallState({
+      goldContributed: 10_000,
+      goldContributedBy: {},
+      storehouse: [],
+      completedTiers: ['build_the_hall', 'hall_bank'],
+    })
+    const save = createNewSave(launch, START_MS)
+    const bank = {
+      items: [{ id: 'gb-1', itemId: 'ITEM-0015', quantity: 1, section: 'up_for_grabs' as const }],
+    }
+    const refused = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_take_up_for_grabs',
+      args: { itemId: 'ITEM-0015', quantity: 1 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: bank,
+      userId: 'u2',
+      guildRole: 'member',
+      totalLevel: 50,
+    })
+    expect(refused.ok).toBe(false)
+    if (refused.ok) return
+    expect(refused.reason).toBe('Reach total level 200 to take from Up for grabs.')
+    expect(refused.reason).toBe(GUILD_BANK_LEVEL_TAKE_REFUSAL)
+  })
+
+  it('two Up for grabs takes of the same item at once: the second commit is 409 Hall changed', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = normalizeGuildHallState({
+      goldContributed: 10_000,
+      goldContributedBy: {},
+      storehouse: [],
+      completedTiers: ['build_the_hall', 'hall_bank'],
+    })
+    const bank = {
+      items: [{ id: 'gb-1', itemId: 'ITEM-0015', quantity: 2, section: 'up_for_grabs' as const }],
+    }
+    const take = (userId: string) =>
+      applyGameCommand(rawDatabase, {
+        command: 'guild_bank_take_up_for_grabs',
+        args: { itemId: 'ITEM-0015', quantity: 2 },
+        save: createNewSave(launch, START_MS),
+        nowMs: START_MS,
+        random: () => 0,
+        hall,
+        guildBank: bank,
+        userId,
+        guildRole: 'member',
+        totalLevel: 200,
+      })
+
+    const first = take('u1')
+    const raced = take('u2')
+    expect(first.ok).toBe(true)
+    expect(raced.ok).toBe(true)
+
+    const expectedRevision = 0
+    const afterFirstCommit = expectedRevision + 1
+    const hallChanged = (expectedRevision ?? 0) !== (afterFirstCommit ?? 0)
+    expect(hallChanged).toBe(true)
+
+    const gameSource = readFileSync(resolve(process.cwd(), 'supabase/functions/game/index.ts'), 'utf8')
+    expect(gameSource).toContain("error.message.includes('Hall changed')")
+    expect(gameSource).toMatch(/conflict \? 409/)
+
+    const sqlSource = readFileSync(
+      resolve(process.cwd(), 'supabase/migrations/20261016150000_guild_commit_hall_caught_up_save.sql'),
+      'utf8',
+    )
+    expect(sqlSource).toContain("Hall changed. Sync and retry.")
+  })
+
+  it('refuses bank withdraw and move to Up for grabs when the rank has no permission', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = normalizeGuildHallState({
+      goldContributed: 10_000,
+      goldContributedBy: {},
+      storehouse: [],
+      completedTiers: ['build_the_hall', 'hall_bank'],
+    })
+    const save = createNewSave(launch, START_MS)
+    const bank = {
+      items: [{ id: 'gb-1', itemId: 'ITEM-0015', quantity: 2, section: 'main' as const }],
+    }
+    const withdrawn = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_withdraw',
+      args: { itemId: 'ITEM-0015', quantity: 1 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: bank,
+      userId: 'u1',
+      guildRole: 'member',
+      totalLevel: 200,
+    })
+    expect(withdrawn).toEqual({ ok: false, reason: 'You cannot withdraw from the guild bank.' })
+
+    const veteran = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_withdraw',
+      args: { itemId: 'ITEM-0015', quantity: 1 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: bank,
+      userId: 'u1',
+      guildRole: 'veteran',
+      totalLevel: 200,
+    })
+    expect(veteran).toEqual({ ok: false, reason: 'You cannot withdraw from the guild bank.' })
+
+    const moved = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_move_up_for_grabs',
+      args: { itemId: 'ITEM-0015', quantity: 2 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: bank,
+      userId: 'u1',
+      guildRole: 'member',
+      nextId: () => 'gb-2',
+    })
+    expect(moved).toEqual({ ok: false, reason: 'You cannot move items to Up for grabs.' })
   })
 
   it('reads the Tradeable column, with missing meaning true', () => {

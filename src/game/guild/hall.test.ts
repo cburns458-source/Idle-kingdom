@@ -144,6 +144,93 @@ describe('guild hall tiers', () => {
     expect(guildHallBankUnlocked(withGold.completedTiers)).toBe(true)
   })
 
+  it('each room finishes only when its gold mark and its materials are both in', () => {
+    const rooms: Array<{
+      id: string
+      gold: number
+      prior: string[]
+      materials: InventoryStack[]
+      missingItem: string
+    }> = [
+      {
+        id: GUILD_HALL_TIER_BANK,
+        gold: 10_000,
+        prior: [GUILD_HALL_TIER_BUILD],
+        materials: [stack('ITEM-0017', 24_000), stack('ITEM-0002', 10_000), stack('ITEM-0006', 6_320)],
+        missingItem: 'ITEM-0017',
+      },
+      {
+        id: GUILD_HALL_TIER_BOXING,
+        gold: 40_000,
+        prior: [GUILD_HALL_TIER_BUILD, GUILD_HALL_TIER_BANK],
+        materials: [stack('ITEM-0002', 14_000), stack('ITEM-0095', 13_160), stack('ITEM-0017', 13_160)],
+        missingItem: 'ITEM-0002',
+      },
+      {
+        id: GUILD_HALL_TIER_GARDEN,
+        gold: 130_000,
+        prior: [GUILD_HALL_TIER_BUILD, GUILD_HALL_TIER_BANK, GUILD_HALL_TIER_BOXING],
+        materials: [stack('ITEM-0016', 20_000), stack('ITEM-0002', 8_320), stack('ITEM-0377', 12_000)],
+        missingItem: 'ITEM-0016',
+      },
+      {
+        id: GUILD_HALL_TIER_ARCANA,
+        gold: 400_000,
+        prior: [
+          GUILD_HALL_TIER_BUILD,
+          GUILD_HALL_TIER_BANK,
+          GUILD_HALL_TIER_BOXING,
+          GUILD_HALL_TIER_GARDEN,
+        ],
+        materials: [stack('ITEM-0011', 16_000), stack('ITEM-0018', 16_000), stack('ITEM-0002', 8_320)],
+        missingItem: 'ITEM-0011',
+      },
+      {
+        id: GUILD_HALL_TIER_CAGE,
+        gold: 1_000_000,
+        prior: [
+          GUILD_HALL_TIER_BUILD,
+          GUILD_HALL_TIER_BANK,
+          GUILD_HALL_TIER_BOXING,
+          GUILD_HALL_TIER_GARDEN,
+          GUILD_HALL_TIER_ARCANA,
+        ],
+        materials: [stack('ITEM-0077', 10_000), stack('ITEM-0076', 12_000), stack('ITEM-0006', 18_320)],
+        missingItem: 'ITEM-0077',
+      },
+    ]
+
+    expect(GUILD_HALL_GOLD_MARKS).toEqual(rooms.map((room) => room.gold))
+
+    for (const room of rooms) {
+      const missingGold = settleGuildHallTiers(room.materials, room.prior, room.gold - 1)
+      expect(missingGold.completedTiers).toEqual(room.prior)
+      expect(missingGold.finishedNow).toEqual([])
+
+      const shortMaterials = room.materials.filter((row) => row.itemId !== room.missingItem)
+      const missingMaterials = settleGuildHallTiers(shortMaterials, room.prior, room.gold)
+      expect(missingMaterials.completedTiers).toEqual(room.prior)
+      expect(missingMaterials.finishedNow).toEqual([])
+
+      const both = settleGuildHallTiers(room.materials, room.prior, room.gold)
+      expect(both.completedTiers).toEqual([...room.prior, room.id])
+      expect(both.finishedNow.map((tier) => tier.id)).toEqual([room.id])
+      expect(both.storehouse).toEqual([])
+    }
+  })
+
+  it('settles a mix of enchanted and unenchanted storehouse stacks the same way Dart does', () => {
+    const storehouse: InventoryStack[] = [
+      stack('ITEM-0015', 600),
+      { itemId: 'ITEM-0015', quantity: 500, enchantmentId: 'ENC-0001' },
+      stack('ITEM-0095', 100),
+    ]
+    const settled = settleGuildHallTiers(storehouse, [])
+    expect(settled.finishedNow.map((tier) => tier.id)).toEqual([GUILD_HALL_TIER_BUILD])
+    expect(settled.completedTiers).toEqual([GUILD_HALL_TIER_BUILD])
+    expect(settled.storehouse).toEqual([{ itemId: 'ITEM-0015', quantity: 100, enchantmentId: 'ENC-0001' }])
+  })
+
   it('does not pay for a step twice', () => {
     const settled = settleGuildHallTiers([stack('ITEM-0015', 1000), stack('ITEM-0095', 100)], [
       GUILD_HALL_TIER_BUILD,
@@ -238,5 +325,12 @@ describe('guild hall tiers', () => {
     expect(applyGuildHallCompanyXp(1000, false)).toBe(1000)
     expect(applyGuildHallCompanyXp(1000, true)).toBe(1050)
     expect(applyGuildHallCompanyXp(0, true)).toBe(0)
+  })
+
+  it('floors the hall +5% company XP bonus', () => {
+    expect(applyGuildHallCompanyXp(101, true)).toBe(106)
+    expect(applyGuildHallCompanyXp(19, true)).toBe(19)
+    expect(applyGuildHallCompanyXp(1, true)).toBe(1)
+    expect(applyGuildHallCompanyXp(20, true)).toBe(21)
   })
 })

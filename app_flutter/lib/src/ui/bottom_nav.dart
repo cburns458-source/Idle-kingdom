@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import '../content/asset_paths.dart';
 import '../session/game_controller.dart';
@@ -162,6 +163,7 @@ class _BottomNavState extends State<BottomNav> {
             if (_nestEntry == nest) nest.markNeedsBuild();
           });
         }
+        final tutorialLocked = isTutorialLocked(widget.controller.save);
         return DecoratedBox(
           decoration: chromeBarFill(
             context,
@@ -190,20 +192,22 @@ class _BottomNavState extends State<BottomNav> {
                     ),
                   ),
                 ),
-                _divider,
-                Expanded(
-                  child: _NavSection(
-                    selected: widget.screen == GameScreen.skills,
-                    tooltip: 'Skills',
-                    semanticsLabel: 'Skills',
-                    onTap: () => _selectTab(GameScreen.skills),
-                    child: GameImage(
-                      uiStatsAssetPath(),
-                      width: _chinIconSize,
-                      height: _chinIconSize,
+                if (!tutorialLocked) ...[
+                  _divider,
+                  Expanded(
+                    child: _NavSection(
+                      selected: widget.screen == GameScreen.skills,
+                      tooltip: 'Skills',
+                      semanticsLabel: 'Skills',
+                      onTap: () => _selectTab(GameScreen.skills),
+                      child: GameImage(
+                        uiStatsAssetPath(),
+                        width: _chinIconSize,
+                        height: _chinIconSize,
+                      ),
                     ),
                   ),
-                ),
+                ],
                 _divider,
                 Expanded(
                   child: _NavSection(
@@ -223,7 +227,7 @@ class _BottomNavState extends State<BottomNav> {
                     child: GameImage(uiLogAssetPath(), width: _chinIconSize, height: _chinIconSize),
                   ),
                 ),
-                if (widget.showMenu) ...[
+                if (widget.showMenu && !tutorialLocked) ...[
                   _divider,
                   Expanded(
                     child: CompositedTransformTarget(

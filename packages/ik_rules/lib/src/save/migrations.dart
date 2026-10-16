@@ -6,6 +6,7 @@ import '../critters/pets.dart';
 import '../equipment/presets.dart';
 import '../js_compat.dart';
 import '../time.dart';
+import '../tutorial/tutorial.dart';
 import 'generated/save_models.dart';
 import 'json_save.dart';
 import 'starting_gear.dart';
@@ -1164,7 +1165,141 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     toVersion: 66,
     migrate: (save, _) => _bumped(_dropRemovedRen01Items(save), 66),
   ),
+  SaveMigration(
+    fromVersion: 66,
+    toVersion: 67,
+    migrate: (save, _) {
+      final next = _bumped(save, 67);
+      next['tutorialGuaranteedGathers'] = math.max(
+        0,
+        jsNumber(save['tutorialGuaranteedGathers']).floor(),
+      );
+      next['tutorialGuaranteedCooks'] = math.max(
+        0,
+        jsNumber(save['tutorialGuaranteedCooks']).floor(),
+      );
+      next['tutorialFoodGrantDeathAt'] = save['tutorialFoodGrantDeathAt'] is String
+          ? save['tutorialFoodGrantDeathAt']
+          : null;
+      // Loose JSON — a v8 fixture has not grown every PlayerSave field yet.
+      return _applyTutorialLockbackJson(next);
+    },
+  ),
 ];
+
+const List<String> _tutorialStepOrder = <String>[
+  tutorialGatherStepId,
+  tutorialShowPotatoesStepId,
+  tutorialCookStepId,
+  tutorialShowCookedStepId,
+  tutorialCombatStepId,
+];
+
+SaveJson? _tutorialQuestJson(SaveJson save) {
+  for (final row in arrayOrEmpty(save, 'quests')) {
+    final quest = asObject(row);
+    if (quest != null && quest['questId'] == tutorialQuestId) return quest;
+  }
+  return null;
+}
+
+bool _jsonGettingStartedActive(SaveJson save) => _tutorialQuestJson(save)?['status'] == 'active';
+
+bool _jsonStepLatched(SaveJson save, String stepId) {
+  final counters = objectOrEmpty(_tutorialQuestJson(save) ?? <String, Object?>{}, 'counters');
+  return jsNumber(counters['step:$stepId']) >= 1;
+}
+
+String? _jsonTutorialStepId(SaveJson save) {
+  if (!_jsonGettingStartedActive(save)) return null;
+  for (final stepId in _tutorialStepOrder) {
+    if (!_jsonStepLatched(save, stepId)) return stepId;
+  }
+  return tutorialCombatStepId;
+}
+
+bool _jsonKitchenPathOpen(SaveJson save) {
+  if (!_jsonGettingStartedActive(save)) return false;
+  final stepId = _jsonTutorialStepId(save);
+  return stepId == tutorialCookStepId || stepId == tutorialShowCookedStepId;
+}
+
+bool _jsonLocationAllowed(SaveJson save, String locationId) {
+  if (!_jsonGettingStartedActive(save)) return true;
+  if (locationId == tutorialFarmLocationId) return true;
+  if (!_jsonKitchenPathOpen(save)) return false;
+  return locationId == tutorialTownGatewayLocationId ||
+      locationId == tutorialTownSquareLocationId ||
+      locationId == tutorialKitchenLocationId;
+}
+
+bool _jsonActivityAllowed(SaveJson save, String activityId) {
+  if (!_jsonGettingStartedActive(save)) return true;
+  if (activityId == tutorialFieldsActivityId) return true;
+  if (activityId == tutorialCookActivityId) return _jsonKitchenPathOpen(save);
+  if (activityId == tutorialPastureActivityId) {
+    return _jsonTutorialStepId(save) == tutorialCombatStepId;
+  }
+  return false;
+}
+
+void _jsonStopRunningAction(SaveJson next) {
+  next['currentActivityId'] = null;
+  next['activityStartedAt'] = null;
+  next['currentActionId'] = null;
+  next['actionStartedAt'] = null;
+  next['actionDurationMs'] = null;
+  next['activityTransition'] = null;
+  next['combatEnemyId'] = null;
+  next['combatEnemyHp'] = null;
+  next['combatRoundStartedAt'] = null;
+  next['combatManualEatRoundStartedAt'] = null;
+  next['combatPlayerSwingApplied'] = false;
+  next['combatPendingRound'] = null;
+  next['combatEatUntil'] = null;
+  next['combatContinueActivityAfterEat'] = false;
+  next['combatSkipEnemyAttack'] = false;
+  next['combatBossSleepRoundsRemaining'] = null;
+  next['combatBossPendingId'] = null;
+  next['combatBossPendingHp'] = null;
+  next['combatBossAddsRemaining'] = null;
+  next['combatBossAddsTriggered'] = false;
+  next['combatBossInkActive'] = false;
+  next['productionRecipeId'] = null;
+  next['productionQuantityTotal'] = null;
+  next['productionQuantityRemaining'] = null;
+  next['heldActionByActivityId'] = <String, Object?>{};
+}
+
+/// Same lock-back as [applyTutorialLockback], for incomplete migration maps.
+SaveJson _applyTutorialLockbackJson(SaveJson save) {
+  final next = copySave(save);
+  if (!_jsonGettingStartedActive(next)) return next;
+
+  final flags = <String>[
+    for (final flag in arrayOrEmpty(next, 'dialogueFlags'))
+      if (flag is String) flag,
+  ];
+  if (!flags.contains(tutorialLockbackFlag)) {
+    flags.add(tutorialLockbackFlag);
+    flags.sort();
+  }
+  next['dialogueFlags'] = flags;
+
+  final locationId = next['currentLocationId'] is String ? next['currentLocationId'] as String : '';
+  final activityId = next['currentActivityId'] is String
+      ? next['currentActivityId'] as String
+      : null;
+  final locationAllowed = _jsonLocationAllowed(next, locationId);
+  final activityAllowed = activityId == null || _jsonActivityAllowed(next, activityId);
+  if (!locationAllowed || !activityAllowed) {
+    _jsonStopRunningAction(next);
+  }
+  if (!locationAllowed) {
+    next['currentLocationId'] = tutorialFarmLocationId;
+  }
+  return next;
+}
 
 /// Thrown when a save cannot be brought to the current version.
 class SaveMigrationException implements Exception {

@@ -42,6 +42,9 @@ export const GUILD_BANK_TOTAL_LEVEL_REQUIRED = 200
 export const GUILD_BANK_LEVEL_WITHDRAW_REFUSAL =
   'Reach total level 200 to withdraw from the guild bank.'
 
+export const GUILD_BANK_LEVEL_TAKE_REFUSAL =
+  'Reach total level 200 to take from Up for grabs.'
+
 /**
  * One server-side check used by hall, bank, and settings commands.
  *

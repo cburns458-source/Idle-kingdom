@@ -118,6 +118,9 @@ function saveWithInventory(itemIds: string[]): PlayerSave {
     xpTrackerPausedAtMs: null,
     mailbox: [],
     unlockedBookIds: [],
+    tutorialGuaranteedGathers: 0,
+    tutorialGuaranteedCooks: 0,
+    tutorialFoodGrantDeathAt: null,
   }
 }
 
