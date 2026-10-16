@@ -1,6 +1,6 @@
 # Restoria master backlog
 
-**Status: Approved by Conor on 2026-10-12. Updated 2026-10-16 (Conor).**
+**Status: Approved by Conor on 2026-10-12. Updated 2026-10-15 (Conor).**
 
 This is the single master backlog for Restoria. Only Conor edits it, or a PR he
 approves. Every design call stays with Conor. Work on any item still follows
