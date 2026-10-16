@@ -68,7 +68,7 @@ QA is building option A: completed steps are latched as `step:<stepId>` entries 
 - `talk_flag` writes the latch through the same helper — no second write path. **Do not start SYS-01 code until the BUG-01 PR merges into test-launch.**
 
 ## 7. Server authority & parity
-- Only `dialogue_choose` (and a new read-only `dialogue_start` view helper) mutate; client calls `applyGameCommand` via the game function. Offline/local path uses the Dart twin.
+- Only `dialogue_choose` (and a new read-only `dialogue_start` view helper) mutate; the signed-in client calls `applyGameCommand` via the game function. The Dart twin exists for tests and for the signed-in client's local tick. It is not a player-facing offline or guest play path.
 - Parity: shared JSON fixtures under `parity/fixtures/dialogue/` (condition matrix, multi-action success, rollback on failure, priority ordering) run by both `packages/ik_rules/test/dialogue_engine_test.dart` and `src/game/dialogue/engine.test.ts`.
 
 ## 8. Open decisions (recommended default in bold)

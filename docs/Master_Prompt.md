@@ -32,11 +32,11 @@ Do not invent missing design values.
 
 ## 2. DEMO BOUNDARIES
 
-This is a live multiplayer idle RPG web demo. Offline guest play is retired.
+This is a live multiplayer idle RPG web demo. There is no guest play, no offline play, and no playing without signing in. The game needs an internet connection and a logged-in character. Unattended progress (idle gains while logged out, settled by the server on next login) is not offline play.
 
 Preserve these core requirements:
 
-- Sign-in is required before play. One account carries one character.
+- Sign-in is required before play. One account carries one character. No guest path, no offline play, no signed-out play.
 - The account save is the source of truth and is written back automatically.
 - One Primary Activity slot.
 - Combat, Gathering, and Standard Production use the Primary Activity slot.
@@ -328,7 +328,7 @@ Required behavior includes:
 - Preserve save version.
 - Support safe migration/versioning as the demo evolves.
 
-Do not restore an offline guest path.
+Do not restore guest play, offline play, or playing without signing in.
 
 ## 10. GAMEPLAY RULES THAT MUST NOT BE CASUALLY CHANGED
 
@@ -556,7 +556,7 @@ Include:
 - Material consumption.
 - Inventory-capacity validation.
 - XP.
-- Offline continuation hooks.
+- Unattended continuation hooks (idle progress on a signed-in account, settled by the server on next login; not offline play).
 - Data-driven recipe UI.
 
 Alchemy effects must only work when the effect is explicitly defined in source data.
@@ -651,7 +651,7 @@ Include:
 - Requirement invalidation.
 - Safe save version migration.
 
-Do not implement a separate simplified offline combat formula if it can diverge from active combat.
+Do not implement a separate simplified unattended-combat formula if it can diverge from active combat. That catch-up is not offline play.
 
 Owner playtest should include:
 - Short absence.
@@ -791,7 +791,7 @@ Do not:
 - add monetization,
 - add energy systems,
 - add extra currencies,
-- restore offline guest play,
+- restore guest play, offline play, or playing without signing in,
 - add cosmetics or customization systems not defined by the sources,
 - implement Expansion content simply because it exists in the database,
 - hardcode large content lists that belong in data,

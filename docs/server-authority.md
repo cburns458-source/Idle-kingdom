@@ -66,8 +66,9 @@ The Dart rules still run every frame so the UI stays responsive. Every
 `game` response replaces the local save. A Dart/TS mismatch shows up as
 a visible snap-back, which is the drift detector.
 
-Signing in is required to play. The local backend stays as a test
-harness only.
+Signing in is required to play. There is no guest play, offline play, or
+playing without a logged-in character. The local backend stays as a test
+harness only. It is not a player-facing offline mode.
 
 ## Quota and catch-up
 

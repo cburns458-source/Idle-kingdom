@@ -164,9 +164,10 @@ where their result lands, so nothing can skip the write pipeline.
 backends sit behind one `MultiplayerService`:
 
 - **Local** keeps accounts, guilds, chat, presence, claims, and posts in a single
-  JSON document in the same store as the save, so the social screens are playable
-  and testable with no project configured. It is also the reference for what the
-  hosted backend has to agree with.
+  JSON document in the same store as the save so tests and local development can
+  run with no project configured. It is a test harness only, not player-facing
+  guest play, offline play, or signed-out play. It is also the reference for
+  what the hosted backend has to agree with.
 - **Hosted** talks to Supabase through `RemoteTransport`, a narrow port the
   Flutter client implements over `supabase_flutter`. Keeping the rows, column
   names, and refusal messages in `remote.dart` (shared with `remote.ts`) means

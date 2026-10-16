@@ -119,6 +119,8 @@ Conor's rulings, dated. Immutable once written.
 | Date | Decision | Evidence |
 |---|---|---|
 | 2026-10-16 | Conor (Vari) parked ADM-01, ADM-02, SYS-05 and the NTF items until closer to the Android/iOS app store launch. No paid plan upgrades happen until needed. Leaked-password protection is blocked because it needs Supabase Pro. | Vari (Conor) |
+| 2026-10-16 | There is no guest play, offline play, or playing without signing in. The game needs an internet connection and a logged-in character. Unattended/offline progress (idle gains while logged out, settled by the server on next login) is not offline play and stays. | Vari (Conor) |
+| 2026-10-16 | UI-07 green and gold rules approved (covers UI-06). One change: selected items get a green highlight instead of gold. Stone UI follows the same rules as wood UI. Ui is building on `ui/ui-07-green-gold`. | Vari (Conor) |
 | 2026-10-16 | ECO-01 Bazaar new offers require total level 200; existing offers still fill, cancel, and collect (merged 2026-10-13). Leftovers in #353. | PR #350, #353 |
 | 2026-10-16 | ECO-03 plaza points and Hearthguard shop are on test-launch (merged 2026-10-13). Points are not bankable and not Bazaar-tradeable. Ranked wins pay 25 points and 0 gold. Bounties pay floored points only. | PR #353 |
 | 2026-10-16 | Guild hall costs confirmed: about a week per tier, tier 5 costs 600k so the tiers total 1,000,000 (confirms Reading B) | Vari (Conor); PR #390 |
@@ -176,6 +178,10 @@ Conor's rulings, dated. Immutable once written.
   once their materials are in.
 - ⚠️ Goblins start with the Wooden Dagger and no shield (2026-10-15). The Cow
   fight is unchanged.
+- ⚠️ No guest play, offline play, or playing without signing in (2026-10-16).
+  The game needs an internet connection and a logged-in character. Unattended
+  progress while logged out is settled by the server on next login; that is
+  not offline play.
 
 **Guardrail from `Master_Prompt.md` §2:** "Do not add currencies, energy
 systems, monetization systems… not defined by the supplied sources." Plaza
@@ -245,7 +251,7 @@ Workflow doc: Cursor cloud agents for commits, pushes, and migrations — **#384
 14. **MAP-01** Region map (+ **MAP-04** landing nodes). Foundation for the isles/citadel.
 15. **ARC-01** Enchant tablets and **ARC-02** Essence rework (design doc together).
 16. **QST-04** Goblin Trouble, **QST-06** Quest recipe rewards, **SKL-04** Cooking multi-output, **ITM-06** Chromium/Vanadium recolor. Content with low dependencies.
-17. **UI-05** asset pack, **UI-07** green/gold plan (also covers UI-06) Awaiting Approval, **ART-01** spec sheet. Unblocks the whole UI/art track.
+17. **UI-05** asset pack, **UI-07** green/gold rules (covers UI-06) In Progress on `ui/ui-07-green-gold` (Vari approved 2026-10-16), **ART-01** spec sheet. Unblocks the whole UI/art track.
 
 ### P2: After
 
@@ -400,8 +406,8 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 | UI-03 | Fancier font for headers | Inbox | Inbox | P2 | UI-06 | Ui | TBD (Ui) | Desc: Fancier font for headers. Accept: TBD (owner to propose). Depends on UI-06. |
 | UI-04 | Use more icons for buttons, x icon to replace close button | Inbox | Inbox | P2 | UI-05 | Ui | TBD (Ui) | Desc: More button icons, including an X to replace Close. Accept: TBD (owner to propose). Depends on UI-05. |
 | UI-05 | Look for ui asset pack | Ready for Proposal | Ready | P1 | none | Art + Ui / Asset Pack Team | Research a UI asset pack | Desc: Find a UI asset pack. Accept: TBD (owner to propose). Gates UI-03/04/06. Asset Pack Team owns research and implementation. |
-| UI-06 | Reduce gold borders | Inbox | Inbox | P2 | UI-07 | Ui | Covered by the UI-07 plan | Desc: Reduce gold borders. Accept: TBD (owner to propose). Covered by Ui's UI-07 plan (Awaiting Approval). |
-| UI-07 | Choose rules for use of green and gold in ui | Awaiting Approval | Awaiting Vari | P1 | none (Vari decision) | Ui | Vari reviews Ui's plan | Desc: Formalize when to use green and gold in the UI. Accept: TBD (owner to propose). Ui submitted a green and gold plan that also covers UI-06 (reduce gold borders). `Master_Prompt.md` §6 says "gold highlights, soft green accents". |
+| UI-06 | Reduce gold borders | In Progress | In progress | P2 | UI-07 | Ui | Covered by UI-07 on `ui/ui-07-green-gold` | Desc: Reduce gold borders. Accept: covered by the approved UI-07 plan. Vari approved 2026-10-16 with UI-07. |
+| UI-07 | Choose rules for use of green and gold in ui | In Progress | In progress | P1 | none | Ui | Continue `ui/ui-07-green-gold` | Desc: Formalize when to use green and gold in the UI. Accept: Vari approved 2026-10-16 (covers UI-06). One change: selected items get a green highlight instead of gold. Stone UI follows the same rules as wood UI. Building on `ui/ui-07-green-gold`. `Master_Prompt.md` §6 still says "gold highlights, soft green accents" until this lands. |
 | UI-12 | Bank and inventory tabs for custom organization | Needs Clarification | Blocked on MEM-01 | P2 | OQ-03, MEM-01 | Ui | TBD (Ui) | Desc: Bank and inventory tabs for custom organization. Accept: TBD (owner to propose). OQ-03 answered (84/168). |
 | UI-14 | Language support | Needs Clarification | Blocked on OQ-18 | Later | OQ-18 | Ui | Vari answers OQ-18 | Desc: Language support. Accept: TBD (owner to propose). Copy lives in the DB plus hardcoded Dart strings. |
 | UI-15 | Bribe confirmation popup | Review | In review | P1 | none | Ui | Confirm the shipping PR (number unknown) | Desc: Confirm before paying a quest bribe. Accept: TBD (owner to propose). Network nits from #358 (`code`/`noRoom` through `CloudSyncResult` / `HostedCommandReceipt`). **PR number is unknown.** |
@@ -495,7 +501,7 @@ OQ-03 inventory size (answered: 84 bag / 168 bank, #332) ─► UI-12 tabs, MEM-
 OQ-05 untradeable ─► BUG-02, QST-12, ARC-01
 ADM-01 audit (Blocked; parked until app store launch) ─► ADM-02 email (Blocked; parked until app store launch), ADM-03 dashboard ─► ADM-05 telemetry
 rls-hardening #3–6 (server hall settlement) ─► SOC-01 guild hall tiers
-UI-07 color rules (Awaiting Approval; plan also covers UI-06) + UI-05 asset pack ─► UI-03/04/06
+UI-07 color rules (In Progress on `ui/ui-07-green-gold`; covers UI-06; Vari approved 2026-10-16) + UI-05 asset pack ─► UI-03/04/06
 ART-01 spec ─► ART-02/04/05, UI-01
 ```
 

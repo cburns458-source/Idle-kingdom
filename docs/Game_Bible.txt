@@ -8,7 +8,7 @@ World name: Restoria
 PURPOSE
 This document defines the playable idle RPG web demo. It contains the current gameplay, content, progression, art, interface, save, social, and data rules needed for the demo. Numerical balance values should remain data-driven unless explicitly fixed here.
 
-The initial single-player offline demo is retired. RestoriaIdle is a live demo: one account carries one character, sign-in is required to play, and the world should feel shared with other players.
+The initial single-player offline demo is retired. RestoriaIdle is a live multiplayer game: one account carries one character, and the world should feel shared with other players. There is no guest play, no offline play, and no playing without signing in. The game needs an internet connection and a logged-in character. Unattended progress (idle gains while the player is logged out, settled by the server on next login) is not offline play.
 
 ======================================================================
 1. GAME OVERVIEW
@@ -81,7 +81,8 @@ Sentence case: Player-facing Display Names use sentence case. Capitalize the fir
 ======================================================================
 
 3.1 ACCOUNT
-- Sign-in is required before play. There is no offline guest path.
+- Sign-in is required before play. There is no guest play, no offline play, and no playing without signing in. The game needs an internet connection and a logged-in character.
+- Unattended/offline progress (idle gains while logged out, settled by the server on next login) is not offline play. See 3.3.
 - One account carries one character. The character belongs to the account, not to the device.
 - Signing in loads that account's save and signs the other device out.
 - The first character name is also the account name other players see.
@@ -97,6 +98,7 @@ Sentence case: Player-facing Display Names use sentence case. Capitalize the fir
 - The hosted save is server-authoritative: sync and named commands write it, and the client adopts that copy. Combat and gathering still tick on the device for the live UI.
 
 3.3 UNATTENDED PROGRESSION
+- This is idle catch-up on a signed-in account, settled by the server on next login. It is not offline play, guest play, or playing without signing in.
 - Gathering and Combat may continue for up to 24 hours while the game is closed.
 - Standard Production queues may contain up to 24 hours of work and continue while the game is closed.
 - Special Production completes instantly and does not require unattended simulation.
@@ -1199,6 +1201,6 @@ The live demo should feel shared. These systems are part of ordinary play, not o
 20.8 RESOLUTION
 - The hosted save is server-authoritative. Combat and gathering still tick on the device for the live UI; the server reruns the same rules on sync and command.
 - Shared rows (guild roster, hall, bazaar listings, chat, presence) are server-backed when the live backend is configured.
-- A build with no backend may keep shared rows on the device so tests and local development still run. That fallback is not a player-facing offline mode.
+- A build with no backend may keep shared rows on the device so tests and local development still run. That fallback is a test harness only. It is not player-facing guest play, offline play, or signed-out play.
 
 END OF GAME BIBLE
