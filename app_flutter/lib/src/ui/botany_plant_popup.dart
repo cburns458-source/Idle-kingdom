@@ -205,7 +205,7 @@ class _BotanyPlantGridPopupState extends State<_BotanyPlantGridPopup> {
                 ),
                 Text(
                   'Grows in ${formatDurationSeconds(_growSeconds)} · plant ${_picked.length}',
-                  style: TextStyle(color: chrome.embossFace, fontSize: GameFont.s),
+                  style: TextStyle(color: chrome.panelMuted, fontSize: GameFont.s),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -299,7 +299,7 @@ class _PlantTile extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
-                  color: Palette.gold,
+                  color: Palette.borderSelected,
                 ),
               ),
             ),

@@ -1168,7 +1168,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                           tone:
                               controller.activityError != null || controller.productionInventoryFull
                               ? Palette.danger
-                              : Palette.gold,
+                              : Palette.success,
                           onDismissed: controller.clearMessages,
                         ),
                       ),
@@ -1556,7 +1556,7 @@ class _BatterySaverPlaque extends StatelessWidget {
       color: UiChrome.of(context).board,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Palette.gold, width: 1),
+        side: const BorderSide(color: Palette.borderSelected, width: 1),
       ),
       child: InkWell(
         onTap: onOpenSettings,
@@ -1566,12 +1566,12 @@ class _BatterySaverPlaque extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.bolt, size: 13, color: Palette.gold),
+              Icon(Icons.bolt, size: 13, color: Palette.borderSelected),
               SizedBox(width: 4),
               Text(
                 'Battery saver',
                 style: TextStyle(
-                  color: Palette.gold,
+                  color: Palette.borderSelected,
                   fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
                 ),

@@ -229,7 +229,7 @@ class _BankPanelState extends State<BankPanel> {
               ),
               GoldAmount(
                 amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
+                style: const TextStyle(color: Palette.currency),
               ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
@@ -339,7 +339,7 @@ class _BankPanelState extends State<BankPanel> {
                       '★',
                       style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
                     ),
-                  if (favorite) const Icon(Icons.favorite, size: 14, color: Palette.gold),
+                  if (favorite) const Icon(Icons.favorite, size: 14, color: Palette.rare),
                 ],
               ),
             ),

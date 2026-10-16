@@ -448,7 +448,7 @@ class _MenuViewState extends State<MenuView> {
             Text(
               notice,
               style: TextStyle(
-                color: _artError ? Palette.warning : Palette.gold,
+                color: _artError ? Palette.warning : Palette.success,
                 fontSize: GameFont.s,
               ),
             ),

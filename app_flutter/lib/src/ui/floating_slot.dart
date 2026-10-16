@@ -66,6 +66,12 @@ class FloatingItemSlot extends StatelessWidget {
     final fill = selected ? floatingSelectTint(chrome.slot) : Colors.transparent;
     Widget body = Material(
       color: fill,
+      shape: selected
+          ? PixelSteppedBorder(
+              step: PixelChrome.stepTight,
+              side: const BorderSide(color: Palette.borderSelected, width: 2),
+            )
+          : null,
       child: InkWell(
         onTap: enabled ? onTap : null,
         onLongPress: enabled ? onLongPress : null,

@@ -225,10 +225,10 @@ class _CosmeticTile extends StatelessWidget {
       decoration: chromeSlotFill(
         context,
         color: selected
-            ? Color.lerp(UiChrome.of(context).slot, UiChrome.of(context).embossFace, 0.18)
+            ? Color.lerp(UiChrome.of(context).slot, Palette.borderSelected, 0.18)
             : UiChrome.of(context).slot,
         border: Border.all(
-          color: selected ? UiChrome.of(context).embossFace : Palette.edge,
+          color: selected ? Palette.borderSelected : UiChrome.of(context).edge,
           width: selected ? 2 : 1,
         ),
       ),

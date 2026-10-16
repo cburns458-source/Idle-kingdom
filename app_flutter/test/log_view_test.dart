@@ -63,13 +63,12 @@ void main() {
 
       final completion = logCompletion(database.launch, controller.save);
       final overall = tester.widget<Text>(find.text('${completion.overall.percent}% complete'));
-      expect(overall.style?.color, chrome.embossFace);
-      if (pack == UiChromePack.stone) {
-        expect(overall.style?.color, isNot(Palette.gold));
-      }
+      expect(overall.style?.color, Palette.progress);
+      expect(overall.style?.color, isNot(Palette.gold));
 
       final section = tester.widget<Text>(find.text(completion.section('achievements')!.label));
-      expect(section.style?.color, chrome.embossFace);
+      expect(section.style?.color, Palette.gold);
+      expect(section.style?.color, isNot(chrome.embossFace));
 
       final bandMuted = find
           .descendant(

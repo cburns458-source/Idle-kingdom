@@ -364,7 +364,7 @@ class _Swatch extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           border: Border.all(
-            color: selected ? Palette.gold : Palette.edge,
+            color: selected ? Palette.borderSelected : UiChrome.of(context).edge,
             width: selected ? 2 : 1,
           ),
         ),
@@ -391,7 +391,7 @@ class _RewardChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: Palette.panel,
           border: Border.all(
-            color: selected ? Palette.gold : Palette.edge,
+            color: selected ? Palette.borderSelected : UiChrome.of(context).edge,
             width: selected ? 2 : 1,
           ),
         ),

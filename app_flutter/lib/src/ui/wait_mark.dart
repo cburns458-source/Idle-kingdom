@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// A gold progress circle. Flutter draws it, so no extra art is needed.
+/// A green progress circle. Flutter draws it, so no extra art is needed.
 class GameWaitMark extends StatelessWidget {
   const GameWaitMark({super.key, this.size = 18});
 
@@ -13,7 +13,7 @@ class GameWaitMark extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: const CircularProgressIndicator(strokeWidth: 2, color: Palette.gold),
+      child: const CircularProgressIndicator(strokeWidth: 2, color: Palette.progress),
     );
   }
 }
@@ -38,7 +38,7 @@ class GameWaitVeil extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   label!,
-                  style: const TextStyle(color: Palette.gold, fontSize: GameFont.m),
+                  style: const TextStyle(color: Palette.progress, fontSize: GameFont.m),
                 ),
               ],
             ],

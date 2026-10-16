@@ -32,7 +32,7 @@ class GuildLogList extends StatelessWidget {
                 guildLogKindIcon(row.kind),
                 key: Key('guild-log-icon-${row.kind}'),
                 size: 18,
-                color: Palette.gold,
+                color: UiChrome.of(context).panelInk,
               ),
               const SizedBox(width: 8),
               Expanded(

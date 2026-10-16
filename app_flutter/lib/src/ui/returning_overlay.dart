@@ -19,7 +19,7 @@ class ReturningOverlay extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (!reduceMotion) ...[
-                const CircularProgressIndicator(color: Palette.gold),
+                const CircularProgressIndicator(color: Palette.progress),
                 const SizedBox(height: 18),
               ],
               const Text(

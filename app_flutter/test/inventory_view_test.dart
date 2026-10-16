@@ -622,7 +622,7 @@ void main() {
     }
 
     expect(chipBorder(const Key('preset-chip-0')).side.width, 3);
-    expect(chipBorder(const Key('preset-chip-0')).side.color, Palette.gold);
+    expect(chipBorder(const Key('preset-chip-0')).side.color, Palette.borderSelected);
 
     final wornAgain = equipItemFromInventory(database.launch, controller.save, 'ITEM-0110');
     expect(wornAgain.ok, isTrue);

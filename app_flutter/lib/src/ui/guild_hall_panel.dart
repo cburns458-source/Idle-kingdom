@@ -176,12 +176,16 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                   'Guild Hall',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    fontSize: GameFont.l,
+                    fontWeight: FontWeight.w400,
+                    color: Palette.gold,
+                  ),
                 ),
               ),
               GoldAmount(
                 amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
+                style: const TextStyle(color: Palette.currency),
               ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
@@ -202,6 +206,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                       _HallTab.bank => 'Bank',
                       _HallTab.achievements => 'Achievements',
                     },
+                    selected: _tab == tab,
                     tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
                     onPressed: () => setState(() => _tab = tab),
                   ),
@@ -325,6 +330,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
         GameButton(
           key: const Key('guild-gold-chip-in'),
           label: 'Chip in',
+          tone: GameButtonTone.confirm,
           onPressed: canChip ? _chipIn : null,
         ),
         const SizedBox(height: 12),
@@ -361,7 +367,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     final color = finished
         ? Palette.gold
         : active
-        ? null
+        ? Palette.borderSelected
         : Palette.muted;
     final needs = guildHallTierNeeds(tier, hall.storehouse);
     return Opacity(
@@ -380,7 +386,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                 '${_itemNameFor(need.itemId)} '
                 '${formatThousands(finished ? need.needed : need.counted)} / '
                 '${formatThousands(need.needed)}',
-                style: TextStyle(color: color ?? Palette.muted, fontSize: GameFont.s),
+                style: TextStyle(color: color, fontSize: GameFont.s),
               ),
           ],
         ),

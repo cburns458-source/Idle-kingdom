@@ -994,7 +994,11 @@ Future<void> showQuestRewards(
                 child: Text('· $reward', style: const TextStyle(color: Palette.gold)),
               ),
           const SizedBox(height: 10),
-          GameButton(label: 'Collect', onPressed: () => Navigator.of(context).pop()),
+          GameButton(
+            label: 'Collect',
+            tone: GameButtonTone.confirm,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         ],
       ),
     ),

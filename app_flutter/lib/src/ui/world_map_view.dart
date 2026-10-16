@@ -441,7 +441,7 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
     final isHere = widget.isHere;
     final isSelected = widget.isSelected;
     final label = mapNodeLabel(location, widget.browseMapId);
-    final fill = isHere ? Palette.gold : Palette.parchmentText;
+    final fill = isHere ? Palette.borderSelected : Palette.parchmentText;
     Widget node = GestureDetector(
       onTap: _handleTap,
       child: Column(
@@ -471,7 +471,7 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
                             )
                     : _mapDot(
                         fill: fill,
-                        border: isSelected ? Palette.gold : Palette.parchment,
+                        border: isSelected ? Palette.borderSelected : Palette.parchment,
                         width: isSelected || isHere ? 2 : 1,
                       ),
               ),

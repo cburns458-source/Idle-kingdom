@@ -842,9 +842,9 @@ class _InventoryViewState extends State<InventoryView> {
         ),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: Palette.gold,
-            inactiveTrackColor: Palette.edge,
-            thumbColor: Palette.gold,
+            activeTrackColor: Palette.progress,
+            inactiveTrackColor: UiChrome.of(context).edge,
+            thumbColor: Palette.progress,
             overlayShape: SliderComponentShape.noOverlay,
             trackHeight: 4,
           ),
@@ -1162,9 +1162,7 @@ class _SortMenu extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: chrome.secondaryFill,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(
-            color: mode == InventorySortMode.group ? chrome.embossFace : chrome.embossFaceSelected,
-          ),
+          border: Border.all(color: chrome.embossFace),
           boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
         ),
         child: const Padding(
@@ -1272,7 +1270,7 @@ class _ItemTile extends StatelessWidget {
                 if (favorite)
                   const Padding(
                     padding: EdgeInsets.all(4),
-                    child: Icon(Icons.favorite, size: 14, color: Palette.gold),
+                    child: Icon(Icons.favorite, size: 14, color: Palette.rare),
                   ),
               ],
             ),
@@ -1283,7 +1281,7 @@ class _ItemTile extends StatelessWidget {
     if (framedWell) {
       final slot = UiChrome.of(context).slot;
       final fill = selected
-          ? Color.lerp(slot, Palette.gold, 0.18)!
+          ? Color.lerp(slot, Palette.borderSelected, 0.18)!
           : enchanted
           ? const Color(0xFF2F3A24)
           : slot;
@@ -1296,7 +1294,8 @@ class _ItemTile extends StatelessWidget {
           fillColor: fill,
           material: PixelPlateMaterial.grain,
           strokeWidth: selected ? 2.5 : 2,
-          selected: selected || enchanted,
+          selected: selected,
+          rare: enchanted && !selected,
           shadow: false,
           padding: const EdgeInsets.all(2),
           child: GestureDetector(

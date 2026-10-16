@@ -261,6 +261,7 @@ class _ItemDetailSheetState extends State<ItemDetailSheet> {
                               controller.indexes.itemsById[wornCandidates[i].itemId]?.displayName ??
                               wornCandidates[i].itemId,
                           compact: true,
+                          selected: i == candidateIndex,
                           tone: i == candidateIndex
                               ? GameButtonTone.primary
                               : GameButtonTone.secondary,
@@ -342,7 +343,7 @@ class _EquipmentComparePanel extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          border: Border.all(color: Palette.edge),
+          border: Border.all(color: UiChrome.of(context).edge),
           color: const Color(0x332A1C12),
         ),
         child: Text(
@@ -361,7 +362,7 @@ class _EquipmentComparePanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        border: Border.all(color: Palette.edge),
+        border: Border.all(color: UiChrome.of(context).edge),
         color: const Color(0x332A1C12),
       ),
       child: Column(

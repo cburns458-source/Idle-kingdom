@@ -361,12 +361,16 @@ class _ArenaPanelState extends State<ArenaPanel> {
                   'Arena',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    fontSize: GameFont.l,
+                    fontWeight: FontWeight.w400,
+                    color: Palette.gold,
+                  ),
                 ),
               ),
               GoldAmount(
                 amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
+                style: const TextStyle(color: Palette.currency),
               ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],

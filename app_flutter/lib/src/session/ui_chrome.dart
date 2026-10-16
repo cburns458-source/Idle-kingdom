@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import '../palette.dart';
+
 /// Selectable outer/inner UI chrome packs (presentation only).
 enum UiChromePack {
   /// Current warm boards + tan panels.
@@ -40,6 +42,10 @@ class UiChrome {
     required this.embossFaceSelected,
     required this.embossHighlightSelected,
     required this.embossShadeSelected,
+    required this.embossFaceRare,
+    required this.embossHighlightRare,
+    required this.embossShadeRare,
+    required this.edge,
     required this.rivetFill,
     required this.rivetShade,
   });
@@ -68,6 +74,10 @@ class UiChrome {
   final Color embossFaceSelected;
   final Color embossHighlightSelected;
   final Color embossShadeSelected;
+  final Color embossFaceRare;
+  final Color embossHighlightRare;
+  final Color embossShadeRare;
+  final Color edge;
   final Color rivetFill;
   final Color rivetShade;
 
@@ -123,14 +133,18 @@ class UiChrome {
     primaryLabel: const Color(0xFFFFF6E4),
     secondaryLabel: const Color(0xFFFFF4D4),
     iconButtonFill: const Color(0xFF45301F),
-    embossFace: const Color(0xFFA7872D),
-    embossHighlight: const Color(0xFFBFA445),
-    embossShade: const Color(0xFF5A420E),
-    embossFaceSelected: const Color(0xFFE0B82E),
-    embossHighlightSelected: const Color(0xFFF0D45C),
-    embossShadeSelected: const Color(0xFF6B4E10),
-    rivetFill: const Color(0xFFC9A227),
-    rivetShade: const Color(0xFF6B4E12),
+    embossFace: Palette.border,
+    embossHighlight: Palette.borderHighlight,
+    embossShade: Palette.borderShade,
+    embossFaceSelected: Palette.borderSelected,
+    embossHighlightSelected: Palette.borderSelectedHighlight,
+    embossShadeSelected: Palette.borderSelectedShade,
+    embossFaceRare: Palette.rare,
+    embossHighlightRare: Palette.rareHighlight,
+    embossShadeRare: Palette.rareShade,
+    edge: Palette.edge,
+    rivetFill: Palette.borderHighlight,
+    rivetShade: Palette.borderShade,
   );
 
   static final stone = UiChrome(
@@ -180,9 +194,13 @@ class UiChrome {
     embossFace: const Color(0xFF4F4F4F),
     embossHighlight: const Color(0xFF5E5E5E),
     embossShade: const Color(0xFF141414),
-    embossFaceSelected: const Color(0xFF717171),
-    embossHighlightSelected: const Color(0xFF808080),
-    embossShadeSelected: const Color(0xFF0C0C0C),
+    embossFaceSelected: Palette.borderSelected,
+    embossHighlightSelected: Palette.borderSelectedHighlight,
+    embossShadeSelected: Palette.borderSelectedShade,
+    embossFaceRare: Palette.rare,
+    embossHighlightRare: Palette.rareHighlight,
+    embossShadeRare: Palette.rareShade,
+    edge: const Color(0x734F4F4F),
     rivetFill: const Color(0xFF5E5E5E),
     rivetShade: const Color(0xFF1C1C1C),
   );

@@ -2,9 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'palette.dart';
 import 'session/ui_chrome.dart';
 
-/// Wood + gold embossed pixel chrome (photo-2 direction).
+/// Wood/stone pixel chrome with green selected rims and gold rare rims.
 ///
 /// Corners are square. [step] is kept for rivet inset spacing and call-site
 /// compatibility; it no longer shapes the outline.
@@ -15,17 +16,17 @@ abstract final class PixelChrome {
   /// Tighter inset for compact chips / icon buttons.
   static const double stepTight = 2;
 
-  /// Gold emboss face — the same mid gold as [Palette.gold].
-  static const Color goldFace = Color(0xFFA7872D);
+  /// Gold emboss face — [Palette.gold], used only for rare/featured rims.
+  static const Color goldFace = Palette.gold;
 
-  /// Soft top-left highlight on embossed borders.
-  static const Color goldHighlight = Color(0xFFBFA445);
+  /// Soft top-left highlight on rare gold borders.
+  static const Color goldHighlight = Palette.goldHighlight;
 
-  /// Bottom-right shade on embossed gold borders.
-  static const Color goldShade = Color(0xFF5A420E);
+  /// Bottom-right shade on rare gold borders.
+  static const Color goldShade = Palette.goldShade;
 
-  /// Dark wood plate under gold rims.
-  static const Color wood = Color(0xFF2A1C12);
+  /// Dark wood plate under pack rims.
+  static const Color wood = Palette.wood;
 
   /// Square rectangle path for [rect] ([step] ignored).
   static Path steppedPath(Rect rect, {double step = step}) {
@@ -185,7 +186,7 @@ class _RivetPainter extends CustomPainter {
 /// Fill material for [PixelPlate] — wood outer boards vs tan inner panels.
 enum PixelPlateMaterial { auto, wood, tan, grain, none }
 
-/// Wood plate with square corners and optional gold emboss rim.
+/// Wood/stone plate with a pack rim; green when [selected], gold when [rare].
 class PixelPlate extends StatelessWidget {
   const PixelPlate({
     super.key,
@@ -196,6 +197,7 @@ class PixelPlate extends StatelessWidget {
     this.padding,
     this.strokeWidth = 2,
     this.selected = false,
+    this.rare = false,
     this.rivets = false,
     this.shadow = true,
     this.clip = true,
@@ -210,11 +212,15 @@ class PixelPlate extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double strokeWidth;
   final bool selected;
+
+  /// Gold rim for a rare/featured item. Ignored when [selected] — selected is
+  /// always green.
+  final bool rare;
   final bool rivets;
   final bool shadow;
   final bool clip;
 
-  /// When false, skips the gold emboss stroke (buttons / small controls).
+  /// When false, skips the pack emboss stroke (unselected buttons / small controls).
   final bool emboss;
   final PixelPlateMaterial material;
 
@@ -253,14 +259,27 @@ class PixelPlate extends StatelessWidget {
           )
         : content;
     if (emboss) {
+      final rareRim = rare && !selected;
       plate = CustomPaint(
         foregroundPainter: _EmbossBorderPainter(
           step: step,
           strokeWidth: strokeWidth,
           selected: selected,
-          face: selected ? chrome.embossFaceSelected : chrome.embossFace,
-          highlight: selected ? chrome.embossHighlightSelected : chrome.embossHighlight,
-          shade: selected ? chrome.embossShadeSelected : chrome.embossShade,
+          face: selected
+              ? chrome.embossFaceSelected
+              : rareRim
+              ? chrome.embossFaceRare
+              : chrome.embossFace,
+          highlight: selected
+              ? chrome.embossHighlightSelected
+              : rareRim
+              ? chrome.embossHighlightRare
+              : chrome.embossHighlight,
+          shade: selected
+              ? chrome.embossShadeSelected
+              : rareRim
+              ? chrome.embossShadeRare
+              : chrome.embossShade,
         ),
         child: plate,
       );
@@ -299,7 +318,9 @@ class PixelSteppedClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant PixelSteppedClipper oldClipper) => oldClipper.step != step;
 }
 
-/// Ink-friendly square plate for buttons and tappable chips (no gold emboss).
+/// Ink-friendly square plate for buttons and tappable chips.
+///
+/// Unselected chips stay rimless. Selected draws a green rim; [rare] draws gold.
 class PixelInkPlate extends StatelessWidget {
   const PixelInkPlate({
     super.key,
@@ -312,6 +333,7 @@ class PixelInkPlate extends StatelessWidget {
     this.padding,
     this.strokeWidth = 2,
     this.selected = false,
+    this.rare = false,
     this.shadow = true,
     this.material = PixelPlateMaterial.auto,
   });
@@ -325,6 +347,7 @@ class PixelInkPlate extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double strokeWidth;
   final bool selected;
+  final bool rare;
   final bool shadow;
   final PixelPlateMaterial material;
 
@@ -347,8 +370,9 @@ class PixelInkPlate extends StatelessWidget {
           padding: padding,
           strokeWidth: strokeWidth,
           selected: selected,
+          rare: rare,
           shadow: false,
-          emboss: false,
+          emboss: selected || rare,
           material: material,
           child: child,
         ),

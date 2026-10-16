@@ -50,8 +50,14 @@ Future<bool> showBribeConfirmPopup({
               style: TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
             ),
             const SizedBox(height: 8),
-            Text('${formatThousands(quote.goldCost)} gold'),
-            Text('You have ${formatThousands(quote.goldOwned)} gold'),
+            Text(
+              '${formatThousands(quote.goldCost)} gold',
+              style: const TextStyle(color: Palette.currency),
+            ),
+            Text(
+              'You have ${formatThousands(quote.goldOwned)} gold',
+              style: const TextStyle(color: Palette.currency),
+            ),
             if (!quote.canAfford) ...[
               const SizedBox(height: 8),
               Text(
@@ -74,6 +80,7 @@ Future<bool> showBribeConfirmPopup({
                   child: GameButton(
                     key: const Key('bribe-pay'),
                     label: 'Pay',
+                    tone: GameButtonTone.confirm,
                     onPressed: quote.canAfford ? () => Navigator.of(context).pop(true) : null,
                   ),
                 ),

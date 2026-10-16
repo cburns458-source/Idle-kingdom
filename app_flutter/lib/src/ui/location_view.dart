@@ -473,11 +473,10 @@ class _LocationViewState extends State<LocationView> {
                                               origin: popupOrigin(context),
                                             ),
                                             dark: true,
-                                            highlightColor: widget.multiplayer.peers.isEmpty
-                                                ? null
-                                                : widget.multiplayer.nearbyHasAllies
+                                            highlight: widget.multiplayer.peers.isNotEmpty,
+                                            highlightColor: widget.multiplayer.nearbyHasAllies
                                                 ? Palette.softGreen
-                                                : Palette.gold,
+                                                : null,
                                             child: GameImage(
                                               uiNearbyAssetPath(),
                                               width: 32,
@@ -1536,7 +1535,7 @@ class _ActivityCard extends StatelessWidget {
               onPressed: () => controller.toggleFavorite(activityId),
               icon: favorited ? Icons.star : Icons.star_border,
               size: 28,
-              iconColor: favorited ? Palette.gold : null,
+              iconColor: favorited ? Palette.rare : null,
             ),
       title: activity.contextualName ?? activityId,
       lines: [

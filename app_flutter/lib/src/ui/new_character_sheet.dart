@@ -219,7 +219,7 @@ class _RaceCard extends StatelessWidget {
           Icon(
             selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
             size: 18,
-            color: selected ? Palette.gold : Palette.edge,
+            color: selected ? Palette.borderSelected : UiChrome.of(context).edge,
           ),
           const SizedBox(width: 10),
           Expanded(

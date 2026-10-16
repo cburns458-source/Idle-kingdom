@@ -26,7 +26,7 @@ class GuildEmblemBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: _color(emblem.color),
         borderRadius: BorderRadius.zero /* pixel step 2 */,
-        border: Border.all(color: Palette.edge),
+        border: Border.all(color: UiChrome.of(context).edge),
       ),
       padding: EdgeInsets.all(size * 0.18),
       child: GuildEmblemMark(symbol: emblem.symbol),
@@ -93,7 +93,10 @@ class SocialPortrait extends StatelessWidget {
     return Container(
       width: size,
       height: height ?? size,
-      decoration: chromeSlotFill(context, border: Border.all(color: borderColor ?? Palette.edge)),
+      decoration: chromeSlotFill(
+        context,
+        border: Border.all(color: borderColor ?? UiChrome.of(context).edge),
+      ),
       clipBehavior: Clip.antiAlias,
       child: fullArt
           ? image
@@ -125,7 +128,10 @@ class NpcPortrait extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: chromeSlotFill(context, border: Border.all(color: borderColor ?? Palette.edge)),
+      decoration: chromeSlotFill(
+        context,
+        border: Border.all(color: borderColor ?? UiChrome.of(context).edge),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Transform.scale(
         scale: playerPortraitHeadZoom,

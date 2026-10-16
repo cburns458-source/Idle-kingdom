@@ -200,7 +200,7 @@ class _BootGateState extends State<_BootGate> {
         if (booted == null) {
           return DecoratedBox(
             decoration: woodShellDecoration(),
-            child: const Center(child: CircularProgressIndicator(color: Palette.gold)),
+            child: const Center(child: CircularProgressIndicator(color: Palette.progress)),
           );
         }
         return AppShell(controller: booted.game, multiplayer: booted.multiplayer);

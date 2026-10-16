@@ -1577,7 +1577,7 @@ class _StagePotionButton extends StatelessWidget {
                               fontFamily: gameFontFamily,
                               fontSize: GameFont.m,
                               fontWeight: FontWeight.w700,
-                              color: Palette.gold,
+                              color: Palette.parchmentText,
                               shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
                             ),
                           ),

@@ -31,12 +31,12 @@ class GuildHallGoldBar extends StatelessWidget {
                   Container(
                     decoration: BoxDecoration(
                       color: Palette.panel,
-                      border: Border.all(color: Palette.goldShade),
+                      border: Border.all(color: UiChrome.of(context).edge),
                     ),
                   ),
                   FractionallySizedBox(
                     widthFactor: t,
-                    child: Container(color: Palette.gold.withValues(alpha: 0.7)),
+                    child: Container(color: Palette.progress.withValues(alpha: 0.85)),
                   ),
                   for (final mark in guildHallGoldMarks)
                     Positioned(
@@ -44,7 +44,7 @@ class GuildHallGoldBar extends StatelessWidget {
                       left: constraints.maxWidth * (mark.toDouble() / cap) - 1,
                       top: 0,
                       bottom: 0,
-                      child: Container(width: 2, color: Palette.goldShade),
+                      child: Container(width: 2, color: UiChrome.of(context).embossFace),
                     ),
                 ],
               );
@@ -55,7 +55,7 @@ class GuildHallGoldBar extends StatelessWidget {
         GoldAmount(
           key: const Key('guild-gold-remaining'),
           amount: remaining,
-          style: const TextStyle(color: Palette.gold),
+          style: const TextStyle(color: Palette.currency),
         ),
       ],
     );

@@ -57,7 +57,7 @@ Future<void> showSkillLevelUp(BuildContext context, SkillLevelUpNotice notice, {
 
 List<Widget> _section(BuildContext context, String heading, List<String> names) {
   if (names.isEmpty) return const <Widget>[];
-  final accent = UiChrome.of(context).embossFace;
+  final accent = Palette.gold;
   return [
     Padding(padding: const EdgeInsets.only(top: 6, bottom: 2), child: MutedText(heading)),
     for (final name in names)
@@ -70,7 +70,7 @@ List<Widget> _section(BuildContext context, String heading, List<String> names) 
 
 List<Widget> _proficientSection(BuildContext context, List<String> phrases) {
   if (phrases.isEmpty) return const <Widget>[];
-  final accent = UiChrome.of(context).embossFace;
+  final accent = Palette.gold;
   return [
     for (final phrase in phrases)
       Padding(
