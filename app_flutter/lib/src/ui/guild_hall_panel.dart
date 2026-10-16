@@ -10,11 +10,12 @@ import '../theme.dart';
 import 'format.dart';
 import 'game_popup.dart';
 import 'guild_bank_view.dart';
+import 'guild_hall_banner.dart';
 import 'guild_hall_gold_bar.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
 
-enum _HallTab { hall, bank }
+enum _HallTab { hall, bank, achievements }
 
 /// Per-guild hall: storehouse, running gold, room tiers, and the guild bank.
 class GuildHallPanel extends StatefulWidget {
@@ -36,6 +37,7 @@ class GuildHallPanel extends StatefulWidget {
 class _GuildHallPanelState extends State<GuildHallPanel> {
   _HallTab _tab = _HallTab.hall;
   GuildHallState? _hall;
+  List<GuildAchievementProgress> _progress = const <GuildAchievementProgress>[];
   String? _error;
   bool _loading = true;
 
@@ -59,9 +61,11 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
       return;
     }
     final hall = await net.service.guildHall(guildId);
+    final progress = await net.service.guildAchievementProgress(guildId);
     if (!mounted) return;
     setState(() {
       _hall = hall;
+      _progress = progress;
       _loading = false;
       if (hall == null) _error = 'Join a guild to use this hall.';
     });
@@ -86,8 +90,14 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
       return;
     }
     if (result.save != null) controller.commit(result.save!);
+    final guildId = net.guildId;
+    final progress = guildId == null
+        ? _progress
+        : await net.service.guildAchievementProgress(guildId);
+    if (!mounted) return;
     setState(() {
       _hall = result.hall;
+      _progress = progress;
       _error = null;
     });
     for (final tierId in result.tiersFinishedNow) {
@@ -154,6 +164,13 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
         children: [
           Row(
             children: [
+              GuildHallBanner(
+                key: const Key('guild-hall-banner'),
+                banner: net.guild?.banner ?? defaultGuildBanner,
+                size: 32,
+                onPressed: _canEditBanner ? _editBanner : null,
+              ),
+              const SizedBox(width: 8),
               const Expanded(
                 child: Text(
                   'Guild Hall',
@@ -183,6 +200,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                     label: switch (tab) {
                       _HallTab.hall => 'Hall',
                       _HallTab.bank => 'Bank',
+                      _HallTab.achievements => 'Achievements',
                     },
                     tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
                     onPressed: () => setState(() => _tab = tab),
@@ -205,6 +223,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                       hall: _hall!,
                       onHallChanged: (hall) => setState(() => _hall = hall),
                     ),
+                    _HallTab.achievements => SingleChildScrollView(child: _achievements()),
                   },
           ),
         ],
@@ -214,7 +233,77 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
 
   List<_HallTab> get _tabs {
     final hall = _hall;
-    return <_HallTab>[_HallTab.hall, if (hall != null && hall.bankUnlocked) _HallTab.bank];
+    return <_HallTab>[
+      _HallTab.hall,
+      if (hall != null && hall.bankUnlocked) _HallTab.bank,
+      _HallTab.achievements,
+    ];
+  }
+
+  bool get _canEditBanner {
+    final role = _role;
+    return role != null && guildMaySetBanner(role);
+  }
+
+  Iterable<String> get _unlockedIds => [
+    for (final row in _progress)
+      if (row.unlocked) row.id,
+  ];
+
+  Future<void> _editBanner() async {
+    final guildId = net.guildId;
+    if (guildId == null || !_canEditBanner) return;
+    final next = await askGuildBanner(
+      context,
+      banner: net.guild?.banner ?? defaultGuildBanner,
+      unlockedAchievementIds: _unlockedIds,
+    );
+    if (next == null || !mounted) return;
+    final result = await net.service.setGuildBanner(guildId, next);
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    await net.refresh(save);
+    if (!mounted) return;
+    setState(() => _error = null);
+  }
+
+  Widget _achievements() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_canEditBanner) ...[
+          GameButton(key: const Key('guild-banner-edit'), label: 'Banner', onPressed: _editBanner),
+          const SizedBox(height: 10),
+        ],
+        for (final row in _progress)
+          Padding(
+            key: Key('guild-achievement-${row.id}'),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    row.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      color: row.unlocked ? Palette.gold : Palette.muted,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${formatThousands(row.current)} / ${formatThousands(row.target)}',
+                  style: TextStyle(
+                    color: row.unlocked ? Palette.gold : Palette.muted,
+                    fontSize: GameFont.s,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _storehouse() {
