@@ -1,4 +1,5 @@
 import 'bank_amenities.dart';
+import 'guild_amenities.dart';
 import 'generated/rows.dart';
 import 'indexes.dart';
 import 'validate.dart';
@@ -54,8 +55,10 @@ LoadedDatabase prepareDatabase(Object? raw) {
     );
   }
 
-  final launch = withBankDepositBoxActivities(filterLaunchContent(source));
-  final sourceView = withBankDepositBoxActivities(source);
+  final launch = withGuildHallRoomActivities(
+    withBankDepositBoxActivities(filterLaunchContent(source)),
+  );
+  final sourceView = withGuildHallRoomActivities(withBankDepositBoxActivities(source));
   return LoadedDatabase(
     source: sourceView,
     launch: launch,

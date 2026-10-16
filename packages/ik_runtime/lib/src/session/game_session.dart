@@ -57,6 +57,9 @@ class GameSession {
 
   final RandomFn random;
 
+  /// Live-tick +5% hall XP when another guildmate is present in the hall.
+  bool Function()? hallCompanyActive;
+
   PlayerSave? _save;
 
   /// Last clock reading that was credited into [PlayerSave.playTimeMs].
@@ -125,17 +128,18 @@ class GameSession {
   /// frame.
   SessionTickResult tick() {
     final nowMs = clock();
-    final catchUp = _catchUpForegroundGap(nowMs);
+    final mates = hallCompanyActive?.call() ?? false;
+    final catchUp = _catchUpForegroundGap(nowMs, guildmatesInHall: mates);
     if (catchUp != null) return catchUp;
     _save = _creditLivePlayTime(save, nowMs);
-    final result = advanceSession(db, save, nowMs, random);
+    final result = advanceSession(db, save, nowMs, random, guildmatesInHall: mates);
     if (result.changed) apply(result.save);
     return result;
   }
 
   /// Batch-resolves a long foreground gap. Returns null when the live tick
   /// should run — including a short lock or a few-second wait on an action.
-  SessionTickResult? _catchUpForegroundGap(num nowMs) {
+  SessionTickResult? _catchUpForegroundGap(num nowMs, {bool guildmatesInHall = false}) {
     final last = _playAccruedAt;
     if (last == null) return null;
     if (nowMs - last <= foregroundCatchUpFloorMs(db)) return null;
@@ -143,7 +147,13 @@ class GameSession {
     // Catch-up from the last live frame so present time already in playTimeMs
     // is not added again.
     final anchored = stampUnattendedProgressAt(save, last);
-    final unattended = resolveUnattendedProgress(db, anchored, nowMs, random);
+    final unattended = resolveUnattendedProgress(
+      db,
+      anchored,
+      nowMs,
+      random,
+      guildmatesInHall: guildmatesInHall,
+    );
     final synced = syncProgressionMeta(db, unattended.save, nowMs);
     _save = repository.write(synced);
     _playAccruedAt = nowMs;

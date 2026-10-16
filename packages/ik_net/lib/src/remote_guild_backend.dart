@@ -830,7 +830,7 @@ class RemoteGuildBackend {
     // Non-members only see tiers (migration 026). Storehouse and debt stay hidden.
     final tiers = await transport.select(
       RemoteTables.guildHallTiers,
-      columns: 'guild_id, completed_tiers, debt_paid_off',
+      columns: 'guild_id, completed_tiers, gold_contributed, debt_paid_off',
       equals: <String, Object?>{'guild_id': guildId},
       limit: 1,
     );
@@ -838,13 +838,18 @@ class RemoteGuildBackend {
     if (summary == null) return GuildHallState.fresh(guildId);
     return GuildHallState(
       guildId: guildId,
-      debtRemaining: 0,
-      debtPaidBy: const <String, num>{},
+      goldContributed: summary['gold_contributed'] is num
+          ? summary['gold_contributed']! as num
+          : goldContributedFromDebtRemaining(
+              summary['debt_remaining'] is num
+                  ? summary['debt_remaining']! as num
+                  : guildHallGoldCap,
+            ),
+      goldContributedBy: const <String, num>{},
       storehouse: const <InventoryStack>[],
       completedTiers: (summary['completed_tiers'] is List)
           ? [for (final value in summary['completed_tiers']! as List) '$value']
           : const <String>[],
-      debtPaidOff: summary['debt_paid_off'] == true,
     );
   }
 
@@ -854,7 +859,7 @@ class RemoteGuildBackend {
     final membership = await _membershipOf(current.userId);
     if (membership == null) return const GuildHallActionResult.failed('Join a guild first.');
     if (!canPayGuildDebt(membership.role)) {
-      return const GuildHallActionResult.failed('Recruits cannot pay the hall debt.');
+      return const GuildHallActionResult.failed('Recruits cannot chip in gold.');
     }
     final hall = await guildHall(membership.guildId);
     if (hall == null) return const GuildHallActionResult.failed(remoteGuildMissing);

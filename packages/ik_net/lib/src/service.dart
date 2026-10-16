@@ -266,6 +266,33 @@ abstract interface class MultiplayerService {
     num quantity,
   );
 
+  Future<GuildHallActionResult> depositGuildBank(PlayerSave save, int inventoryIndex, num quantity);
+
+  Future<GuildHallActionResult> withdrawGuildBank(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  });
+
+  Future<GuildHallActionResult> takeGuildBankUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  });
+
+  Future<GuildHallActionResult> moveGuildBankToUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  });
+
+  Future<List<GuildLogEntry>> guildLog(String guildId);
+
+  Future<String?> setGuildPermissions(String guildId, GuildPermissionTable table);
+
   Future<List<ArenaOpponent>> hallBoxingOpponents();
 
   /// Refreshes the hosted access token. Local play has nothing to refresh.
@@ -980,6 +1007,63 @@ class LocalMultiplayerService implements MultiplayerService {
       return const GuildHallActionResult.failed('Sign in to use the guild hall.');
     }
     return _backend.contributeHallItem(current.userId, save, inventoryIndex, quantity);
+  }
+
+  @override
+  Future<GuildHallActionResult> depositGuildBank(
+    PlayerSave save,
+    int inventoryIndex,
+    num quantity,
+  ) async {
+    final current = session;
+    if (current == null) return const GuildHallActionResult.failed('Sign in first.');
+    return _backend.depositGuildBank(current.userId, save, inventoryIndex, quantity);
+  }
+
+  @override
+  Future<GuildHallActionResult> withdrawGuildBank(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final current = session;
+    if (current == null) return const GuildHallActionResult.failed('Sign in first.');
+    return _backend.withdrawGuildBank(current.userId, save, itemId, quantity, enchantmentId);
+  }
+
+  @override
+  Future<GuildHallActionResult> takeGuildBankUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final current = session;
+    if (current == null) return const GuildHallActionResult.failed('Sign in first.');
+    return _backend.takeHallBankUpForGrabs(current.userId, save, itemId, quantity, enchantmentId);
+  }
+
+  @override
+  Future<GuildHallActionResult> moveGuildBankToUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final current = session;
+    if (current == null) return const GuildHallActionResult.failed('Sign in first.');
+    return _backend.moveHallBankToUpForGrabs(current.userId, save, itemId, quantity, enchantmentId);
+  }
+
+  @override
+  Future<List<GuildLogEntry>> guildLog(String guildId) async => _backend.guildLog(guildId);
+
+  @override
+  Future<String?> setGuildPermissions(String guildId, GuildPermissionTable table) async {
+    final current = session;
+    if (current == null) return 'Sign in first.';
+    return _backend.setGuildPermissions(current.userId, guildId, table);
   }
 
   @override

@@ -69,13 +69,14 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text('Guild Hall'), findsOne);
-    expect(find.text('Debt'), findsOne);
-    await tester.tap(find.text('Debt'));
+    expect(find.text('Chip in'), findsOne);
+    expect(find.text('Debt'), findsNothing);
+    await tester.tap(find.text('Chip in'));
     await tester.pump();
-    expect(find.textContaining('Remaining:'), findsOne);
+    expect(find.text('Chip in gold'), findsOne);
   });
 
-  testWidgets('a new hall offers the store house and the debt, and nothing else', (tester) async {
+  testWidgets('a new hall offers the store house and chip-in, and nothing else', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: guildHallLocationId),
@@ -89,7 +90,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Store House'), findsWidgets);
-    expect(find.text('Debt'), findsOne);
+    expect(find.text('Chip in'), findsOne);
+    expect(find.text('Debt'), findsNothing);
     expect(find.text('Bank'), findsNothing);
     expect(find.text('Boxing'), findsNothing);
 
@@ -152,18 +154,23 @@ void main() {
   testWidgets('a finished counting room adds a Bank that opens the bank screen', (tester) async {
     final controller = buildController(
       database,
-      seed: startedCharacter(database).copyWith(currentLocationId: guildHallLocationId),
+      seed: startedCharacter(database)
+          .copyWith(currentLocationId: guildHallLocationId, gold: 20000),
     );
     addTearDown(controller.dispose);
     final net = await _leaderOfANewGuild(database, controller.save);
     addTearDown(net.dispose);
-    // The first two tiers, paid for before the panel opens.
     await _donate(net, controller, const <InventoryStack>[
       InventoryStack(itemId: 'ITEM-0015', quantity: 1000),
       InventoryStack(itemId: 'ITEM-0095', quantity: 100),
-      InventoryStack(itemId: 'ITEM-0017', quantity: 1000),
-      InventoryStack(itemId: 'ITEM-0002', quantity: 200),
-      InventoryStack(itemId: 'ITEM-0006', quantity: 100),
+    ]);
+    final chipped = await net.service.payGuildDebt(controller.save, 10000);
+    expect(chipped.reason, isNull);
+    controller.commit(chipped.save!);
+    await _donate(net, controller, const <InventoryStack>[
+      InventoryStack(itemId: 'ITEM-0017', quantity: 24000),
+      InventoryStack(itemId: 'ITEM-0002', quantity: 10000),
+      InventoryStack(itemId: 'ITEM-0006', quantity: 6320),
     ]);
 
     var opened = 0;

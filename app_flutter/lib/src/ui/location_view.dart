@@ -51,7 +51,7 @@ class ArenaOpen extends LocationPanel {
   const ArenaOpen();
 }
 
-/// The per-guild hall: the store house it is built out of, and its debt.
+/// The per-guild hall: storehouse, gold chip-in, and unlocked rooms.
 class GuildHallOpen extends LocationPanel {
   const GuildHallOpen();
 }
@@ -129,6 +129,8 @@ class LocationView extends StatefulWidget {
 
 class _LocationViewState extends State<LocationView> {
   final List<LocationPanel> _open = [];
+  GuildHallState? _hall;
+  String? _hallGuildId;
 
   /// The location the open panel belongs to, so travelling closes it.
   String? _openAt;
@@ -154,6 +156,32 @@ class _LocationViewState extends State<LocationView> {
   final GlobalKey _arenaPanelKey = GlobalKey();
 
   GameController get controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHall();
+  }
+
+  @override
+  void didUpdateWidget(LocationView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadHall();
+  }
+
+  Future<void> _loadHall() async {
+    final guildId = widget.multiplayer.guildId;
+    if (guildId == null) return;
+    if (_hallGuildId == guildId && _hall != null) return;
+    final hall = await widget.multiplayer.service.guildHall(guildId);
+    if (!mounted) return;
+    setState(() {
+      _hall = hall;
+      _hallGuildId = guildId;
+    });
+  }
+
+  List<String> get _hallTiers => _hall?.completedTiers ?? const <String>[];
 
   void _openPanel(LocationPanel panel, {bool nest = false}) {
     var save = controller.save;
@@ -645,7 +673,11 @@ class _LocationViewState extends State<LocationView> {
       case ShopOpen(shopId: final shopId):
         return ShopPanel(controller: controller, shopId: shopId, onClose: _closePanel);
       case BankOpen():
-        return BankPanel(controller: controller, onClose: _closePanel);
+        return BankPanel(
+          controller: controller,
+          multiplayer: widget.multiplayer,
+          onClose: _closePanel,
+        );
       case ArenaOpen():
         return ArenaPanel(
           key: _arenaPanelKey,
@@ -749,7 +781,8 @@ class _LocationViewState extends State<LocationView> {
               !isCompostCollectActivity(activity) &&
               activityVisibleForSave(controller.db, controller.save, activity.activityId) &&
               !isProduceBandActivity(controller.db, controller.save, activity) &&
-              !_thieveryMovedOutOfActivities(activity),
+              !_thieveryMovedOutOfActivities(activity) &&
+              guildHallRoomActivityVisible(activity.activityId, _hallTiers),
         )
         .toList();
     if (activities.isEmpty) return const [];
@@ -864,7 +897,8 @@ class _LocationViewState extends State<LocationView> {
       locationSupports:
           (kind == null || kind == 'botany') &&
           locationHasBotanyPatch(locationId) &&
-          botanyPatchUnlocked(controller.db, controller.save, locationId),
+          botanyPatchUnlocked(controller.db, controller.save, locationId) &&
+          (locationId != guildHallLocationId || guildHallGardenPatchOpen(_hallTiers)),
       idleCard: () {
         final courtyardLocked =
             locationId == courtyardLocationId && !courtyardBotanyUnlocked(controller.save);

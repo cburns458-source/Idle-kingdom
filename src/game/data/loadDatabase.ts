@@ -7,6 +7,7 @@ import {
 } from './validate'
 import type { DatabaseIndexes, GameDatabase, ValidationIssue } from './types'
 import { withBankDepositBoxActivities } from '../inventory/bank'
+import { withGuildHallRoomActivities } from '../guild/rooms'
 
 /** Bump when Launch content rows change so browsers skip stale JSON. */
 export const DATABASE_CONTENT_VERSION = '2026-10-16-alchemy-prices'
@@ -44,8 +45,8 @@ export function prepareDatabase(raw: unknown): LoadedDatabase {
     throw new Error(`Database validation failed (${errors.length} error(s)): ${summary}`)
   }
 
-  const launch = withBankDepositBoxActivities(filterLaunchContent(source))
-  const sourceView = withBankDepositBoxActivities(source)
+  const launch = withGuildHallRoomActivities(withBankDepositBoxActivities(filterLaunchContent(source)))
+  const sourceView = withGuildHallRoomActivities(withBankDepositBoxActivities(source))
   return {
     source: sourceView,
     launch,

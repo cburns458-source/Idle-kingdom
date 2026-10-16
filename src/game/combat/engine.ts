@@ -1,4 +1,5 @@
 import { recordEnemyKill } from '../achievements/progress'
+import { applyGuildHallCompanyXp, isGuildHallCageActivity } from '../guild/rooms'
 import { withoutHeldAction } from '../activity/heldAction'
 import { configNumber } from '../activity/gathering'
 import { resolveActionRewards } from '../activity/rewards'
@@ -513,6 +514,7 @@ export function applyCombatVictory(
   enemy: EnemyRow,
   random: RandomFn = Math.random,
   nowMs: number = Date.now(),
+  guildmatesPresent = false,
 ): CombatVictoryResult {
   const maxHp = playerMaxHp(db, save)
   let next: PlayerSave = {
@@ -521,7 +523,8 @@ export function applyCombatVictory(
     currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
   }
 
-  const xpAmount = enemyCombatXp(enemy)
+  const skipLoot = isGuildHallCageActivity(save.currentActivityId ?? '')
+  const xpAmount = applyGuildHallCompanyXp(enemyCombatXp(enemy), guildmatesPresent)
   // Prefer fishing-mode bosses and Fishing-tagged fight actions (Mother Squid /
   // Squidling fallthrough). Ordinary fights split XP across Might / Vitality.
   const fishingMode =
@@ -549,6 +552,24 @@ export function applyCombatVictory(
       next = applied.save
       xpAwards.push({ skillId: VITALITY_SKILL_ID, xp: split.vitalityXp })
       if (split.mightXp <= 0) xpSkillId = VITALITY_SKILL_ID
+    }
+  }
+
+  if (skipLoot) {
+    next = withBossRespawn(tickPotionAction(clearCombatSave(next)), enemy, nowMs)
+    next = withoutHeldAction(next, save.currentActivityId)
+    next = creditXpAwards(next, xpAwards, nowMs)
+    return {
+      save: next,
+      xpGained: xpAmount,
+      xpSkillId,
+      xpAwards,
+      goldGained: 0,
+      loot: [],
+      cosmeticsGranted: [],
+      foodConsumed: false,
+      foodHealed: 0,
+      foodName: null,
     }
   }
 

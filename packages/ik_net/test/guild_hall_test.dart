@@ -12,10 +12,10 @@ void main() {
     database = assertGameDatabaseShape(contentDatabaseJson());
   });
 
-  test('Member can pay hall debt, recruit cannot, payoff says the debt is gone', () {
+  test('Member can chip in gold, recruit cannot, a 1M chip-in caps the total', () {
     final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
     final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;
-    var save = createNewSave(database, 1).copyWith(gold: 2 * guildHallDebtGold);
+    var save = createNewSave(database, 1).copyWith(gold: 2 * guildHallGoldCap);
     backend.writeCloudSave(leader.userId, save);
     final created = backend.createGuild(
       leader,
@@ -31,23 +31,33 @@ void main() {
     save = save.copyWith(gold: save.gold - created.goldCost!);
 
     final hall = backend.guildHall(created.guild!.id)!;
-    expect(hall.debtRemaining, guildHallDebtGold);
+    expect(hall.goldContributed, 0);
+    expect(hall.debtRemaining, guildHallGoldCap);
     expect(hall.boxingUnlocked, isFalse);
 
     final recruit = backend.signUp('recruit@example.com', 'Recruit', 'secret').session!;
     backend.applyToGuild(recruit, created.guild!.id, '');
     backend.setMemberRole(leader.userId, created.guild!.id, recruit.userId, guildRoleRecruit);
-    final recruitSave = createNewSave(database, 1).copyWith(gold: guildHallDebtGold);
+    final recruitSave = createNewSave(database, 1).copyWith(gold: guildHallGoldCap);
     final blocked = backend.payGuildDebt(recruit.userId, recruitSave, 100);
     expect(blocked.ok, isFalse);
-    expect(blocked.reason, 'Recruits cannot pay the hall debt.');
+    expect(blocked.reason, 'Recruits cannot chip in gold.');
 
-    final paid = backend.payGuildDebt(leader.userId, save, guildHallDebtGold);
+    final short = backend.payGuildDebt(leader.userId, save.copyWith(gold: 50), 100);
+    expect(short.ok, isFalse);
+    expect(short.reason, guildHallNotEnoughGold);
+
+    final paid = backend.payGuildDebt(leader.userId, save, guildHallGoldCap);
     expect(paid.ok, isTrue);
     expect(paid.paidOffJustNow, isTrue);
-    expect(paid.hall!.debtPaidOff, isTrue);
+    expect(paid.hall!.goldContributed, guildHallGoldCap);
     expect(paid.hall!.debtRemaining, 0);
-    expect(paid.save!.gold, save.gold - guildHallDebtGold);
+    expect(paid.save!.gold, save.gold - guildHallGoldCap);
+
+    final again = backend.payGuildDebt(leader.userId, paid.save!, 10);
+    expect(again.ok, isTrue);
+    expect(again.goldChipped, 0);
+    expect(again.save!.gold, paid.save!.gold);
   });
 
   test('a donation fills the store house and stays there until a tier is met', () {
@@ -117,17 +127,17 @@ void main() {
     expect(fibre.hall!.boxingUnlocked, isFalse);
   });
 
-  test('the bank opens on the second tier and the ring on the third', () {
+  test('the counting room needs gold and materials; boxing waits on the next mark', () {
     final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
     final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;
     var save = createNewSave(database, 1).copyWith(
-      gold: guildCreateGoldCost + 10,
+      gold: guildCreateGoldCost + 10000,
       inventory: const [
         InventoryStack(itemId: 'ITEM-0015', quantity: 1000),
-        InventoryStack(itemId: 'ITEM-0095', quantity: 400),
-        InventoryStack(itemId: 'ITEM-0017', quantity: 1300),
-        InventoryStack(itemId: 'ITEM-0002', quantity: 500),
-        InventoryStack(itemId: 'ITEM-0006', quantity: 100),
+        InventoryStack(itemId: 'ITEM-0095', quantity: 100),
+        InventoryStack(itemId: 'ITEM-0017', quantity: 24000),
+        InventoryStack(itemId: 'ITEM-0002', quantity: 10000),
+        InventoryStack(itemId: 'ITEM-0006', quantity: 6320),
       ],
     );
     backend.writeCloudSave(leader.userId, save);
@@ -161,14 +171,15 @@ void main() {
       save = last.save!;
     }
 
-    expect(last!.hall!.completedTiers, <String>[
-      guildHallTierBuild,
-      guildHallTierBank,
-      guildHallTierBoxing,
-    ]);
-    expect(last.hall!.bankUnlocked, isTrue);
-    expect(last.hall!.boxingUnlocked, isTrue);
-    expect(last.hall!.storehouse, isEmpty);
+    expect(last!.hall!.completedTiers, <String>[guildHallTierBuild]);
+    expect(last.hall!.bankUnlocked, isFalse);
+
+    final chipped = backend.payGuildDebt(leader.userId, save, 10000);
+    expect(chipped.ok, isTrue, reason: chipped.reason);
+    expect(chipped.hall!.completedTiers, <String>[guildHallTierBuild, guildHallTierBank]);
+    expect(chipped.hall!.bankUnlocked, isTrue);
+    expect(chipped.hall!.boxingUnlocked, isFalse);
+    expect(chipped.goldChipped, 10000);
   });
 
   test('a stack the next step does not want stays in the bag', () {
@@ -195,4 +206,88 @@ void main() {
     expect(refused.reason, guildHallUnneededRefusal);
     expect(save.inventory.single.quantity, 8);
   });
+
+  test('the guild bank takes tradeable items and Up for grabs has one taker', () {
+    final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
+    final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;
+    var save = _withTotalLevel(
+      createNewSave(database, 1).copyWith(
+        gold: guildCreateGoldCost + 10000,
+        inventory: const [
+          InventoryStack(itemId: 'ITEM-0015', quantity: 1000),
+          InventoryStack(itemId: 'ITEM-0095', quantity: 100),
+          InventoryStack(itemId: 'ITEM-0017', quantity: 24000),
+          InventoryStack(itemId: 'ITEM-0002', quantity: 10000),
+          InventoryStack(itemId: 'ITEM-0006', quantity: 6320),
+          InventoryStack(itemId: 'ITEM-0026', quantity: 3),
+        ],
+      ),
+      200,
+    );
+    backend.writeCloudSave(leader.userId, save);
+    final created = backend.createGuild(
+      leader,
+      const CreateGuildInput(
+        name: 'Oak',
+        tag: 'OAK',
+        description: '',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      save.gold,
+    );
+    save = save.copyWith(gold: save.gold - created.goldCost!);
+    GuildHallActionResult? last;
+    var hall = backend.guildHall(created.guild!.id)!;
+    while (true) {
+      hall = last?.hall ?? hall;
+      final index = save.inventory.indexWhere(
+        (stack) => guildHallDonationCap(hall.completedTiers, hall.storehouse, stack.itemId) > 0,
+      );
+      if (index < 0) break;
+      last = backend.contributeHallItem(
+        leader.userId,
+        save,
+        index,
+        guildHallDonationCap(hall.completedTiers, hall.storehouse, save.inventory[index].itemId),
+      );
+      save = last.save!;
+    }
+    save = backend.payGuildDebt(leader.userId, save, 10000).save!;
+    hall = backend.guildHall(created.guild!.id)!;
+    expect(hall.bankUnlocked, isTrue);
+
+    final ironIndex = save.inventory.indexWhere((stack) => stack.itemId == 'ITEM-0026');
+    final deposited = backend.depositGuildBank(leader.userId, save, ironIndex, 3);
+    expect(deposited.ok, isTrue, reason: deposited.reason);
+    expect(deposited.hall!.bank.section(guildBankSectionMain).single.quantity, 3);
+    save = deposited.save!;
+
+    final moved = backend.moveHallBankToUpForGrabs(leader.userId, save, 'ITEM-0026', 3);
+    expect(moved.ok, isTrue, reason: moved.reason);
+    expect(moved.hall!.bank.section(guildBankSectionUpForGrabs).single.quantity, 3);
+
+    final taken = backend.takeHallBankUpForGrabs(leader.userId, moved.save!, 'ITEM-0026', 3);
+    expect(taken.ok, isTrue, reason: taken.reason);
+    final again = backend.takeHallBankUpForGrabs(leader.userId, taken.save!, 'ITEM-0026', 3);
+    expect(again.ok, isFalse);
+
+    final logs = backend.guildLog(created.guild!.id);
+    expect(
+      logs.first.kind,
+      anyOf(guildLogKindDonation, guildLogKindTierComplete, guildLogKindJoin),
+    );
+    expect(logs, isNotEmpty);
+  });
+}
+
+PlayerSave _withTotalLevel(PlayerSave save, num target) {
+  final bump = target - totalLevel(save);
+  if (bump <= 0) return save;
+  final first = save.skills.first;
+  return save.copyWith(
+    skills: <SkillProgress>[
+      first.copyWith(level: first.level + bump),
+      ...save.skills.skip(1),
+    ],
+  );
 }

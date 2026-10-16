@@ -181,9 +181,11 @@ class LocalDb {
     required this.guests,
     required this.halls,
     required this.playSessions,
+    List<GuildLogEntry>? logs,
     Map<String, String>? guildPrivateMessages,
     List<CloudSaveRecord>? pvpSnapshots,
-  }) : guildPrivateMessages = guildPrivateMessages ?? <String, String>{},
+  }) : logs = logs ?? <GuildLogEntry>[],
+       guildPrivateMessages = guildPrivateMessages ?? <String, String>{},
        pvpSnapshots = pvpSnapshots ?? <CloudSaveRecord>[];
 
   LocalDb.empty()
@@ -207,6 +209,7 @@ class LocalDb {
       bountyClaims = <BountyClaimRecord>[],
       guests = <GuildGuest>[],
       halls = <GuildHallState>[],
+      logs = <GuildLogEntry>[],
       playSessions = <String, String>{},
       guildPrivateMessages = <String, String>{},
       pvpSnapshots = <CloudSaveRecord>[];
@@ -248,6 +251,7 @@ class LocalDb {
     db.bountyClaims.addAll(rows('bountyClaims').map(BountyClaimRecord.fromJson));
     db.guests.addAll(rows('guests').map(GuildGuest.fromJson));
     db.halls.addAll(rows('halls').map(GuildHallState.fromJson));
+    db.logs.addAll(rows('logs').map(GuildLogEntry.fromJson));
     db.pvpSnapshots.addAll(rows('pvpSnapshots').map(CloudSaveRecord.fromJson));
     final sessions = raw['playSessions'];
     if (sessions is Map<String, Object?>) {
@@ -286,6 +290,7 @@ class LocalDb {
   List<BountyClaimRecord> bountyClaims;
   List<GuildGuest> guests;
   List<GuildHallState> halls;
+  List<GuildLogEntry> logs;
   Map<String, String> playSessions;
   Map<String, String> guildPrivateMessages;
   List<CloudSaveRecord> pvpSnapshots;
@@ -311,6 +316,7 @@ class LocalDb {
     'bountyClaims': bountyClaims.map((row) => row.toJson()).toList(),
     if (guests.isNotEmpty) 'guests': guests.map((row) => row.toJson()).toList(),
     if (halls.isNotEmpty) 'halls': halls.map((row) => row.toJson()).toList(),
+    if (logs.isNotEmpty) 'logs': logs.map((row) => row.toJson()).toList(),
     if (playSessions.isNotEmpty) 'playSessions': <String, Object?>{...playSessions},
     if (guildPrivateMessages.isNotEmpty)
       'guildPrivateMessages': <String, Object?>{...guildPrivateMessages},
@@ -332,4 +338,6 @@ GuildRecord normalizeGuild(GuildRecord raw) => GuildRecord(
   createdAt: raw.createdAt,
   guestAutoAccept: raw.guestAutoAccept,
   rankIconTheme: normalizeRankIconTheme(raw.rankIconTheme),
+  skillMilestoneSettings: raw.skillMilestoneSettings,
+  permissions: raw.permissions ?? defaultGuildPermissionTable(),
 );

@@ -27,7 +27,9 @@ String guildMottoFromInput(String raw) => _cut(raw.trim(), guildDescriptionMaxLe
 String guildPrivateMessageFromInput(String raw) => _cut(raw.trim(), guildPrivateMessageMaxLength);
 
 const String guildHallFinishedRefusal = 'The hall is finished.';
-const String guildHallUnneededRefusal = 'The storehouse only takes what this step still needs.';
+const String guildHallUnneededRefusal = 'The hall does not need that.';
+const String guildHallGoldCapRefusal = 'The gold total is already at its cap.';
+const String guildHallNotEnoughGold = 'Not enough gold.';
 
 String _cut(String raw, int length) => raw.length > length ? raw.substring(0, length) : raw;
 
@@ -81,6 +83,7 @@ GuildRecord guildFromCreateInput(
   rankLabels: <GuildRankKey, String>{...defaultGuildRankLabels},
   createdAt: createdAt,
   skillMilestoneSettings: defaultGuildSkillMilestoneSettings,
+  permissions: defaultGuildPermissionTable(),
 );
 
 bool isGuildLeader(GuildRecord guild, String userId) => guild.leaderId == userId;
@@ -121,8 +124,8 @@ GuildProject contributedProject(GuildProject project, num amount) {
   return project.copyWith(contributed: math.min(project.goalAmount, project.contributed + add));
 }
 
-/// The hall and the payer's save after gold goes toward the debt.
-GuildHallActionResult payGuildHallDebt(
+/// The hall and the payer's save after gold chips into the running total.
+GuildHallActionResult chipInGuildHallGold(
   GuildHallState hall,
   String userId,
   PlayerSave save,
@@ -130,20 +133,35 @@ GuildHallActionResult payGuildHallDebt(
 ) {
   final want = math.max(0, amount.floor());
   if (want <= 0) return const GuildHallActionResult.failed('Choose an amount.');
-  if (save.gold < want) return const GuildHallActionResult.failed('Not enough gold.');
-  if (hall.debtPaidOff || hall.debtRemaining <= 0) return GuildHallActionResult.ok(hall);
+  if (save.gold < want) return const GuildHallActionResult.failed(guildHallNotEnoughGold);
+  final remaining = guildHallGoldChipInCap(hall.goldContributed);
+  if (remaining <= 0) {
+    return GuildHallActionResult.ok(hall, save: save, goldChipped: 0);
+  }
 
-  final pay = math.min(want, hall.debtRemaining.floor());
-  final remaining = hall.debtRemaining - pay;
-  final paidOff = remaining <= 0;
-  final paidBy = <String, num>{...hall.debtPaidBy};
+  final pay = math.min(want, remaining);
+  final goldContributed = hall.goldContributed + pay;
+  final paidBy = <String, num>{...hall.goldContributedBy};
   paidBy[userId] = (paidBy[userId] ?? 0) + pay;
+  final next = hall.copyWith(goldContributed: goldContributed, goldContributedBy: paidBy);
+  final settled = settleGuildHallTiers(next.storehouse, next.completedTiers, next.goldContributed);
   return GuildHallActionResult.ok(
-    hall.copyWith(debtRemaining: paidOff ? 0 : remaining, debtPaidBy: paidBy, debtPaidOff: paidOff),
+    next.copyWith(storehouse: settled.storehouse, completedTiers: settled.completedTiers),
     save: save.copyWith(gold: save.gold - pay),
-    paidOffJustNow: paidOff,
+    paidOffJustNow:
+        next.goldContributed >= guildHallGoldCap && hall.goldContributed < guildHallGoldCap,
+    tiersFinishedNow: settled.finishedNow.map((tier) => tier.id).toList(),
+    goldChipped: pay,
   );
 }
+
+/// Chip-in replaced the old hall debt.
+GuildHallActionResult payGuildHallDebt(
+  GuildHallState hall,
+  String userId,
+  PlayerSave save,
+  num amount,
+) => chipInGuildHallGold(hall, userId, save, amount);
 
 /// The hall and the donor's save after a stack goes into the store house.
 ///
@@ -192,11 +210,16 @@ GuildHallActionResult donateToGuildHall(
   } else {
     nextInventory[inventoryIndex] = stack.copyWith(quantity: stack.quantity - takenQty);
   }
-  final settled = settleGuildHallTiers(added.save!.inventory, hall.completedTiers);
+  final settled = settleGuildHallTiers(
+    added.save!.inventory,
+    hall.completedTiers,
+    hall.goldContributed,
+  );
   return GuildHallActionResult.ok(
     hall.copyWith(storehouse: settled.storehouse, completedTiers: settled.completedTiers),
     save: save.copyWith(inventory: nextInventory),
     tiersFinishedNow: settled.finishedNow.map((tier) => tier.id).toList(),
+    donatedItem: GuildLogDonationItem(itemId: stack.itemId, quantity: takenQty),
   );
 }
 

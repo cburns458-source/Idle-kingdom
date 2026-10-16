@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 
 import '../session/game_controller.dart';
+import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'dialogue_text.dart';
 import 'game_popup.dart';
@@ -23,9 +25,10 @@ String bankNoRoomMessage(NoRoom? noRoom, {int? slotsNeeded}) {
 
 /// Town and Citadel vault: stored stacks on the left, bag on the right.
 class BankPanel extends StatefulWidget {
-  const BankPanel({super.key, required this.controller, this.onClose});
+  const BankPanel({super.key, required this.controller, this.multiplayer, this.onClose});
 
   final GameController controller;
+  final MultiplayerController? multiplayer;
   final VoidCallback? onClose;
 
   @override
@@ -36,6 +39,8 @@ class _BankPanelState extends State<BankPanel> {
   final TextEditingController _search = TextEditingController();
   late InventorySorter _sorter = InventorySorter(widget.controller.db);
   String? _error;
+  bool _guildTab = false;
+  GuildHallState? _guildHall;
 
   List<({int index, InventoryStack stack})>? _cachedBag;
   List<({int index, InventoryStack stack})>? _cachedChest;
@@ -47,6 +52,21 @@ class _BankPanelState extends State<BankPanel> {
 
   GameController get controller => widget.controller;
   PlayerSave get save => controller.save;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGuildHall();
+  }
+
+  Future<void> _loadGuildHall() async {
+    final net = widget.multiplayer;
+    final guildId = net?.guildId;
+    if (net == null || guildId == null) return;
+    final hall = await net.service.guildHall(guildId);
+    if (!mounted) return;
+    setState(() => _guildHall = hall);
+  }
 
   @override
   void didUpdateWidget(BankPanel oldWidget) {
@@ -238,6 +258,28 @@ class _BankPanelState extends State<BankPanel> {
             'Bag ${formatThousands(save.inventory.length)}/$inventorySlotLimit · '
             'Bank ${formatThousands(bankLen)}/$bankSlotLimit',
           ),
+          if (_guildHall?.bankUnlocked == true) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: GameButton(
+                    label: 'Personal',
+                    tone: _guildTab ? GameButtonTone.secondary : GameButtonTone.primary,
+                    onPressed: () => setState(() => _guildTab = false),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: GameButton(
+                    label: 'Guild',
+                    tone: _guildTab ? GameButtonTone.primary : GameButtonTone.secondary,
+                    onPressed: () => setState(() => _guildTab = true),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 8),
           TextField(
             controller: _search,
@@ -256,50 +298,251 @@ class _BankPanelState extends State<BankPanel> {
           ],
           const SizedBox(height: 10),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _Column(
-                    heading: 'Bank',
-                    empty: bankLen == 0 ? 'The chest is empty.' : 'Nothing in the bank matches.',
-                    itemCount: chest.length,
-                    itemBuilder: (context, i) {
-                      final row = chest[i];
-                      return _tileFor(
-                        key: ValueKey('bank-${row.index}'),
-                        stack: row.stack,
-                        onTap: () => _withdraw(row.index, row.stack),
-                      );
-                    },
+            child: _guildTab && _guildHall != null
+                ? _guildBankBody(_guildHall!)
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _Column(
+                          heading: 'Bank',
+                          empty: bankLen == 0
+                              ? 'The chest is empty.'
+                              : 'Nothing in the bank matches.',
+                          itemCount: chest.length,
+                          itemBuilder: (context, i) {
+                            final row = chest[i];
+                            return _tileFor(
+                              key: ValueKey('bank-${row.index}'),
+                              stack: row.stack,
+                              onTap: () => _withdraw(row.index, row.stack),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: _Column(
+                          heading: 'Bag',
+                          empty: save.inventory.isEmpty
+                              ? 'The bag is empty.'
+                              : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
+                              ? 'Nothing in the bag to deposit.'
+                              : 'Nothing in the bag matches.',
+                          itemCount: bag.length,
+                          itemBuilder: (context, i) {
+                            final row = bag[i];
+                            return _tileFor(
+                              key: ValueKey('bag-${row.index}'),
+                              stack: row.stack,
+                              onTap: () => _deposit(row.index, row.stack),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: _Column(
-                    heading: 'Bag',
-                    empty: save.inventory.isEmpty
-                        ? 'The bag is empty.'
-                        : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
-                        ? 'Nothing in the bag to deposit.'
-                        : 'Nothing in the bag matches.',
-                    itemCount: bag.length,
-                    itemBuilder: (context, i) {
-                      final row = bag[i];
-                      return _tileFor(
-                        key: ValueKey('bag-${row.index}'),
-                        stack: row.stack,
-                        onTap: () => _deposit(row.index, row.stack),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _guildBankBody(GuildHallState hall) {
+    final net = widget.multiplayer;
+    final userId = net?.session?.userId;
+    String? role;
+    num total = 1;
+    for (final row in net?.members ?? const <GuildMember>[]) {
+      if (row.userId == userId) {
+        role = row.role;
+        total = row.totalLevel;
+      }
+    }
+    final table = net?.guild?.permissions ?? defaultGuildPermissionTable();
+    final canDeposit = role != null && guildMay(role, guildPermissionDeposit, table);
+    final canWithdraw =
+        role != null &&
+        guildMay(role, guildPermissionWithdraw, table) &&
+        guildMayWithdrawAtLevel(total);
+    final canMove = role != null && guildMay(role, guildPermissionMoveUpForGrabs, table);
+    final main = hall.bank.section(guildBankSectionMain);
+    final grabs = hall.bank.section(guildBankSectionUpForGrabs);
+    return ListView(
+      children: [
+        const Text('Main', style: TextStyle(fontWeight: FontWeight.w400)),
+        const MutedText('Tradeable items. Under total level 200 can deposit but not withdraw.'),
+        if (main.isEmpty)
+          const MutedText('Empty.')
+        else
+          for (final row in main)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: DockRow(
+                title: _stackLabel(
+                  InventoryStack(
+                    itemId: row.itemId,
+                    quantity: row.quantity,
+                    enchantmentId: row.enchantmentId,
+                  ),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GameButton(
+                      label: 'Out',
+                      compact: true,
+                      onPressed: canWithdraw ? () => _guildWithdraw(row, fromGrabs: false) : null,
+                    ),
+                    const SizedBox(width: 4),
+                    GameButton(
+                      label: 'Up for grabs',
+                      compact: true,
+                      onPressed: canMove ? () => _guildMove(row) : null,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        const SizedBox(height: 10),
+        const Text('Up for grabs', style: TextStyle(fontWeight: FontWeight.w400)),
+        const MutedText('Anyone in the guild can take these.'),
+        if (grabs.isEmpty)
+          const MutedText('Empty.')
+        else
+          for (final row in grabs)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: DockRow(
+                title: _stackLabel(
+                  InventoryStack(
+                    itemId: row.itemId,
+                    quantity: row.quantity,
+                    enchantmentId: row.enchantmentId,
+                  ),
+                ),
+                trailing: GameButton(
+                  label: 'Take',
+                  compact: true,
+                  onPressed: () => _guildWithdraw(row, fromGrabs: true),
+                ),
+              ),
+            ),
+        const SizedBox(height: 10),
+        const Text('Bag', style: TextStyle(fontWeight: FontWeight.w400)),
+        for (final entry in save.inventory.indexed)
+          if (!stackIsUnbankableGold(entry.$2))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: DockRow(
+                title: _stackLabel(entry.$2),
+                trailing: GameButton(
+                  label: 'In',
+                  compact: true,
+                  onPressed: canDeposit ? () => _guildDeposit(entry.$1, entry.$2) : null,
+                ),
+              ),
+            ),
+      ],
+    );
+  }
+
+  Future<void> _guildDeposit(int index, InventoryStack stack) async {
+    final net = widget.multiplayer;
+    if (net == null) return;
+    final quantity = await askQuantity(
+      context,
+      title: _stackLabel(stack),
+      subtitle: 'Into the guild bank',
+      confirmLabel: 'Deposit',
+      max: stack.quantity.floor(),
+    );
+    if (quantity == null || !mounted) return;
+    final result = await net.service.depositGuildBank(save, index, quantity);
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    if (result.save != null) controller.commit(result.save!);
+    setState(() {
+      _guildHall = result.hall;
+      _error = null;
+    });
+  }
+
+  Future<void> _guildWithdraw(GuildBankItem row, {required bool fromGrabs}) async {
+    final net = widget.multiplayer;
+    if (net == null) return;
+    final quantity = await askQuantity(
+      context,
+      title: _stackLabel(
+        InventoryStack(
+          itemId: row.itemId,
+          quantity: row.quantity,
+          enchantmentId: row.enchantmentId,
+        ),
+      ),
+      subtitle: fromGrabs ? 'From Up for grabs' : 'From the guild bank',
+      confirmLabel: fromGrabs ? 'Take' : 'Withdraw',
+      max: row.quantity.floor(),
+    );
+    if (quantity == null || !mounted) return;
+    final result = fromGrabs
+        ? await net.service.takeGuildBankUpForGrabs(
+            save,
+            row.itemId,
+            quantity,
+            enchantmentId: row.enchantmentId,
+          )
+        : await net.service.withdrawGuildBank(
+            save,
+            row.itemId,
+            quantity,
+            enchantmentId: row.enchantmentId,
+          );
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    if (result.save != null) controller.commit(result.save!);
+    setState(() {
+      _guildHall = result.hall;
+      _error = null;
+    });
+  }
+
+  Future<void> _guildMove(GuildBankItem row) async {
+    final net = widget.multiplayer;
+    if (net == null) return;
+    final quantity = await askQuantity(
+      context,
+      title: _stackLabel(
+        InventoryStack(
+          itemId: row.itemId,
+          quantity: row.quantity,
+          enchantmentId: row.enchantmentId,
+        ),
+      ),
+      subtitle: 'Move to Up for grabs',
+      confirmLabel: 'Move',
+      max: row.quantity.floor(),
+    );
+    if (quantity == null || !mounted) return;
+    final result = await net.service.moveGuildBankToUpForGrabs(
+      save,
+      row.itemId,
+      quantity,
+      enchantmentId: row.enchantmentId,
+    );
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    if (result.save != null) controller.commit(result.save!);
+    setState(() {
+      _guildHall = result.hall;
+      _error = null;
+    });
   }
 
   Widget _tileFor({required Key key, required InventoryStack stack, required VoidCallback onTap}) {

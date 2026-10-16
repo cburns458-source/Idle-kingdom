@@ -2164,7 +2164,7 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<GuildHallActionResult> payGuildDebt(PlayerSave save, num amount) async {
     final paid = await gameCommand('guild_pay_hall_debt', <String, Object?>{'amount': amount});
-    if (!paid.ok) return GuildHallActionResult.failed(paid.reason ?? 'Could not pay hall debt.');
+    if (!paid.ok) return GuildHallActionResult.failed(paid.reason ?? 'Could not chip in gold.');
     final guildId = await currentGuildId();
     final hall = guildId == null ? null : await guildHall(guildId);
     if (hall == null) return GuildHallActionResult.failed('Guild hall not found.');
@@ -2192,6 +2192,136 @@ class RemoteMultiplayerService implements MultiplayerService {
     final hall = guildId == null ? null : await guildHall(guildId);
     if (hall == null) return GuildHallActionResult.failed('Guild hall not found.');
     return GuildHallActionResult.ok(hall, save: donated.save);
+  }
+
+  @override
+  Future<GuildHallActionResult> depositGuildBank(
+    PlayerSave save,
+    int inventoryIndex,
+    num quantity,
+  ) async {
+    final stack = inventoryIndex >= 0 && inventoryIndex < save.inventory.length
+        ? save.inventory[inventoryIndex]
+        : null;
+    final deposited = await gameCommand('guild_bank_deposit', <String, Object?>{
+      'inventoryIndex': inventoryIndex,
+      'quantity': quantity,
+      if (stack != null) 'itemId': stack.itemId,
+      if (stack?.enchantmentId != null && stack!.enchantmentId!.isNotEmpty)
+        'enchantmentId': stack.enchantmentId,
+    });
+    if (!deposited.ok)
+      return GuildHallActionResult.failed(deposited.reason ?? 'Could not deposit.');
+    final guildId = await currentGuildId();
+    final hall = guildId == null ? null : await guildHall(guildId);
+    if (hall == null) return GuildHallActionResult.failed('Guild hall not found.');
+    return GuildHallActionResult.ok(hall, save: deposited.save);
+  }
+
+  @override
+  Future<GuildHallActionResult> withdrawGuildBank(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final withdrawn = await gameCommand('guild_bank_withdraw', <String, Object?>{
+      'itemId': itemId,
+      'quantity': quantity,
+      if (enchantmentId != null) 'enchantmentId': enchantmentId,
+    });
+    if (!withdrawn.ok) {
+      return GuildHallActionResult.failed(withdrawn.reason ?? 'Could not withdraw.');
+    }
+    final guildId = await currentGuildId();
+    final hall = guildId == null ? null : await guildHall(guildId);
+    if (hall == null) return GuildHallActionResult.failed('Guild hall not found.');
+    return GuildHallActionResult.ok(hall, save: withdrawn.save);
+  }
+
+  @override
+  Future<GuildHallActionResult> takeGuildBankUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final taken = await gameCommand('guild_bank_take_up_for_grabs', <String, Object?>{
+      'itemId': itemId,
+      'quantity': quantity,
+      if (enchantmentId != null) 'enchantmentId': enchantmentId,
+    });
+    if (!taken.ok) return GuildHallActionResult.failed(taken.reason ?? 'Could not take.');
+    final guildId = await currentGuildId();
+    final hall = guildId == null ? null : await guildHall(guildId);
+    if (hall == null) return GuildHallActionResult.failed('Guild hall not found.');
+    return GuildHallActionResult.ok(hall, save: taken.save);
+  }
+
+  @override
+  Future<GuildHallActionResult> moveGuildBankToUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final moved = await gameCommand('guild_bank_move_up_for_grabs', <String, Object?>{
+      'itemId': itemId,
+      'quantity': quantity,
+      if (enchantmentId != null) 'enchantmentId': enchantmentId,
+    });
+    if (!moved.ok) return GuildHallActionResult.failed(moved.reason ?? 'Could not move.');
+    final guildId = await currentGuildId();
+    final hall = guildId == null ? null : await guildHall(guildId);
+    if (hall == null) return GuildHallActionResult.failed('Guild hall not found.');
+    return GuildHallActionResult.ok(hall, save: moved.save);
+  }
+
+  @override
+  Future<List<GuildLogEntry>> guildLog(String guildId) async {
+    final result = await transport.select(
+      RemoteTables.guildLogEntries,
+      columns:
+          'id, guild_id, kind, created_at, actor_user_id, actor_username, role, '
+          'target_user_id, target_username, tier_id, message, gold, items',
+      equals: <String, Object?>{'guild_id': guildId},
+      orderBy: 'created_at',
+      ascending: false,
+    );
+    if (!result.ok) return const <GuildLogEntry>[];
+    return [
+      for (final row in result.rows ?? const <RemoteRow>[])
+        GuildLogEntry.fromJson(<String, Object?>{
+          'id': row['id'],
+          'guildId': row['guild_id'],
+          'kind': row['kind'],
+          'createdAt': row['created_at'],
+          'actorUserId': row['actor_user_id'],
+          'actorUsername': row['actor_username'] ?? '',
+          'role': row['role'],
+          'targetUserId': row['target_user_id'],
+          'targetUsername': row['target_username'],
+          'tierId': row['tier_id'],
+          'message': row['message'] ?? '',
+          'gold': row['gold'] ?? 0,
+          'items': row['items'] ?? const <Object?>[],
+        }),
+    ];
+  }
+
+  @override
+  Future<String?> setGuildPermissions(String guildId, GuildPermissionTable table) async {
+    final result = await transport.rpc(RemoteRpcs.guildSetPermissions, <String, Object?>{
+      'p_guild_id': guildId,
+      'p_permissions': table.toJson(),
+    });
+    if (!result.ok) return result.reason ?? 'Could not save permissions.';
+    final data = result.data;
+    if (data != null && data['ok'] == false) {
+      final refusal = data['reason'];
+      return refusal is String ? refusal : 'Could not save permissions.';
+    }
+    return null;
   }
 
   Future<String?> _remoteChatPrivacyRefusal(ChatChannel channel) async {
@@ -2264,7 +2394,7 @@ class RemoteMultiplayerService implements MultiplayerService {
     final ids = {for (final member in members) member.userId};
     return [
       for (final row in await _hostedArenaOpponents())
-        if (ids.contains(row.userId)) row,
+        if (ids.contains(row.userId) && row.userId != current.userId) row,
     ];
   }
 

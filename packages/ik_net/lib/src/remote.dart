@@ -34,6 +34,7 @@ class RemoteTables {
   static const String guildGuests = 'guild_guests';
   static const String guildHalls = 'guild_halls';
   static const String guildHallTiers = 'guild_hall_tiers';
+  static const String guildLogEntries = 'guild_log_entries';
   static const String guildProjects = 'guild_projects';
   static const String guildChallenges = 'guild_challenges';
   static const String guildPrivateMessages = 'guild_private_messages';
@@ -59,6 +60,7 @@ class RemoteRpcs {
   static const String guildKick = 'guild_kick';
   static const String guildSetMotto = 'guild_set_motto';
   static const String guildSetMessage = 'guild_set_message';
+  static const String guildSetPermissions = 'guild_set_permissions';
 
   /// Wave E: one transaction each, answering `{ok, reason}`.
   static const Set<String> guildLifecycle = <String>{

@@ -8,6 +8,7 @@ import { applyQuestAutoStartOnSeed } from '../quests/progress'
 import { getQuestProgress } from '../quests/quests'
 import { createNewSave } from '../save/saveStore'
 import type { InventoryStack } from '../save/types'
+import { normalizeGuildHallState } from '../guild/economy'
 import {
   applyGameCommand,
   CATCHING_UP_REASON,
@@ -188,13 +189,13 @@ describe('phase 2 authority', () => {
 
   it('refuses to donate an untradeable item to the guild storehouse', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    const hall = {
+    const hall = normalizeGuildHallState({
       debtRemaining: 0,
       debtPaidOff: true,
       debtPaidBy: {},
       storehouse: [],
       completedTiers: [],
-    }
+    })
     const save = {
       ...createNewSave(launch, START_MS),
       inventory: [
@@ -221,6 +222,172 @@ describe('phase 2 authority', () => {
     const cedar = donate(1, 'ITEM-0015')
     expect(cedar.ok).toBe(true)
     if (cedar.ok) expect(cedar.hall?.storehouse).toEqual([{ itemId: 'ITEM-0015', quantity: 1 }])
+  })
+
+  it('chips gold into one running total, refuses a short purse, and spends the remainder once', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = normalizeGuildHallState({
+      goldContributed: 999_900,
+      goldContributedBy: {},
+      storehouse: [],
+      completedTiers: [],
+    })
+    const save = { ...createNewSave(launch, START_MS), gold: 500 }
+    const short = applyGameCommand(rawDatabase, {
+      command: 'guild_chip_in_hall_gold',
+      args: { amount: 600 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      userId: 'u1',
+      guildRole: 'member',
+    })
+    expect(short.ok).toBe(false)
+
+    const first = applyGameCommand(rawDatabase, {
+      command: 'guild_chip_in_hall_gold',
+      args: { amount: 200 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      userId: 'u1',
+      guildRole: 'member',
+    })
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.goldChipped).toBe(100)
+    expect(first.save.gold).toBe(400)
+    expect(first.hall?.goldContributed).toBe(1_000_000)
+
+    const second = applyGameCommand(rawDatabase, {
+      command: 'guild_chip_in_hall_gold',
+      args: { amount: 50 },
+      save: first.save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall: first.hall,
+      userId: 'u1',
+      guildRole: 'member',
+    })
+    expect(second.ok).toBe(true)
+    if (!second.ok) return
+    expect(second.goldChipped).toBe(0)
+    expect(second.save.gold).toBe(400)
+  })
+
+  it('lets a low-level member deposit in the guild bank but not withdraw', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = normalizeGuildHallState({
+      goldContributed: 10_000,
+      goldContributedBy: {},
+      storehouse: [],
+      completedTiers: ['build_the_hall', 'hall_bank'],
+    })
+    const save = {
+      ...createNewSave(launch, START_MS),
+      inventory: [{ itemId: 'ITEM-0015', quantity: 4 }],
+    }
+    const deposited = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_deposit',
+      args: { inventoryIndex: 0, itemId: 'ITEM-0015', quantity: 4 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      userId: 'u1',
+      guildRole: 'member',
+      totalLevel: 50,
+      nextId: () => 'gb-1',
+    })
+    expect(deposited.ok).toBe(true)
+    if (!deposited.ok) return
+    expect(deposited.bank?.items).toEqual([
+      { id: 'gb-1', itemId: 'ITEM-0015', quantity: 4, section: 'main' },
+    ])
+
+    const withdrawn = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_withdraw',
+      args: { itemId: 'ITEM-0015', quantity: 1 },
+      save: deposited.save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: deposited.bank,
+      userId: 'u1',
+      guildRole: 'member',
+      totalLevel: 50,
+    })
+    expect(withdrawn.ok).toBe(false)
+
+    const takenAtLevel = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_withdraw',
+      args: { itemId: 'ITEM-0015', quantity: 1 },
+      save: deposited.save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: deposited.bank,
+      userId: 'u1',
+      guildRole: 'officer',
+      totalLevel: 200,
+    })
+    expect(takenAtLevel.ok).toBe(true)
+  })
+
+  it('moves a stack to Up for grabs so any member can take it once', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = normalizeGuildHallState({
+      goldContributed: 10_000,
+      goldContributedBy: {},
+      storehouse: [],
+      completedTiers: ['build_the_hall', 'hall_bank'],
+    })
+    const save = createNewSave(launch, START_MS)
+    const bank = {
+      items: [{ id: 'gb-1', itemId: 'ITEM-0015', quantity: 2, section: 'main' as const }],
+    }
+    const moved = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_move_up_for_grabs',
+      args: { itemId: 'ITEM-0015', quantity: 2 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: bank,
+      userId: 'u1',
+      guildRole: 'leader',
+      nextId: () => 'gb-2',
+    })
+    expect(moved.ok).toBe(true)
+    if (!moved.ok) return
+    const first = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_take_up_for_grabs',
+      args: { itemId: 'ITEM-0015', quantity: 2 },
+      save: moved.save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: moved.bank,
+      userId: 'u2',
+      guildRole: 'recruit',
+      totalLevel: 1,
+    })
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    const second = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_take_up_for_grabs',
+      args: { itemId: 'ITEM-0015', quantity: 2 },
+      save: first.save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: first.bank,
+      userId: 'u3',
+      guildRole: 'member',
+    })
+    expect(second.ok).toBe(false)
   })
 
   it('reads the Tradeable column, with missing meaning true', () => {

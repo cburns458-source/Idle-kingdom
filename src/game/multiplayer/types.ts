@@ -9,6 +9,7 @@ import {
   type PlayerSave,
 } from '../save/types'
 import type { GuildSkillMilestoneSettings } from '../guild/skillMilestones'
+import type { GuildPermissionTable } from '../guild/permissions'
 
 /** The appearance a row falls back to when no save or profile supplied one. */
 export const DEFAULT_PLAYER_APPEARANCE: PlayerAppearance = {
@@ -321,6 +322,8 @@ export interface GuildRecord {
   rankIconTheme?: string
   /** Guild chat skill milestone thresholds; defaults when omitted. */
   skillMilestoneSettings?: GuildSkillMilestoneSettings
+  /** Per-rank hall/bank actions. Leader always may. */
+  permissions?: GuildPermissionTable
 }
 
 /** A guild as the browser lists it, with how full it is. */

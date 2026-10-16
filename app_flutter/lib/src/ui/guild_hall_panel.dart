@@ -12,12 +12,11 @@ import 'game_popup.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
 
-enum _HallTab { storehouse, debt, bank, boxing }
+enum _HallTab { storehouse, bank, boxing }
 
-/// Per-guild hall: the storehouse the guild builds out of, and its debt ledger.
+/// Per-guild hall: the storehouse the guild builds out of, and a running gold total.
 ///
-/// A hall opens with those two. The bank and the boxing ring are added by the
-/// tiers that pay for them.
+/// A hall opens with those two. Rooms are added by the tiers that pay for them.
 class GuildHallPanel extends StatefulWidget {
   const GuildHallPanel({
     super.key,
@@ -102,7 +101,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
       await showGameAlert(
         context: context,
         title: 'Good job!',
-        message: 'The hall debt is paid.',
+        message: 'The gold total has reached its cap.',
         confirmLabel: 'OK',
         placement: GamePopupPlacement.center,
       );
@@ -147,15 +146,17 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     await _apply(await net.service.contributeHallItem(save, index, quantity));
   }
 
-  Future<void> _payDebt() async {
+  Future<void> _chipIn() async {
     final hall = _hall;
     if (hall == null) return;
-    final maxPay = hall.debtRemaining.floor().clamp(0, save.gold.floor());
+    final remaining = guildHallGoldChipInCap(hall.goldContributed).floor();
+    final maxPay = remaining.clamp(0, save.gold.floor());
     final quantity = await askQuantity(
       context,
-      title: 'Hall debt',
-      subtitle: 'Remaining: ${formatThousands(hall.debtRemaining)}',
-      confirmLabel: 'Pay',
+      title: 'Chip in gold',
+      subtitle:
+          'Running total: ${formatThousands(hall.goldContributed)} / ${formatThousands(guildHallGoldCap)}',
+      confirmLabel: 'Chip in',
       max: maxPay,
     );
     if (quantity == null || !mounted) return;
@@ -198,8 +199,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                 Expanded(
                   child: GameButton(
                     label: switch (tab) {
-                      _HallTab.storehouse => 'Store House',
-                      _HallTab.debt => 'Debt',
+                      _HallTab.storehouse => 'Hall',
                       _HallTab.bank => 'Bank',
                       _HallTab.boxing => 'Boxing',
                     },
@@ -222,7 +222,6 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                 : SingleChildScrollView(
                     child: switch (_tab) {
                       _HallTab.storehouse => _storehouse(),
-                      _HallTab.debt => _debt(),
                       _HallTab.bank => _bank(),
                       _HallTab.boxing => _boxing(),
                     },
@@ -233,12 +232,10 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     );
   }
 
-  /// A hall offers the Store House and the Debt. The rest is built into it.
   List<_HallTab> get _tabs {
     final hall = _hall;
     return <_HallTab>[
       _HallTab.storehouse,
-      _HallTab.debt,
       if (hall != null && hall.bankUnlocked) _HallTab.bank,
       if (hall != null && hall.boxingUnlocked) _HallTab.boxing,
     ];
@@ -287,24 +284,76 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     );
   }
 
-  /// What the guild is building, and what it still owes for it.
   Widget _tierCard(GuildHallState hall) {
-    final tier = nextGuildHallTier(hall.completedTiers);
-    if (tier == null) {
-      return const MutedText('The hall is finished.');
-    }
-    final needs = guildHallTierNeeds(tier, hall.storehouse);
+    final role = _role;
+    final canChip = role != null && canChipInGuildGold(role);
+    final remaining = guildHallGoldChipInCap(hall.goldContributed);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(tier.name, style: const TextStyle(fontWeight: FontWeight.w400)),
-        MutedText('${tier.blurb} Donations are spent when it is finished.'),
-        for (final need in needs)
+        Text(
+          'Gold ${formatThousands(hall.goldContributed)} / ${formatThousands(guildHallGoldCap)}',
+          style: const TextStyle(fontWeight: FontWeight.w400),
+        ),
+        const SizedBox(height: 6),
+        _goldBar(hall.goldContributed),
+        const MutedText('Marks: 10k / 40k / 130k / 400k / 1M. Chip-ins cap at 1M.'),
+        const SizedBox(height: 8),
+        GameButton(
+          label: remaining <= 0 ? 'Capped' : 'Chip in',
+          onPressed: remaining > 0 && canChip && save.gold > 0 ? _chipIn : null,
+        ),
+        if (!canChip) const MutedText('Recruits cannot chip in gold.'),
+        const SizedBox(height: 12),
+        for (final tier in guildHallTiers) ...[
+          Text(tier.name, style: const TextStyle(fontWeight: FontWeight.w400)),
           MutedText(
-            '${_itemNameFor(need.itemId)} '
-            '${formatThousands(need.counted)} / ${formatThousands(need.needed)}',
+            hall.completedTiers.contains(tier.id)
+                ? 'Finished. ${tier.blurb}'
+                : '${tier.blurb}${tier.goldCost > 0 ? ' Gold for this step: ${formatThousands(tier.goldCost)}.' : ''}',
           ),
+          for (final need in guildHallTierNeeds(tier, hall.storehouse))
+            MutedText(
+              '${_itemNameFor(need.itemId)} '
+              '${formatThousands(need.counted)} / ${formatThousands(need.needed)}',
+            ),
+          const SizedBox(height: 8),
+        ],
       ],
+    );
+  }
+
+  Widget _goldBar(num contributed) {
+    final cap = guildHallGoldCap.toDouble();
+    final t = cap <= 0 ? 0.0 : (contributed.toDouble() / cap).clamp(0.0, 1.0);
+    return SizedBox(
+      height: 16,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Palette.panel,
+                  border: Border.all(color: Palette.goldShade),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: t,
+                child: Container(color: Palette.gold.withValues(alpha: 0.7)),
+              ),
+              for (final mark in guildHallGoldMarks)
+                Positioned(
+                  left: constraints.maxWidth * (mark.toDouble() / cap) - 1,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(width: 2, color: Palette.goldShade),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -315,33 +364,6 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
         const MutedText('The counting room holds your own bank, same chest as in town.'),
         const SizedBox(height: 8),
         GameButton(label: 'Open the bank', onPressed: widget.onOpenBank),
-      ],
-    );
-  }
-
-  Widget _debt() {
-    final hall = _hall!;
-    final role = _role;
-    final canPay = role != null && canPayGuildDebt(role);
-    final mine = hall.debtPaidBy[net.session?.userId] ?? 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          hall.debtPaidOff
-              ? 'Paid in full.'
-              : 'Remaining: ${formatThousands(hall.debtRemaining)} / ${formatThousands(guildHallDebtGold)}',
-          style: const TextStyle(fontWeight: FontWeight.w400),
-        ),
-        MutedText(
-          'Your payments: ${formatThousands(mine)} gold. Member and above can pay. No extra reward.',
-        ),
-        const SizedBox(height: 8),
-        GameButton(
-          label: hall.debtPaidOff ? 'Settled' : 'Pay',
-          onPressed: !hall.debtPaidOff && canPay ? _payDebt : null,
-        ),
-        if (!canPay) const MutedText('Recruits cannot pay the hall debt.'),
       ],
     );
   }

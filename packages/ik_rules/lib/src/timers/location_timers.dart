@@ -15,7 +15,9 @@ import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
+import '../guild/rooms.dart';
 import '../trackers/trackers.dart';
+import '../world/constants.dart';
 
 const String botanySkillId = 'SKL-0014';
 const String thieverySkillId = 'SKL-0015';
@@ -186,6 +188,7 @@ const Set<String> botanyPatchLocations = <String>{
   'LOC-0043',
   'LOC-0036',
   'LOC-0009',
+  guildHallLocationId,
 };
 
 bool locationHasCompostCollect(String locationId) =>
@@ -1039,6 +1042,7 @@ LocationTimerCollectResult collectLocationTimer(
   String kind, {
   required num nowMs,
   num Function()? random,
+  bool guildmatesPresent = false,
 }) {
   // Must be a real RNG. A constant 0.5 makes `rng() < botanySeedReturnChance` never
   // succeed, so patch collects would never return seeds (Flutter omits [random]).
@@ -1143,6 +1147,9 @@ LocationTimerCollectResult collectLocationTimer(
     );
   }
 
+  if (locationId == guildHallLocationId && timer.kind == 'botany') {
+    xpGained = applyGuildHallCompanyXp(xpGained, guildmatesPresent);
+  }
   next = applyXp(next, db, skillId, xpGained).save;
   final bonusXp = <({String skillId, num xp})>[];
   final awards = <({String skillId, num xp})>[(skillId: skillId, xp: xpGained)];

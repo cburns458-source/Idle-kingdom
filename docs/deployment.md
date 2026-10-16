@@ -164,6 +164,14 @@ Checklist, in order:
    should change nothing there; it records the version test has. Safe to
    re-run.
    Status: applied on test (version `20261007045115`); live pending.
+4. [ ] `20261016120000_guild_hall_tiers.sql` (SOC-01). Running gold total,
+   `guild_may`, hall revision CAS, guild bank jsonb, guild log, and
+   `guild_commit_hall`. Apply to test when this PR lands on `test-launch`; live
+   only after Conor merges `test-launch` into `main`. Do not apply to live
+   before the game function that writes through `guild_commit_hall` is on
+   `restoria-idlerpg`.
+   Status: applied on test Oct 16 2026 (MCP version `20261016061935`, file
+   `20261016120000`); live pending.
 
 The eight files before that (profile guard through Wave F cleanup) were applied
 to live when `efbda080` shipped to `main`.

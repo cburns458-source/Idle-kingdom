@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'catalog_popup.dart';
+import 'format.dart';
 import 'game_popup.dart';
 import 'page_header.dart';
 import 'player_profile_sheet.dart';
@@ -348,20 +349,32 @@ class _GuildPanelState extends State<GuildPanel> {
           }
           if (index == 5) return const SizedBox(height: 10);
           if (index == 6) {
-            return GameButton(
-              label: save.currentLocationId == guildHallLocationId
-                  ? 'In the hall'
-                  : 'Travel to hall',
-              onPressed: widget.onTravelToHall == null || widget.controller.switchBusy
-                  ? null
-                  : widget.onTravelToHall,
+            return Row(
+              children: [
+                Expanded(
+                  child: GameButton(
+                    label: save.currentLocationId == guildHallLocationId
+                        ? 'In the hall'
+                        : 'Travel to hall',
+                    onPressed: widget.onTravelToHall == null || widget.controller.switchBusy
+                        ? null
+                        : widget.onTravelToHall,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                GameButton(
+                  label: 'Log',
+                  tone: GameButtonTone.secondary,
+                  onPressed: () => _openGuildLog(guild),
+                ),
+              ],
             );
           }
           if (index == 7) {
             return const Padding(
               padding: EdgeInsets.only(top: 4, bottom: 10),
               child: MutedText(
-                'Each guild has its own hall: a store house and a debt to work off.',
+                'Each guild has its own hall: donate materials, chip in gold, and unlock rooms.',
               ),
             );
           }
@@ -556,6 +569,76 @@ class _GuildPanelState extends State<GuildPanel> {
     );
   }
 
+  Future<void> _openGuildLog(GuildRecord guild) async {
+    final entries = await net.service.guildLog(guild.id);
+    if (!mounted) return;
+    await showGamePopup<void>(
+      context: context,
+      maxWidth: 420,
+      maxHeight: 520,
+      builder: (context) => GamePopupCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Guild log', style: TextStyle(fontWeight: FontWeight.w400)),
+                ),
+                GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: entries.isEmpty
+                  ? const MutedText('Nothing logged yet.')
+                  : ListView.builder(
+                      itemCount: entries.length,
+                      itemBuilder: (context, index) {
+                        final row = entries[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                row.message.isNotEmpty ? row.message : _guildLogFallback(row),
+                                style: const TextStyle(fontWeight: FontWeight.w400),
+                              ),
+                              MutedText(row.actorUsername),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _guildLogFallback(GuildLogEntry row) {
+    switch (row.kind) {
+      case guildLogKindDonation:
+        final gold = row.gold > 0 ? '${formatThousands(row.gold)} gold' : '';
+        final items = row.items
+            .map((item) => '${formatThousands(item.quantity)} ${item.itemId}')
+            .join(', ');
+        return [gold, items].where((part) => part.isNotEmpty).join(' · ');
+      case guildLogKindJoin:
+        return '${row.actorUsername} joined the guild.';
+      case guildLogKindLeave:
+        return '${row.actorUsername} left the guild.';
+      case guildLogKindRankChange:
+        return '${row.actorUsername} is now ${row.role ?? 'a member'}.';
+      case guildLogKindTierComplete:
+        return guildHallTierFinishLine(row.tierId ?? '') ?? row.tierId ?? '';
+      default:
+        return row.kind;
+    }
+  }
+
   Future<void> _openSettingsSheet(GuildRecord guild) async {
     final settings = await showGamePopup<_GuildSettings>(
       context: context,
@@ -573,6 +656,7 @@ class _GuildPanelState extends State<GuildPanel> {
       skillMilestoneSettings: settings.skillMilestoneSettings,
       save: save,
     );
+    await net.service.setGuildPermissions(guild.id, settings.permissions);
   }
 
   Future<void> _editGuildMotto(GuildRecord guild) async {
@@ -1352,6 +1436,7 @@ class _GuildSettings {
     required this.emblem,
     required this.rankLabels,
     required this.skillMilestoneSettings,
+    required this.permissions,
   });
 
   final GuildJoinPolicy joinPolicy;
@@ -1360,6 +1445,7 @@ class _GuildSettings {
   final GuildEmblem emblem;
   final Map<GuildRankKey, String> rankLabels;
   final GuildSkillMilestoneSettings skillMilestoneSettings;
+  final GuildPermissionTable permissions;
 }
 
 class _GuildSettingsSheet extends StatefulWidget {
@@ -1389,6 +1475,8 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
   late final TextEditingController _xpStep = TextEditingController(
     text: '${widget.guild.skillMilestoneSettings.xpStepMillion.round()}',
   );
+  late GuildPermissionTable _permissions =
+      widget.guild.permissions ?? defaultGuildPermissionTable();
   late final Map<GuildRankKey, TextEditingController> _labels =
       <GuildRankKey, TextEditingController>{
         for (final field in rankLabelFields(widget.guild))
@@ -1543,6 +1631,48 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
                 decoration: InputDecoration(labelText: field.fieldLabel),
               ),
             ],
+            const SizedBox(height: 12),
+            const Text('Hall permissions', style: TextStyle(fontWeight: FontWeight.w400)),
+            const MutedText(
+              'The leader always may. Check a rank to allow deposit, withdraw, or Up for grabs.',
+            ),
+            const SizedBox(height: 6),
+            for (final action in guildPermissionActions) ...[
+              Text(
+                action.replaceAll('_', ' '),
+                style: const TextStyle(fontWeight: FontWeight.w400),
+              ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final rank in guildPermissionRanks)
+                    FilterChip(
+                      label: Text(rank),
+                      selected: _permissions.ranksFor(action).contains(rank),
+                      onSelected: rank == 'leader'
+                          ? null
+                          : (selected) {
+                              setState(() {
+                                final current = [..._permissions.ranksFor(action)];
+                                if (selected) {
+                                  if (!current.contains(rank)) current.add(rank);
+                                } else {
+                                  current.remove(rank);
+                                }
+                                if (!current.contains('leader')) current.insert(0, 'leader');
+                                _permissions = GuildPermissionTable(
+                                  ranksByAction: <String, List<String>>{
+                                    ..._permissions.ranksByAction,
+                                    action: current,
+                                  },
+                                );
+                              });
+                            },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
             const SizedBox(height: 6),
             GameButton(
               label: 'Save settings',
@@ -1556,6 +1686,7 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
                     for (final entry in _labels.entries) entry.key: entry.value.text,
                   },
                   skillMilestoneSettings: _milestoneSettings(),
+                  permissions: _permissions,
                 ),
               ),
             ),

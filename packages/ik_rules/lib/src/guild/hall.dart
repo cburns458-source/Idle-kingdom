@@ -8,23 +8,35 @@ bool locationHasGuildHall(LocationRow? location) {
   return location.locationId == guildHallLocationId;
 }
 
-/// Recruits cannot pay the hall debt. Member and every rank above can.
-bool canPayGuildDebt(String role) {
+/// Recruits cannot chip in gold. Member and every rank above can.
+bool canChipInGuildGold(String role) {
   return role == 'leader' || role == 'officer' || role == 'veteran' || role == 'member';
 }
 
-const num guildHallDebtGold = 1000000;
+/// Recruits cannot chip in gold. Member and every rank above can.
+bool canPayGuildDebt(String role) => canChipInGuildGold(role);
+
+/// Running gold total members chip into. Caps chip-ins; never a stored coffer.
+const num guildHallGoldCap = 1000000;
+
+/// The old 1M debt is the same cap as the running gold total.
+const num guildHallDebtGold = guildHallGoldCap;
+
+const List<num> guildHallGoldMarks = <num>[10000, 40000, 130000, 400000, 1000000];
 
 /// What a guild owes for one step of its hall, and what that step opens.
 ///
 /// The materials are read out of the storehouse, so a donation is a deposit
-/// that happens to count. Finishing a tier spends them.
+/// that happens to count. Finishing a tier spends them. Gold uses one running
+/// total; a room tier also needs that total to have reached [goldThreshold].
 class GuildHallTier {
   const GuildHallTier({
     required this.id,
     required this.name,
     required this.blurb,
     required this.cost,
+    this.goldThreshold = 0,
+    this.goldCost = 0,
     this.unlock,
   });
 
@@ -36,6 +48,12 @@ class GuildHallTier {
 
   /// Item id to the quantity the guild must put in, in listing order.
   final List<GuildHallTierCost> cost;
+
+  /// Cumulative gold the guild must have chipped in before this tier can finish.
+  final num goldThreshold;
+
+  /// Gold shown on the tier card as this step's cost (10k / 30k / 90k / 270k / 600k).
+  final num goldCost;
 
   /// What opens in the hall when the tier is finished, or null when the tier
   /// is only the building itself.
@@ -66,19 +84,45 @@ class GuildHallTierNeed {
 const String guildHallTierBuild = 'build_the_hall';
 const String guildHallTierBank = 'hall_bank';
 const String guildHallTierBoxing = 'hall_boxing_ring';
+const String guildHallTierGarden = 'hall_indoor_garden';
+const String guildHallTierArcana = 'hall_arcana_station';
+const String guildHallTierCage = 'hall_monster_cage';
 
 const String guildHallUnlockBank = 'bank';
 const String guildHallUnlockBoxing = 'boxing_ring';
+const String guildHallUnlockGarden = 'indoor_garden';
+const String guildHallUnlockArcana = 'arcana_station';
+const String guildHallUnlockCage = 'monster_cage';
 
-/// The three steps of a hall, finished in this order.
+const Map<String, String> guildHallTierFinishLines = <String, String>{
+  guildHallTierBank: 'The counting room is open for business.',
+  guildHallTierBoxing: 'The ring is roped off. Settle your differences in there.',
+  guildHallTierGarden: "Soil's in, and the hall smells of earth now.",
+  guildHallTierArcana: 'The Arcana station hums to life in the corner.',
+  guildHallTierCage: 'Something big is rattling the cage. Mind your fingers.',
+};
+
+const String _poplarLog = 'ITEM-0017';
+const String _clay = 'ITEM-0002';
+const String _coal = 'ITEM-0006';
+const String _thread = 'ITEM-0095';
+const String _oakLog = 'ITEM-0016';
+const String _compost = 'ITEM-0377';
+const String _essence = 'ITEM-0011';
+const String _mapleLog = 'ITEM-0018';
+const String _steelBar = 'ITEM-0077';
+const String _ironBar = 'ITEM-0076';
+const String _cedarLog = 'ITEM-0015';
+
+/// Build the Hall, then the five rooms, finished in this order.
 const List<GuildHallTier> guildHallTiers = <GuildHallTier>[
   GuildHallTier(
     id: guildHallTierBuild,
     name: 'Build the Hall',
     blurb: 'Raise the hall itself. Nothing opens yet.',
     cost: <GuildHallTierCost>[
-      GuildHallTierCost(itemId: 'ITEM-0015', quantity: 1000),
-      GuildHallTierCost(itemId: 'ITEM-0095', quantity: 100),
+      GuildHallTierCost(itemId: _cedarLog, quantity: 1000),
+      GuildHallTierCost(itemId: _thread, quantity: 100),
     ],
   ),
   GuildHallTier(
@@ -86,10 +130,12 @@ const List<GuildHallTier> guildHallTiers = <GuildHallTier>[
     name: 'Counting Room',
     blurb: 'Opens a bank in the hall.',
     cost: <GuildHallTierCost>[
-      GuildHallTierCost(itemId: 'ITEM-0017', quantity: 1000),
-      GuildHallTierCost(itemId: 'ITEM-0002', quantity: 200),
-      GuildHallTierCost(itemId: 'ITEM-0006', quantity: 100),
+      GuildHallTierCost(itemId: _poplarLog, quantity: 24000),
+      GuildHallTierCost(itemId: _clay, quantity: 10000),
+      GuildHallTierCost(itemId: _coal, quantity: 6320),
     ],
+    goldThreshold: 10000,
+    goldCost: 10000,
     unlock: guildHallUnlockBank,
   ),
   GuildHallTier(
@@ -97,13 +143,71 @@ const List<GuildHallTier> guildHallTiers = <GuildHallTier>[
     name: 'Boxing Ring',
     blurb: 'Opens the ring, where guildmates spar.',
     cost: <GuildHallTierCost>[
-      GuildHallTierCost(itemId: 'ITEM-0002', quantity: 300),
-      GuildHallTierCost(itemId: 'ITEM-0095', quantity: 300),
-      GuildHallTierCost(itemId: 'ITEM-0017', quantity: 300),
+      GuildHallTierCost(itemId: _clay, quantity: 14000),
+      GuildHallTierCost(itemId: _thread, quantity: 13160),
+      GuildHallTierCost(itemId: _poplarLog, quantity: 13160),
     ],
+    goldThreshold: 40000,
+    goldCost: 30000,
     unlock: guildHallUnlockBoxing,
   ),
+  GuildHallTier(
+    id: guildHallTierGarden,
+    name: 'Indoor Garden',
+    blurb: 'Opens a garden patch in the hall.',
+    cost: <GuildHallTierCost>[
+      GuildHallTierCost(itemId: _oakLog, quantity: 20000),
+      GuildHallTierCost(itemId: _clay, quantity: 8320),
+      GuildHallTierCost(itemId: _compost, quantity: 12000),
+    ],
+    goldThreshold: 130000,
+    goldCost: 90000,
+    unlock: guildHallUnlockGarden,
+  ),
+  GuildHallTier(
+    id: guildHallTierArcana,
+    name: 'Arcana Station',
+    blurb: 'Opens an Arcana station in the hall.',
+    cost: <GuildHallTierCost>[
+      GuildHallTierCost(itemId: _essence, quantity: 16000),
+      GuildHallTierCost(itemId: _mapleLog, quantity: 16000),
+      GuildHallTierCost(itemId: _clay, quantity: 8320),
+    ],
+    goldThreshold: 400000,
+    goldCost: 270000,
+    unlock: guildHallUnlockArcana,
+  ),
+  GuildHallTier(
+    id: guildHallTierCage,
+    name: 'Monster Cage',
+    blurb: 'Opens a training cage. XP only — no loot.',
+    cost: <GuildHallTierCost>[
+      GuildHallTierCost(itemId: _steelBar, quantity: 10000),
+      GuildHallTierCost(itemId: _ironBar, quantity: 12000),
+      GuildHallTierCost(itemId: _coal, quantity: 18320),
+    ],
+    goldThreshold: 1000000,
+    goldCost: 600000,
+    unlock: guildHallUnlockCage,
+  ),
 ];
+
+/// Paid gold from the old 1M debt, used when loading halls that still store remaining.
+num goldContributedFromDebtRemaining(num debtRemaining) {
+  final remaining = debtRemaining;
+  final paid = guildHallGoldCap - remaining;
+  if (paid < 0) return 0;
+  if (paid > guildHallGoldCap) return guildHallGoldCap;
+  return paid;
+}
+
+num guildHallGoldRemaining(num goldContributed) {
+  final left = guildHallGoldCap - goldContributed;
+  return left < 0 ? 0 : left;
+}
+
+/// How much of a chip-in the running total will still take.
+num guildHallGoldChipInCap(num goldContributed) => guildHallGoldRemaining(goldContributed);
 
 /// How many of [itemId] the next unfinished step will still take.
 ///
@@ -146,6 +250,10 @@ bool guildHallTierMet(GuildHallTier tier, List<InventoryStack> storehouse) {
   return guildHallTierNeeds(tier, storehouse).every((need) => need.met);
 }
 
+bool guildHallTierGoldMet(GuildHallTier tier, num goldContributed) {
+  return goldContributed >= tier.goldThreshold;
+}
+
 /// The storehouse once a finished tier has taken its materials out of it.
 ///
 /// Stacks are drawn down in the order they sit in, and an emptied stack goes.
@@ -186,19 +294,25 @@ class GuildHallTierSettlement {
   final List<GuildHallTier> finishedNow;
 }
 
-/// Finishes every tier the storehouse now covers, spending its materials.
+/// Finishes every tier the storehouse and gold total now cover, spending materials.
 ///
-/// Runs in a loop because one large donation can cover more than one tier.
+/// A room tier unlocks only when its gold threshold is passed AND its materials
+/// are in. Tiers finish in order, never twice. Build the Hall has no gold gate.
 GuildHallTierSettlement settleGuildHallTiers(
   List<InventoryStack> storehouse,
-  List<String> completedTiers,
-) {
+  List<String> completedTiers, [
+  num goldContributed = 0,
+]) {
   var store = storehouse;
   final done = <String>[...completedTiers];
   final finished = <GuildHallTier>[];
   while (true) {
     final tier = nextGuildHallTier(done);
-    if (tier == null || !guildHallTierMet(tier, store)) break;
+    if (tier == null ||
+        !guildHallTierGoldMet(tier, goldContributed) ||
+        !guildHallTierMet(tier, store)) {
+      break;
+    }
     store = spendGuildHallTier(tier, store);
     done.add(tier.id);
     finished.add(tier);
@@ -218,3 +332,14 @@ bool guildHallBankUnlocked(List<String> completedTiers) =>
 
 bool guildHallBoxingUnlocked(List<String> completedTiers) =>
     guildHallHasUnlock(completedTiers, guildHallUnlockBoxing);
+
+bool guildHallGardenUnlocked(List<String> completedTiers) =>
+    guildHallHasUnlock(completedTiers, guildHallUnlockGarden);
+
+bool guildHallArcanaUnlocked(List<String> completedTiers) =>
+    guildHallHasUnlock(completedTiers, guildHallUnlockArcana);
+
+bool guildHallCageUnlocked(List<String> completedTiers) =>
+    guildHallHasUnlock(completedTiers, guildHallUnlockCage);
+
+String? guildHallTierFinishLine(String tierId) => guildHallTierFinishLines[tierId];

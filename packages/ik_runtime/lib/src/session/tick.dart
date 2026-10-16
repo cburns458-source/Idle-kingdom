@@ -198,8 +198,9 @@ void _applyDueCombatRound(
   ActionRow action,
   num roundEnd,
   num roundMs,
-  RandomFn random,
-) {
+  RandomFn random, {
+  bool guildmatesInHall = false,
+}) {
   final before = out.current;
   final round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random);
   if (round.lifestealHealed > 0) {
@@ -233,7 +234,17 @@ void _applyDueCombatRound(
       bossInkActive: round.bossInkActive,
     ),
   );
-  _applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random);
+  _applyDueCombatOutcome(
+    db,
+    out,
+    activityId,
+    enemy,
+    action,
+    roundEnd,
+    roundMs,
+    random,
+    guildmatesInHall: guildmatesInHall,
+  );
 }
 
 /// Victory, defeat, or next round from a pending clash.
@@ -245,8 +256,9 @@ void _applyDueCombatOutcome(
   ActionRow action,
   num roundEnd,
   num roundMs,
-  RandomFn random,
-) {
+  RandomFn random, {
+  bool guildmatesInHall = false,
+}) {
   final before = out.current;
   final round = before.combatPendingRound;
   if (round == null) {
@@ -311,6 +323,7 @@ void _applyDueCombatOutcome(
       enemy,
       random,
       roundEnd,
+      guildHallCompanyActive(before.currentLocationId, guildmatesInHall),
     );
     out.set(victory.save);
     out.creditCritterTime(roundMs, roundEnd, random);
@@ -398,7 +411,13 @@ void _applyDueCombatOutcome(
 /// The live client calls this every frame and applies the events it returns; the
 /// unattended resolver is the same rules run in a loop over a past window. Time
 /// and randomness are parameters, so a tick is reproducible.
-SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, RandomFn random) {
+SessionTickResult advanceSession(
+  GameDatabase db,
+  PlayerSave save,
+  num nowMs,
+  RandomFn random, {
+  bool guildmatesInHall = false,
+}) {
   final out = _TickOutput(resolveActivityTransitions(db, save, nowMs, random), save);
 
   // Death recovery does not require a running activity. Travel / stop used to
@@ -483,13 +502,24 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
         math.max(attackAt, roundEnd),
         roundMs,
         random,
+        guildmatesInHall: guildmatesInHall,
       );
       return out.result();
     }
 
     // Leftover split-swing saves: finish the pending outcome at round end.
     if (out.current.combatPlayerSwingApplied && roundEnd <= nowMs) {
-      _applyDueCombatOutcome(db, out, activityId!, enemy, action, roundEnd, roundMs, random);
+      _applyDueCombatOutcome(
+        db,
+        out,
+        activityId!,
+        enemy,
+        action,
+        roundEnd,
+        roundMs,
+        random,
+        guildmatesInHall: guildmatesInHall,
+      );
       return out.result();
     }
 
@@ -537,7 +567,14 @@ SessionTickResult advanceSession(GameDatabase db, PlayerSave save, num nowMs, Ra
       return out.result();
     }
 
-    final finished = completeGatheringAction(db, out.current, action, random, due);
+    final finished = completeGatheringAction(
+      db,
+      out.current,
+      action,
+      random,
+      due,
+      guildHallCompanyActive(out.current.currentLocationId, guildmatesInHall),
+    );
     out.set(finished.save);
     out.creditCritterTime(actionState.durationMs, due, random);
     out.emit(

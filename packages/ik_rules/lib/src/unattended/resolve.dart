@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../achievements/progress.dart';
+import '../guild/rooms.dart';
 import '../activity/engine.dart';
 import '../activity/rewards.dart';
 import '../activity/transition.dart';
@@ -178,6 +179,7 @@ UnattendedResult resolveUnattendedProgress(
   num nowMs,
   RandomFn random, {
   num? maxStepsOverride,
+  bool guildmatesInHall = false,
 }) {
   final capMs = unattendedCapMs(db);
   final anchor = _anchorMs(save, nowMs);
@@ -399,6 +401,7 @@ UnattendedResult resolveUnattendedProgress(
           // Credit the kill to the hour it happened in, not to the hour the
           // player happens to come back in.
           roundEnd,
+          guildHallCompanyActive(current.currentLocationId, guildmatesInHall),
         );
         combatVictories += 1;
         overflow.addAll(victory.leftBehind);
@@ -508,7 +511,14 @@ UnattendedResult resolveUnattendedProgress(
         break;
       }
 
-      final completed = completeGatheringAction(db, current, action, random, due);
+      final completed = completeGatheringAction(
+        db,
+        current,
+        action,
+        random,
+        due,
+        guildHallCompanyActive(current.currentLocationId, guildmatesInHall),
+      );
       gatheringActions += 1;
       overflow.addAll(completed.result.leftBehind);
       // Clear completed action fields before generating the next one.

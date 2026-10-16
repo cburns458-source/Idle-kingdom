@@ -212,6 +212,7 @@ class FakeTransport implements RemoteTransport {
     RemoteTables.guildApplications: <String>['guild_id', 'user_id'],
     RemoteTables.guildGuests: <String>['guild_id', 'user_id'],
     RemoteTables.guildHalls: <String>['guild_id'],
+    RemoteTables.guildLogEntries: <String>['id'],
     RemoteTables.guildProjects: <String>['id'],
     RemoteTables.guildChallenges: <String>['id'],
     RemoteTables.guildPrivateMessages: <String>['guild_id'],
@@ -230,7 +231,12 @@ class FakeTransport implements RemoteTransport {
   /// The columns a table fills in for itself, the way a default does.
   RemoteRow _defaults(String table) => switch (table) {
     RemoteTables.bountyClaims => <String, Object?>{'claimed_at': stamp()},
-    RemoteTables.guilds => <String, Object?>{'id': _nextId('gld'), 'created_at': stamp()},
+    RemoteTables.guilds => <String, Object?>{
+      'id': _nextId('gld'),
+      'created_at': stamp(),
+      'permissions': defaultGuildPermissionTable().toJson(),
+    },
+    RemoteTables.guildLogEntries => <String, Object?>{'id': _nextId('glg'), 'created_at': stamp()},
     RemoteTables.guildMembers => <String, Object?>{'joined_at': stamp()},
     RemoteTables.guildApplications => <String, Object?>{
       'id': _nextId('app'),
@@ -911,8 +917,13 @@ class FakeTransport implements RemoteTransport {
   RemoteInvokeResult? _applyGuildHallCommand(String userId, RemoteRow body, RemoteRow saveRow) {
     final command = body['command'] as String? ?? '';
     if (command != 'guild_pay_hall_debt' &&
+        command != 'guild_chip_in_hall_gold' &&
         command != 'guild_donate_hall_item' &&
-        command != 'guild_withdraw_hall_item') {
+        command != 'guild_withdraw_hall_item' &&
+        command != 'guild_bank_deposit' &&
+        command != 'guild_bank_withdraw' &&
+        command != 'guild_bank_take_up_for_grabs' &&
+        command != 'guild_bank_move_up_for_grabs') {
       return null;
     }
     final membership = _membershipFor(userId);
@@ -921,6 +932,14 @@ class FakeTransport implements RemoteTransport {
     final at = halls.indexWhere((row) => row['guild_id'] == membership['guild_id']);
     if (at < 0) return const RemoteInvokeResult.failed('Guild hall not found.');
     final hall = guildHallFrom(halls[at]);
+    final role = '${membership['role'] ?? ''}';
+    if ((command == 'guild_pay_hall_debt' || command == 'guild_chip_in_hall_gold') &&
+        !canChipInGuildGold(role)) {
+      return const RemoteInvokeResult.failed('Recruits cannot chip in gold.');
+    }
+    if (command.startsWith('guild_bank_') && !guildHallBankUnlocked(hall.completedTiers)) {
+      return const RemoteInvokeResult.failed('The counting room is not built yet.');
+    }
     final payload = saveRow['payload'];
     if (payload is! Map)
       return const RemoteInvokeResult.failed('The cloud save could not be read.');
@@ -931,9 +950,25 @@ class FakeTransport implements RemoteTransport {
       return const RemoteInvokeResult.failed('The cloud save could not be read.');
     }
     final args = (body['args'] as Map?) ?? const <Object?, Object?>{};
+    final guildRow = _guildRow(membership['guild_id']);
+    final table = normalizeGuildPermissionTable(guildRow?['permissions']);
+    if (command == 'guild_bank_deposit' && !guildMay(role, guildPermissionDeposit, table)) {
+      return const RemoteInvokeResult.failed('You cannot deposit in the guild bank.');
+    }
+    if (command == 'guild_bank_withdraw' && !guildMay(role, guildPermissionWithdraw, table)) {
+      return const RemoteInvokeResult.failed('You cannot withdraw from the guild bank.');
+    }
+    if (command == 'guild_bank_withdraw' &&
+        !guildMayWithdrawAtLevel(_asNum(membership['total_level']))) {
+      return const RemoteInvokeResult.failed(guildBankLevelWithdrawRefusal);
+    }
+    if (command == 'guild_bank_move_up_for_grabs' &&
+        !guildMay(role, guildPermissionMoveUpForGrabs, table)) {
+      return const RemoteInvokeResult.failed('You cannot move items to Up for grabs.');
+    }
     final GuildHallActionResult result;
-    if (command == 'guild_pay_hall_debt') {
-      result = payGuildHallDebt(hall, userId, save, _asNum(args['amount']));
+    if (command == 'guild_pay_hall_debt' || command == 'guild_chip_in_hall_gold') {
+      result = chipInGuildHallGold(hall, userId, save, _asNum(args['amount']));
     } else if (command == 'guild_donate_hall_item') {
       final index = _asNum(args['inventoryIndex']).toInt();
       final itemId = index >= 0 && index < save.inventory.length
@@ -942,11 +977,86 @@ class FakeTransport implements RemoteTransport {
       result = itemId != null && bazaarItemBound(database, itemId)
           ? const GuildHallActionResult.failed(bazaarBoundItem)
           : donateToGuildHall(hall, save, index, _asNum(args['quantity']));
+    } else if (command == 'guild_bank_deposit') {
+      final index = _asNum(args['inventoryIndex']).toInt();
+      final itemId = index >= 0 && index < save.inventory.length
+          ? save.inventory[index].itemId
+          : null;
+      if (itemId != null && bazaarItemBound(database, itemId)) {
+        return const RemoteInvokeResult.failed(bazaarBoundItem);
+      }
+      final deposited = depositToGuildBank(
+        hall.bank,
+        save,
+        index,
+        _asNum(args['quantity']),
+        () => 'gb-${_clockMs()}',
+      );
+      result = deposited.ok
+          ? GuildHallActionResult.ok(hall.copyWith(bank: deposited.bank), save: deposited.save)
+          : GuildHallActionResult.failed(deposited.reason ?? 'Could not deposit.');
+    } else if (command == 'guild_bank_withdraw') {
+      final withdrawn = withdrawFromGuildBank(
+        hall.bank,
+        save,
+        args['itemId'] as String? ?? '',
+        _asNum(args['quantity']),
+        args['enchantmentId'] as String?,
+      );
+      result = withdrawn.ok
+          ? GuildHallActionResult.ok(hall.copyWith(bank: withdrawn.bank), save: withdrawn.save)
+          : GuildHallActionResult.failed(withdrawn.reason ?? 'Could not withdraw.');
+    } else if (command == 'guild_bank_take_up_for_grabs') {
+      final taken = takeGuildBankUpForGrabs(
+        hall.bank,
+        save,
+        args['itemId'] as String? ?? '',
+        _asNum(args['quantity']),
+        args['enchantmentId'] as String?,
+      );
+      result = taken.ok
+          ? GuildHallActionResult.ok(hall.copyWith(bank: taken.bank), save: taken.save)
+          : GuildHallActionResult.failed(taken.reason ?? 'Could not take.');
+    } else if (command == 'guild_bank_move_up_for_grabs') {
+      final moved = moveGuildBankToUpForGrabs(
+        hall.bank,
+        save,
+        args['itemId'] as String? ?? '',
+        _asNum(args['quantity']),
+        args['enchantmentId'] as String?,
+        () => 'gb-${_clockMs()}',
+      );
+      result = moved.ok
+          ? GuildHallActionResult.ok(hall.copyWith(bank: moved.bank), save: moved.save)
+          : GuildHallActionResult.failed(moved.reason ?? 'Could not move.');
     } else {
-      result = const GuildHallActionResult.failed('Withdraw is not available in this stand-in.');
+      result = const GuildHallActionResult.failed(
+        'That hall action is not available in this stand-in.',
+      );
     }
     if (!result.ok) return RemoteInvokeResult.failed(result.reason ?? 'Guild hall action failed.');
-    halls[at] = <String, Object?>{...halls[at], ...guildHallRowFor(result.hall!)};
+    final nextHall = result.hall!.copyWith(hallRevision: hall.hallRevision + 1);
+    halls[at] = <String, Object?>{...halls[at], ...guildHallRowFor(nextHall)};
+    if (result.goldChipped > 0 || result.donatedItem != null) {
+      _appendGuildLog('${membership['guild_id']}', <String, Object?>{
+        'kind': guildLogKindDonation,
+        'actor_user_id': userId,
+        'actor_username': '${membership['username'] ?? 'Adventurer'}',
+        'gold': result.goldChipped,
+        'items': result.donatedItem == null
+            ? const <Object?>[]
+            : <Object?>[result.donatedItem!.toJson()],
+      });
+    }
+    for (final tierId in result.tiersFinishedNow) {
+      _appendGuildLog('${membership['guild_id']}', <String, Object?>{
+        'kind': guildLogKindTierComplete,
+        'actor_user_id': userId,
+        'actor_username': '${membership['username'] ?? 'Adventurer'}',
+        'tier_id': tierId,
+        'message': guildHallTierFinishLine(tierId) ?? '',
+      });
+    }
     final next = result.save ?? save;
     saveRow['payload'] = next.toJson();
     final version = ((saveRow['version'] as num?) ?? 1).toInt() + 1;
@@ -1382,6 +1492,19 @@ class FakeTransport implements RemoteTransport {
         return RemoteInvokeResult.ok(next);
       }
 
+      if (function == RemoteRpcs.guildSetPermissions) {
+        final guildId = args['p_guild_id'];
+        final perms = args['p_permissions'];
+        final stored = tables[RemoteTables.guilds]!;
+        final at = stored.indexWhere((row) => row['id'] == guildId);
+        if (at < 0) return const RemoteInvokeResult.failed('Guild not found.');
+        if (stored[at]['leader_id'] != _current?.userId) {
+          return const RemoteInvokeResult.failed('Only the leader can change permissions.');
+        }
+        stored[at] = <String, Object?>{...stored[at], 'permissions': perms};
+        return RemoteInvokeResult.ok(<String, Object?>{'ok': true, 'permissions': perms});
+      }
+
       if (function == RemoteRpcs.guildSetMemberRole) {
         final guildId = args['p_guild_id'];
         final target = args['p_target_user_id'];
@@ -1393,6 +1516,15 @@ class FakeTransport implements RemoteTransport {
         if (at < 0) return const RemoteInvokeResult.failed('Member not found.');
         final next = <String, Object?>{...stored[at], 'role': role};
         stored[at] = next;
+        _appendGuildLog('$guildId', <String, Object?>{
+          'kind': guildLogKindRankChange,
+          'actor_user_id': target,
+          'actor_username': next['username'] ?? 'Adventurer',
+          'role': role,
+          'target_user_id': target,
+          'target_username': next['username'] ?? 'Adventurer',
+          'message': '${next['username'] ?? 'Adventurer'} is now $role.',
+        });
         return RemoteInvokeResult.ok(next);
       }
 
@@ -1556,6 +1688,14 @@ class FakeTransport implements RemoteTransport {
     tables[RemoteTables.guildApplications]!.removeWhere((row) => row['user_id'] == userId);
     tables[RemoteTables.guildGuests]!.removeWhere((row) => row['user_id'] == userId);
     tables[RemoteTables.guildHalls]!.add(guildHallRowFor(GuildHallState.fresh(id)));
+    final founderName = '${_memberFacts(userId)['username'] ?? 'Adventurer'}';
+    _appendGuildLog(id, <String, Object?>{
+      'kind': guildLogKindJoin,
+      'actor_user_id': userId,
+      'actor_username': founderName,
+      'role': guildRoleLeader,
+      'message': '$founderName joined the guild.',
+    });
     tables[RemoteTables.guildProjects]!.add(<String, Object?>{
       ..._defaults(RemoteTables.guildProjects),
       'guild_id': id,
@@ -1589,6 +1729,7 @@ class FakeTransport implements RemoteTransport {
       RemoteTables.guildProjects,
       RemoteTables.guildChallenges,
       RemoteTables.guildPrivateMessages,
+      RemoteTables.guildLogEntries,
     ]) {
       tables[table]!.removeWhere((row) => row['guild_id'] == guildId);
     }
@@ -1625,6 +1766,14 @@ class FakeTransport implements RemoteTransport {
       applications.removeWhere((row) => row['user_id'] == me && row['guild_id'] == guildId);
       guests.removeWhere((row) => row['user_id'] == me && row['guild_id'] == guildId);
       _tagProfile(me, '$guildId');
+      final joiner = '${_memberFacts(me)['username'] ?? 'Adventurer'}';
+      _appendGuildLog('$guildId', <String, Object?>{
+        'kind': guildLogKindJoin,
+        'actor_user_id': me,
+        'actor_username': joiner,
+        'role': guildRoleRecruit,
+        'message': '$joiner joined the guild.',
+      });
       return const <String, Object?>{'ok': true, 'joined': true};
     }
 
@@ -1707,6 +1856,13 @@ class FakeTransport implements RemoteTransport {
       });
       guests.removeWhere((row) => row['guild_id'] == guildId && row['user_id'] == applicant);
       _tagProfile(applicant, '$guildId');
+      _appendGuildLog('$guildId', <String, Object?>{
+        'kind': guildLogKindJoin,
+        'actor_user_id': applicant,
+        'actor_username': facts['username'] ?? 'Adventurer',
+        'role': guildRoleRecruit,
+        'message': '${facts['username'] ?? 'Adventurer'} joined the guild.',
+      });
       return const <String, Object?>{'ok': true};
     }
 
@@ -1721,6 +1877,13 @@ class FakeTransport implements RemoteTransport {
         }
         _dropGuild(guildId);
       } else {
+        _appendGuildLog(guildId, <String, Object?>{
+          'kind': guildLogKindLeave,
+          'actor_user_id': me,
+          'actor_username': membership['username'] ?? 'Adventurer',
+          'role': membership['role'],
+          'message': '${membership['username'] ?? 'Adventurer'} left the guild.',
+        });
         members.removeWhere((row) => row['user_id'] == me);
       }
       _tagProfile(me, null);
@@ -1734,6 +1897,19 @@ class FakeTransport implements RemoteTransport {
     if (guild == null) return _refused(remoteGuildMissing);
     if (guild['leader_id'] != me) return _refused('Only the leader can remove members.');
     if (target == guild['leader_id']) return _refused('Cannot remove the leader.');
+    final kicked = members.firstWhere(
+      (row) => row['guild_id'] == guildId && row['user_id'] == target,
+      orElse: () => const <String, Object?>{},
+    );
+    if (kicked.isNotEmpty) {
+      _appendGuildLog('$guildId', <String, Object?>{
+        'kind': guildLogKindLeave,
+        'actor_user_id': target,
+        'actor_username': kicked['username'] ?? 'Adventurer',
+        'role': kicked['role'],
+        'message': '${kicked['username'] ?? 'Adventurer'} left the guild.',
+      });
+    }
     members.removeWhere((row) => row['guild_id'] == guildId && row['user_id'] == target);
     final profiles = tables[RemoteTables.profiles]!;
     for (var i = 0; i < profiles.length; i++) {
@@ -1961,6 +2137,59 @@ class FakeTransport implements RemoteTransport {
     row['payload'] = next;
   }
 
+  void _appendGuildLog(String guildId, Map<String, Object?> entry) {
+    final incoming = GuildLogEntry.fromJson(<String, Object?>{
+      'id': _nextId('glg'),
+      'guildId': guildId,
+      'createdAt': stamp(),
+      ...entry,
+    });
+    final logs = tables[RemoteTables.guildLogEntries]!;
+    final newestRows = [...logs.where((row) => row['guild_id'] == guildId)]
+      ..sort((a, b) => '${b['created_at']}'.compareTo('${a['created_at']}'));
+    final newest = newestRows.isEmpty
+        ? null
+        : GuildLogEntry.fromJson(<String, Object?>{
+            'id': newestRows.first['id'],
+            'guildId': newestRows.first['guild_id'],
+            'kind': newestRows.first['kind'],
+            'createdAt': newestRows.first['created_at'],
+            'actorUserId': newestRows.first['actor_user_id'],
+            'actorUsername': newestRows.first['actor_username'] ?? '',
+            'message': newestRows.first['message'] ?? '',
+            'gold': newestRows.first['gold'] ?? 0,
+            'items': newestRows.first['items'] ?? const <Object?>[],
+          });
+    final merged = mergeGuildLogDonation(newest, incoming);
+    if (merged.merged && merged.entry != null) {
+      final at = logs.indexWhere((row) => row['id'] == merged.entry!.id);
+      if (at >= 0) {
+        logs[at] = <String, Object?>{
+          ...logs[at],
+          'gold': merged.entry!.gold,
+          'items': merged.entry!.items.map((row) => row.toJson()).toList(),
+          'message': merged.entry!.message,
+        };
+        return;
+      }
+    }
+    logs.add(<String, Object?>{
+      'id': incoming.id,
+      'guild_id': guildId,
+      'kind': incoming.kind,
+      'created_at': incoming.createdAt,
+      'actor_user_id': incoming.actorUserId,
+      'actor_username': incoming.actorUsername,
+      'role': incoming.role,
+      'target_user_id': incoming.targetUserId,
+      'target_username': incoming.targetUsername,
+      'tier_id': incoming.tierId,
+      'message': incoming.message,
+      'gold': incoming.gold,
+      'items': incoming.items.map((row) => row.toJson()).toList(),
+    });
+  }
+
   RemoteRow? _membershipFor(String? userId) {
     if (userId == null) return null;
     for (final row in tables[RemoteTables.guildMembers]!) {
@@ -2007,6 +2236,7 @@ class _FakeProject {
     RemoteTables.guildApplications: <RemoteRow>[],
     RemoteTables.guildGuests: <RemoteRow>[],
     RemoteTables.guildHalls: <RemoteRow>[],
+    RemoteTables.guildLogEntries: <RemoteRow>[],
     RemoteTables.guildProjects: <RemoteRow>[],
     RemoteTables.guildChallenges: <RemoteRow>[],
     RemoteTables.guildPrivateMessages: <RemoteRow>[],
