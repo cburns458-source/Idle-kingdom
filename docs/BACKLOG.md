@@ -118,6 +118,7 @@ Conor's rulings, dated. Immutable once written.
 
 | Date | Decision | Evidence |
 |---|---|---|
+| 2026-10-16 | Conor (Vari) parked ADM-01, ADM-02, SYS-05 and the NTF items until closer to the Android/iOS app store launch. No paid plan upgrades happen until needed. Leaked-password protection is blocked because it needs Supabase Pro. | Vari (Conor) |
 | 2026-10-16 | Guild hall costs confirmed: about a week per tier, tier 5 costs 600k so the tiers total 1,000,000 (confirms Reading B) | Vari (Conor); PR #390 |
 | 2026-10-16 | The server enforces total level 200 on Up for grabs Take, matching the UI | Vari (Conor); PR #390 |
 | 2026-10-16 | Guild achievements and banners ship inside #390: Deep pockets 100k/500k gold, Stocked vault 100k tier materials, Many hands 10/25 members, Rising strength (25 members at total level 500+, replacing Open doors); banners have background, accent, emblem and border, set by leaders and officers | Vari (Conor); PR #390, #391 |
@@ -221,8 +222,8 @@ Just IDs, in order. Conor re-orders this.
 
 ### P0: Now (security, exploits, broken onboarding)
 
-1. **ADM-01** Supabase/Cloudflare/RLS audit. Re-run advisors, do leaked-password protection, close the rls-hardening follow-ups (hall donations without debit, etc.).
-2. **ADM-02** Email confirmation with the new email. Account security and recovery. Needs an auth-flow change because Confirm email is deliberately off.
+1. **ADM-01** Supabase/Cloudflare/RLS audit. Status Blocked; parked until app store launch. Leaked-password protection needs Supabase Pro. The `bazaar_user_total_level` empty search_path goes in ADM-01 when it resumes.
+2. **ADM-02** Email confirmation with the new email. Status Blocked; parked until app store launch.
 
 Verified 2026-10-15 (Conor playtest on test.restoriaidle.com): **BUG-01** (#304), **BUG-02** (#310, Items `Tradeable` column; not #377), **BUG-04** (#333).
 
@@ -230,13 +231,13 @@ Workflow doc: Cursor cloud agents for commits, pushes, and migrations — **#384
 
 ### P1: Next
 
-5. **SYS-01** + **QST-02** + **OQ-09** tutorial flow. Merged to `test-launch` in #386 (2026-10-16); Staging Verification, waiting on Vari's playtest on test.restoriaidle.com. Cow fight unchanged. QST-01 closed via #323 and #270.
-6. **SOC-01** guild hall tiers, achievements and banners. Merged to `test-launch` in #390 and #391 (2026-10-16); Staging Verification, waiting on Vari's playtest. The live Supabase migration is not applied and goes live only with Vari's merge to `main`. **SOC-04** mass bosses remain Ready for Proposal (owner Sys; Eco numbers).
-7. **ADM-06** Staging `game` function redeployed (v56, 2026-10-16 5:31 AM PT) with the 4 new potions; Staging Verification, accept after an in-game check.
-8. **ECO-04** Alchemy potion sell prices + Bazaar floors. Merged (#385).
-9. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
-10. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Biggest idle-game QoL win.
-11. **ADM-04** Report/ideas button → Discord webhook. Cheap, and feeds QA.
+5. **ADM-04** In-game report/suggestion button that posts to a Discord channel automatically through a webhook and a Discord bot. Ready for Proposal; owner Ops; next action: Ops writes plan.
+6. **SYS-01** + **QST-02** + **OQ-09** tutorial flow. Merged to `test-launch` in #386 (2026-10-16); Staging Verification, waiting on Vari's playtest on test.restoriaidle.com. Cow fight unchanged. QST-01 closed via #323 and #270.
+7. **SOC-01** guild hall tiers, achievements and banners. Merged to `test-launch` in #390 and #391 (2026-10-16); Staging Verification, waiting on Vari's playtest. The live Supabase migration is not applied and goes live only with Vari's merge to `main`. **SOC-04** mass bosses remain Ready for Proposal (owner Sys; Eco numbers).
+8. **ADM-06** Staging `game` function v56 is on test with the 4 potions (redeployed 2026-10-16 5:31 AM PT); Staging Verification, waiting on Conor's in-game check.
+9. **ECO-04** Alchemy potion sell prices + Bazaar floors. Merged (#385).
+10. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
+11. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Status Blocked. Parked until app store infrastructure. Plan drafted (option B recommended).
 12. **Decision session on OQ-01..02, OQ-04..07, OQ-11, OQ-15.** OQ-03 answered (84/168); OQ-09 answered (tutorial lock-back). Unblocks MAP-01, ECO-03, ARC-01, WLD-01.
 13. **ECO-01** Bazaar total level 200 and **ECO-03** Plaza points. Economy health, after the decisions.
 14. **MAP-01** Region map (+ **MAP-04** landing nodes). Foundation for the isles/citadel.
@@ -275,12 +276,12 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 
 | ID | Title (Conor's words) | Status | Ready | Pri | Dep | Owner | Next | Notes |
 |---|---|---|---|---|---|---|---|---|
-| ADM-01 | Check supabase and cloudflare for issues and errors, check for row level security | Ready for Proposal | Ready | **P0** | none | Ops | Re-run Security Advisor; leaked-password protection; review rls follow-ups #2–9, #13–17 | Desc: Audit test and live Supabase/Cloudflare for RLS, logs, and advisor issues. Accept: TBD (owner to propose). Also Worker/edge logs and HTTP 546 CPU kills. |
-| ADM-02 | Set up email confirmation with new email | Ready for Proposal | Ready | **P0** | *soft:* ADM-01 | Ops | Spec confirm-email flow on the test project first | Desc: Turn on Confirm email with Restoria SMTP without breaking character creation. Accept: TBD (owner to propose). Confirm email is **OFF on purpose** (`deployment.md`): no session → `profiles` RLS. Needs custom SMTP, confirm-link redirect, and a "check your email" gate. |
+| ADM-01 | Check supabase and cloudflare for issues and errors, check for row level security | Blocked | Parked | **P0** | none | Ops | Parked until app store launch | Desc: Audit test and live Supabase/Cloudflare for RLS, logs, and advisor issues. Accept: TBD (owner to propose). Also Worker/edge logs and HTTP 546 CPU kills. Parked until app store launch. The `bazaar_user_total_level` empty search_path goes in ADM-01 when it resumes. Leaked-password protection is blocked because it needs Supabase Pro. |
+| ADM-02 | Set up email confirmation with new email | Blocked | Parked | **P0** | *soft:* ADM-01 | Ops | Parked until app store launch | Desc: Turn on Confirm email with Restoria SMTP without breaking character creation. Accept: TBD (owner to propose). Confirm email is **OFF on purpose** (`deployment.md`): no session → `profiles` RLS. Needs custom SMTP, confirm-link redirect, and a "check your email" gate. Parked until app store launch. |
 | ADM-03 | admin dashboard with event ledger | Inbox | Inbox | P1 | ADM-01, SYS-05 (event log) | Ops | TBD (Ops) | Desc: Admin dashboard with an event ledger, building on dev accounts, reports tables, and guild/bazaar ledgers. Accept: TBD (owner to propose). Blocks ADM-05. |
-| ADM-04 | Ingame report/ideas button that links to discord with webhook *(moved from UI)* | Inbox | Inbox | P1 | ADM-01 | Ops + Ui | TBD (Ops) | Desc: In-game report/ideas button that posts to Discord through a webhook. Accept: TBD (owner to propose). Webhook URL must be a server secret; send through an edge function, never from the client. |
+| ADM-04 | In-game report/suggestion button that posts to a Discord channel automatically through a webhook and a Discord bot *(moved from UI)* | Ready for Proposal | Ready | P1 | ADM-01 | Ops | Ops writes plan | Desc: In-game report/suggestion button that posts to a Discord channel automatically through a webhook and a Discord bot. Accept: TBD (owner to propose). Webhook URL must be a server secret; send through an edge function, never from the client. |
 | ADM-05 | Telemetry? | Needs Clarification | Blocked on OQ-16 | P2 | OQ-16, ADM-03 | Ops | Vari answers OQ-16 | Desc: Telemetry — what to measure, which vendor, privacy/consent (OQ-16). Accept: TBD (owner to propose). Could start as rows in the server event ledger. |
-| ADM-06 | Regenerate the server item data bundle so the 4 new potions are on staging | Staging Verification | On staging | P1 | none | Ops | In-game check on test: brew a Fernleaf Tonic and sell to the Apothecary (SHP-0010 buys at 4) | Desc: `supabase/functions/_shared/game-database.json` is built by `tools/bundle_game_edge.sh` and is not committed. Accept: staging `game` function serves the 4 new potions from #377. Staging `game` function is v56 (deployed 2026-10-16 5:31 AM PT) with the bundle matching `test-launch`. |
+| ADM-06 | Regenerate the server item data bundle so the 4 new potions are on staging | Staging Verification | On staging | P1 | none | Ops | Waiting on Conor's in-game check | Desc: `supabase/functions/_shared/game-database.json` is built by `tools/bundle_game_edge.sh` and is not committed. Accept: staging `game` function serves the 4 new potions from #377. Staging `game` function is v56 (deployed 2026-10-16 5:31 AM PT) with the bundle matching `test-launch`. Waiting on Conor's in-game check (brew a Fernleaf Tonic and sell to the Apothecary; SHP-0010 buys at 4). |
 | ADM-07 | Branch cleanup report for merged coord/* and stale branches | Inbox | Inbox | Unset (Vari to decide) | none | Ops | Write a report-only list of merged `coord/*` and stale branches | Desc: Report only — list merged `coord/*` leftovers and stale `cursor/*` branches. Accept: TBD (owner to propose). No deletes until Vari says so. |
 
 ### BUG: Bugs and fixes
@@ -315,7 +316,7 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 | SYS-02 | Should there be a mechanic for moving between locations… | Verified | Decided | Unset (Vari to decide) | OQ-01 | Design | — | Desc: Travel is a mechanic vs instant. Accept: instant except the necessary delays (OQ-01, 2026-10-13). Unused travel-time setting removed in #336 (SYS-07). |
 | SYS-03 | Maximum inventory size? | Merged | On test-launch | Unset (Vari to decide) | none | Design + Eco | — | Desc: Inventory / bank cap. Accept: 84 bag slots / 168 bank slots (#332, 2026-10-13). Blocks UI-12, MEM-01. |
 | SYS-04 | Should there be defense or just health? | Needs Clarification | Blocked on OQ-04 | Unset (Vari to decide) | OQ-04 | Design + Eco | Vari answers OQ-04 | Desc: Defense vs health only. DR already shipped in #289; OQ-04 asks whether to keep DR as the defense stat. Accept: TBD (owner to propose). |
-| SYS-05 | Notifications system (plumbing for NTF-\*) | Ready for Proposal | Ready | P1 | none | Community | Propose SYS-05 plumbing | Desc: Shared notifications plumbing for NTF-*. Accept: TBD (owner to propose). Today only chat bubbles exist (`notification_bubble.dart`). Blocks NTF-01..09, ADM-03. |
+| SYS-05 | Notifications system (plumbing for NTF-\*) | Blocked | Parked | P1 | none | Community | Parked until app store infrastructure | Desc: Shared notifications plumbing for NTF-*. Accept: TBD (owner to propose). Today only chat bubbles exist (`notification_bubble.dart`). Blocks NTF-01..09, ADM-03. Parked until app store infrastructure. Plan drafted (option B recommended). |
 | SYS-06 | Server time clock… weather art or item *(from UI)* | Inbox | Inbox | P2 | none | Systems + Art | TBD (Systems) | Desc: Server time clock, possibly with weather art or an item. Accept: TBD (owner to propose). Overlaps SKL-06 (tides) and UTC-hour leaderboard resets. |
 | SYS-07 | Remove the unused travel-time setting | Merged | On test-launch | P2 | none | Systems | — | Desc: Remove the unused travel-time setting. Accept: travel stays instant; no player-facing change. Shipped in #336. |
 
@@ -441,12 +442,12 @@ All depend on SYS-05. Owner: **Notifs**.
 
 | ID | Event | Status | Ready | Pri | Dep | Owner | Next | Notes |
 |---|---|---|---|---|---|---|---|---|
-| NTF-01 | Activity stopped after afk | Inbox | Inbox | P1 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when an activity stops after AFK. Accept: TBD (owner to propose). |
-| NTF-02 | Inventory full | Needs Clarification | Blocked on SYS-05 | P1 | SYS-05, OQ-03 | Notifs | TBD (Notifs) | Desc: Notify when inventory is full. Accept: TBD (owner to propose). OQ-03 answered (84/168). |
-| NTF-03 | Food depleted | Inbox | Inbox | P1 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when food is depleted. Accept: TBD (owner to propose). |
-| NTF-04 | Production queue finished | Inbox | Inbox | P1 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when a production queue finishes. Accept: TBD (owner to propose). |
+| NTF-01 | Activity stopped after afk | Blocked | Parked | P1 | SYS-05 | Notifs | Parked until app store infrastructure | Desc: Notify when an activity stops after AFK. Accept: TBD (owner to propose). Parked until app store infrastructure. Plan drafted (option B recommended). |
+| NTF-02 | Inventory full | Blocked | Parked | P1 | SYS-05, OQ-03 | Notifs | Parked until app store infrastructure | Desc: Notify when inventory is full. Accept: TBD (owner to propose). OQ-03 answered (84/168). Parked until app store infrastructure. Plan drafted (option B recommended). |
+| NTF-03 | Food depleted | Blocked | Parked | P1 | SYS-05 | Notifs | Parked until app store infrastructure | Desc: Notify when food is depleted. Accept: TBD (owner to propose). Parked until app store infrastructure. Plan drafted (option B recommended). |
+| NTF-04 | Production queue finished | Blocked | Parked | P1 | SYS-05 | Notifs | Parked until app store infrastructure | Desc: Notify when a production queue finishes. Accept: TBD (owner to propose). Parked until app store infrastructure. Plan drafted (option B recommended). |
 | NTF-05 | Crop ready | Inbox | Inbox | P2 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when a crop is ready. Accept: TBD (owner to propose). |
-| NTF-06 | Quest step completed | Inbox | Inbox | P1 | SYS-05, BUG-01 | Notifs | TBD (Notifs) | Desc: Notify when a quest step completes. Accept: TBD (owner to propose). Needs persisted steps or it fires again and again. BUG-01 latch is Verified. |
+| NTF-06 | Quest step completed | Blocked | Parked | P1 | SYS-05, BUG-01 | Notifs | Parked until app store infrastructure | Desc: Notify when a quest step completes. Accept: TBD (owner to propose). Needs persisted steps or it fires again and again. BUG-01 latch is Verified. Parked until app store infrastructure. Plan drafted (option B recommended). |
 | NTF-07 | Guild invitation | Inbox | Inbox | P2 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify on a guild invitation. Accept: TBD (owner to propose). |
 | NTF-08 | Direct message | Inbox | Inbox | P2 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify on a direct message. Accept: TBD (owner to propose). Already partly done via chat bubbles. |
 | NTF-09 | Someone bought your Bazaar listing | Inbox | Inbox | P2 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when someone buys your Bazaar listing. Accept: TBD (owner to propose). |
@@ -483,13 +484,13 @@ SYS-01 dialogue system ─► QST-01 dialogue fixes (Merged #323/#270), QST-02 t
 BUG-01 (persist steps; Verified #304, Conor playtest 2026-10-15) ─► QST-02 tutorial, NTF-06 quest-step notifications
 QST-02 tutorial ─► SOC-04 mass bosses (Ready for Proposal after tutorial). SOC-01 guild hall merged #390/#391, Staging Verification
 OQ-15 + Bible ─► ECO-03 plaza points ─► bounty/pvp reward swap, SOC-03 leaderboard payouts
-SYS-05 notifications ─► NTF-01..09
+SYS-05 notifications (Blocked; parked until app store infrastructure; plan drafted, option B recommended) ─► NTF-01..09
 ARC-01 tablets ─► ARC-07 piercing, ARC-08 shield
 ARC-02 essence rework ─► ARC-03 spell charges, ARC-04 essence item
 OQ-07 religion ─► WLD-01 ─► TTL-03 Pureblooded, Vesper/QST-0009, ITM-01 blessings, ART-06
 OQ-03 inventory size (answered: 84 bag / 168 bank, #332) ─► UI-12 tabs, MEM-01 bank space, NTF-02
 OQ-05 untradeable ─► BUG-02, QST-12, ARC-01
-ADM-01 audit ─► ADM-02 email, ADM-03 dashboard ─► ADM-05 telemetry
+ADM-01 audit (Blocked; parked until app store launch) ─► ADM-02 email (Blocked; parked until app store launch), ADM-03 dashboard ─► ADM-05 telemetry
 rls-hardening #3–6 (server hall settlement) ─► SOC-01 guild hall tiers
 UI-07 color rules + UI-05 asset pack ─► UI-03/04/06
 ART-01 spec ─► ART-02/04/05, UI-01
