@@ -991,6 +991,7 @@ class FakeTransport implements RemoteTransport {
         index,
         _asNum(args['quantity']),
         () => 'gb-${_clockMs()}',
+        db: database,
       );
       result = deposited.ok
           ? GuildHallActionResult.ok(hall.copyWith(bank: deposited.bank), save: deposited.save)

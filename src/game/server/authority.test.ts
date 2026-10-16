@@ -316,6 +316,54 @@ describe('phase 2 authority', () => {
     expect(forged.hall.completedTiers).toEqual([])
   })
 
+  it('refuses to deposit an untradeable item in the guild bank', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = normalizeGuildHallState({
+      goldContributed: 10_000,
+      goldContributedBy: {},
+      storehouse: [],
+      completedTiers: ['build_the_hall', 'hall_bank'],
+    })
+    const save = {
+      ...createNewSave(launch, START_MS),
+      inventory: [
+        { itemId: 'ITEM-0406', quantity: 1 },
+        { itemId: 'ITEM-0015', quantity: 4 },
+      ],
+    }
+    const machete = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_deposit',
+      args: { inventoryIndex: 0, itemId: 'ITEM-0406', quantity: 1 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      userId: 'u1',
+      guildRole: 'member',
+      totalLevel: 50,
+      nextId: () => 'gb-bound',
+    })
+    expect(machete).toEqual({ ok: false, reason: UNTRADEABLE_ITEM_REFUSAL })
+
+    const cedar = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_deposit',
+      args: { inventoryIndex: 1, itemId: 'ITEM-0015', quantity: 4 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      userId: 'u1',
+      guildRole: 'member',
+      totalLevel: 50,
+      nextId: () => 'gb-1',
+    })
+    expect(cedar.ok).toBe(true)
+    if (!cedar.ok) return
+    expect(cedar.bank?.items).toEqual([
+      { id: 'gb-1', itemId: 'ITEM-0015', quantity: 4, section: 'main' },
+    ])
+  })
+
   it('lets a low-level member deposit in the guild bank but not withdraw', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const hall = normalizeGuildHallState({

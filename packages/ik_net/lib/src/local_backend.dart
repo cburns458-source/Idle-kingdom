@@ -1651,6 +1651,7 @@ class LocalMultiplayerBackend {
       inventoryIndex,
       quantity,
       () => _newId('gb'),
+      db: gameDatabase,
     );
     if (!deposited.ok)
       return GuildHallActionResult.failed(deposited.reason ?? 'Could not deposit.');

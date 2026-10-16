@@ -1,3 +1,6 @@
+import 'package:collection/collection.dart';
+import 'package:ik_content/ik_content.dart';
+
 import '../inventory/add_items.dart';
 import '../inventory/bank.dart';
 import '../inventory/capacity.dart';
@@ -177,14 +180,19 @@ GuildBankActionResult depositToGuildBank(
   PlayerSave save,
   int inventoryIndex,
   num quantity,
-  String Function() nextId,
-) {
+  String Function() nextId, {
+  GameDatabase? db,
+}) {
   if (inventoryIndex < 0 || inventoryIndex >= save.inventory.length) {
     return const GuildBankActionResult.failed(guildBankEmptyRefusal);
   }
   final stack = save.inventory[inventoryIndex];
   if (stackIsUnbankableGold(stack)) {
     return const GuildBankActionResult.failed(guildBankGoldRefusal);
+  }
+  final item = db?.items.firstWhereOrNull((row) => row.itemId == stack.itemId);
+  if (item != null && !item.isTradeable) {
+    return const GuildBankActionResult.failed(guildBankUntradeableRefusal);
   }
   final want = quantity.floor();
   if (want <= 0) return const GuildBankActionResult.failed('Choose a quantity.');
