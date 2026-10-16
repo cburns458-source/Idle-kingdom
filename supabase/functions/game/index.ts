@@ -549,22 +549,6 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     }
     const published = await publishPhase3Rows(admin, rawDatabase, userId, commandSave, nowMs, command)
     if (!published.ok) return published.response
-    if (result.hall && hallContext && !isGuildHallCommand(command)) {
-      const { error: hallError } = await admin
-        .from('guild_halls')
-        .update({
-          gold_contributed: result.hall.goldContributed,
-          gold_contributed_by: result.hall.goldContributedBy,
-          debt_remaining: result.hall.debtRemaining,
-          debt_paid_off: result.hall.debtPaidOff,
-          debt_paid_by: result.hall.debtPaidBy,
-          storehouse: result.hall.storehouse,
-          completed_tiers: result.hall.completedTiers,
-          updated_at: new Date(nowMs).toISOString(),
-        })
-        .eq('guild_id', hallContext.guildId)
-      if (hallError) return json({ error: hallError.message, phase: 2 }, 500)
-    }
     return json({
       ok: true,
       phase: 2,
@@ -1197,6 +1181,9 @@ async function commitGuildHall(
     ...entry,
     actor_username: entry.actor_username || hallContext.username,
   }))
+  // Gold totals and completed tiers in this payload are hints only.
+  // guild_commit_hall credits gold the hosted save lost, materials that left
+  // the bag, and settles tiers itself. A forged gold_contributed is ignored.
   const { data, error } = await admin.rpc('guild_commit_hall', {
     p_user_id: userId,
     p_expected_save_version: expectedVersion,
@@ -1205,10 +1192,7 @@ async function commitGuildHall(
     p_rng_state: rngState,
     p_now: new Date(nowMs).toISOString(),
     p_hall: {
-      gold_contributed: hall.goldContributed,
-      gold_contributed_by: hall.goldContributedBy,
       storehouse: hall.storehouse,
-      completed_tiers: hall.completedTiers,
       bank_items: result.bank?.items ?? hallContext.bank.items,
     },
     p_log: logs,

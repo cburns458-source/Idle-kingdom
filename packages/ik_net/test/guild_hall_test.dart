@@ -285,6 +285,44 @@ void main() {
       'The counting room is open for business.',
     );
   });
+
+  test('a forged hall payload that claims the gold cap is ignored unless the save paid', () {
+    final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
+    final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;
+    final save = createNewSave(database, 1).copyWith(gold: guildCreateGoldCost + 80);
+    backend.writeCloudSave(leader.userId, save);
+    backend.createGuild(
+      leader,
+      const CreateGuildInput(
+        name: 'Oak',
+        tag: 'OAK',
+        description: '',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      save.gold,
+    );
+    final paid = backend.payGuildDebt(leader.userId, save.copyWith(gold: 80), 40);
+    expect(paid.ok, isTrue);
+    expect(paid.goldChipped, 40);
+    expect(paid.save!.gold, 40);
+    expect(goldTakenFromPlayerSaves(80, paid.save!.gold), paid.goldChipped);
+
+    final forged = commitGuildHallFromPlayerSaves(
+      previousGold: 80,
+      nextGold: 80,
+      previousInventory: const <InventoryStack>[],
+      nextInventory: const <InventoryStack>[],
+      hallGoldContributed: 0,
+      userId: leader.userId,
+      proposal: const GuildHallCommitProposal(
+        goldContributed: guildHallGoldCap,
+        completedTiers: <String>[guildHallTierBuild, guildHallTierBank],
+      ),
+    );
+    expect(forged.goldTaken, 0);
+    expect(forged.goldContributed, 0);
+    expect(forged.completedTiers, isEmpty);
+  });
 }
 
 PlayerSave _withTotalLevel(PlayerSave save, num target) {

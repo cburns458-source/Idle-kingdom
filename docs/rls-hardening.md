@@ -71,8 +71,11 @@ owner confirms its plan.
    execute on the old ledger-only RPCs in
    `20261007045115_revoke_hall_economy_rpcs.sql` (same revokes as the tail of
    `20261007050000_player_save_authority.sql`).
-4. **Guild hall tier settlement on the server** — completing tiers / spending
-   storehouse materials must not be client-decided.
+4. ~~**Guild hall tier settlement on the server**~~ — done. `guild_commit_hall`
+   credits only gold the hosted save actually lost (previous gold minus new
+   gold, capped at 1M) and materials that left the bag. It settles tiers from
+   that gold and storehouse. A client-sent `gold_contributed` /
+   `completed_tiers` is ignored. Live is not migrated until Conor promotes.
 5. **Guild hall withdrawals** — role-gated RPC once leader permission settings
    exist (no withdrawal API yet).
 6. **Per-rank guild permission settings** — plug into one server-side

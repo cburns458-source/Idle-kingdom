@@ -8,7 +8,9 @@ import { applyQuestAutoStartOnSeed } from '../quests/progress'
 import { getQuestProgress } from '../quests/quests'
 import { createNewSave } from '../save/saveStore'
 import type { InventoryStack } from '../save/types'
-import { normalizeGuildHallState } from '../guild/economy'
+import { commitGuildHallFromPlayerSaves } from '../guild/commit'
+import { emptyGuildHallState, normalizeGuildHallState } from '../guild/economy'
+import { GUILD_HALL_GOLD_CAP } from '../guild/hall'
 import {
   applyGameCommand,
   CATCHING_UP_REASON,
@@ -259,6 +261,7 @@ describe('phase 2 authority', () => {
     if (!first.ok) return
     expect(first.goldChipped).toBe(100)
     expect(first.save.gold).toBe(400)
+    expect(first.goldChipped).toBe(save.gold - first.save.gold)
     expect(first.hall?.goldContributed).toBe(1_000_000)
 
     const second = applyGameCommand(rawDatabase, {
@@ -275,6 +278,42 @@ describe('phase 2 authority', () => {
     if (!second.ok) return
     expect(second.goldChipped).toBe(0)
     expect(second.save.gold).toBe(400)
+  })
+
+  it('ignores a forged hall payload that claims the gold cap without deducting gold', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const save = { ...createNewSave(launch, START_MS), gold: 500 }
+    const honest = applyGameCommand(rawDatabase, {
+      command: 'guild_chip_in_hall_gold',
+      args: { amount: 40 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+      guildRole: 'member',
+    })
+    expect(honest.ok).toBe(true)
+    if (!honest.ok) return
+    expect(honest.goldChipped).toBe(40)
+    expect(honest.save.gold).toBe(460)
+
+    const forged = commitGuildHallFromPlayerSaves({
+      previousGold: save.gold,
+      nextGold: save.gold,
+      previousInventory: save.inventory,
+      nextInventory: save.inventory,
+      hall: emptyGuildHallState(),
+      userId: 'u1',
+      proposed: {
+        goldContributed: GUILD_HALL_GOLD_CAP,
+        completedTiers: ['build_the_hall', 'hall_bank'],
+        storehouse: honest.hall?.storehouse,
+      },
+    })
+    expect(forged.goldTaken).toBe(0)
+    expect(forged.hall.goldContributed).toBe(0)
+    expect(forged.hall.completedTiers).toEqual([])
   })
 
   it('lets a low-level member deposit in the guild bank but not withdraw', () => {
