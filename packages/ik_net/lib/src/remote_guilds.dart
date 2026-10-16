@@ -21,7 +21,15 @@ const String remoteGuildBaseColumns =
 const String remoteGuildSkillMilestoneColumn = 'skill_milestone_settings';
 
 /// Full guild select when migration 020 is applied.
-const String remoteGuildColumns = '$remoteGuildBaseColumns, $remoteGuildSkillMilestoneColumn';
+const String remoteGuildPermissionColumn = 'permissions';
+
+/// Full guild select when hall-tier permissions are applied.
+const String remoteGuildBannerColumn = 'banner';
+
+const String remoteGuildColumnsWithoutBanner =
+    '$remoteGuildBaseColumns, $remoteGuildSkillMilestoneColumn, $remoteGuildPermissionColumn';
+
+const String remoteGuildColumns = '$remoteGuildColumnsWithoutBanner, $remoteGuildBannerColumn';
 
 const String remoteGuildMemberColumns =
     'guild_id, user_id, username, role, joined_at, appearance_json, total_level';
@@ -31,8 +39,15 @@ const String remoteGuildApplicationColumns =
 
 const String remoteGuildGuestColumns = 'guild_id, user_id, username, appearance_json, joined_at';
 
+const String remoteGuildHallColumnsWithoutDonatedBy =
+    'guild_id, gold_contributed, gold_contributed_by, debt_remaining, debt_paid_off, '
+    'debt_paid_by, storehouse, completed_tiers, hall_revision, bank_items';
+
 const String remoteGuildHallColumns =
-    'guild_id, debt_remaining, debt_paid_off, debt_paid_by, storehouse, completed_tiers';
+    'guild_id, gold_contributed, gold_contributed_by, donated_by, debt_remaining, debt_paid_off, '
+    'debt_paid_by, storehouse, completed_tiers, hall_revision, bank_items';
+
+const String remoteGuildAchievementColumns = 'guild_id, achievement_id, unlocked_at';
 
 const String remoteGuildProjectColumns =
     'id, guild_id, name, description, goal_amount, contributed, reward_label';
@@ -90,6 +105,7 @@ RemoteRow guildRowForCreate(String leaderId, GuildRecord guild) => <String, Obje
 };
 
 /// The settings half of a guild, for an update that leaves the rest alone.
+/// Banner is not here: officers set it through `guild_set_banner`.
 RemoteRow guildSettingsRowFor(GuildRecord guild) => <String, Object?>{
   'id': guild.id,
   'description': guild.description,
@@ -129,6 +145,8 @@ GuildRecord guildRecordFrom(RemoteRow row) => GuildRecord(
   guestAutoAccept: row['guest_auto_accept'] == true,
   rankIconTheme: normalizeRankIconTheme(_str(row['rank_icon_theme'])),
   skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(row['skill_milestone_settings']),
+  permissions: normalizeGuildPermissionTable(row['permissions']),
+  banner: readGuildBanner(row['banner']),
 );
 
 /// A roster row, carrying the name, look, and level it is listed under.
@@ -233,22 +251,41 @@ GuildChallenge guildChallengeFrom(RemoteRow row) => GuildChallenge(
 
 RemoteRow guildHallRowFor(GuildHallState hall) => <String, Object?>{
   'guild_id': hall.guildId,
+  'gold_contributed': hall.goldContributed,
+  'gold_contributed_by': hall.goldContributedBy,
+  'donated_by': hall.donatedBy,
   'debt_remaining': hall.debtRemaining,
   'debt_paid_off': hall.debtPaidOff,
   'debt_paid_by': hall.debtPaidBy,
   'storehouse': hall.storehouse.map((stack) => stack.toJson()).toList(),
   'completed_tiers': hall.completedTiers,
+  'hall_revision': hall.hallRevision,
+  'bank_items': hall.bank.items.map((row) => row.toJson()).toList(),
 };
 
-GuildHallState guildHallFrom(RemoteRow row) => GuildHallState(
-  guildId: _str(row['guild_id']),
-  debtRemaining: _num(row['debt_remaining']),
-  debtPaidBy: <String, num>{
-    for (final entry in _map(row['debt_paid_by']).entries) entry.key: _num(entry.value),
-  },
-  storehouse: _list(row['storehouse'])
-      .map((value) => InventoryStack.fromJson(_map(value)))
-      .toList(),
-  completedTiers: _list(row['completed_tiers']).map(_str).toList(),
-  debtPaidOff: row['debt_paid_off'] == true,
-);
+GuildHallState guildHallFrom(RemoteRow row) {
+  final gold = row.containsKey('gold_contributed')
+      ? _num(row['gold_contributed'])
+      : goldContributedFromDebtRemaining(_num(row['debt_remaining']));
+  final paidBy = <String, num>{
+    for (final entry in _map(row['gold_contributed_by'] ?? row['debt_paid_by']).entries)
+      entry.key: _num(entry.value),
+  };
+  return GuildHallState(
+    guildId: _str(row['guild_id']),
+    goldContributed: gold,
+    goldContributedBy: paidBy,
+    donatedBy: <String, bool>{
+      for (final entry in _map(row['donated_by']).entries)
+        if (entry.value == true || entry.value == 'true' || _num(entry.value) > 0) entry.key: true,
+    },
+    storehouse: _list(row['storehouse'])
+        .map((value) => InventoryStack.fromJson(_map(value)))
+        .toList(),
+    completedTiers: _list(row['completed_tiers']).map(_str).toList(),
+    hallRevision: _num(row['hall_revision']),
+    bank: GuildBankState(
+      items: _list(row['bank_items']).map((value) => GuildBankItem.fromJson(_map(value))).toList(),
+    ),
+  );
+}

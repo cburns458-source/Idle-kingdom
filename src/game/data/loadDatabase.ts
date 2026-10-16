@@ -7,9 +7,10 @@ import {
 } from './validate'
 import type { DatabaseIndexes, GameDatabase, ValidationIssue } from './types'
 import { withBankDepositBoxActivities } from '../inventory/bank'
+import { withGuildHallRoomActivities } from '../guild/rooms'
 
 /** Bump when Launch content rows change so browsers skip stale JSON. */
-export const DATABASE_CONTENT_VERSION = '2026-10-16-tutorial-fennel-alchemy'
+export const DATABASE_CONTENT_VERSION = '2026-10-16-tutorial-guild-hall'
 export const DATABASE_URL = `/data/game-database.json?v=${DATABASE_CONTENT_VERSION}`
 
 export interface LoadedDatabase {
@@ -44,8 +45,8 @@ export function prepareDatabase(raw: unknown): LoadedDatabase {
     throw new Error(`Database validation failed (${errors.length} error(s)): ${summary}`)
   }
 
-  const launch = withBankDepositBoxActivities(filterLaunchContent(source))
-  const sourceView = withBankDepositBoxActivities(source)
+  const launch = withGuildHallRoomActivities(withBankDepositBoxActivities(filterLaunchContent(source)))
+  const sourceView = withGuildHallRoomActivities(withBankDepositBoxActivities(source))
   return {
     source: sourceView,
     launch,

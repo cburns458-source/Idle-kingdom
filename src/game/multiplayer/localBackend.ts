@@ -23,6 +23,8 @@ import {
   guildNameFromInput,
   guildTagFromInput,
 } from '../guild/rules'
+import { defaultGuildPermissionTable } from '../guild/permissions'
+import { mergeGuildLogDonation, type GuildLogEntry } from '../guild/log'
 import {
   normalizeGuildSkillMilestoneSettings,
   type GuildSkillMilestoneSettings,
@@ -99,6 +101,7 @@ interface LocalDb {
   friends: Array<{ userA: string; userB: string }>
   bountyClaims: BountyClaimRecord[]
   guests?: GuildGuest[]
+  logs?: GuildLogEntry[]
 }
 
 function defaultAppearance(): PlayerAppearance {
@@ -132,6 +135,7 @@ function emptyDb(): LocalDb {
     friendRequests: [],
     friends: [],
     bountyClaims: [],
+    logs: [],
   }
 }
 
@@ -197,6 +201,7 @@ function normalizeGuild(raw: GuildRecord): GuildRecord {
     rankLabels: normalizeRankLabels((raw as GuildRecord & { rankLabels?: unknown }).rankLabels),
     description: raw.description ?? '',
     skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(raw.skillMilestoneSettings),
+    permissions: raw.permissions ?? defaultGuildPermissionTable(),
   }
 }
 
@@ -215,6 +220,7 @@ function loadDb(storage: Storage = localStorage): LocalDb {
     }))
     merged.bountyClaims = Array.isArray(merged.bountyClaims) ? merged.bountyClaims : []
     merged.guests = Array.isArray(merged.guests) ? merged.guests : []
+    merged.logs = Array.isArray(merged.logs) ? merged.logs : []
     merged.profiles = (merged.profiles ?? []).map((profile) => ({
       ...profile,
       privacyPublicGear: profile.privacyPublicGear !== false,
@@ -228,6 +234,7 @@ function loadDb(storage: Storage = localStorage): LocalDb {
 function saveDb(db: LocalDb, storage: Storage = localStorage): void {
   const payload: LocalDb = { ...db }
   if (!payload.guests?.length) delete payload.guests
+  if (!payload.logs?.length) delete payload.logs
   storage.setItem(MULTIPLAYER_LOCAL_DB_KEY, JSON.stringify(payload))
 }
 
@@ -275,6 +282,71 @@ export class LocalMultiplayerBackend {
 
   private newId(prefix: string): string {
     return this.ports.newId(prefix)
+  }
+
+  private logsOf(db: LocalDb): GuildLogEntry[] {
+    return db.logs ?? []
+  }
+
+  private appendLog(db: LocalDb, incoming: GuildLogEntry): void {
+    db.logs = this.logsOf(db)
+    const newest = [...db.logs]
+      .filter((row) => row.guildId === incoming.guildId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+    const merged = mergeGuildLogDonation(newest ?? null, incoming)
+    if (merged.merged) {
+      db.logs = db.logs.map((row) => (row.id === merged.entry.id ? merged.entry : row))
+      return
+    }
+    db.logs.push(incoming)
+  }
+
+  private logJoin(
+    db: LocalDb,
+    guildId: string,
+    userId: string,
+    username: string,
+    role: string,
+  ): void {
+    this.appendLog(db, {
+      id: this.newId('glg'),
+      guildId,
+      kind: 'join',
+      createdAt: this.nowIso(),
+      actorUserId: userId,
+      actorUsername: username,
+      role,
+      targetUserId: null,
+      targetUsername: null,
+      tierId: null,
+      message: `${username} joined the guild.`,
+      gold: 0,
+      items: [],
+    })
+  }
+
+  private logLeave(
+    db: LocalDb,
+    guildId: string,
+    userId: string,
+    username: string,
+    role: string,
+  ): void {
+    this.appendLog(db, {
+      id: this.newId('glg'),
+      guildId,
+      kind: 'leave',
+      createdAt: this.nowIso(),
+      actorUserId: userId,
+      actorUsername: username,
+      role,
+      targetUserId: null,
+      targetUsername: null,
+      tierId: null,
+      message: `${username} left the guild.`,
+      gold: 0,
+      items: [],
+    })
   }
 
   signUp(
@@ -796,6 +868,7 @@ export class LocalMultiplayerBackend {
       rankLabels: { ...DEFAULT_GUILD_RANK_LABELS },
       createdAt: this.nowIso(),
       skillMilestoneSettings: normalizeGuildSkillMilestoneSettings(undefined),
+      permissions: defaultGuildPermissionTable(),
     }
     db.guilds.push(guild)
     db.members.push({
@@ -807,6 +880,7 @@ export class LocalMultiplayerBackend {
       appearance: snapshot.appearance,
       totalLevel: snapshot.totalLevel,
     })
+    this.logJoin(db, guild.id, session.userId, snapshot.username, 'leader')
     db.profiles = db.profiles.map((row) =>
       row.userId === session.userId
         ? { ...row, guildId: guild.id, guildName: guild.name, updatedAt: this.nowIso() }
@@ -903,6 +977,7 @@ export class LocalMultiplayerBackend {
       db.guests = this.guestsOf(db).filter(
         (row) => !(row.guildId === guildId && row.userId === session.userId),
       )
+      this.logJoin(db, guild.id, session.userId, snapshot.username, 'recruit')
       this.write(db)
       return { ok: true, joined: true }
     }
@@ -1062,6 +1137,7 @@ export class LocalMultiplayerBackend {
       db.guests = this.guestsOf(db).filter(
         (row) => !(row.guildId === guild.id && row.userId === application.userId),
       )
+      this.logJoin(db, guild.id, application.userId, snapshot.username, 'recruit')
     }
     this.write(db)
     return { ok: true }
@@ -1078,7 +1154,8 @@ export class LocalMultiplayerBackend {
     if (guild.leaderId !== actorId) return { ok: false, reason: 'Only the leader can remove members.' }
     if (targetUserId === guild.leaderId) return { ok: false, reason: 'Cannot remove the leader.' }
     if (targetUserId === actorId) return { ok: false, reason: 'Leave the guild instead.' }
-    if (!db.members.some((row) => row.guildId === guildId && row.userId === targetUserId)) {
+    const target = db.members.find((row) => row.guildId === guildId && row.userId === targetUserId)
+    if (!target) {
       return { ok: false, reason: 'Not a member of that guild.' }
     }
     db.members = db.members.filter((row) => !(row.guildId === guildId && row.userId === targetUserId))
@@ -1087,6 +1164,7 @@ export class LocalMultiplayerBackend {
         ? { ...row, guildId: null, guildName: null, updatedAt: this.nowIso() }
         : row,
     )
+    this.logLeave(db, guildId, targetUserId, target.username, target.role)
     this.write(db)
     return { ok: true }
   }
@@ -1131,9 +1209,27 @@ export class LocalMultiplayerBackend {
     }
     const allowed: GuildRole[] = ['officer', 'veteran', 'member', 'recruit']
     if (!allowed.includes(role)) return { ok: false, reason: 'Invalid rank.' }
+    const target = db.members.find((row) => row.guildId === guildId && row.userId === targetUserId)
     db.members = db.members.map((row) =>
       row.guildId === guildId && row.userId === targetUserId ? { ...row, role } : row,
     )
+    if (target) {
+      this.appendLog(db, {
+        id: this.newId('glg'),
+        guildId,
+        kind: 'rank_change',
+        createdAt: this.nowIso(),
+        actorUserId: targetUserId,
+        actorUsername: target.username,
+        role,
+        targetUserId: targetUserId,
+        targetUsername: target.username,
+        tierId: null,
+        message: `${target.username} is now ${role}.`,
+        gold: 0,
+        items: [],
+      })
+    }
     this.write(db)
     return { ok: true }
   }
@@ -1251,6 +1347,9 @@ export class LocalMultiplayerBackend {
       db.challenges = db.challenges.filter((row) => row.guildId !== membership.guildId)
       db.applications = db.applications.filter((row) => row.guildId !== membership.guildId)
       db.guests = this.guestsOf(db).filter((row) => row.guildId !== membership.guildId)
+      db.logs = this.logsOf(db).filter((row) => row.guildId !== membership.guildId)
+    } else {
+      this.logLeave(db, membership.guildId, userId, membership.username, membership.role)
     }
     db.members = db.members.filter((row) => row.userId !== userId)
     db.profiles = db.profiles.map((row) =>

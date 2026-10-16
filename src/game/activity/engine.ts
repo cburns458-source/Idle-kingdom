@@ -13,6 +13,7 @@ import { isStandardProductionActivity, recipesForActivity } from '../production/
 import type { ActionRow, ActivityRow, GameDatabase } from '../data/types'
 import type { EquippedStack, PlayerSave } from '../save/types'
 import { tickPotionAction, tryConsumePotionForScope } from '../potions/effects'
+import { applyGuildHallCompanyXp } from '../guild/rooms'
 import {
   equippedLockpickBreakChanceReductionPercent,
   equippedSuccessChanceBonusPercentForAction,
@@ -384,6 +385,7 @@ export function completeGatheringAction(
   action: ActionRow,
   random: RandomFn = Math.random,
   nowMs: number = Date.now(),
+  guildmatesPresent = false,
 ): { save: PlayerSave; result: ActionCompletionResult } {
   const notes = action.Notes ?? ''
   const requiresLockpick = /RequiresLockpick/i.test(notes)
@@ -477,7 +479,10 @@ export function completeGatheringAction(
       : resolveActionRewards(db, working, action, random)
   const fullXp = gatheringXpReward(db, working, action)
   const primarySkillId = pruning ? BOTANY_SKILL_ID : skillId
-  const xpAmount = pruning ? Math.floor(fullXp * PRUNING_XP_FRACTION) : fullXp
+  const xpAmount = applyGuildHallCompanyXp(
+    pruning ? Math.floor(fullXp * PRUNING_XP_FRACTION) : fullXp,
+    guildmatesPresent,
+  )
   let next = tickPotionAction(rewarded.save)
   const xpApplied = applyXp(next, db, primarySkillId, xpAmount)
   next = xpApplied.save

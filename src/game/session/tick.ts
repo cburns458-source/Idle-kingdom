@@ -32,6 +32,7 @@ import { isStandardProductionActivity } from '../production/recipes'
 import type { PlayerSave } from '../save/types'
 import { notePlayerDamaged } from '../vitals/regen'
 import type { SessionEvent } from './events'
+import { guildHallCompanyActive } from '../guild/rooms'
 import { shouldStopTutorialCombatAfterKill } from '../tutorial/tutorial'
 
 export interface SessionTickResult {
@@ -228,6 +229,7 @@ function applyDueCombatRound(
   roundEnd: number,
   roundMs: number,
   random: RandomFn,
+  extras: SessionAdvanceExtras = {},
 ): void {
   const before = out.current
   const round = resolveCombatRound(db, before, enemy, before.combatEnemyHp!, random)
@@ -260,7 +262,7 @@ function applyDueCombatRound(
     outcome: round.outcome,
     bossInkActive: round.bossInkActive,
   })
-  applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random)
+  applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random, extras)
 }
 
 /** Victory, defeat, or next round from a pending clash. */
@@ -273,6 +275,7 @@ function applyDueCombatOutcome(
   roundEnd: number,
   roundMs: number,
   random: RandomFn,
+  extras: SessionAdvanceExtras = {},
 ): void {
   const before = out.current
   const round = before.combatPendingRound
@@ -338,6 +341,7 @@ function applyDueCombatOutcome(
       enemy,
       random,
       roundEnd,
+      guildHallCompanyActive(before.currentLocationId, extras.guildmatesInHall === true),
     )
     out.set(victory.save)
     out.creditCritterTime(roundMs, roundEnd, random)
@@ -447,11 +451,16 @@ function applyDueCombatOutcome(
  * unattended resolver is the same rules run in a loop over a past window. Time
  * and randomness are parameters, so a tick is reproducible.
  */
+export type SessionAdvanceExtras = {
+  guildmatesInHall?: boolean
+}
+
 export function advanceSession(
   db: GameDatabase,
   save: PlayerSave,
   nowMs: number,
   random: RandomFn = Math.random,
+  extras: SessionAdvanceExtras = {},
 ): SessionTickResult {
   const out = new TickOutput(resolveActivityTransitions(db, save, nowMs, random), save)
 
@@ -550,13 +559,14 @@ export function advanceSession(
         Math.max(attackAt, roundEnd),
         roundMs,
         random,
+        extras,
       )
       return out.result()
     }
 
     // Leftover split-swing saves: finish the pending outcome at round end.
     if (out.current.combatPlayerSwingApplied && roundEnd <= nowMs) {
-      applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random)
+      applyDueCombatOutcome(db, out, activityId, enemy, action, roundEnd, roundMs, random, extras)
       return out.result()
     }
 
@@ -608,7 +618,14 @@ export function advanceSession(
       return out.result()
     }
 
-    const finished = completeGatheringAction(db, out.current, action, random, due)
+    const finished = completeGatheringAction(
+      db,
+      out.current,
+      action,
+      random,
+      due,
+      guildHallCompanyActive(out.current.currentLocationId, extras.guildmatesInHall === true),
+    )
     out.set(finished.save)
     out.creditCritterTime(actionState.durationMs, due, random)
     const damageTaken = finished.result.damageTaken ?? 0

@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../achievements/progress.dart';
+import '../guild/rooms.dart';
 import '../combat/boss.dart';
 import '../combat/engine.dart';
 import '../combat/food.dart';
@@ -337,8 +338,9 @@ GatheringCompletion completeGatheringAction(
   PlayerSave save,
   ActionRow action,
   RandomFn random,
-  num nowMs,
-) {
+  num nowMs, [
+  bool guildmatesPresent = false,
+]) {
   final notes = action.raw['Notes'];
   final notesText = notes is String ? notes : '';
   final now = nowMs;
@@ -440,7 +442,10 @@ GatheringCompletion completeGatheringAction(
       : resolveActionRewards(db, working, action, random);
   final fullXp = gatheringXpReward(db, working, action);
   final primarySkillId = pruning ? botanySkillId : skillId;
-  final xpAmount = pruning ? (fullXp * pruningXpFraction).floor() : fullXp;
+  final xpAmount = applyGuildHallCompanyXp(
+    pruning ? (fullXp * pruningXpFraction).floor() : fullXp,
+    guildmatesPresent,
+  );
   final xpApplied = applyXp(tickPotionAction(rewarded.save), db, primarySkillId, xpAmount);
   var next = xpApplied.save;
   var leveledUpTo = xpApplied.leveledUpTo;

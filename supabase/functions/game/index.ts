@@ -333,11 +333,13 @@ async function handleSync(admin: Client, userId: string, payload: GameBody): Pro
   const nowMs = Date.now()
   const windowStartMs = catchUpWindowStartMs(hosted)
   try {
+    const hallContext = await loadHallContext(admin, userId)
     const result = runPhase2Sync(rawDatabase, {
       save: hosted.payload,
       nowMs,
       rngState: hosted.rng_state,
       windowStartMs,
+      guildmatesInHall: hallContext?.guildmatesInHall,
     })
     const written = await writeHostedSave(admin, userId, {
       expectedVersion: expected,
@@ -400,8 +402,16 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       nowMs,
       random: rng.random,
       hall: hallContext?.hall,
+      guildBank: hallContext?.bank,
+      guildPermissions: hallContext?.permissions,
       userId,
       guildRole: hallContext?.role,
+      // Hosted save totalLevel, never the client-writable guild_members column.
+      totalLevel: hostedTotalLevel(hosted?.payload, nowMs),
+      membersAtLevel500: hallContext?.membersAtLevel500,
+      unlockedAchievements: hallContext?.unlockedAchievements,
+      guildmatesInHall: hallContext?.guildmatesInHall,
+      nextId: () => crypto.randomUUID(),
       windowStartMs,
       ...(rankedContext && !('response' in rankedContext) ? rankedContext : {}),
     })
@@ -504,6 +514,10 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       written = { ok: true, version: plazaPurchase.version }
       commandSave = plazaPurchase.save
       bountyExtras = plazaShopBuyResponseExtras(plazaPurchase)
+    } else if (isGuildHallCommand(command) && hosted && result.ok && hallContext && result.hall) {
+      const committed = await commitGuildHall(admin, userId, hallContext, result, expected, rng.getState(), nowMs)
+      if (!committed.ok) return committed.response
+      written = { ok: true, version: committed.version }
     } else if (command === 'ranked_pvp_fight' && hosted && result.fightId) {
       const recorded = await recordRankedFight(
         admin,
@@ -539,20 +553,6 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     }
     const published = await publishPhase3Rows(admin, rawDatabase, userId, commandSave, nowMs, command)
     if (!published.ok) return published.response
-    if (result.hall && hallContext) {
-      const { error: hallError } = await admin
-        .from('guild_halls')
-        .update({
-          debt_remaining: result.hall.debtRemaining,
-          debt_paid_off: result.hall.debtPaidOff,
-          debt_paid_by: result.hall.debtPaidBy,
-          storehouse: result.hall.storehouse,
-          completed_tiers: result.hall.completedTiers,
-          updated_at: new Date(nowMs).toISOString(),
-        })
-        .eq('guild_id', hallContext.guildId)
-      if (hallError) return json({ error: hallError.message, phase: 2 }, 500)
-    }
     return json({
       ok: true,
       phase: 2,
@@ -579,6 +579,12 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
           }
         : {}),
       ...bountyExtras,
+      ...(Array.isArray(result.achievementsUnlocked) && result.achievementsUnlocked.length > 0
+        ? { achievementsUnlocked: result.achievementsUnlocked }
+        : {}),
+      ...(Array.isArray(result.achievementProgress)
+        ? { achievementProgress: result.achievementProgress }
+        : {}),
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Command failed.'
@@ -968,6 +974,7 @@ async function publishPhase3Rows(
       .update(rankingProfilePatch(hosted))
       .eq('user_id', userId)
     if (profileError) return { ok: false, response: json({ error: profileError.message, phase: 3 }, 500) }
+    await admin.from('guild_members').update({ total_level: totalLevel(hosted) }).eq('user_id', userId)
   }
   if (command === 'save_pvp_equipment') {
     const { data: profile } = await admin.from('profiles').select('username').eq('user_id', userId).maybeSingle()
@@ -1070,7 +1077,18 @@ async function insertHostedSave(
 type HallContext = {
   guildId: string
   role: string
+  username: string
+  totalLevel: number
+  hallRevision: number
+  permissions: Record<string, string[]>
+  guildmatesInHall: boolean
+  membersAtLevel500: number
+  unlockedAchievements: Record<string, string>
+  bank: { items: unknown[] }
   hall: {
+    goldContributed: number
+    goldContributedBy: Record<string, number>
+    donatedBy: Record<string, boolean>
     debtRemaining: number
     debtPaidOff: boolean
     debtPaidBy: Record<string, number>
@@ -1079,28 +1097,189 @@ type HallContext = {
   }
 }
 
+const GUILD_HALL_COMMANDS = new Set([
+  'guild_pay_hall_debt',
+  'guild_chip_in_hall_gold',
+  'guild_donate_hall_item',
+  'guild_withdraw_hall_item',
+  'guild_bank_deposit',
+  'guild_bank_withdraw',
+  'guild_bank_take_up_for_grabs',
+  'guild_bank_move_up_for_grabs',
+])
+
+function isGuildHallCommand(command: string): boolean {
+  return GUILD_HALL_COMMANDS.has(command)
+}
+
+function hostedTotalLevel(payload: unknown, nowMs: number): number | undefined {
+  if (payload == null) return undefined
+  try {
+    return totalLevel(parseSave(payload, nowMs))
+  } catch {
+    return undefined
+  }
+}
+
+async function countMembersAtSaveLevel500(admin: Client, guildId: string, nowMs: number): Promise<number> {
+  const { data: roster } = await admin.from('guild_members').select('user_id').eq('guild_id', guildId)
+  const ids = (roster ?? [])
+    .map((row: { user_id?: unknown }) => row.user_id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+  if (ids.length === 0) return 0
+  const { data: saves } = await admin.from('player_saves').select('user_id, payload').in('user_id', ids)
+  let strong = 0
+  for (const row of saves ?? []) {
+    if ((hostedTotalLevel(row.payload, nowMs) ?? 0) >= 500) strong += 1
+  }
+  return strong
+}
+
 async function loadHallContext(admin: Client, userId: string): Promise<HallContext | null> {
   const { data: member } = await admin
     .from('guild_members')
-    .select('guild_id, role')
+    .select('guild_id, role, username, total_level')
     .eq('user_id', userId)
     .maybeSingle()
   if (!member?.guild_id) return null
   const { data: hall } = await admin.from('guild_halls').select('*').eq('guild_id', member.guild_id).maybeSingle()
   if (!hall) return null
+  const { data: guild } = await admin
+    .from('guilds')
+    .select('permissions')
+    .eq('id', member.guild_id)
+    .maybeSingle()
+  const goldContributed =
+    hall.gold_contributed != null
+      ? Number(hall.gold_contributed)
+      : Math.max(0, 1_000_000 - Number(hall.debt_remaining ?? 1_000_000))
+  const goldContributedBy = (hall.gold_contributed_by ?? hall.debt_paid_by ?? {}) as Record<string, number>
+  const donatedBy = (hall.donated_by ?? {}) as Record<string, boolean>
+  const nowMs = Date.now()
+  const { data: unlockRows } = await admin
+    .from('guild_achievements')
+    .select('achievement_id, unlocked_at')
+    .eq('guild_id', member.guild_id)
+  const unlockedAchievements: Record<string, string> = {}
+  for (const row of unlockRows ?? []) {
+    const id = String(row.achievement_id ?? '')
+    const at = row.unlocked_at
+    if (id && typeof at === 'string') unlockedAchievements[id] = at
+  }
+  const strongCount = unlockedAchievements.gach_rising_strength
+    ? 25
+    : await countMembersAtSaveLevel500(admin, member.guild_id as string, nowMs)
+  const { data: mates } = await admin
+    .from('guild_members')
+    .select('user_id')
+    .eq('guild_id', member.guild_id)
+    .neq('user_id', userId)
+  const mateIds = new Set((mates ?? []).map((row: { user_id: string }) => row.user_id))
+  let guildmatesInHall = false
+  if (mateIds.size > 0) {
+    const { data: present } = await admin
+      .from('activity_presence')
+      .select('user_id')
+      .eq('location_id', 'LOC-0033')
+      .gt('expires_at', new Date().toISOString())
+      .neq('user_id', userId)
+    guildmatesInHall = (present ?? []).some((row: { user_id: string }) => mateIds.has(row.user_id))
+  }
   return {
     guildId: member.guild_id as string,
     role: String(member.role ?? ''),
+    username: String(member.username ?? 'Adventurer'),
+    totalLevel: Number(member.total_level ?? 1),
+    hallRevision: Number(hall.hall_revision ?? 0),
+    permissions: (guild?.permissions ?? {}) as Record<string, string[]>,
+    guildmatesInHall,
+    membersAtLevel500: strongCount,
+    unlockedAchievements,
+    bank: { items: Array.isArray(hall.bank_items) ? hall.bank_items : [] },
     hall: {
-      debtRemaining: Number(hall.debt_remaining ?? 0),
-      debtPaidOff: Boolean(hall.debt_paid_off),
-      debtPaidBy: (hall.debt_paid_by ?? {}) as Record<string, number>,
+      goldContributed,
+      goldContributedBy,
+      donatedBy,
+      debtRemaining: Math.max(0, 1_000_000 - goldContributed),
+      debtPaidOff: goldContributed >= 1_000_000,
+      debtPaidBy: goldContributedBy,
       storehouse: Array.isArray(hall.storehouse) ? hall.storehouse : [],
       completedTiers: Array.isArray(hall.completed_tiers)
         ? hall.completed_tiers.map((row: unknown) => String(row))
         : [],
     },
   }
+}
+
+async function commitGuildHall(
+  admin: Client,
+  userId: string,
+  hallContext: HallContext,
+  result: {
+    save: unknown
+    saveBeforeCommand?: unknown
+    hall?: {
+      goldContributed: number
+      goldContributedBy: Record<string, number>
+      storehouse: unknown
+      completedTiers: unknown
+    }
+    bank?: { items: unknown }
+    logEntries?: Array<Record<string, unknown>>
+  },
+  expectedVersion: number,
+  rngState: number,
+  nowMs: number,
+): Promise<{ ok: true; version: number } | { ok: false; response: Response }> {
+  const hall = result.hall
+  if (!hall) return { ok: false, response: json({ error: 'Guild hall not found.', phase: 2 }, 400) }
+  if (result.saveBeforeCommand == null) {
+    return { ok: false, response: json({ error: 'Caught-up save missing.', phase: 2 }, 400) }
+  }
+  const logs = (result.logEntries ?? []).map((entry) => ({
+    ...entry,
+    actor_username: entry.actor_username || hallContext.username,
+  }))
+  // Gold totals and completed tiers in this payload are hints only.
+  // guild_commit_hall diffs the caught-up save from right before the hall
+  // command against the post-command save. Catch-up consumption is not a
+  // donation. A forged gold_contributed is ignored.
+  const { data, error } = await admin.rpc('guild_commit_hall', {
+    p_user_id: userId,
+    p_expected_save_version: expectedVersion,
+    p_expected_hall_revision: hallContext.hallRevision,
+    p_payload: result.save,
+    p_before: result.saveBeforeCommand,
+    p_rng_state: rngState,
+    p_now: new Date(nowMs).toISOString(),
+    p_hall: {
+      storehouse: hall.storehouse,
+      bank_items: result.bank?.items ?? hallContext.bank.items,
+    },
+    p_log: logs,
+  })
+  if (error) {
+    const conflict = error.message.includes('save') ? 'save' : error.message.includes('Hall changed') ? 'hall' : null
+    return {
+      ok: false,
+      response: json(
+        { error: error.message, phase: 2, conflict: Boolean(conflict) },
+        conflict ? 409 : 500,
+      ),
+    }
+  }
+  const body = data as { ok?: boolean; version?: number; conflict?: string; reason?: string } | null
+  if (!body || body.ok === false) {
+    const conflict = body?.conflict === 'save' || body?.conflict === 'hall'
+    return {
+      ok: false,
+      response: json(
+        { error: body?.reason ?? 'Could not update the hall.', phase: 2, conflict },
+        conflict ? 409 : 400,
+      ),
+    }
+  }
+  return { ok: true, version: Number(body.version ?? expectedVersion + 1) }
 }
 
 function rankedWinsRemainingFromHosted(hosted: HostedSaveRow | null, nowMs: number): number {

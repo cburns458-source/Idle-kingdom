@@ -7,6 +7,9 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'catalog_popup.dart';
 import 'game_popup.dart';
+import 'guild_hall_banner.dart';
+import 'guild_log_list.dart';
+import 'guild_permissions_table.dart';
 import 'page_header.dart';
 import 'player_profile_sheet.dart';
 import 'social_bits.dart';
@@ -315,7 +318,11 @@ class _GuildPanelState extends State<GuildPanel> {
             return SocialRow(
               title: header.title,
               subtitle: header.subtitle,
-              leading: GuildEmblemBadge(emblem: header.emblem, size: 40),
+              leading: GuildHallBanner(
+                key: const Key('guild-panel-banner'),
+                banner: guild.banner,
+                size: 40,
+              ),
               onTap: () => _openGuildDetail(guild, mode: _GuildDetailMode.own),
               trailing: header.canManage
                   ? GameIconButton(
@@ -348,22 +355,29 @@ class _GuildPanelState extends State<GuildPanel> {
           }
           if (index == 5) return const SizedBox(height: 10);
           if (index == 6) {
-            return GameButton(
-              label: save.currentLocationId == guildHallLocationId
-                  ? 'In the hall'
-                  : 'Travel to hall',
-              onPressed: widget.onTravelToHall == null || widget.controller.switchBusy
-                  ? null
-                  : widget.onTravelToHall,
+            return Row(
+              children: [
+                Expanded(
+                  child: GameButton(
+                    label: save.currentLocationId == guildHallLocationId
+                        ? 'In the hall'
+                        : 'Travel to hall',
+                    onPressed: widget.onTravelToHall == null || widget.controller.switchBusy
+                        ? null
+                        : widget.onTravelToHall,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                GameButton(
+                  label: 'Log',
+                  tone: GameButtonTone.secondary,
+                  onPressed: () => _openGuildLog(guild),
+                ),
+              ],
             );
           }
           if (index == 7) {
-            return const Padding(
-              padding: EdgeInsets.only(top: 4, bottom: 10),
-              child: MutedText(
-                'Each guild has its own hall: a store house and a debt to work off.',
-              ),
-            );
+            return const SizedBox(height: 10);
           }
           var i = index - 8;
           if (guestGuild != null) {
@@ -556,10 +570,45 @@ class _GuildPanelState extends State<GuildPanel> {
     );
   }
 
+  Future<void> _openGuildLog(GuildRecord guild) async {
+    final entries = await net.service.guildLog(guild.id);
+    if (!mounted) return;
+    await showGamePopup<void>(
+      context: context,
+      maxWidth: 420,
+      maxHeight: 520,
+      builder: (context) => GamePopupCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Guild log', style: TextStyle(fontWeight: FontWeight.w400)),
+                ),
+                GameCloseButton(onPressed: () => Navigator.of(context).pop()),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: entries.isEmpty
+                  ? const SizedBox.shrink()
+                  : GuildLogList(
+                      entries: entries,
+                      itemName: (itemId) =>
+                          widget.controller.indexes.itemsById[itemId]?.displayName ?? itemId,
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _openSettingsSheet(GuildRecord guild) async {
     final settings = await showGamePopup<_GuildSettings>(
       context: context,
-      maxWidth: 360,
+      maxWidth: 480,
       maxHeight: 560,
       builder: (context) => GamePopupCard(child: _GuildSettingsSheet(guild: guild)),
     );
@@ -573,6 +622,7 @@ class _GuildPanelState extends State<GuildPanel> {
       skillMilestoneSettings: settings.skillMilestoneSettings,
       save: save,
     );
+    await net.service.setGuildPermissions(guild.id, settings.permissions);
   }
 
   Future<void> _editGuildMotto(GuildRecord guild) async {
@@ -905,7 +955,11 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             return SocialRow(
                               title: header.title,
                               subtitle: header.subtitle,
-                              leading: GuildEmblemBadge(emblem: header.emblem, size: 40),
+                              leading: GuildHallBanner(
+                                key: const Key('guild-detail-banner'),
+                                banner: guild.banner,
+                                size: 40,
+                              ),
                             );
                           }
                           var i = index - 1;
@@ -1352,6 +1406,7 @@ class _GuildSettings {
     required this.emblem,
     required this.rankLabels,
     required this.skillMilestoneSettings,
+    required this.permissions,
   });
 
   final GuildJoinPolicy joinPolicy;
@@ -1360,6 +1415,7 @@ class _GuildSettings {
   final GuildEmblem emblem;
   final Map<GuildRankKey, String> rankLabels;
   final GuildSkillMilestoneSettings skillMilestoneSettings;
+  final GuildPermissionTable permissions;
 }
 
 class _GuildSettingsSheet extends StatefulWidget {
@@ -1389,6 +1445,8 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
   late final TextEditingController _xpStep = TextEditingController(
     text: '${widget.guild.skillMilestoneSettings.xpStepMillion.round()}',
   );
+  late GuildPermissionTable _permissions =
+      widget.guild.permissions ?? defaultGuildPermissionTable();
   late final Map<GuildRankKey, TextEditingController> _labels =
       <GuildRankKey, TextEditingController>{
         for (final field in rankLabelFields(widget.guild))
@@ -1543,6 +1601,13 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
                 decoration: InputDecoration(labelText: field.fieldLabel),
               ),
             ],
+            const SizedBox(height: 12),
+            GuildPermissionsTable(
+              table: _permissions,
+              canEdit: true,
+              rankLabels: widget.guild.rankLabels,
+              onChanged: (next) => setState(() => _permissions = next),
+            ),
             const SizedBox(height: 6),
             GameButton(
               label: 'Save settings',
@@ -1556,6 +1621,7 @@ class _GuildSettingsSheetState extends State<_GuildSettingsSheet> {
                     for (final entry in _labels.entries) entry.key: entry.value.text,
                   },
                   skillMilestoneSettings: _milestoneSettings(),
+                  permissions: _permissions,
                 ),
               ),
             ),

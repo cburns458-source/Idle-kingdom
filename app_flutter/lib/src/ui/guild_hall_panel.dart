@@ -9,39 +9,35 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
 import 'game_popup.dart';
+import 'guild_bank_view.dart';
+import 'guild_hall_banner.dart';
+import 'guild_hall_gold_bar.dart';
 import 'item_icon.dart';
 import 'quantity_sheet.dart';
 
-enum _HallTab { storehouse, debt, bank, boxing }
+enum _HallTab { hall, bank, achievements }
 
-/// Per-guild hall: the storehouse the guild builds out of, and its debt ledger.
-///
-/// A hall opens with those two. The bank and the boxing ring are added by the
-/// tiers that pay for them.
+/// Per-guild hall: storehouse, running gold, room tiers, and the guild bank.
 class GuildHallPanel extends StatefulWidget {
   const GuildHallPanel({
     super.key,
     required this.controller,
     required this.multiplayer,
     this.onClose,
-    this.onOpenBank,
   });
 
   final GameController controller;
   final MultiplayerController multiplayer;
   final VoidCallback? onClose;
 
-  /// Opens the bank screen, which the hall borrows once the tier is paid for.
-  final VoidCallback? onOpenBank;
-
   @override
   State<GuildHallPanel> createState() => _GuildHallPanelState();
 }
 
 class _GuildHallPanelState extends State<GuildHallPanel> {
-  _HallTab _tab = _HallTab.storehouse;
+  _HallTab _tab = _HallTab.hall;
   GuildHallState? _hall;
-  List<ArenaOpponent> _boxers = const <ArenaOpponent>[];
+  List<GuildAchievementProgress> _progress = const <GuildAchievementProgress>[];
   String? _error;
   bool _loading = true;
 
@@ -65,11 +61,11 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
       return;
     }
     final hall = await net.service.guildHall(guildId);
-    final boxers = await net.service.hallBoxingOpponents();
+    final progress = await net.service.guildAchievementProgress(guildId);
     if (!mounted) return;
     setState(() {
       _hall = hall;
-      _boxers = boxers;
+      _progress = progress;
       _loading = false;
       if (hall == null) _error = 'Join a guild to use this hall.';
     });
@@ -94,26 +90,24 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
       return;
     }
     if (result.save != null) controller.commit(result.save!);
+    final guildId = net.guildId;
+    final progress = guildId == null
+        ? _progress
+        : await net.service.guildAchievementProgress(guildId);
+    if (!mounted) return;
     setState(() {
       _hall = result.hall;
+      _progress = progress;
       _error = null;
     });
-    if (result.paidOffJustNow && mounted) {
-      await showGameAlert(
-        context: context,
-        title: 'Good job!',
-        message: 'The hall debt is paid.',
-        confirmLabel: 'OK',
-        placement: GamePopupPlacement.center,
-      );
-    }
     for (final tierId in result.tiersFinishedNow) {
       if (!mounted) return;
-      final tier = guildHallTiers.firstWhere((row) => row.id == tierId);
+      final line = guildHallTierFinishLine(tierId);
+      final tier = guildHallTiers.where((row) => row.id == tierId);
       await showGameAlert(
         context: context,
-        title: '${tier.name} finished',
-        message: 'The guild spent the materials. ${tier.blurb}',
+        title: tier.isEmpty ? 'Finished' : '${tier.first.name} finished',
+        message: line ?? '',
         confirmLabel: 'OK',
         placement: GamePopupPlacement.center,
       );
@@ -139,7 +133,6 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     final quantity = await askQuantity(
       context,
       title: _itemName(stack),
-      subtitle: 'Into the guild storehouse',
       confirmLabel: 'Contribute',
       max: math.min(stack.quantity.floor(), remaining.floor()),
     );
@@ -147,16 +140,17 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
     await _apply(await net.service.contributeHallItem(save, index, quantity));
   }
 
-  Future<void> _payDebt() async {
+  Future<void> _chipIn() async {
     final hall = _hall;
     if (hall == null) return;
-    final maxPay = hall.debtRemaining.floor().clamp(0, save.gold.floor());
+    final maxPay = guildHallGoldPayMax(hall.goldContributed, save.gold);
+    if (maxPay <= 0) return;
     final quantity = await askQuantity(
       context,
-      title: 'Hall debt',
-      subtitle: 'Remaining: ${formatThousands(hall.debtRemaining)}',
-      confirmLabel: 'Pay',
+      title: 'Chip in',
+      confirmLabel: 'Chip in',
       max: maxPay,
+      clampToMax: true,
     );
     if (quantity == null || !mounted) return;
     await _apply(await net.service.payGuildDebt(save, quantity));
@@ -170,6 +164,13 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
         children: [
           Row(
             children: [
+              GuildHallBanner(
+                key: const Key('guild-hall-banner'),
+                banner: net.guild?.banner ?? defaultGuildBanner,
+                size: 32,
+                onPressed: _canEditBanner ? _editBanner : null,
+              ),
+              const SizedBox(width: 8),
               const Expanded(
                 child: Text(
                   'Guild Hall',
@@ -185,7 +186,6 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),
-          const MutedText('This instance belongs to your guild.'),
           if (_error case final error?) ...[
             const SizedBox(height: 6),
             Text(error, style: warningStyle),
@@ -198,10 +198,9 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                 Expanded(
                   child: GameButton(
                     label: switch (tab) {
-                      _HallTab.storehouse => 'Store House',
-                      _HallTab.debt => 'Debt',
+                      _HallTab.hall => 'Hall',
                       _HallTab.bank => 'Bank',
-                      _HallTab.boxing => 'Boxing',
+                      _HallTab.achievements => 'Achievements',
                     },
                     tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
                     onPressed: () => setState(() => _tab = tab),
@@ -213,35 +212,98 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
           const SizedBox(height: 10),
           Expanded(
             child: _loading
-                ? const Align(alignment: Alignment.topLeft, child: MutedText('Loading hall…'))
+                ? const SizedBox.shrink()
                 : _hall == null
-                ? const Align(
-                    alignment: Alignment.topLeft,
-                    child: MutedText('Join a guild to use this hall.'),
-                  )
-                : SingleChildScrollView(
-                    child: switch (_tab) {
-                      _HallTab.storehouse => _storehouse(),
-                      _HallTab.debt => _debt(),
-                      _HallTab.bank => _bank(),
-                      _HallTab.boxing => _boxing(),
-                    },
-                  ),
+                ? const SizedBox.shrink()
+                : switch (_tab) {
+                    _HallTab.hall => SingleChildScrollView(child: _storehouse()),
+                    _HallTab.bank => GuildBankView(
+                      controller: controller,
+                      multiplayer: net,
+                      hall: _hall!,
+                      onHallChanged: (hall) => setState(() => _hall = hall),
+                    ),
+                    _HallTab.achievements => SingleChildScrollView(child: _achievements()),
+                  },
           ),
         ],
       ),
     );
   }
 
-  /// A hall offers the Store House and the Debt. The rest is built into it.
   List<_HallTab> get _tabs {
     final hall = _hall;
     return <_HallTab>[
-      _HallTab.storehouse,
-      _HallTab.debt,
+      _HallTab.hall,
       if (hall != null && hall.bankUnlocked) _HallTab.bank,
-      if (hall != null && hall.boxingUnlocked) _HallTab.boxing,
+      _HallTab.achievements,
     ];
+  }
+
+  bool get _canEditBanner {
+    final role = _role;
+    return role != null && guildMaySetBanner(role);
+  }
+
+  Iterable<String> get _unlockedIds => [
+    for (final row in _progress)
+      if (row.unlocked) row.id,
+  ];
+
+  Future<void> _editBanner() async {
+    final guildId = net.guildId;
+    if (guildId == null || !_canEditBanner) return;
+    final next = await askGuildBanner(
+      context,
+      banner: net.guild?.banner ?? defaultGuildBanner,
+      unlockedAchievementIds: _unlockedIds,
+    );
+    if (next == null || !mounted) return;
+    final result = await net.service.setGuildBanner(guildId, next);
+    if (!result.ok) {
+      setState(() => _error = result.reason);
+      return;
+    }
+    await net.refresh(save);
+    if (!mounted) return;
+    setState(() => _error = null);
+  }
+
+  Widget _achievements() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_canEditBanner) ...[
+          GameButton(key: const Key('guild-banner-edit'), label: 'Banner', onPressed: _editBanner),
+          const SizedBox(height: 10),
+        ],
+        for (final row in _progress)
+          Padding(
+            key: Key('guild-achievement-${row.id}'),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    row.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      color: row.unlocked ? Palette.gold : Palette.muted,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${formatThousands(row.current)} / ${formatThousands(row.target)}',
+                  style: TextStyle(
+                    color: row.unlocked ? Palette.gold : Palette.muted,
+                    fontSize: GameFont.s,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _storehouse() {
@@ -252,150 +314,77 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
             guildHallDonationCap(hall.completedTiers, hall.storehouse, entry.$2.itemId) > 0)
           (entry.$1, entry.$2),
     ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _tierCard(hall),
-        const SizedBox(height: 8),
-        const Text('Bag', style: TextStyle(fontWeight: FontWeight.w400)),
-        if (bag.isEmpty)
-          const MutedText('Nothing to contribute.')
-        else
-          for (final entry in bag)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: DockRow(
-                title: _itemName(entry.$2),
-                lines: [MutedText('×${formatThousands(entry.$2.quantity)}')],
-                trailing: GameButton(label: 'In', onPressed: () => _deposit(entry.$1, entry.$2)),
-              ),
-            ),
-        const SizedBox(height: 8),
-        const Text('Store House', style: TextStyle(fontWeight: FontWeight.w400)),
-        if (hall.storehouse.isEmpty)
-          const MutedText('Empty.')
-        else
-          for (final stack in hall.storehouse)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: DockRow(
-                title: _itemName(stack),
-                trailing: MutedText('×${formatThousands(stack.quantity)}'),
-              ),
-            ),
-      ],
-    );
-  }
-
-  /// What the guild is building, and what it still owes for it.
-  Widget _tierCard(GuildHallState hall) {
-    final tier = nextGuildHallTier(hall.completedTiers);
-    if (tier == null) {
-      return const MutedText('The hall is finished.');
-    }
-    final needs = guildHallTierNeeds(tier, hall.storehouse);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(tier.name, style: const TextStyle(fontWeight: FontWeight.w400)),
-        MutedText('${tier.blurb} Donations are spent when it is finished.'),
-        for (final need in needs)
-          MutedText(
-            '${_itemNameFor(need.itemId)} '
-            '${formatThousands(need.counted)} / ${formatThousands(need.needed)}',
-          ),
-      ],
-    );
-  }
-
-  Widget _bank() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const MutedText('The counting room holds your own bank, same chest as in town.'),
-        const SizedBox(height: 8),
-        GameButton(label: 'Open the bank', onPressed: widget.onOpenBank),
-      ],
-    );
-  }
-
-  Widget _debt() {
-    final hall = _hall!;
     final role = _role;
-    final canPay = role != null && canPayGuildDebt(role);
-    final mine = hall.debtPaidBy[net.session?.userId] ?? 0;
+    final maxPay = guildHallGoldPayMax(hall.goldContributed, save.gold);
+    final canChip = role != null && canChipInGuildGold(role) && maxPay > 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          hall.debtPaidOff
-              ? 'Paid in full.'
-              : 'Remaining: ${formatThousands(hall.debtRemaining)} / ${formatThousands(guildHallDebtGold)}',
-          style: const TextStyle(fontWeight: FontWeight.w400),
-        ),
-        MutedText(
-          'Your payments: ${formatThousands(mine)} gold. Member and above can pay. No extra reward.',
-        ),
+        GuildHallGoldBar(contributed: hall.goldContributed),
         const SizedBox(height: 8),
         GameButton(
-          label: hall.debtPaidOff ? 'Settled' : 'Pay',
-          onPressed: !hall.debtPaidOff && canPay ? _payDebt : null,
+          key: const Key('guild-gold-chip-in'),
+          label: 'Chip in',
+          onPressed: canChip ? _chipIn : null,
         ),
-        if (!canPay) const MutedText('Recruits cannot pay the hall debt.'),
-      ],
-    );
-  }
-
-  Widget _boxing() {
-    if (_boxers.isEmpty) {
-      return const MutedText('No guildmates with a stored character to challenge.');
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const MutedText('Challenge a guildmate. Saved gear, current combat and race. No gold.'),
+        const SizedBox(height: 12),
+        for (final tier in guildHallTiers) _tierBlock(hall, tier),
         const SizedBox(height: 8),
-        for (final row in _boxers)
+        const Text('Bag', style: TextStyle(fontWeight: FontWeight.w400)),
+        for (final entry in bag)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: 6),
             child: DockRow(
-              title: row.username,
-              lines: [MutedText('Combat ${formatThousands(row.combatLevel)}')],
-              trailing: GameButton(label: 'Fight', onPressed: () => _box(row)),
+              title: _itemName(entry.$2),
+              lines: [MutedText('×${formatThousands(entry.$2.quantity)}')],
+              trailing: GameButton(label: 'In', onPressed: () => _deposit(entry.$1, entry.$2)),
+            ),
+          ),
+        const SizedBox(height: 8),
+        const Text('Store House', style: TextStyle(fontWeight: FontWeight.w400)),
+        for (final stack in hall.storehouse)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: DockRow(
+              title: _itemName(stack),
+              trailing: MutedText('×${formatThousands(stack.quantity)}'),
             ),
           ),
       ],
     );
   }
 
-  Future<void> _box(ArenaOpponent opponent) async {
-    final loadout = await net.service.ownPvpSnapshot();
-    if (!mounted) return;
-    if (loadout == null) {
-      setState(() => _error = pvpEquipmentRequired);
-      return;
-    }
-    final them = await net.service.readOpponentSave(opponent.userId);
-    if (!mounted) return;
-    if (them == null) {
-      setState(() => _error = 'That player has no character to fight.');
-      return;
-    }
-    final fight = simulatePvpFight(
-      controller.db,
-      composePvpFighter(controller.db, save, loadout),
-      composePvpFighter(controller.db, them, them),
-      controller.session.random,
-    );
-    if (!mounted) return;
-    await showGameAlert(
-      context: context,
-      title: fight.outcome == 'win' ? 'Victory' : 'Defeat',
-      message: fight.outcome == 'win'
-          ? 'You beat ${opponent.username} in the ring.'
-          : '${opponent.username} won the bout. No gold changes hands.',
-      confirmLabel: 'OK',
-      placement: GamePopupPlacement.center,
+  Widget _tierBlock(GuildHallState hall, GuildHallTier tier) {
+    final next = nextGuildHallTier(hall.completedTiers);
+    final finished = hall.completedTiers.contains(tier.id);
+    final active = !finished && next?.id == tier.id;
+    final color = finished
+        ? Palette.gold
+        : active
+        ? null
+        : Palette.muted;
+    final needs = guildHallTierNeeds(tier, hall.storehouse);
+    return Opacity(
+      opacity: finished || active ? 1 : 0.45,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              tier.name,
+              style: TextStyle(fontWeight: FontWeight.w400, color: color),
+            ),
+            for (final need in needs)
+              Text(
+                '${_itemNameFor(need.itemId)} '
+                '${formatThousands(finished ? need.needed : need.counted)} / '
+                '${formatThousands(need.needed)}',
+                style: TextStyle(color: color ?? Palette.muted, fontSize: GameFont.s),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

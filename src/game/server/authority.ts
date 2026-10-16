@@ -17,8 +17,38 @@ import {
   saveActiveEquipmentPreset,
   setEquipmentPresetIcon,
 } from '../equipment/presets'
-import { donateToGuildHall, payGuildHallDebt, withdrawFromGuildHall, type GuildHallState } from '../guild/economy'
-import { canPayGuildDebt } from '../guild/hall'
+import {
+  donateToGuildHall,
+  chipInGuildHallGold,
+  withdrawFromGuildHall,
+  normalizeGuildHallState,
+  type GuildHallState,
+} from '../guild/economy'
+import {
+  evaluateGuildAchievements,
+  type GuildAchievementProgress,
+} from '../guild/achievements'
+import { canChipInGuildGold, canPayGuildDebt, guildHallTierFinishLine } from '../guild/hall'
+import {
+  depositToGuildBank,
+  emptyGuildBank,
+  moveGuildBankToUpForGrabs,
+  takeGuildBankUpForGrabs,
+  withdrawFromGuildBank,
+  type GuildBankState,
+} from '../guild/bank'
+import {
+  defaultGuildPermissionTable,
+  guildMay,
+  guildMayWithdrawAtLevel,
+  GUILD_BANK_LEVEL_WITHDRAW_REFUSAL,
+  GUILD_BANK_LEVEL_TAKE_REFUSAL,
+  type GuildPermissionTable,
+} from '../guild/permissions'
+import { guildHallGardenPatchOpen, guildHallRoomActivityVisible } from '../guild/rooms'
+import { guildHallBankUnlocked } from '../guild/hall'
+import { GUILD_HALL_LOCATION_ID } from '../world/constants'
+import { totalLevel } from '../skills/totals'
 import { depositToBank, withdrawFromBank } from '../inventory/bank'
 import type { LootGrant } from '../activity/types'
 import type { NoRoom } from '../inventory/fit'
@@ -144,8 +174,13 @@ export type GameCommandName =
   | 'guild_create'
   | 'guild_create_pay'
   | 'guild_pay_hall_debt'
+  | 'guild_chip_in_hall_gold'
   | 'guild_donate_hall_item'
   | 'guild_withdraw_hall_item'
+  | 'guild_bank_deposit'
+  | 'guild_bank_withdraw'
+  | 'guild_bank_take_up_for_grabs'
+  | 'guild_bank_move_up_for_grabs'
   | 'submit_leaderboard'
   | 'save_pvp_equipment'
 
@@ -168,8 +203,15 @@ export type GameCommandContext = {
   nowMs: number
   random: RandomFn
   hall?: GuildHallState
+  guildBank?: GuildBankState
+  guildPermissions?: GuildPermissionTable
   userId?: string
   guildRole?: string
+  totalLevel?: number
+  membersAtLevel500?: number
+  unlockedAchievements?: Record<string, string>
+  guildmatesInHall?: boolean
+  nextId?: () => string
   opponentSave?: PlayerSave
   opponent?: ArenaOpponent
   issuedFightId?: string
@@ -180,8 +222,16 @@ export type GameCommandResult =
   | {
       ok: true
       save: PlayerSave
+      /** Hosted save after catch-up, before this intent. Hall SQL diffs this. */
+      saveBeforeCommand?: PlayerSave
       hall?: GuildHallState
+      bank?: GuildBankState
+      logEntries?: Array<Record<string, unknown>>
       goldCost?: number
+      goldChipped?: number
+      tiersFinishedNow?: string[]
+      achievementsUnlocked?: string[]
+      achievementProgress?: GuildAchievementProgress[]
       view?: DialogueView | null
       questCompletions?: QuestArrivalCompletion[]
       fightId?: string
@@ -236,6 +286,7 @@ export type HostedCatchUpOptions = {
   /** Start of the unattended cap window when a previous request stopped early. */
   windowStartMs?: number
   budgetMs?: number
+  guildmatesInHall?: boolean
 }
 
 function asString(value: unknown): string | null {
@@ -313,6 +364,72 @@ function parseDesiredSlots(value: unknown): DesiredLoadoutSlot[] | null {
   return slots
 }
 
+function refuseHallGarden(save: PlayerSave, hall: GuildHallState | undefined): string | null {
+  if (save.currentLocationId !== GUILD_HALL_LOCATION_ID) return null
+  if (guildHallGardenPatchOpen(hall?.completedTiers ?? [])) return null
+  return 'The indoor garden is not built yet.'
+}
+
+function withHallAchievements(
+  extra: Omit<Extract<GameCommandResult, { ok: true }>, 'ok' | 'save'>,
+  options: GameCommandContext,
+  nowMs: number,
+  hall?: GuildHallState,
+): Omit<Extract<GameCommandResult, { ok: true }>, 'ok' | 'save'> {
+  if (!hall) return extra
+  const evaluated = evaluateGuildAchievements(
+    {
+      completedTiers: hall.completedTiers,
+      goldContributed: hall.goldContributed,
+      goldContributedBy: hall.goldContributedBy,
+      donatedBy: hall.donatedBy,
+      membersAtLevel500: options.membersAtLevel500 ?? 0,
+      unlocked: options.unlockedAchievements,
+    },
+    new Date(nowMs).toISOString(),
+  )
+  return {
+    ...extra,
+    hall,
+    achievementsUnlocked: evaluated.newlyUnlocked,
+    achievementProgress: evaluated.progress,
+  }
+}
+
+function hallLogEntries(
+  options: GameCommandContext,
+  result: {
+    goldChipped?: number
+    donatedItem?: { itemId: string; quantity: number }
+    tiersFinishedNow?: string[]
+  },
+): Array<Record<string, unknown>> {
+  const entries: Array<Record<string, unknown>> = []
+  const actorUsername = ''
+  if ((result.goldChipped ?? 0) > 0 || result.donatedItem) {
+    entries.push({
+      kind: 'donation',
+      actor_user_id: options.userId ?? '',
+      actor_username: actorUsername,
+      gold: result.goldChipped ?? 0,
+      items: result.donatedItem
+        ? [{ itemId: result.donatedItem.itemId, quantity: result.donatedItem.quantity }]
+        : [],
+      message: '',
+    })
+  }
+  for (const tierId of result.tiersFinishedNow ?? []) {
+    entries.push({
+      kind: 'tier_complete',
+      actor_user_id: options.userId ?? '',
+      actor_username: actorUsername,
+      tier_id: tierId,
+      message: guildHallTierFinishLine(tierId) ?? '',
+    })
+  }
+  return entries
+}
+
 function failed(reason: string): GameCommandResult {
   return { ok: false, reason }
 }
@@ -371,9 +488,12 @@ export function runPhase2Sync(
   const unattended = resolveUnattendedProgress(db, current, options.nowMs, tracked.random, {
     budgetMs: options.budgetMs ?? HOSTED_CATCH_UP_BUDGET_MS,
     windowStartMs: options.windowStartMs,
+    guildmatesInHall: options.guildmatesInHall,
   })
   const save = unattended.caughtUp
-    ? advanceSession(db, unattended.save, options.nowMs, tracked.random).save
+    ? advanceSession(db, unattended.save, options.nowMs, tracked.random, {
+        guildmatesInHall: options.guildmatesInHall,
+      }).save
     : unattended.save
   return {
     save,
@@ -431,6 +551,9 @@ function applyExistingCommand(
   save: PlayerSave,
   options: GameCommandContext & HostedCatchUpOptions,
 ): GameCommandResult {
+  if (options.hall) {
+    options = { ...options, hall: normalizeGuildHallState(options.hall) }
+  }
   const nowMs = options.nowMs
   const random = options.random
   // Catch the hosted copy up before the intent so a sell/bank sees loot the
@@ -438,14 +561,19 @@ function applyExistingCommand(
   const unattended = resolveUnattendedProgress(db, save, nowMs, random, {
     budgetMs: options.budgetMs ?? HOSTED_CATCH_UP_BUDGET_MS,
     windowStartMs: options.windowStartMs,
+    guildmatesInHall: options.guildmatesInHall,
   })
   // An intent on a half-caught-up save would act on the wrong bag and clock.
   // The partial progress is still written so the retry continues from it.
   if (!unattended.caughtUp) {
     return { ok: false, reason: CATCHING_UP_REASON, catchingUp: true, save: unattended.save }
   }
-  save = advanceSession(db, unattended.save, nowMs, random).save
+  save = advanceSession(db, unattended.save, nowMs, random, {
+    guildmatesInHall: options.guildmatesInHall,
+  }).save
+  const saveBeforeCommand = save
 
+  const commanded = ((): GameCommandResult => {
   switch (command) {
     case 'set_meta':
       return applyMeta(db, save, args)
@@ -466,6 +594,11 @@ function applyExistingCommand(
     case 'confirm_auto_equip': {
       const activityId = asString(args.activityId)
       if (!activityId) return failed('Missing activity.')
+      if (
+        !guildHallRoomActivityVisible(activityId, options.hall?.completedTiers ?? [])
+      ) {
+        return failed('That room is not built yet.')
+      }
       const allowAutoEquip = command === 'confirm_auto_equip' || asBool(args.allowAutoEquip, true)
       const started = requestActivityStart(db, save, activityId, nowMs, random)
       if (started.ok) return ok(started.save)
@@ -513,16 +646,23 @@ function applyExistingCommand(
       return unwrap(chooseCombatForQuest(db, save, questId, nowMs, random))
     }
     case 'plant_botany': {
+      const gardenRefusal = refuseHallGarden(save, options.hall)
+      if (gardenRefusal) return failed(gardenRefusal)
       const seedItemId = asString(args.seedItemId)
       if (!seedItemId) return failed('Missing seed.')
       return unwrap(plantBotanySeed(db, save, seedItemId, nowMs, asNumber(args.plantQuantity) ?? 3))
     }
     case 'plant_botany_selection': {
+      const gardenRefusal = refuseHallGarden(save, options.hall)
+      if (gardenRefusal) return failed(gardenRefusal)
       const seedItemIds = Array.isArray(args.seedItemIds) ? args.seedItemIds.filter((id): id is string => typeof id === 'string') : []
       return unwrap(plantBotanySelection(db, save, seedItemIds, nowMs, asBool(args.usedCompost)))
     }
-    case 'plant_best_botany':
+    case 'plant_best_botany': {
+      const gardenRefusal = refuseHallGarden(save, options.hall)
+      if (gardenRefusal) return failed(gardenRefusal)
       return unwrap(plantBestBotanySeed(db, save, nowMs))
+    }
     case 'place_trap': {
       const trapItemId = asString(args.trapItemId)
       if (!trapItemId) return failed('Missing trap.')
@@ -535,7 +675,17 @@ function applyExistingCommand(
       const locationId = asString(args.locationId) ?? save.currentLocationId
       const kind = asString(args.kind)
       if (!kind) return failed('Missing timer.')
-      return unwrap(collectLocationTimer(db, save, locationId, kind, nowMs, random))
+      return unwrap(
+        collectLocationTimer(
+          db,
+          save,
+          locationId,
+          kind,
+          nowMs,
+          random,
+          options.guildmatesInHall === true && locationId === GUILD_HALL_LOCATION_ID,
+        ),
+      )
     }
     case 'collect_critter':
       return unwrap(collectCritter(save, save.currentLocationId))
@@ -751,15 +901,34 @@ function applyExistingCommand(
       if (refusal) return failed(refusal)
       return ok({ ...save, gold: save.gold - GUILD_CREATE_GOLD_COST }, { goldCost: GUILD_CREATE_GOLD_COST })
     }
-    case 'guild_pay_hall_debt': {
+    case 'guild_pay_hall_debt':
+    case 'guild_chip_in_hall_gold': {
       if (!options.hall || !options.userId) return failed('Join a guild first.')
-      if (options.guildRole && !canPayGuildDebt(options.guildRole)) {
-        return failed('Recruits cannot pay the hall debt.')
+      if (
+        !canChipInGuildGold(options.guildRole ?? '') &&
+        !canPayGuildDebt(options.guildRole ?? '')
+      ) {
+        return failed('Recruits cannot chip in gold.')
       }
       const amount = asNumber(args.amount)
       if (amount == null) return failed('Choose an amount.')
-      const paid = payGuildHallDebt(options.hall, options.userId, save, amount)
-      return paid.ok ? ok(paid.save, { hall: paid.hall }) : failed(paid.reason)
+      const paid = chipInGuildHallGold(options.hall, options.userId, save, amount)
+      return paid.ok
+        ? ok(
+            paid.save,
+            withHallAchievements(
+              {
+                hall: paid.hall,
+                goldChipped: paid.goldChipped,
+                tiersFinishedNow: paid.tiersFinishedNow,
+                logEntries: hallLogEntries(options, paid),
+              },
+              options,
+              nowMs,
+              paid.hall,
+            ),
+          )
+        : failed(paid.reason)
     }
     case 'guild_donate_hall_item': {
       if (!options.hall) return failed('Join a guild first.')
@@ -768,15 +937,29 @@ function applyExistingCommand(
       if (index == null || quantity == null) return failed('Missing donation.')
       const resolved = resolveStackIndex(save.inventory, index, asString(args.itemId), enchantmentArg(args))
       if (resolved == null) return failed('That stack is not there.')
-      // Officers can withdraw from the storehouse, so a donation can reach another player.
       if (!isItemTradeable(db, save.inventory[resolved].itemId)) return failed(UNTRADEABLE_ITEM_REFUSAL)
-      const donated = donateToGuildHall(options.hall, save, resolved, quantity)
-      return donated.ok ? ok(donated.save, { hall: donated.hall }) : failed(donated.reason)
+      const donated = donateToGuildHall(options.hall, save, resolved, quantity, options.userId)
+      return donated.ok
+        ? ok(
+            donated.save,
+            withHallAchievements(
+              {
+                hall: donated.hall,
+                tiersFinishedNow: donated.tiersFinishedNow,
+                logEntries: hallLogEntries(options, donated),
+              },
+              options,
+              nowMs,
+              donated.hall,
+            ),
+          )
+        : failed(donated.reason)
     }
     case 'guild_withdraw_hall_item': {
       if (!options.hall) return failed('Join a guild first.')
-      if (options.guildRole !== 'leader' && options.guildRole !== 'officer') {
-        return failed('Officers or the leader can withdraw.')
+      const perms = options.guildPermissions ?? defaultGuildPermissionTable()
+      if (!guildMay(options.guildRole ?? '', 'withdraw', perms)) {
+        return failed('You cannot withdraw from the storehouse.')
       }
       const index = asInt(args.storehouseIndex)
       const quantity = asNumber(args.quantity)
@@ -791,12 +974,100 @@ function applyExistingCommand(
       const withdrawn = withdrawFromGuildHall(options.hall, save, resolved, quantity)
       return withdrawn.ok ? ok(withdrawn.save, { hall: withdrawn.hall }) : failed(withdrawn.reason)
     }
+    case 'guild_bank_deposit': {
+      if (!options.hall || !options.userId) return failed('Join a guild first.')
+      if (!guildHallBankUnlocked(options.hall.completedTiers)) {
+        return failed('The counting room is not built yet.')
+      }
+      const perms = options.guildPermissions ?? defaultGuildPermissionTable()
+      if (!guildMay(options.guildRole ?? '', 'deposit', perms)) {
+        return failed('You cannot deposit in the guild bank.')
+      }
+      const index = asInt(args.inventoryIndex)
+      const quantity = asNumber(args.quantity)
+      if (index == null || quantity == null) return failed('Missing deposit.')
+      const resolved = resolveStackIndex(save.inventory, index, asString(args.itemId), enchantmentArg(args))
+      if (resolved == null) return failed('That stack is not there.')
+      if (!isItemTradeable(db, save.inventory[resolved].itemId)) return failed(UNTRADEABLE_ITEM_REFUSAL)
+      const nextId = options.nextId ?? (() => `gb-${nowMs}-${resolved}`)
+      const deposited = depositToGuildBank(options.guildBank ?? emptyGuildBank(), save, resolved, quantity, nextId)
+      return deposited.ok
+        ? ok(deposited.save, { hall: options.hall, bank: deposited.bank })
+        : failed(deposited.reason)
+    }
+    case 'guild_bank_withdraw': {
+      if (!options.hall || !options.userId) return failed('Join a guild first.')
+      if (!guildHallBankUnlocked(options.hall.completedTiers)) {
+        return failed('The counting room is not built yet.')
+      }
+      const perms = options.guildPermissions ?? defaultGuildPermissionTable()
+      if (!guildMay(options.guildRole ?? '', 'withdraw', perms)) {
+        return failed('You cannot withdraw from the guild bank.')
+      }
+      const level = options.totalLevel ?? totalLevel(save)
+      if (!guildMayWithdrawAtLevel(level)) return failed(GUILD_BANK_LEVEL_WITHDRAW_REFUSAL)
+      const itemId = asString(args.itemId)
+      const quantity = asNumber(args.quantity)
+      if (!itemId || quantity == null) return failed('Missing withdraw.')
+      const taken = withdrawFromGuildBank(
+        options.guildBank ?? emptyGuildBank(),
+        save,
+        itemId,
+        quantity,
+        enchantmentArg(args) ?? null,
+      )
+      return taken.ok ? ok(taken.save, { hall: options.hall, bank: taken.bank }) : failed(taken.reason)
+    }
+    case 'guild_bank_take_up_for_grabs': {
+      if (!options.hall || !options.userId) return failed('Join a guild first.')
+      if (!guildHallBankUnlocked(options.hall.completedTiers)) {
+        return failed('The counting room is not built yet.')
+      }
+      const takeLevel = options.totalLevel ?? totalLevel(save)
+      if (!guildMayWithdrawAtLevel(takeLevel)) return failed(GUILD_BANK_LEVEL_TAKE_REFUSAL)
+      const itemId = asString(args.itemId)
+      const quantity = asNumber(args.quantity)
+      if (!itemId || quantity == null) return failed('Missing take.')
+      const taken = takeGuildBankUpForGrabs(
+        options.guildBank ?? emptyGuildBank(),
+        save,
+        itemId,
+        quantity,
+        enchantmentArg(args) ?? null,
+      )
+      return taken.ok ? ok(taken.save, { hall: options.hall, bank: taken.bank }) : failed(taken.reason)
+    }
+    case 'guild_bank_move_up_for_grabs': {
+      if (!options.hall || !options.userId) return failed('Join a guild first.')
+      if (!guildHallBankUnlocked(options.hall.completedTiers)) {
+        return failed('The counting room is not built yet.')
+      }
+      const perms = options.guildPermissions ?? defaultGuildPermissionTable()
+      if (!guildMay(options.guildRole ?? '', 'move_up_for_grabs', perms)) {
+        return failed('You cannot move items to Up for grabs.')
+      }
+      const itemId = asString(args.itemId)
+      const quantity = asNumber(args.quantity)
+      if (!itemId || quantity == null) return failed('Missing item.')
+      const nextId = options.nextId ?? (() => `gb-${nowMs}-${itemId}`)
+      const moved = moveGuildBankToUpForGrabs(
+        options.guildBank ?? emptyGuildBank(),
+        save,
+        itemId,
+        quantity,
+        enchantmentArg(args) ?? null,
+        nextId,
+      )
+      return moved.ok ? ok(moved.save, { hall: options.hall, bank: moved.bank }) : failed(moved.reason)
+    }
     case 'submit_leaderboard':
     case 'save_pvp_equipment':
       return ok(save)
     default:
       return failed('Unknown command.')
   }
+  })()
+  return commanded.ok ? { ...commanded, saveBeforeCommand } : commanded
 }
 
 function resolveRankedPvpFightCommand(

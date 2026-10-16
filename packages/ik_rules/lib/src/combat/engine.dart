@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../achievements/progress.dart';
+import '../guild/rooms.dart';
 import '../activity/held_action.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
@@ -564,15 +565,17 @@ CombatVictoryResult applyCombatVictory(
   ActionRow action,
   EnemyRow enemy,
   RandomFn random,
-  num nowMs,
-) {
+  num nowMs, [
+  bool guildmatesPresent = false,
+]) {
   final maxHp = playerMaxHp(db, save);
   var next = save.copyWith(
     maxHp: maxHp,
     currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
   );
 
-  final xpAmount = enemyCombatXp(enemy);
+  final skipLoot = isGuildHallCageActivity(save.currentActivityId ?? '');
+  final xpAmount = applyGuildHallCompanyXp(enemyCombatXp(enemy), guildmatesPresent);
   // Prefer fishing-mode bosses and Fishing-tagged fight actions (Mother Squid /
   // Squidling fallthrough). Ordinary fights split XP across Might / Vitality.
   final fishingMode =
@@ -597,6 +600,26 @@ CombatVictoryResult applyCombatVictory(
       xpAwards.add((skillId: vitalitySkillId, xp: split.vitalityXp));
       if (split.mightXp <= 0) xpSkillId = vitalitySkillId;
     }
+  }
+
+  if (skipLoot) {
+    next = withBossRespawn(tickPotionAction(clearCombatSave(next)), enemy, nowMs);
+    next = withoutHeldAction(next, save.currentActivityId);
+    next = creditXpAwards(next, xpAwards, nowMs);
+    return CombatVictoryResult(
+      save: next,
+      xpGained: xpAmount,
+      xpSkillId: xpSkillId,
+      xpAwards: xpAwards,
+      goldGained: 0,
+      loot: const <LootGrant>[],
+      cosmeticsGranted: const <ActionCosmeticGrant>[],
+      booksGranted: const <ActionBookGrant>[],
+      leftBehind: const <LootGrant>[],
+      foodConsumed: false,
+      foodHealed: 0,
+      foodName: null,
+    );
   }
 
   final minGold = jsNumber(enemy.raw['Minimum Gold'] ?? 0);

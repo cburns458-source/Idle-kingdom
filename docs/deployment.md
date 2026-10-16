@@ -164,6 +164,52 @@ Checklist, in order:
    should change nothing there; it records the version test has. Safe to
    re-run.
    Status: applied on test (version `20261007045115`); live pending.
+4. [ ] `20261016120000_guild_hall_tiers.sql` (SOC-01). Running gold total,
+   `guild_may`, hall revision CAS, guild bank jsonb, guild log, and
+   `guild_commit_hall`. Apply to test when this PR lands on `test-launch`; live
+   only after Conor merges `test-launch` into `main`. Do not apply to live
+   before the game function that writes through `guild_commit_hall` is on
+   `restoria-idlerpg`.
+   Status: applied on test Oct 16 2026 (MCP version `20261016061935`, file
+   `20261016120000`); live pending.
+5. [ ] `20261016140000_guild_commit_hall_save_delta.sql` (SOC-01). Hall gold and
+   storehouse from hosted save deltas (8-argument `guild_commit_hall`). Apply
+   to test with this PR; live only after Conor merges `test-launch` into
+   `main`. Must land before or together with `20261016150000` and the `game`
+   function that passes `p_before`.
+   Status: applied on test Oct 16 2026 (file `20261016140000`); live pending.
+6. [ ] `20261016150000_guild_commit_hall_caught_up_save.sql` (SOC-01). Drops the
+   8-argument `guild_commit_hall` and replaces it with the 9-argument function
+   that takes `p_before` (the caught-up save). Refuses gold past the 1M cap and
+   a mismatched bank. Apply to test with this PR; live only after Conor merges
+   `test-launch` into `main`. Do not apply to live before the `game` function
+   that passes `p_before` is on `restoria-idlerpg`. This file and
+   `20261016140000` must land before or together with that function.
+   Status: applied on test Oct 16 2026 (file `20261016150000`); live pending.
+7. [ ] `20261016170000_guild_achievements_and_banner.sql` (SOC-01). Guild
+   achievement unlocks, hall `donated_by`, and `guilds.banner`. Apply to test
+   with this PR; live only after Conor merges `test-launch` into `main`.
+   Status: applied on test Oct 16 2026 (file `20261016170000`, MCP
+   `guild_achievements_and_banner` plus engine follow-ups); live pending.
+8. [ ] `20261016180000_guild_achievements_qa.sql` (SOC-01). Rising strength
+   counts hosted saves via `bazaar_user_total_level`, guild reset restores
+   `guilds.banner` to the default, `guild_set_banner` catches only P0001.
+   Apply to test with this PR; live only after Conor merges `test-launch`
+   into `main`. Do not edit `20261016170000`.
+   Status: applied on test Oct 16 2026 (file `20261016180000`, MCP
+   `20261016120815` / `guild_achievements_qa`); live pending.
+9. [ ] `20261016190000_guild_achievements_skip_rising_count.sql` (SOC-01).
+   Skip the Rising strength hosted-save scan once unlocked; save-payload
+   trigger only evaluates when a member newly reaches total level 500.
+   Apply to test with this PR; live only after Conor merges `test-launch`
+   into `main`. Do not edit `20261016170000` or `20261016180000`.
+   Status: applied on test Oct 16 2026 (file `20261016190000`, MCP
+   `20261016122648` / `guild_achievements_skip_rising_count`); live pending.
+
+Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
+update, so paid-off halls are not migrated. Already applied on test Oct 16
+2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.
+Do not apply on live.
 
 The eight files before that (profile guard through Wave F cleanup) were applied
 to live when `efbda080` shipped to `main`.

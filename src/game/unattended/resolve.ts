@@ -21,6 +21,7 @@ import { accruePlayTime } from '../save/playTime'
 import type { PlayerSave } from '../save/types'
 import { mergeLeftBehind, type LootGrant } from '../activity/types'
 import { advanceSession } from '../session/tick'
+import { guildHallCompanyActive } from '../guild/rooms'
 import { isIncompleteCombatAwayLine } from './summary'
 import { applyNaturalHpRegen } from '../vitals/regen'
 
@@ -97,6 +98,8 @@ export interface UnattendedOptions {
    * steps.
    */
   maxStepsOverride?: number
+  /** +5% hall XP when another guildmate is in the hall during this catch-up. */
+  guildmatesInHall?: boolean
 }
 
 export function unattendedCapMs(db: GameDatabase): number {
@@ -261,7 +264,9 @@ export function resolveUnattendedProgress(
     const combatDue = nextCombatDueMs(db, current)
     if (combatDue != null) {
       if (combatDue > endMs) break
-      const tick = advanceSession(db, current, combatDue, random)
+      const tick = advanceSession(db, current, combatDue, random, {
+        guildmatesInHall: options.guildmatesInHall,
+      })
       for (const event of tick.events) {
         if (event.kind === 'enemy-defeated') combatVictories += 1
         if (event.kind === 'player-defeated') combatDeaths += 1
@@ -293,7 +298,14 @@ export function resolveUnattendedProgress(
         break
       }
 
-      const completed = completeGatheringAction(db, current, action, random, due)
+      const completed = completeGatheringAction(
+        db,
+        current,
+        action,
+        random,
+        due,
+        guildHallCompanyActive(current.currentLocationId, options.guildmatesInHall === true),
+      )
       gatheringActions += 1
       rememberLeftBehind(completed.result.leftBehind)
       let next = completed.save
