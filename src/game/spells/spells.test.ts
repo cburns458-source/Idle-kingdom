@@ -141,7 +141,7 @@ describe("Wizard's tome spell power", () => {
     const equipment = launch.Equipment.find((row) => row['Equipment ID'] === 'EQP-0067')!
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0003')!
     expect(item['Base Sell Value']).toBe(157)
-    expect(item.Description).toBe('Equipped spells are 20% stronger.')
+    expect(item.Description).toBe('A tome that makes equipped spells 20% stronger.')
     expect(equipment['HP Bonus']).toBeNull()
     expect(equipment['Damage Reduction']).toBeNull()
     expect(equipment['Capabilities / Effects']).toContain('spell_power_pct=20')
