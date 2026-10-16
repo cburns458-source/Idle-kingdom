@@ -1,5 +1,5 @@
 -- Forged hall payloads must not move gold_contributed or completed_tiers.
--- Run against a project that has 20261016140000_guild_commit_hall_save_delta.
+-- Run against a project that has 20261016150000_guild_commit_hall_caught_up_save.
 
 \pset pager off
 
@@ -13,6 +13,7 @@ declare
   v_overpay jsonb;
   v_cap jsonb;
   v_bank jsonb;
+  v_log jsonb;
 begin
   v_forged := public.guild_hall_apply_save_deltas(
     '{"gold": 500, "inventory": []}'::jsonb,
@@ -144,6 +145,23 @@ begin
   end if;
   if (v_bank ->> 'reason') <> 'The guild bank change did not match the save.' then
     raise exception 'bank reason: %', v_bank;
+  end if;
+
+  v_log := public.guild_hall_stamp_log_gold(
+    '[{"kind":"donation","gold":9,"items":[{"itemId":"ITEM-0015","quantity":1}]},{"kind":"donation","gold":99},{"kind":"tier_complete","tier_id":"build_the_hall"}]'::jsonb,
+    40
+  );
+  if jsonb_array_length(v_log) <> 3 then
+    raise exception 'stamped log should keep three entries: %', v_log;
+  end if;
+  if (v_log -> 0 ->> 'gold')::numeric <> 40 then
+    raise exception 'first donation should get taken gold once: %', v_log;
+  end if;
+  if (v_log -> 1 ->> 'gold')::numeric <> 0 then
+    raise exception 'later donation must not also get taken gold: %', v_log;
+  end if;
+  if v_log -> 2 ? 'gold' then
+    raise exception 'non-donation entries must not get a gold field: %', v_log;
   end if;
 end;
 $$;

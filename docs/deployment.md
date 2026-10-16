@@ -173,11 +173,19 @@ Checklist, in order:
    Status: applied on test Oct 16 2026 (MCP version `20261016061935`, file
    `20261016120000`); live pending.
 5. [ ] `20261016140000_guild_commit_hall_save_delta.sql` (SOC-01). Hall gold and
-   storehouse from the caught-up save versus the post-command save; refuses
-   gold past the 1M cap and a mismatched bank. Apply to test with this PR;
-   live only after Conor merges `test-launch` into `main`. Do not apply to live
-   before the game function that passes `p_before` is on `restoria-idlerpg`.
+   storehouse from hosted save deltas (8-argument `guild_commit_hall`). Apply
+   to test with this PR; live only after Conor merges `test-launch` into
+   `main`. Must land before or together with `20261016150000` and the `game`
+   function that passes `p_before`.
    Status: applied on test Oct 16 2026 (file `20261016140000`); live pending.
+6. [ ] `20261016150000_guild_commit_hall_caught_up_save.sql` (SOC-01). Drops the
+   8-argument `guild_commit_hall` and replaces it with the 9-argument function
+   that takes `p_before` (the caught-up save). Refuses gold past the 1M cap and
+   a mismatched bank. Apply to test with this PR; live only after Conor merges
+   `test-launch` into `main`. Do not apply to live before the `game` function
+   that passes `p_before` is on `restoria-idlerpg`. This file and
+   `20261016140000` must land before or together with that function.
+   Status: applied on test Oct 16 2026 (file `20261016150000`); live pending.
 
 The eight files before that (profile guard through Wave F cleanup) were applied
 to live when `efbda080` shipped to `main`.
