@@ -291,6 +291,76 @@ void main() {
     );
   });
 
+  test('a member under total level 200 is refused on Up for grabs Take', () {
+    final backend = LocalMultiplayerBackend(storage: MemorySaveStorage())..gameDatabase = database;
+    final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;
+    var save = _withTotalLevel(
+      createNewSave(database, 1).copyWith(
+        gold: guildCreateGoldCost + 10000,
+        inventory: const [
+          InventoryStack(itemId: 'ITEM-0015', quantity: 1000),
+          InventoryStack(itemId: 'ITEM-0095', quantity: 100),
+          InventoryStack(itemId: 'ITEM-0017', quantity: 24000),
+          InventoryStack(itemId: 'ITEM-0002', quantity: 10000),
+          InventoryStack(itemId: 'ITEM-0006', quantity: 6320),
+          InventoryStack(itemId: 'ITEM-0026', quantity: 1),
+        ],
+      ),
+      200,
+    );
+    backend.writeCloudSave(leader.userId, save);
+    final created = backend.createGuild(
+      leader,
+      const CreateGuildInput(
+        name: 'Oak',
+        tag: 'OAK',
+        description: '',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      save.gold,
+    );
+    save = save.copyWith(gold: save.gold - created.goldCost!);
+    GuildHallActionResult? last;
+    var hall = backend.guildHall(created.guild!.id)!;
+    while (true) {
+      hall = last?.hall ?? hall;
+      final index = save.inventory.indexWhere(
+        (stack) => guildHallDonationCap(hall.completedTiers, hall.storehouse, stack.itemId) > 0,
+      );
+      if (index < 0) break;
+      last = backend.contributeHallItem(
+        leader.userId,
+        save,
+        index,
+        guildHallDonationCap(hall.completedTiers, hall.storehouse, save.inventory[index].itemId),
+      );
+      save = last.save!;
+    }
+    save = backend.payGuildDebt(leader.userId, save, 10000).save!;
+    final ironIndex = save.inventory.indexWhere((stack) => stack.itemId == 'ITEM-0026');
+    final deposited = backend.depositGuildBank(leader.userId, save, ironIndex, 1);
+    expect(deposited.ok, isTrue, reason: deposited.reason);
+    final moved = backend.moveHallBankToUpForGrabs(leader.userId, deposited.save!, 'ITEM-0026', 1);
+    expect(moved.ok, isTrue, reason: moved.reason);
+
+    final recruit = backend.signUp('recruit@example.com', 'Recruit', 'secret').session!;
+    backend.applyToGuild(recruit, created.guild!.id, '');
+    final lowLevel = createNewSave(database, 1);
+    final refused = backend.takeHallBankUpForGrabs(recruit.userId, lowLevel, 'ITEM-0026', 1);
+    expect(refused.ok, isFalse);
+    expect(refused.reason, 'Reach total level 200 to take from Up for grabs.');
+    expect(refused.reason, guildBankLevelTakeRefusal);
+    expect(
+      backend
+          .guildHall(created.guild!.id)!
+          .bank
+          .section(guildBankSectionUpForGrabs)
+          .single
+          .quantity,
+      1,
+    );
+  });
+
   test('the guild bank refuses a bound or untradeable item, matching TS guild_bank_deposit', () {
     final backend = LocalMultiplayerBackend(storage: MemorySaveStorage())..gameDatabase = database;
     final leader = backend.signUp('leader@example.com', 'Leader', 'secret').session!;

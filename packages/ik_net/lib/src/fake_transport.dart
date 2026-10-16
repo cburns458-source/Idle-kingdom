@@ -962,6 +962,9 @@ class FakeTransport implements RemoteTransport {
         !guildMayWithdrawAtLevel(_asNum(membership['total_level']))) {
       return const RemoteInvokeResult.failed(guildBankLevelWithdrawRefusal);
     }
+    if (command == 'guild_bank_take_up_for_grabs' && !guildMayWithdrawAtLevel(totalLevel(save))) {
+      return const RemoteInvokeResult.failed(guildBankLevelTakeRefusal);
+    }
     if (command == 'guild_bank_move_up_for_grabs' &&
         !guildMay(role, guildPermissionMoveUpForGrabs, table)) {
       return const RemoteInvokeResult.failed('You cannot move items to Up for grabs.');

@@ -58,6 +58,8 @@ const num guildBankTotalLevelRequired = 200;
 const String guildBankLevelWithdrawRefusal =
     'Reach total level 200 to withdraw from the guild bank.';
 
+const String guildBankLevelTakeRefusal = 'Reach total level 200 to take from Up for grabs.';
+
 /// One server-side check used by hall, bank, and settings commands.
 ///
 /// The leader always may. Everyone else reads the per-rank table the leader set.

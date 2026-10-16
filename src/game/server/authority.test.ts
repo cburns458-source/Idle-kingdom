@@ -16,6 +16,7 @@ import {
   normalizeGuildHallState,
 } from '../guild/economy'
 import { GUILD_HALL_GOLD_CAP } from '../guild/hall'
+import { GUILD_BANK_LEVEL_TAKE_REFUSAL } from '../guild/permissions'
 import {
   applyGameCommand,
   CATCHING_UP_REASON,
@@ -482,6 +483,21 @@ describe('phase 2 authority', () => {
     })
     expect(moved.ok).toBe(true)
     if (!moved.ok) return
+    const tooLow = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_take_up_for_grabs',
+      args: { itemId: 'ITEM-0015', quantity: 2 },
+      save: moved.save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: moved.bank,
+      userId: 'u2',
+      guildRole: 'recruit',
+      totalLevel: 199,
+    })
+    expect(tooLow.ok).toBe(false)
+    if (!tooLow.ok) expect(tooLow.reason).toBe(GUILD_BANK_LEVEL_TAKE_REFUSAL)
+
     const first = applyGameCommand(rawDatabase, {
       command: 'guild_bank_take_up_for_grabs',
       args: { itemId: 'ITEM-0015', quantity: 2 },
@@ -492,7 +508,7 @@ describe('phase 2 authority', () => {
       guildBank: moved.bank,
       userId: 'u2',
       guildRole: 'recruit',
-      totalLevel: 1,
+      totalLevel: 200,
     })
     expect(first.ok).toBe(true)
     if (!first.ok) return
@@ -506,8 +522,39 @@ describe('phase 2 authority', () => {
       guildBank: first.bank,
       userId: 'u3',
       guildRole: 'member',
+      totalLevel: 200,
     })
     expect(second.ok).toBe(false)
+  })
+
+  it('a member under total level 200 is refused on Up for grabs Take', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const hall = normalizeGuildHallState({
+      goldContributed: 10_000,
+      goldContributedBy: {},
+      storehouse: [],
+      completedTiers: ['build_the_hall', 'hall_bank'],
+    })
+    const save = createNewSave(launch, START_MS)
+    const bank = {
+      items: [{ id: 'gb-1', itemId: 'ITEM-0015', quantity: 1, section: 'up_for_grabs' as const }],
+    }
+    const refused = applyGameCommand(rawDatabase, {
+      command: 'guild_bank_take_up_for_grabs',
+      args: { itemId: 'ITEM-0015', quantity: 1 },
+      save,
+      nowMs: START_MS,
+      random: () => 0,
+      hall,
+      guildBank: bank,
+      userId: 'u2',
+      guildRole: 'member',
+      totalLevel: 50,
+    })
+    expect(refused.ok).toBe(false)
+    if (refused.ok) return
+    expect(refused.reason).toBe('Reach total level 200 to take from Up for grabs.')
+    expect(refused.reason).toBe(GUILD_BANK_LEVEL_TAKE_REFUSAL)
   })
 
   it('reads the Tradeable column, with missing meaning true', () => {

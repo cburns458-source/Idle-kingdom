@@ -113,6 +113,8 @@ class _GuildBankBodyState extends State<_GuildBankBody> {
     return guildMay(role, guildPermissionMoveUpForGrabs, net.guild?.permissions);
   }
 
+  bool get _canTake => guildMayWithdrawAtLevel(_totalLevel);
+
   bool _tradeable(InventoryStack stack) {
     if (stackIsUnbankableGold(stack)) return false;
     return !bazaarItemBound(controller.db, stack.itemId);
@@ -162,6 +164,7 @@ class _GuildBankBodyState extends State<_GuildBankBody> {
   }
 
   Future<void> _take(GuildBankItem row) async {
+    if (!_canTake) return;
     final quantity = await askQuantity(
       context,
       title: _stackLabel(row.itemId, row.enchantmentId),
@@ -249,7 +252,7 @@ class _GuildBankBodyState extends State<_GuildBankBody> {
                 key: Key('guild-bank-take-${row.id}'),
                 label: 'Take',
                 compact: true,
-                onPressed: () => _take(row),
+                onPressed: _canTake ? () => _take(row) : null,
               ),
             ),
           ),
