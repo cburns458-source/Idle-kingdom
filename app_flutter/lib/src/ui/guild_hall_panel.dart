@@ -133,13 +133,14 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
   Future<void> _chipIn() async {
     final hall = _hall;
     if (hall == null) return;
-    final remaining = guildHallGoldChipInCap(hall.goldContributed).floor();
-    final maxPay = remaining.clamp(0, save.gold.floor());
+    final maxPay = guildHallGoldPayMax(hall.goldContributed, save.gold);
+    if (maxPay <= 0) return;
     final quantity = await askQuantity(
       context,
       title: 'Chip in',
       confirmLabel: 'Chip in',
       max: maxPay,
+      clampToMax: true,
     );
     if (quantity == null || !mounted) return;
     await _apply(await net.service.payGuildDebt(save, quantity));
@@ -225,14 +226,18 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
           (entry.$1, entry.$2),
     ];
     final role = _role;
-    final remaining = guildHallGoldChipInCap(hall.goldContributed);
-    final canChip = role != null && canChipInGuildGold(role) && remaining > 0 && save.gold > 0;
+    final maxPay = guildHallGoldPayMax(hall.goldContributed, save.gold);
+    final canChip = role != null && canChipInGuildGold(role) && maxPay > 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         GuildHallGoldBar(contributed: hall.goldContributed),
         const SizedBox(height: 8),
-        GameButton(label: 'Chip in', onPressed: canChip ? _chipIn : null),
+        GameButton(
+          key: const Key('guild-gold-chip-in'),
+          label: 'Chip in',
+          onPressed: canChip ? _chipIn : null,
+        ),
         const SizedBox(height: 12),
         for (final tier in guildHallTiers) _tierBlock(hall, tier),
         const SizedBox(height: 8),
