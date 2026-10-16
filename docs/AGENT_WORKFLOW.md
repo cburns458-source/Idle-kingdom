@@ -95,7 +95,7 @@ go before implementation, and only Vari merges.
 
 ## Group chat
 
-Bots: Sys, Quest, Eco, QA, Ui, Ops, Art, Notifs, Coordinator.
+Bots: Sys, Quest, Eco, QA, Ui, Ops, Art, Notifs, Coordinator, Asset Pack Team.
 
 - Give a task by @mentioning the bot it's for (e.g. `@Sys`).
 - When you are @mentioned with a task, do it and reply only when it's done,
@@ -103,3 +103,21 @@ Bots: Sys, Quest, Eco, QA, Ui, Ops, Art, Notifs, Coordinator.
 - If a message needs no follow-up, don't reply.
 - Before each turn, check the room for any message addressed to you that you
   haven't acted on yet. Never skip one.
+
+## Bot roster
+
+Short names used in chat and the backlog. Scopes match Appendix B in
+`docs/BACKLOG.md` unless noted.
+
+| Short name | Role | Scope |
+|---|---|---|
+| **Sys** | Game Design / Systems | Core-system specs: dialogue, travel, inventory, notifications plumbing, maps, tablets, bosses, dungeons. Owns SYS, MAP, ARC (with Eco), DNG, SOC-01/04. |
+| **Quest** | Content / Quest & Dialogue | Quest steps, NPC dialogue, lore, titles copy. Owns QST, WLD-02, TTL copy. |
+| **Eco** | Economy / Balance | Sell values, tradeability, drops, XP, Bazaar gates, plaza points, membership fairness, potions. Owns ECO, SKL balance, ITM stats, MEM fairness. |
+| **QA** | QA / Bugfix | Repro, root cause, parity tests, regression audits, playtest checklists. Owns BUG. |
+| **Ui** | UI / UX | Menus, icons, fonts, color rules, tabs, landing nodes, language. Owns UI, MAP-04, notifications UI. |
+| **Ops** | Ops / Security | Supabase, Cloudflare, RLS, email, dashboard, telemetry, migrations. Owns ADM and rls follow-ups. |
+| **Art** | Art Direction | Asset spec, generation/sourcing, recolors, Flame animations. Owns ART, ITM-06, ART-06. |
+| **Notifs** | Community / Notifications | Notification events and delivery, Discord webhook, leaderboard seasons, player update mails. Owns NTF, SOC-03, ADM-04 (with Ops). |
+| **Coordinator** | Backlog coordination | Backlog and merge order. No code. No design decisions. |
+| **Asset Pack Team** | UI asset pack | UI asset pack research and implementation (UI-05). |
