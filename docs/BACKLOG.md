@@ -56,8 +56,9 @@ reused or renumbered. Gaps in the numbering are intentional. Open questions use
 
 ### 1.2 Status legend
 
-`Idea` → `Needs decision` → `Ready for plan` → `Planned` (plan approved) →
-`In PR` → `On test` → `Verified` (owner playtested on test-launch) → `Live`.
+`Idea` → `Needs decision` → `Ready for plan` / `Ready for Proposal` →
+`Planned` (plan approved) → `In Progress` / `In PR` → `Review` → `On test` →
+`Verified` (owner playtested on test-launch) → `Live`.
 Or `Parked` / `Dropped` / `Duplicate of X`.
 
 **Rule:** an item can't move past `Needs decision` while it has an open `OQ-##`.
@@ -110,6 +111,10 @@ Conor's rulings, dated. Immutable once written.
 
 | Date | Decision | Evidence |
 |---|---|---|
+| 2026-10-15 | Tutorial flow (QST-02 / OQ-09 / SYS-01): partway players are locked back into the tutorial (keep progress and items; idle actions and travel in hidden places stop; Bazaar orders kept); finished players unchanged; not skippable; locked places hidden until unlocked; mobile-style guidance (hovering pointer, dimmed screen, only the target tappable; falls back to dialogue with no dim if the target is missing); first 5 potato gathers guaranteed one potato each, no other drops; first 5 cooks guaranteed success; Fennel only looks at potatoes; final step is fight a Cow in the pasture (never a bull); Fennel tells the player to equip the starting sword and shield, no gear gift; losing leaves the step open to retry; if the player dies on the Cow step with no food, Fennel gives 5 cooked potatoes, server-checked once per death; killing the Cow stops combat, ends the quest, farewell plays, and the world opens immediately; Quest keeps existing lines and only adds or fixes where needed | Vari (Conor); In Progress on `sys/tutorial-flow` |
+| 2026-10-15 | Bots message Vari in their own 1:1 for a go; a group-chat agreement is not a go | Vari (Conor); `docs/AGENT_WORKFLOW.md` |
+| 2026-10-15 | Game Bible Regular Bow lines removed | Vari (Conor); PR #383 |
+| 2026-10-15 | Workflow doc: Cursor cloud agents for commits, pushes, and migrations | PR #384 |
 | 2026-10-15 | BUG-01, BUG-02, and BUG-04 Verified on test.restoriaidle.com | Conor playtest; BUG-01 #304, BUG-02 #310 (Tradeable column; not #377), BUG-04 #333 |
 | 2026-10-13 | Done archive tracks `test-launch`; `main` is updated later | Conor |
 | 2026-10-13 | Inventory/bank caps: 84 bag slots / 168 bank slots | PR #332, Conor (OQ-03 / SYS-03) |
@@ -155,7 +160,7 @@ Conor to update the Game Bible/DB first, or agents will refuse or stall.
 
 ## 3. Open questions register
 
-Conor decides. Open unless marked answered. OQ-03 and OQ-05 are answered; OQ-11 stays Open with a partial ruling.
+Conor decides. Open unless marked answered. OQ-03, OQ-05, and OQ-09 are answered; OQ-11 stays Open with a partial ruling.
 
 ### 3.1 Conor's own
 
@@ -174,7 +179,7 @@ Conor decides. Open unless marked answered. OQ-03 and OQ-05 are answered; OQ-11 
 | OQ-06 | Membership: price, one-time or subscription, and is it fair? "Instant Bazaar at total level 1" and "double AFK" are close to pay-to-win in a game with a shared market and leaderboards. | MEM-\* | — | Open |
 | OQ-07 | Religion vs races: replace races fully? What happens to existing race bonuses, race starting items, Vesper, "A Change of Skin", and the Pureblooded title? | WLD-01, TTL-03 | — | Open |
 | OQ-08 | Mass bosses: which bosses? What are the scaling and contribution formulas? Are there server-side lobbies (new realtime infra)? | SOC-04 | — | Open |
-| OQ-09 | Mandatory tutorial: what happens to existing players partway through Getting Started, and to players who already finished it? | QST-02 | — | Open |
+| OQ-09 | Mandatory tutorial: what happens to existing players partway through Getting Started, and to players who already finished it? | QST-02 | Answered 2026-10-15 (Vari / Conor): partway players locked back in (keep progress/items; idle actions/travel in hidden places stop; Bazaar orders kept); finished players unchanged. See decisions log. Implementation In Progress on `sys/tutorial-flow`. | Answered |
 | OQ-10 | Bazaar gate at total level 200: what about existing players under 200 who have live offers? | ECO-01 | — | Open |
 | OQ-11 | Region unlocks (200/400/800 total level) vs the existing quest-based unlocks (Through the Thicket, Going Deeper, Forged in Fire). Which wins? | MAP-01, MAP-01b | Conor confirmed total-level region unlock thresholds 200 / 400 / 800 (regions unlock by total level, decided Oct 12, 2026); regions are not implemented yet, so it is on hold until map assets arrive. Whether existing quest unlocks also stay is undecided. | Open |
 | OQ-12 | Back slot conflict: blessings, the Quiver/Hunter's Quiver, and capes all want the Back slot. | ITM-01, ITM-04 | — | Open |
@@ -198,30 +203,34 @@ Just IDs, in order. Conor re-orders this.
 
 Verified 2026-10-15 (Conor playtest on test.restoriaidle.com): **BUG-01** (#304), **BUG-02** (#310, Items `Tradeable` column; not #377), **BUG-04** (#333).
 
+Workflow doc: Cursor cloud agents for commits, pushes, and migrations — **#384**.
+
 ### P1: Next
 
-5. **SYS-01** Dialogue system (extend the MVP). Unblocks QST-02/03 (QST-01 done).
-6. **QST-02** Mandatory tutorial. QST-01 (Getting Started / Green Thumb dialogue) closed via #323 and #270.
-7. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
-8. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Biggest idle-game QoL win.
-9. **ADM-04** Report/ideas button → Discord webhook. Cheap, and feeds QA.
-10. **Decision session on OQ-01..02, OQ-04..07, OQ-11, OQ-15.** OQ-03 answered (84/168). Unblocks MAP-01, ECO-03, ARC-01, WLD-01.
-11. **ECO-01** Bazaar total level 200 and **ECO-03** Plaza points. Economy health, after the decisions.
-12. **MAP-01** Region map (+ **MAP-04** landing nodes). Foundation for the isles/citadel.
-13. **ARC-01** Enchant tablets and **ARC-02** Essence rework (design doc together).
-14. **QST-04** Goblin Trouble, **QST-06** Quest recipe rewards, **SKL-04** Cooking multi-output, **ITM-06** Chromium/Vanadium recolor. Content with low dependencies.
-15. **UI-05** asset pack, **UI-07** green/gold rules, **ART-01** spec sheet. Unblocks the whole UI/art track.
+5. **SYS-01** + **QST-02** + **OQ-09** tutorial flow. In Progress on `sys/tutorial-flow`. OQ-09 answered 2026-10-15. QST-01 (Getting Started / Green Thumb dialogue) closed via #323 and #270.
+6. **ECO-04** Alchemy potion sell prices + Bazaar floors. Review in PR #385.
+7. **ADM-06** Regenerate the server item data bundle at the next staging deploy so the 4 new potions are in `supabase/functions/_shared/game-database.json`.
+8. **SOC-01** guild hall tiers and **SOC-04** mass bosses. Ready for Proposal (owner Sys; Eco numbers). Queued after the tutorial.
+9. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
+10. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Biggest idle-game QoL win.
+11. **ADM-04** Report/ideas button → Discord webhook. Cheap, and feeds QA.
+12. **Decision session on OQ-01..02, OQ-04..07, OQ-11, OQ-15.** OQ-03 answered (84/168); OQ-09 answered (tutorial lock-back). Unblocks MAP-01, ECO-03, ARC-01, WLD-01.
+13. **ECO-01** Bazaar total level 200 and **ECO-03** Plaza points. Economy health, after the decisions.
+14. **MAP-01** Region map (+ **MAP-04** landing nodes). Foundation for the isles/citadel.
+15. **ARC-01** Enchant tablets and **ARC-02** Essence rework (design doc together).
+16. **QST-04** Goblin Trouble, **QST-06** Quest recipe rewards, **SKL-04** Cooking multi-output, **ITM-06** Chromium/Vanadium recolor. Content with low dependencies.
+17. **UI-05** asset pack, **UI-07** green/gold rules, **ART-01** spec sheet. Unblocks the whole UI/art track.
 
 ### P2: After
 
 ARC-03/04/07/08/09 · ITM-01/03/04/05/07 · SKL-01/03/05 · QST-03/05/07/12 ·
-MAP-01b/02/03 · SOC-01/03 · WLD-01 (once decided) · WLD-02 · TTL-00/02/03 ·
+MAP-01b/02/03 · SOC-03 · WLD-01 (once decided) · WLD-02 · TTL-00/02/03 ·
 UI-01/02/03/04/06/12 · ART-02/04/05/06 · NTF-05/07/08/09 · ADM-05 Telemetry ·
 SYS-06 clock.
 
 ### Later
 
-SOC-04 Mass bosses · DNG-01 Catacombs · SKL-02 Thievery companions · SKL-06
+DNG-01 Catacombs · SKL-02 Thievery companions · SKL-06
 Tides · QST-08 Balrog · UI-14 Language · MEM-01..05 Membership (after OQ-06 and
 payments).
 
@@ -244,6 +253,7 @@ Direction, Community = Community/Notifications).
 | ADM-03 | admin dashboard with event ledger | Idea | P1 | ADM-01, SYS-05 (event log) | Ops | Can build on dev accounts, reports tables, and guild/bazaar ledgers. Blocks ADM-05. |
 | ADM-04 | Ingame report/ideas button that links to discord with webhook *(moved from UI)* | Idea | P1 | ADM-01 | Ops + UI | Webhook URL must be a server secret. Send through an edge function, never from the client. |
 | ADM-05 | Telemetry? | Needs decision | P2 | OQ-16, ADM-03 | Ops | Could start as rows in the server event ledger |
+| ADM-06 | Regenerate the server item data bundle so the 4 new potions are on staging | Ready for plan | P1 | none | Ops | `supabase/functions/_shared/game-database.json` is built by `tools/bundle_game_edge.sh`. Must regenerate at the next staging deploy. |
 
 ### BUG: Bugs and fixes
 
@@ -259,7 +269,7 @@ Direction, Community = Community/Notifications).
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
 | QST-01 | Fix dialogue for getting started and green thumb | Done (on test) | P1 | SYS-01, BUG-01 | Writer | Closed 2026-10-13, citing #323 and #270. Green Thumb lines restored in #270; Fennel and King dialogue content in #323. **Dup cluster** with BUG-01 / QST-02. |
-| QST-02 | Make getting started a mandatory tutorial… 5 actions guaranteed as potatoes, only fennel showing at first, then gather, then combat… | Needs decision | P1 | BUG-01, SYS-01, OQ-09 | Design + Writer | Redesigning this could replace the buggy Hold steps entirely |
+| QST-02 | Make getting started a mandatory tutorial… 5 actions guaranteed as potatoes, only fennel showing at first, then gather, then combat… | In Progress | P1 | BUG-01, SYS-01 | Design + Writer | OQ-09 answered 2026-10-15 (Vari / Conor). In Progress on `sys/tutorial-flow` with SYS-01. See decisions log for the full tutorial ruling. |
 | QST-03 | Asking king about the queen and he describes a dragon but doesn't say it outright | Idea | P2 | SYS-01 | Writer | Ties to castle crypt dragon content (branch `castle-crypt-dragon`) |
 | QST-04 | Goblin Trouble (early)… Fight scouts at the Goblin Camp, then the Chief… riverside chest as thievery mark… | Idea | P1 | none (Goblin Camp exists) | Writer + Design | "First real combat quest". Fits the tutorial hand-off from QST-02. |
 | QST-05 | Giants on the Ridge (late)… wyvern… giant-bone craft unlock | Idea | P2 | QST-06 | Writer + Design | Giant Camp exists |
@@ -273,7 +283,7 @@ Direction, Community = Community/Notifications).
 
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
-| SYS-01 | Create a dedicated dialogue system *(from UI)* | Ready for plan | P1 | none | Systems | **MVP already exists** (Citadel Guide). This item = extend it to every NPC and quest. QST-01 done (#323/#270). Still blocks QST-02/03. |
+| SYS-01 | Create a dedicated dialogue system *(from UI)* | In Progress | P1 | none | Systems | **MVP already exists** (Citadel Guide). Tutorial-flow slice In Progress on `sys/tutorial-flow` with QST-02 / OQ-09. Still extends to every NPC and quest after that. QST-01 done (#323/#270). Still blocks QST-03. |
 | SYS-02 | Should there be a mechanic for moving between locations… | Answered | — | OQ-01 | Design | Answered 2026-10-13 (OQ-01): travel is instant except the necessary delays. Unused travel-time setting removed in #336 (SYS-07). |
 | SYS-03 | Maximum inventory size? | On test (decided) | — | none | Design + Econ | Decided 2026-10-13 (Conor): 84 bag slots / 168 bank slots (#332). Blocks UI-12, MEM-01 |
 | SYS-04 | Should there be defense or just health? | Needs decision | — | OQ-04 | Design + Econ | |
@@ -321,14 +331,15 @@ Direction, Community = Community/Notifications).
 |---|---|---|---|---|---|---|
 | ECO-01 | Require total level 200 to use the bazaar | Needs decision | P1 | OQ-10 | Econ | Anti-bot/alt measure. **Coupled** with MEM-02. |
 | ECO-03 | Replace bounty and pvp gold reward with new currency, plaza points… plaza shop for items and exp | Needs decision | P1 | OQ-15, Game Bible update | Econ | **Blocks** SOC-03 leaderboard payouts (soft) |
+| ECO-04 | Alchemy potion sell prices + Bazaar floors | Review | P1 | none | Econ | Review in PR #385. Poison 24→8, Masterwork 2000→2300; NPC sell values are floors. Bazaar has no per-item floors in that PR. |
 
 ### SOC: Social / Competitive
 
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
-| SOC-01 | 5 guild hall tiers (bank, boxing ring, indoor garden, arcana station, monster cage) | Idea | P2 | rls-hardening #3–6 (server hall settlement, withdrawals, rank perms) | Design + Systems | Existing tiers: Build the Hall, Counting Room, Boxing Ring. Map the 5 tiers onto these. |
+| SOC-01 | 5 guild hall tiers (bank, boxing ring, indoor garden, arcana station, monster cage) | Ready for Proposal | P1 | rls-hardening #3–6 (server hall settlement, withdrawals, rank perms) | Systems (Sys); Econ numbers | Existing tiers: Build the Hall, Counting Room, Boxing Ring. Map the 5 tiers onto these. Queued after the tutorial. |
 | SOC-03 | Revolving leaderboards for guilds and pvp… monthly reset… temporary title | Idea | P2 | *soft:* ECO-03, TTL system | Community + Econ | Leaderboards already exist and are written from the hosted save |
-| SOC-04 | Make bosses solo or mass… scaled by players… contribution drops… lobby queue | Needs decision | Later | OQ-08, realtime infra | Design + Systems | Large: new server lobby system |
+| SOC-04 | Make bosses solo or mass… scaled by players… contribution drops… lobby queue | Ready for Proposal | P1 | OQ-08, realtime infra | Systems (Sys); Econ numbers | Large: new server lobby system. Queued after the tutorial. |
 
 ### MAP: World and maps
 
@@ -422,7 +433,7 @@ All depend on SYS-05. Owner: Community.
 |---|---|---|
 | Citadel as region | UI "Citadel can be its own region…", UI "citadel can be in the middle…", MAP-03 | One item, MAP-03. Lore → WLD-02, travel button → MAP-01b |
 | Region unlock vs region map | MAP-01b (200/400/800) vs MAP-01 | MAP-01 builds the map, MAP-01b sets the unlock rule. OQ-11: thresholds 200/400/800 confirmed; quest-unlock overlap still Open; on hold for map assets. |
-| Getting Started | BUG-01 Fennel bug, QST-01 dialogue fix, QST-02 mandatory tutorial | QST-01 closed (#323, #270). BUG-01 Verified (#304; Conor playtest 2026-10-15). Then QST-02. |
+| Getting Started | BUG-01 Fennel bug, QST-01 dialogue fix, QST-02 mandatory tutorial | QST-01 closed (#323, #270). BUG-01 Verified (#304; Conor playtest 2026-10-15). QST-02 / OQ-09 / SYS-01 In Progress on `sys/tutorial-flow`. |
 | Essence | ARC-02 rework, ARC-04 0.1% essence item, ARC-03 spell charging | One "Essence economy" design doc |
 | Enchanting | ARC-01 tablets, ARC-07 piercing, ARC-08 shield | Tablets first, then new enchants ship as tablets |
 | Thievery | SKL-01 loot bags/recipes, SKL-02 companions, ITM-07 lockpick items, QST-07 lockpick quest, MAP-03 citadel thievery | One "Thievery expansion" epic |
@@ -438,8 +449,9 @@ All depend on SYS-05. Owner: Community.
 
 ```
 OQ-01/OQ-11 ─► MAP-01 region map ─► MAP-01b unlocks ─► MAP-02 isles, MAP-03 citadel map
-SYS-01 dialogue system ─► QST-01 dialogue fixes (done #323/#270), QST-02 tutorial, QST-03 king/queen
+SYS-01 dialogue system ─► QST-01 dialogue fixes (done #323/#270), QST-02 tutorial (In Progress on `sys/tutorial-flow` with OQ-09), QST-03 king/queen
 BUG-01 (persist steps; Verified #304, Conor playtest 2026-10-15) ─► QST-02 tutorial, NTF-06 quest-step notifications
+QST-02 tutorial ─► SOC-01 guild hall tiers, SOC-04 mass bosses (Ready for Proposal after tutorial; Sys, Eco numbers)
 OQ-15 + Bible ─► ECO-03 plaza points ─► bounty/pvp reward swap, SOC-03 leaderboard payouts
 SYS-05 notifications ─► NTF-01..09
 ARC-01 tablets ─► ARC-07 piercing, ARC-08 shield
@@ -489,6 +501,8 @@ already done when the backlog was approved.
 | BUG-03 todo drops/recipes | solved before tracking (no fixing PR in `git log`) | 2026-10-13 |
 | BUG-01: Fennel Getting Started step-latch | PR #304 (on test-launch); Verified by Conor playtest on test.restoriaidle.com 2026-10-15 | 2026-10-15 |
 | BUG-02: Items Tradeable column (untradeable Bazaar block) | PR #310 (on test-launch; not #377); Verified by Conor playtest on test.restoriaidle.com 2026-10-15 | 2026-10-15 |
+| Game Bible Regular Bow lines removed | PR #383 (on test-launch) | 2026-10-15 |
+| Workflow doc: Cursor cloud agents for commits, pushes, and migrations | PR #384 (on test-launch) | 2026-10-15 |
 
 ---
 

@@ -2317,7 +2317,7 @@
       "Description": "Deals 10% of the enemy's current HP after each of your swings. Stops at 10% of their maximum HP and cannot kill.",
       "Icon Asset Key": "poison_potion",
       "Notes": null,
-      "Base Sell Value": 24,
+      "Base Sell Value": 8,
       "Tradeable": true,
       "Stackable": null
     },
@@ -4245,7 +4245,7 @@
       "Description": null,
       "Icon Asset Key": "masterwork_draught",
       "Notes": null,
-      "Base Sell Value": 2000,
+      "Base Sell Value": 2300,
       "Tradeable": true,
       "Stackable": null
     },
