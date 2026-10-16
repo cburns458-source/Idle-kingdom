@@ -46,7 +46,7 @@ const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
-const EXPECTED_CONTENT_VERSION = '2026-10-16-plain-descriptions'
+const EXPECTED_CONTENT_VERSION = '2026-10-16-alchemy-prices'
 const NOW_MS = Date.parse('2026-10-15T00:00:00.000Z')
 const APOTHECARY = 'LOC-0026'
 const KITCHENS = ['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049']
@@ -113,7 +113,7 @@ describe('alchemy rework QA', () => {
   const sourceItem = (id: string) => source.Items.find((row) => row['Item ID'] === id)!
   const equipment = (itemId: string) => launch.Equipment.find((row) => row['Item ID'] === itemId)
 
-  it('content version is 2026-10-16-plain-descriptions in both loaders', () => {
+  it('content version is 2026-10-16-alchemy-prices in both loaders', () => {
     const tsSource = readFileSync(resolve(process.cwd(), 'src/game/data/loadDatabase.ts'), 'utf8')
     const dartSource = readFileSync(
       resolve(process.cwd(), 'packages/ik_content/lib/src/load_database.dart'),
@@ -321,6 +321,10 @@ describe('alchemy rework QA', () => {
     expect(item('ITEM-0211')['Base Sell Value']).toBe(210)
     expect(item('ITEM-0072')['Base Sell Value']!).toBeGreaterThan(item('ITEM-0211')['Base Sell Value']!)
     expect(item('ITEM-0210')['Base Sell Value']).toBe(120)
+    // Poison: 1 wild berry (1g) + free water, Alchemy 30. Masterwork: Starroot 406 + Eel Tail 12 + Yew 1800 = 2218 input.
+    expect(item('ITEM-0073')['Base Sell Value']).toBe(8)
+    expect(item('ITEM-0213')['Base Sell Value']).toBe(2300)
+    expect(item('ITEM-0213')['Base Sell Value']!).toBeGreaterThan(406 + 12 + 1800)
     expect(item('ITEM-0070')['Base Sell Value']).toBe(294)
     expect(item('ITEM-0210')['Base Sell Value']!).toBeLessThan(item('ITEM-0070')['Base Sell Value']!)
   })
