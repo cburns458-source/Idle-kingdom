@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_parity/ik_parity.dart';
@@ -513,6 +515,110 @@ void main() {
       guildBannerColourRefusal,
     );
   });
+
+  test('rising strength stays unlocked after a member leaves', () {
+    final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());
+    final leader = backend.signUp('leader-rs@example.com', 'Leader', 'secret').session!;
+    final leaderSave = _withTotalLevel(
+      createNewSave(database, 1).copyWith(gold: guildCreateGoldCost),
+      500,
+    );
+    backend.writeCloudSave(leader.userId, leaderSave);
+    final created = backend.createGuild(
+      leader,
+      const CreateGuildInput(
+        name: 'Oak Strength',
+        tag: 'STR',
+        description: '',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      leaderSave.gold,
+    );
+    expect(created.ok, isTrue);
+    final guildId = created.guild!.id;
+    for (var i = 0; i < 24; i++) {
+      final member = backend.signUp('rs$i@example.com', 'M$i', 'secret').session!;
+      backend.writeCloudSave(member.userId, _withTotalLevel(createNewSave(database, 1), 500));
+      expect(backend.applyToGuild(member, guildId, '').ok, isTrue);
+    }
+    expect(
+      backend.getGuild(guildId)!.achievements.map((row) => row.achievementId),
+      contains('gach_rising_strength'),
+    );
+    final leaver = backend.guildMembers(guildId).firstWhere((row) => row.userId != leader.userId);
+    expect(backend.leaveGuild(leaver.userId).ok, isTrue);
+    expect(backend.guildMembers(guildId), hasLength(24));
+    expect(
+      backend.getGuild(guildId)!.achievements.map((row) => row.achievementId),
+      contains('gach_rising_strength'),
+    );
+    backend.writeCloudSave(leader.userId, leaderSave);
+    expect(
+      backend.getGuild(guildId)!.achievements.map((row) => row.achievementId),
+      contains('gach_rising_strength'),
+    );
+    expect(
+      backend
+          .guildAchievementProgress(guildId)
+          .singleWhere((row) => row.id == 'gach_rising_strength')
+          .unlocked,
+      isTrue,
+    );
+  });
+
+  test(
+    'a member with no save counts as 0; forging roster total_level does not unlock Rising strength',
+    () {
+      final storage = MemorySaveStorage();
+      final backend = LocalMultiplayerBackend(storage: storage);
+      final leader = backend.signUp('leader-forge@example.com', 'Leader', 'secret').session!;
+      final leaderSave = createNewSave(database, 1).copyWith(gold: guildCreateGoldCost);
+      backend.writeCloudSave(leader.userId, leaderSave);
+      final created = backend.createGuild(
+        leader,
+        const CreateGuildInput(
+          name: 'Oak Forge',
+          tag: 'FRG',
+          description: '',
+          emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+        ),
+        leaderSave.gold,
+      );
+      expect(created.ok, isTrue);
+      final guildId = created.guild!.id;
+      for (var i = 0; i < 24; i++) {
+        final member = backend.signUp('forge$i@example.com', 'F$i', 'secret').session!;
+        expect(backend.applyToGuild(member, guildId, '').ok, isTrue);
+      }
+      expect(guildMemberSaveTotalLevel(null), 0);
+      expect(
+        backend.getGuild(guildId)!.achievements.map((row) => row.achievementId),
+        isNot(contains('gach_rising_strength')),
+      );
+      expect(
+        backend
+            .guildAchievementProgress(guildId)
+            .singleWhere((row) => row.id == 'gach_rising_strength')
+            .current,
+        0,
+      );
+
+      final db = LocalDb.fromJson(jsonDecode(storage.getItem(multiplayerLocalDbKey)!));
+      db.members = [for (final row in db.members) row.copyWith(totalLevel: 500)];
+      storage.setItem(multiplayerLocalDbKey, jsonEncode(db.toJson()));
+      expect(
+        backend.getGuild(guildId)!.achievements.map((row) => row.achievementId),
+        isNot(contains('gach_rising_strength')),
+      );
+      expect(
+        backend
+            .guildAchievementProgress(guildId)
+            .singleWhere((row) => row.id == 'gach_rising_strength')
+            .unlocked,
+        isFalse,
+      );
+    },
+  );
 
   test('a forged hall payload that claims the gold cap is ignored unless the save paid', () {
     final backend = LocalMultiplayerBackend(storage: MemorySaveStorage());

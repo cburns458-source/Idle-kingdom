@@ -406,7 +406,8 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       guildPermissions: hallContext?.permissions,
       userId,
       guildRole: hallContext?.role,
-      totalLevel: hallContext?.totalLevel,
+      // Hosted save totalLevel, never the client-writable guild_members column.
+      totalLevel: hostedTotalLevel(hosted?.payload, nowMs),
       membersAtLevel500: hallContext?.membersAtLevel500,
       unlockedAchievements: hallContext?.unlockedAchievements,
       guildmatesInHall: hallContext?.guildmatesInHall,
@@ -1111,6 +1112,29 @@ function isGuildHallCommand(command: string): boolean {
   return GUILD_HALL_COMMANDS.has(command)
 }
 
+function hostedTotalLevel(payload: unknown, nowMs: number): number | undefined {
+  if (payload == null) return undefined
+  try {
+    return totalLevel(parseSave(payload, nowMs))
+  } catch {
+    return undefined
+  }
+}
+
+async function countMembersAtSaveLevel500(admin: Client, guildId: string, nowMs: number): Promise<number> {
+  const { data: roster } = await admin.from('guild_members').select('user_id').eq('guild_id', guildId)
+  const ids = (roster ?? [])
+    .map((row: { user_id?: unknown }) => row.user_id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+  if (ids.length === 0) return 0
+  const { data: saves } = await admin.from('player_saves').select('user_id, payload').in('user_id', ids)
+  let strong = 0
+  for (const row of saves ?? []) {
+    if ((hostedTotalLevel(row.payload, nowMs) ?? 0) >= 500) strong += 1
+  }
+  return strong
+}
+
 async function loadHallContext(admin: Client, userId: string): Promise<HallContext | null> {
   const { data: member } = await admin
     .from('guild_members')
@@ -1131,11 +1155,8 @@ async function loadHallContext(admin: Client, userId: string): Promise<HallConte
       : Math.max(0, 1_000_000 - Number(hall.debt_remaining ?? 1_000_000))
   const goldContributedBy = (hall.gold_contributed_by ?? hall.debt_paid_by ?? {}) as Record<string, number>
   const donatedBy = (hall.donated_by ?? {}) as Record<string, boolean>
-  const { count: strongCount } = await admin
-    .from('guild_members')
-    .select('user_id', { count: 'exact', head: true })
-    .eq('guild_id', member.guild_id)
-    .gte('total_level', 500)
+  const nowMs = Date.now()
+  const strongCount = await countMembersAtSaveLevel500(admin, member.guild_id as string, nowMs)
   const { data: unlockRows } = await admin
     .from('guild_achievements')
     .select('achievement_id, unlocked_at')
@@ -1170,7 +1191,7 @@ async function loadHallContext(admin: Client, userId: string): Promise<HallConte
     hallRevision: Number(hall.hall_revision ?? 0),
     permissions: (guild?.permissions ?? {}) as Record<string, string[]>,
     guildmatesInHall,
-    membersAtLevel500: Number(strongCount ?? 0),
+    membersAtLevel500: strongCount,
     unlockedAchievements,
     bank: { items: Array.isArray(hall.bank_items) ? hall.bank_items : [] },
     hall: {

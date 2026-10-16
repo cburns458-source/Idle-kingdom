@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_GUILD_BANNER,
@@ -12,6 +14,7 @@ import {
   guildAchievementCurrent,
   guildDonorIds,
   guildMaySetBanner,
+  guildMemberSaveTotalLevel,
   normalizeGuildBanner,
   type GuildAchievementSnapshot,
 } from './achievements'
@@ -21,6 +24,7 @@ import {
   GUILD_HALL_TIER_BUILD,
   GUILD_HALL_TIER_GARDEN,
   guildHallMaterialsSpent,
+  guildHallTierMaterialCount,
   GUILD_HALL_TIERS,
 } from './hall'
 
@@ -143,6 +147,63 @@ describe('guild achievements and banner', () => {
       target: 25,
       unlocked: true,
     })
+  })
+
+  it('counts a member with no save as total level 0 for Rising strength', () => {
+    expect(guildMemberSaveTotalLevel(null)).toBe(0)
+    expect(guildMemberSaveTotalLevel(undefined)).toBe(0)
+    expect(
+      evaluateGuildAchievements(snapshot({ membersAtLevel500: guildMemberSaveTotalLevel(null) }), NOW)
+        .newlyUnlocked,
+    ).not.toContain('gach_rising_strength')
+  })
+
+  it('keeps rising strength unlocked after a member leaves', () => {
+    // Vari: Rising strength stays unlocked after members leave.
+    const reached = evaluateGuildAchievements(snapshot({ membersAtLevel500: 25 }), NOW)
+    expect(reached.newlyUnlocked).toEqual(['gach_rising_strength'])
+    const afterLeave = evaluateGuildAchievements(
+      snapshot({ membersAtLevel500: 24, unlocked: reached.unlocked }),
+      '2026-10-16T13:00:00.000Z',
+    )
+    expect(afterLeave.newlyUnlocked).toEqual([])
+    expect(afterLeave.unlocked.gach_rising_strength).toBe(NOW)
+    expect(afterLeave.progress.find((row) => row.id === 'gach_rising_strength')?.unlocked).toBe(true)
+  })
+
+  it('SQL hall tier material costs match guildHallTierMaterialCount (202700 all six)', () => {
+    const sql = readFileSync(
+      resolve(process.cwd(), 'supabase/migrations/20261016170000_guild_achievements_and_banner.sql'),
+      'utf8',
+    )
+    const costs = new Map<string, number>()
+    for (const match of sql.matchAll(/when '([^']+)' then (\d+)/g)) {
+      costs.set(match[1], Number(match[2]))
+    }
+    let sqlTotal = 0
+    let tsTotal = 0
+    for (const tier of GUILD_HALL_TIERS) {
+      expect(costs.get(tier.id), tier.id).toBe(guildHallTierMaterialCount(tier))
+      sqlTotal += costs.get(tier.id) ?? 0
+      tsTotal += guildHallTierMaterialCount(tier)
+    }
+    expect(tsTotal).toBe(202_700)
+    expect(sqlTotal).toBe(202_700)
+    expect(guildHallMaterialsSpent(GUILD_HALL_TIERS.map((tier) => tier.id))).toBe(202_700)
+  })
+
+  it('hosted game function counts rising strength from saves, not roster total_level', () => {
+    const gameSource = readFileSync(resolve(process.cwd(), 'supabase/functions/game/index.ts'), 'utf8')
+    expect(gameSource).toContain('countMembersAtSaveLevel500')
+    expect(gameSource).toContain('hostedTotalLevel')
+    expect(gameSource).not.toMatch(/\.gte\('total_level',\s*500\)/)
+    const qaSql = readFileSync(
+      resolve(process.cwd(), 'supabase/migrations/20261016180000_guild_achievements_qa.sql'),
+      'utf8',
+    )
+    expect(qaSql).toContain('bazaar_user_total_level')
+    expect(qaSql).toMatch(/when sqlstate 'P0001'/)
+    expect(qaSql).not.toMatch(/when others then/)
   })
 
   it('exposes current/target progress for every achievement', () => {

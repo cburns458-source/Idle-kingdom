@@ -1417,8 +1417,11 @@ class LocalMultiplayerBackend {
     final guild = getGuild(guildId);
     final hall = guildHall(guildId) ?? GuildHallState.fresh(guildId);
     var strong = 0;
-    for (final member in guildMembers(guildId)) {
-      if (member.totalLevel >= guildAchievementMemberLevel) strong += 1;
+    for (final member in db.members.where((row) => row.guildId == guildId)) {
+      final cloud = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
+      if (guildMemberSaveTotalLevel(cloud?.payload) >= guildAchievementMemberLevel) {
+        strong += 1;
+      }
     }
     return evaluateGuildAchievements(
       GuildAchievementSnapshot(
@@ -1561,8 +1564,8 @@ class LocalMultiplayerBackend {
     final hall = hallIndex >= 0 ? db.halls[hallIndex] : GuildHallState.fresh(guildId);
     var strong = 0;
     for (final member in db.members.where((row) => row.guildId == guildId)) {
-      if (_memberSnapshot(db, member.userId, member.username).totalLevel >=
-          guildAchievementMemberLevel) {
+      final cloud = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
+      if (guildMemberSaveTotalLevel(cloud?.payload) >= guildAchievementMemberLevel) {
         strong += 1;
       }
     }

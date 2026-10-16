@@ -1674,7 +1674,10 @@ class FakeTransport implements RemoteTransport {
     }
     var strong = 0;
     for (final row in tables[RemoteTables.guildMembers]!) {
-      if (row['guild_id'] == guildId && _asNum(row['total_level']) >= guildAchievementMemberLevel) {
+      if (row['guild_id'] != guildId) continue;
+      final memberId = row['user_id'];
+      if (memberId is! String) continue;
+      if (guildMemberSaveTotalLevel(_saveForUser(memberId)) >= guildAchievementMemberLevel) {
         strong += 1;
       }
     }
@@ -1707,6 +1710,20 @@ class FakeTransport implements RemoteTransport {
   }
 
   static RemoteRow _refused(String reason) => <String, Object?>{'ok': false, 'reason': reason};
+
+  PlayerSave? _saveForUser(String userId) {
+    for (final row in tables[RemoteTables.saves]!) {
+      if (row['user_id'] != userId) continue;
+      final payload = row['payload'];
+      if (payload is! Map) return null;
+      try {
+        return parseSave(Map<String, Object?>.from(payload), _clockMs());
+      } on Object {
+        return null;
+      }
+    }
+    return null;
+  }
 
   /// The name, look, and level a roster row copies, as the SQL helper reads them.
   RemoteRow _memberFacts(String userId, [String? fallbackName]) {

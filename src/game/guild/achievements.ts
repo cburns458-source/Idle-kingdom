@@ -1,3 +1,5 @@
+import type { PlayerSave } from '../save/types'
+import { totalLevel } from '../skills/totals'
 import {
   GUILD_HALL_TIER_ARCANA,
   GUILD_HALL_TIER_BANK,
@@ -48,8 +50,17 @@ export const GUILD_ACHIEVEMENT_GOLD_500K = 500_000
 export const GUILD_ACHIEVEMENT_MATERIALS = 100_000
 export const GUILD_ACHIEVEMENT_DONORS_10 = 10
 export const GUILD_ACHIEVEMENT_DONORS_25 = 25
+/** Hosted-save totalLevel gate. Count via totalLevel(parseSave(...)), never guild_members.total_level. */
 export const GUILD_ACHIEVEMENT_MEMBER_LEVEL = 500
 export const GUILD_ACHIEVEMENT_MEMBERS_AT_LEVEL = 25
+
+/**
+ * Rising strength reads the hosted save, same as SQL bazaar_user_total_level.
+ * A member with no save counts as 0. Do not use guild_members.total_level.
+ */
+export function guildMemberSaveTotalLevel(save: Pick<PlayerSave, 'skills'> | null | undefined): number {
+  return save == null ? 0 : totalLevel(save)
+}
 
 export type GuildAchievementKind = 'hall_tier' | 'gold' | 'materials' | 'donors' | 'members_level'
 
@@ -158,6 +169,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
     target: GUILD_ACHIEVEMENT_MATERIALS,
   },
   {
+    // Vari: Many hands rules stay unchanged (gold chip-in or hall material donate).
     id: 'gach_donors_10',
     name: 'Many hands',
     description: 'Have 10 different members chip in.',
@@ -176,6 +188,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
     target: GUILD_ACHIEVEMENT_DONORS_25,
   },
   {
+    // Vari: stays unlocked after members leave (unlock-once).
     id: 'gach_rising_strength',
     name: 'Rising strength',
     description: 'Have 25 members reach total level 500.',

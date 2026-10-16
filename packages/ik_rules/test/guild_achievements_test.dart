@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
@@ -159,6 +162,69 @@ void main() {
     expect(row.current, 25);
     expect(row.target, 25);
     expect(row.unlocked, isTrue);
+  });
+
+  test('counts a member with no save as total level 0 for Rising strength', () {
+    expect(guildMemberSaveTotalLevel(null), 0);
+    expect(
+      evaluateGuildAchievements(
+        GuildAchievementSnapshot(
+          completedTiers: const <String>[],
+          goldContributed: 0,
+          membersAtLevel500: guildMemberSaveTotalLevel(null),
+        ),
+        _now,
+      ).newlyUnlocked,
+      isNot(contains('gach_rising_strength')),
+    );
+  });
+
+  test('keeps rising strength unlocked after a member leaves', () {
+    // Vari: Rising strength stays unlocked after members leave.
+    final reached = evaluateGuildAchievements(
+      const GuildAchievementSnapshot(
+        completedTiers: <String>[],
+        goldContributed: 0,
+        membersAtLevel500: 25,
+      ),
+      _now,
+    );
+    expect(reached.newlyUnlocked, <String>['gach_rising_strength']);
+    final afterLeave = evaluateGuildAchievements(
+      GuildAchievementSnapshot(
+        completedTiers: const <String>[],
+        goldContributed: 0,
+        membersAtLevel500: 24,
+        unlocked: reached.unlocked,
+      ),
+      '2026-10-16T13:00:00.000Z',
+    );
+    expect(afterLeave.newlyUnlocked, isEmpty);
+    expect(afterLeave.unlocked['gach_rising_strength'], _now);
+    expect(
+      afterLeave.progress.singleWhere((entry) => entry.id == 'gach_rising_strength').unlocked,
+      isTrue,
+    );
+  });
+
+  test('SQL hall tier material costs match guildHallTierMaterialCount (202700 all six)', () {
+    final sql = File(
+      '${parityRepoRoot().path}/supabase/migrations/20261016170000_guild_achievements_and_banner.sql',
+    ).readAsStringSync();
+    final costs = <String, int>{
+      for (final match in RegExp(r"when '([^']+)' then (\d+)").allMatches(sql))
+        match.group(1)!: int.parse(match.group(2)!),
+    };
+    var sqlTotal = 0;
+    var dartTotal = 0;
+    for (final tier in guildHallTiers) {
+      expect(costs[tier.id], guildHallTierMaterialCount(tier), reason: tier.id);
+      sqlTotal += costs[tier.id] ?? 0;
+      dartTotal += guildHallTierMaterialCount(tier).toInt();
+    }
+    expect(dartTotal, 202700);
+    expect(sqlTotal, 202700);
+    expect(guildHallMaterialsSpent(guildHallTiers.map((tier) => tier.id).toList()), 202700);
   });
 
   test('validates banner colours and requires unlocked emblem and border', () {

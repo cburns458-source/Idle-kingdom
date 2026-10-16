@@ -191,6 +191,13 @@ Checklist, in order:
    with this PR; live only after Conor merges `test-launch` into `main`.
    Status: applied on test Oct 16 2026 (file `20261016170000`, MCP
    `guild_achievements_and_banner` plus engine follow-ups); live pending.
+8. [ ] `20261016180000_guild_achievements_qa.sql` (SOC-01). Rising strength
+   counts hosted saves via `bazaar_user_total_level`, guild reset restores
+   `guilds.banner` to the default, `guild_set_banner` catches only P0001.
+   Apply to test with this PR; live only after Conor merges `test-launch`
+   into `main`. Do not edit `20261016170000`.
+   Status: applied on test Oct 16 2026 (file `20261016180000`, MCP
+   `20261016120815` / `guild_achievements_qa`); live pending.
 
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16

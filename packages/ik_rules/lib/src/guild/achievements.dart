@@ -1,3 +1,5 @@
+import '../save/generated/save_models.dart';
+import '../skills/totals.dart';
 import 'hall.dart';
 
 /// Palette ids for banner fill and accent. Hex values are a UI choice.
@@ -46,8 +48,15 @@ const num guildAchievementGold500k = 500000;
 const num guildAchievementMaterials = 100000;
 const num guildAchievementDonors10 = 10;
 const num guildAchievementDonors25 = 25;
+
+/// Hosted-save totalLevel gate. Count via [totalLevel] of the cloud save, never
+/// the client-writable guild_members.total_level column.
 const num guildAchievementMemberLevel = 500;
 const num guildAchievementMembersAtLevel = 25;
+
+/// Rising strength reads the hosted save, same as SQL bazaar_user_total_level.
+/// A member with no save counts as 0. Do not use guild_members.total_level.
+num guildMemberSaveTotalLevel(PlayerSave? save) => save == null ? 0 : totalLevel(save);
 
 const String guildAchievementKindHallTier = 'hall_tier';
 const String guildAchievementKindGold = 'gold';
@@ -167,6 +176,7 @@ const List<GuildAchievementDef> guildAchievements = <GuildAchievementDef>[
     kind: guildAchievementKindMaterials,
     target: guildAchievementMaterials,
   ),
+  // Vari: Many hands rules stay unchanged (gold chip-in or hall material donate).
   GuildAchievementDef(
     id: 'gach_donors_10',
     name: 'Many hands',
@@ -185,6 +195,7 @@ const List<GuildAchievementDef> guildAchievements = <GuildAchievementDef>[
     kind: guildAchievementKindDonors,
     target: guildAchievementDonors25,
   ),
+  // Vari: stays unlocked after members leave (unlock-once).
   GuildAchievementDef(
     id: 'gach_rising_strength',
     name: 'Rising strength',
