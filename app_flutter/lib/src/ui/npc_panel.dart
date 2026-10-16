@@ -307,10 +307,6 @@ class _NpcPanelState extends State<NpcPanel> {
       setState(() => _error = null);
       return;
     }
-    if (controller.hostedPlay != null) {
-      setState(() => _error = GameController.needsConnectionReason);
-      return;
-    }
     final result = bribeForQuest(controller.db, controller.save, quest.questId);
     if (!result.ok) {
       if (result.code == 'no_room') {

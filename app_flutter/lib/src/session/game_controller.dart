@@ -1864,7 +1864,6 @@ class GameController extends ChangeNotifier {
       return null;
     }
     // Test-harness only. Production always wires [hostedPlay].
-    if (hostedPlay != null) return needsConnectionReason;
     final result = chooseReligion(db, save, religionId, session.clock());
     if (!result.ok) return result.reason;
     commit(result.save!, command: 'choose_religion', args: args);

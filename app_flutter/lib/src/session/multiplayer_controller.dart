@@ -508,7 +508,7 @@ class MultiplayerController extends ChangeNotifier {
   /// Signs out after writing the account save, then drops the character here.
   Future<void> signOut(PlayerSave save) {
     return run(() async {
-      await flushAccountSave(save);
+      await _flushAccountSave(save: save, disconnectOnUnreachable: false);
       await service.clearPresence();
       await service.signOut();
       _clearAccountLocally();
@@ -780,11 +780,48 @@ class MultiplayerController extends ChangeNotifier {
   /// Marks the session disconnected and starts reconnect syncs.
   void markDisconnected() => _enterDisconnected();
 
+  void _clearPendingLoadout() {
+    _loadoutTimer?.cancel();
+    _loadoutTimer = null;
+    _loadoutDirty = false;
+    _loadoutRetries = 0;
+  }
+
+  bool _isAuthError(String? reason) => isExpiredAuthError(reason);
+
   void _enterDisconnected() {
+    _clearPendingLoadout();
     final was = disconnected;
     disconnected = true;
-    if (!was) notifyListeners();
-    _scheduleReconnect();
+    if (!was) {
+      notifyListeners();
+      _scheduleReconnect();
+    }
+  }
+
+  Future<void> _signOutFromExpiredSession() async {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempt = 0;
+    disconnected = false;
+    _clearPendingLoadout();
+    try {
+      await service.signOut();
+    } on Object {
+      // The session is already dead; still drop the local copy.
+    }
+    _clearAccountLocally();
+    _notice = remoteSignInAgain;
+    notifyListeners();
+  }
+
+  void _stopReconnectWithNotice(String notice) {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempt = 0;
+    disconnected = false;
+    _notice = notice;
+    notifyListeners();
   }
 
   void _scheduleReconnect() {
@@ -822,22 +859,33 @@ class MultiplayerController extends ChangeNotifier {
         _reconnectTimer?.cancel();
         _reconnectTimer = null;
         _reconnectAttempt = 0;
+        _clearPendingLoadout();
         _adoptHosted(result.save!);
         notifyListeners();
         return true;
       }
-      if (_isUnreachable(result.reason) || !result.ok) {
+      if (_isAuthError(result.reason)) {
+        await _signOutFromExpiredSession();
+        return false;
+      }
+      if (_isUnreachable(result.reason)) {
         _scheduleReconnect();
         return false;
       }
+      _stopReconnectWithNotice(result.reason ?? 'Game function returned no save.');
+      return false;
     } on Object catch (error) {
-      if (_isUnreachable(error.toString()) || disconnected) {
+      if (_isAuthError(error.toString())) {
+        await _signOutFromExpiredSession();
+        return false;
+      }
+      if (_isUnreachable(error.toString())) {
         _scheduleReconnect();
         return false;
       }
+      _stopReconnectWithNotice(error.toString());
+      return false;
     }
-    _scheduleReconnect();
-    return false;
   }
 
   void _scheduleLoadoutFlush({Duration delay = loadoutCoalesceDelay}) {
@@ -845,7 +893,7 @@ class MultiplayerController extends ChangeNotifier {
     _loadoutDirty = true;
     _loadoutTimer?.cancel();
     _loadoutTimer = Timer(delay, () {
-      if (!_alive || !_loadoutDirty) return;
+      if (!_alive || !_loadoutDirty || disconnected) return;
       unawaited(submitGameCommand('set_loadout'));
     });
   }
@@ -862,6 +910,8 @@ class MultiplayerController extends ChangeNotifier {
     final result = await _runHostedCommand('set_loadout', loadoutCommandArgs(live));
     if (result.ok) {
       _loadoutRetries = 0;
+    } else if (_isUnreachable(result.reason)) {
+      _enterDisconnected();
     } else {
       await _loadoutFailed(result.reason);
     }
@@ -873,6 +923,10 @@ class MultiplayerController extends ChangeNotifier {
   /// so the same slots go again a little later. Only a real refusal, such as
   /// a piece the server's bag does not hold, reloads the server's gear.
   Future<void> _loadoutFailed(String? reason) async {
+    if (_isUnreachable(reason)) {
+      _enterDisconnected();
+      return;
+    }
     final transient = remoteMissingGameFunction(reason) || reason == remoteUnknownGameCommand;
     if (!transient) {
       _loadoutRetries = 0;
@@ -949,23 +1003,40 @@ class MultiplayerController extends ChangeNotifier {
   /// rewinds the action bar and puts sold items back in the bag.
   Future<void> flushAccountSave([PlayerSave? save]) => _flushAccountSave(save: save);
 
-  Future<void> _flushAccountSave({PlayerSave? save, bool enqueue = true}) async {
+  Future<void> _flushAccountSave({
+    PlayerSave? save,
+    bool enqueue = true,
+    bool disconnectOnUnreachable = true,
+  }) async {
     _accountSaveTimer?.cancel();
     _accountSaveTimer = null;
     final outgoing = save ?? _pendingAccountSave;
     _pendingAccountSave = null;
     if (!isSignedIn || _suppressUploads || !isPlayableSave(outgoing)) return;
+
+    Future<void> send() async {
+      try {
+        final result = await service.pushSave(db, outgoing!, force: false);
+        if (disconnectOnUnreachable && !result.ok && _isUnreachable(result.reason)) {
+          _enterDisconnected();
+        }
+      } on Object catch (error) {
+        if (disconnectOnUnreachable && _isUnreachable(error.toString())) {
+          _enterDisconnected();
+        }
+      }
+    }
+
     if (!enqueue) {
-      await service.pushSave(db, outgoing!, force: false);
+      await send();
       return;
     }
     final done = Completer<void>();
     _commandTail = _commandTail
         .then((_) async {
           if (!isSignedIn || _suppressUploads) return;
-          await service.pushSave(db, outgoing!, force: false);
+          await send();
         })
-        .catchError((Object _) {})
         .whenComplete(done.complete);
     return done.future;
   }

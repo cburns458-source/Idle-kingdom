@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
+import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/ui/app_root.dart';
 import 'package:idle_kingdoms/src/ui/app_shell.dart';
 import 'package:ik_content/ik_content.dart';
@@ -188,6 +189,278 @@ void main() {
 
     game.commit(game.save.copyWith(gold: 1), command: 'shop_confirm');
     expect(game.save.gold, before.gold);
+  });
+
+  test('a command connection error enters disconnected without markDisconnected', () async {
+    final transport = FakeTransport()..database = database.launch;
+    final hold = Completer<void>();
+    addTearDown(() {
+      if (!hold.isCompleted) hold.complete();
+    });
+    final net = buildRemoteMultiplayer(
+      database,
+      transport: transport,
+      reconnectDelay: (_) => hold.future,
+    );
+    addTearDown(net.dispose);
+    await net.signUp(
+      'hero@example.com',
+      'Hero',
+      'secret',
+      startedCharacter(database),
+      adopt: (save, {nowMs}) {},
+    );
+    final seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    expect((await seedHostedSave(net.service, transport, seed)).ok, isTrue);
+    await net.resumeAccount(seed, adopt: (save, {nowMs}) {});
+
+    transport.unreachable = true;
+    final result = await net.submitGameCommand('start_activity', <String, Object?>{
+      'activityId': 'ACT-0021',
+    });
+
+    expect(result.ok, isFalse);
+    expect(result.reason, GameController.needsConnectionReason);
+    expect(net.disconnected, isTrue);
+    expect(net.isSignedIn, isTrue);
+  });
+
+  test('reconnect backoff is scheduled with increasing attempts', () async {
+    final transport = FakeTransport()..database = database.launch;
+    final attempts = <int>[];
+    final gates = <Completer<void>>[];
+    final net = buildRemoteMultiplayer(
+      database,
+      transport: transport,
+      reconnectDelay: (attempt) {
+        attempts.add(attempt);
+        final gate = Completer<void>();
+        gates.add(gate);
+        return gate.future;
+      },
+    );
+    addTearDown(net.dispose);
+    await net.signUp(
+      'hero@example.com',
+      'Hero',
+      'secret',
+      startedCharacter(database),
+      adopt: (save, {nowMs}) {},
+    );
+    final seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    expect((await seedHostedSave(net.service, transport, seed)).ok, isTrue);
+    await net.resumeAccount(seed, adopt: (save, {nowMs}) {});
+
+    transport.unreachable = true;
+    await net.submitGameCommand('start_activity', <String, Object?>{'activityId': 'ACT-0021'});
+    expect(net.disconnected, isTrue);
+    expect(attempts, [1]);
+
+    gates[0].complete();
+    await pumpEventQueue();
+    expect(attempts, [1, 1]);
+
+    gates[1].complete();
+    await pumpEventQueue();
+    expect(attempts, [1, 1, 2]);
+  });
+
+  test('an auth error during retry signs out and stops reconnecting', () async {
+    final transport = FakeTransport()..database = database.launch;
+    final hold = Completer<void>();
+    addTearDown(() {
+      if (!hold.isCompleted) hold.complete();
+    });
+    final net = buildRemoteMultiplayer(
+      database,
+      transport: transport,
+      reconnectDelay: (_) => hold.future,
+    );
+    addTearDown(net.dispose);
+    await net.signUp(
+      'hero@example.com',
+      'Hero',
+      'secret',
+      startedCharacter(database),
+      adopt: (save, {nowMs}) {},
+    );
+    final seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    expect((await seedHostedSave(net.service, transport, seed)).ok, isTrue);
+    await net.resumeAccount(seed, adopt: (save, {nowMs}) {});
+
+    net.markDisconnected();
+    expect(net.disconnected, isTrue);
+    expect(net.isSignedIn, isTrue);
+
+    transport.failNextWith = 'JWT expired';
+    expect(await net.retrySync(), isFalse);
+    expect(net.isSignedIn, isFalse);
+    expect(net.disconnected, isFalse);
+    expect(net.notice, remoteSignInAgain);
+  });
+
+  test('a non-network sync error stops retrying and shows a notice', () async {
+    final transport = FakeTransport()..database = database.launch;
+    final attempts = <int>[];
+    final net = buildRemoteMultiplayer(
+      database,
+      transport: transport,
+      reconnectDelay: (attempt) {
+        attempts.add(attempt);
+        return Completer<void>().future;
+      },
+    );
+    addTearDown(net.dispose);
+    await net.signUp(
+      'hero@example.com',
+      'Hero',
+      'secret',
+      startedCharacter(database),
+      adopt: (save, {nowMs}) {},
+    );
+    final seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    expect((await seedHostedSave(net.service, transport, seed)).ok, isTrue);
+    await net.resumeAccount(seed, adopt: (save, {nowMs}) {});
+
+    net.markDisconnected();
+    expect(attempts, [1]);
+
+    transport.failNextWith = 'Game function returned no save.';
+    expect(await net.retrySync(), isFalse);
+    expect(net.disconnected, isFalse);
+    expect(net.isSignedIn, isTrue);
+    expect(net.notice, 'Game function returned no save.');
+    expect(attempts, [1]);
+  });
+
+  test('craft, item use, eatFood and religion are refused while disconnected', () async {
+    final transport = FakeTransport()..database = database.launch;
+    final hold = Completer<void>();
+    addTearDown(() {
+      if (!hold.isCompleted) hold.complete();
+    });
+    final net = buildRemoteMultiplayer(
+      database,
+      transport: transport,
+      reconnectDelay: (_) => hold.future,
+    );
+    addTearDown(net.dispose);
+    await net.signUp(
+      'hero@example.com',
+      'Hero',
+      'secret',
+      startedCharacter(database),
+      adopt: (save, {nowMs}) {},
+    );
+    final seed = startedCharacter(database).copyWith(
+      currentLocationId: 'LOC-0001',
+      gold: 80,
+      inventory: const [InventoryStack(itemId: 'ITEM-0025', quantity: 2)],
+    );
+    expect((await seedHostedSave(net.service, transport, seed)).ok, isTrue);
+
+    final game = buildController(database, seed: seed);
+    addTearDown(game.dispose);
+    wireHostedPlay(game, net);
+    await net.resumeAccount(game.save, adopt: game.adoptAccountSave);
+
+    net.markDisconnected();
+    final before = game.save;
+
+    game.commit(
+      game.save.copyWith(gold: 1),
+      command: 'start_production',
+      args: const <String, Object?>{'activityId': 'ACT-0001', 'recipeId': 'RCP-0001'},
+    );
+    expect(game.save.gold, before.gold);
+    expect(game.activityError, GameController.needsConnectionReason);
+
+    game.commit(
+      game.save.copyWith(gold: 1),
+      command: 'eat_food',
+      args: const <String, Object?>{'inventoryIndex': 0},
+    );
+    expect(game.save.gold, before.gold);
+
+    expect(game.eatFood(inventoryIndex: 0), GameController.needsConnectionReason);
+    expect(game.save.inventory.single.quantity, 2);
+
+    expect(await game.chooseReligionAtTemple('REL-0001'), GameController.needsConnectionReason);
+    expect(game.save.religionId, before.religionId);
+  });
+
+  testWidgets('pending loadout is not flushed after reconnect', (tester) async {
+    final transport = FakeTransport()..database = database.launch;
+    final hold = Completer<void>();
+    addTearDown(() {
+      if (!hold.isCompleted) hold.complete();
+    });
+    final net = buildRemoteMultiplayer(
+      database,
+      transport: transport,
+      reconnectDelay: (_) => hold.future,
+    );
+    addTearDown(net.dispose);
+    await net.signUp(
+      'hero@example.com',
+      'Hero',
+      'secret',
+      startedCharacter(database),
+      adopt: (save, {nowMs}) {},
+    );
+    final seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    expect((await seedHostedSave(net.service, transport, seed)).ok, isTrue);
+
+    final game = buildController(database, seed: seed);
+    addTearDown(game.dispose);
+    wireHostedPlay(game, net);
+    await net.resumeAccount(game.save, adopt: game.adoptAccountSave);
+
+    await net.submitGameCommand('equip_index', <String, Object?>{'inventoryIndex': 0});
+    expect(transport.calls.where((call) => call == 'game:set_loadout'), isEmpty);
+
+    transport.unreachable = true;
+    await net.submitGameCommand('start_activity', <String, Object?>{'activityId': 'ACT-0021'});
+    expect(net.disconnected, isTrue);
+
+    final server = seed.copyWith(gold: 250);
+    transport.unreachable = false;
+    expect((await seedHostedSave(net.service, transport, server)).ok, isTrue);
+    expect(await net.retrySync(), isTrue);
+    expect(net.disconnected, isFalse);
+    expect(game.save.gold, 250);
+
+    await tester.pump(MultiplayerController.loadoutCoalesceDelay);
+    await tester.pump(const Duration(seconds: 2));
+    expect(transport.calls.where((call) => call == 'game:set_loadout'), isEmpty);
+  });
+
+  test('flushAccountSave connection error enters disconnected', () async {
+    final transport = FakeTransport()..database = database.launch;
+    final hold = Completer<void>();
+    addTearDown(() {
+      if (!hold.isCompleted) hold.complete();
+    });
+    final net = buildRemoteMultiplayer(
+      database,
+      transport: transport,
+      reconnectDelay: (_) => hold.future,
+    );
+    addTearDown(net.dispose);
+    await net.signUp(
+      'hero@example.com',
+      'Hero',
+      'secret',
+      startedCharacter(database),
+      adopt: (save, {nowMs}) {},
+    );
+    final seed = startedCharacter(database).copyWith(currentLocationId: 'LOC-0001');
+    expect((await seedHostedSave(net.service, transport, seed)).ok, isTrue);
+    await net.resumeAccount(seed, adopt: (save, {nowMs}) {});
+
+    transport.unreachable = true;
+    await net.flushAccountSave(seed);
+    expect(net.disconnected, isTrue);
   });
 
   test('leftover is not pushed when an account has no cloud save', () async {
