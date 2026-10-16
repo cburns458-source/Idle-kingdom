@@ -1,6 +1,6 @@
 # Restoria master backlog
 
-**Status: Approved by Conor on 2026-10-12. Updated 2026-10-13 (Conor).**
+**Status: Approved by Conor on 2026-10-12. Updated 2026-10-16 (Conor).**
 
 This is the single master backlog for Restoria. Only Conor edits it, or a PR he
 approves. Every design call stays with Conor. Work on any item still follows
@@ -57,7 +57,8 @@ reused or renumbered. Gaps in the numbering are intentional. Open questions use
 ### 1.2 Status legend
 
 `Idea` → `Needs decision` → `Ready for plan` → `Planned` (plan approved) →
-`In PR` → `On test` → `Live`. Or `Parked` / `Dropped` / `Duplicate of X`.
+`In PR` → `On test` → `Verified` (owner playtested on test-launch) → `Live`.
+Or `Parked` / `Dropped` / `Duplicate of X`.
 
 **Rule:** an item can't move past `Needs decision` while it has an open `OQ-##`.
 
@@ -109,6 +110,7 @@ Conor's rulings, dated. Immutable once written.
 
 | Date | Decision | Evidence |
 |---|---|---|
+| 2026-10-15 | BUG-01, BUG-02, and BUG-04 Verified on test.restoriaidle.com | Conor playtest; BUG-01 #304, BUG-02 #310 (Tradeable column; not #377), BUG-04 #333 |
 | 2026-10-13 | Done archive tracks `test-launch`; `main` is updated later | Conor |
 | 2026-10-13 | Inventory/bank caps: 84 bag slots / 168 bank slots | PR #332, Conor (OQ-03 / SYS-03) |
 | 2026-10-13 | Travel stays instant; remove the unused travel-time setting (no player-facing change) | Conor (SYS-07) |
@@ -191,10 +193,10 @@ Just IDs, in order. Conor re-orders this.
 
 ### P0: Now (security, exploits, broken onboarding)
 
-1. **BUG-01** Fennel Getting Started step bug. Needs a Fennel potato playtest re-check on test-launch before closing (step-latch shipped in #304).
-2. **ADM-01** Supabase/Cloudflare/RLS audit. Re-run advisors, do leaked-password protection, close the rls-hardening follow-ups (hall donations without debit, etc.).
-3. **BUG-02** Untradeable selling exploit. Merged on test-launch via #310; leave the row in the BUG table as On test.
-4. **ADM-02** Email confirmation with the new email. Account security and recovery. Needs an auth-flow change because Confirm email is deliberately off.
+1. **ADM-01** Supabase/Cloudflare/RLS audit. Re-run advisors, do leaked-password protection, close the rls-hardening follow-ups (hall donations without debit, etc.).
+2. **ADM-02** Email confirmation with the new email. Account security and recovery. Needs an auth-flow change because Confirm email is deliberately off.
+
+Verified 2026-10-15 (Conor playtest on test.restoriaidle.com): **BUG-01** (#304), **BUG-02** (#310, Items `Tradeable` column; not #377), **BUG-04** (#333).
 
 ### P1: Next
 
@@ -247,10 +249,10 @@ Direction, Community = Community/Notifications).
 
 | ID | Title | Status | Pri | Dep | Owner | Notes |
 |---|---|---|---|---|---|---|
-| BUG-01 | Fennels second step in getting started isn't working properly… | Needs re-check (Fennel potato playtest) | **P0** | none | QA | Root cause in [Appendix A](#appendix-a-fennel-getting-started-bug-analysis). Step-latch shipped in #304. **Needs a Fennel potato playtest on test-launch before closing.** **Dup/overlap:** QST-01, QST-02. Blocks QST-02, NTF-06. |
-| BUG-02 | Fix selling "untradeable" items to shops. | On test | **P0** | OQ-05 | QA + Econ | Merged on test-launch via #310. Items `Tradeable` column (default true; false for Machete, Excavator's Pickaxe, Stolen Coin Purse, Beggar's Hood). Bazaar refuses them client and server side; shops unchanged. Migration `20261012170000` cancels open orders. `validateTradeability` keeps quest-only items untradeable. **Overlap:** QST-12 |
+| BUG-01 | Fennels second step in getting started isn't working properly… | Verified | **P0** | none | QA | Root cause in [Appendix A](#appendix-a-fennel-getting-started-bug-analysis). Fixed by #304 (step-latch). Verified by Conor playtest on test.restoriaidle.com on 2026-10-15. All Hold: steps are covered by that latch; no separate follow-up. **Dup/overlap:** QST-01, QST-02. Blocks QST-02, NTF-06. |
+| BUG-02 | Fix selling "untradeable" items to shops. | Verified | **P0** | OQ-05 | QA + Econ | Fixed by #310 (Items `Tradeable` column; not #377). Default true; false for Machete, Excavator's Pickaxe, Stolen Coin Purse, Beggar's Hood. Bazaar refuses them client and server side; shops unchanged. Migration `20261012170000` cancels open orders. `validateTradeability` keeps quest-only items untradeable. Verified by Conor playtest on test.restoriaidle.com on 2026-10-15. **Overlap:** QST-12 |
 | BUG-03 | Fixes: todo- drops/recipes | Done | P1 | none | QA | Closed 2026-10-13. No fixing PR in `git log`; solved before tracking. |
-| BUG-04 | Ranked PvP reward exploit | On test (merged) | **P0** | none | QA | Fixed in #333: server mints fight ID, picks opponent, pays; cap 5 paid wins/day resetting midnight UTC; idempotent retries. Merged on test-launch. |
+| BUG-04 | Ranked PvP reward exploit | Verified | **P0** | none | QA | Fixed in #333: server mints fight ID, picks opponent, pays; cap 5 paid wins/day resetting midnight UTC; idempotent retries. Verified by Conor playtest on test.restoriaidle.com on 2026-10-15. |
 
 ### QST: Quests and dialogue
 
@@ -420,7 +422,7 @@ All depend on SYS-05. Owner: Community.
 |---|---|---|
 | Citadel as region | UI "Citadel can be its own region…", UI "citadel can be in the middle…", MAP-03 | One item, MAP-03. Lore → WLD-02, travel button → MAP-01b |
 | Region unlock vs region map | MAP-01b (200/400/800) vs MAP-01 | MAP-01 builds the map, MAP-01b sets the unlock rule. OQ-11: thresholds 200/400/800 confirmed; quest-unlock overlap still Open; on hold for map assets. |
-| Getting Started | BUG-01 Fennel bug, QST-01 dialogue fix, QST-02 mandatory tutorial | QST-01 closed (#323, #270). BUG-01 needs a Fennel potato playtest before closing. Then QST-02. |
+| Getting Started | BUG-01 Fennel bug, QST-01 dialogue fix, QST-02 mandatory tutorial | QST-01 closed (#323, #270). BUG-01 Verified (#304; Conor playtest 2026-10-15). Then QST-02. |
 | Essence | ARC-02 rework, ARC-04 0.1% essence item, ARC-03 spell charging | One "Essence economy" design doc |
 | Enchanting | ARC-01 tablets, ARC-07 piercing, ARC-08 shield | Tablets first, then new enchants ship as tablets |
 | Thievery | SKL-01 loot bags/recipes, SKL-02 companions, ITM-07 lockpick items, QST-07 lockpick quest, MAP-03 citadel thievery | One "Thievery expansion" epic |
@@ -437,7 +439,7 @@ All depend on SYS-05. Owner: Community.
 ```
 OQ-01/OQ-11 ─► MAP-01 region map ─► MAP-01b unlocks ─► MAP-02 isles, MAP-03 citadel map
 SYS-01 dialogue system ─► QST-01 dialogue fixes (done #323/#270), QST-02 tutorial, QST-03 king/queen
-BUG-01 (persist steps; needs Fennel potato playtest) ─► QST-02 tutorial, NTF-06 quest-step notifications
+BUG-01 (persist steps; Verified #304, Conor playtest 2026-10-15) ─► QST-02 tutorial, NTF-06 quest-step notifications
 OQ-15 + Bible ─► ECO-03 plaza points ─► bounty/pvp reward swap, SOC-03 leaderboard payouts
 SYS-05 notifications ─► NTF-01..09
 ARC-01 tablets ─► ARC-07 piercing, ARC-08 shield
@@ -482,16 +484,20 @@ already done when the backlog was approved.
 | test(unattended): test-only step cap so the catch-up self-heal test runs fast | PR #331 (on test-launch) | 2026-10-13 |
 | SYS-03: 84 bag slots / 168 bank slots, leftover loot | PR #332 (on test-launch) | 2026-10-13 |
 | SYS-07: unused travel-time setting removed | PR #336 (on test-launch) | 2026-10-13 |
-| BUG-04: server-authoritative ranked PvP and bounty payouts | PR #333 (on test-launch) | 2026-10-13 |
+| BUG-04: server-authoritative ranked PvP and bounty payouts | PR #333 (on test-launch); Verified by Conor playtest on test.restoriaidle.com 2026-10-15 | 2026-10-13 |
 | QST-01 Getting Started / Green Thumb dialogue | PR #323, #270 (on test-launch) | 2026-10-13 |
 | BUG-03 todo drops/recipes | solved before tracking (no fixing PR in `git log`) | 2026-10-13 |
+| BUG-01: Fennel Getting Started step-latch | PR #304 (on test-launch); Verified by Conor playtest on test.restoriaidle.com 2026-10-15 | 2026-10-15 |
+| BUG-02: Items Tradeable column (untradeable Bazaar block) | PR #310 (on test-launch; not #377); Verified by Conor playtest on test.restoriaidle.com 2026-10-15 | 2026-10-15 |
 
 ---
 
 ## Appendix A: Fennel "Getting Started" bug analysis
 
 Supports **BUG-01**. Analysis written before #304 (step-latch). That fix is on
-test-launch; status stays **Needs re-check** until a Fennel potato playtest.
+test-launch; **Verified** by Conor playtest on test.restoriaidle.com on
+2026-10-15. All Hold: steps are covered by the #304 latch; no separate
+follow-up.
 
 **Root cause (high confidence):** quest steps aren't saved once they're done.
 `getCurrentStepIndex` re-checks every step on every tick, and steps 1–2 of
@@ -547,9 +553,9 @@ Started dates from `6ea1865f`, reworked in #131. No PR from #283–#302 touched
 quest step logic. PR #301 touched sell/shops only. So this is long-standing, not
 a regression from recent PRs.
 
-**Probably affects other quests too:** any quest with a `Hold:` step followed by
-steps that use up or move that item has the same problem. Worth an audit (QA
-bot): grep `Hold:` in `QuestSteps`.
+**Covered for other quests too:** any quest with a `Hold:` step followed by
+steps that use up or move that item had the same problem. The #304 latch
+covers all Hold: steps, so there is no separate follow-up.
 
 ### Fix directions (Conor chooses)
 

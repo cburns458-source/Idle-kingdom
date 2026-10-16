@@ -595,11 +595,9 @@ Hunting tools:
 
 Tool progression:
 - Hunting Level 1: Sling (ex-net), starter hunting tool.
-- Hunting Level 10: Regular Bow.
 - Hunting Level 15: Bola, 0 damage, 4% action time reduction.
 
 Bow progression:
-- Regular Bow.
 - Cedar Bow.
 - Oak Bow.
 - Poplar Bow.
