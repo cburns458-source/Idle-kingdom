@@ -167,9 +167,29 @@ describe('guild hall tiers', () => {
   })
 
   it('uses the listed finish lines and never the word coffer', () => {
+    expect(GUILD_HALL_TIER_FINISH_LINES).toEqual({
+      [GUILD_HALL_TIER_BANK]: 'The counting room is open for business.',
+      [GUILD_HALL_TIER_BOXING]: 'The ring is roped off. Settle your differences in there.',
+      [GUILD_HALL_TIER_GARDEN]: "Soil's in, and the hall smells of earth now.",
+      [GUILD_HALL_TIER_ARCANA]: 'The Arcana station hums to life in the corner.',
+      [GUILD_HALL_TIER_CAGE]: 'Something big is rattling the cage. Mind your fingers.',
+    })
     expect(guildHallTierFinishLine(GUILD_HALL_TIER_BANK)).toBe(
       'The counting room is open for business.',
     )
+    expect(guildHallTierFinishLine(GUILD_HALL_TIER_BOXING)).toBe(
+      'The ring is roped off. Settle your differences in there.',
+    )
+    expect(guildHallTierFinishLine(GUILD_HALL_TIER_GARDEN)).toBe(
+      "Soil's in, and the hall smells of earth now.",
+    )
+    expect(guildHallTierFinishLine(GUILD_HALL_TIER_ARCANA)).toBe(
+      'The Arcana station hums to life in the corner.',
+    )
+    expect(guildHallTierFinishLine(GUILD_HALL_TIER_CAGE)).toBe(
+      'Something big is rattling the cage. Mind your fingers.',
+    )
+    expect(guildHallTierFinishLine(GUILD_HALL_TIER_BUILD)).toBeNull()
     expect(Object.values(GUILD_HALL_TIER_FINISH_LINES).join(' ')).not.toMatch(/coffer/i)
   })
 

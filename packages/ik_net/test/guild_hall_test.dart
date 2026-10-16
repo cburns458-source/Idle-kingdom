@@ -277,6 +277,13 @@ void main() {
       anyOf(guildLogKindDonation, guildLogKindTierComplete, guildLogKindJoin),
     );
     expect(logs, isNotEmpty);
+    expect(
+      logs
+          .where((row) => row.kind == guildLogKindTierComplete && row.tierId == guildHallTierBank)
+          .single
+          .message,
+      'The counting room is open for business.',
+    );
   });
 }
 

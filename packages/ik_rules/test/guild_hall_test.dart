@@ -161,7 +161,31 @@ void main() {
   });
 
   test('finish lines match the listed copy and never say coffer', () {
+    expect(guildHallTierFinishLines, {
+      guildHallTierBank: 'The counting room is open for business.',
+      guildHallTierBoxing: 'The ring is roped off. Settle your differences in there.',
+      guildHallTierGarden: "Soil's in, and the hall smells of earth now.",
+      guildHallTierArcana: 'The Arcana station hums to life in the corner.',
+      guildHallTierCage: 'Something big is rattling the cage. Mind your fingers.',
+    });
     expect(guildHallTierFinishLine(guildHallTierBank), 'The counting room is open for business.');
+    expect(
+      guildHallTierFinishLine(guildHallTierBoxing),
+      'The ring is roped off. Settle your differences in there.',
+    );
+    expect(
+      guildHallTierFinishLine(guildHallTierGarden),
+      "Soil's in, and the hall smells of earth now.",
+    );
+    expect(
+      guildHallTierFinishLine(guildHallTierArcana),
+      'The Arcana station hums to life in the corner.',
+    );
+    expect(
+      guildHallTierFinishLine(guildHallTierCage),
+      'Something big is rattling the cage. Mind your fingers.',
+    );
+    expect(guildHallTierFinishLine(guildHallTierBuild), isNull);
     expect(guildHallTierFinishLines.values.join(' ').toLowerCase(), isNot(contains('coffer')));
   });
 
