@@ -353,7 +353,7 @@ const String remoteSaveColumns = 'save_version, updated_at, payload, version, rn
 const String remoteSaveColumnsWithoutAuthority = 'save_version, updated_at, payload';
 const String remoteChatColumns =
     'id, channel_key, user_id, username, body, created_at, '
-    'guild_tag, rank_icon, guest';
+    'guild_tag, rank_icon, guest, title';
 const String remoteLeaderboardColumns = 'user_id, board_key, value, value_secondary, profiles';
 const String remoteBountyClaimColumns = 'hour_key, bounty_id, user_id, username, claimed_at';
 const String remotePresenceColumns =

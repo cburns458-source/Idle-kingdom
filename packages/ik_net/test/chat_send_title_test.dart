@@ -55,38 +55,39 @@ void main() {
     expect(oruvani.message!.title, 'Oruvani');
   });
 
-  test(
-    'send-chat function payload carries the save title and listing does not invent one',
-    () async {
-      final db = _database();
-      final transport = FakeTransport(database: db);
-      final service = RemoteMultiplayerService(
-        transport: transport,
-        storage: MemorySaveStorage(),
-        ports: LocalBackendPorts(nowMs: () => _nowMs, newId: (prefix) => '${prefix}_0001'),
-      );
-      expect((await service.signUp('hero@example.com', 'Hero', 'secret')).ok, isTrue);
+  test('send-chat stores the save title on the row and listing reads it', () async {
+    final db = _database();
+    final transport = FakeTransport(database: db);
+    final service = RemoteMultiplayerService(
+      transport: transport,
+      storage: MemorySaveStorage(),
+      ports: LocalBackendPorts(nowMs: () => _nowMs, newId: (prefix) => '${prefix}_0001'),
+    );
+    expect((await service.signUp('hero@example.com', 'Hero', 'secret')).ok, isTrue);
 
-      final noSave = await service.sendChat(const ChatChannel.global(), 'No save yet');
-      expect(noSave.ok, isTrue);
-      expect(noSave.message!.title, isNull);
+    final noSave = await service.sendChat(const ChatChannel.global(), 'No save yet');
+    expect(noSave.ok, isTrue);
+    expect(noSave.message!.title, isNull);
+    expect(transport.tables[RemoteTables.chat]!.last['title'], isNull);
 
-      final living = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
-      expect((await seedHostedSave(service, transport, living)).ok, isTrue);
-      final undying = await service.sendChat(const ChatChannel.local('LOC-0001'), 'Hi');
-      expect(undying.ok, isTrue);
-      expect(undying.message!.title, 'The Undying');
-      expect(undying.message!.body, 'Hi');
+    final living = createNewSave(db, _nowMs).copyWith(characterName: 'Hero');
+    expect((await seedHostedSave(service, transport, living)).ok, isTrue);
+    final undying = await service.sendChat(const ChatChannel.local('LOC-0001'), 'Hi');
+    expect(undying.ok, isTrue);
+    expect(undying.message!.title, 'The Undying');
+    expect(undying.message!.body, 'Hi');
 
-      // Listing reads the table, which has no title column yet.
-      final listed = await service.listChat(const ChatChannel.local('LOC-0001'));
-      expect(listed.single.body, 'Hi');
-      expect(listed.single.title, isNull);
+    final listed = await service.listChat(const ChatChannel.local('LOC-0001'));
+    expect(listed.single.body, 'Hi');
+    expect(listed.single.title, 'The Undying');
+    expect(transport.tables[RemoteTables.chat]!.last['title'], 'The Undying');
 
-      final faith = _withTitle(living, 'COS-0013');
-      expect((await seedHostedSave(service, transport, faith)).ok, isTrue);
-      final oruvani = await service.sendChat(const ChatChannel.local('LOC-0002'), 'Hold');
-      expect(oruvani.message!.title, 'Oruvani');
-    },
-  );
+    final faith = _withTitle(living, 'COS-0013');
+    expect((await seedHostedSave(service, transport, faith)).ok, isTrue);
+    final oruvani = await service.sendChat(const ChatChannel.local('LOC-0002'), 'Hold');
+    expect(oruvani.message!.title, 'Oruvani');
+    expect(transport.tables[RemoteTables.chat]!.last['title'], 'Oruvani');
+    final listedFaith = await service.listChat(const ChatChannel.local('LOC-0002'));
+    expect(listedFaith.single.title, 'Oruvani');
+  });
 }

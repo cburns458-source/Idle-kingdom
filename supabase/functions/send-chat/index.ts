@@ -200,8 +200,10 @@ Deno.serve(async (req) => {
       guild_tag: guildTag,
       rank_icon: rankIcon,
       guest,
+      // Equipped title from the hosted save. A client-supplied title is ignored.
+      title,
     })
-    .select('id, channel_key, user_id, username, body, created_at, guild_tag, rank_icon, guest')
+    .select('id, channel_key, user_id, username, body, created_at, guild_tag, rank_icon, guest, title')
     .single()
   if (insertError || !inserted) {
     return json({ error: insertError?.message ?? 'The chat message was not accepted.' }, 400)
@@ -213,7 +215,6 @@ Deno.serve(async (req) => {
     last_sent_at: new Date().toISOString(),
   })
 
-  // Title is computed from the hosted save. It is not a chat_messages column.
   return json({ ...inserted, title }, 200)
 })
 
