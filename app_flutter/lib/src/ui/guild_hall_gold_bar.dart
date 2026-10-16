@@ -65,3 +65,11 @@ class GuildHallGoldBar extends StatelessWidget {
 /// Gold still to chip in, as the bar shows it.
 String guildHallGoldRemainingLabel(num contributed) =>
     formatThousands(guildHallGoldRemaining(contributed));
+
+/// Largest chip-in the hall and the purse will both take. Zero when either is.
+int guildHallGoldPayMax(num contributed, num playerGold) {
+  final room = guildHallGoldChipInCap(contributed).floor();
+  final purse = playerGold.floor();
+  if (room <= 0 || purse <= 0) return 0;
+  return room < purse ? room : purse;
+}

@@ -107,6 +107,14 @@ void main() {
     expect(find.text('Monster Cage'), findsOne);
   });
 
+  test('chip-in max is leftover to 1M or the purse, whichever is smaller', () {
+    expect(guildHallGoldPayMax(0, 50), 50);
+    expect(guildHallGoldPayMax(999900, 500), 100);
+    expect(guildHallGoldPayMax(guildHallGoldCap, 500), 0);
+    expect(guildHallGoldPayMax(0, 0), 0);
+    expect(guildHallGoldPayMax(0, 2000000), guildHallGoldCap);
+  });
+
   testWidgets('the gold bar has Sys marks and counts remaining gold down', (tester) async {
     final controller = buildController(
       database,
@@ -139,6 +147,103 @@ void main() {
     await pumpPanel(tester, const GuildHallGoldBar(contributed: 10000));
     expect(tester.widget<GuildHallGoldBar>(find.byType(GuildHallGoldBar)).contributed, 10000);
     expect(find.text('990,000'), findsOne);
+  });
+
+  testWidgets('Chip in is disabled when the hall is at the 1M cap', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database)
+          .copyWith(currentLocationId: guildHallLocationId, gold: guildHallGoldCap),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+    final chipped = await net.service.payGuildDebt(controller.save, guildHallGoldCap.floor());
+    expect(chipped.ok, isTrue, reason: chipped.reason);
+    controller.commit(chipped.save!);
+
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+
+    final chip = tester.widget<GameButton>(find.byKey(const Key('guild-gold-chip-in')));
+    expect(chip.onPressed, isNull);
+    expect(guildHallGoldPayMax(chipped.hall!.goldContributed, controller.save.gold), 0);
+  });
+
+  testWidgets('Chip in is disabled when the player has no gold', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: guildHallLocationId, gold: 0),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+
+    final chip = tester.widget<GameButton>(find.byKey(const Key('guild-gold-chip-in')));
+    expect(chip.onPressed, isNull);
+  });
+
+  testWidgets('chip-in keypad and Max stop at leftover to 1M', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database)
+          .copyWith(currentLocationId: guildHallLocationId, gold: 2000000),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+    final chipped = await net.service.payGuildDebt(controller.save, 999900);
+    expect(chipped.ok, isTrue, reason: chipped.reason);
+    controller.commit(chipped.save!);
+
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('guild-gold-chip-in')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(GameButton, '9'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, '9'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, '9'));
+    await tester.pump();
+    expect(tester.widget<Text>(find.byKey(const Key('quantity-input'))).data, '100');
+
+    await tester.tap(find.text('Max'));
+    await tester.pump();
+    expect(tester.widget<Text>(find.byKey(const Key('quantity-input'))).data, '100');
+  });
+
+  testWidgets('chip-in keypad and Max stop at the player purse', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: guildHallLocationId, gold: 40),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('guild-gold-chip-in')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(GameButton, '9'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(GameButton, '9'));
+    await tester.pump();
+    expect(tester.widget<Text>(find.byKey(const Key('quantity-input'))).data, '40');
+
+    await tester.tap(find.text('Max'));
+    await tester.pump();
+    expect(tester.widget<Text>(find.byKey(const Key('quantity-input'))).data, '40');
   });
 
   testWidgets('the store house takes donations and never gives them back', (tester) async {
