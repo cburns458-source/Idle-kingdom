@@ -50,7 +50,7 @@ Source read: `cburns458-source/Idle-kingdom` @ `4f5abbc` (Oct 12 2026).
 - **Locked choice:** `enabled:false` → `GameButton(onPressed:null)` (existing disabled look) with reason appended in `GameFont.s`/`Palette.muted`, e.g. "Needs Thievery 25". Tapping shows the reason as a tooltip/announce; no engine call.
 - **Hidden choice:** not in the view, not rendered, no placeholder.
 - **Quest choice (after asset pack):** quest glyph leading the label; locked quest choices keep the glyph (greyed).
-- **States:** loading (start pending — sync today, show nothing extra); normal; locked choices; **no choices + finished** → single "Close"; **empty** (dialogue has no node/line) → panel with "They have nothing to say right now." + Close; **start error** → existing danger text + Close (`StandaloneDialogueHost` today); **choose error** (`ok:false`) → danger text under line, choices stay, no state change; **offline/commit rejected** by server → same as choose error, view rolls back to last confirmed node.
+- **States:** loading (start pending, sync today, show nothing extra); normal; locked choices; **no choices + finished** → single "Close"; **empty** (dialogue has no node/line) → panel with "They have nothing to say right now." + Close; **start error** → existing danger text + Close (`StandaloneDialogueHost` today); **choose error** (`ok:false`) → danger text under line, choices stay, no state change; **commit rejected by server** (including a dropped connection) → same as choose error, view rolls back to last confirmed node. There is no offline play mode.
 - **Close:** Close/Done always reachable; system back closes the panel.
 
 ## 5. Acceptance criteria

@@ -1,6 +1,6 @@
 # Restoria master backlog
 
-**Status: Approved by Conor on 2026-10-12. Updated 2026-10-15 (Conor).**
+**Status: Approved by Conor on 2026-10-12. Updated 2026-10-16 (Conor).**
 
 This is the single master backlog for Restoria. Only Conor edits it, or a PR he
 approves. Every design call stays with Conor. Work on any item still follows
@@ -118,6 +118,17 @@ Conor's rulings, dated. Immutable once written.
 
 | Date | Decision | Evidence |
 |---|---|---|
+| 2026-10-16 | Conor (Vari) parked ADM-01, ADM-02, SYS-05 and the NTF items until closer to the Android/iOS app store launch. No paid plan upgrades happen until needed. Leaked-password protection is blocked because it needs Supabase Pro. | Vari (Conor) |
+| 2026-10-16 | There is no guest play, offline play, or playing without signing in. The game needs an internet connection and a logged-in character. Unattended/offline progress (idle gains while logged out, settled by the server on next login) is not offline play and stays. | Vari (Conor) |
+| 2026-10-16 | UI-07 green and gold rules approved (covers UI-06). One change: selected items get a green highlight instead of gold. Stone UI follows the same rules as wood UI. Ui is building on `ui/ui-07-green-gold`. | Vari (Conor) |
+| 2026-10-16 | ECO-01 Bazaar new offers require total level 200; existing offers still fill, cancel, and collect (merged 2026-10-13). Leftovers in #353. | PR #350, #353 |
+| 2026-10-16 | ECO-03 plaza points and Hearthguard shop are on test-launch (merged 2026-10-13). Points are not bankable and not Bazaar-tradeable. Ranked wins pay 25 points and 0 gold. Bounties pay floored points only. | PR #353 |
+| 2026-10-16 | Guild hall costs confirmed: about a week per tier, tier 5 costs 600k so the tiers total 1,000,000 (confirms Reading B) | Vari (Conor); PR #390 |
+| 2026-10-16 | The server enforces total level 200 on Up for grabs Take, matching the UI | Vari (Conor); PR #390 |
+| 2026-10-16 | Guild achievements and banners ship inside #390: Deep pockets 100k/500k gold, Stocked vault 100k tier materials, Many hands 10/25 members, Rising strength (25 members at total level 500+, replacing Open doors); banners have background, accent, emblem and border, set by leaders and officers | Vari (Conor); PR #390, #391 |
+| 2026-10-16 | Many hands has no minimum donation and isn't limited to current members; Rising strength stays unlocked after members leave | Vari (Conor) |
+| 2026-10-16 | Guilds reset with the guild hall update, so the legacy paid-off-hall migration is dropped | Vari (Conor); PR #390 |
+| 2026-10-16 | Strength potions stay at 12% damage; no flat damage ranges (ITM-08 closed) | Vari (Conor) |
 | 2026-10-15 | Guild hall: every tier is a week of solo gathering (about 40,320 items per tier, Eco's Reading B costs) | Vari (Conor) |
 | 2026-10-15 | Guild hall gold: one running total that members chip into, replacing the 1M hall debt. Tiers unlock at 10k, 40k, 130k, 400k and 1M once their materials are in | Vari (Conor) |
 | 2026-10-15 | Goblins start with the Wooden Dagger and no shield | Vari (Conor) |
@@ -167,17 +178,21 @@ Conor's rulings, dated. Immutable once written.
   once their materials are in.
 - ⚠️ Goblins start with the Wooden Dagger and no shield (2026-10-15). The Cow
   fight is unchanged.
+- ⚠️ No guest play, offline play, or playing without signing in (2026-10-16).
+  The game needs an internet connection and a logged-in character. Unattended
+  progress while logged out is settled by the server on next login; that is
+  not offline play.
 
 **Guardrail from `Master_Prompt.md` §2:** "Do not add currencies, energy
 systems, monetization systems… not defined by the supplied sources." Plaza
-points (ECO-03), membership (MEM-\*), and essence-as-charge (ARC-03) each need
-Conor to update the Game Bible/DB first, or agents will refuse or stall.
+points shipped in #353. Membership (MEM-\*) and essence-as-charge (ARC-03) still
+need Conor to update the Game Bible/DB first, or agents will refuse or stall.
 
 ---
 
 ## 3. Open questions register
 
-Conor decides. Open unless marked answered. OQ-03, OQ-05, and OQ-09 are answered; OQ-11 stays Open with a partial ruling.
+Conor decides. Open unless marked answered. OQ-03, OQ-05, OQ-09, and OQ-10 are answered; OQ-11 stays Open with a partial ruling.
 
 ### 3.1 Conor's own
 
@@ -196,13 +211,13 @@ Conor decides. Open unless marked answered. OQ-03, OQ-05, and OQ-09 are answered
 | OQ-06 | Membership: price, one-time or subscription, and is it fair? "Instant Bazaar at total level 1" and "double AFK" are close to pay-to-win in a game with a shared market and leaderboards. | MEM-\* | — | Open |
 | OQ-07 | Religion vs races: replace races fully? What happens to existing race bonuses, race starting items, Vesper, "A Change of Skin", and the Pureblooded title? | WLD-01, TTL-03 | — | Open |
 | OQ-08 | Mass bosses: which bosses? What are the scaling and contribution formulas? Are there server-side lobbies (new realtime infra)? | SOC-04 | — | Open |
-| OQ-09 | Mandatory tutorial: what happens to existing players partway through Getting Started, and to players who already finished it? | QST-02 | Answered 2026-10-15 (Vari / Conor): partway players locked back in (keep progress/items; idle actions/travel in hidden places stop; Bazaar orders kept); finished players unchanged. See decisions log. Implementation In Progress on #386 / `sys/tutorial-flow`. | Answered |
-| OQ-10 | Bazaar gate at total level 200: what about existing players under 200 who have live offers? | ECO-01 | — | Open |
+| OQ-09 | Mandatory tutorial: what happens to existing players partway through Getting Started, and to players who already finished it? | QST-02 | Answered 2026-10-15 (Vari / Conor): partway players locked back in (keep progress/items; idle actions/travel in hidden places stop; Bazaar orders kept); finished players unchanged. See decisions log. Implemented in #386 (merged to `test-launch` 2026-10-16). | Answered |
+| OQ-10 | Bazaar gate at total level 200: what about existing players under 200 who have live offers? | ECO-01 | Answered in #350 (merged 2026-10-13): existing offers still fill, cancel, and collect. New BUY/SELL offers require total level 200. | Answered |
 | OQ-11 | Region unlocks (200/400/800 total level) vs the existing quest-based unlocks (Through the Thicket, Going Deeper, Forged in Fire). Which wins? | MAP-01, MAP-01b | Conor confirmed total-level region unlock thresholds 200 / 400 / 800 (regions unlock by total level, decided Oct 12, 2026); regions are not implemented yet, so it is on hold until map assets arrive. Whether existing quest unlocks also stay is undecided. | Open |
 | OQ-12 | Back slot conflict: blessings, the Quiver/Hunter's Quiver, and capes all want the Back slot. | ITM-01, ITM-04 | — | Open |
 | OQ-13 | Spell charging: does the 1/150 per-action loss stack with "only spent on relevant actions"? What happens to existing spells? | ARC-03 | — | Open |
 | OQ-14 | Tablet rework migration: what happens to enchanted items players already own, and to recipes they've learned? | ARC-01 | — | Open |
-| OQ-15 | Plaza points: can they be traded? Do bounties keep any gold? What goes in the shop's item and XP catalog? | ECO-03 | — | Open |
+| OQ-15 | Plaza points: can they be traded? Do bounties keep any gold? What goes in the shop's item and XP catalog? | ECO-03 | Partial from #353: not bankable and not Bazaar-tradeable; bounties pay floored points and 0 gold; first shop catalog is the Hearthguard set. XP catalog still unset. | Open |
 | OQ-16 | Telemetry: what do you want to measure, which vendor, and what privacy/consent rules? | ADM-05 | — | Open |
 | OQ-17 | Catacombs: solo survival, group roles, or both first? | DNG-01 | — | Open |
 | OQ-18 | Language support: which languages, and when? (Copy is in the DB plus hardcoded Dart strings.) | UI-14 | — | Open |
@@ -215,8 +230,8 @@ Just IDs, in order. Conor re-orders this.
 
 ### P0: Now (security, exploits, broken onboarding)
 
-1. **ADM-01** Supabase/Cloudflare/RLS audit. Re-run advisors, do leaked-password protection, close the rls-hardening follow-ups (hall donations without debit, etc.).
-2. **ADM-02** Email confirmation with the new email. Account security and recovery. Needs an auth-flow change because Confirm email is deliberately off.
+1. **ADM-01** Supabase/Cloudflare/RLS audit. Status Blocked; parked until app store launch. Leaked-password protection needs Supabase Pro.
+2. **ADM-02** Email confirmation with the new email. Status Blocked; parked until app store launch.
 
 Verified 2026-10-15 (Conor playtest on test.restoriaidle.com): **BUG-01** (#304), **BUG-02** (#310, Items `Tradeable` column; not #377), **BUG-04** (#333).
 
@@ -224,19 +239,19 @@ Workflow doc: Cursor cloud agents for commits, pushes, and migrations — **#384
 
 ### P1: Next
 
-5. **SYS-01** + **QST-02** + **OQ-09** tutorial flow. In Progress (#386, `sys/tutorial-flow`). OQ-09 answered 2026-10-15. Cow fight unchanged. QST-01 closed via #323 and #270.
-6. **SOC-01** guild hall tiers. In Progress (`sys/guild-hall-tiers`). **SOC-04** mass bosses remain Ready for Proposal (owner Sys; Eco numbers), queued after the tutorial.
-7. **ADM-06** Regenerate the server item data bundle at the next staging deploy so the 4 new potions are in `supabase/functions/_shared/game-database.json`.
-8. **ECO-04** Alchemy potion sell prices + Bazaar floors. Merged (#385).
-9. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
-10. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Biggest idle-game QoL win.
-11. **ADM-04** Report/ideas button → Discord webhook. In Progress / Review (P1 form + submit-feedback).
-12. **Decision session on OQ-01..02, OQ-04..07, OQ-11, OQ-15.** OQ-03 answered (84/168); OQ-09 answered (tutorial lock-back). Unblocks MAP-01, ECO-03, ARC-01, WLD-01.
-13. **ECO-01** Bazaar total level 200 and **ECO-03** Plaza points. Economy health, after the decisions.
+5. **ADM-04** In-game report/suggestion button that posts to a Discord channel automatically through a webhook and a Discord bot. Review / In Progress (P1 form + submit-feedback). Owner Ops.
+6. **SYS-01** + **QST-02** + **OQ-09** tutorial flow. Merged to `test-launch` in #386 (2026-10-16); Staging Verification, waiting on Vari's playtest on test.restoriaidle.com. Cow fight unchanged. QST-01 closed via #323 and #270.
+7. **SOC-01** guild hall tiers, achievements and banners. Merged to `test-launch` in #390 and #391 (2026-10-16); Staging Verification, waiting on Vari's playtest. The live Supabase migration is not applied and goes live only with Vari's merge to `main`. **SOC-04** mass bosses remain Ready for Proposal (owner Sys; Eco numbers).
+8. **ADM-06** Staging `game` function v56 is on test with the 4 potions (redeployed 2026-10-16 5:31 AM PT); Staging Verification, waiting on Conor's in-game check.
+9. **ECO-04** Alchemy potion sell prices + Bazaar floors. Merged (#385).
+10. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
+11. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Status Blocked. Parked until app store infrastructure. Plan drafted (option B recommended).
+12. **Decision session on OQ-01..02, OQ-04..07, OQ-11, OQ-15.** OQ-03 answered (84/168); OQ-09 answered (tutorial lock-back); OQ-10 answered (#350). Unblocks MAP-01, ARC-01, WLD-01.
+13. **ECO-05** Pin empty search_path on `bazaar_user_total_level`. Owner Eco; include in the next Economy PR as a new migration.
 14. **MAP-01** Region map (+ **MAP-04** landing nodes). Foundation for the isles/citadel.
 15. **ARC-01** Enchant tablets and **ARC-02** Essence rework (design doc together).
 16. **QST-04** Goblin Trouble, **QST-06** Quest recipe rewards, **SKL-04** Cooking multi-output, **ITM-06** Chromium/Vanadium recolor. Content with low dependencies.
-17. **UI-05** asset pack, **UI-07** green/gold rules, **ART-01** spec sheet. Unblocks the whole UI/art track.
+17. **UI-05** asset pack, **UI-07** green/gold rules (covers UI-06) In Progress on `ui/ui-07-green-gold` (Vari approved 2026-10-16), **ART-01** spec sheet. Unblocks the whole UI/art track.
 
 ### P2: After
 
@@ -253,7 +268,6 @@ payments).
 
 ### Inbox / Unset (Vari to decide priority)
 
-**ITM-08** Strength potions still give % damage; Eco to propose flat ranges (Awaiting Approval).
 **UI-16** Track `docs/item-icon-plan.md` and `docs/flutter-migration.md` (Inbox).
 **ADM-07** Branch cleanup report for merged `coord/*` and stale branches (Ops, Inbox, report only).
 
@@ -270,12 +284,12 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 
 | ID | Title (Conor's words) | Status | Ready | Pri | Dep | Owner | Next | Notes |
 |---|---|---|---|---|---|---|---|---|
-| ADM-01 | Check supabase and cloudflare for issues and errors, check for row level security | Ready for Proposal | Ready | **P0** | none | Ops | Re-run Security Advisor; leaked-password protection; review rls follow-ups #2–9, #13–17 | Desc: Audit test and live Supabase/Cloudflare for RLS, logs, and advisor issues. Accept: TBD (owner to propose). Also Worker/edge logs and HTTP 546 CPU kills. |
-| ADM-02 | Set up email confirmation with new email | Ready for Proposal | Ready | **P0** | *soft:* ADM-01 | Ops | Spec confirm-email flow on the test project first | Desc: Turn on Confirm email with Restoria SMTP without breaking character creation. Accept: TBD (owner to propose). Confirm email is **OFF on purpose** (`deployment.md`): no session → `profiles` RLS. Needs custom SMTP, confirm-link redirect, and a "check your email" gate. |
+| ADM-01 | Check supabase and cloudflare for issues and errors, check for row level security | Blocked | Parked | **P0** | none | Ops | Parked until app store launch | Desc: Audit test and live Supabase/Cloudflare for RLS, logs, and advisor issues. Accept: TBD (owner to propose). Also Worker/edge logs and HTTP 546 CPU kills. Parked until app store launch. Leaked-password protection is blocked because it needs Supabase Pro. |
+| ADM-02 | Set up email confirmation with new email | Blocked | Parked | **P0** | *soft:* ADM-01 | Ops | Parked until app store launch | Desc: Turn on Confirm email with Restoria SMTP without breaking character creation. Accept: TBD (owner to propose). Confirm email is **OFF on purpose** (`deployment.md`): no session → `profiles` RLS. Needs custom SMTP, confirm-link redirect, and a "check your email" gate. Parked until app store launch. |
 | ADM-03 | admin dashboard with event ledger | Inbox | Inbox | P1 | ADM-01, SYS-05 (event log) | Ops | TBD (Ops) | Desc: Admin dashboard with an event ledger, building on dev accounts, reports tables, and guild/bazaar ledgers. Accept: TBD (owner to propose). Blocks ADM-05. |
-| ADM-04 | Ingame report/ideas button that links to discord with webhook *(moved from UI)* | Review | In Progress | P1 | ADM-01 | Ops + Ui | Playtest on test after Conor sets the two test function secrets | Desc: In-game report/ideas button that posts to Discord through a webhook. Accept: Settings form (Bug / Suggestion / Player) for signed-in players; 60s cooldown, 5/24h, global 20/min queue; webhook secret `FEEDBACK_DISCORD_WEBHOOK_URL`; tag map `FEEDBACK_DISCORD_TAG_IDS`. No Phase 3 status. Webhook URL must be a server secret; send through an edge function, never from the client. |
+| ADM-04 | In-game report/suggestion button that posts to a Discord channel automatically through a webhook and a Discord bot *(moved from UI)* | Review | In Progress | P1 | ADM-01 | Ops | Playtest on test after Conor sets the two test function secrets | Desc: In-game report/suggestion button that posts to a Discord channel automatically through a webhook and a Discord bot. Accept: Settings form (Bug / Suggestion / Player) for signed-in players; 60s cooldown, 5/24h, global 20/min queue; webhook secret `FEEDBACK_DISCORD_WEBHOOK_URL`; tag map `FEEDBACK_DISCORD_TAG_IDS`. No Phase 3 status. Webhook URL must be a server secret; send through an edge function, never from the client. |
 | ADM-05 | Telemetry? | Needs Clarification | Blocked on OQ-16 | P2 | OQ-16, ADM-03 | Ops | Vari answers OQ-16 | Desc: Telemetry — what to measure, which vendor, privacy/consent (OQ-16). Accept: TBD (owner to propose). Could start as rows in the server event ledger. |
-| ADM-06 | Regenerate the server item data bundle so the 4 new potions are on staging | Ready for Proposal | Ready | P1 | none | Ops | Regenerate the bundle at the next staging deploy | Desc: `supabase/functions/_shared/game-database.json` is built by `tools/bundle_game_edge.sh` and is not committed. Accept: staging `game` function serves the 4 new potions from #377. |
+| ADM-06 | Regenerate the server item data bundle so the 4 new potions are on staging | Staging Verification | On staging | P1 | none | Ops | Waiting on Conor's in-game check | Desc: `supabase/functions/_shared/game-database.json` is built by `tools/bundle_game_edge.sh` and is not committed. Accept: staging `game` function serves the 4 new potions from #377. Staging `game` function is v56 (deployed 2026-10-16 5:31 AM PT) with the bundle matching `test-launch`. Waiting on Conor's in-game check (brew a Fernleaf Tonic and sell to the Apothecary; SHP-0010 buys at 4). |
 | ADM-07 | Branch cleanup report for merged coord/* and stale branches | Inbox | Inbox | Unset (Vari to decide) | none | Ops | Write a report-only list of merged `coord/*` and stale branches | Desc: Report only — list merged `coord/*` leftovers and stale `cursor/*` branches. Accept: TBD (owner to propose). No deletes until Vari says so. |
 
 ### BUG: Bugs and fixes
@@ -292,7 +306,7 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 | ID | Title | Status | Ready | Pri | Dep | Owner | Next | Notes |
 |---|---|---|---|---|---|---|---|---|
 | QST-01 | Fix dialogue for getting started and green thumb | Merged | On test-launch | P1 | SYS-01, BUG-01 | Writer | — | Desc: Getting Started and Green Thumb dialogue. Accept: closed 2026-10-13 via #323 and #270. **Dup cluster** with BUG-01 / QST-02. |
-| QST-02 | Make getting started a mandatory tutorial… 5 actions guaranteed as potatoes, only fennel showing at first, then gather, then combat… | In Progress | In progress | P1 | BUG-01, SYS-01 | Design + Writer | Continue #386 on `sys/tutorial-flow` | Desc: Mandatory Getting Started tutorial. Accept: decisions log 2026-10-15 (lock-back, guarantees, Cow step, farewell). Cow fight is unchanged. OQ-09 answered. In Progress with SYS-01 on #386 / `sys/tutorial-flow`. |
+| QST-02 | Make getting started a mandatory tutorial… 5 actions guaranteed as potatoes, only fennel showing at first, then gather, then combat… | Staging Verification | On test-launch | P1 | BUG-01, SYS-01 | Design + Writer | Vari playtests the tutorial on test.restoriaidle.com | Desc: Mandatory Getting Started tutorial. Accept: decisions log 2026-10-15 (lock-back, guarantees, Cow step, farewell). Cow fight is unchanged. OQ-09 answered. Merged to `test-launch` in #386 (2026-10-16). |
 | QST-03 | Asking king about the queen and he describes a dragon but doesn't say it outright | Inbox | Inbox | P2 | SYS-01 | Writer | TBD (Writer) | Desc: King describes a dragon when asked about the queen, without saying it outright. Accept: TBD (owner to propose). Ties to branch `castle-crypt-dragon`. |
 | QST-04 | Goblin Trouble (early)… Fight scouts at the Goblin Camp, then the Chief… riverside chest as thievery mark… | Inbox | Inbox | P1 | none (Goblin Camp exists) | Writer + Design | TBD (Writer) | Desc: Early combat quest — Goblin Camp scouts, then the Chief, riverside chest as a thievery mark. Accept: TBD (owner to propose). "First real combat quest" after QST-02. |
 | QST-05 | Giants on the Ridge (late)… wyvern… giant-bone craft unlock | Inbox | Inbox | P2 | QST-06 | Writer + Design | TBD (Writer) | Desc: Late quest at the existing Giant Camp — wyvern and giant-bone craft unlock. Accept: TBD (owner to propose). |
@@ -306,11 +320,11 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 
 | ID | Title | Status | Ready | Pri | Dep | Owner | Next | Notes |
 |---|---|---|---|---|---|---|---|---|
-| SYS-01 | Create a dedicated dialogue system *(from UI)* | In Progress | In progress | P1 | none | Systems | Continue #386 on `sys/tutorial-flow` | Desc: Extend the Citadel Guide dialogue MVP to every NPC and quest. Accept: TBD (owner to propose) for the full extension. Tutorial-flow slice In Progress with QST-02 / OQ-09 on #386 / `sys/tutorial-flow`. Specs: `docs/specs/SYS-01-dialogue.md`, `docs/specs/SYS-01_dialogue_screen.md`. QST-01 done (#323/#270). Still blocks QST-03. |
+| SYS-01 | Create a dedicated dialogue system *(from UI)* | Ready for Proposal | Ready | P1 | none | Systems | Propose the full NPC/quest extension | Desc: Extend the Citadel Guide dialogue MVP to every NPC and quest. Accept: TBD (owner to propose) for the full extension. Tutorial-flow slice merged to `test-launch` in #386 (2026-10-16). Specs: `docs/specs/SYS-01-dialogue.md`, `docs/specs/SYS-01_dialogue_screen.md`. QST-01 done (#323/#270). Still blocks QST-03. |
 | SYS-02 | Should there be a mechanic for moving between locations… | Verified | Decided | Unset (Vari to decide) | OQ-01 | Design | — | Desc: Travel is a mechanic vs instant. Accept: instant except the necessary delays (OQ-01, 2026-10-13). Unused travel-time setting removed in #336 (SYS-07). |
 | SYS-03 | Maximum inventory size? | Merged | On test-launch | Unset (Vari to decide) | none | Design + Eco | — | Desc: Inventory / bank cap. Accept: 84 bag slots / 168 bank slots (#332, 2026-10-13). Blocks UI-12, MEM-01. |
 | SYS-04 | Should there be defense or just health? | Needs Clarification | Blocked on OQ-04 | Unset (Vari to decide) | OQ-04 | Design + Eco | Vari answers OQ-04 | Desc: Defense vs health only. DR already shipped in #289; OQ-04 asks whether to keep DR as the defense stat. Accept: TBD (owner to propose). |
-| SYS-05 | Notifications system (plumbing for NTF-\*) | Ready for Proposal | Ready | P1 | none | Community | Propose SYS-05 plumbing | Desc: Shared notifications plumbing for NTF-*. Accept: TBD (owner to propose). Today only chat bubbles exist (`notification_bubble.dart`). Blocks NTF-01..09, ADM-03. |
+| SYS-05 | Notifications system (plumbing for NTF-\*) | Blocked | Parked | P1 | none | Community | Parked until app store infrastructure | Desc: Shared notifications plumbing for NTF-*. Accept: TBD (owner to propose). Today only chat bubbles exist (`notification_bubble.dart`). Blocks NTF-01..09, ADM-03. Parked until app store infrastructure. Plan drafted (option B recommended). |
 | SYS-06 | Server time clock… weather art or item *(from UI)* | Inbox | Inbox | P2 | none | Systems + Art | TBD (Systems) | Desc: Server time clock, possibly with weather art or an item. Accept: TBD (owner to propose). Overlaps SKL-06 (tides) and UTC-hour leaderboard resets. |
 | SYS-07 | Remove the unused travel-time setting | Merged | On test-launch | P2 | none | Systems | — | Desc: Remove the unused travel-time setting. Accept: travel stays instant; no player-facing change. Shipped in #336. |
 
@@ -336,7 +350,7 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 | ITM-05 | Add more potions for skill bonuses | Inbox | Inbox | P2 | none | Design + Eco | TBD (Design) | Desc: Add more potions for skill bonuses. Accept: TBD (owner to propose). Overlaps ARC-09. |
 | ITM-06 | Make chromium red and vanadium green, swap already used images and recolor existing ones. | Ready for Proposal | Ready | P1 | none | Art | Propose the recolor swap | Desc: Chromium red, vanadium green; swap already-used images and recolor existing ones. Accept: TBD (owner to propose). Precedent: `swap-titanium-tungsten`. |
 | ITM-07 | Add Items that increase lockpick chance | Inbox | Inbox | P2 | SKL-01 | Design | TBD (Design) | Desc: Items that increase lockpick chance. Accept: TBD (owner to propose). Thievery cluster. |
-| ITM-08 | Strength potions still give % damage; Eco to propose flat ranges | Awaiting Approval | Awaiting Vari | Unset (Vari to decide) | none | Eco | Eco proposes flat damage ranges | Desc: Strength potions still give % damage. Eco proposes flat ranges. Accept: TBD (owner to propose). No ranges written here until Eco's proposal. |
+| ITM-08 | Strength potions still give % damage; Eco to propose flat ranges | Rejected | Closed | — | none | Eco | — | Desc: Strength potions give % damage. Eco proposed flat ranges. Closed 2026-10-16: Vari keeps strength potions at 12% damage, no flat ranges. |
 
 ### SKL: Skills and activities
 
@@ -353,15 +367,16 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 
 | ID | Title | Status | Ready | Pri | Dep | Owner | Next | Notes |
 |---|---|---|---|---|---|---|---|---|
-| ECO-01 | Require total level 200 to use the bazaar | Needs Clarification | Blocked on OQ-10 | P1 | OQ-10 | Eco | Vari answers OQ-10 | Desc: Bazaar locked until total level 200. Accept: TBD (owner to propose). Anti-bot/alt measure. **Coupled** with MEM-02. |
-| ECO-03 | Replace bounty and pvp gold reward with new currency, plaza points… plaza shop for items and exp | Needs Clarification | Blocked on OQ-15 | P1 | OQ-15, Game Bible update | Eco | Vari answers OQ-15 | Desc: Replace bounty and PvP gold with plaza points and a plaza shop. Accept: TBD (owner to propose). **Blocks** SOC-03 leaderboard payouts (soft). Needs a Game Bible update. |
-| ECO-04 | Alchemy potion sell prices + Bazaar floors | Merged | On test-launch | P1 | none | Eco | — | Desc: Alchemy potion sell prices and Bazaar floors. Accept: Poison 24→8, Masterwork 2000→2300; NPC sell values are floors. Merged #385. |
+| ECO-01 | Require total level 200 to use the bazaar | Merged | On test-launch | P1 | none | Eco | - | Desc: Bazaar locked until total level 200. Accept: new BUY/SELL offers refused below 200; existing offers still fill, cancel, and collect. Merged #350 (2026-10-13); leftovers in #353. OQ-10 answered. **Coupled** with MEM-02. |
+| ECO-03 | Replace bounty and pvp gold reward with new currency, plaza points… plaza shop for items and exp | Merged | On test-launch | P1 | none | Eco | - | Desc: Plaza points replace gold on ranked PvP and bounty payouts; Citadel plaza shop sells Hearthguard for points. Accept: ranked win 25 points and 0 gold; bounties pay floored points only; points not bankable and not Bazaar-tradeable. Merged #353 (2026-10-13). Soft-blocks SOC-03 leaderboard payouts. OQ-15 still Open for the XP catalog. |
+| ECO-04 | Alchemy potion sell prices + Bazaar floors | Merged | On test-launch | P1 | none | Eco | - | Desc: Alchemy potion sell prices and Bazaar floors. Accept: Poison 24→8, Masterwork 2000→2300; NPC sell values are floors. Merged #385. |
+| ECO-05 | Pin empty search_path on bazaar_user_total_level | Ready for Proposal | Ready | P1 | ECO-01 | Eco | Include in the next Economy PR as a new migration | Desc: `bazaar_user_total_level` still uses `set search_path = public`. Pin it to empty search_path in a new migration on the next Economy PR. Moved from ADM-01. |
 
 ### SOC: Social / Competitive
 
 | ID | Title | Status | Ready | Pri | Dep | Owner | Next | Notes |
 |---|---|---|---|---|---|---|---|---|
-| SOC-01 | 5 guild hall tiers (bank, boxing ring, indoor garden, arcana station, monster cage) | In Progress | In progress | P1 | rls-hardening #3–6 (server hall settlement, withdrawals, rank perms) | Sys; Eco numbers | Continue `sys/guild-hall-tiers` | Desc: Five guild hall tiers — bank, boxing ring, indoor garden, arcana station, monster cage. Accept: each tier is a week of solo gathering (~40,320 items, Eco Reading B costs); one running gold total replacing the 1M hall debt; unlocks at 10k, 40k, 130k, 400k, 1M once materials are in (2026-10-15). Existing shipped tiers: Build the Hall, Counting Room, Boxing Ring. In Progress on `sys/guild-hall-tiers`. |
+| SOC-01 | 5 guild hall tiers (bank, boxing ring, indoor garden, arcana station, monster cage) | Staging Verification | On test-launch | P1 | rls-hardening #3–6 (server hall settlement, withdrawals, rank perms) | Sys; Eco numbers | Vari playtests on test.restoriaidle.com; live migration only with the `main` merge | Desc: Five guild hall tiers — bank, boxing ring, indoor garden, arcana station, monster cage. Accept: each tier is a week of solo gathering (~40,320 items, Eco Reading B costs); one running gold total replacing the 1M hall debt; unlocks at 10k, 40k, 130k, 400k, 1M once materials are in (2026-10-15). Existing shipped tiers: Build the Hall, Counting Room, Boxing Ring. Tier 5 is 600k so the tiers total 1,000,000 (confirmed 2026-10-16). Server enforces total level 200 on Up for grabs Take. Achievements (Deep pockets, Stocked vault, Many hands, Rising strength) and banners included. Guilds reset with this update. Merged to `test-launch` in #390 and #391 (2026-10-16); live Supabase migration not applied. |
 | SOC-03 | Revolving leaderboards for guilds and pvp… monthly reset… temporary title | Inbox | Inbox | P2 | *soft:* ECO-03, TTL system | Community + Eco | TBD (Community) | Desc: Revolving guild and PvP leaderboards with a monthly reset and a temporary title. Accept: TBD (owner to propose). Leaderboards already exist and are written from the hosted save. |
 | SOC-04 | Make bosses solo or mass… scaled by players… contribution drops… lobby queue | Ready for Proposal | Ready | P1 | OQ-08, realtime infra | Sys; Eco numbers | Queued after the tutorial | Desc: Solo or mass bosses, scaled by players, contribution drops, lobby queue. Accept: TBD (owner to propose). Large: new server lobby system. OQ-08 still open. |
 
@@ -391,8 +406,8 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 | UI-03 | Fancier font for headers | Inbox | Inbox | P2 | UI-06 | Ui | TBD (Ui) | Desc: Fancier font for headers. Accept: TBD (owner to propose). Depends on UI-06. |
 | UI-04 | Use more icons for buttons, x icon to replace close button | Inbox | Inbox | P2 | UI-05 | Ui | TBD (Ui) | Desc: More button icons, including an X to replace Close. Accept: TBD (owner to propose). Depends on UI-05. |
 | UI-05 | Look for ui asset pack | Ready for Proposal | Ready | P1 | none | Art + Ui / Asset Pack Team | Research a UI asset pack | Desc: Find a UI asset pack. Accept: TBD (owner to propose). Gates UI-03/04/06. Asset Pack Team owns research and implementation. |
-| UI-06 | Reduce gold borders | Inbox | Inbox | P2 | UI-07 | Ui | TBD (Ui) | Desc: Reduce gold borders. Accept: TBD (owner to propose). Depends on UI-07. |
-| UI-07 | Choose rules for use of green and gold in ui | Needs Clarification | Needs Vari | P1 | none (Vari decision) | Ui | Vari chooses green/gold rules | Desc: Formalize when to use green and gold in the UI. Accept: TBD (owner to propose). `Master_Prompt.md` §6 says "gold highlights, soft green accents". |
+| UI-06 | Reduce gold borders | In Progress | In progress | P2 | UI-07 | Ui | Covered by UI-07 on `ui/ui-07-green-gold` | Desc: Reduce gold borders. Accept: covered by the approved UI-07 plan. Vari approved 2026-10-16 with UI-07. |
+| UI-07 | Choose rules for use of green and gold in ui | In Progress | In progress | P1 | none | Ui | Continue `ui/ui-07-green-gold` | Desc: Formalize when to use green and gold in the UI. Accept: Vari approved 2026-10-16 (covers UI-06). One change: selected items get a green highlight instead of gold. Stone UI follows the same rules as wood UI. Building on `ui/ui-07-green-gold`. `Master_Prompt.md` §6 still says "gold highlights, soft green accents" until this lands. |
 | UI-12 | Bank and inventory tabs for custom organization | Needs Clarification | Blocked on MEM-01 | P2 | OQ-03, MEM-01 | Ui | TBD (Ui) | Desc: Bank and inventory tabs for custom organization. Accept: TBD (owner to propose). OQ-03 answered (84/168). |
 | UI-14 | Language support | Needs Clarification | Blocked on OQ-18 | Later | OQ-18 | Ui | Vari answers OQ-18 | Desc: Language support. Accept: TBD (owner to propose). Copy lives in the DB plus hardcoded Dart strings. |
 | UI-15 | Bribe confirmation popup | Review | In review | P1 | none | Ui | Confirm the shipping PR (number unknown) | Desc: Confirm before paying a quest bribe. Accept: TBD (owner to propose). Network nits from #358 (`code`/`noRoom` through `CloudSyncResult` / `HostedCommandReceipt`). **PR number is unknown.** |
@@ -436,12 +451,12 @@ All depend on SYS-05. Owner: **Notifs**.
 
 | ID | Event | Status | Ready | Pri | Dep | Owner | Next | Notes |
 |---|---|---|---|---|---|---|---|---|
-| NTF-01 | Activity stopped after afk | Inbox | Inbox | P1 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when an activity stops after AFK. Accept: TBD (owner to propose). |
-| NTF-02 | Inventory full | Needs Clarification | Blocked on SYS-05 | P1 | SYS-05, OQ-03 | Notifs | TBD (Notifs) | Desc: Notify when inventory is full. Accept: TBD (owner to propose). OQ-03 answered (84/168). |
-| NTF-03 | Food depleted | Inbox | Inbox | P1 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when food is depleted. Accept: TBD (owner to propose). |
-| NTF-04 | Production queue finished | Inbox | Inbox | P1 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when a production queue finishes. Accept: TBD (owner to propose). |
+| NTF-01 | Activity stopped after afk | Blocked | Parked | P1 | SYS-05 | Notifs | Parked until app store infrastructure | Desc: Notify when an activity stops after AFK. Accept: TBD (owner to propose). Parked until app store infrastructure. Plan drafted (option B recommended). |
+| NTF-02 | Inventory full | Blocked | Parked | P1 | SYS-05, OQ-03 | Notifs | Parked until app store infrastructure | Desc: Notify when inventory is full. Accept: TBD (owner to propose). OQ-03 answered (84/168). Parked until app store infrastructure. Plan drafted (option B recommended). |
+| NTF-03 | Food depleted | Blocked | Parked | P1 | SYS-05 | Notifs | Parked until app store infrastructure | Desc: Notify when food is depleted. Accept: TBD (owner to propose). Parked until app store infrastructure. Plan drafted (option B recommended). |
+| NTF-04 | Production queue finished | Blocked | Parked | P1 | SYS-05 | Notifs | Parked until app store infrastructure | Desc: Notify when a production queue finishes. Accept: TBD (owner to propose). Parked until app store infrastructure. Plan drafted (option B recommended). |
 | NTF-05 | Crop ready | Inbox | Inbox | P2 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when a crop is ready. Accept: TBD (owner to propose). |
-| NTF-06 | Quest step completed | Inbox | Inbox | P1 | SYS-05, BUG-01 | Notifs | TBD (Notifs) | Desc: Notify when a quest step completes. Accept: TBD (owner to propose). Needs persisted steps or it fires again and again. BUG-01 latch is Verified. |
+| NTF-06 | Quest step completed | Blocked | Parked | P1 | SYS-05, BUG-01 | Notifs | Parked until app store infrastructure | Desc: Notify when a quest step completes. Accept: TBD (owner to propose). Needs persisted steps or it fires again and again. BUG-01 latch is Verified. Parked until app store infrastructure. Plan drafted (option B recommended). |
 | NTF-07 | Guild invitation | Inbox | Inbox | P2 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify on a guild invitation. Accept: TBD (owner to propose). |
 | NTF-08 | Direct message | Inbox | Inbox | P2 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify on a direct message. Accept: TBD (owner to propose). Already partly done via chat bubbles. |
 | NTF-09 | Someone bought your Bazaar listing | Inbox | Inbox | P2 | SYS-05 | Notifs | TBD (Notifs) | Desc: Notify when someone buys your Bazaar listing. Accept: TBD (owner to propose). |
@@ -458,7 +473,7 @@ All depend on SYS-05. Owner: **Notifs**.
 |---|---|---|
 | Citadel as region | UI "Citadel can be its own region…", UI "citadel can be in the middle…", MAP-03 | One item, MAP-03. Lore → WLD-02, travel button → MAP-01b |
 | Region unlock vs region map | MAP-01b (200/400/800) vs MAP-01 | MAP-01 builds the map, MAP-01b sets the unlock rule. OQ-11: thresholds 200/400/800 confirmed; quest-unlock overlap still Open; on hold for map assets. |
-| Getting Started | BUG-01 Fennel bug, QST-01 dialogue fix, QST-02 mandatory tutorial | QST-01 Merged (#323, #270). BUG-01 Verified (#304). QST-02 / OQ-09 / SYS-01 In Progress (#386, `sys/tutorial-flow`). Cow fight unchanged. |
+| Getting Started | BUG-01 Fennel bug, QST-01 dialogue fix, QST-02 mandatory tutorial | QST-01 Merged (#323, #270). BUG-01 Verified (#304). QST-02 / OQ-09 / SYS-01 tutorial slice merged to `test-launch` (#386), Staging Verification. Cow fight unchanged. |
 | Essence | ARC-02 rework, ARC-04 0.1% essence item, ARC-03 spell charging | One "Essence economy" design doc |
 | Enchanting | ARC-01 tablets, ARC-07 piercing, ARC-08 shield | Tablets first, then new enchants ship as tablets |
 | Thievery | SKL-01 loot bags/recipes, SKL-02 companions, ITM-07 lockpick items, QST-07 lockpick quest, MAP-03 citadel thievery | One "Thievery expansion" epic |
@@ -467,26 +482,26 @@ All depend on SYS-05. Owner: **Notifs**.
 | Untradeable | BUG-02, QST-12 retrieval NPC, ARC-01 tradeable tablets | OQ-05 defines the rule for all three |
 | Clock | SYS-06 server time, SKL-06 tides, SOC-03 monthly resets | One shared server clock |
 | Titles vs religion | TTL-03 Pureblooded, WLD-01 | OQ-07 |
-| Bazaar access | ECO-01 (level 200), MEM-02 (level 1 for members), MEM-05 (slots) | Decide together |
+| Bazaar access | ECO-01 (level 200, Merged #350), MEM-02 (level 1 for members), MEM-05 (slots) | ECO-01 shipped. Membership gate still with OQ-06. |
 | Report button | UI list vs admin | ADM-04 |
 
 ### 5.2 Key dependencies
 
 ```
 OQ-01/OQ-11 ─► MAP-01 region map ─► MAP-01b unlocks ─► MAP-02 isles, MAP-03 citadel map
-SYS-01 dialogue system ─► QST-01 dialogue fixes (Merged #323/#270), QST-02 tutorial (In Progress #386 / `sys/tutorial-flow` with OQ-09), QST-03 king/queen
+SYS-01 dialogue system ─► QST-01 dialogue fixes (Merged #323/#270), QST-02 tutorial (merged #386 with OQ-09, Staging Verification), QST-03 king/queen
 BUG-01 (persist steps; Verified #304, Conor playtest 2026-10-15) ─► QST-02 tutorial, NTF-06 quest-step notifications
-QST-02 tutorial ─► SOC-04 mass bosses (Ready for Proposal after tutorial). SOC-01 guild hall In Progress on `sys/guild-hall-tiers`
-OQ-15 + Bible ─► ECO-03 plaza points ─► bounty/pvp reward swap, SOC-03 leaderboard payouts
-SYS-05 notifications ─► NTF-01..09
+QST-02 tutorial ─► SOC-04 mass bosses (Ready for Proposal after tutorial). SOC-01 guild hall merged #390/#391, Staging Verification
+OQ-15 (partial; XP catalog still Open) ─► ECO-03 plaza points (Merged #353) ─► SOC-03 leaderboard payouts
+SYS-05 notifications (Blocked; parked until app store infrastructure; plan drafted, option B recommended) ─► NTF-01..09
 ARC-01 tablets ─► ARC-07 piercing, ARC-08 shield
 ARC-02 essence rework ─► ARC-03 spell charges, ARC-04 essence item
 OQ-07 religion ─► WLD-01 ─► TTL-03 Pureblooded, Vesper/QST-0009, ITM-01 blessings, ART-06
 OQ-03 inventory size (answered: 84 bag / 168 bank, #332) ─► UI-12 tabs, MEM-01 bank space, NTF-02
 OQ-05 untradeable ─► BUG-02, QST-12, ARC-01
-ADM-01 audit ─► ADM-02 email, ADM-03 dashboard ─► ADM-05 telemetry
+ADM-01 audit (Blocked; parked until app store launch) ─► ADM-02 email (Blocked; parked until app store launch), ADM-03 dashboard ─► ADM-05 telemetry
 rls-hardening #3–6 (server hall settlement) ─► SOC-01 guild hall tiers
-UI-07 color rules + UI-05 asset pack ─► UI-03/04/06
+UI-07 color rules (In Progress on `ui/ui-07-green-gold`; covers UI-06; Vari approved 2026-10-16) + UI-05 asset pack ─► UI-03/04/06
 ART-01 spec ─► ART-02/04/05, UI-01
 ```
 
@@ -532,6 +547,12 @@ already done when the backlog was approved.
 | ECO-04: Alchemy potion sell prices + Bazaar floors | PR #385 (on test-launch) | 2026-10-15 |
 | QST-13: Barracks Guard "Hmph." after Lowly Beggar | PR #369 (on test-launch; also #364) | 2026-10-14 |
 | docs: backlog tidy and tutorial flow decisions (Oct 15) | PR #387 (on test-launch) | 2026-10-15 |
+| docs: apply Oct 15 backlog audit (fields, statuses, decisions) | PR #388 (on test-launch) | 2026-10-16 |
+| QST-02 / SYS-01 / OQ-09: mandatory Getting Started tutorial | PR #386 (on test-launch); awaiting Vari's playtest | 2026-10-16 |
+| SOC-01: guild hall five room tiers, gold chip-in, bank, log, achievements and banners | PR #390, #391 (on test-launch; live migration not applied); awaiting Vari's playtest | 2026-10-16 |
+| Player-facing potion descriptions | PR #389 (on test-launch) | 2026-10-16 |
+| ECO-01: Bazaar total-level 200 gate | PR #350 (on test-launch); leftovers in #353 | 2026-10-13 |
+| ECO-03: plaza points and Hearthguard shop | PR #353 (on test-launch) | 2026-10-13 |
 
 ---
 
