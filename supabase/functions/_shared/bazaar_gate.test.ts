@@ -8,6 +8,7 @@ import {
   bazaarSkillLevelInvalidError,
   bazaarTotalLevelGate,
   bazaarTotalLevelRefusalFields,
+  bazaarTutorialLocked,
   totalLevelFromPayload,
 } from './bazaar_gate.ts'
 
@@ -84,6 +85,24 @@ describe('ECO-01 bazaar total-level gate', () => {
       code: BAZAAR_SKILL_LEVEL_INVALID_CODE,
       error: bazaarSkillLevelInvalidError('adept'),
     })
+  })
+
+  it('blocks new offers while Getting Started is active, without touching order rows', () => {
+    const openOrder = { id: 'ord-1', status: 'open', side: 'sell', item_id: 'ITEM-0025', quantity: 3 }
+    const snapshot = structuredClone(openOrder)
+    expect(
+      bazaarTutorialLocked({
+        quests: [{ questId: 'QST-0006', status: 'active' }],
+        bazaar_orders: [openOrder],
+      }),
+    ).toBe(true)
+    expect(
+      bazaarTutorialLocked({
+        quests: [{ questId: 'QST-0006', status: 'completed' }],
+        bazaar_orders: [openOrder],
+      }),
+    ).toBe(false)
+    expect(openOrder).toEqual(snapshot)
   })
 
   it('still skips a missing or null skill level', () => {

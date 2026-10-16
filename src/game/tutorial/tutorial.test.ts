@@ -29,6 +29,7 @@ import { createNewSave, parseSave } from '../save/saveStore'
 import { SAVE_VERSION, type PlayerSave } from '../save/types'
 import { applyGameCommand } from '../server/authority'
 import { resolveUnattendedProgress } from '../unattended/resolve'
+import { bazaarTutorialLocked } from '../../../supabase/functions/_shared/bazaar_gate.ts'
 import { canTravelTo, applyTravelArrival } from '../world/travel'
 import {
   applyTutorialCowKill,
@@ -598,6 +599,58 @@ describe('mandatory Getting Started tutorial', () => {
     expect(migrated.currentActivityId).toBeNull()
     expect(canTravelTo(db, FARM, COPPER_MINE, MAIN_MAP, migrated)).toBe(false)
     expect(validateActivityStart(db, migrated, 'ACT-0002').ok).toBe(false)
+  })
+
+  it('v66 to v67 lock-back leaves an existing open Bazaar order untouched', () => {
+    // bazaar_orders live in the edge table, not on PlayerSave. Lock-back and the
+    // v67 migration never receive a row; this keeps a server-side order next to
+    // the save and checks both stay intact.
+    const openOrder = {
+      id: 'ord-tutorial-lockback',
+      user_id: 'user-lockback',
+      username: 'LockedBack',
+      side: 'sell',
+      item_id: TUTORIAL_POTATO_ITEM_ID,
+      unit_price: 10,
+      quantity: 3,
+      filled: 0,
+      gold_escrow: 0,
+      slot: 1,
+      status: 'open',
+      created_at: '2026-10-01T00:00:00.000Z',
+      updated_at: '2026-10-01T00:00:00.000Z',
+    }
+    const orderSnapshot = structuredClone(openOrder)
+
+    let save = withItem(activeTutorial(TOWN), TUTORIAL_POTATO_ITEM_ID, 4)
+    save = {
+      ...save,
+      currentActivityId: 'ACT-0008',
+      gold: 77,
+      claimedMerchantTipIds: ['NPC-0008'],
+    }
+    const goldBefore = save.gold
+    const potatoesBefore = stackQty(save, TUTORIAL_POTATO_ITEM_ID)
+
+    const locked = applyTutorialLockback(save)
+    expect(locked.gold).toBe(goldBefore)
+    expect(stackQty(locked, TUTORIAL_POTATO_ITEM_ID)).toBe(potatoesBefore)
+    expect(locked.claimedMerchantTipIds).toEqual(['NPC-0008'])
+    expect(bazaarTutorialLocked(locked as unknown as Record<string, unknown>)).toBe(true)
+    expect(openOrder).toEqual(orderSnapshot)
+    expect(JSON.parse(JSON.stringify(locked))).not.toHaveProperty('bazaarOrders')
+    expect(JSON.parse(JSON.stringify(locked))).not.toHaveProperty('bazaar_orders')
+
+    const migrated = migrateSave({ ...save, saveVersion: 66 }, NOW)
+    expect(migrated.saveVersion).toBe(67)
+    expect(migrated.dialogueFlags).toContain(TUTORIAL_LOCKBACK_FLAG)
+    expect(migrated.gold).toBe(goldBefore)
+    expect(stackQty(migrated, TUTORIAL_POTATO_ITEM_ID)).toBe(potatoesBefore)
+    expect(migrated.claimedMerchantTipIds).toEqual(['NPC-0008'])
+    expect(bazaarTutorialLocked(migrated as unknown as Record<string, unknown>)).toBe(true)
+    expect(openOrder).toEqual(orderSnapshot)
+    expect(JSON.parse(JSON.stringify(migrated))).not.toHaveProperty('bazaarOrders')
+    expect(JSON.parse(JSON.stringify(migrated))).not.toHaveProperty('bazaar_orders')
   })
 
   it('v66 to v67 leaves finished players and bazaar-adjacent state unchanged', () => {
