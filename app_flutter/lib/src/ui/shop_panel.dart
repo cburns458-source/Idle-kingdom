@@ -383,48 +383,40 @@ class _ShopPanelState extends State<ShopPanel> {
             ),
           ],
           const SizedBox(height: 4),
-          // Stock on the left, the bag on the right, so a trade is one glance.
+          // Stock above the bag, stacked at desktop and phone widths.
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _Column(
-                    heading: 'Buy',
-                    empty: 'No stock listed.',
-                    itemCount: stock.length,
-                    itemBuilder: (context, i) {
-                      final entry = stock[i];
-                      return _tileFor(
-                        itemId: entry.itemId,
-                        unit: playerBuyPrice(db, shop, entry.itemId),
-                        offered: _buys[entry.itemId],
-                        remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
-                        onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: _Column(
-                    heading: 'Sell',
-                    empty: 'Nothing here that this shop will buy.',
-                    itemCount: sellable.length,
-                    itemBuilder: (context, i) {
-                      final row = sellable[i];
-                      return _tileFor(
-                        itemId: row.itemId,
-                        unit: row.unit,
-                        owned: row.owned,
-                        offered: _sells[row.itemId],
-                        enchantments: row.enchantmentNames(db),
-                        onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
-                      );
-                    },
-                  ),
-                ),
-              ],
+            child: StackedInventoryPanes(
+              top: _Column(
+                heading: 'Buy',
+                empty: 'No stock listed.',
+                itemCount: stock.length,
+                itemBuilder: (context, i) {
+                  final entry = stock[i];
+                  return _tileFor(
+                    itemId: entry.itemId,
+                    unit: playerBuyPrice(db, shop, entry.itemId),
+                    offered: _buys[entry.itemId],
+                    remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
+                    onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
+                  );
+                },
+              ),
+              bottom: _Column(
+                heading: 'Sell',
+                empty: 'Nothing here that this shop will buy.',
+                itemCount: sellable.length,
+                itemBuilder: (context, i) {
+                  final row = sellable[i];
+                  return _tileFor(
+                    itemId: row.itemId,
+                    unit: row.unit,
+                    owned: row.owned,
+                    offered: _sells[row.itemId],
+                    enchantments: row.enchantmentNames(db),
+                    onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -575,26 +567,34 @@ class _ShopPanelState extends State<ShopPanel> {
       onTap: enabled ? () => onTap(unit, label) : null,
       child: Stack(
         children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ItemIcon(item: item, size: 36),
-              const SizedBox(height: 2),
-              Text(
-                unit == null
-                    ? '—'
-                    : owned != null
-                    ? '${formatThousands(unit)}g · ${formatThousands(owned)}'
-                    : remaining == null
-                    ? '${formatThousands(unit)}g'
-                    : soldOut
-                    ? 'sold out'
-                    : '${formatThousands(unit)}g · ${formatThousands(remaining)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: GameFont.xs, color: Palette.currency, height: 1.1),
-              ),
-            ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ItemIcon(item: item, size: 36),
+                const SizedBox(height: 2),
+                Text(
+                  unit == null
+                      ? '—'
+                      : owned != null
+                      ? '${formatThousands(unit)}g · ${formatThousands(owned)}'
+                      : remaining == null
+                      ? '${formatThousands(unit)}g'
+                      : soldOut
+                      ? 'sold out'
+                      : '${formatThousands(unit)}g · ${formatThousands(remaining)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: GameFont.xs,
+                    color: Palette.currency,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
           ),
           if (enchantments.isNotEmpty)
             const Positioned(

@@ -418,6 +418,16 @@ class _GameButtonState extends State<GameButton> {
   }
 }
 
+/// Selected option copy is always green. Unselected copy is parchment on dark
+/// wood/stone boards (≥4.5:1) and pack ink on tan/ash plates.
+Color gameOptionLabelColor(BuildContext context, {required bool selected}) {
+  if (selected) return Palette.borderSelected;
+  final inherited = DefaultTextStyle.of(context).style.color;
+  final onPanel =
+      _PanelForeground.of(context) || (inherited != null && inherited.computeLuminance() < 0.45);
+  return onPanel ? UiChrome.of(context).panelInk : Palette.parchmentText;
+}
+
 /// Borderless label used on dense settings rows (privacy chips, list actions).
 class GameTextButton extends StatelessWidget {
   const GameTextButton({
@@ -433,8 +443,6 @@ class GameTextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chrome = UiChrome.of(context);
-    final ink = chrome.panelInk;
     return Semantics(
       button: true,
       enabled: onPressed != null,
@@ -453,7 +461,7 @@ class GameTextButton extends StatelessWidget {
                   fontFamily: gameFontFamily,
                   fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
-                  color: selected ? Palette.borderSelected : ink,
+                  color: gameOptionLabelColor(context, selected: selected),
                   height: 1.1,
                 ),
               ),

@@ -121,19 +121,17 @@ void main() {
         .toList();
   }
 
-  testWidgets('the Temple faith picker shows Choose a faith… and only the seven names', (
-    tester,
-  ) async {
+  testWidgets('the Temple faith picker shows Choose a faith…, names, and bonuses', (tester) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 100));
     await openOther(tester);
     await tapFaithAction(tester, 'Choose');
 
     expect(picker(), findsOne);
     expect(find.descendant(of: picker(), matching: find.text('Choose a faith…')), findsOne);
-    expect(pickerTexts(tester).toSet(), {'Choose a faith…', ..._faithNames});
 
     final faiths = religions(db());
     expect(faiths.map((row) => row.displayName).toSet(), _faithNames.toSet());
+    final expected = <String>{'Choose a faith…', ..._faithNames};
     for (final faith in faiths) {
       expect(find.descendant(of: picker(), matching: find.text(faith.displayName)), findsOne);
       final god = faithGodName(faith);
@@ -144,10 +142,13 @@ void main() {
       if (description.isNotEmpty) {
         expect(find.descendant(of: picker(), matching: find.text(description)), findsNothing);
       }
+      expect(faithFlavourLine(faith), '');
+      expected.addAll(religionBonusSummaryLines(db(), faith.religionId));
     }
+    expect(pickerTexts(tester).toSet(), expected);
   });
 
-  testWidgets('tapping a faith name opens its page: name header, then god, then description', (
+  testWidgets('tapping a faith name opens its page: name, god, bonus, then description', (
     tester,
   ) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 100));
@@ -167,16 +168,23 @@ void main() {
       expect(god, isNotNull);
       final description = faithDescription(faith);
       expect(description, isNotEmpty);
+      final bonuses = religionBonusSummaryLines(db(), faith.religionId);
+      expect(bonuses, isNotEmpty);
 
       final headerTop = tester
           .getTopLeft(find.descendant(of: picker(), matching: find.text(faith.displayName)))
           .dy;
       final godTop = tester.getTopLeft(find.descendant(of: picker(), matching: find.text(god!))).dy;
+      final bonusTop = tester
+          .getTopLeft(find.descendant(of: picker(), matching: find.text(bonuses.first)))
+          .dy;
       final descriptionTop = tester
           .getTopLeft(find.descendant(of: picker(), matching: find.text(description)))
           .dy;
       expect(headerTop, lessThan(godTop));
-      expect(godTop, lessThan(descriptionTop));
+      expect(godTop + 8, lessThan(bonusTop));
+      expect(bonusTop + 8, lessThan(descriptionTop));
+      expect(find.byKey(Key('faith-flavour-${faith.religionId}')), findsNothing);
 
       await tester.tap(find.byKey(const Key('faith-back')));
       await tester.pump();

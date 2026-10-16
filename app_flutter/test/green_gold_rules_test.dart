@@ -29,6 +29,13 @@ void main() {
     }
   });
 
+  test('unselected option parchment clears 4.5:1 on wood and stone boards', () {
+    expect(contrastRatio(Palette.parchmentText, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.parchmentText, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.panelInk, Palette.panelTan), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(UiChrome.stone.panelInk, UiChrome.stone.panel), greaterThanOrEqualTo(4.5));
+  });
+
   test('you-are-here is a filled marker; selected is a green rim', () {
     final here = mapNodeMarkerStyle(isHere: true, isSelected: false);
     final picked = mapNodeMarkerStyle(isHere: false, isSelected: true);
@@ -189,6 +196,43 @@ void main() {
       ),
     );
     expect(tester.widget<Text>(find.text('Shop')).style?.color, Palette.goldInk);
+  });
+
+  testWidgets('GameTextButton is parchment on boards, green when selected', (tester) async {
+    for (final chrome in [UiChrome.wood, UiChrome.stone]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: UiChromeScope(
+            chrome: chrome,
+            child: Scaffold(
+              body: ColoredBox(
+                color: chrome.board,
+                child: GameTextButton(label: 'Report a bug', selected: false, onPressed: () {}),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tester.widget<Text>(find.text('Report a bug')).style?.color, Palette.parchmentText);
+      expect(contrastRatio(Palette.parchmentText, chrome.board), greaterThanOrEqualTo(4.5));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: UiChromeScope(
+            chrome: chrome,
+            child: Scaffold(
+              body: ColoredBox(
+                color: chrome.board,
+                child: GameTextButton(label: 'Share an idea', selected: true, onPressed: () {}),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(tester.widget<Text>(find.text('Share an idea')).style?.color, Palette.borderSelected);
+    }
   });
 
   testWidgets('GamePanel highlight is selected, not rare', (tester) async {

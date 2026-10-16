@@ -83,6 +83,21 @@ void main() {
     );
   });
 
+  test('flavour is empty until Quest fills the map or a Flavour column', () {
+    expect(faithFlavourById, isEmpty);
+    expect(faithFlavourLine(const ReligionRow(<String, Object?>{})), '');
+    expect(faithFlavourLine(const ReligionRow(<String, Object?>{'Flavour': '  '})), '');
+    expect(
+      faithFlavourLine(
+        const ReligionRow(<String, Object?>{'Flavour': '  Keepers of the grove.  '}),
+      ),
+      'Keepers of the grove.',
+    );
+    for (final faith in religions(database.launch)) {
+      expect(faithFlavourLine(faith), '');
+    }
+  });
+
   testWidgets('the picker is locked at total level 99', (tester) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 99));
     await openOther(tester);
@@ -92,7 +107,7 @@ void main() {
     expect(picker(), findsNothing);
   });
 
-  testWidgets('the list is only Choose a faith… and the seven names', (tester) async {
+  testWidgets('the list shows each name and bonus, not god or description', (tester) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 100));
     await openOther(tester);
     await tapFaithAction(tester, 'Choose');
@@ -115,16 +130,24 @@ void main() {
       if (description.isNotEmpty) {
         expect(find.descendant(of: picker(), matching: find.text(description)), findsNothing);
       }
-      for (final line in religionBonusSummaryLines(database.launch, faith.religionId)) {
-        expect(find.descendant(of: picker(), matching: find.text(line)), findsNothing);
+      expect(faithFlavourLine(faith), '');
+      expect(find.byKey(Key('faith-flavour-${faith.religionId}')), findsNothing);
+      final bonuses = religionBonusSummaryLines(database.launch, faith.religionId);
+      expect(bonuses, isNotEmpty);
+      for (final line in bonuses) {
+        expect(find.descendant(of: row, matching: find.text(line)), findsOne);
       }
     }
 
     expect(find.descendant(of: picker(), matching: find.text('Free')), findsNothing);
     expect(find.byKey(const Key('faith-choose')), findsNothing);
+
+    final first = tester.getRect(find.byKey(Key('faith-${faiths.first.religionId}')));
+    final second = tester.getRect(find.byKey(Key('faith-${faiths[1].religionId}')));
+    expect(second.top - first.bottom, greaterThanOrEqualTo(12));
   });
 
-  testWidgets('tapping a name opens its page with god, description, choose, and cost', (
+  testWidgets('tapping a name opens its page with god, bonus, description, choose, and cost', (
     tester,
   ) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 100));
@@ -140,6 +163,10 @@ void main() {
     if (god != null) {
       expect(find.descendant(of: picker(), matching: find.text(god)), findsOne);
     }
+    for (final line in religionBonusSummaryLines(database.launch, faith.religionId)) {
+      expect(find.descendant(of: picker(), matching: find.text(line)), findsOne);
+    }
+    expect(find.byKey(Key('faith-flavour-${faith.religionId}')), findsNothing);
     final description = faithDescription(faith);
     if (description.isNotEmpty) {
       expect(find.descendant(of: picker(), matching: find.text(description)), findsOne);

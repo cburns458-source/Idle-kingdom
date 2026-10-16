@@ -35,11 +35,14 @@ class MenuView extends StatefulWidget {
 
 enum _SettingsTab { general, account }
 
+enum _FeedbackKind { bug, idea }
+
 class _MenuViewState extends State<MenuView> {
   String? _artNotice;
   bool _artError = false;
   bool _picking = false;
   _SettingsTab _tab = _SettingsTab.general;
+  _FeedbackKind? _feedbackKind;
 
   GameController get controller => widget.controller;
 
@@ -145,6 +148,8 @@ class _MenuViewState extends State<MenuView> {
                 ],
               ),
             ),
+            const SizedBox(height: 10),
+            _buildFeedback(),
             const SizedBox(height: 10),
             _SettingsFold(
               heading: 'UI',
@@ -348,6 +353,40 @@ class _MenuViewState extends State<MenuView> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildFeedback() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Feedback', style: TextStyle(fontWeight: FontWeight.w400)),
+        const MutedText('Report a bug or share an idea on Discord.'),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            GameTextButton(
+              label: 'Report a bug',
+              selected: _feedbackKind == _FeedbackKind.bug,
+              onPressed: () => setState(() => _feedbackKind = _FeedbackKind.bug),
+            ),
+            GameTextButton(
+              label: 'Share an idea',
+              selected: _feedbackKind == _FeedbackKind.idea,
+              onPressed: () => setState(() => _feedbackKind = _FeedbackKind.idea),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        GameButton(
+          label: 'Open Discord',
+          onPressed: _feedbackKind == null
+              ? null
+              : () => launchUrl(Uri.parse(_discordInviteUrl), mode: LaunchMode.externalApplication),
+        ),
+      ],
     );
   }
 

@@ -85,12 +85,14 @@ class _FaithPickerPanelState extends State<FaithPickerPanel> {
             framed: true,
             child: pending == null
                 ? _FaithList(
+                    db: db,
                     faiths: faiths,
                     currentId: save.religionId,
                     onOpen: _openFaith,
                     onClose: widget.onClose,
                   )
                 : _FaithPage(
+                    db: db,
                     faith: pending,
                     cost: _cost,
                     cooldown: _cooldown,
@@ -115,12 +117,14 @@ class _FaithPickerPanelState extends State<FaithPickerPanel> {
 
 class _FaithList extends StatelessWidget {
   const _FaithList({
+    required this.db,
     required this.faiths,
     required this.currentId,
     required this.onOpen,
     required this.onClose,
   });
 
+  final GameDatabase db;
   final List<ReligionRow> faiths;
   final String? currentId;
   final ValueChanged<String> onOpen;
@@ -152,9 +156,11 @@ class _FaithList extends StatelessWidget {
               children: [
                 for (final faith in faiths)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: _FaithNameRow(
                       faith: faith,
+                      bonuses: religionBonusSummaryLines(db, faith.religionId),
+                      flavour: faithFlavourLine(faith),
                       current: currentId == faith.religionId,
                       onTap: () => onOpen(faith.religionId),
                     ),
@@ -170,6 +176,7 @@ class _FaithList extends StatelessWidget {
 
 class _FaithPage extends StatelessWidget {
   const _FaithPage({
+    required this.db,
     required this.faith,
     required this.cost,
     required this.cooldown,
@@ -182,6 +189,7 @@ class _FaithPage extends StatelessWidget {
     required this.onClose,
   });
 
+  final GameDatabase db;
   final ReligionRow faith;
   final num cost;
   final String? cooldown;
@@ -196,6 +204,8 @@ class _FaithPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final god = faithGodName(faith);
+    final bonuses = religionBonusSummaryLines(db, faith.religionId);
+    final flavour = faithFlavourLine(faith);
     final description = faithDescription(faith);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -224,11 +234,19 @@ class _FaithPage extends StatelessWidget {
                     god,
                     style: TextStyle(fontSize: GameFont.m, color: UiChrome.of(context).panelInk),
                   ),
-                if (description.isNotEmpty) ...[
-                  if (god != null && god.isNotEmpty) const SizedBox(height: 8),
-                  Text(description),
+                if (bonuses.isNotEmpty) ...[
+                  if (god != null && god.isNotEmpty) const SizedBox(height: 12),
+                  for (var i = 0; i < bonuses.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 4),
+                    Text(bonuses[i], key: Key('faith-bonus-${faith.religionId}-$i')),
+                  ],
                 ],
-                const SizedBox(height: 8),
+                if (flavour.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(flavour, key: Key('faith-flavour-${faith.religionId}')),
+                ],
+                if (description.isNotEmpty) ...[const SizedBox(height: 12), Text(description)],
+                const SizedBox(height: 12),
                 _FaithCost(cost: cost),
                 if (cooldown case final remaining?) Text(remaining),
                 if (error case final message?)
@@ -295,10 +313,37 @@ String faithDescription(ReligionRow faith) {
   return raw.trim();
 }
 
+/// Quest-owned one-liners keyed by religion id. Empty until Quest fills a line.
+///
+/// Also reads a `Flavour` / `Flavor` column if that field lands in the row.
+/// Do not invent copy here.
+const Map<String, String> faithFlavourById = <String, String>{};
+
+String faithFlavourLine(ReligionRow faith) {
+  final id = faith.raw['Religion ID'];
+  if (id is String && id.isNotEmpty) {
+    final mapped = faithFlavourById[id]?.trim() ?? '';
+    if (mapped.isNotEmpty) return mapped;
+  }
+  for (final key in const ['Flavour', 'Flavor']) {
+    final raw = faith.raw[key];
+    if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+  }
+  return '';
+}
+
 class _FaithNameRow extends StatelessWidget {
-  const _FaithNameRow({required this.faith, required this.current, required this.onTap});
+  const _FaithNameRow({
+    required this.faith,
+    required this.bonuses,
+    required this.flavour,
+    required this.current,
+    required this.onTap,
+  });
 
   final ReligionRow faith;
+  final List<String> bonuses;
+  final String flavour;
   final bool current;
   final VoidCallback onTap;
 
@@ -311,15 +356,36 @@ class _FaithNameRow extends StatelessWidget {
         child: GamePanel(
           highlight: current,
           onTap: onTap,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              faith.displayName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w400),
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                faith.displayName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w400),
+              ),
+              if (bonuses.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                for (var i = 0; i < bonuses.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 4),
+                  Text(
+                    bonuses[i],
+                    key: Key('faith-bonus-${faith.religionId}-$i'),
+                    style: const TextStyle(fontSize: GameFont.s),
+                  ),
+                ],
+              ],
+              if (flavour.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  flavour,
+                  key: Key('faith-flavour-${faith.religionId}'),
+                  style: const TextStyle(fontSize: GameFont.s),
+                ),
+              ],
+            ],
           ),
         ),
       ),

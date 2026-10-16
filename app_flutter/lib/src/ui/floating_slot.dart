@@ -1,6 +1,49 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+
+/// Minimum height for one stacked bank/shop pane so the grid still scrolls
+/// on a short phone overlay instead of collapsing to zero.
+const double stackedInventoryPaneMinHeight = 168;
+
+/// Two inventory panes stacked top-then-bottom at every width.
+///
+/// Each pane keeps [stackedInventoryPaneMinHeight] so a short phone overlay
+/// scrolls instead of giving the lower grid a zero viewport.
+class StackedInventoryPanes extends StatelessWidget {
+  const StackedInventoryPanes({super.key, required this.top, required this.bottom, this.gap = 9});
+
+  final Widget top;
+  final Widget bottom;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final paneHeight = math.max(
+          stackedInventoryPaneMinHeight,
+          (constraints.maxHeight - gap) / 2,
+        );
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: paneHeight, child: top),
+                SizedBox(height: gap),
+                SizedBox(height: paneHeight, child: bottom),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
 
 /// Tiny white wash used when a floating cell or list row is selected / own.
 Color floatingSelectTint(Color base) => Color.lerp(base, Colors.white, 0.16)!;
