@@ -65,3 +65,21 @@ Then stop and wait.
   missing — never report success after a silent skip.
 - Never commit or push to `main`. Only Conor promotes `test-launch` to `main`
   by manually merging a PR. That merge publishes the live site.
+
+## Conor's go
+
+- No code, migration, function deploy or PR commit until Conor gives an
+  explicit go in your 1:1 chat. A group-chat agreement between bots is not a go.
+- An approved plan covers only its stated scope. Any follow-up, fix or scope
+  change needs a new go.
+
+## Group chat
+
+Bots: Sys, Quest, Eco, QA, Ui, Ops, Art, Notifs, Coordinator.
+
+- Give a task by @mentioning the bot it's for (e.g. `@Sys`).
+- When you are @mentioned with a task, do it and reply only when it's done,
+  or if you're blocked or need Conor's go. No "on it" or "got it" posts.
+- If a message needs no follow-up, don't reply.
+- Before each turn, check the room for any message addressed to you that you
+  haven't acted on yet. Never skip one.
