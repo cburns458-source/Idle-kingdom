@@ -321,6 +321,40 @@ describe('collection box rows', () => {
     expect(result.rowsLeft).toBe(1)
     expect(result.noRoom).toEqual({ slotsNeeded: 1, slotsFree: 0 })
   })
+
+  it('drops rows whose item id is gone from the catalog, without granting them', () => {
+    expect(CATALOG.knownIds.has(IRON_ORE)).toBe(true)
+    expect(CATALOG.knownIds.has('ITEM-0135')).toBe(false)
+    expect(CATALOG.knownIds.has('ITEM-0290')).toBe(false)
+    const held = save([{ itemId: IRON_ORE, quantity: 10 }])
+    const result = collectRows(
+      held,
+      [
+        { id: 'bow', item_id: 'ITEM-0135', quantity: 1, gold: 0 },
+        { id: 'binding', item_id: 'ITEM-0290', quantity: 2, gold: 0 },
+        { id: 'ore', item_id: IRON_ORE, quantity: 3, gold: 0 },
+      ],
+      CATALOG,
+    )
+    expect(result.taken).toEqual(['bow', 'binding', 'ore'])
+    expect(result.items).toBe(3)
+    expect(result.left).toBe(0)
+    expect(result.noRoom).toBeNull()
+    expect(stacks(result.payload)).toEqual([{ itemId: IRON_ORE, quantity: 13 }])
+  })
+
+  it('consumes unknown collection rows even when the bag is full', () => {
+    const result = collectRows(
+      full,
+      [{ id: 'bow', item_id: 'ITEM-0135', quantity: 1, gold: 0 }],
+      CATALOG,
+    )
+    expect(result.taken).toEqual(['bow'])
+    expect(result.items).toBe(0)
+    expect(result.left).toBe(0)
+    expect(result.noRoom).toBeNull()
+    expect(stacks(result.payload)).toEqual(full.inventory)
+  })
 })
 
 describe('gold', () => {

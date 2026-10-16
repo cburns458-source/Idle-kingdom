@@ -30,8 +30,8 @@ class FakeExchange {
   final String Function() stamp;
 
   /// The game database the hosted function bundles, read when an offer is
-  /// placed. Without one the exchange carries any item id, as it did before
-  /// the `Tradeable` column.
+  /// placed and when the collection box is emptied. Without one the exchange
+  /// carries any item id, as it did before the `Tradeable` column.
   final GameDatabase? Function()? database;
 
   final List<FakeExchangeOrder> orders = <FakeExchangeOrder>[];
@@ -468,7 +468,15 @@ class FakeExchange {
     var gold = 0;
     var left = 0;
     var purseFull = false;
+    final db = database?.call();
+    final knownIds = db == null ? null : <String>{for (final item in db.items) item.itemId};
     for (final entry in waiting) {
+      // A deleted item in the box is consumed, not granted, matching
+      // `collectRows` on the hosted function.
+      if (!entry.isGold && knownIds != null && !knownIds.contains(entry.itemId)) {
+        taken.add(entry);
+        continue;
+      }
       final applied = entry.isGold
           ? fakeExchangeGiveGold(payload, entry.gold)
           : fakeExchangeGiveItems(payload, entry.itemId!, entry.quantity);

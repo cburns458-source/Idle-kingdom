@@ -435,7 +435,7 @@ async function collect(admin: Client, userId: string): Promise<Response> {
   const rows = (box.data ?? []) as Array<Record<string, unknown>>
   if (rows.length === 0) return refused('The collection box is empty.')
 
-  const collected = collectRows(stored.payload, rows)
+  const collected = collectRows(stored.payload, rows, CATALOG)
   if (collected.taken.length === 0) {
     if (collected.purseFull) return refused('Your purse is full.')
     const noRoom = collected.noRoom ?? { slotsNeeded: 1, slotsFree: 0 }

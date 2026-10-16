@@ -62,9 +62,9 @@ PlayerSave _fullBag(GameDatabase db, {num gold = 10}) => _save(
   gold: gold,
 );
 
-FakeExchange _collectExchange(PlayerSave save) {
+FakeExchange _collectExchange(PlayerSave save, {GameDatabase? Function()? database}) {
   final row = <String, Object?>{'user_id': _collectUserId, 'payload': save.toJson()};
-  return FakeExchange(saves: <RemoteRow>[row], stamp: () => _collectStamp);
+  return FakeExchange(saves: <RemoteRow>[row], stamp: () => _collectStamp, database: database);
 }
 
 MarketOrder _order({int slot = 0, num quantity = 10, num filled = 0}) => MarketOrder(
@@ -257,6 +257,61 @@ void main() {
       final payload = result.data!['save']! as Map<String, Object?>;
       expect(payload['gold'], 35);
       expect(exchange.box.single.itemId, 'ITEM-9999');
+    });
+
+    test('drops collection rows whose item id is gone from the database', () {
+      final db = _database();
+      expect(db.items.any((row) => row.itemId == removedRegularBowItemId), isFalse);
+      expect(db.items.any((row) => row.itemId == removedAncientBindingItemId), isFalse);
+      final exchange = _collectExchange(
+        _save(db, bag: <InventoryStack>[_stack(_ironOre, 10)]),
+        database: () => db,
+      );
+      exchange.box.addAll(<FakeExchangeCollect>[
+        FakeExchangeCollect(
+          id: 'bow',
+          userId: _collectUserId,
+          itemId: removedRegularBowItemId,
+          quantity: 1,
+          gold: 0,
+          reason: bazaarCollectBought,
+          createdAt: _collectStamp,
+        ),
+        FakeExchangeCollect(
+          id: 'binding',
+          userId: _collectUserId,
+          itemId: removedAncientBindingItemId,
+          quantity: 2,
+          gold: 0,
+          reason: bazaarCollectBought,
+          createdAt: '2026-01-01T00:00:01.000Z',
+        ),
+        FakeExchangeCollect(
+          id: 'ore',
+          userId: _collectUserId,
+          itemId: _ironOre,
+          quantity: 3,
+          gold: 0,
+          reason: bazaarCollectBought,
+          createdAt: '2026-01-01T00:00:02.000Z',
+        ),
+      ]);
+      final result = exchange.call(
+        userId: _collectUserId,
+        username: 'Trader',
+        body: <String, Object?>{'action': 'collect'},
+      );
+      expect(result.ok, isTrue);
+      expect(result.data!['ok'], isTrue);
+      expect(result.data!['items'], 3);
+      expect(result.data!['left'], 0);
+      expect(exchange.box, isEmpty);
+      final payload = result.data!['save']! as Map<String, Object?>;
+      final inventory = payload['inventory']! as List<Object?>;
+      expect(inventory, hasLength(1));
+      final stack = inventory.single! as Map<Object?, Object?>;
+      expect(stack['itemId'], _ironOre);
+      expect(stack['quantity'], 13);
     });
   });
 
