@@ -5,7 +5,7 @@ import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
-const _expectedContentVersion = '2026-10-16-alchemy-prices';
+const _expectedContentVersion = '2026-10-16-potion-descriptions';
 const _nowMs = 1760486400000; // 2026-10-15T00:00:00.000Z
 const _apothecary = 'LOC-0026';
 const _kitchens = <String>['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049'];
@@ -101,7 +101,7 @@ void main() {
     return equipStackToSlot(save, potionSlotId, itemId, quantity);
   }
 
-  test('content version is 2026-10-16-alchemy-prices in both loaders', () {
+  test('content version is 2026-10-16-potion-descriptions in both loaders', () {
     final root = parityRepoRoot();
     final tsSource = File('${root.path}/src/game/data/loadDatabase.ts').readAsStringSync();
     final dartSource = File('${root.path}/packages/ik_content/lib/src/load_database.dart')
