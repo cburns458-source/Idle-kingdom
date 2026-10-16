@@ -34923,7 +34923,7 @@
       "Dialogue ID": "QDL-0014",
       "Quest ID": "QST-0006",
       "NPC ID": "NPC-0014",
-      "Line": "Good. Equip your sword and shield, and keep potatoes in your food slot when you fight the cows here. Or if you want other skills first: the copper mine has fishing and mining, the meadow has hunting, and the kingswoods have woodcutting.",
+      "Line": "That cow's been trouble all week. Put on your sword and shield before you go near her.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "RequiresStep: QSTP-0016"
@@ -34971,7 +34971,7 @@
       "Line": "Good luck on your adventure!",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "RequiresStep: QSTP-0022"
+      "Notes": "When: completed"
     },
     {
       "Dialogue ID": "QDL-0020",
@@ -35071,6 +35071,15 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "When: completed"
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "RequiresStep: QSTP-0022",
+      "Dialogue ID": "QDL-0032",
+      "Quest ID": "QST-0006",
+      "NPC ID": "NPC-0014",
+      "Line": "That cow's been trouble all week. Put on your sword and shield before you go near her."
     }
   ],
   "Dialogues": [
@@ -35142,13 +35151,13 @@
       "Internal Key": "fennel_getting_started_farewell",
       "Display Name": "Fennel",
       "NPC ID": "NPC-0014",
-      "Start Node ID": "DNODE-0009",
-      "Repeatable": true,
+      "Start Node ID": "DNODE-0026",
+      "Repeatable": false,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Getting Started completion (QSTP-0022). The farewell choice completes QST-0006, and quest completion grants BOOK-0001 once (RewardBook).",
+      "Notes": "Getting Started farewell after the cow kill. Plays on flag:tutorial:farewell; the quest already completed on the kill and granted BOOK-0001.",
       "Priority": 10,
-      "Condition": "quest_step:QST-0006:QSTP-0022"
+      "Condition": "flag:tutorial:farewell"
     },
     {
       "Dialogue ID": "DLG-0007",
@@ -35264,6 +35273,58 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": "Hearthguard shop greeting. Always available. No quest actions."
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Getting Started combat step (QSTP-0022). Equip reminder.",
+      "Dialogue ID": "DLG-0016",
+      "Internal Key": "fennel_getting_started_combat",
+      "Display Name": "Fennel",
+      "NPC ID": "NPC-0014",
+      "Start Node ID": "DNODE-0027",
+      "Repeatable": true,
+      "Priority": 10,
+      "Condition": "quest_step:QST-0006:QSTP-0022"
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Played after dying to the tutorial cow. Draft line.",
+      "Dialogue ID": "DLG-0017",
+      "Internal Key": "fennel_getting_started_loss",
+      "Display Name": "Fennel",
+      "NPC ID": "NPC-0014",
+      "Start Node ID": "DNODE-0028",
+      "Repeatable": true,
+      "Priority": 30,
+      "Condition": "flag:tutorial:loss"
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Played when Fennel tops up cooked potatoes after a foodless death.",
+      "Dialogue ID": "DLG-0018",
+      "Internal Key": "fennel_getting_started_food",
+      "Display Name": "Fennel",
+      "NPC ID": "NPC-0014",
+      "Start Node ID": "DNODE-0029",
+      "Repeatable": true,
+      "Priority": 50,
+      "Condition": "flag:tutorial:food_grant"
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": "Played once when an in-progress player is locked back into the tutorial.",
+      "Dialogue ID": "DLG-0019",
+      "Internal Key": "fennel_getting_started_lockback",
+      "Display Name": "Fennel",
+      "NPC ID": "NPC-0014",
+      "Start Node ID": "DNODE-0030",
+      "Repeatable": true,
+      "Priority": 40,
+      "Condition": "flag:tutorial:lockback"
     }
   ],
   "DialogueNodes": [
@@ -35326,7 +35387,7 @@
     {
       "Node ID": "DNODE-0008",
       "Dialogue ID": "DLG-0005",
-      "Line": "Golden all the way through. Keep them; you earned them. Equip your sword and shield, and keep potatoes in your food slot when you fight the cows here. Or if you want other skills first: the copper mine has fishing and mining, the meadow has hunting, and the kingswoods have woodcutting.",
+      "Line": "That cow's been trouble all week. Put on your sword and shield before you go near her.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -35466,6 +35527,46 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Node ID": "DNODE-0026",
+      "Dialogue ID": "DLG-0006",
+      "Line": "Well, that settles that."
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Node ID": "DNODE-0027",
+      "Dialogue ID": "DLG-0016",
+      "Line": "That cow's been trouble all week. Put on your sword and shield before you go near her."
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Node ID": "DNODE-0028",
+      "Dialogue ID": "DLG-0017",
+      "Line": "She got you, didn't she? Dust off and try again."
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Node ID": "DNODE-0029",
+      "Dialogue ID": "DLG-0018",
+      "Line": "Out of food? Here, eat these and get back out there."
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Node ID": "DNODE-0030",
+      "Dialogue ID": "DLG-0019",
+      "Line": "Back so soon? Let's finish what we started."
     }
   ],
   "DialogueChoices": [
@@ -35608,12 +35709,12 @@
       "Label": "Thank you, Fennel.",
       "Next Node ID": "DNODE-0010",
       "Condition": null,
-      "Action": "talk_flag:QST-0006:QSTP-0022;complete_quest:QST-0006",
+      "Action": null,
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Completes QST-0006; quest completion grants BOOK-0001 once. No Room Line is stored for Game Systems: the engine has no no_room branch yet.",
-      "No Room Line": "You're carrying too much for a harvest gift. Clear some space and come back to me."
+      "Notes": "Quest already completed on the cow kill; BOOK-0001 was granted then. This choice only advances the farewell.",
+      "No Room Line": null
     },
     {
       "Choice ID": "DCH-0013",
@@ -35621,7 +35722,7 @@
       "Label": "Farewell.",
       "Next Node ID": null,
       "Condition": null,
-      "Action": null,
+      "Action": "clear_flag:tutorial:farewell",
       "Sort Order": 1,
       "Status": "Planned",
       "Release Phase": "Launch",
@@ -35900,6 +36001,66 @@
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Choice ID": "DCH-0036",
+      "Node ID": "DNODE-0026",
+      "Label": "Continue",
+      "Next Node ID": "DNODE-0009",
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Choice ID": "DCH-0037",
+      "Node ID": "DNODE-0027",
+      "Label": "I'll handle her.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": null,
+      "Sort Order": 1
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Choice ID": "DCH-0038",
+      "Node ID": "DNODE-0028",
+      "Label": "I'll try again.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": "clear_flag:tutorial:loss",
+      "Sort Order": 1
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Choice ID": "DCH-0039",
+      "Node ID": "DNODE-0029",
+      "Label": "Thanks, Fennel.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": "clear_flag:tutorial:food_grant",
+      "Sort Order": 1
+    },
+    {
+      "Status": "Planned",
+      "Release Phase": "Launch",
+      "Notes": null,
+      "Choice ID": "DCH-0040",
+      "Node ID": "DNODE-0030",
+      "Label": "Let's finish it.",
+      "Next Node ID": null,
+      "Condition": null,
+      "Action": "clear_flag:tutorial:lockback",
+      "Sort Order": 1
     }
   ],
   "Achievements": [
@@ -37656,11 +37817,11 @@
       "Step ID": "QSTP-0022",
       "Quest ID": "QST-0006",
       "Step Order": 5,
-      "Journal Label": "Hear Fennel's farewell",
-      "Notes": "Talk: NPC-0014; Hint: LOC-0001",
-      "Step Type": "Talk",
+      "Journal Label": "Fight a cow in the pasture",
+      "Notes": "Defeat: ENM-0001 x1; Hint: LOC-0001",
+      "Step Type": null,
       "Step Items": null,
-      "Step NPC": "NPC-0014",
+      "Step NPC": null,
       "Status": "Planned",
       "Release Phase": "Launch"
     },

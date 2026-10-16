@@ -2,6 +2,7 @@ import 'package:ik_content/ik_content.dart';
 
 import '../equipment/vitals.dart';
 import '../save/generated/save_models.dart';
+import '../tutorial/tutorial.dart';
 import 'races.dart';
 
 class AssignRaceResult {
@@ -30,6 +31,7 @@ AssignRaceResult assignRace(GameDatabase db, PlayerSave save, String raceId) {
   var next = save.copyWith(raceId: raceId);
   if (firstSelection) {
     next = grantRaceStartingItems(db, next, raceId);
+    next = ensureGettingStartedAccepted(db, next);
   }
   return AssignRaceResult.ok(withRecalculatedVitals(db, next), grantedStarterKit: firstSelection);
 }

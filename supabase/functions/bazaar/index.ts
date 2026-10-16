@@ -33,8 +33,11 @@ import {
   BAZAAR_TOTAL_LEVEL_REQUIRED,
   BAZAAR_TOTAL_LEVEL_TOO_LOW,
   BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE,
+  BAZAAR_TUTORIAL_LOCKED,
+  BAZAAR_TUTORIAL_LOCKED_CODE,
   bazaarTotalLevelGate,
   bazaarTotalLevelRefusalFields,
+  bazaarTutorialLocked,
 } from '../_shared/bazaar_gate.ts'
 import {
   GOLD_CAP,
@@ -308,6 +311,10 @@ async function place(
 
   const stored = await loadSave(admin, userId)
   if ('error' in stored) return refused(stored.error)
+
+  if (bazaarTutorialLocked(stored.payload)) {
+    return refused(BAZAAR_TUTORIAL_LOCKED, { code: BAZAAR_TUTORIAL_LOCKED_CODE })
+  }
 
   const gate = bazaarTotalLevelGate(stored.payload)
   if (!gate.ok) {

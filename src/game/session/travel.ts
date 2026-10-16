@@ -10,6 +10,7 @@ import {
 import { resolveSubMapTravelDestination } from '../world/submaps'
 import { canTravelTo } from '../world/travel'
 import { GUILD_HALL_LOCATION_ID } from '../world/constants'
+import { isTutorialGuildHallAllowed } from '../tutorial/tutorial'
 
 /** What a travel request turns into, once the rules have had their say. */
 export type TravelPlan =
@@ -87,6 +88,7 @@ export function planGuildHallTravel(
   random: () => number = Math.random,
 ): TravelPlan {
   if (isDeathPaused(save, nowMs)) return { kind: 'blocked' }
+  if (!isTutorialGuildHallAllowed(save)) return { kind: 'blocked' }
   return {
     kind: 'instant',
     arrival: arrivalOf(db, applyHostileTravelArrival(db, save, GUILD_HALL_LOCATION_ID, nowMs, random)),

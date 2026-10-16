@@ -16,6 +16,7 @@ import {
   isSubMap,
   subMapIdForGateway,
 } from './submaps'
+import { isTutorialLocationAllowed } from '../tutorial/tutorial'
 
 export function getLocationMapId(location: LocationRow): string {
   return location['Map ID'] ?? MAIN_MAP_ID
@@ -62,6 +63,9 @@ function locationOpenForSave(
   location: LocationRow,
   save?: MapUnlockSave | null,
 ): boolean {
+  if (save && Array.isArray(save.quests) && !isTutorialLocationAllowed(save as PlayerSave, location['Location ID'])) {
+    return false
+  }
   const unlockState = save ?? { unlockedLocationIds: [] }
   if (isLocationUnlocked(unlockState, location)) return true
   if (!save || !Array.isArray(save.quests)) return false
@@ -75,9 +79,13 @@ export function locationsForMapView(
   hiddenLocationIds: readonly string[] = [],
 ): LocationRow[] {
   if (mapId === MAIN_MAP_ID) {
-    return db.Locations.filter(
-      (location) => location['Map ID'] === MAIN_MAP_ID && !locationHiddenOnMap(location, mapId),
-    )
+    return db.Locations.filter((location) => {
+      if (location['Map ID'] !== MAIN_MAP_ID || locationHiddenOnMap(location, mapId)) return false
+      if (save && Array.isArray(save.quests) && !isTutorialLocationAllowed(save as PlayerSave, location['Location ID'])) {
+        return false
+      }
+      return true
+    })
   }
 
   if (isBrowsableEmptyMap(mapId)) {
@@ -155,6 +163,9 @@ export function applyTravelArrivalResult(
   nowMs: number = Date.now(),
 ): TravelArrivalSave {
   if (isDeathPaused(save, nowMs)) return { save, questCompletions: [], discoveryNotice: null }
+  if (!isTutorialLocationAllowed(save, destinationLocationId)) {
+    return { save, questCompletions: [], discoveryNotice: null }
+  }
   const stopped = stopPrimaryActivityNow(db, save, nowMs)
   const arrived = {
     ...stopped,

@@ -28,6 +28,7 @@ import { activeSpellProductionDurationMultiplier } from '../spells/spells'
 import { removeIngredients } from './inventory'
 import { requirementsForEntity, unmetHardRequirements } from '../activity/requirements'
 import { knowsRecipe } from '../recipes/knowledge'
+import { noteTutorialGuaranteedCook, shouldGuaranteeTutorialCook } from '../tutorial/tutorial'
 import {
   canKnowRecipe,
   facilityIdForActivity,
@@ -213,7 +214,11 @@ export function completeProductionCraft(
   // costs them: rolling before the output means a full bag cannot save them.
   const craftLevel = getSkillProgress(save, recipe['Skill ID']).level
   const successBonus = equippedSuccessChanceBonusPercent(db, save, recipe['Skill ID'])
-  if (!rollProductionSuccess(craftLevel, random, recipe['Proficiency Level'], successBonus)) {
+  const tutorialCook = shouldGuaranteeTutorialCook(save, recipe['Recipe ID'])
+  if (
+    !tutorialCook &&
+    !rollProductionSuccess(craftLevel, random, recipe['Proficiency Level'], successBonus)
+  ) {
     const outputItem = db.Items.find((item) => item['Item ID'] === recipe['Output Item ID'])
     return finishProductionCraft(db, save, recipe, nowMs, {
       next: save,
@@ -248,6 +253,7 @@ export function completeProductionCraft(
   const granted = addItemToInventoryExact(save, recipe['Output Item ID'], outputQty)
   if (!granted.ok) return null
   let next = granted.save
+  if (tutorialCook) next = noteTutorialGuaranteedCook(next, recipe['Recipe ID'])
   const xpGained = recipe['XP Reward']
   const xpApplied = applyXp(next, db, recipe['Skill ID'], xpGained)
   next = xpApplied.save

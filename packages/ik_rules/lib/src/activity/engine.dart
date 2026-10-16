@@ -20,6 +20,7 @@ import '../timers/location_timers.dart';
 import '../time.dart';
 import '../trackers/trackers.dart';
 import '../vitals/regen.dart';
+import '../tutorial/tutorial.dart';
 import '../world/main_hall_kitchen.dart';
 import 'bonus_xp.dart';
 import 'gathering.dart';
@@ -91,10 +92,9 @@ ActivityRow? getActivity(GameDatabase db, String activityId) {
 
 bool activityIsComingSoon(ActivityRow? activity) {
   if (activity == null) return false;
-  return jsString(activity.raw['Notes'])
-      .split(';')
-      .map((token) => token.trim().toLowerCase())
-      .contains('coming_soon');
+  return jsString(
+    activity.raw['Notes'],
+  ).split(';').map((token) => token.trim().toLowerCase()).contains('coming_soon');
 }
 
 /// Earliest time the next pool action can start, or null when nothing is waiting.
@@ -138,6 +138,9 @@ ActivityStartResult validateActivityStart(GameDatabase db, PlayerSave save, Stri
   }
   if (mainHallKitchenLocked(db, save, activityId)) {
     return const ActivityStartResult.failed(mainHallKitchenLockedMessage);
+  }
+  if (!isTutorialActivityAllowed(save, activityId)) {
+    return const ActivityStartResult.failed('Not available yet.');
   }
   final activityReqFailures = unmetHardRequirements(
     db,
@@ -255,6 +258,8 @@ GeneratedAction? generateNextAction(
     }
   }
   action ??= pickWeightedAction(eligible, random);
+  final forced = tutorialForcedAction(db, save, activityId);
+  if (forced != null) action = forced;
   if (action == null) return null;
   final actionId = jsString(action.raw['Action ID']);
 
@@ -367,7 +372,11 @@ GatheringCompletion completeGatheringAction(
   final proficiencyLevel = jsNumber(action.raw['Proficiency Level'] ?? 1);
   final successBonus = equippedSuccessChanceBonusPercentForAction(db, save, action);
   final noConsequences = RegExp(r'NoConsequences', caseSensitive: false).hasMatch(notesText);
-  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel, successBonus)) {
+  final tutorialPotato =
+      shouldGuaranteeTutorialGather(save) &&
+      jsString(action.raw['Action ID']) == tutorialPotatoActionId;
+  if (!tutorialPotato &&
+      !rollGatheringSuccess(gatheringLevel, random, proficiencyLevel, successBonus)) {
     if (!isThievery || noConsequences) {
       return GatheringCompletion(
         save: withoutHeldAction(save, save.currentActivityId),
@@ -423,7 +432,9 @@ GatheringCompletion completeGatheringAction(
 
   final working = save;
   final pruning = isPruningToolEquipped(db, working) && prunableSkillIds.contains(skillId);
-  final rewarded = pruning
+  final rewarded = tutorialPotato
+      ? applyTutorialGuaranteedPotatoGather(db, working)
+      : pruning
       ? _resolvePruningRewards(db, working, action, random)
       : resolveActionRewards(db, working, action, random);
   final fullXp = gatheringXpReward(db, working, action);

@@ -6,6 +6,7 @@ import '../critters/pets.dart';
 import '../equipment/presets.dart';
 import '../js_compat.dart';
 import '../time.dart';
+import '../tutorial/tutorial.dart';
 import 'generated/save_models.dart';
 import 'json_save.dart';
 import 'starting_gear.dart';
@@ -1163,6 +1164,25 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
     fromVersion: 65,
     toVersion: 66,
     migrate: (save, _) => _bumped(_dropRemovedRen01Items(save), 66),
+  ),
+  SaveMigration(
+    fromVersion: 66,
+    toVersion: 67,
+    migrate: (save, _) {
+      final next = _bumped(save, 67);
+      next['tutorialGuaranteedGathers'] = math.max(
+        0,
+        jsNumber(save['tutorialGuaranteedGathers']).floor(),
+      );
+      next['tutorialGuaranteedCooks'] = math.max(
+        0,
+        jsNumber(save['tutorialGuaranteedCooks']).floor(),
+      );
+      next['tutorialFoodGrantDeathAt'] = save['tutorialFoodGrantDeathAt'] is String
+          ? save['tutorialFoodGrantDeathAt']
+          : null;
+      return applyTutorialLockback(PlayerSave.fromJson(next)).toJson();
+    },
   ),
 ];
 
