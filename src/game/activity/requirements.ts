@@ -9,6 +9,7 @@ import {
 import { getQuest } from '../quests/quests'
 import { getCurrentStepId } from '../quests/steps'
 import type { PlayerSave } from '../save/types'
+import { isTutorialActivityAllowed } from '../tutorial/tutorial'
 import { getSkillProgress } from './xp'
 
 /** Requirement types the runtime knows how to evaluate. Unknown types fail closed. */
@@ -215,6 +216,7 @@ export function activityVisibleForSave(
   save: PlayerSave,
   activityId: string,
 ): boolean {
+  if (!isTutorialActivityAllowed(save, activityId)) return false
   return entityVisibleForSave(db, save, 'Activity', activityId)
 }
 

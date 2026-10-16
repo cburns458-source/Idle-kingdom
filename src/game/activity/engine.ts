@@ -45,6 +45,13 @@ import { bonusSkillXpForAction, bowHuntingCombatXpBonus } from './bonusXp'
 import { summarizeXpReward } from './rewardSummary'
 import { applyXp, getSkillProgress } from './xp'
 import { bossRespawnUntilMs, isBossEnemy, isBossRespawnReady } from '../combat/boss'
+import {
+  applyTutorialGuaranteedPotatoGather,
+  isTutorialActivityAllowed,
+  shouldGuaranteeTutorialGather,
+  TUTORIAL_POTATO_ACTION_ID,
+  tutorialForcedAction,
+} from '../tutorial/tutorial'
 
 export const COMING_SOON_REASON = 'Coming soon.'
 
@@ -104,6 +111,9 @@ export function validateActivityStart(
   }
   if (mainHallKitchenLocked(db, save, activityId)) {
     return { ok: false, reason: MAIN_HALL_KITCHEN_LOCKED_MESSAGE }
+  }
+  if (!isTutorialActivityAllowed(save, activityId)) {
+    return { ok: false, reason: 'Not available yet.' }
   }
   const activityReqFailures = unmetHardRequirements(
     db,
@@ -207,10 +217,12 @@ export function generateNextAction(
 
   const heldId = heldActionIdFor(save, activityId)
   const eligible = eligiblePoolEntries(db, activity['Pool ID'])
+  const forced = tutorialForcedAction(db, save, activityId)
   let action = heldId ? db.Actions.find((row) => row['Action ID'] === heldId) : undefined
   if (action && !isSelectableAction(action)) action = undefined
   if (action && !eligible.some((pair) => pair.action['Action ID'] === heldId)) action = undefined
   action ??= pickWeightedAction(eligible, random) ?? undefined
+  if (forced) action = forced
   if (!action) return null
   const actionId = action['Action ID']
 
@@ -410,7 +422,12 @@ export function completeGatheringAction(
   const proficiencyLevel = Number(action['Proficiency Level'] ?? 1)
   const successBonus = equippedSuccessChanceBonusPercentForAction(db, save, action)
   const noConsequences = /NoConsequences/i.test(notes)
-  if (!rollGatheringSuccess(gatheringLevel, random, proficiencyLevel, successBonus)) {
+  const tutorialPotato =
+    shouldGuaranteeTutorialGather(save) && action['Action ID'] === TUTORIAL_POTATO_ACTION_ID
+  if (
+    !tutorialPotato &&
+    !rollGatheringSuccess(gatheringLevel, random, proficiencyLevel, successBonus)
+  ) {
     if (!isThievery || noConsequences) {
       return {
         save: withoutHeldAction(save, save.currentActivityId),
@@ -449,13 +466,15 @@ export function completeGatheringAction(
 
   const working = save
   const pruning = isPruningToolEquipped(db, working) && PRUNABLE_SKILL_IDS.has(skillId)
-  const rewarded = pruning
-    ? {
-        ...resolvePruningRewards(db, working, action, random),
-        cosmeticsGranted: [] as { cosmeticId: string; isFirstEver: boolean }[],
-        booksGranted: [] as { bookId: string; isFirstEver: boolean }[],
-      }
-    : resolveActionRewards(db, working, action, random)
+  const rewarded = tutorialPotato
+    ? applyTutorialGuaranteedPotatoGather(db, working)
+    : pruning
+      ? {
+          ...resolvePruningRewards(db, working, action, random),
+          cosmeticsGranted: [] as { cosmeticId: string; isFirstEver: boolean }[],
+          booksGranted: [] as { bookId: string; isFirstEver: boolean }[],
+        }
+      : resolveActionRewards(db, working, action, random)
   const fullXp = gatheringXpReward(db, working, action)
   const primarySkillId = pruning ? BOTANY_SKILL_ID : skillId
   const xpAmount = pruning ? Math.floor(fullXp * PRUNING_XP_FRACTION) : fullXp

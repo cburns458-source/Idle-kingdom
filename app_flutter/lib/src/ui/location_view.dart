@@ -27,6 +27,7 @@ import 'tanner_panel.dart';
 import 'botany_plant_popup.dart';
 import 'pot_bait_popup.dart';
 import 'tracker_view.dart';
+import 'tutorial_spotlight.dart';
 import 'temple_stage.dart';
 import 'faith_picker_panel.dart';
 
@@ -463,11 +464,14 @@ class _LocationViewState extends State<LocationView> {
                                       controller.db,
                                       controller.save,
                                     ),
-                                    child: OverlayChipButton(
-                                      tooltip: 'Open world map',
-                                      onPressed: widget.onOpenMap,
-                                      plain: true,
-                                      child: GameImage(uiMapAssetPath(), width: 32, height: 32),
+                                    child: TutorialAnchor(
+                                      id: TutorialSpotlightId.mapTown,
+                                      child: OverlayChipButton(
+                                        tooltip: 'Open world map',
+                                        onPressed: widget.onOpenMap,
+                                        plain: true,
+                                        child: GameImage(uiMapAssetPath(), width: 32, height: 32),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -690,14 +694,17 @@ class _LocationViewState extends State<LocationView> {
     }
 
     add('Activities', _activities(locationId));
-    add('Produce', _produce(locationId));
+    if (!isTutorialLocked(controller.save)) {
+      add('Produce', _produce(locationId));
+    }
+    add('People', [..._people(locationId), ..._npcThievery(locationId)]);
+    if (isTutorialLocked(controller.save)) return sections;
     add('Patches', [
       ..._locationTimers(locationId, kind: 'botany'),
       ..._compostCollect(locationId),
     ]);
     add('Traps', _locationTimers(locationId, kind: 'fishing_pot'));
     add('Shops', [..._shops(locationId), ..._shopThievery(locationId)]);
-    add('People', [..._people(locationId), ..._npcThievery(locationId)]);
     add('Bank', [..._bank(), ..._bankThievery(locationId)]);
     add('Other', [
       ..._faith(),
@@ -1051,14 +1058,27 @@ class _LocationViewState extends State<LocationView> {
       for (final npc in npcs)
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: _InteractionCard(
-            title: npc.displayName,
-            subtitle: npc.role?.toLowerCase() == 'quest giver' || npc.role == npc.displayName
-                ? null
-                : npc.role,
-            actionLabel: isTannerNpc(npc) ? 'Shop' : 'Talk',
-            onPressed: () => _openPanel(isTannerNpc(npc) ? TannerOpen(npc) : NpcOpen(npc)),
-          ),
+          child: npc.npcId == tutorialNpcId
+              ? TutorialAnchor(
+                  id: TutorialSpotlightId.fennel,
+                  child: _InteractionCard(
+                    title: npc.displayName,
+                    subtitle:
+                        npc.role?.toLowerCase() == 'quest giver' || npc.role == npc.displayName
+                        ? null
+                        : npc.role,
+                    actionLabel: isTannerNpc(npc) ? 'Shop' : 'Talk',
+                    onPressed: () => _openPanel(isTannerNpc(npc) ? TannerOpen(npc) : NpcOpen(npc)),
+                  ),
+                )
+              : _InteractionCard(
+                  title: npc.displayName,
+                  subtitle: npc.role?.toLowerCase() == 'quest giver' || npc.role == npc.displayName
+                      ? null
+                      : npc.role,
+                  actionLabel: isTannerNpc(npc) ? 'Shop' : 'Talk',
+                  onPressed: () => _openPanel(isTannerNpc(npc) ? TannerOpen(npc) : NpcOpen(npc)),
+                ),
         ),
     ];
   }
@@ -1465,7 +1485,7 @@ class _ActivityCard extends StatelessWidget {
       controller.save,
       activityId,
     );
-    return DockRow(
+    Widget card = DockRow(
       // A bench waits on a recipe, so there is nothing for a star to start.
       leading: production
           ? null
@@ -1539,6 +1559,16 @@ class _ActivityCard extends StatelessWidget {
                     },
             ),
     );
+    final spotlight = switch (activityId) {
+      tutorialFieldsActivityId => TutorialSpotlightId.fields,
+      tutorialPastureActivityId => TutorialSpotlightId.pasture,
+      tutorialCookActivityId => TutorialSpotlightId.kitchenCook,
+      _ => null,
+    };
+    if (spotlight != null) {
+      card = TutorialAnchor(id: spotlight, child: card);
+    }
+    return card;
   }
 }
 

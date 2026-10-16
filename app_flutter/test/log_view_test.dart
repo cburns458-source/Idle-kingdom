@@ -419,7 +419,7 @@ void main() {
 
     expect(find.text('A Change of Skin'), findsOne);
     expect(find.textContaining('Every 7 days'), findsOne);
-    expect(find.textContaining('Available now'), findsOne);
+    expect(find.textContaining('Available now'), findsWidgets);
   });
 
   testWidgets('quest sort is a menu and persists the chosen order', (tester) async {

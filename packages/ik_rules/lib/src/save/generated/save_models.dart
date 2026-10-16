@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 66;
+const int saveVersion = 67;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1233,6 +1233,9 @@ class PlayerSave {
     this.lootTrackerPausedAtMs,
     this.xpTrackerPausedAtMs,
     required this.mailbox,
+    required this.tutorialGuaranteedGathers,
+    required this.tutorialGuaranteedCooks,
+    this.tutorialFoodGrantDeathAt,
   });
 
   factory PlayerSave.fromJson(Map<String, Object?> json) {
@@ -1376,6 +1379,9 @@ class PlayerSave {
       lootTrackerPausedAtMs: json['lootTrackerPausedAtMs'] as num?,
       xpTrackerPausedAtMs: json['xpTrackerPausedAtMs'] as num?,
       mailbox: listOf(json['mailbox'], (Object? entry) => MailMessage.fromJson(asJsonMap(entry))),
+      tutorialGuaranteedGathers: json['tutorialGuaranteedGathers'] as num,
+      tutorialGuaranteedCooks: json['tutorialGuaranteedCooks'] as num,
+      tutorialFoodGrantDeathAt: json['tutorialFoodGrantDeathAt'] as String?,
     );
   }
 
@@ -1656,6 +1662,17 @@ class PlayerSave {
   /// after [MailMessage.sentAt].
   final List<MailMessage> mailbox;
 
+  /// Tutorial (QST-0006) guaranteed potato gathers already used (0–5).
+  /// Missing on v66; migrate to 0.
+  final num tutorialGuaranteedGathers;
+
+  /// Tutorial guaranteed potato cooks already used (0–5). Missing on v66.
+  final num tutorialGuaranteedCooks;
+
+  /// `deathPauseUntil` already granted Fennel's tutorial food top-up for.
+  /// Missing on v66; migrate to null.
+  final String? tutorialFoodGrantDeathAt;
+
   Map<String, Object?> toJson() {
     return <String, Object?>{
       'saveVersion': saveVersion,
@@ -1752,6 +1769,9 @@ class PlayerSave {
       'lootTrackerPausedAtMs': lootTrackerPausedAtMs,
       'xpTrackerPausedAtMs': xpTrackerPausedAtMs,
       'mailbox': mailbox.map((entry) => entry.toJson()).toList(),
+      'tutorialGuaranteedGathers': tutorialGuaranteedGathers,
+      'tutorialGuaranteedCooks': tutorialGuaranteedCooks,
+      'tutorialFoodGrantDeathAt': tutorialFoodGrantDeathAt,
     };
   }
 
@@ -1850,6 +1870,9 @@ class PlayerSave {
     Object? lootTrackerPausedAtMs = _unset,
     Object? xpTrackerPausedAtMs = _unset,
     List<MailMessage>? mailbox,
+    num? tutorialGuaranteedGathers,
+    num? tutorialGuaranteedCooks,
+    Object? tutorialFoodGrantDeathAt = _unset,
   }) {
     return PlayerSave(
       saveVersion: saveVersion ?? this.saveVersion,
@@ -1997,6 +2020,11 @@ class PlayerSave {
           ? this.xpTrackerPausedAtMs
           : xpTrackerPausedAtMs as num?,
       mailbox: mailbox ?? this.mailbox,
+      tutorialGuaranteedGathers: tutorialGuaranteedGathers ?? this.tutorialGuaranteedGathers,
+      tutorialGuaranteedCooks: tutorialGuaranteedCooks ?? this.tutorialGuaranteedCooks,
+      tutorialFoodGrantDeathAt: tutorialFoodGrantDeathAt == _unset
+          ? this.tutorialFoodGrantDeathAt
+          : tutorialFoodGrantDeathAt as String?,
     );
   }
 }

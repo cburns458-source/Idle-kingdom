@@ -41,6 +41,21 @@ String? questDialogueForNpc(GameDatabase db, PlayerSave save, String npcId) {
   return null;
 }
 
+/// Getting Started Fennel lines from Quest's nodes, never the QDL sword panel.
+///
+/// Auto flags (farewell / loss / food / lock-back) win, then the quest-gated
+/// graph. [dialoguesForNpc] already picks DLG-0020 when ITEM-0125 is in the bag.
+String? tutorialFennelDialogueId(GameDatabase db, PlayerSave save) {
+  return tutorialAutoDialogueId(save) ??
+      questDialogueForNpc(db, save, tutorialNpcId) ??
+      dialoguesForNpc(db, save, tutorialNpcId).firstOrNull;
+}
+
+bool _tutorialFennelTalk(PlayerSave save, String npcId) {
+  return npcId == tutorialNpcId &&
+      (isGettingStartedActive(save) || tutorialAutoDialogueId(save) != null);
+}
+
 /// Talking to somebody: Talk opens the dialogue box immediately.
 ///
 /// Every line and label comes from [npcConversation], so this widget never
@@ -447,6 +462,7 @@ class _NpcPanelState extends State<NpcPanel> {
       key: ValueKey<String>(dialogueId),
       controller: controller,
       dialogueId: dialogueId,
+      docked: _tutorialFennelTalk(controller.save, widget.npc.npcId),
       onClose: () => setState(() {
         _standaloneDialogueId = null;
         _questDialogueDismissed = true;
@@ -470,6 +486,13 @@ class _NpcPanelState extends State<NpcPanel> {
 
   Widget _openingDialogue(NpcConversation conversation) {
     if (!_questDialogueDismissed) {
+      if (_tutorialFennelTalk(controller.save, widget.npc.npcId)) {
+        final tutorialId = tutorialFennelDialogueId(controller.db, controller.save);
+        if (tutorialId != null) {
+          _standaloneDialogueId = tutorialId;
+          return _standaloneHost(tutorialId);
+        }
+      }
       final questDialogueId = questDialogueForNpc(controller.db, controller.save, widget.npc.npcId);
       if (questDialogueId != null) {
         // Held until closed, so a choice that moves the quest on does not swap
@@ -479,7 +502,9 @@ class _NpcPanelState extends State<NpcPanel> {
       }
     }
 
-    final talkQuest = conversation.quests.where((quest) => quest.canTalk).firstOrNull;
+    final talkQuest = conversation.quests
+        .where((quest) => quest.canTalk && quest.questId != tutorialQuestId)
+        .firstOrNull;
     if (talkQuest != null) {
       return _playerDialogue(
         name: conversation.name,
@@ -527,7 +552,9 @@ class _NpcPanelState extends State<NpcPanel> {
       );
     }
 
-    final turnInQuest = conversation.quests.where((quest) => quest.canTurnIn).firstOrNull;
+    final turnInQuest = conversation.quests
+        .where((quest) => quest.canTurnIn && quest.questId != tutorialQuestId)
+        .firstOrNull;
     if (turnInQuest != null) {
       return _playerDialogue(
         name: conversation.name,
@@ -584,7 +611,9 @@ class _NpcPanelState extends State<NpcPanel> {
       );
     }
 
-    final activeQuest = conversation.quests.where((quest) => quest.status == 'active').firstOrNull;
+    final activeQuest = conversation.quests
+        .where((quest) => quest.status == 'active' && quest.questId != tutorialQuestId)
+        .firstOrNull;
     if (activeQuest != null) {
       return _playerDialogue(
         name: conversation.name,

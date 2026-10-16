@@ -14,6 +14,10 @@ export const BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE = 'total_level_too_low'
 /** Exact copy the Bazaar screen shows for [BAZAAR_TOTAL_LEVEL_TOO_LOW_CODE]. */
 export const BAZAAR_TOTAL_LEVEL_TOO_LOW = `You need total level ${BAZAAR_TOTAL_LEVEL_REQUIRED} to use the bazaar.`
 
+/** Server refusal when Getting Started is still active. */
+export const BAZAAR_TUTORIAL_LOCKED_CODE = 'tutorial_locked'
+export const BAZAAR_TUTORIAL_LOCKED = 'Finish Getting Started before using the Bazaar.'
+
 /** Server refusal code when a skill level is present but not numeric. */
 export const BAZAAR_SKILL_LEVEL_INVALID_CODE = 'BAZAAR_SKILL_LEVEL_INVALID'
 
@@ -50,6 +54,18 @@ export function totalLevelFromPayload(payload: Record<string, unknown>): number 
     sum += Math.floor(Number(text))
   }
   return sum
+}
+
+export function bazaarTutorialLocked(payload: Record<string, unknown>): boolean {
+  const quests = payload.quests
+  if (!Array.isArray(quests)) return false
+  return quests.some(
+    (row) =>
+      row &&
+      typeof row === 'object' &&
+      (row as { questId?: unknown }).questId === 'QST-0006' &&
+      (row as { status?: unknown }).status === 'active',
+  )
 }
 
 export type BazaarTotalLevelAllowed = { ok: true; totalLevel: number }

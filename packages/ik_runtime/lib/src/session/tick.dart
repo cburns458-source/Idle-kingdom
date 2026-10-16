@@ -304,6 +304,7 @@ void _applyDueCombatOutcome(
       return;
     }
 
+    final stopTutorialCombat = shouldStopTutorialCombatAfterKill(before, enemyId);
     final victory = applyCombatVictory(
       db,
       before.copyWith(combatEnemyHp: 0, currentHp: round.playerHp),
@@ -342,6 +343,7 @@ void _applyDueCombatOutcome(
       ),
     );
     out.emit(EnemyDefeatedEvent(enemyId: enemyId, enemyName: enemyName));
+    if (stopTutorialCombat) return;
     _continueActivity(db, out, activityId, roundEnd, random, 'Defeated enemy · activity stopped.');
     return;
   }
