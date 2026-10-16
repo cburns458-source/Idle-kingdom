@@ -54,10 +54,13 @@ export type ItemCatalog = {
   sellValues: ReadonlyMap<string, number | null>
   /** Ids marked `Tradeable` false. */
   untradeable: ReadonlySet<string>
+  /** Every Item ID in the bundled database, any Release Phase. */
+  knownIds: ReadonlySet<string>
 }
 
 export const BOUND_ITEM_REFUSAL = "That stays with you; it can't be traded."
 export const UNTRADABLE_ITEM_REFUSAL = 'Nobody at the Bazaar deals in that.'
+export const UNKNOWN_ITEM_REFUSAL = 'That item is no longer in the game.'
 
 export function itemCatalog(database: unknown): ItemCatalog {
   const rows =
@@ -66,17 +69,19 @@ export function itemCatalog(database: unknown): ItemCatalog {
       : []
   const sellValues = new Map<string, number | null>()
   const untradeable = new Set<string>()
+  const knownIds = new Set<string>()
   for (const entry of rows) {
     if (!entry || typeof entry !== 'object') continue
     const row = entry as Record<string, unknown>
     const id = row['Item ID']
     if (typeof id !== 'string') continue
+    knownIds.add(id)
     if ('Release Phase' in row && row['Release Phase'] !== 'Launch') continue
     const value = row['Base Sell Value']
     sellValues.set(id, typeof value === 'number' && Number.isFinite(value) ? value : null)
     if (row.Tradeable === false) untradeable.add(id)
   }
-  return { sellValues, untradeable }
+  return { sellValues, untradeable, knownIds }
 }
 
 /** True unless the database marks [itemId] `Tradeable` false. */
@@ -88,9 +93,10 @@ export function isTradableItem(itemId: string, catalog?: ItemCatalog): boolean {
  * Why the exchange will not take [itemId] on either side, or null when it will.
  *
  * Checked before any escrow, for sell and buy orders alike, so a forged request
- * for a bound item moves no gold and no items.
+ * for a bound or deleted item moves no gold and no items.
  */
 export function itemRefusal(itemId: string, catalog: ItemCatalog): string | null {
+  if (!catalog.knownIds.has(itemId)) return UNKNOWN_ITEM_REFUSAL
   if (!isTradableItem(itemId, catalog)) return BOUND_ITEM_REFUSAL
   if (itemId === GOLD_ITEM_ID) return UNTRADABLE_ITEM_REFUSAL
   const value = catalog.sellValues.get(itemId)
@@ -301,11 +307,14 @@ export function collectNoRoomReason(noRoom: CollectNoRoom): string {
  * Empties as much of the box into the save as will fit.
  *
  * Gold always collects. Each item row is taken whole or left in the box.
- * [noRoom] describes the leftover item rows when any stay behind.
+ * Rows whose item id is not in [catalog] are dropped without granting, so a
+ * deleted item cannot re-enter a save through the collection box. [noRoom]
+ * describes the leftover item rows when any stay behind.
  */
 export function collectRows(
   payload: SavePayload,
   rows: ReadonlyArray<CollectBoxRow | Record<string, unknown>>,
+  catalog?: ItemCatalog,
 ): CollectRowsResult {
   let next = payload
   const taken: string[] = []
@@ -320,6 +329,10 @@ export function collectRows(
     const quantity = Number(row.quantity ?? 0)
     const coin = Number(row.gold ?? 0)
     if (itemId != null && quantity > 0) {
+      if (catalog != null && !catalog.knownIds.has(itemId)) {
+        taken.push(String(row.id))
+        continue
+      }
       const applied = giveItems(next, itemId, quantity)
       if (applied == null) {
         leftoverItems.push({ itemId, quantity })

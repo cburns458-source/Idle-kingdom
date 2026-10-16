@@ -22,7 +22,7 @@ import {
   tickPotionAction,
   tryConsumePotionForScope,
 } from './effects'
-import { POTION_ACTION_DURATION } from '../save/types'
+import { POTION_ACTION_DURATION, SAVE_VERSION } from '../save/types'
 import { playerDamageRange } from '../combat/stats'
 
 const rawDatabase = JSON.parse(
@@ -333,7 +333,7 @@ describe('potion effects', () => {
       },
     }
     const migrated = migrateSave(legacy as PlayerSave)
-    expect(migrated.saveVersion).toBe(65)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.activePotionEffect?.enemyMaxHpDamagePercent).toBe(10)
     expect(migrated.activePotionEffect?.instantHealMaxHpPercent).toBeNull()
     expect(migrated.activePotionEffect?.regenMaxHpPercentPerRound).toBeNull()

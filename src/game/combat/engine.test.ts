@@ -47,7 +47,7 @@ describe('combat engine', () => {
         ...createNewSave(launch).equipment,
         slots: {
           ...createNewSave(launch).equipment.slots,
-          'SLOT-0001': { itemId: 'ITEM-0124', quantity: 1 }, // Wooden Sword 10-30
+          'SLOT-0001': { itemId: 'ITEM-0124', quantity: 1 }, // Wooden sword 10-30
         },
       },
     }
@@ -181,8 +181,8 @@ describe('combat engine', () => {
         ...base.equipment,
         slots: {
           ...base.equipment.slots,
-          'SLOT-0001': { itemId: 'ITEM-0124', quantity: 1 }, // Wooden Sword 10-30
-          'SLOT-0002': { itemId: 'ITEM-0125', quantity: 1 }, // Wooden Dagger 10-20
+          'SLOT-0001': { itemId: 'ITEM-0124', quantity: 1 }, // Wooden sword 10-30
+          'SLOT-0002': { itemId: 'ITEM-0125', quantity: 1 }, // Wooden dagger 10-20
         },
       },
     }
@@ -226,7 +226,7 @@ describe('combat engine', () => {
     expect(miss.playerHit).toBe(9)
   })
 
-  it('rolls a Staff of Sparks splat from Arcana level with no multipliers', () => {
+  it('rolls a Staff of sparks splat from Arcana level with no multipliers', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
     const save = {
@@ -251,7 +251,7 @@ describe('combat engine', () => {
     expect(round.enemyHp).toBe(200 - round.playerHit - 26)
   })
 
-  it("lets Mage's Wand spark while keeping an off-hand dagger", () => {
+  it("lets Mage's wand spark while keeping an off-hand dagger", () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
     const save = {
@@ -274,7 +274,7 @@ describe('combat engine', () => {
     expect(round.offhandHit).toBeGreaterThan(0)
   })
 
-  it('lets Staff of Sparks finish a kill before the enemy swings', () => {
+  it('lets Staff of sparks finish a kill before the enemy swings', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
     const save = {
@@ -297,7 +297,7 @@ describe('combat engine', () => {
     expect(round.enemyHit).toBeNull()
   })
 
-  it('lets Staff of Binding skip the following enemy attack', () => {
+  it('lets Staff of binding skip the following enemy attack', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
     const save = {

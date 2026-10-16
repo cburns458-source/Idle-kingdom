@@ -185,7 +185,7 @@ void main() {
   });
 
   test(
-    'skips cooking and still completes at QSTP-0002 with 10,000 Cooking XP and the Golden Spud',
+    'skips cooking and still completes at QSTP-0002 with 10,000 Cooking XP and the Golden spud',
     () {
       var save = accept();
       // After the briefing the hand-in is already current; the Cook step is skipped.

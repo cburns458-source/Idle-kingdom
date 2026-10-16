@@ -418,7 +418,7 @@ void main() {
           .copyWith(bank: const [InventoryStack(itemId: _bakedPotato, quantity: 50)]);
       expect(completeQuest(db, save, 'QST-9101').failureJson(), <String, Object?>{
         'ok': false,
-        'reason': 'Need 5 Baked Potato.',
+        'reason': 'Need 5 Baked potato.',
       });
     });
 

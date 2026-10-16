@@ -117,7 +117,7 @@ void main() {
       final cookingBefore = getSkillProgress(controller.save, _cooking).xp;
 
       expect(find.text('Ah, my cook returns! Tell me the feast is ready.'), findsOne);
-      expect(find.text('Hand in 10 Baked Potato and 10 Cooked Perch'), findsOne);
+      expect(find.text('Hand in 10 Baked potato and 10 Cooked perch'), findsOne);
       expect(find.text('Done'), findsNothing);
       expect(find.text('Turn in'), findsNothing);
 
@@ -137,7 +137,7 @@ void main() {
       expect(getSkillProgress(controller.save, _cooking).xp - cookingBefore, 10000);
       expect(bagQty(controller.save, _goldenSpud), 1);
       expect(courtyardBotanyUnlocked(controller.save), isTrue);
-      expect(find.textContaining('Take this Golden Spud with my thanks'), findsOne);
+      expect(find.textContaining('Take this Golden spud with my thanks'), findsOne);
       expect(
         [
           for (final completion in controller.takePendingDialogueQuestCompletions())
@@ -168,7 +168,7 @@ void main() {
       expect(isStepLatched(controller.save, 'QST-0001', 'QSTP-0036'), isFalse);
       expect(stepOf(controller.save, 'QST-0001'), 'QSTP-0002');
       expect(find.text('Ah, my cook returns! Tell me the feast is ready.'), findsOne);
-      expect(find.text('Hand in 10 Baked Potato and 10 Cooked Perch'), findsOne);
+      expect(find.text('Hand in 10 Baked potato and 10 Cooked perch'), findsOne);
 
       await tester.tap(find.textContaining('Hand in '));
       await tester.pump();
@@ -184,8 +184,8 @@ void main() {
     testWidgets('a partial hand-in keeps its count across visits', (tester) async {
       final controller = await openPanel(tester, feastCook(potatoes: 6, perch: 0), _kingId);
 
-      expect(find.text('Hand in 6 Baked Potato'), findsOne);
-      await tester.tap(find.text('Hand in 6 Baked Potato'));
+      expect(find.text('Hand in 6 Baked potato'), findsOne);
+      await tester.tap(find.text('Hand in 6 Baked potato'));
       await tester.pump();
       expect(bagQty(controller.save, _bakedPotato), 0);
       expect(stepOf(controller.save, 'QST-0001'), 'QSTP-0002');
@@ -201,8 +201,8 @@ void main() {
       );
       await reopen(tester, controller, _kingId, const ValueKey('king again'));
       expect(find.text('Ah, my cook returns! Tell me the feast is ready.'), findsOne);
-      expect(find.text('Hand in 4 Baked Potato and 10 Cooked Perch'), findsOne);
-      await tester.tap(find.text('Hand in 4 Baked Potato and 10 Cooked Perch'));
+      expect(find.text('Hand in 4 Baked potato and 10 Cooked perch'), findsOne);
+      await tester.tap(find.text('Hand in 4 Baked potato and 10 Cooked perch'));
       await tester.pump();
       expect(find.text("That's everything. The feast is ready."), findsOne);
       await tester.tap(find.text("That's everything. The feast is ready."));
@@ -218,7 +218,7 @@ void main() {
       expect(find.text('Not yet, Your Majesty.'), findsOne);
       expect(find.textContaining('Hand in '), findsNothing);
       expect(
-        find.text('Bring Baked Potato (0/10 handed in) and Cooked Perch (0/10 handed in)'),
+        find.text('Bring Baked potato (0/10 handed in) and Cooked perch (0/10 handed in)'),
         findsOne,
       );
       expect(find.text('Done'), findsNothing);

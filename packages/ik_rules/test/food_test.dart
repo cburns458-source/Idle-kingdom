@@ -122,7 +122,7 @@ void main() {
 
   test('Gluttony is an Arcana 30 spell that costs bass, stew, and essence', () {
     final project = db.projects.firstWhere((row) => row.raw['Project ID'] == 'PRJ-0153');
-    expect(project.displayName, 'Gluttony Spell');
+    expect(project.displayName, 'Gluttony spell');
     expect(project.raw['Required Skill 1 Level'], 30);
     expect(project.raw['Input 2 Item ID'], 'ITEM-0062');
     expect(project.raw['Input 2 Quantity'], 20);
@@ -131,7 +131,7 @@ void main() {
     expect(project.raw['Input 4 Item ID'], 'ITEM-0011');
     expect(project.raw['Input 4 Quantity'], 100);
     expect(
-      db.items.any((row) => row.itemId == 'ITEM-0312' && row.displayName == 'Gluttony Spell'),
+      db.items.any((row) => row.itemId == 'ITEM-0312' && row.displayName == 'Gluttony spell'),
       isTrue,
     );
   });

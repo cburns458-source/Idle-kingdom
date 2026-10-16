@@ -16,6 +16,7 @@ import {
   BANK_SLOT_LIMIT,
   INVENTORY_SLOT_LIMIT,
   UNTRADABLE_ITEM_REFUSAL,
+  UNKNOWN_ITEM_REFUSAL,
   collectNoRoomReason,
   collectRows,
   giveGold,
@@ -133,16 +134,24 @@ describe('items the exchange will not carry', () => {
     expect(BOUND_ITEM_REFUSAL).toBe("That stays with you; it can't be traded.")
   })
 
-  it('keeps Golden Spud, Chef’s Hat, and Pirate Insignia on the exchange', () => {
+  it('keeps Golden spud, Chef’s Hat, and Pirate insignia on the exchange', () => {
     expect(itemRefusal(GOLDEN_SPUD, CATALOG)).toBeNull()
     expect(itemRefusal(CHEFS_HAT, CATALOG)).toBeNull()
     expect(itemRefusal(PIRATE_INSIGNIA, CATALOG)).toBeNull()
     expect(itemRefusal(IRON_ORE, CATALOG)).toBeNull()
   })
 
+  it('refuses buy and sell orders for an item gone from the catalog', () => {
+    // Side-independent and before escrow, matching a forged listing of a
+    // deleted Regular Bow or Ancient Binding.
+    expect(itemRefusal('ITEM-0135', CATALOG)).toBe(UNKNOWN_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-0290', CATALOG)).toBe(UNKNOWN_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-9999', CATALOG)).toBe(UNKNOWN_ITEM_REFUSAL)
+    expect(UNKNOWN_ITEM_REFUSAL).toBe('That item is no longer in the game.')
+  })
+
   it('checks Base Sell Value the way the client does', () => {
     expect(itemRefusal(GOLD_ITEM_ID, CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
-    expect(itemRefusal('ITEM-9999', CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
     // The Undying: a starter title worth nothing, so a shop would not price it.
     expect(itemRefusal('ITEM-0301', CATALOG)).toBe(UNTRADABLE_ITEM_REFUSAL)
     const catalog = itemCatalog({
@@ -320,6 +329,40 @@ describe('collection box rows', () => {
     expect(result.left).toBe(1)
     expect(result.rowsLeft).toBe(1)
     expect(result.noRoom).toEqual({ slotsNeeded: 1, slotsFree: 0 })
+  })
+
+  it('drops rows whose item id is gone from the catalog, without granting them', () => {
+    expect(CATALOG.knownIds.has(IRON_ORE)).toBe(true)
+    expect(CATALOG.knownIds.has('ITEM-0135')).toBe(false)
+    expect(CATALOG.knownIds.has('ITEM-0290')).toBe(false)
+    const held = save([{ itemId: IRON_ORE, quantity: 10 }])
+    const result = collectRows(
+      held,
+      [
+        { id: 'bow', item_id: 'ITEM-0135', quantity: 1, gold: 0 },
+        { id: 'binding', item_id: 'ITEM-0290', quantity: 2, gold: 0 },
+        { id: 'ore', item_id: IRON_ORE, quantity: 3, gold: 0 },
+      ],
+      CATALOG,
+    )
+    expect(result.taken).toEqual(['bow', 'binding', 'ore'])
+    expect(result.items).toBe(3)
+    expect(result.left).toBe(0)
+    expect(result.noRoom).toBeNull()
+    expect(stacks(result.payload)).toEqual([{ itemId: IRON_ORE, quantity: 13 }])
+  })
+
+  it('consumes unknown collection rows even when the bag is full', () => {
+    const result = collectRows(
+      full,
+      [{ id: 'bow', item_id: 'ITEM-0135', quantity: 1, gold: 0 }],
+      CATALOG,
+    )
+    expect(result.taken).toEqual(['bow'])
+    expect(result.items).toBe(0)
+    expect(result.left).toBe(0)
+    expect(result.noRoom).toBeNull()
+    expect(stacks(result.payload)).toEqual(full.inventory)
   })
 })
 

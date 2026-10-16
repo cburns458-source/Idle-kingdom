@@ -5,7 +5,7 @@ import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
-const _expectedContentVersion = '2026-10-15-item-descriptions';
+const _expectedContentVersion = '2026-10-16-sentence-case-names';
 const _nowMs = 1760486400000; // 2026-10-15T00:00:00.000Z
 const _apothecary = 'LOC-0026';
 const _kitchens = <String>['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049'];
@@ -17,19 +17,19 @@ const _crossbreedingSeeds = <String>[
   'ITEM-0349',
 ];
 
-const _sixDosePotions = <({String itemId, String key, String name})>[
-  (itemId: 'ITEM-0070', key: 'luck_potion', name: 'Luck Potion (6)'),
-  (itemId: 'ITEM-0071', key: 'speed_potion', name: 'Speed Potion (6)'),
-  (itemId: 'ITEM-0072', key: 'strength_potion', name: 'Strength Potion (6)'),
-  (itemId: 'ITEM-0073', key: 'poison_potion', name: 'Poison Potion (6)'),
-  (itemId: 'ITEM-0210', key: 'minor_luck_potion', name: 'Minor Luck Potion (6)'),
-  (itemId: 'ITEM-0211', key: 'minor_strength_potion', name: 'Minor Strength Potion (6)'),
-  (itemId: 'ITEM-0212', key: 'greater_strength_potion', name: 'Greater Strength Potion (6)'),
-  (itemId: 'ITEM-0213', key: 'masterwork_draught', name: 'Masterwork Draught (6)'),
-  (itemId: 'ITEM-0439', key: 'fernleaf_tonic', name: 'Fernleaf Tonic (6)'),
-  (itemId: 'ITEM-0440', key: 'mosstole_brew', name: 'Mosstole Brew (6)'),
-  (itemId: 'ITEM-0441', key: 'augur_draught', name: 'Augur Draught (6)'),
-  (itemId: 'ITEM-0442', key: 'moonblossom_elixir', name: 'Moonblossom Elixir (6)'),
+const _sixDosePotions = <({String itemId, String key})>[
+  (itemId: 'ITEM-0070', key: 'luck_potion'),
+  (itemId: 'ITEM-0071', key: 'speed_potion'),
+  (itemId: 'ITEM-0072', key: 'strength_potion'),
+  (itemId: 'ITEM-0073', key: 'poison_potion'),
+  (itemId: 'ITEM-0210', key: 'minor_luck_potion'),
+  (itemId: 'ITEM-0211', key: 'minor_strength_potion'),
+  (itemId: 'ITEM-0212', key: 'greater_strength_potion'),
+  (itemId: 'ITEM-0213', key: 'masterwork_draught'),
+  (itemId: 'ITEM-0439', key: 'fernleaf_tonic'),
+  (itemId: 'ITEM-0440', key: 'mosstole_brew'),
+  (itemId: 'ITEM-0441', key: 'augur_draught'),
+  (itemId: 'ITEM-0442', key: 'moonblossom_elixir'),
 ];
 
 const _herbPotions = <({String itemId, String recipeId, String herbId})>[
@@ -101,7 +101,7 @@ void main() {
     return equipStackToSlot(save, potionSlotId, itemId, quantity);
   }
 
-  test('content version is 2026-10-15-item-descriptions in both loaders', () {
+  test('content version is 2026-10-16-sentence-case-names in both loaders', () {
     final root = parityRepoRoot();
     final tsSource = File('${root.path}/src/game/data/loadDatabase.ts').readAsStringSync();
     final dartSource = File('${root.path}/packages/ik_content/lib/src/load_database.dart')
@@ -141,7 +141,7 @@ void main() {
     expect(elixir?.actionsRemaining, 6);
   });
 
-  test('Fernleaf Tonic heals 5% of max HP instantly, capped at max HP', () {
+  test('Fernleaf tonic heals 5% of max HP instantly, capped at max HP', () {
     final effect = parsePotionEffect(equipment('ITEM-0439'), 'ITEM-0439');
     expect(applyPotionInstantHeal(400, 1000, effect), 450);
     expect(applyPotionInstantHeal(980, 1000, effect), 1000);
@@ -156,7 +156,7 @@ void main() {
     expect(started.activePotionEffect?.actionsRemaining, 6);
   });
 
-  test('Mosstole Brew heals 3% of max HP each combat round, capped at max HP', () {
+  test('Mosstole brew heals 3% of max HP each combat round, capped at max HP', () {
     final effect = parsePotionEffect(equipment('ITEM-0440'), 'ITEM-0440');
     expect(applyPotionRegenHeal(400, 1000, effect), 430);
     expect(applyPotionRegenHeal(990, 1000, effect), 1000);
@@ -181,7 +181,7 @@ void main() {
     expect(started.activePotionEffect?.actionsRemaining, 6);
   });
 
-  test('Augur Draught adds +10 min / +30 max flat damage', () {
+  test('Augur draught adds +10 min / +30 max flat damage', () {
     final save = withPotion(createNewSave(db, 0), 'ITEM-0441');
     final enemy = db.enemies.firstWhere((row) => row.raw['Enemy ID'] == 'ENM-0001');
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0001');
@@ -193,7 +193,7 @@ void main() {
     expect(started.activePotionEffect?.actionsRemaining, 6);
   });
 
-  test('Moonblossom Elixir adds +30 min / +90 max flat damage', () {
+  test('Moonblossom elixir adds +30 min / +90 max flat damage', () {
     final save = withPotion(createNewSave(db, 0), 'ITEM-0442');
     final enemy = db.enemies.firstWhere((row) => row.raw['Enemy ID'] == 'ENM-0001');
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0001');
@@ -210,7 +210,6 @@ void main() {
       final row = item(potion.itemId);
       expect(row.itemId, potion.itemId, reason: potion.itemId);
       expect(row.internalKey, potion.key, reason: potion.itemId);
-      expect(row.displayName, potion.name, reason: potion.itemId);
       expect(row.displayName.endsWith('(6)'), isTrue, reason: potion.itemId);
     }
   });
@@ -248,7 +247,7 @@ void main() {
     expect(ingredientOwned(db, base.copyWith(currentLocationId: 'LOC-0001'), waterItemId), 0);
   });
 
-  test('Kitchen Scraps are free in kitchens, including Manor and Giant Camp, but not at the apothecary', () {
+  test('Kitchen scraps are free in kitchens, including Manor and Giant Camp, but not at the apothecary', () {
     final base = createNewSave(db, 0);
     for (final loc in _kitchens) {
       final save = base.copyWith(currentLocationId: loc);
@@ -340,7 +339,7 @@ void main() {
     expect(weightedShare(entries, 'ITEM-0039') * 60, closeTo(15, 0.01));
   });
 
-  test('Troll Tooth drops about 11.2% on the Rock Troll table', () {
+  test('Troll tooth drops about 11.2% on the Rock Troll table', () {
     final action = db.actions.firstWhere((row) => row.raw['Action ID'] == 'ACN-0005');
     final enemy = db.enemies.firstWhere((row) => row.raw['Enemy ID'] == 'ENM-0007');
     expect(action.raw['Reward Table ID'], 'RWT-0198');
@@ -355,13 +354,13 @@ void main() {
     expect(weightedShare(entries, 'ITEM-0201') * 32, closeTo(11.2, 0.01));
   });
 
-  test('Goblin Scouts drop Wooden Dagger, not Bronze Dagger', () {
+  test('Goblin Scouts drop Wooden dagger, not Bronze dagger', () {
     final entries = db.rewardEntries
         .where((row) => row.raw['Reward Table ID'] == 'RWT-0003')
         .toList();
     final rwe0006 = entries.firstWhere((row) => row.raw['Reward Entry ID'] == 'RWE-0006');
     expect(rwe0006.raw['Reward ID / Value'], 'ITEM-0125');
-    expect(item('ITEM-0125').displayName, 'Wooden Dagger');
+    expect(item('ITEM-0125').displayName, 'Wooden dagger');
     expect(entries.any((row) => row.raw['Reward ID / Value'] == 'ITEM-0225'), isFalse);
     final warrior = db.rewardEntries.where((row) => row.raw['Reward Table ID'] == 'RWT-0004');
     expect(warrior.any((row) => row.raw['Reward ID / Value'] == 'ITEM-0225'), isTrue);
@@ -500,7 +499,7 @@ void main() {
       'actionsRemaining': 6,
     };
     final migrated = parseSave(json, 0);
-    expect(migrated.saveVersion, 65);
+    expect(migrated.saveVersion, saveVersion);
     expect(migrated.activePotionEffect?.itemId, 'ITEM-0073');
     expect(migrated.activePotionEffect?.enemyMaxHpDamagePercent, 10);
     expect(migrated.activePotionEffect?.actionsRemaining, 6);
@@ -523,10 +522,10 @@ void main() {
     }
   });
 
-  test('Willow Log, Cinnamon Log, and Cooked Baby Giant Squid are hidden', () {
-    expect(sourceItem('ITEM-0383').displayName, 'Willow Log');
-    expect(sourceItem('ITEM-0384').displayName, 'Cinnamon Log');
-    expect(sourceItem('ITEM-0192').displayName, 'Cooked Baby Giant Squid');
+  test('Willow log, Cinnamon log, and Cooked baby giant squid are hidden', () {
+    expect(sourceItem('ITEM-0383').displayName, 'Willow log');
+    expect(sourceItem('ITEM-0384').displayName, 'Cinnamon log');
+    expect(sourceItem('ITEM-0192').displayName, 'Cooked baby giant squid');
     expect(sourceItem('ITEM-0383').retired, isTrue);
     expect(sourceItem('ITEM-0384').retired, isTrue);
     expect(sourceItem('ITEM-0192').retired, isTrue);

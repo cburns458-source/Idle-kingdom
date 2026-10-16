@@ -7,13 +7,13 @@ void main() {
     expect(
       consolidateAwayMessages(<String>[
         'Won 2 fights while away.',
-        'Crafted 1 Baked Potato (+120 XP)',
-        'Crafted 1 Baked Potato (+120 XP)',
+        'Crafted 1 Baked potato (+120 XP)',
+        'Crafted 1 Baked potato (+120 XP)',
         'Defeated by Cow while away.',
       ]),
       <String>[
         'Won 2 fights while away.',
-        'Crafted 2 Baked Potato (+240 XP)',
+        'Crafted 2 Baked potato (+240 XP)',
         'Defeated by Cow while away.',
       ],
     );
@@ -22,11 +22,11 @@ void main() {
   test('keeps different crafted items on separate lines, in the order they arrived', () {
     expect(
       consolidateAwayMessages(<String>[
-        'Crafted 1 Baked Potato (+120 XP)',
-        'Crafted 2 Copper Bar (+50 XP)',
-        'Crafted 1 Baked Potato (+120 XP)',
+        'Crafted 1 Baked potato (+120 XP)',
+        'Crafted 2 Copper bar (+50 XP)',
+        'Crafted 1 Baked potato (+120 XP)',
       ]),
-      <String>['Crafted 2 Baked Potato (+240 XP)', 'Crafted 2 Copper Bar (+50 XP)'],
+      <String>['Crafted 2 Baked potato (+240 XP)', 'Crafted 2 Copper bar (+50 XP)'],
     );
   });
 

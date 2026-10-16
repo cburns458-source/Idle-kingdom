@@ -36,23 +36,9 @@ const WOODEN_FISHING_TOOLS = ['ITEM-0103']
 const WOODEN_HUNTING_TOOLS = ['ITEM-0108', 'ITEM-0109']
 const WOODEN_COMBAT_GEAR = ['ITEM-0124', 'ITEM-0125', 'ITEM-0145']
 
-const COMBAT_GEAR_WORDS = [
-  'Sword',
-  'Dagger',
-  'Shield',
-  'Helmet',
-  'Chestplate',
-  'Platelegs',
-  'Boots',
-  'Gloves',
-  'Warhammer',
-  'Battleaxe',
-  'Bow',
-  'Spear',
-] as const
-
 const COMBAT_ARMOR_WORDS = ['Helmet', 'Chestplate', 'Platelegs', 'Boots', 'Gloves', 'Shield'] as const
 const COMBAT_WEAPON_WORDS = ['Sword', 'Dagger', 'Warhammer', 'Battleaxe'] as const
+const MAGIC_BOLA_ITEM_ID = 'ITEM-0315'
 
 export interface SkillMenuListItem {
   id: string
@@ -254,22 +240,21 @@ export function skillMenuPlacementForOutput(
     return { tabId: 'other', tabLabel: 'Other', sectionTitle: null }
   }
   if (skillId === ARTISANRY_SKILL_ID) {
-    if (isBowName(displayName)) return { tabId: 'bows', tabLabel: 'Bows', sectionTitle: null }
-    const item = outputId
-      ? db.Items.find((row) => row['Item ID'] === outputId)
-      : itemByName(db, displayName)
-    if (isJewelryItem(item, displayName)) {
+    const item = itemForOutput(db, outputId, displayName)
+    if (isBowItem(item)) return { tabId: 'bows', tabLabel: 'Bows', sectionTitle: null }
+    if (isJewelryItem(item)) {
       return { tabId: 'jewelry', tabLabel: 'Jewelry', sectionTitle: null }
     }
-    const material = armorMaterial(displayName)
+    const material = armorMaterial(item?.['Display Name'] ?? displayName)
     if (material && isGroupedArmorMaterial(material)) {
       return { tabId: 'other', tabLabel: 'Other', sectionTitle: `${material} equipment` }
     }
     return { tabId: 'other', tabLabel: 'Other', sectionTitle: null }
   }
   if (skillId === ARCANA_SKILL_ID) {
-    if (isSpellName(displayName)) return { tabId: 'spells', tabLabel: 'Spells', sectionTitle: null }
-    if (isArcanaWeaponName(displayName, outputId)) {
+    const item = itemForOutput(db, outputId, displayName)
+    if (isSpellItem(item, displayName)) return { tabId: 'spells', tabLabel: 'Spells', sectionTitle: null }
+    if (isArcanaWeaponItem(item, outputId, displayName)) {
       return { tabId: 'equipment', tabLabel: 'Equipment', sectionTitle: null }
     }
     return { tabId: 'enchants', tabLabel: 'Enchants', sectionTitle: null }
@@ -278,7 +263,7 @@ export function skillMenuPlacementForOutput(
     const action =
       (outputId
         ? db.Actions.find((row) => row['Action ID'] === outputId)
-        : undefined) ?? db.Actions.find((row) => row['Display Name'] === displayName)
+        : undefined) ?? db.Actions.find((row) => namesEqual(row['Display Name'], displayName))
     if (action && isThieveryShopAction(action)) {
       return { tabId: 'shops', tabLabel: 'Shops', sectionTitle: null }
     }
@@ -515,9 +500,9 @@ function cookingTabs(db: GameDatabase): SkillMenuTab[] {
 
 function alchemyOutputItemId(db: GameDatabase, displayName: string, outputId: string): string {
   if (outputId) return outputId
-  const action = db.Actions.find((row) => row['Display Name'] === displayName)
+  const action = db.Actions.find((row) => namesEqual(row['Display Name'], displayName))
   if (action?.['Target ID']) return action['Target ID']
-  const recipe = db.Recipes.find((row) => row['Display Name'] === displayName)
+  const recipe = db.Recipes.find((row) => namesEqual(row['Display Name'], displayName))
   return recipe?.['Output Item ID'] ?? ''
 }
 
@@ -574,11 +559,12 @@ function artisanryTabs(db: GameDatabase): SkillMenuTab[] {
   const other: SkillMenuListItem[] = []
   const seenLeather = new Set<string>()
   for (const project of projectsForSkill(db, ARTISANRY_SKILL_ID)) {
-    const item = itemByName(db, project.displayName)
-    if (isBowName(project.displayName)) bows.push(project)
-    else if (isJewelryItem(item, project.displayName)) jewelry.push(project)
+    const outputId = projectOutputId(db, project.id)
+    const item = itemForOutput(db, outputId, project.displayName)
+    if (isBowItem(item)) bows.push(project)
+    else if (isJewelryItem(item)) jewelry.push(project)
     else {
-      const material = armorMaterial(project.displayName)
+      const material = armorMaterial(item?.['Display Name'] ?? project.displayName)
       if (material && isGroupedArmorMaterial(material)) {
         const key = `${project.level ?? ''}|${material}`
         if (seenLeather.has(key)) continue
@@ -617,8 +603,9 @@ function arcanaTabs(db: GameDatabase): SkillMenuTab[] {
   for (const project of projectsForSkill(db, ARCANA_SKILL_ID)) {
     if (isArcanaEssenceMenuItem(project)) continue
     const outputId = projectOutputId(db, project.id)
-    if (isSpellName(project.displayName)) spells.push(project)
-    else if (isArcanaWeaponName(project.displayName, outputId)) weapons.push(project)
+    const item = itemForOutput(db, outputId, project.displayName)
+    if (isSpellItem(item, project.displayName)) spells.push(project)
+    else if (isArcanaWeaponItem(item, outputId, project.displayName)) weapons.push(project)
     else if (isEnchantmentName(project.displayName, outputId)) enchantments.push(project)
     else enchantments.push(project)
   }
@@ -635,7 +622,7 @@ function combatGearItems(db: GameDatabase, skillId: string): SkillMenuListItem[]
     ...woodenItems(db, WOODEN_COMBAT_GEAR),
   ].map((item) => ({
     ...item,
-    level: equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
+    level: equipLevelForSkill(db, item, skillId) ?? item.level,
   }))
 }
 
@@ -704,12 +691,12 @@ function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListI
   const entries = dedupeByName(
     [...projectItemsWhere(db, spec.match, null), ...woodenItems(db, spec.woodenIds)].map((item) => ({
       ...item,
-      level: equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
+      level: equipLevelForSkill(db, item, skillId) ?? item.level,
     })),
   )
   if (skillId === FISHING_SKILL_ID) {
     const pot = db.Items.find((row) => row['Item ID'] === FISHING_POT_ITEM_ID)
-    if (pot && !entries.some((item) => item.displayName === pot['Display Name'])) {
+    if (pot && !entries.some((item) => item.id === pot['Item ID'])) {
       entries.push({ id: pot['Item ID'], displayName: pot['Display Name'], level: 14 })
     }
     return dedupeByName(entries)
@@ -717,8 +704,12 @@ function gatheringToolEntries(db: GameDatabase, skillId: string): SkillMenuListI
   return entries
 }
 
-function equipLevelForSkill(db: GameDatabase, displayName: string, skillId: string): number | null {
-  const item = db.Items.find((row) => row['Display Name'] === displayName)
+function equipLevelForSkill(
+  db: GameDatabase,
+  entry: SkillMenuListItem,
+  skillId: string,
+): number | null {
+  const item = itemForMenuEntry(db, entry)
   if (!item) return null
   const equipment = db.Equipment.find((row) => row['Item ID'] === item['Item ID'])
   if (!equipment || equipment['Required Skill ID'] !== skillId) return null
@@ -730,13 +721,13 @@ function gatheringToolSpec(
 ): { woodenIds: string[]; match: (item: ItemRow, name: string) => boolean } | null {
   switch (skillId) {
     case MINING_SKILL_ID:
-      return { woodenIds: WOODEN_MINING_TOOLS, match: (_item, name) => endsWithWord(name, 'Pickaxe') }
+      return { woodenIds: WOODEN_MINING_TOOLS, match: (item) => itemHasTag(item, 'mining_tool') }
     case WOODCUTTING_SKILL_ID:
-      return { woodenIds: WOODEN_WOODCUTTING_TOOLS, match: (_item, name) => isWoodcuttingToolName(name) }
+      return { woodenIds: WOODEN_WOODCUTTING_TOOLS, match: (item) => isWoodcuttingToolItem(item) }
     case FISHING_SKILL_ID:
-      return { woodenIds: WOODEN_FISHING_TOOLS, match: (_item, name) => isFishingToolName(name) }
+      return { woodenIds: WOODEN_FISHING_TOOLS, match: (item) => isFishingToolItem(item) }
     case HUNTING_SKILL_ID:
-      return { woodenIds: WOODEN_HUNTING_TOOLS, match: (_item, name) => isHuntingToolName(name) }
+      return { woodenIds: WOODEN_HUNTING_TOOLS, match: (item) => itemHasTag(item, 'hunting_tool') }
     default:
       return null
   }
@@ -879,68 +870,108 @@ function weaponMaterial(name: string): string | null {
   return null
 }
 
+function namesEqual(a: string | null | undefined, b: string | null | undefined): boolean {
+  return (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase()
+}
+
 function endsWithWord(name: string, word: string): boolean {
-  return name === word || name.endsWith(` ${word}`)
+  const haystack = name.trim().toLowerCase()
+  const needle = word.trim().toLowerCase()
+  return haystack === needle || haystack.endsWith(` ${needle}`)
 }
 
-function isWoodcuttingToolName(name: string): boolean {
-  if (endsWithWord(name, 'Battleaxe')) return false
-  return endsWithWord(name, 'Axe') || endsWithWord(name, 'Hatchet')
-}
-
-function isFishingToolName(name: string): boolean {
-  return name.includes('Fishing Rod') || endsWithWord(name, 'Harpoon') || name === 'Fishing Pot'
-}
-
-function isHuntingToolName(name: string): boolean {
-  return (
-    endsWithWord(name, 'Bow') ||
-    endsWithWord(name, 'Spear') ||
-    name === 'Sling' ||
-    name === 'Bola' ||
-    name === 'Magic Bola'
+function itemTags(item: ItemRow | undefined): Set<string> {
+  if (!item) return new Set()
+  return new Set(
+    String(item['Functional / Source Tags'] ?? '')
+      .split(/[;,]/)
+      .map((part) => part.trim().toLowerCase())
+      .filter(Boolean),
   )
 }
 
-function isBowName(name: string): boolean {
-  return endsWithWord(name, 'Bow')
+function itemHasTag(item: ItemRow | undefined, tag: string): boolean {
+  return itemTags(item).has(tag.toLowerCase())
 }
 
-function isJewelryItem(item: ItemRow | undefined, name: string): boolean {
-  if (item?.Category === 'Jewelry') return true
-  return name.includes('Necklace') || name.includes('Ring')
+function isWoodcuttingToolItem(item: ItemRow): boolean {
+  return itemHasTag(item, 'woodcutting_tool') && item.Subtype?.toLowerCase() !== 'battleaxe'
+}
+
+function isFishingToolItem(item: ItemRow): boolean {
+  return itemHasTag(item, 'fishing_tool') || itemHasTag(item, 'fishing_pot')
+}
+
+function isBowItem(item: ItemRow | undefined): boolean {
+  if (!item) return false
+  return item.Subtype === 'Bow' || itemHasTag(item, 'bow_combat_xp')
+}
+
+function isJewelryItem(item: ItemRow | undefined): boolean {
+  return item?.Category === 'Jewelry'
 }
 
 function isCombatGearItem(item: ItemRow): boolean {
   if (item.Category === 'Tool' || item.Category === 'Jewelry') return false
-  const name = item['Display Name']
-  if (name.includes('Necklace') || name.includes('Ring') || name.includes('Backpack')) return false
-  if (isWoodcuttingToolName(name) || endsWithWord(name, 'Pickaxe') || isFishingToolName(name)) {
+  if (isWoodcuttingToolItem(item) || itemHasTag(item, 'mining_tool') || isFishingToolItem(item)) {
     return false
   }
-  return COMBAT_GEAR_WORDS.some((word) => endsWithWord(name, word))
-}
-
-function isSpellName(name: string): boolean {
-  return name.includes('Spell')
-}
-
-function isArcanaWeaponName(name: string, outputId: string): boolean {
-  if (outputId.startsWith('ENCH-')) return false
+  const category = (item.Category ?? '').toLowerCase()
   return (
-    /staff of\b/i.test(name) ||
-    /\bstaff\b/i.test(name) ||
-    /\bwand\b/i.test(name) ||
-    name === 'Magic Bola'
+    category === 'weapon' ||
+    category === 'armor' ||
+    category === 'shield / off-hand' ||
+    itemHasTag(item, 'combat_weapon') ||
+    itemHasTag(item, 'combat_armor') ||
+    itemHasTag(item, 'combat_defense')
   )
 }
 
+function isSpellItem(item: ItemRow | undefined, name: string): boolean {
+  if (item?.Category === 'Spell' || itemHasTag(item, 'spell')) return true
+  return /\bspell\b/i.test(name) && item?.Category !== 'Spell Component'
+}
+
+function isArcanaWeaponItem(item: ItemRow | undefined, outputId: string, name: string): boolean {
+  if (outputId.startsWith('ENCH-')) return false
+  if (item?.['Item ID'] === MAGIC_BOLA_ITEM_ID || namesEqual(name, 'Magic bola')) return true
+  const subtype = (item?.Subtype ?? '').toLowerCase()
+  if (subtype === 'staff' || subtype === 'wand') return true
+  return itemHasTag(item, 'staff') || itemHasTag(item, 'wand')
+}
+
 function isEnchantmentName(name: string, outputId: string): boolean {
-  return outputId.startsWith('ENCH-') || name.includes('Enchantment') || name.includes('Enchanted')
+  return (
+    outputId.startsWith('ENCH-') ||
+    /enchantment/i.test(name) ||
+    /enchanted/i.test(name)
+  )
 }
 
 function itemByName(db: GameDatabase, name: string): ItemRow | undefined {
-  return db.Items.find((item) => item['Display Name'] === name)
+  return (
+    db.Items.find((item) => item['Display Name'] === name) ??
+    db.Items.find((item) => namesEqual(item['Display Name'], name))
+  )
+}
+
+function itemForOutput(db: GameDatabase, outputId: string, displayName: string): ItemRow | undefined {
+  if (outputId) {
+    const byId = db.Items.find((row) => row['Item ID'] === outputId)
+    if (byId) return byId
+  }
+  return itemByName(db, displayName)
+}
+
+function itemForMenuEntry(db: GameDatabase, entry: SkillMenuListItem): ItemRow | undefined {
+  const byId = db.Items.find((row) => row['Item ID'] === entry.id)
+  if (byId) return byId
+  const outputId = projectOutputId(db, entry.id)
+  if (outputId) {
+    const byOutput = db.Items.find((row) => row['Item ID'] === outputId)
+    if (byOutput) return byOutput
+  }
+  return itemByName(db, entry.displayName)
 }
 
 function projectOutputId(db: GameDatabase, projectId: string): string {

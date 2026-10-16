@@ -85,11 +85,11 @@ void main() {
     }
 
     await pumpWith(UiChromePack.wood);
-    final woodLink = tester.widget<Text>(find.text('Copper Ore'));
+    final woodLink = tester.widget<Text>(find.text('Copper ore'));
     expect(woodLink.style?.color, Palette.chatItemLink);
 
     await pumpWith(UiChromePack.stone);
-    final stoneLink = tester.widget<Text>(find.text('Copper Ore'));
+    final stoneLink = tester.widget<Text>(find.text('Copper ore'));
     expect(stoneLink.style?.color, Palette.chatItemLink);
   });
 }

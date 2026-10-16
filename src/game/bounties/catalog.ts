@@ -5,7 +5,7 @@ export const BOUNTY_CATALOG: BountyDefinition[] = [
   {
     id: 'BNT-0001',
     title: 'Root Runner',
-    description: 'Deliver Wild Roots to the Plaza board.',
+    description: 'Deliver wild roots to the Plaza board.',
     kind: 'gather_deliver',
     targetId: 'ITEM-0030',
     amount: 8,
@@ -25,7 +25,7 @@ export const BOUNTY_CATALOG: BountyDefinition[] = [
   {
     id: 'BNT-0003',
     title: 'Copper Quota',
-    description: 'Deliver Copper Ore to the Plaza board.',
+    description: 'Deliver copper ore to the Plaza board.',
     kind: 'gather_deliver',
     targetId: 'ITEM-0003',
     amount: 10,
@@ -75,7 +75,7 @@ export const BOUNTY_CATALOG: BountyDefinition[] = [
   {
     id: 'BNT-0008',
     title: 'Kitchen Duty',
-    description: 'Cook Baked Potatoes.',
+    description: 'Cook baked potatoes.',
     kind: 'process',
     targetId: 'RCP-0001',
     amount: 5,
@@ -85,7 +85,7 @@ export const BOUNTY_CATALOG: BountyDefinition[] = [
   {
     id: 'BNT-0009',
     title: 'Crawfish Cook',
-    description: 'Cook Cooked Crawfish.',
+    description: 'Cook cooked crawfish.',
     kind: 'process',
     targetId: 'RCP-0002',
     amount: 3,
@@ -95,7 +95,7 @@ export const BOUNTY_CATALOG: BountyDefinition[] = [
   {
     id: 'BNT-0010',
     title: 'Trout Tray',
-    description: 'Cook Cooked Trout.',
+    description: 'Cook cooked trout.',
     kind: 'process',
     targetId: 'RCP-0003',
     amount: 3,
@@ -105,7 +105,7 @@ export const BOUNTY_CATALOG: BountyDefinition[] = [
   {
     id: 'BNT-0011',
     title: 'Cedar Delivery',
-    description: 'Deliver Cedar Logs to the Plaza board.',
+    description: 'Deliver cedar logs to the Plaza board.',
     kind: 'gather_deliver',
     targetId: 'ITEM-0015',
     amount: 6,

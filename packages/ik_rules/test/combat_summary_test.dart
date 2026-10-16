@@ -37,11 +37,11 @@ void main() {
     expect(
       summary.activeBonuses.map((bonus) => bonus.name),
       containsAll(<String>[
-        'Minor Strength Enchantment',
+        'Minor strength enchantment',
         'Thorns',
-        'Strength Spell ×2',
-        'Abundance Spell',
-        'Strength Potion (6)',
+        'Strength spell ×2',
+        'Abundance spell',
+        'Strength potion (6)',
         'High Elf',
       ]),
     );
@@ -55,15 +55,15 @@ void main() {
     final summary = playerCombatStatSummary(db, save);
 
     expect(summary.mainhandBreakdown.map((line) => line.label), isNot(contains('Unarmed')));
-    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Steel Sword'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Steel sword'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Enchantments'));
     expect(summary.mainhandBreakdown.map((line) => line.label), contains('Might 25'));
     expect(
       summary.mainhandBreakdown.firstWhere((line) => line.label == 'Might 25').detail,
       '×1.12',
     );
-    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Spell'));
-    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength Potion (6)'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength spell'));
+    expect(summary.mainhandBreakdown.map((line) => line.label), contains('Strength potion (6)'));
     expect(summary.mainhandBreakdown.lastWhere((line) => line.label == 'Total').detail, '124–248');
 
     final offhand = playerOffhandDamageRange(db, save);
@@ -79,12 +79,12 @@ void main() {
     }
 
     expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('Base')));
-    expect(summary.healthBreakdown.map((line) => line.label), contains('Steel Helmet'));
+    expect(summary.healthBreakdown.map((line) => line.label), contains('Steel helmet'));
     expect(summary.healthBreakdown.map((line) => line.label), contains('Combat Level 38'));
     expect(summary.healthBreakdown.map((line) => line.label), isNot(contains('High Elf')));
     expect(summary.healthBreakdown.last.detail, jsNumberToString(playerMaxHp(db, save)));
 
-    expect(summary.reductionBreakdown.map((line) => line.label), contains('Steel Helmet'));
+    expect(summary.reductionBreakdown.map((line) => line.label), contains('Steel helmet'));
     expect(summary.reductionBreakdown.map((line) => line.label), contains('Vitality 25'));
     expect(
       summary.reductionBreakdown.last.detail,

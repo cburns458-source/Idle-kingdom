@@ -24,8 +24,8 @@ const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
-describe('spell slots and Strength Spell', () => {
-  it('includes Launch spell slots and the Strength Spell project', () => {
+describe('spell slots and Strength spell', () => {
+  it('includes Launch spell slots and the Strength spell project', () => {
     const { launch } = prepareDatabase(rawDatabase)
     for (const slotId of SPELL_SLOT_IDS) {
       expect(launch.EquipmentSlots.some((slot) => slot['Slot ID'] === slotId)).toBe(true)
@@ -54,7 +54,7 @@ describe('spell slots and Strength Spell', () => {
     expect(firstEmptySpellSlot(save)).toBe('SLOT-0015')
   })
 
-  it('applies Strength Spell while equipped in any slot (always on)', () => {
+  it('applies Strength spell while equipped in any slot (always on)', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     const clearedNet = unequipSlot(save, 'SLOT-0001')
@@ -76,7 +76,7 @@ describe('spell slots and Strength Spell', () => {
     expect(buffed.max).toBe(Math.floor(base.max * 1.1))
   })
 
-  it('stacks duplicate Strength Spells additively', () => {
+  it('stacks duplicate Strength spells additively', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = addItemToInventory(save, 'ITEM-0295', 2)
@@ -93,7 +93,7 @@ describe('spell slots and Strength Spell', () => {
     expect(activeSpellDamageRangeMultiplier(launch, save)).toBeCloseTo(1.2)
   })
 
-  it('includes Abundance Spell project and stacks double-chance', () => {
+  it('includes Abundance spell project and stacks double-chance', () => {
     const { launch } = prepareDatabase(rawDatabase)
     expect(launch.Items.some((item) => item['Item ID'] === 'ITEM-0297')).toBe(true)
     expect(launch.Projects.some((project) => project['Project ID'] === 'PRJ-0141')).toBe(true)
@@ -134,7 +134,7 @@ function equipItem(
   return equipped.save
 }
 
-describe("Wizard's Tome spell power", () => {
+describe("Wizard's tome spell power", () => {
   it('sells the Tome at the Wizard Shop for 314 and carries no HP or DR', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const item = launch.Items.find((row) => row['Item ID'] === 'ITEM-0149')!
@@ -170,7 +170,7 @@ describe("Wizard's Tome spell power", () => {
     expect(activeSpellGatheringDurationMultiplier(launch, save)).toBe(basePathfinder)
   })
 
-  it('raises Strength Spell +10% damage to +12%', () => {
+  it('raises Strength spell +10% damage to +12%', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     const cleared = unequipSlot(save, 'SLOT-0001')

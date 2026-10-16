@@ -143,8 +143,8 @@ describe('achievements and statistics', () => {
     const quiverAndSword = withSlots(quiverOnly, { 'SLOT-0001': 'ITEM-0128' })
     expect(unlocks(quiverAndSword, 'ACH-0031', launch)).toBe(false)
 
-    const quiverAndBow = withSlots(quiverOnly, { 'SLOT-0001': 'ITEM-0135' })
-    expect(itemHasCapability(launch, 'ITEM-0135', 'bow_combat_xp')).toBe(true)
+    const quiverAndBow = withSlots(quiverOnly, { 'SLOT-0001': 'ITEM-0136' })
+    expect(itemHasCapability(launch, 'ITEM-0136', 'bow_combat_xp')).toBe(true)
     expect(unlocks(quiverAndBow, 'ACH-0031', launch)).toBe(true)
   })
 

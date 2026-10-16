@@ -110,7 +110,7 @@ describe('specialist hats and quiver', () => {
       equipment: {
         slots: {
           ...quiverOnly.equipment.slots,
-          'SLOT-0001': { itemId: 'ITEM-0135', quantity: 1 },
+          'SLOT-0001': { itemId: 'ITEM-0136', quantity: 1 },
         },
       },
     }
@@ -182,7 +182,7 @@ describe('specialist hats and quiver', () => {
   it('crafts fish reagents 1:1 with no goggles multi-output', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const recipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0073')!
-    expect(recipe['Display Name']).toBe('Salmon Roe')
+    expect(recipe['Display Name']).toBe('Salmon roe')
     expect(recipe['Proficiency Level']).toBe(28)
     expect(recipe['Base Duration Seconds']).toBe(12)
     expect(recipe['XP Reward']).toBe(480)
@@ -190,13 +190,13 @@ describe('specialist hats and quiver', () => {
     expect(recipe['Output Item ID']).toBe('ITEM-0413')
 
     const oil = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0074')!
-    expect(oil['Display Name']).toBe('Catfish Oil')
+    expect(oil['Display Name']).toBe('Catfish oil')
     expect(oil['Proficiency Level']).toBe(36)
     expect(oil['Base Duration Seconds']).toBe(12)
     expect(oil['XP Reward']).toBe(534)
 
     const tail = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0075')!
-    expect(tail['Display Name']).toBe('Eel Tail')
+    expect(tail['Display Name']).toBe('Eel tail')
     expect(tail['Proficiency Level']).toBe(60)
     expect(tail['Base Duration Seconds']).toBe(12)
     expect(tail['XP Reward']).toBe(660)
@@ -223,7 +223,7 @@ describe('specialist hats and quiver', () => {
     expect(goggled?.xpGained).toBe(480)
   })
 
-  it('requires Alchemy 30 to wear the Alchemist Goggles', () => {
+  it('requires Alchemy 30 to wear the Alchemist goggles', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const row = launch.Equipment.find((entry) => entry['Equipment ID'] === 'EQP-0196')!
     expect(row['Item ID']).toBe(ALCHEMIST_GOGGLES_ITEM_ID)

@@ -93,11 +93,11 @@ describe('Castle Crypt', () => {
   })
 })
 
-describe("Mage's Wand", () => {
+describe("Mage's wand", () => {
   it('is a one-handed Arcana weapon with sparks', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const item = launch.Items.find((row) => row['Item ID'] === 'ITEM-0307')
-    expect(item?.['Display Name']).toBe("Mage's Wand")
+    expect(item?.['Display Name']).toBe("Mage's wand")
     expect(item?.['Functional / Source Tags']).toContain('staff_sparks')
     expect(item?.['Functional / Source Tags']).not.toContain('two_handed')
     expect(isTwoHandedItem(launch, 'ITEM-0307')).toBe(false)
@@ -133,11 +133,11 @@ describe("Mage's Wand", () => {
       skillMenuView(launch, 'SKL-0013').tabs.find((tab) => tab.id === 'equipment')?.sections[0]
         ?.entries ?? []
     expect(weapons.map((entry) => entry.displayName)).toEqual([
-      'Staff of Sparks',
-      'Magic Bola',
-      'Staff of Binding',
-      "Mage's Wand",
-      'Staff of Power',
+      'Staff of sparks',
+      'Magic bola',
+      'Staff of binding',
+      "Mage's wand",
+      'Staff of power',
     ])
   })
 })

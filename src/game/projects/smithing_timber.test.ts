@@ -9,13 +9,13 @@ const rawDatabase = JSON.parse(
 
 /** Metal bar display name → timber the smithing recipes that use wood should take. */
 const TIMBER_BY_BAR: Record<string, string> = {
-  'Copper Bar': 'Cedar Timber',
-  'Bronze Bar': 'Oak Timber',
-  'Iron Bar': 'Poplar Timber',
-  'Steel Bar': 'Maple Timber',
-  'Reinforced Steel Bar': 'Maple Timber',
-  'Tungsten Bar': 'Ironwood Timber',
-  'Titanium Bar': 'Mahogany Timber',
+  'Copper bar': 'Cedar timber',
+  'Bronze bar': 'Oak timber',
+  'Iron bar': 'Poplar timber',
+  'Steel bar': 'Maple timber',
+  'Reinforced steel bar': 'Maple timber',
+  'Tungsten bar': 'Ironwood timber',
+  'Titanium bar': 'Mahogany timber',
 }
 
 describe('smithing timber tiers', () => {
@@ -31,7 +31,7 @@ describe('smithing timber tiers', () => {
         .map((slot) => nameOf(project[`Input ${slot} Item ID` as keyof typeof project] as string))
         .filter((name): name is string => Boolean(name))
       const bar = inputs.find((name) => name in TIMBER_BY_BAR)
-      const timber = inputs.find((name) => name.endsWith('Timber'))
+      const timber = inputs.find((name) => /timber$/i.test(name))
       if (!bar || !timber) continue
       expect(timber, project['Display Name']).toBe(TIMBER_BY_BAR[bar])
       checked += 1

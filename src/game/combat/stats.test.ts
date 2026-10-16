@@ -302,7 +302,7 @@ describe('might / vitality combat stats', () => {
     expect(splitCombatVictoryXp(125, 'balanced')).toEqual({ mightXp: 63, vitalityXp: 62 })
   })
 
-  it('adds an Arcana layer only on Staff of Power', () => {
+  it('adds an Arcana layer only on Staff of power', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
     const withSkills = withSkillLevels(base, {

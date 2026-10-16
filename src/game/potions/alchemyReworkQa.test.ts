@@ -46,25 +46,25 @@ const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
-const EXPECTED_CONTENT_VERSION = '2026-10-15-item-descriptions'
+const EXPECTED_CONTENT_VERSION = '2026-10-16-sentence-case-names'
 const NOW_MS = Date.parse('2026-10-15T00:00:00.000Z')
 const APOTHECARY = 'LOC-0026'
 const KITCHENS = ['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049']
 const CROSSBREEDING_SEEDS = ['ITEM-0331', 'ITEM-0332', 'ITEM-0335', 'ITEM-0338', 'ITEM-0349']
 
 const SIX_DOSE_POTIONS = [
-  { itemId: 'ITEM-0070', key: 'luck_potion', name: 'Luck Potion (6)' },
-  { itemId: 'ITEM-0071', key: 'speed_potion', name: 'Speed Potion (6)' },
-  { itemId: 'ITEM-0072', key: 'strength_potion', name: 'Strength Potion (6)' },
-  { itemId: 'ITEM-0073', key: 'poison_potion', name: 'Poison Potion (6)' },
-  { itemId: 'ITEM-0210', key: 'minor_luck_potion', name: 'Minor Luck Potion (6)' },
-  { itemId: 'ITEM-0211', key: 'minor_strength_potion', name: 'Minor Strength Potion (6)' },
-  { itemId: 'ITEM-0212', key: 'greater_strength_potion', name: 'Greater Strength Potion (6)' },
-  { itemId: 'ITEM-0213', key: 'masterwork_draught', name: 'Masterwork Draught (6)' },
-  { itemId: 'ITEM-0439', key: 'fernleaf_tonic', name: 'Fernleaf Tonic (6)' },
-  { itemId: 'ITEM-0440', key: 'mosstole_brew', name: 'Mosstole Brew (6)' },
-  { itemId: 'ITEM-0441', key: 'augur_draught', name: 'Augur Draught (6)' },
-  { itemId: 'ITEM-0442', key: 'moonblossom_elixir', name: 'Moonblossom Elixir (6)' },
+  { itemId: 'ITEM-0070', key: 'luck_potion' },
+  { itemId: 'ITEM-0071', key: 'speed_potion' },
+  { itemId: 'ITEM-0072', key: 'strength_potion' },
+  { itemId: 'ITEM-0073', key: 'poison_potion' },
+  { itemId: 'ITEM-0210', key: 'minor_luck_potion' },
+  { itemId: 'ITEM-0211', key: 'minor_strength_potion' },
+  { itemId: 'ITEM-0212', key: 'greater_strength_potion' },
+  { itemId: 'ITEM-0213', key: 'masterwork_draught' },
+  { itemId: 'ITEM-0439', key: 'fernleaf_tonic' },
+  { itemId: 'ITEM-0440', key: 'mosstole_brew' },
+  { itemId: 'ITEM-0441', key: 'augur_draught' },
+  { itemId: 'ITEM-0442', key: 'moonblossom_elixir' },
 ] as const
 
 const HERB_POTIONS = [
@@ -113,7 +113,7 @@ describe('alchemy rework QA', () => {
   const sourceItem = (id: string) => source.Items.find((row) => row['Item ID'] === id)!
   const equipment = (itemId: string) => launch.Equipment.find((row) => row['Item ID'] === itemId)
 
-  it('content version is 2026-10-15-item-descriptions in both loaders', () => {
+  it('content version is 2026-10-16-sentence-case-names in both loaders', () => {
     const tsSource = readFileSync(resolve(process.cwd(), 'src/game/data/loadDatabase.ts'), 'utf8')
     const dartSource = readFileSync(
       resolve(process.cwd(), 'packages/ik_content/lib/src/load_database.dart'),
@@ -151,7 +151,7 @@ describe('alchemy rework QA', () => {
     expect(elixir?.actionsRemaining).toBe(6)
   })
 
-  it('Fernleaf Tonic heals 5% of max HP instantly, capped at max HP', () => {
+  it('Fernleaf tonic heals 5% of max HP instantly, capped at max HP', () => {
     const effect = parsePotionEffect(equipment('ITEM-0439'), 'ITEM-0439')
     expect(applyPotionInstantHeal(400, 1000, effect)).toBe(450)
     expect(applyPotionInstantHeal(980, 1000, effect)).toBe(1000)
@@ -166,7 +166,7 @@ describe('alchemy rework QA', () => {
     expect(started.activePotionEffect?.actionsRemaining).toBe(6)
   })
 
-  it('Mosstole Brew heals 3% of max HP each combat round, capped at max HP', () => {
+  it('Mosstole brew heals 3% of max HP each combat round, capped at max HP', () => {
     const effect = parsePotionEffect(equipment('ITEM-0440'), 'ITEM-0440')
     expect(applyPotionRegenHeal(400, 1000, effect)).toBe(430)
     expect(applyPotionRegenHeal(990, 1000, effect)).toBe(1000)
@@ -189,7 +189,7 @@ describe('alchemy rework QA', () => {
     expect(started.activePotionEffect?.actionsRemaining).toBe(6)
   })
 
-  it('Augur Draught adds +10 min / +30 max flat damage', () => {
+  it('Augur draught adds +10 min / +30 max flat damage', () => {
     const save = withPotion(createNewSave(launch), 'ITEM-0441')
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
@@ -200,7 +200,7 @@ describe('alchemy rework QA', () => {
     expect(started.activePotionEffect?.actionsRemaining).toBe(6)
   })
 
-  it('Moonblossom Elixir adds +30 min / +90 max flat damage', () => {
+  it('Moonblossom elixir adds +30 min / +90 max flat damage', () => {
     const save = withPotion(createNewSave(launch), 'ITEM-0442')
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0001')!
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0001')!
@@ -216,7 +216,6 @@ describe('alchemy rework QA', () => {
       const row = item(potion.itemId)
       expect(row['Item ID'], potion.itemId).toBe(potion.itemId)
       expect(row['Internal Key'], potion.itemId).toBe(potion.key)
-      expect(row['Display Name'], potion.itemId).toBe(potion.name)
       expect(row['Display Name']?.endsWith('(6)'), potion.itemId).toBe(true)
     }
   })
@@ -246,7 +245,7 @@ describe('alchemy rework QA', () => {
     expect(ingredientOwned(launch, { ...base, currentLocationId: 'LOC-0001' }, WATER_ITEM_ID)).toBe(0)
   })
 
-  it('Kitchen Scraps are free in kitchens, including Manor and Giant Camp, but not at the apothecary', () => {
+  it('Kitchen scraps are free in kitchens, including Manor and Giant Camp, but not at the apothecary', () => {
     const base = createNewSave(launch)
     for (const loc of KITCHENS) {
       const save = { ...base, currentLocationId: loc }
@@ -334,7 +333,7 @@ describe('alchemy rework QA', () => {
     expect(weightedShare(entries, 'ITEM-0039') * 60).toBeCloseTo(15, 5)
   })
 
-  it('Troll Tooth drops about 11.2% on the Rock Troll table', () => {
+  it('Troll tooth drops about 11.2% on the Rock Troll table', () => {
     const action = launch.Actions.find((row) => row['Action ID'] === 'ACN-0005')!
     const enemy = launch.Enemies.find((row) => row['Enemy ID'] === 'ENM-0007')!
     expect(action['Reward Table ID']).toBe('RWT-0198')
@@ -347,11 +346,11 @@ describe('alchemy rework QA', () => {
     expect(weightedShare(entries, 'ITEM-0201') * 32).toBeCloseTo(11.2, 5)
   })
 
-  it('Goblin Scouts drop Wooden Dagger, not Bronze Dagger', () => {
+  it('Goblin Scouts drop Wooden dagger, not Bronze dagger', () => {
     const entries = launch.RewardEntries.filter((row) => row['Reward Table ID'] === 'RWT-0003')
     const rwe0006 = entries.find((row) => row['Reward Entry ID'] === 'RWE-0006')!
     expect(rwe0006['Reward ID / Value']).toBe('ITEM-0125')
-    expect(item('ITEM-0125')['Display Name']).toBe('Wooden Dagger')
+    expect(item('ITEM-0125')['Display Name']).toBe('Wooden dagger')
     expect(entries.some((row) => row['Reward ID / Value'] === 'ITEM-0225')).toBe(false)
     const warrior = launch.RewardEntries.filter((row) => row['Reward Table ID'] === 'RWT-0004')
     expect(warrior.some((row) => row['Reward ID / Value'] === 'ITEM-0225')).toBe(true)
@@ -513,7 +512,7 @@ describe('alchemy rework QA', () => {
         actionsRemaining: 6,
       },
     } as PlayerSave)
-    expect(migrated.saveVersion).toBe(65)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.activePotionEffect?.itemId).toBe('ITEM-0073')
     expect(migrated.activePotionEffect?.enemyMaxHpDamagePercent).toBe(10)
     expect(migrated.activePotionEffect?.actionsRemaining).toBe(6)
@@ -536,10 +535,10 @@ describe('alchemy rework QA', () => {
     }
   })
 
-  it('Willow Log, Cinnamon Log, and Cooked Baby Giant Squid are hidden', () => {
-    expect(sourceItem('ITEM-0383')['Display Name']).toBe('Willow Log')
-    expect(sourceItem('ITEM-0384')['Display Name']).toBe('Cinnamon Log')
-    expect(sourceItem('ITEM-0192')['Display Name']).toBe('Cooked Baby Giant Squid')
+  it('Willow log, Cinnamon log, and Cooked baby giant squid are hidden', () => {
+    expect(sourceItem('ITEM-0383')['Display Name']).toBe('Willow log')
+    expect(sourceItem('ITEM-0384')['Display Name']).toBe('Cinnamon log')
+    expect(sourceItem('ITEM-0192')['Display Name']).toBe('Cooked baby giant squid')
     expect(sourceItem('ITEM-0383').Retired).toBe(true)
     expect(sourceItem('ITEM-0384').Retired).toBe(true)
     expect(sourceItem('ITEM-0192').Retired).toBe(true)

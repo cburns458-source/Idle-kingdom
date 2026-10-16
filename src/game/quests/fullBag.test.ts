@@ -364,7 +364,7 @@ describe('no_room is all-or-nothing', () => {
 describe('legacy quest turn-ins share the hand-in item rules', () => {
   it('takes bag stacks only; the bank never counts', () => {
     const save = { ...started('QST-9101'), bank: [{ itemId: BAKED_POTATO, quantity: 50 }] }
-    expect(completeQuest(db, save, 'QST-9101')).toEqual({ ok: false, reason: 'Need 5 Baked Potato.' })
+    expect(completeQuest(db, save, 'QST-9101')).toEqual({ ok: false, reason: 'Need 5 Baked potato.' })
   })
 
   it('asks before using favourited stacks, and takes unhearted ones first on a yes', () => {

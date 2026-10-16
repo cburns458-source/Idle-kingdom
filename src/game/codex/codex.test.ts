@@ -24,14 +24,14 @@ describe('codex index', () => {
     expect(catalogIds.has('ITEM-0320')).toBe(false)
     expect(catalogIds.has('ITEM-0383')).toBe(false)
     expect(catalogIds.has('ITEM-0192')).toBe(false)
-    expect(codex.item('ITEM-0299')?.displayName).toBe('Stolen Coin Purse')
-    expect(codex.item('ITEM-0296')?.displayName).toBe("Traveler's Tunic")
-    expect(codex.item('ITEM-0320')?.displayName).toBe('Chick Pet')
+    expect(codex.item('ITEM-0299')?.displayName).toBe('Stolen coin purse')
+    expect(codex.item('ITEM-0296')?.displayName).toBe("Traveler's tunic")
+    expect(codex.item('ITEM-0320')?.displayName).toBe('Chick pet')
     expect(new Set(codex.enemies.map((row) => row.enemyId))).toEqual(
       new Set(launch.Enemies.map((row) => row['Enemy ID'])),
     )
     expect(codex.item('ITEM-0209')).toBeUndefined()
-    expect(codex.item('ITEM-0276')?.displayName).toBe('Ancient Alloy Sword')
+    expect(codex.item('ITEM-0276')?.displayName).toBe('Chromium sword')
     expect(codex.item('ITEM-0325')).toBeUndefined()
     expect(codex.item('ITEM-0346')).toBeUndefined()
     expect(codex.item('ITEM-0091')).toBeUndefined()
@@ -57,8 +57,8 @@ describe('codex index', () => {
     expect(mine.tables.map((table) => table.label)).toEqual(['Primary', 'Gems'])
     const ore = mine.tables.find((table) => table.label === 'Primary')!
     expect(ore.dropChance).toBe(71.25)
-    expect(ore.drops.map((row) => row.displayName)).toContain('Copper Ore')
-    expect(ore.drops.find((row) => row.displayName === 'Copper Ore')?.dropRatePercent).toBe(100)
+    expect(ore.drops.map((row) => row.displayName)).toContain('Copper ore')
+    expect(ore.drops.find((row) => row.displayName === 'Copper ore')?.dropRatePercent).toBe(100)
     expect(ore.drops.map((row) => row.displayName)).not.toContain('Sapphire')
     const gems = mine.tables.find((table) => table.label === 'Gems')!
     expect(gems.dropChance).toBe(0.5)
@@ -86,15 +86,15 @@ describe('codex index', () => {
     const primary = hunt.tables[0]!
     expect(primary.dropChance).toBe(63.75)
     expect(primary.drops.map((row) => row.displayName)).toEqual(
-      expect.arrayContaining(['Venison', 'Elk Hide', 'Elk Horns']),
+      expect.arrayContaining(['Venison', 'Elk hide', 'Elk horns']),
     )
     expect(primary.drops.find((row) => row.displayName === 'Venison')?.dropRatePercent).toBe(45)
-    expect(primary.drops.find((row) => row.displayName === 'Elk Hide')?.dropRatePercent).toBe(50)
-    expect(primary.drops.find((row) => row.displayName === 'Elk Horns')?.dropRatePercent).toBe(5)
-    expect(primary.drops.map((row) => row.displayName)).not.toContain('Animal Tendons')
+    expect(primary.drops.find((row) => row.displayName === 'Elk hide')?.dropRatePercent).toBe(50)
+    expect(primary.drops.find((row) => row.displayName === 'Elk horns')?.dropRatePercent).toBe(5)
+    expect(primary.drops.map((row) => row.displayName)).not.toContain('Animal tendons')
     const secondary = hunt.tables[1]!
     expect(secondary.dropChance).toBe(5)
-    expect(secondary.drops.map((row) => row.displayName)).toEqual(['Animal Tendons'])
+    expect(secondary.drops.map((row) => row.displayName)).toEqual(['Animal tendons'])
     expect(secondary.drops[0]?.dropRatePercent).toBe(100)
   })
 
@@ -199,7 +199,7 @@ describe('codex index', () => {
     const pirate = codex.enemy('ENM-0005')!
     expect(pirate.tables.map((table) => table.label)).toEqual(['Primary', 'Secondary'])
     expect(pirate.tables[1]?.dropChance).toBe(10)
-    expect(pirate.tables[1]?.drops.map((row) => row.displayName)).toEqual(['Pirate Insignia'])
+    expect(pirate.tables[1]?.drops.map((row) => row.displayName)).toEqual(['Pirate insignia'])
     expect(pirate.tables[1]?.drops[0]?.dropRatePercent).toBe(100)
 
     const dragon = codex.enemy('ENM-0006')!
@@ -235,8 +235,8 @@ describe('codex index', () => {
     expect(codex.itemsMatching(undefined, 'cooked baby giant squid').map((row) => row.itemId)).not.toContain(
       'ITEM-0192',
     )
-    expect(codex.item('ITEM-0383')?.displayName).toBe('Willow Log')
-    expect(codex.item('ITEM-0192')?.displayName).toBe('Cooked Baby Giant Squid')
+    expect(codex.item('ITEM-0383')?.displayName).toBe('Willow log')
+    expect(codex.item('ITEM-0192')?.displayName).toBe('Cooked baby giant squid')
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0383')?.Retired).toBe(true)
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0192')?.Retired).toBe(true)
     expect(source.Items.find((row) => row['Item ID'] === 'ITEM-0384')?.Retired).toBe(true)
@@ -292,7 +292,7 @@ describe('codex index', () => {
       expect(noteTitles(itemId), itemId).toEqual(['Botany crops'])
       expect(codex.item(itemId)!.obtainedFrom.every((row) => row.kind === 'note'), itemId).toBe(true)
     }
-    expect(noteTitles('ITEM-0366')).toEqual(['Kitchen Scraps'])
+    expect(noteTitles('ITEM-0366')).toEqual(['Kitchen scraps'])
     expect(codex.item('ITEM-0366')!.obtainedFrom.every((row) => row.kind === 'note')).toBe(true)
     expect(noteTitles('ITEM-0045')).toEqual(['Tanner leather'])
     expect(codex.item('ITEM-0045')!.obtainedFrom.every((row) => row.kind === 'note')).toBe(true)

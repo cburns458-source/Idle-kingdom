@@ -64,7 +64,7 @@ describe('cooked beef and tablet recipes', () => {
   it('adds soup stock at cooking 16 from water and scraps and uses it in stews', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const stock = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0068')!
-    expect(stock['Display Name']).toBe('Soup Stock')
+    expect(stock['Display Name']).toBe('Soup stock')
     expect(stock['Facility ID']).toBe('FAC-0001')
     expect(stock['Proficiency Level']).toBe(16)
     expect(stock['Base Duration Seconds']).toBe(12)
@@ -84,7 +84,7 @@ describe('cooked beef and tablet recipes', () => {
     expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['XP Reward']).toBe(1850)
     const marlin = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0044')!
     expect(marlin.Status).toBe('Planned')
-    expect(marlin['Display Name']).toBe('Cooked Marlin')
+    expect(marlin['Display Name']).toBe('Cooked marlin')
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0127')?.Status).toBe('Planned')
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0127')?.['Display Name']).toBe(
       'Cooked marlin',

@@ -22,7 +22,7 @@ void main() {
     expect((segments[0] as ChatTextSegment).text, 'Bring ');
     expect(segments[1], isA<ChatItemRefSegment>());
     expect((segments[1] as ChatItemRefSegment).itemId, 'ITEM-0003');
-    expect((segments[1] as ChatItemRefSegment).displayName, 'Copper Ore');
+    expect((segments[1] as ChatItemRefSegment).displayName, 'Copper ore');
     expect((segments[1] as ChatItemRefSegment).known, isTrue);
     expect((segments[3] as ChatItemRefSegment).displayName, 'Bola');
   });

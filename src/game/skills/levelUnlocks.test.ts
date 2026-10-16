@@ -21,10 +21,10 @@ describe('skill unlocks between levels', () => {
     return save
   }
 
-  it('lists Leather Straps when crafting reaches 10', () => {
+  it('lists Leather straps when crafting reaches 10', () => {
     const save = atLevel('SKL-0009', 10)
     const unlocks = skillUnlocksBetween(launch, save, 'SKL-0009', 9, 10)
-    expect(unlocks.recipes).toContain('Leather Straps')
+    expect(unlocks.recipes).toContain('Leather straps')
   })
 
   it('never lists combat fight or enemy action names', () => {
@@ -48,16 +48,16 @@ describe('skill unlocks between levels', () => {
     const save = atLevel(ARTISANRY_SKILL_ID, 25)
     const unlocks = skillUnlocksBetween(launch, save, ARTISANRY_SKILL_ID, 24, 25)
     expect(unlocks.projects).toContain('Bola')
-    expect(unlocks.projects).toContain('Lucky Necklace')
-    expect(unlocks.projects).not.toContain('Cedar Bow')
+    expect(unlocks.projects).toContain('Lucky necklace')
+    expect(unlocks.projects).not.toContain('Cedar bow')
   })
 
-  it('lists Magic Bola at arcana 40 only after the Archmage', () => {
+  it('lists Magic bola at arcana 40 only after the Archmage', () => {
     const locked = skillUnlocksBetween(launch, atLevel(ARCANA_SKILL_ID, 40), ARCANA_SKILL_ID, 39, 40)
-    expect(locked.projects).not.toContain('Magic Bola')
+    expect(locked.projects).not.toContain('Magic bola')
 
     const taught = atLevel(ARCANA_SKILL_ID, 40, [ARCHMAGE_ID])
     const unlocks = skillUnlocksBetween(launch, taught, ARCANA_SKILL_ID, 39, 40)
-    expect(unlocks.projects).toContain('Magic Bola')
+    expect(unlocks.projects).toContain('Magic bola')
   })
 })

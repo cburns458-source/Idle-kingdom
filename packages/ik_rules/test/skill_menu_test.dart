@@ -23,7 +23,7 @@ void main() {
     final rows = skillMenuDisplayEntries(db, smithingSkillId);
     expect(rows.any((row) => row.displayName == 'Tungsten items' && row.level == 60), isTrue);
     expect(rows.any((row) => row.displayName == 'Titanium items' && row.level == 70), isTrue);
-    expect(rows.where((row) => row.displayName == 'Tungsten Sword'), isEmpty);
+    expect(rows.where((row) => row.displayName == 'Tungsten sword'), isEmpty);
     expect(projectsForSkill(db, smithingSkillId).length, greaterThan(rows.length));
     expect(
       view.tabs.first.sections.first.entries.any(
@@ -34,7 +34,7 @@ void main() {
     expect(
       view.tabs.first.sections
           .expand((section) => section.entries)
-          .any((row) => row.displayName == 'Steel Battleaxe'),
+          .any((row) => row.displayName == 'Steel battleaxe'),
       isFalse,
     );
     expect(
@@ -46,7 +46,7 @@ void main() {
     expect(
       view.tabs.first.sections
           .expand((section) => section.entries)
-          .any((row) => row.displayName == 'Steel Warhammer'),
+          .any((row) => row.displayName == 'Steel warhammer'),
       isFalse,
     );
   });
@@ -84,27 +84,27 @@ void main() {
     expect(weapons.any((row) => row.displayName == 'Tungsten weapons' && row.level == 60), isTrue);
     expect(weapons.any((row) => row.displayName == 'Titanium weapons' && row.level == 70), isTrue);
     expect(weapons.any((row) => row.displayName == 'Steel weapons'), isTrue);
-    expect(weapons.any((row) => row.displayName == 'Wooden Sword'), isFalse);
-    expect(weapons.any((row) => row.displayName == 'Tungsten Sword'), isFalse);
-    expect(weapons.any((row) => row.displayName == 'Steel Warhammer'), isFalse);
-    expect(weapons.any((row) => row.displayName == 'Cedar Bow'), isFalse);
-    expect(weapons.any((row) => row.displayName == 'Tungsten Shield'), isFalse);
+    expect(weapons.any((row) => row.displayName == 'Wooden sword'), isFalse);
+    expect(weapons.any((row) => row.displayName == 'Tungsten sword'), isFalse);
+    expect(weapons.any((row) => row.displayName == 'Steel warhammer'), isFalse);
+    expect(weapons.any((row) => row.displayName == 'Cedar bow'), isFalse);
+    expect(weapons.any((row) => row.displayName == 'Tungsten shield'), isFalse);
     final gear = vitality.tabs
         .firstWhere((tab) => tab.id == 'gear')
         .sections
         .expand((section) => section.entries);
     expect(gear.any((row) => row.displayName == 'Tungsten equipment' && row.level == 60), isTrue);
     expect(gear.any((row) => row.displayName == 'Titanium equipment' && row.level == 70), isTrue);
-    expect(gear.any((row) => row.displayName == 'Reinforced Steel equipment'), isTrue);
+    expect(gear.any((row) => row.displayName == 'Reinforced steel equipment'), isTrue);
     expect(gear.any((row) => row.displayName == 'Bull Horn equipment'), isFalse);
     expect(gear.any((row) => row.displayName == 'Wooden equipment' && row.level == 1), isTrue);
     expect(gear.any((row) => row.displayName == 'Leather equipment' && row.level == 1), isTrue);
     final gearNames = gear.map((row) => row.displayName).toList();
     expect(gearNames.indexOf('Wooden equipment'), lessThan(gearNames.indexOf('Leather equipment')));
-    expect(gear.any((row) => row.displayName == 'Leather Helmet'), isFalse);
-    expect(gear.any((row) => row.displayName == 'Tungsten Helmet'), isFalse);
-    expect(gear.any((row) => row.displayName == 'Tungsten Shield'), isFalse);
-    expect(gear.any((row) => row.displayName == 'Tungsten Sword'), isFalse);
+    expect(gear.any((row) => row.displayName == 'Leather helmet'), isFalse);
+    expect(gear.any((row) => row.displayName == 'Tungsten helmet'), isFalse);
+    expect(gear.any((row) => row.displayName == 'Tungsten shield'), isFalse);
+    expect(gear.any((row) => row.displayName == 'Tungsten sword'), isFalse);
     final mightOther = might.tabs
         .firstWhere((tab) => tab.id == 'other')
         .sections
@@ -113,15 +113,15 @@ void main() {
         .firstWhere((tab) => tab.id == 'other')
         .sections
         .expand((section) => section.entries);
-    expect(mightOther.any((row) => row.displayName == 'Bull Horn Helmet'), isFalse);
-    expect(mightOther.any((row) => row.displayName == 'Wooden Sword'), isFalse);
-    expect(mightOther.any((row) => row.displayName == 'Leather Helmet'), isFalse);
+    expect(mightOther.any((row) => row.displayName == 'Bull horn helmet'), isFalse);
+    expect(mightOther.any((row) => row.displayName == 'Wooden sword'), isFalse);
+    expect(mightOther.any((row) => row.displayName == 'Leather helmet'), isFalse);
     expect(mightOther.any((row) => row.displayName == 'Leather equipment'), isFalse);
-    expect(mightOther.any((row) => row.displayName == 'Cedar Bow'), isTrue);
-    expect(mightOther.any((row) => row.displayName == 'Boar Spear'), isTrue);
-    expect(vitalityOther.any((row) => row.displayName == 'Bull Horn Helmet'), isTrue);
-    expect(vitalityOther.any((row) => row.displayName == 'Wooden Sword'), isFalse);
-    expect(vitalityOther.any((row) => row.displayName == 'Cedar Bow'), isFalse);
+    expect(mightOther.any((row) => row.displayName == 'Cedar bow'), isTrue);
+    expect(mightOther.any((row) => row.displayName == 'Boar spear'), isTrue);
+    expect(vitalityOther.any((row) => row.displayName == 'Bull horn helmet'), isTrue);
+    expect(vitalityOther.any((row) => row.displayName == 'Wooden sword'), isFalse);
+    expect(vitalityOther.any((row) => row.displayName == 'Cedar bow'), isFalse);
   });
 
   test('hunting tools include sling and bola', () {
@@ -130,7 +130,7 @@ void main() {
     final tools = hunting.tabs.firstWhere((tab) => tab.id == 'tools').sections.first.entries;
     expect(tools.any((row) => row.displayName == 'Sling' && row.level == 1), isTrue);
     expect(tools.any((row) => row.displayName == 'Bola' && row.level == 15), isTrue);
-    expect(tools.any((row) => row.displayName == 'Magic Bola' && row.level == 45), isTrue);
+    expect(tools.any((row) => row.displayName == 'Magic bola' && row.level == 45), isTrue);
     expect(tools.any((row) => row.displayName == 'Net'), isFalse);
     expect(tools.any((row) => row.displayName == 'Noose Wand'), isFalse);
     expect(tools.any((row) => row.displayName == 'Magic Net'), isFalse);
@@ -174,7 +174,7 @@ void main() {
       'Pick the armory supply chest',
       'Steal from the kitchen',
       'Steal from the Grand Bazaar',
-      'Steal from the Apothecary',
+      'Steal from the apothecary',
       'Steal from the mining merchant',
       "Steal from a noble's purse",
       "Steal from the Wizard's Shop",
@@ -200,10 +200,10 @@ void main() {
     final fishing = skillMenuView(db, fishingSkillId);
     expect(fishing.tabs.map((tab) => tab.label), ['Actions', 'Tools', 'Pot fishing']);
     final actions = fishing.tabs.firstWhere((tab) => tab.id == 'actions').sections.first.entries;
-    expect(actions.any((row) => row.displayName == 'Fight Mother Squid'), isFalse);
+    expect(actions.any((row) => row.displayName == 'Fight mother squid'), isFalse);
     expect(actions.any((row) => row.displayName == 'Catch perch'), isTrue);
     expect(
-      actionsForSkill(db, fishingSkillId).any((row) => row.displayName == 'Fight Mother Squid'),
+      actionsForSkill(db, fishingSkillId).any((row) => row.displayName == 'Fight mother squid'),
       isTrue,
     );
   });
@@ -211,16 +211,17 @@ void main() {
   test('fishing Tools tab lists the fishing pot', () {
     final fishing = skillMenuView(db, fishingSkillId);
     final tools = fishing.tabs.firstWhere((tab) => tab.id == 'tools').sections.first.entries;
-    expect(tools.any((row) => row.displayName == 'Fishing Pot' && row.level == 14), isTrue);
+    expect(tools.any((row) => row.displayName == 'Fishing pot' && row.level == 14), isTrue);
+    expect(tools.any((row) => row.displayName.toLowerCase().contains('fishing rod')), isTrue);
   });
 
   test('fishing Pot fishing tab lists pot catches', () {
     final fishing = skillMenuView(db, fishingSkillId);
     final pot = fishing.tabs.firstWhere((tab) => tab.id == 'pot_fishing').sections.first.entries;
-    expect(pot.any((row) => row.displayName == 'Fishing Pot'), isFalse);
-    expect(pot.any((row) => row.displayName == 'Raw Crawfish' && row.level == 14), isTrue);
-    expect(pot.any((row) => row.displayName == 'Raw Lobster' && row.level == 84), isTrue);
-    expect(pot.any((row) => row.displayName == 'Raw Perch'), isFalse);
+    expect(pot.any((row) => row.displayName == 'Fishing pot'), isFalse);
+    expect(pot.any((row) => row.displayName == 'Raw crawfish' && row.level == 14), isTrue);
+    expect(pot.any((row) => row.displayName == 'Raw lobster' && row.level == 84), isTrue);
+    expect(pot.any((row) => row.displayName == 'Raw perch'), isFalse);
   });
 
   test('arcana does not list Essence or Harness essence', () {
@@ -248,29 +249,29 @@ void main() {
     expect(mining.tabs.map((tab) => tab.label), ['Actions', 'Tools']);
     expect(
       mining.tabs.last.sections.first.entries.any(
-        (row) => row.displayName == 'Wooden Pickaxe' && row.level == 1,
+        (row) => row.displayName == 'Wooden pickaxe' && row.level == 1,
       ),
       isTrue,
     );
     final toolNames = mining.tabs.last.sections.first.entries
         .map((row) => row.displayName)
         .toList();
-    final woodenPick = toolNames.indexOf('Wooden Pickaxe');
-    final copperPick = toolNames.indexOf('Copper Pickaxe');
+    final woodenPick = toolNames.indexOf('Wooden pickaxe');
+    final copperPick = toolNames.indexOf('Copper pickaxe');
     if (copperPick >= 0) {
       expect(woodenPick, lessThan(copperPick));
     }
   });
 
-  test('artisanry puts Lucky Necklace on Jewelry', () {
+  test('artisanry puts Lucky necklace on Jewelry', () {
     final view = skillMenuView(db, artisanrySkillId);
     expect(view.tabs.map((tab) => tab.label), contains('Jewelry'));
     final jewelry = view.tabs.firstWhere((tab) => tab.id == 'jewelry').sections.first.entries;
-    expect(jewelry.any((row) => row.displayName == 'Lucky Necklace' && row.level == 25), isTrue);
+    expect(jewelry.any((row) => row.displayName == 'Lucky necklace' && row.level == 25), isTrue);
     final other = view.tabs.firstWhere((tab) => tab.id == 'other').sections.first.entries;
     expect(other.any((row) => row.displayName == 'Leather equipment' && row.level == 1), isTrue);
-    expect(other.any((row) => row.displayName == 'Leather Helmet'), isFalse);
-    expect(other.any((row) => row.displayName == 'Leather Gloves'), isFalse);
+    expect(other.any((row) => row.displayName == 'Leather helmet'), isFalse);
+    expect(other.any((row) => row.displayName == 'Leather gloves'), isFalse);
     final helmet = db.equipment.firstWhere((row) => row.raw['Item ID'] == 'ITEM-0308');
     expect(helmet.raw['HP Bonus'], 15);
     expect(helmet.raw['Damage Reduction'], 0);
@@ -279,8 +280,8 @@ void main() {
   test('cooking lists soup stock and soup, and the book keeps locked recipes', () {
     final launch = filterLaunchContent(db);
     final cooking = actionsForSkill(launch, 'SKL-0007');
-    expect(cooking.any((row) => row.displayName == 'Cooked Baby Giant Squid'), isFalse);
-    expect(cooking.any((row) => row.displayName == 'Soup Stock' && row.level == 16), isTrue);
+    expect(cooking.any((row) => row.displayName == 'Cooked baby giant squid'), isFalse);
+    expect(cooking.any((row) => row.displayName == 'Soup stock' && row.level == 16), isTrue);
     expect(cooking.any((row) => row.displayName == 'Squid noodle soup' && row.level == 66), isTrue);
 
     final view = skillMenuView(launch, 'SKL-0007');
@@ -293,39 +294,39 @@ void main() {
     expect(tab('other').any((row) => row.displayName == 'Cooked swordfish'), isFalse);
     expect(tab('other').any((row) => row.displayName == 'Cooked marlin'), isFalse);
     expect(tab('meat').any((row) => row.displayName == 'Cooked beef'), isTrue);
-    expect(tab('stew').any((row) => row.displayName == 'Crawfish Stew'), isTrue);
-    expect(tab('stew').any((row) => row.displayName == 'Soup Stock'), isTrue);
+    expect(tab('stew').any((row) => row.displayName == 'Crawfish stew'), isTrue);
+    expect(tab('stew').any((row) => row.displayName == 'Soup stock'), isTrue);
     expect(tab('other').any((row) => row.displayName.toLowerCase().contains('potato')), isTrue);
 
     final save = createNewSave(launch, 0);
     final book = recipeBookForSkill(save, launch, 'SKL-0007');
     expect(book, isNotEmpty);
     expect(book.any((entry) => entry.known), isTrue);
-    expect(book.any((entry) => entry.name == 'Squid Noodle Soup' && !entry.known), isTrue);
+    expect(book.any((entry) => entry.name == 'Squid noodle soup' && !entry.known), isTrue);
     expect(
       listRecipeBookEntries(
         save,
         launch,
-      ).any((entry) => entry.name == 'Squid Noodle Soup' && !entry.known),
+      ).any((entry) => entry.name == 'Squid noodle soup' && !entry.known),
       isTrue,
     );
     expect(
-      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Cooked Baby Giant Squid'),
+      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Cooked baby giant squid'),
       isFalse,
     );
     expect(
-      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Cooked Swordfish'),
+      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Cooked swordfish'),
       isFalse,
     );
     expect(
-      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Squid Noodle Soup'),
+      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Squid noodle soup'),
       isTrue,
     );
     expect(
       listRecipeBookEntries(
         save,
         launch,
-      ).any((entry) => entry.name == 'Leather Helmet' && entry.known),
+      ).any((entry) => entry.name == 'Leather helmet' && entry.known),
       isTrue,
     );
   });
@@ -334,8 +335,8 @@ void main() {
     final launch = filterLaunchContent(db);
     final save = createNewSave(launch, 0);
     final entries = listRecipeBookEntries(save, launch);
-    final gloves = entries.firstWhere((entry) => entry.name == "Falconer's Gloves");
-    expect(gloves.materials, contains('Great Stag Hide'));
+    final gloves = entries.firstWhere((entry) => entry.name == "Falconer's gloves");
+    expect(gloves.materials, contains('Great stag hide'));
     expect(gloves.materials, contains('Thread'));
     expect(gloves.materials, isNot(contains('Ancient Binding')));
     expect(gloves.materials, isNot(contains('ITEM-0290')));
@@ -348,14 +349,14 @@ void main() {
     expect(glovesItem.raw['Release Phase'], 'Launch');
     final marlin = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
     expect(marlin.raw['Status'], 'Planned');
-    expect(marlin.raw['Display Name'], 'Cooked Marlin');
+    expect(marlin.raw['Display Name'], 'Cooked marlin');
     expect(marlin.raw['Ingredient 3 Item ID'], isNull);
-    final soup = entries.firstWhere((entry) => entry.name == 'Squid Noodle Soup');
-    expect(soup.materials, contains('Soup Stock'));
+    final soup = entries.firstWhere((entry) => entry.name == 'Squid noodle soup');
+    expect(soup.materials, contains('Soup stock'));
     expect(soup.materials, isNot(contains('Starroot')));
   });
 
-  test("Falconer's Gloves are craftable at the Artisans workshop", () {
+  test("Falconer's gloves are craftable at the Artisans workshop", () {
     final launch = filterLaunchContent(db);
     final project = launch.projects.firstWhere((row) => row.projectId == 'PRJ-0049');
     expect(project.raw['Facility ID'], 'FAC-0003');
@@ -394,7 +395,7 @@ void main() {
 
     final result = completeSpecialProject(launch, save, 'PRJ-0049', 1, nowMs: 0);
     expect(result.ok, isTrue);
-    expect(result.outputLabel, "Falconer's Gloves");
+    expect(result.outputLabel, "Falconer's gloves");
     expect(inventoryCount(result.save!, 'ITEM-0167'), 1);
   });
 
@@ -404,7 +405,7 @@ void main() {
     expect(smithing.tabs.map((tab) => tab.label), contains('Basic metal'));
     final steel = smithing.tabs.first.sections.where((section) => section.title == 'Steel items');
     expect(steel, isNotEmpty);
-    expect(steel.first.entries.any((entry) => entry.name == 'Steel Sword'), isTrue);
+    expect(steel.first.entries.any((entry) => entry.name == 'Steel sword'), isTrue);
     expect(steel.first.entries.any((entry) => entry.name == 'Steel items'), isFalse);
 
     final artisanry = recipeBookView(save, db, artisanrySkillId);
@@ -417,14 +418,14 @@ void main() {
     expect(
       other.sections
           .expand((section) => section.entries)
-          .any((entry) => entry.name == 'Leather Helmet'),
+          .any((entry) => entry.name == 'Leather helmet'),
       isTrue,
     );
   });
 
   test('squid noodle soup heals 1,100', () {
     final item = db.items.firstWhere((row) => row.itemId == 'ITEM-0302');
-    expect(item.displayName, 'Squid Noodle Soup');
+    expect(item.displayName, 'Squid noodle soup');
     final equipment = db.equipment.firstWhere((row) => row.raw['Item ID'] == 'ITEM-0302');
     expect(equipment.raw['Healing Amount'], 1100);
     final marlinAction = db.actions.firstWhere((row) => row.actionId == 'ACN-0127');
@@ -432,7 +433,7 @@ void main() {
     expect(marlinAction.displayName, 'Cooked marlin');
     final marlinRecipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
     expect(marlinRecipe.raw['Status'], 'Planned');
-    expect(marlinRecipe.raw['Display Name'], 'Cooked Marlin');
+    expect(marlinRecipe.raw['Display Name'], 'Cooked marlin');
     final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0175');
     expect(action.proficiencyLevel, 66);
     expect(action.releasePhase, 'Launch');

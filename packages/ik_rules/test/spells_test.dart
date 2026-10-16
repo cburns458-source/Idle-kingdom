@@ -52,7 +52,7 @@ void main() {
     expect(activeSpellGatheringDurationMultiplier(db, save), basePathfinder);
   });
 
-  test('raises Strength Spell +10% damage to +12%', () {
+  test('raises Strength spell +10% damage to +12%', () {
     var save = createNewSave(db, 0);
     final cleared = unequipSlot(save, 'SLOT-0001');
     expect(cleared.ok, isTrue);

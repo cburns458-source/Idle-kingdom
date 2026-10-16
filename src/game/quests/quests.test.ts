@@ -93,7 +93,7 @@ describe('quest tours', () => {
     expect(completed.ok).toBe(true)
     if (!completed.ok) return
     expect(completed.rewards.some((reward) => reward.label === '10,000 Cooking XP')).toBe(true)
-    expect(completed.rewards.some((reward) => /Golden Spud/i.test(reward.label))).toBe(true)
+    expect(completed.rewards.some((reward) => /Golden spud/i.test(reward.label))).toBe(true)
   })
 
   it("reveals Rose's shopping list after she is heard", () => {

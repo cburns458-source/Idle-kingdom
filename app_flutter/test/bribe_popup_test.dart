@@ -17,7 +17,7 @@ const _purseId = 'ITEM-0299';
 const _guardId = 'NPC-0012';
 const _beggarId = 'NPC-0011';
 const _barracks = 'LOC-0017';
-const _purseName = 'Stolen Coin Purse';
+const _purseName = 'Stolen coin purse';
 
 void main() {
   late LoadedDatabase database;

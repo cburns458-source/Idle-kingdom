@@ -125,7 +125,7 @@ void main() {
       expect(controller.save.inventory.any((stack) => stack.itemId == _rabbitsFoot), isFalse);
       expect(controller.recentRewards, hasLength(1));
       expect(find.textContaining('Alchemy XP'), findsOne);
-      expect(find.textContaining("Chef's Hat"), findsOne);
+      expect(find.textContaining("Chef's hat"), findsOne);
       expect(find.text('Collect'), findsOne);
       expect(jsonEncode(controller.save.toJson()), isNot(contains('useFavourites')));
 
@@ -138,7 +138,7 @@ void main() {
 
     testWidgets('no_room names the slots the rewards need and commits nothing', (tester) async {
       // Qty 6 leaves each delivery pile in place, so turning in frees no slot.
-      // Chef's Hat then needs one new slot against a full bag.
+      // Chef's hat then needs one new slot against a full bag.
       final seed = fillBag(roseReady(deliverQty: 6), 0);
       final controller = await openTurnIn(tester, seed);
       final log = watchCommits(controller);
@@ -181,7 +181,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.textContaining(DialogueText.favouritesPrompt), findsOne);
         expect(
-          find.textContaining("Rabbit's Foot x5, Fernleaf x5, Wild berries x5, Weasel Tail x5"),
+          find.textContaining("Rabbit's foot x5, Fernleaf x5, Wild berries x5, Weasel tail x5"),
           findsOne,
         );
         expect(questCompleteArgs(log), isEmpty);
@@ -244,7 +244,7 @@ void main() {
     }
 
     testWidgets('a Turn in needing more than one bag slot shows N more items', (tester) async {
-      // Chef's Hat plus Golden Spud need two new slots. Qty 6 leaves each
+      // Chef's hat plus Golden spud need two new slots. Qty 6 leaves each
       // delivery pile in place, so turning in frees none.
       var seed = startedCharacter(twoRewardDb).copyWith(
         currentLocationId: _kitchen,

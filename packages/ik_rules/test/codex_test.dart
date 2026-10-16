@@ -31,15 +31,15 @@ void main() {
     expect(catalogIds.contains('ITEM-0320'), isFalse);
     expect(catalogIds.contains('ITEM-0383'), isFalse);
     expect(catalogIds.contains('ITEM-0192'), isFalse);
-    expect(codex.item('ITEM-0299')?.displayName, 'Stolen Coin Purse');
-    expect(codex.item('ITEM-0296')?.displayName, "Traveler's Tunic");
-    expect(codex.item('ITEM-0320')?.displayName, 'Chick Pet');
+    expect(codex.item('ITEM-0299')?.displayName, 'Stolen coin purse');
+    expect(codex.item('ITEM-0296')?.displayName, "Traveler's tunic");
+    expect(codex.item('ITEM-0320')?.displayName, 'Chick pet');
     expect(
       codex.enemies.map((row) => row.enemyId).toSet(),
       db.enemies.map((row) => row.enemyId).toSet(),
     );
     expect(codex.item('ITEM-0209'), isNull);
-    expect(codex.item('ITEM-0276')?.displayName, 'Ancient Alloy Sword');
+    expect(codex.item('ITEM-0276')?.displayName, 'Chromium sword');
     expect(codex.item('ITEM-0325'), isNull);
     expect(codex.item('ITEM-0346'), isNull);
     expect(codex.item('ITEM-0091'), isNull);
@@ -69,8 +69,8 @@ void main() {
     expect(mine.tables.map((table) => table.label), ['Primary', 'Gems']);
     final ore = mine.tables.firstWhere((table) => table.label == 'Primary');
     expect(ore.dropChance, 71.25);
-    expect(ore.drops.map((row) => row.displayName), contains('Copper Ore'));
-    expect(ore.drops.firstWhere((row) => row.displayName == 'Copper Ore').dropRatePercent, 100);
+    expect(ore.drops.map((row) => row.displayName), contains('Copper ore'));
+    expect(ore.drops.firstWhere((row) => row.displayName == 'Copper ore').dropRatePercent, 100);
     expect(ore.drops.map((row) => row.displayName), isNot(contains('Sapphire')));
     final gems = mine.tables.firstWhere((table) => table.label == 'Gems');
     expect(gems.dropChance, 0.5);
@@ -100,15 +100,15 @@ void main() {
     expect(primary.dropChance, 63.75);
     expect(
       primary.drops.map((row) => row.displayName),
-      containsAll(['Venison', 'Elk Hide', 'Elk Horns']),
+      containsAll(['Venison', 'Elk hide', 'Elk horns']),
     );
     expect(primary.drops.firstWhere((row) => row.displayName == 'Venison').dropRatePercent, 45);
-    expect(primary.drops.firstWhere((row) => row.displayName == 'Elk Hide').dropRatePercent, 50);
-    expect(primary.drops.firstWhere((row) => row.displayName == 'Elk Horns').dropRatePercent, 5);
-    expect(primary.drops.map((row) => row.displayName), isNot(contains('Animal Tendons')));
+    expect(primary.drops.firstWhere((row) => row.displayName == 'Elk hide').dropRatePercent, 50);
+    expect(primary.drops.firstWhere((row) => row.displayName == 'Elk horns').dropRatePercent, 5);
+    expect(primary.drops.map((row) => row.displayName), isNot(contains('Animal tendons')));
     final secondary = hunt.tables.last;
     expect(secondary.dropChance, 5);
-    expect(secondary.drops.map((row) => row.displayName), ['Animal Tendons']);
+    expect(secondary.drops.map((row) => row.displayName), ['Animal tendons']);
     expect(secondary.drops.single.dropRatePercent, 100);
   });
 
@@ -230,7 +230,7 @@ void main() {
     final pirate = codex.enemy('ENM-0005')!;
     expect(pirate.tables.map((table) => table.label), ['Primary', 'Secondary']);
     expect(pirate.tables.last.dropChance, 10);
-    expect(pirate.tables.last.drops.map((row) => row.displayName), ['Pirate Insignia']);
+    expect(pirate.tables.last.drops.map((row) => row.displayName), ['Pirate insignia']);
     expect(pirate.tables.last.drops.single.dropRatePercent, 100);
 
     final dragon = codex.enemy('ENM-0006')!;
@@ -274,8 +274,8 @@ void main() {
       codex.itemsMatching(query: 'cooked baby giant squid').map((row) => row.itemId),
       isNot(contains('ITEM-0192')),
     );
-    expect(codex.item('ITEM-0383')?.displayName, 'Willow Log');
-    expect(codex.item('ITEM-0192')?.displayName, 'Cooked Baby Giant Squid');
+    expect(codex.item('ITEM-0383')?.displayName, 'Willow log');
+    expect(codex.item('ITEM-0192')?.displayName, 'Cooked baby giant squid');
     expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0383').retired, isTrue);
     expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0192').retired, isTrue);
   });
@@ -357,7 +357,7 @@ void main() {
         reason: itemId,
       );
     }
-    expect(noteTitles('ITEM-0366'), ['Kitchen Scraps']);
+    expect(noteTitles('ITEM-0366'), ['Kitchen scraps']);
     expect(
       codex.item('ITEM-0366')!.obtainedFrom.every((row) => row.kind == CodexObtainKind.note),
       isTrue,

@@ -138,7 +138,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller, onOpenCodexItem: (_) {}));
-    await tester.longPress(find.byTooltip('Copper Hatchet'));
+    await tester.longPress(find.byTooltip('Copper hatchet'));
     await tester.pumpAndSettle();
 
     final popup = find.byKey(const Key('game-popup'));
@@ -170,13 +170,13 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.longPress(find.byTooltip('Copper Hatchet'));
+    await tester.longPress(find.byTooltip('Copper hatchet'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Equip'));
     await tester.pumpAndSettle();
     expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0110');
 
-    await tester.longPress(find.byTooltip('Copper Hatchet').first);
+    await tester.longPress(find.byTooltip('Copper hatchet').first);
     await tester.pumpAndSettle();
     expect(find.text('Compare'), findsOne);
     await tester.tap(find.text('Compare'));
@@ -184,7 +184,7 @@ void main() {
 
     expect(find.text('Equipped'), findsOne);
     expect(find.text('From bag'), findsOne);
-    expect(find.text('Wooden Sword'), findsWidgets);
+    expect(find.text('Wooden sword'), findsWidgets);
     expect(find.textContaining('Woodcutting success chance %: 3'), findsOne);
     expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0110');
   });
@@ -197,7 +197,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, InventoryView(controller: controller));
-    await tester.longPress(find.byTooltip('Copper Hatchet'));
+    await tester.longPress(find.byTooltip('Copper hatchet'));
     await tester.pumpAndSettle();
 
     expect(find.text('Woodcutting: +3% success chance'), findsOne);
@@ -206,7 +206,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.save.equipment.slots[weaponToolSlotId]?.itemId, 'ITEM-0110');
 
-    await tester.longPress(find.byTooltip('Copper Hatchet').first);
+    await tester.longPress(find.byTooltip('Copper hatchet').first);
     await tester.pumpAndSettle();
     expect(find.text('Woodcutting: +3% success chance'), findsOne);
     expect(find.text('Equip'), findsNothing);
@@ -216,7 +216,7 @@ void main() {
     expect(isFavoriteEquipped(controller.save.equipment.slots[weaponToolSlotId]), isTrue);
     expect(find.byIcon(Icons.favorite), findsOne);
 
-    await tester.longPress(find.byTooltip('Copper Hatchet').first);
+    await tester.longPress(find.byTooltip('Copper hatchet').first);
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.favorite), findsWidgets);
     await tester.tap(find.byTooltip('Unfavorite'));
@@ -418,7 +418,7 @@ void main() {
 
     expect(find.text('No active bonuses.'), findsNothing);
     expect(find.textContaining('High Elf'), findsOne);
-    expect(find.textContaining('Strength Potion (6)'), findsOne);
+    expect(find.textContaining('Strength potion (6)'), findsOne);
   });
 
   testWidgets('equipment page lists success chance on the tool skill', (tester) async {
@@ -472,8 +472,8 @@ void main() {
     expect(find.byType(TextField), findsNothing);
 
     expect(
-      visibleBagOrder(tester, ['Baked Potato', 'Copper Ore', 'Copper Bar', 'Iron Sword', 'Potato']),
-      ['Baked Potato', 'Copper Ore', 'Copper Bar', 'Iron Sword', 'Potato'],
+      visibleBagOrder(tester, ['Baked potato', 'Copper ore', 'Copper bar', 'Iron sword', 'Potato']),
+      ['Baked potato', 'Copper ore', 'Copper bar', 'Iron sword', 'Potato'],
     );
 
     await tester.tap(find.byTooltip('Sort'));
@@ -481,8 +481,8 @@ void main() {
     await tester.tap(find.widgetWithText(CheckedPopupMenuItem<InventorySortMode>, 'A–Z'));
     await tester.pumpAndSettle();
     expect(
-      visibleBagOrder(tester, ['Baked Potato', 'Copper Bar', 'Copper Ore', 'Iron Sword', 'Potato']),
-      ['Baked Potato', 'Copper Bar', 'Copper Ore', 'Iron Sword', 'Potato'],
+      visibleBagOrder(tester, ['Baked potato', 'Copper bar', 'Copper ore', 'Iron sword', 'Potato']),
+      ['Baked potato', 'Copper bar', 'Copper ore', 'Iron sword', 'Potato'],
     );
 
     await tester.tap(find.byTooltip('Sort'));
@@ -493,8 +493,8 @@ void main() {
 
     await tester.enterText(find.byType(TextField), 'copper');
     await tester.pump();
-    expect(find.byTooltip('Copper Ore'), findsOne);
-    expect(find.byTooltip('Copper Bar'), findsOne);
+    expect(find.byTooltip('Copper ore'), findsOne);
+    expect(find.byTooltip('Copper bar'), findsOne);
     expect(find.byTooltip('Potato'), findsNothing);
   });
 
@@ -517,7 +517,7 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller));
 
     // An enchanted tile names its enchantment on the tooltip's second line.
-    const clay = 'Clay\nMinor Strength Enchantment';
+    const clay = 'Clay\nMinor strength enchantment';
     expect(find.byTooltip('Unfavorite'), findsNothing);
     expect(find.byTooltip('Favorite'), findsNothing);
     final tile = tester.getRect(find.byTooltip(clay));
@@ -593,7 +593,7 @@ void main() {
     Future<void> tapBagHatchet() async {
       final hatchet = find.descendant(
         of: find.byKey(const Key('inventory-bag')),
-        matching: find.byTooltip('Copper Hatchet'),
+        matching: find.byTooltip('Copper hatchet'),
       );
       await tester.ensureVisible(hatchet);
       await tester.tap(hatchet);
@@ -646,7 +646,7 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller));
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');
 
-    await tester.tap(find.byTooltip('Copper Hatchet').first);
+    await tester.tap(find.byTooltip('Copper hatchet').first);
     await tester.pump();
     expect(controller.save.equipment.slots['SLOT-0001']?.itemId, 'ITEM-0110');
     expect(controller.save.equipmentPresets[0].slots['SLOT-0001']?.itemId, 'ITEM-0111');

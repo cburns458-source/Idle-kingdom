@@ -197,7 +197,7 @@ List<TannerHideOption> tannerHideOptions(GameDatabase db, PlayerSave save) {
       ),
     );
   }
-  options.sort((a, b) => a.displayName.compareTo(b.displayName));
+  options.sort((a, b) => jsLocaleCompare(a.displayName, b.displayName));
   return options;
 }
 

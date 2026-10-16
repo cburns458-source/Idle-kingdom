@@ -6,6 +6,10 @@ import { migrateSave } from './migrations'
 import { createNewSave } from './saveStore'
 import { removeRetiredItems, replaceFishingNetsWithNet } from './startingGear'
 import {
+  REMOVED_ANCIENT_BINDING_ACTION_ID,
+  REMOVED_ANCIENT_BINDING_ITEM_ID,
+  REMOVED_ANCIENT_BINDING_RECIPE_ID,
+  REMOVED_REGULAR_BOW_ITEM_ID,
   RETIRED_FISHING_NET_ITEM_ID,
   SAVE_VERSION,
   STARTING_HUNTING_TOOL_ID,
@@ -99,5 +103,99 @@ describe('retired item cleanup', () => {
     })
     expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.inventory).toEqual([])
+  })
+})
+
+describe('REN-01 Regular Bow and Ancient Binding removal', () => {
+  it('deletes Regular Bow and Ancient Binding from content', () => {
+    const { source, launch } = prepareDatabase(rawDatabase)
+    for (const db of [source, launch]) {
+      expect(db.Items.some((item) => item['Item ID'] === REMOVED_REGULAR_BOW_ITEM_ID)).toBe(false)
+      expect(db.Items.some((item) => item['Item ID'] === REMOVED_ANCIENT_BINDING_ITEM_ID)).toBe(false)
+      expect(db.Equipment.some((row) => row['Item ID'] === REMOVED_REGULAR_BOW_ITEM_ID)).toBe(false)
+      expect(db.Recipes.some((row) => row['Recipe ID'] === REMOVED_ANCIENT_BINDING_RECIPE_ID)).toBe(
+        false,
+      )
+      expect(db.Actions.some((row) => row['Action ID'] === REMOVED_ANCIENT_BINDING_ACTION_ID)).toBe(
+        false,
+      )
+    }
+  })
+
+  it('drops leftover copies from bag, bank, equipment, presets, mail, and queued crafts', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const base = createNewSave(launch)
+    const migrated = migrateSave({
+      ...base,
+      saveVersion: 65,
+      inventory: [
+        { itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 1 },
+        { itemId: 'ITEM-0003', quantity: 4 },
+        { itemId: REMOVED_ANCIENT_BINDING_ITEM_ID, quantity: 2 },
+      ],
+      bank: [{ itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 3 }],
+      equipment: {
+        slots: {
+          ...base.equipment.slots,
+          [WEAPON_TOOL_SLOT_ID]: { itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 1 },
+        },
+      },
+      equipmentPresets: base.equipmentPresets.map((preset, index) =>
+        index === 0
+          ? {
+              ...preset,
+              slots: {
+                ...preset.slots,
+                [WEAPON_TOOL_SLOT_ID]: { itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 1 },
+              },
+            }
+          : preset,
+      ),
+      mailbox: [
+        {
+          id: 'mail-ren01',
+          catalogId: null,
+          subject: 'A bow',
+          body: 'Keep this Regular Bow.',
+          sentAt: '2026-01-01T00:00:00.000Z',
+          readAt: null,
+          attachments: [{ itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 1 }],
+          claimedAt: null,
+        },
+      ],
+      productionRecipeId: REMOVED_ANCIENT_BINDING_RECIPE_ID,
+      productionQuantityTotal: 1,
+      productionQuantityRemaining: 1,
+      currentActionId: REMOVED_ANCIENT_BINDING_ACTION_ID,
+      currentActivityId: 'ACT-0001',
+      actionStartedAt: '2026-01-01T00:00:00.000Z',
+      actionDurationMs: 12000,
+      activityStartedAt: '2026-01-01T00:00:00.000Z',
+      heldActionByActivityId: { 'ACT-0001': REMOVED_ANCIENT_BINDING_ACTION_ID },
+      activityTransition: {
+        kind: 'starting',
+        activityId: 'ACT-0001',
+        followUpActivityId: null,
+        productionRecipeId: REMOVED_ANCIENT_BINDING_RECIPE_ID,
+        productionQuantity: 1,
+        startedAt: '2026-01-01T00:00:00.000Z',
+        durationMs: 1000,
+      },
+    })
+
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
+    expect(migrated.inventory).toEqual([{ itemId: 'ITEM-0003', quantity: 4 }])
+    expect(migrated.bank).toEqual([])
+    expect(migrated.equipment.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()
+    expect(migrated.equipmentPresets[0]?.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()
+    expect(migrated.mailbox[0]?.body).toBe('Keep this Regular Bow.')
+    expect(migrated.mailbox[0]?.attachments).toEqual([])
+    expect(migrated.productionRecipeId).toBeNull()
+    expect(migrated.productionQuantityTotal).toBeNull()
+    expect(migrated.productionQuantityRemaining).toBeNull()
+    expect(migrated.currentActionId).toBeNull()
+    expect(migrated.currentActivityId).toBeNull()
+    expect(migrated.activityTransition).toBeNull()
+    expect(migrated.heldActionByActivityId).toEqual({})
   })
 })

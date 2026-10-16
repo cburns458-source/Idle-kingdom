@@ -374,7 +374,7 @@ describe('locationTimers', () => {
     ).toBe(true)
   })
 
-  it('rolls Old Boots as a 1% pot-collect secondary and treats a bare day key as one use', () => {
+  it('rolls Old boots as a 1% pot-collect secondary and treats a bare day key as one use', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const dayStart = Date.parse('2026-03-01T12:00:00.000Z')
     const perch = launch.Actions.find((row) => row['Action ID'] === 'ACN-0099')!

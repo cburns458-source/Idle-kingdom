@@ -399,7 +399,7 @@ void main() {
     }
 
     expect(controller.craftPopup, isNotNull);
-    expect(controller.craftPopup!.displayName, 'Baked Potato');
+    expect(controller.craftPopup!.displayName, 'Baked potato');
     expect(find.byKey(ValueKey('craft-pop-${controller.craftPopup!.seq}')), findsOne);
 
     clock.advance(GameController.craftPopupHoldMs);

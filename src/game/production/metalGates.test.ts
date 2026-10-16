@@ -178,7 +178,7 @@ describe('tungsten and titanium gates', () => {
     )
     expect(forged.ok).toBe(true)
     if (!forged.ok) return
-    expect(forged.outputLabel).toBe('Tungsten Sword')
+    expect(forged.outputLabel).toBe('Tungsten sword')
     expect(inventoryCount(forged.save, TUNGSTEN_SWORD)).toBe(1)
   })
 
@@ -213,7 +213,7 @@ describe('tungsten and titanium gates', () => {
     )
     expect(forged.ok).toBe(true)
     if (!forged.ok) return
-    expect(forged.outputLabel).toBe('Titanium Sword')
+    expect(forged.outputLabel).toBe('Titanium sword')
     expect(inventoryCount(forged.save, 'ITEM-0250')).toBe(1)
   })
 

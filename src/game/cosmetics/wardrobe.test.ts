@@ -31,7 +31,7 @@ describe('wardrobe view', () => {
     const slot = wardrobeSlotView(launch, save, OUTFIT_COSMETIC_SLOT_ID)
     expect(slot?.equippedCosmeticId).toBe('COS-0001')
     expect(slot?.tiles).toEqual([
-      { cosmeticId: 'COS-0001', itemId: 'ITEM-0296', name: "Traveler's Tunic", equipped: true },
+      { cosmeticId: 'COS-0001', itemId: 'ITEM-0296', name: "Traveler's tunic", equipped: true },
     ])
   })
 
@@ -98,7 +98,7 @@ describe('cosmetic unlock notice', () => {
     expect(cosmeticUnlockNotice(launch, 'COS-0001', true)).toEqual({
       cosmeticId: 'COS-0001',
       itemId: 'ITEM-0296',
-      name: "Traveler's Tunic",
+      name: "Traveler's tunic",
       hint: 'Tap your portrait in the top-left corner anytime to open the Wardrobe and equip it.',
     })
     expect(cosmeticUnlockNotice(launch, 'COS-0001', false)?.hint).toBeNull()

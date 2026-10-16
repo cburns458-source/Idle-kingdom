@@ -55,22 +55,22 @@ describe('skill menu entries', () => {
       false,
     )
     expect(
-      smithing.tabs[0]?.sections[0]?.entries.some((item) => item.displayName === 'Steel Warhammer'),
+      smithing.tabs[0]?.sections[0]?.entries.some((item) => item.displayName === 'Steel warhammer'),
     ).toBe(false)
 
     const artisanry = skillMenuView(launch, 'SKL-0012')
     expect(
       artisanry.tabs
         .find((tab) => tab.id === 'jewelry')
-        ?.sections[0]?.entries.some((item) => item.displayName === 'Lucky Necklace'),
+        ?.sections[0]?.entries.some((item) => item.displayName === 'Lucky necklace'),
     ).toBe(true)
     const artisanryOther =
       artisanry.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
     expect(artisanryOther.some((item) => item.displayName === 'Leather equipment' && item.level === 1)).toBe(
       true,
     )
-    expect(artisanryOther.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
-    expect(artisanryOther.some((item) => item.displayName === 'Leather Gloves')).toBe(false)
+    expect(artisanryOther.some((item) => item.displayName === 'Leather helmet')).toBe(false)
+    expect(artisanryOther.some((item) => item.displayName === 'Leather gloves')).toBe(false)
   })
 
   it('groups same-tier combat armor as material equipment', () => {
@@ -89,17 +89,17 @@ describe('skill menu entries', () => {
     expect(gear.some((item) => item.displayName === 'Titanium equipment' && item.level === 70)).toBe(
       true,
     )
-    expect(gear.some((item) => item.displayName === 'Reinforced Steel equipment')).toBe(true)
+    expect(gear.some((item) => item.displayName === 'Reinforced steel equipment')).toBe(true)
     expect(gear.some((item) => item.displayName === 'Bull Horn equipment')).toBe(false)
     expect(gear.some((item) => item.displayName === 'Wooden equipment' && item.level === 1)).toBe(true)
     expect(gear.some((item) => item.displayName === 'Leather equipment' && item.level === 1)).toBe(true)
     expect(gear.findIndex((item) => item.displayName === 'Wooden equipment')).toBeLessThan(
       gear.findIndex((item) => item.displayName === 'Leather equipment'),
     )
-    expect(gear.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
-    expect(gear.some((item) => item.displayName === 'Tungsten Helmet')).toBe(false)
-    expect(gear.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
-    expect(gear.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Leather helmet')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten helmet')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten shield')).toBe(false)
+    expect(gear.some((item) => item.displayName === 'Tungsten sword')).toBe(false)
     expect(weapons.some((item) => item.displayName === 'Tungsten weapons' && item.level === 60)).toBe(
       true,
     )
@@ -112,20 +112,20 @@ describe('skill menu entries', () => {
       weapons.findIndex((item) => item.displayName === 'Copper weapons'),
     )
     expect(weapons.some((item) => item.displayName === 'Steel weapons')).toBe(true)
-    expect(weapons.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
-    expect(weapons.some((item) => item.displayName === 'Wooden Sword')).toBe(false)
-    expect(weapons.some((item) => item.displayName === 'Steel Warhammer')).toBe(false)
-    expect(weapons.some((item) => item.displayName === 'Cedar Bow')).toBe(false)
-    expect(weapons.some((item) => item.displayName === 'Tungsten Shield')).toBe(false)
-    expect(mightOther.some((item) => item.displayName === 'Bull Horn Helmet')).toBe(false)
-    expect(mightOther.some((item) => item.displayName === 'Wooden Sword')).toBe(false)
-    expect(mightOther.some((item) => item.displayName === 'Leather Helmet')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Tungsten sword')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Wooden sword')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Steel warhammer')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Cedar bow')).toBe(false)
+    expect(weapons.some((item) => item.displayName === 'Tungsten shield')).toBe(false)
+    expect(mightOther.some((item) => item.displayName === 'Bull horn helmet')).toBe(false)
+    expect(mightOther.some((item) => item.displayName === 'Wooden sword')).toBe(false)
+    expect(mightOther.some((item) => item.displayName === 'Leather helmet')).toBe(false)
     expect(mightOther.some((item) => item.displayName === 'Leather equipment')).toBe(false)
-    expect(mightOther.some((item) => item.displayName === 'Cedar Bow')).toBe(true)
-    expect(mightOther.some((item) => item.displayName === 'Boar Spear')).toBe(true)
-    expect(vitalityOther.some((item) => item.displayName === 'Bull Horn Helmet')).toBe(true)
-    expect(vitalityOther.some((item) => item.displayName === 'Wooden Sword')).toBe(false)
-    expect(vitalityOther.some((item) => item.displayName === 'Cedar Bow')).toBe(false)
+    expect(mightOther.some((item) => item.displayName === 'Cedar bow')).toBe(true)
+    expect(mightOther.some((item) => item.displayName === 'Boar spear')).toBe(true)
+    expect(vitalityOther.some((item) => item.displayName === 'Bull horn helmet')).toBe(true)
+    expect(vitalityOther.some((item) => item.displayName === 'Wooden sword')).toBe(false)
+    expect(vitalityOther.some((item) => item.displayName === 'Cedar bow')).toBe(false)
   })
 
   it('lists smithing projects by output item name and required level', () => {
@@ -134,7 +134,7 @@ describe('skill menu entries', () => {
     expect(items.length).toBeGreaterThan(0)
     expect(items.every((item) => !item.displayName.startsWith('PRJ-'))).toBe(true)
     expect(items.every((item) => !item.displayName.startsWith('ITEM-'))).toBe(true)
-    const copperAxe = items.find((item) => item.displayName === 'Copper Axe')
+    const copperAxe = items.find((item) => item.displayName === 'Copper axe')
     expect(copperAxe?.level).toBeTypeOf('number')
     expect(items[0]!.level!).toBeLessThanOrEqual(items[items.length - 1]!.level ?? Infinity)
   })
@@ -142,15 +142,15 @@ describe('skill menu entries', () => {
   it('lists arcana projects including enchantment and spell output names', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const items = skillMenuEntries(launch, 'SKL-0013')
-    expect(items.some((item) => item.displayName === 'Strength Spell')).toBe(true)
-    expect(items.some((item) => item.displayName === 'Gluttony Spell')).toBe(true)
-    expect(items.find((item) => item.displayName === 'Gluttony Spell')?.level).toBe(30)
-    expect(items.some((item) => item.displayName === 'Minor Gathering Enchantment')).toBe(false)
-    expect(items.some((item) => item.displayName === 'Ancient Weapon Enchantment')).toBe(false)
-    expect(items.some((item) => item.displayName === 'Minor Mining Enchantment')).toBe(true)
-    expect(items.find((item) => item.displayName === 'Minor Mining Enchantment')?.level).toBe(20)
-    expect(items.some((item) => item.displayName === 'Hoard Spell')).toBe(true)
-    expect(items.some((item) => item.displayName === 'Pathfinder Spell')).toBe(true)
+    expect(items.some((item) => item.displayName === 'Strength spell')).toBe(true)
+    expect(items.some((item) => item.displayName === 'Gluttony spell')).toBe(true)
+    expect(items.find((item) => item.displayName === 'Gluttony spell')?.level).toBe(30)
+    expect(items.some((item) => item.displayName === 'Minor gathering enchantment')).toBe(false)
+    expect(items.some((item) => item.displayName === 'Ancient weapon enchantment')).toBe(false)
+    expect(items.some((item) => item.displayName === 'Minor mining enchantment')).toBe(true)
+    expect(items.find((item) => item.displayName === 'Minor mining enchantment')?.level).toBe(20)
+    expect(items.some((item) => item.displayName === 'Hoard spell')).toBe(true)
+    expect(items.some((item) => item.displayName === 'Pathfinder spell')).toBe(true)
   })
 
   it('puts battle staves on an Arcana Weapons tab', () => {
@@ -169,20 +169,20 @@ describe('skill menu entries', () => {
     ).toBe(false)
     const weapons = arcana.tabs.find((tab) => tab.id === 'equipment')?.sections[0]?.entries ?? []
     expect(weapons.map((item) => item.displayName)).toEqual([
-      'Staff of Sparks',
-      'Magic Bola',
-      'Staff of Binding',
-      "Mage's Wand",
-      'Staff of Power',
+      'Staff of sparks',
+      'Magic bola',
+      'Staff of binding',
+      "Mage's wand",
+      'Staff of power',
     ])
-    expect(weapons.find((item) => item.displayName === 'Staff of Sparks')?.level).toBe(35)
-    expect(weapons.find((item) => item.displayName === 'Staff of Binding')?.level).toBe(45)
-    expect(weapons.find((item) => item.displayName === 'Staff of Power')?.level).toBe(65)
-    expect(weapons.find((item) => item.displayName === 'Magic Bola')?.level).toBe(40)
+    expect(weapons.find((item) => item.displayName === 'Staff of sparks')?.level).toBe(35)
+    expect(weapons.find((item) => item.displayName === 'Staff of binding')?.level).toBe(45)
+    expect(weapons.find((item) => item.displayName === 'Staff of power')?.level).toBe(65)
+    expect(weapons.find((item) => item.displayName === 'Magic bola')?.level).toBe(40)
     expect(
       arcana.tabs
         .find((tab) => tab.id === 'enchants')
-        ?.sections[0]?.entries.some((item) => item.displayName === 'Magic Bola'),
+        ?.sections[0]?.entries.some((item) => item.displayName === 'Magic bola'),
     ).toBe(false)
     expect(
       arcana.tabs
@@ -198,18 +198,18 @@ describe('skill menu entries', () => {
     const tools = fishing.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
     expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
     expect(tools.some((item) => item.displayName === 'Fishing Net')).toBe(false)
-    expect(tools.some((item) => item.displayName.includes('Fishing Rod'))).toBe(true)
-    expect(tools.some((item) => item.displayName === 'Fishing Pot' && item.level === 14)).toBe(true)
+    expect(tools.some((item) => /fishing rod/i.test(item.displayName))).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Fishing pot' && item.level === 14)).toBe(true)
   })
 
   it('lists pot fishing catches on the fishing Pot fishing tab', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const fishing = skillMenuView(launch, 'SKL-0003')
     const pot = fishing.tabs.find((tab) => tab.id === 'pot_fishing')?.sections[0]?.entries ?? []
-    expect(pot.some((item) => item.displayName === 'Fishing Pot')).toBe(false)
-    expect(pot.some((item) => item.displayName === 'Raw Crawfish' && item.level === 14)).toBe(true)
-    expect(pot.some((item) => item.displayName === 'Raw Lobster' && item.level === 84)).toBe(true)
-    expect(pot.some((item) => item.displayName === 'Raw Perch')).toBe(false)
+    expect(pot.some((item) => item.displayName === 'Fishing pot')).toBe(false)
+    expect(pot.some((item) => item.displayName === 'Raw crawfish' && item.level === 14)).toBe(true)
+    expect(pot.some((item) => item.displayName === 'Raw lobster' && item.level === 84)).toBe(true)
+    expect(pot.some((item) => item.displayName === 'Raw perch')).toBe(false)
   })
 
   it('lists sling, bola, and magic bola on the hunting Tools tab', () => {
@@ -219,7 +219,7 @@ describe('skill menu entries', () => {
     const tools = hunting.tabs.find((tab) => tab.id === 'tools')?.sections[0]?.entries ?? []
     expect(tools.some((item) => item.displayName === 'Sling' && item.level === 1)).toBe(true)
     expect(tools.some((item) => item.displayName === 'Bola' && item.level === 15)).toBe(true)
-    expect(tools.some((item) => item.displayName === 'Magic Bola' && item.level === 45)).toBe(true)
+    expect(tools.some((item) => item.displayName === 'Magic bola' && item.level === 45)).toBe(true)
     expect(tools.some((item) => item.displayName === 'Noose Wand')).toBe(false)
     expect(tools.some((item) => item.displayName === 'Net')).toBe(false)
   })
@@ -256,7 +256,7 @@ describe('skill menu entries', () => {
       'Pick the armory supply chest',
       'Steal from the kitchen',
       'Steal from the Grand Bazaar',
-      'Steal from the Apothecary',
+      'Steal from the apothecary',
       'Steal from the mining merchant',
       "Steal from a noble's purse",
       "Steal from the Wizard's Shop",
@@ -282,9 +282,9 @@ describe('skill menu entries', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const fishing = skillMenuView(launch, 'SKL-0003')
     const actions = fishing.tabs.find((tab) => tab.id === 'actions')?.sections[0]?.entries ?? []
-    expect(actions.some((item) => item.displayName === 'Fight Mother Squid')).toBe(false)
+    expect(actions.some((item) => item.displayName === 'Fight mother squid')).toBe(false)
     expect(actions.some((item) => item.displayName === 'Catch perch')).toBe(true)
-    expect(actionsForSkill(launch, 'SKL-0003').some((item) => item.displayName === 'Fight Mother Squid')).toBe(
+    expect(actionsForSkill(launch, 'SKL-0003').some((item) => item.displayName === 'Fight mother squid')).toBe(
       true,
     )
   })
@@ -303,13 +303,13 @@ describe('skill menu entries', () => {
     expect(other.some((item) => item.displayName === 'Cooked swordfish')).toBe(false)
     expect(other.some((item) => item.displayName === 'Cooked marlin')).toBe(false)
     expect(meat.some((item) => item.displayName === 'Cooked beef')).toBe(true)
-    expect(stew.some((item) => item.displayName === 'Crawfish Stew')).toBe(true)
-    expect(stew.some((item) => item.displayName === 'Soup Stock')).toBe(true)
+    expect(stew.some((item) => item.displayName === 'Crawfish stew')).toBe(true)
+    expect(stew.some((item) => item.displayName === 'Soup stock')).toBe(true)
     expect(other.some((item) => item.displayName.toLowerCase().includes('potato'))).toBe(true)
-    expect(actionsForSkill(launch, 'SKL-0007').some((item) => item.displayName === 'Cooked Baby Giant Squid')).toBe(
+    expect(actionsForSkill(launch, 'SKL-0007').some((item) => item.displayName === 'Cooked baby giant squid')).toBe(
       false,
     )
-    expect(actionsForSkill(launch, 'SKL-0003').find((item) => item.displayName === 'Catch Baby Giant Squid')?.level).toBe(
+    expect(actionsForSkill(launch, 'SKL-0003').find((item) => item.displayName === 'Catch baby giant squid')?.level).toBe(
       63,
     )
   })
@@ -326,9 +326,9 @@ describe('skill menu entries', () => {
     const ingredients =
       alchemy.tabs.find((tab) => tab.id === 'ingredients')?.sections[0]?.entries ?? []
     expect(ingredients.map((item) => item.displayName).sort()).toEqual([
-      'Catfish Oil',
-      'Eel Tail',
-      'Salmon Roe',
+      'Catfish oil',
+      'Eel tail',
+      'Salmon roe',
     ])
     const crafting = skillMenuView(launch, 'SKL-0009')
     const actions = crafting.tabs.find((tab) => tab.id === 'actions')?.sections[0]?.entries ?? []
@@ -348,7 +348,7 @@ describe('skill menu entries', () => {
     expect(smithing.some((item) => item.displayName === 'Titanium items' && item.level === 70)).toBe(
       true,
     )
-    expect(smithing.some((item) => item.displayName === 'Tungsten Sword')).toBe(false)
+    expect(smithing.some((item) => item.displayName === 'Tungsten sword')).toBe(false)
     expect(projectsForSkill(launch, 'SKL-0011').length).toBeGreaterThan(smithing.length)
   })
 })

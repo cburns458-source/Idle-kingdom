@@ -60,13 +60,13 @@ void main() {
 
     await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Copper Axe → Copper Axe').last);
+    await tester.tap(find.textContaining('Copper axe → Copper axe').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Complete project'));
     await tester.pumpAndSettle();
 
     expect(inventoryCount(controller.save, copperAxeItem), 1);
-    expect(find.text('Copper Axe'), findsWidgets);
+    expect(find.text('Copper axe'), findsWidgets);
     expect(find.textContaining('XP'), findsWidgets);
     expect(controller.recentRewards, isNotEmpty);
     expect(controller.recentRewards.first.xpRewards, isNotEmpty);
@@ -74,7 +74,7 @@ void main() {
 
     await tester.tap(find.text('Collect'));
     await tester.pumpAndSettle();
-    expect(controller.message, contains('Completed Copper Axe'));
+    expect(controller.message, contains('Completed Copper axe'));
   });
 
   testWidgets('makes several at once, up to what the materials allow', (tester) async {
@@ -92,7 +92,7 @@ void main() {
     );
     await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Copper Axe → Copper Axe').last);
+    await tester.tap(find.textContaining('Copper axe → Copper axe').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Max'));
     await tester.pump();
@@ -114,7 +114,7 @@ void main() {
     expect(find.byType(GameDropdown<String>), findsOne);
     await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Copper Axe → Copper Axe'), findsWidgets);
+    expect(find.textContaining('Copper axe → Copper axe'), findsWidgets);
   });
 
   testWidgets('the recipe book lists locked projects the dropdown hides', (tester) async {
@@ -183,7 +183,7 @@ void main() {
     );
     await tester.tap(find.byType(GameDropdown<String>).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Minor Strength Enchantment').last);
+    await tester.tap(find.textContaining('Minor strength enchantment').last);
     await tester.pumpAndSettle();
     expect(find.text('Item to enchant'), findsOne);
 

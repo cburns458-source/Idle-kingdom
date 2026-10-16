@@ -185,7 +185,7 @@ describe('The Grand Feast cook step', () => {
     expectPaid(finishAtTheKing(save))
   })
 
-  it('skips cooking and still completes at QSTP-0002 with 10,000 Cooking XP and the Golden Spud', () => {
+  it('skips cooking and still completes at QSTP-0002 with 10,000 Cooking XP and the Golden spud', () => {
     let save = accept()
     // After the briefing the hand-in is already current; the Cook step is skipped.
     expect(stepOf(save)).toBe(HAND_IN)

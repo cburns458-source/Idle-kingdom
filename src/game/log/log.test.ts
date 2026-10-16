@@ -214,7 +214,7 @@ describe('quest log', () => {
       state: 'header',
     })
     expect(row.steps.some((step) => step.label === '10,000 Cooking XP')).toBe(true)
-    expect(row.steps.some((step) => /Golden Spud/i.test(step.label))).toBe(true)
+    expect(row.steps.some((step) => /Golden spud/i.test(step.label))).toBe(true)
     expect(row.steps.filter((step) => step.state !== 'header').every((step) => step.state === 'done')).toBe(
       true,
     )

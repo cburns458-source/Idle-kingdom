@@ -18,7 +18,7 @@ const rawDatabase = JSON.parse(
 )
 
 describe('relative drop chance stacking', () => {
-  it('applies Lucky Necklace +15% relative drop chance while equipped', () => {
+  it('applies Lucky necklace +15% relative drop chance while equipped', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     expect(equippedRelativeDropChanceBonusPercent(launch, save)).toBe(0)
@@ -37,7 +37,7 @@ describe('relative drop chance stacking', () => {
     expect(applyRelativeDropChance(20, 15)).toBe(23)
   })
 
-  it('adds Lucky Necklace and luck potion bonuses together', () => {
+  it('adds Lucky necklace and luck potion bonuses together', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = createNewSave(launch)
     const potion: ActivePotionEffect = {

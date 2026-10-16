@@ -80,7 +80,7 @@ void main() {
       ItemDetailSheet(controller: controller, itemId: 'ITEM-0439', quantity: 1),
     );
 
-    expect(find.text('Fernleaf Tonic (6)'), findsOneWidget);
+    expect(find.text('Fernleaf tonic (6)'), findsOneWidget);
     expect(find.text('Heals 5%, 6 uses'), findsOneWidget);
   });
 
@@ -97,7 +97,7 @@ void main() {
       ItemDetailSheet(controller: controller, itemId: 'ITEM-0441', quantity: 1),
     );
 
-    expect(find.text('Augur Draught (6)'), findsOneWidget);
+    expect(find.text('Augur draught (6)'), findsOneWidget);
     expect(find.text('+10–30 damage, 6 uses'), findsOneWidget);
   });
 }

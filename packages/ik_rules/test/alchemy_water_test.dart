@@ -50,7 +50,7 @@ void main() {
     for (final loc in <String>['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049']) {
       final save = base.copyWith(currentLocationId: loc);
       expect(ingredientOwned(db, save, waterItemId), double.infinity, reason: loc);
-      // Kitchen Scraps uses the same location list, so it is free here too.
+      // Kitchen scraps uses the same location list, so it is free here too.
       expect(ingredientOwned(db, save, kitchenScrapsItemId), double.infinity, reason: loc);
     }
     final away = base.copyWith(currentLocationId: 'LOC-0001');
@@ -94,7 +94,7 @@ void main() {
   );
 
   test(
-    'does not treat Kitchen Scraps as free at the apothecary, and max brew counts stay herb-gated',
+    'does not treat Kitchen scraps as free at the apothecary, and max brew counts stay herb-gated',
     () {
       final base = createNewSave(db, 0).copyWith(currentLocationId: 'LOC-0026');
       expect(ingredientOwned(db, base, kitchenScrapsItemId), 0);

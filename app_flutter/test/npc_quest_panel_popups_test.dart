@@ -176,7 +176,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining(prompt), findsOne);
-      expect(find.textContaining('Baked Potato x4, Cooked Perch x2'), findsOne);
+      expect(find.textContaining('Baked potato x4, Cooked perch x2'), findsOne);
       expect(jsonEncode(controller.save.toJson()), before);
       expectNoBank(tester);
 
@@ -267,7 +267,7 @@ void main() {
       await tester.tap(find.text('Turn in'));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Baked Potato x4, Cooked Perch x2, Potato x7'), findsOne);
+      expect(find.textContaining('Baked potato x4, Cooked perch x2, Potato x7'), findsOne);
     });
 
     testWidgets('favourited items never grey out Turn in; No leaves the bag alone', (tester) async {
@@ -284,7 +284,7 @@ void main() {
 
       expect(find.textContaining(prompt), findsOne);
       expect(
-        find.textContaining("Rabbit's Foot x5, Fernleaf x5, Wild berries x5, Weasel Tail x5"),
+        find.textContaining("Rabbit's foot x5, Fernleaf x5, Wild berries x5, Weasel tail x5"),
         findsOne,
       );
       expectNoBank(tester);

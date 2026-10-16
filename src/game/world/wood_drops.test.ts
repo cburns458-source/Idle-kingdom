@@ -23,7 +23,7 @@ describe('woodcutting byproduct drops', () => {
   it('drops only named byproducts for willow and elder yew', () => {
     expect(primaryItem('ACN-0200')).toBe('ITEM-0386')
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0386')?.['Display Name']).toBe(
-      'Willow Branches',
+      'Willow branches',
     )
     expect(action('ACN-0200')['Drop Chance']).toBe(30)
     expect(action('ACN-0200')['Secondary Reward Table ID']).toBe('RWT-0182')
@@ -38,7 +38,7 @@ describe('woodcutting byproduct drops', () => {
 
     expect(primaryItem('ACN-0051')).toBe('ITEM-0219')
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0219')?.['Display Name']).toBe(
-      'Yew Branches',
+      'Yew branches',
     )
     expect(action('ACN-0051')['Drop Chance']).toBe(25)
     expect(action('ACN-0051')['Secondary Drop Chance']).toBe(0.1)
@@ -61,7 +61,7 @@ describe('woodcutting byproduct drops', () => {
     const bow = source.Projects.find((row) => row['Project ID'] === 'PRJ-0131')!
     expect(bow['Input 1 Item ID']).toBe('ITEM-0219')
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0219')?.['Display Name']).toBe(
-      'Yew Branches',
+      'Yew branches',
     )
   })
 })

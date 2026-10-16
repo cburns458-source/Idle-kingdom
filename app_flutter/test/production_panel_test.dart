@@ -36,7 +36,7 @@ void main() {
 
     await pumpPanel(tester, ProductionPicker(controller: controller, activity: kitchen()));
 
-    expect(find.textContaining('Baked Potato'), findsWidgets);
+    expect(find.textContaining('Baked potato'), findsWidgets);
     expect(find.byTooltip('Potato'), findsOne);
     // Ten potatoes in the bag, so ten crafts of one potato each.
     expect(find.textContaining('materials 10'), findsOne);
@@ -88,11 +88,11 @@ void main() {
 
     await pumpPanel(tester, ProductionPicker(controller: controller, activity: kitchen()));
 
-    expect(find.textContaining('Soup Stock'), findsWidgets);
+    expect(find.textContaining('Soup stock'), findsWidgets);
     expect(find.textContaining('materials ∞'), findsOne);
     expect(find.text('∞/1'), findsNWidgets(2));
     expect(find.byTooltip('Water'), findsOne);
-    expect(find.byTooltip('Kitchen Scraps'), findsOne);
+    expect(find.byTooltip('Kitchen scraps'), findsOne);
 
     await tester.tap(find.widgetWithText(GameButton, 'Max'));
     await tester.pump();
@@ -124,7 +124,7 @@ void main() {
     // Picking another recipe starts over at one, since its materials differ.
     await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Cooked Perch').last);
+    await tester.tap(find.textContaining('Cooked perch').last);
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(GameButton, '1'), findsOne);

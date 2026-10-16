@@ -301,7 +301,7 @@ void main() {
     expect(find.text('Hear what the King needs'), findsOne);
     expect(find.text('Rewards'), findsOne);
     expect(find.text('10,000 Cooking XP'), findsOne);
-    expect(find.textContaining('Golden Spud'), findsOne);
+    expect(find.textContaining('Golden spud'), findsOne);
   });
 
   testWidgets('the Log no longer carries a recipe book page', (tester) async {

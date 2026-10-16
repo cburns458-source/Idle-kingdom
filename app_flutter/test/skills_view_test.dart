@@ -189,8 +189,8 @@ void main() {
     );
     expect(find.textContaining('70. Titanium items'), findsOne);
     expect(find.textContaining('60. Tungsten items'), findsOne);
-    expect(find.textContaining('Tungsten Sword'), findsNothing);
-    expect(find.textContaining('Titanium Sword'), findsNothing);
+    expect(find.textContaining('Tungsten sword'), findsNothing);
+    expect(find.textContaining('Titanium sword'), findsNothing);
   });
 
   testWidgets('combat lists armor tiers as equipment instead of every piece', (tester) async {
@@ -221,26 +221,26 @@ void main() {
       ),
     );
     expect(find.textContaining('70. Titanium weapons'), findsOne);
-    expect(find.textContaining('Tungsten Sword'), findsNothing);
-    expect(find.textContaining('Tungsten Shield'), findsNothing);
+    expect(find.textContaining('Tungsten sword'), findsNothing);
+    expect(find.textContaining('Tungsten shield'), findsNothing);
     expect(find.textContaining('Wooden weapons'), findsOne);
     expect(find.textContaining('Copper weapons'), findsOne);
 
     await tester.tap(find.descendant(of: popup, matching: find.text('Other')));
     await tester.pump();
-    expect(find.textContaining('Leather Helmet'), findsNothing);
-    expect(find.textContaining('Wooden Sword'), findsNothing);
-    expect(find.textContaining('Bull Horn Helmet'), findsNothing);
+    expect(find.textContaining('Leather helmet'), findsNothing);
+    expect(find.textContaining('Wooden sword'), findsNothing);
+    expect(find.textContaining('Bull horn helmet'), findsNothing);
     await tester.scrollUntilVisible(
-      find.textContaining('Cedar Bow'),
+      find.textContaining('Cedar bow'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.textContaining('Cedar Bow'), findsOne);
-    expect(find.textContaining('Boar Spear'), findsOne);
+    expect(find.textContaining('Cedar bow'), findsOne);
+    expect(find.textContaining('Boar spear'), findsOne);
   });
 
   testWidgets('Vitality lists armor tiers as equipment instead of every piece', (tester) async {
@@ -275,23 +275,23 @@ void main() {
       ),
     );
     expect(find.textContaining('70. Titanium equipment'), findsOne);
-    expect(find.textContaining('Tungsten Helmet'), findsNothing);
-    expect(find.textContaining('Tungsten Shield'), findsNothing);
-    expect(find.textContaining('Tungsten Sword'), findsNothing);
+    expect(find.textContaining('Tungsten helmet'), findsNothing);
+    expect(find.textContaining('Tungsten shield'), findsNothing);
+    expect(find.textContaining('Tungsten sword'), findsNothing);
 
     await tester.tap(find.descendant(of: vitality, matching: find.text('Other')));
     await tester.pump();
     await tester.scrollUntilVisible(
-      find.textContaining('Bull Horn Helmet'),
+      find.textContaining('Bull horn helmet'),
       200,
       scrollable: find.descendant(
         of: find.byKey(const Key('game-popup')),
         matching: find.byType(Scrollable),
       ),
     );
-    expect(find.textContaining('Bull Horn Helmet'), findsOne);
-    expect(find.textContaining('Wooden Sword'), findsNothing);
-    expect(find.textContaining('Cedar Bow'), findsNothing);
+    expect(find.textContaining('Bull horn helmet'), findsOne);
+    expect(find.textContaining('Wooden sword'), findsNothing);
+    expect(find.textContaining('Cedar bow'), findsNothing);
   });
 
   testWidgets('artisanry lists leather equipment on Other', (tester) async {
@@ -313,8 +313,8 @@ void main() {
       ),
     );
     expect(find.textContaining('Leather equipment'), findsOne);
-    expect(find.textContaining('Leather Helmet'), findsNothing);
-    expect(find.textContaining('Leather Gloves'), findsNothing);
+    expect(find.textContaining('Leather helmet'), findsNothing);
+    expect(find.textContaining('Leather gloves'), findsNothing);
   });
 
   testWidgets('a skill tooltip reads total xp and what the next level needs', (tester) async {
