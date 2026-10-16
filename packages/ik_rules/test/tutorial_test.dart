@@ -653,33 +653,145 @@ void main() {
     );
   });
 
-  test('equip step accepts Human starting sword and shield from inventory', () {
-    var save = combatStepSave();
-    final sword = equipItemFromInventory(db, save, tutorialStarterSwordId);
-    expect(sword.ok, isTrue, reason: sword.reason);
-    save = sword.save!;
-    final shield = equipItemFromInventory(db, save, tutorialStarterShieldId);
-    expect(shield.ok, isTrue, reason: shield.reason);
-    save = shield.save!;
-    expect(isTutorialSwordEquipped(save), isTrue);
-    expect(isTutorialShieldEquipped(save), isTrue);
-    expect(tutorialHudHint(db, save)?.spotlight, TutorialSpotlightId.pasture);
-  });
-
-  test('equip step accepts Goblin starting wooden dagger from inventory', () {
+  test('equip step accepts Goblin starting wooden dagger alone', () {
     var save = combatStepSave('RACE-0005');
     expect(stackQty(save, tutorialStarterDaggerId), 1);
     expect(stackQty(save, tutorialStarterShieldId), 0);
-    final sword = equipItemFromInventory(db, save, tutorialStarterSwordId);
-    expect(sword.ok, isTrue, reason: sword.reason);
-    save = sword.save!;
-    expect(isTutorialSwordEquipped(save), isTrue);
+    expect(stackQty(save, tutorialStarterSwordId), 1);
+
     final dagger = equipItemFromInventory(db, save, tutorialStarterDaggerId);
     expect(dagger.ok, isTrue, reason: dagger.reason);
     save = dagger.save!;
     expect(save.equipment.slots[tutorialOffhandSlotId]?.itemId, tutorialStarterDaggerId);
     expect(isTutorialShieldEquipped(save), isTrue);
+    expect(tutorialHudHint(db, save)?.label, isNot('Equip your shield'));
+
+    final sword = equipItemFromInventory(db, save, tutorialStarterSwordId);
+    expect(sword.ok, isTrue, reason: sword.reason);
+    save = sword.save!;
+    expect(isTutorialSwordEquipped(save), isTrue);
+    expect(save.equipment.slots[tutorialOffhandSlotId]?.itemId, tutorialStarterDaggerId);
+    expect(stackQty(save, tutorialStarterShieldId), 0);
+    expect(tutorialHudHint(db, save)?.label, 'Fight a cow in the pasture');
     expect(tutorialHudHint(db, save)?.spotlight, TutorialSpotlightId.pasture);
+  });
+
+  test('equip step still requires sword and shield for other races', () {
+    for (final raceId in <String>['RACE-0001', 'RACE-0004', 'RACE-0006']) {
+      var save = combatStepSave(raceId);
+      expect(stackQty(save, tutorialStarterSwordId), 1, reason: raceId);
+      expect(stackQty(save, tutorialStarterShieldId), 1, reason: raceId);
+      expect(stackQty(save, tutorialStarterDaggerId), 0, reason: raceId);
+
+      final sword = equipItemFromInventory(db, save, tutorialStarterSwordId);
+      expect(sword.ok, isTrue, reason: '$raceId ${sword.reason}');
+      save = sword.save!;
+      expect(isTutorialSwordEquipped(save), isTrue, reason: raceId);
+      expect(tutorialHudHint(db, save)?.label, 'Equip your shield', reason: raceId);
+      expect(
+        tutorialHudHint(db, save)?.spotlight,
+        isNot(TutorialSpotlightId.pasture),
+        reason: raceId,
+      );
+
+      final shield = equipItemFromInventory(db, save, tutorialStarterShieldId);
+      expect(shield.ok, isTrue, reason: '$raceId ${shield.reason}');
+      save = shield.save!;
+      expect(isTutorialShieldEquipped(save), isTrue, reason: raceId);
+      expect(tutorialHudHint(db, save)?.label, 'Fight a cow in the pasture', reason: raceId);
+      expect(tutorialHudHint(db, save)?.spotlight, TutorialSpotlightId.pasture, reason: raceId);
+    }
+  });
+
+  test(
+    'locked-back non-goblin who owns a wooden dagger still completes equip with sword and shield',
+    () {
+      var save = applyTutorialLockback(withItem(combatStepSave(), tutorialStarterDaggerId, 1));
+      expect(save.dialogueFlags, contains(tutorialLockbackFlag));
+      expect(save.raceId, 'RACE-0001');
+      expect(stackQty(save, tutorialStarterDaggerId), 1);
+      expect(stackQty(save, tutorialStarterShieldId), 1);
+
+      final sword = equipItemFromInventory(db, save, tutorialStarterSwordId);
+      expect(sword.ok, isTrue, reason: sword.reason);
+      save = sword.save!;
+      expect(tutorialHudHint(db, save)?.label, 'Equip your shield');
+
+      final shield = equipItemFromInventory(db, save, tutorialStarterShieldId);
+      expect(shield.ok, isTrue, reason: shield.reason);
+      save = shield.save!;
+      expect(save.equipment.slots[tutorialOffhandSlotId]?.itemId, tutorialStarterShieldId);
+      expect(isTutorialSwordEquipped(save), isTrue);
+      expect(isTutorialShieldEquipped(save), isTrue);
+      expect(tutorialHudHint(db, save)?.label, 'Fight a cow in the pasture');
+    },
+  );
+
+  test('Fennel picks the dagger line when ITEM-0125 is in the bag, else sword and shield', () {
+    const sword =
+        "That cow's been trouble all week. Put on your sword and shield before you go near her.";
+    const dagger = "That cow's been trouble all week. Grab your dagger before you go near her.";
+
+    final humanCombat = combatStepSave();
+    expect(dialoguesForNpc(db, humanCombat, tutorialNpcId), contains('DLG-0016'));
+    expect(startDialogue(db, humanCombat, 'DLG-0016').view?.nodeId, 'DNODE-0027');
+    expect(startDialogue(db, humanCombat, 'DLG-0016').view?.line, sword);
+    expect(startDialogue(db, humanCombat, 'DLG-0020').ok, isFalse);
+
+    final goblinCombat = combatStepSave('RACE-0005');
+    expect(stackQty(goblinCombat, tutorialStarterDaggerId), 1);
+    expect(dialoguesForNpc(db, goblinCombat, tutorialNpcId), contains('DLG-0020'));
+    expect(startDialogue(db, goblinCombat, 'DLG-0020').view?.nodeId, 'DNODE-0032');
+    expect(startDialogue(db, goblinCombat, 'DLG-0020').view?.line, dagger);
+    expect(startDialogue(db, goblinCombat, 'DLG-0016').ok, isFalse);
+
+    var cooked = withLatchedSteps(activeTutorial(), [
+      tutorialGatherStepId,
+      tutorialShowPotatoesStepId,
+      tutorialCookStepId,
+    ]);
+    cooked = withItem(cooked, tutorialBakedPotatoItemId, 5);
+    final shown = chooseDialogue(db, cooked, 'DLG-0005', 'DNODE-0007', 'DCH-0009');
+    expect(shown.ok, isTrue, reason: shown.reason);
+    expect(shown.view?.nodeId, 'DNODE-0008');
+    expect(shown.view?.line, sword);
+
+    final shownDagger = chooseDialogue(
+      db,
+      withItem(cooked, tutorialStarterDaggerId, 1),
+      'DLG-0005',
+      'DNODE-0007',
+      'DCH-0041',
+    );
+    expect(shownDagger.ok, isTrue, reason: shownDagger.reason);
+    expect(shownDagger.view?.nodeId, 'DNODE-0031');
+    expect(shownDagger.view?.line, dagger);
+  });
+
+  test('cow win line DNODE-0026 leads to farewell', () {
+    final killed = applyTutorialCowKill(db, combatStepSave(), tutorialCowEnemyId);
+    expect(killed.completed, isTrue);
+    expect(killed.save.dialogueFlags, contains(tutorialFarewellFlag));
+    expect(tutorialAutoDialogueId(killed.save), 'DLG-0006');
+
+    final opened = startDialogue(db, killed.save, 'DLG-0006');
+    expect(opened.ok, isTrue, reason: opened.reason);
+    expect(opened.view?.nodeId, 'DNODE-0026');
+    expect(opened.view?.line, 'Well, that settles that.');
+
+    final continued = chooseDialogue(db, opened.save, 'DLG-0006', 'DNODE-0026', 'DCH-0036');
+    expect(continued.ok, isTrue, reason: continued.reason);
+    expect(continued.view?.nodeId, 'DNODE-0009');
+
+    final thanks = chooseDialogue(db, continued.save, 'DLG-0006', 'DNODE-0009', 'DCH-0012');
+    expect(thanks.ok, isTrue, reason: thanks.reason);
+    expect(thanks.view?.nodeId, 'DNODE-0010');
+
+    final farewell = chooseDialogue(db, thanks.save, 'DLG-0006', 'DNODE-0010', 'DCH-0013');
+    expect(farewell.ok, isTrue, reason: farewell.reason);
+    expect(farewell.completed, isTrue);
+    expect(farewell.save.dialogueFlags, isNot(contains(tutorialFarewellFlag)));
+    expect(tutorialAutoDialogueId(farewell.save), isNull);
   });
 
   test('step progress survives reload and a refused travel save', () {

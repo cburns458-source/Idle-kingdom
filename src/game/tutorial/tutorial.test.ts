@@ -19,6 +19,7 @@ import {
 import { isEdibleItem } from '../combat/food'
 import { equipItemFromInventory, FOOD_SLOT_ID } from '../equipment/loadout'
 import { prepareDatabase } from '../data/loadDatabase'
+import { chooseDialogue, dialoguesForNpc, startDialogue } from '../dialogue/engine'
 import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { completeProductionCraft } from '../production/engine'
 import { recipesForActivity } from '../production/recipes'
@@ -33,6 +34,7 @@ import {
   applyTutorialCowKill,
   applyTutorialLockback,
   ensureGettingStartedAccepted,
+  tutorialAutoDialogueId,
   isTutorialActivityAllowed,
   isTutorialBazaarAllowed,
   isTutorialGuildHallAllowed,
@@ -55,6 +57,7 @@ import {
   TUTORIAL_KITCHEN_LOCATION_ID,
   TUTORIAL_LOCKBACK_FLAG,
   TUTORIAL_LOSS_FLAG,
+  TUTORIAL_NPC_ID,
   TUTORIAL_OFFHAND_SLOT_ID,
   TUTORIAL_PASTURE_ACTIVITY_ID,
   TUTORIAL_POTATO_ACTION_ID,
@@ -670,37 +673,149 @@ describe('mandatory Getting Started tutorial', () => {
     ).toBe(false)
   })
 
-  it('equip step accepts Human starting sword and shield from inventory', () => {
-    let save = combatStepSave()
-    const sword = equipItemFromInventory(db, save, TUTORIAL_STARTER_SWORD_ID)
-    expect(sword.ok).toBe(true)
-    if (!sword.ok) return
-    save = sword.save
-    const shield = equipItemFromInventory(db, save, TUTORIAL_STARTER_SHIELD_ID)
-    expect(shield.ok).toBe(true)
-    if (!shield.ok) return
-    save = shield.save
-    expect(isTutorialSwordEquipped(save)).toBe(true)
-    expect(isTutorialShieldEquipped(save)).toBe(true)
-    expect(tutorialHudHint(db, save)?.spotlight).toBe('pasture')
-  })
-
-  it('equip step accepts Goblin starting wooden dagger from inventory', () => {
+  it('equip step accepts Goblin starting wooden dagger alone', () => {
     let save = combatStepSave('RACE-0005')
     expect(stackQty(save, TUTORIAL_STARTER_DAGGER_ID)).toBe(1)
     expect(stackQty(save, TUTORIAL_STARTER_SHIELD_ID)).toBe(0)
-    const sword = equipItemFromInventory(db, save, TUTORIAL_STARTER_SWORD_ID)
-    expect(sword.ok).toBe(true)
-    if (!sword.ok) return
-    save = sword.save
-    expect(isTutorialSwordEquipped(save)).toBe(true)
+    expect(stackQty(save, TUTORIAL_STARTER_SWORD_ID)).toBe(1)
+
     const dagger = equipItemFromInventory(db, save, TUTORIAL_STARTER_DAGGER_ID)
     expect(dagger.ok).toBe(true)
-    if (!dagger.ok) return
+    if (!dagger.ok) throw new Error(dagger.reason)
     save = dagger.save
     expect(save.equipment.slots[TUTORIAL_OFFHAND_SLOT_ID]?.itemId).toBe(TUTORIAL_STARTER_DAGGER_ID)
     expect(isTutorialShieldEquipped(save)).toBe(true)
+    expect(tutorialHudHint(db, save)?.label).not.toBe('Equip your shield')
+
+    const sword = equipItemFromInventory(db, save, TUTORIAL_STARTER_SWORD_ID)
+    expect(sword.ok).toBe(true)
+    if (!sword.ok) throw new Error(sword.reason)
+    save = sword.save
+    expect(isTutorialSwordEquipped(save)).toBe(true)
+    expect(save.equipment.slots[TUTORIAL_OFFHAND_SLOT_ID]?.itemId).toBe(TUTORIAL_STARTER_DAGGER_ID)
+    expect(stackQty(save, TUTORIAL_STARTER_SHIELD_ID)).toBe(0)
+    expect(tutorialHudHint(db, save)?.label).toBe('Fight a cow in the pasture')
     expect(tutorialHudHint(db, save)?.spotlight).toBe('pasture')
+  })
+
+  it('equip step still requires sword and shield for other races', () => {
+    for (const raceId of ['RACE-0001', 'RACE-0004', 'RACE-0006']) {
+      let save = combatStepSave(raceId)
+      expect(stackQty(save, TUTORIAL_STARTER_SWORD_ID), raceId).toBe(1)
+      expect(stackQty(save, TUTORIAL_STARTER_SHIELD_ID), raceId).toBe(1)
+      expect(stackQty(save, TUTORIAL_STARTER_DAGGER_ID), raceId).toBe(0)
+
+      const sword = equipItemFromInventory(db, save, TUTORIAL_STARTER_SWORD_ID)
+      expect(sword.ok, raceId).toBe(true)
+      if (!sword.ok) throw new Error(`${raceId} ${sword.reason}`)
+      save = sword.save
+      expect(isTutorialSwordEquipped(save), raceId).toBe(true)
+      expect(tutorialHudHint(db, save)?.label, raceId).toBe('Equip your shield')
+      expect(tutorialHudHint(db, save)?.spotlight, raceId).not.toBe('pasture')
+
+      const shield = equipItemFromInventory(db, save, TUTORIAL_STARTER_SHIELD_ID)
+      expect(shield.ok, raceId).toBe(true)
+      if (!shield.ok) throw new Error(`${raceId} ${shield.reason}`)
+      save = shield.save
+      expect(isTutorialShieldEquipped(save), raceId).toBe(true)
+      expect(tutorialHudHint(db, save)?.label, raceId).toBe('Fight a cow in the pasture')
+      expect(tutorialHudHint(db, save)?.spotlight, raceId).toBe('pasture')
+    }
+  })
+
+  it('locked-back non-goblin who owns a wooden dagger still completes equip with sword and shield', () => {
+    let save = applyTutorialLockback(withItem(combatStepSave(), TUTORIAL_STARTER_DAGGER_ID, 1))
+    expect(save.dialogueFlags).toContain(TUTORIAL_LOCKBACK_FLAG)
+    expect(save.raceId).toBe('RACE-0001')
+    expect(stackQty(save, TUTORIAL_STARTER_DAGGER_ID)).toBe(1)
+    expect(stackQty(save, TUTORIAL_STARTER_SHIELD_ID)).toBe(1)
+
+    const sword = equipItemFromInventory(db, save, TUTORIAL_STARTER_SWORD_ID)
+    expect(sword.ok).toBe(true)
+    if (!sword.ok) throw new Error(sword.reason)
+    save = sword.save
+    expect(tutorialHudHint(db, save)?.label).toBe('Equip your shield')
+
+    const shield = equipItemFromInventory(db, save, TUTORIAL_STARTER_SHIELD_ID)
+    expect(shield.ok).toBe(true)
+    if (!shield.ok) throw new Error(shield.reason)
+    save = shield.save
+    expect(save.equipment.slots[TUTORIAL_OFFHAND_SLOT_ID]?.itemId).toBe(TUTORIAL_STARTER_SHIELD_ID)
+    expect(isTutorialSwordEquipped(save)).toBe(true)
+    expect(isTutorialShieldEquipped(save)).toBe(true)
+    expect(tutorialHudHint(db, save)?.label).toBe('Fight a cow in the pasture')
+  })
+
+  it('Fennel picks the dagger line when ITEM-0125 is in the bag, else sword and shield', () => {
+    const sword = "That cow's been trouble all week. Put on your sword and shield before you go near her."
+    const dagger = "That cow's been trouble all week. Grab your dagger before you go near her."
+
+    const humanCombat = combatStepSave()
+    expect(dialoguesForNpc(db, humanCombat, TUTORIAL_NPC_ID)).toContain('DLG-0016')
+    expect(startDialogue(db, humanCombat, 'DLG-0016').view?.nodeId).toBe('DNODE-0027')
+    expect(startDialogue(db, humanCombat, 'DLG-0016').view?.line).toBe(sword)
+    expect(startDialogue(db, humanCombat, 'DLG-0020').ok).toBe(false)
+
+    const goblinCombat = combatStepSave('RACE-0005')
+    expect(stackQty(goblinCombat, TUTORIAL_STARTER_DAGGER_ID)).toBe(1)
+    expect(dialoguesForNpc(db, goblinCombat, TUTORIAL_NPC_ID)).toContain('DLG-0020')
+    expect(startDialogue(db, goblinCombat, 'DLG-0020').view?.nodeId).toBe('DNODE-0032')
+    expect(startDialogue(db, goblinCombat, 'DLG-0020').view?.line).toBe(dagger)
+    expect(startDialogue(db, goblinCombat, 'DLG-0016').ok).toBe(false)
+
+    let cooked = withLatchedSteps(activeTutorial(), [
+      TUTORIAL_GATHER_STEP_ID,
+      TUTORIAL_SHOW_POTATOES_STEP_ID,
+      TUTORIAL_COOK_STEP_ID,
+    ])
+    cooked = withItem(cooked, TUTORIAL_BAKED_POTATO_ITEM_ID, 5)
+    const shown = chooseDialogue(db, cooked, 'DLG-0005', 'DNODE-0007', 'DCH-0009')
+    expect(shown.ok).toBe(true)
+    if (!shown.ok) throw new Error(shown.reason)
+    expect(shown.view?.nodeId).toBe('DNODE-0008')
+    expect(shown.view?.line).toBe(sword)
+
+    const shownDagger = chooseDialogue(
+      db,
+      withItem(cooked, TUTORIAL_STARTER_DAGGER_ID, 1),
+      'DLG-0005',
+      'DNODE-0007',
+      'DCH-0041',
+    )
+    expect(shownDagger.ok).toBe(true)
+    if (!shownDagger.ok) throw new Error(shownDagger.reason)
+    expect(shownDagger.view?.nodeId).toBe('DNODE-0031')
+    expect(shownDagger.view?.line).toBe(dagger)
+  })
+
+  it('cow win line DNODE-0026 leads to farewell', () => {
+    const killed = applyTutorialCowKill(db, combatStepSave(), TUTORIAL_COW_ENEMY_ID)
+    expect(killed.completed).toBe(true)
+    expect(killed.save.dialogueFlags).toContain(TUTORIAL_FAREWELL_FLAG)
+    expect(tutorialAutoDialogueId(killed.save)).toBe('DLG-0006')
+
+    const opened = startDialogue(db, killed.save, 'DLG-0006')
+    expect(opened.ok).toBe(true)
+    if (!opened.ok) throw new Error(opened.reason)
+    expect(opened.view?.nodeId).toBe('DNODE-0026')
+    expect(opened.view?.line).toBe('Well, that settles that.')
+
+    const continued = chooseDialogue(db, opened.save, 'DLG-0006', 'DNODE-0026', 'DCH-0036')
+    expect(continued.ok).toBe(true)
+    if (!continued.ok) throw new Error(continued.reason)
+    expect(continued.view?.nodeId).toBe('DNODE-0009')
+
+    const thanks = chooseDialogue(db, continued.save, 'DLG-0006', 'DNODE-0009', 'DCH-0012')
+    expect(thanks.ok).toBe(true)
+    if (!thanks.ok) throw new Error(thanks.reason)
+    expect(thanks.view?.nodeId).toBe('DNODE-0010')
+
+    const farewell = chooseDialogue(db, thanks.save, 'DLG-0006', 'DNODE-0010', 'DCH-0013')
+    expect(farewell.ok).toBe(true)
+    if (!farewell.ok) throw new Error(farewell.reason)
+    expect(farewell.completed).toBe(true)
+    expect(farewell.save.dialogueFlags).not.toContain(TUTORIAL_FAREWELL_FLAG)
+    expect(tutorialAutoDialogueId(farewell.save)).toBeNull()
   })
 
   it('step progress survives reload and a refused travel save', () => {
