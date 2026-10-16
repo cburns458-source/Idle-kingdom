@@ -186,12 +186,11 @@ Checklist, in order:
    that passes `p_before` is on `restoria-idlerpg`. This file and
    `20261016140000` must land before or together with that function.
    Status: applied on test Oct 16 2026 (file `20261016150000`); live pending.
-7. [ ] `20261016160000_guild_hall_paid_off_gold.sql` (SOC-01). Halls that were
-   already paid off (`debt_paid_off`) with a null `debt_remaining` were skipped
-   by `20261016120000` and stayed at 0 gold contributed. Sets those rows to the
-   1M running total (tier 5 gold mark). Idempotent. Apply to test with this PR;
-   live only after Conor merges `test-launch` into `main`.
-   Status: applied on test Oct 16 2026 (file `20261016160000`); live pending.
+
+Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
+update, so paid-off halls are not migrated. Already applied on test Oct 16
+2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.
+Do not apply on live.
 
 The eight files before that (profile guard through Wave F cleanup) were applied
 to live when `efbda080` shipped to `main`.

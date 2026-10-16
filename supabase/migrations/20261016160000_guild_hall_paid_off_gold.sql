@@ -1,3 +1,6 @@
+-- SKIP on live: guilds reset with this update. Already applied on the test
+-- project; do not reverse those rows. Do not apply on live.
+--
 -- 20261016120000 copied paid gold from debt_remaining only. Halls with
 -- debt_paid_off = true and null debt_remaining were skipped (coalesce treated
 -- remaining as 1M) and stayed at gold_contributed = 0. Set those rows to the

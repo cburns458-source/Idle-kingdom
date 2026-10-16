@@ -1,5 +1,5 @@
 -- Forged hall payloads must not move gold_contributed or completed_tiers.
--- Run against a project that has 20261016160000_guild_hall_paid_off_gold.
+-- Run against a project that has 20261016150000_guild_commit_hall_caught_up_save.
 
 \pset pager off
 
@@ -18,10 +18,6 @@ declare
   v_merge_items jsonb;
   v_expected_revision bigint;
   v_hall_revision bigint;
-  v_null_debt numeric;
-  v_paid_off numeric;
-  v_paid_off_null_debt numeric;
-  v_was_paid_off boolean;
 begin
   v_forged := public.guild_hall_apply_save_deltas(
     '{"gold": 500, "inventory": []}'::jsonb,
@@ -212,42 +208,6 @@ begin
   if jsonb_build_object('ok', false, 'conflict', 'hall', 'reason', 'Hall changed. Sync and retry.')
        ->> 'reason' <> 'Hall changed. Sync and retry.' then
     raise exception 'second take must return Hall changed';
-  end if;
-
-  -- Debt migration 20261016120000_guild_hall_tiers.sql:30-40.
-  -- gold_contributed = greatest(0, least(1000000, 1000000 - coalesce(debt_remaining, 1000000)))
-  -- WHERE gold_contributed = 0 AND coalesce(debt_remaining, 1000000) < 1000000
-  -- A hall with null debt_remaining does not match the WHERE (coalesce is 1M).
-  if coalesce(null::numeric, 1000000) < 1000000 then
-    v_null_debt := greatest(0, least(1000000, 1000000 - coalesce(null::numeric, 1000000)));
-  else
-    v_null_debt := 0;
-  end if;
-  if v_null_debt <> 0 then
-    raise exception 'null debt_remaining should stay at 0 gold_contributed: %', v_null_debt;
-  end if;
-
-  -- Already paid off: debt_paid_off = true, debt_remaining = 0 → 1M.
-  if coalesce(0::numeric, 1000000) < 1000000 then
-    v_paid_off := greatest(0, least(1000000, 1000000 - coalesce(0::numeric, 1000000)));
-  else
-    v_paid_off := 0;
-  end if;
-  if v_paid_off <> 1000000 then
-    raise exception 'paid-off hall with debt_remaining 0 should become 1M: %', v_paid_off;
-  end if;
-
-  -- Paid-off hall with null debt_remaining: 20261016120000 skipped it (WHERE
-  -- never reads debt_paid_off). 20261016160000 sets gold_contributed to 1M.
-  v_was_paid_off := true;
-  v_paid_off_null_debt := case
-    when v_was_paid_off then 1000000
-    when coalesce(null::numeric, 1000000) < 1000000 then
-      greatest(0, least(1000000, 1000000 - coalesce(null::numeric, 1000000)))
-    else 0
-  end;
-  if v_paid_off_null_debt <> 1000000 then
-    raise exception 'paid-off + null debt_remaining should become 1M: %', v_paid_off_null_debt;
   end if;
 end;
 $$;
