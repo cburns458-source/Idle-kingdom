@@ -7,6 +7,7 @@ import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'catalog_popup.dart';
 import 'game_popup.dart';
+import 'guild_hall_banner.dart';
 import 'guild_log_list.dart';
 import 'guild_permissions_table.dart';
 import 'page_header.dart';
@@ -317,7 +318,11 @@ class _GuildPanelState extends State<GuildPanel> {
             return SocialRow(
               title: header.title,
               subtitle: header.subtitle,
-              leading: GuildEmblemBadge(emblem: header.emblem, size: 40),
+              leading: GuildHallBanner(
+                key: const Key('guild-panel-banner'),
+                banner: guild.banner,
+                size: 40,
+              ),
               onTap: () => _openGuildDetail(guild, mode: _GuildDetailMode.own),
               trailing: header.canManage
                   ? GameIconButton(
@@ -950,7 +955,11 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             return SocialRow(
                               title: header.title,
                               subtitle: header.subtitle,
-                              leading: GuildEmblemBadge(emblem: header.emblem, size: 40),
+                              leading: GuildHallBanner(
+                                key: const Key('guild-detail-banner'),
+                                banner: guild.banner,
+                                size: 40,
+                              ),
                             );
                           }
                           var i = index - 1;

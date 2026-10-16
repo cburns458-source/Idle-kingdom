@@ -4,6 +4,7 @@ import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/guild_bank_view.dart';
+import 'package:idle_kingdoms/src/ui/guild_hall_banner.dart';
 import 'package:idle_kingdoms/src/ui/guild_hall_gold_bar.dart';
 import 'package:idle_kingdoms/src/ui/guild_hall_panel.dart';
 import 'package:idle_kingdoms/src/ui/guild_log_list.dart';
@@ -95,6 +96,7 @@ void main() {
 
     expect(find.text('Store House'), findsWidgets);
     expect(find.text('Chip in'), findsOne);
+    expect(find.text('Achievements'), findsOne);
     expect(find.text('Debt'), findsNothing);
     expect(find.text('Bank'), findsNothing);
     expect(find.text('Boxing'), findsNothing);
@@ -432,6 +434,108 @@ void main() {
     final newest = tester.getTopLeft(find.text('The counting room is open for business.'));
     final oldest = tester.getTopLeft(find.text('Ash joined the guild.'));
     expect(newest.dy, lessThan(oldest.dy));
+  });
+
+  testWidgets('Achievements lists engine rows with progress and unlocks after a tier', (
+    tester,
+  ) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: guildHallLocationId,
+        inventory: const [
+          InventoryStack(itemId: 'ITEM-0015', quantity: 1000),
+          InventoryStack(itemId: 'ITEM-0095', quantity: 100),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Achievements'));
+    await tester.pump();
+
+    expect(find.byKey(const Key('guild-achievement-gach_foundations')), findsOne);
+    expect(find.text('Foundations laid'), findsOne);
+    expect(find.text('0 / 1'), findsWidgets);
+    expect(find.text('Deep pockets'), findsOne);
+
+    await _donate(net, controller, const <InventoryStack>[
+      InventoryStack(itemId: 'ITEM-0015', quantity: 1000),
+      InventoryStack(itemId: 'ITEM-0095', quantity: 100),
+    ]);
+    final hall = await net.service.guildHall(net.guildId!);
+    expect(hall!.completedTiers, contains(guildHallTierBuild));
+    final progress = await net.service.guildAchievementProgress(net.guildId!);
+    final foundations = progress.firstWhere((row) => row.id == 'gach_foundations');
+    expect(foundations.unlocked, isTrue);
+    expect(foundations.current, 1);
+
+    await pumpPanel(
+      tester,
+      GuildHallPanel(key: UniqueKey(), controller: controller, multiplayer: net),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Achievements'));
+    await tester.pumpAndSettle();
+    final foundationsRow = find.byKey(const Key('guild-achievement-gach_foundations'));
+    expect(foundationsRow, findsOne);
+    final lines = tester
+        .widgetList<Text>(find.descendant(of: foundationsRow, matching: find.byType(Text)))
+        .map((row) => row.data)
+        .toList();
+    expect(lines, contains('Foundations laid'));
+    expect(lines.join(' '), contains('1 / 1'), reason: '$lines');
+    expect(
+      tester
+          .widget<Text>(
+            find.descendant(of: foundationsRow, matching: find.text('Foundations laid')),
+          )
+          .style
+          ?.color,
+      Palette.gold,
+    );
+  });
+
+  testWidgets('a leader can set banner colours; locked emblems stay off the pad', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(currentLocationId: guildHallLocationId),
+    );
+    addTearDown(controller.dispose);
+    final net = await _leaderOfANewGuild(database, controller.save);
+    addTearDown(net.dispose);
+
+    await pumpPanel(tester, GuildHallPanel(controller: controller, multiplayer: net));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const Key('guild-hall-banner')), findsOne);
+    expect(
+      tester.widget<GuildHallBanner>(find.byKey(const Key('guild-hall-banner'))).banner.background,
+      guildBannerDefaultBackground,
+    );
+
+    await tester.tap(find.text('Achievements'));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('guild-banner-edit')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('guild-banner-emblem-emblem_foundations')), findsNothing);
+    await tester.tap(find.byKey(const Key('guild-banner-bg-wine')));
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(net.guild!.banner.background, 'wine');
+    expect(
+      tester.widget<GuildHallBanner>(find.byKey(const Key('guild-hall-banner'))).banner.background,
+      'wine',
+    );
   });
 }
 

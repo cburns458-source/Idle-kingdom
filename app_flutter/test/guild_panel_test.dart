@@ -3,10 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
 import 'package:idle_kingdoms/src/session/multiplayer_controller.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/guild_hall_banner.dart';
 import 'package:idle_kingdoms/src/ui/guild_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
+import 'package:ik_rules/ik_rules.dart';
 
 import 'support/harness.dart';
 
@@ -84,6 +86,11 @@ void main() {
     expect(transport.tables[RemoteTables.guildMembers]!.single['role'], guildRoleLeader);
     expect(controller.save.gold, 5, reason: 'the founding fee is taken once');
     expect(find.text('[IRN] Iron League'), findsOne);
+    expect(find.byKey(const Key('guild-panel-banner')), findsOne);
+    expect(
+      tester.widget<GuildHallBanner>(find.byKey(const Key('guild-panel-banner'))).banner.background,
+      defaultGuildBanner.background,
+    );
   });
 
   testWidgets('the create sheet says what it is still waiting for', (tester) async {
