@@ -9,8 +9,6 @@ import { addItemsToInventory } from '../activity/rewards'
 import { isEdibleItem } from '../combat/food'
 import type { ActionRow, GameDatabase } from '../data/types'
 import { FOOD_SLOT_ID, slotStack } from '../equipment/loadout'
-import { inventoryCount } from '../production/recipes'
-import { applyQuestDefeatProgress } from '../quests/progress'
 import { acceptQuest, completeQuest, getQuest, getQuestProgress } from '../quests/quests'
 import { applyQuestStepUnlocks, getCurrentStepId, isStepLatched } from '../quests/steps'
 import {
@@ -37,6 +35,7 @@ export const TUTORIAL_COW_ENEMY_ID = 'ENM-0001'
 export const TUTORIAL_STARTER_SWORD_ID = 'ITEM-0124'
 export const TUTORIAL_STARTER_SHIELD_ID = 'ITEM-0145'
 export const TUTORIAL_STARTER_DAGGER_ID = 'ITEM-0125'
+export const TUTORIAL_GOBLIN_RACE_ID = 'RACE-0005'
 export const TUTORIAL_WEAPON_SLOT_ID = 'SLOT-0001'
 export const TUTORIAL_OFFHAND_SLOT_ID = 'SLOT-0002'
 export const TUTORIAL_GATHER_GUARANTEE_COUNT = 5
@@ -76,6 +75,7 @@ export type TutorialSpotlightId =
   | 'kitchen-cook'
   | 'sword'
   | 'shield'
+  | 'dagger'
   | 'pasture'
   | 'food-slot'
 
@@ -403,8 +403,7 @@ export function applyTutorialCowKill(
     return { save: stopRunningAction(save), completed: true }
   }
 
-  let next = applyQuestDefeatProgress(db, save, enemyId, 1)
-  next = applyQuestStepUnlocks(db, next)
+  let next = applyQuestStepUnlocks(db, save)
   const finished = completeQuest(db, next, TUTORIAL_QUEST_ID, { ignoreLocation: true })
   if (!finished.ok) {
     return { save: stopRunningAction(next), completed: false }
@@ -430,9 +429,23 @@ export function isTutorialSwordEquipped(save: PlayerSave): boolean {
   return slotStack(save, TUTORIAL_WEAPON_SLOT_ID)?.itemId === TUTORIAL_STARTER_SWORD_ID
 }
 
+export function isTutorialDaggerEquipped(save: PlayerSave): boolean {
+  return slotStack(save, TUTORIAL_OFFHAND_SLOT_ID)?.itemId === TUTORIAL_STARTER_DAGGER_ID
+}
+
 export function isTutorialShieldEquipped(save: PlayerSave): boolean {
   const itemId = slotStack(save, TUTORIAL_OFFHAND_SLOT_ID)?.itemId
   return itemId === TUTORIAL_STARTER_SHIELD_ID || itemId === TUTORIAL_STARTER_DAGGER_ID
+}
+
+/** Sum every matching bag stack. `inventoryCount` only reads the first. */
+function bagCount(save: PlayerSave, itemId: string): number {
+  let total = 0
+  for (const stack of save.inventory) {
+    if (stack.itemId !== itemId) continue
+    total += Math.max(0, Math.floor(Number(stack.quantity) || 0))
+  }
+  return total
 }
 
 export function tutorialHudHint(db: GameDatabase, save: PlayerSave): TutorialHudHint | null {
@@ -442,7 +455,7 @@ export function tutorialHudHint(db: GameDatabase, save: PlayerSave): TutorialHud
   if (!stepId) return null
 
   if (stepId === TUTORIAL_GATHER_STEP_ID) {
-    const have = Math.min(5, inventoryCount(save, TUTORIAL_POTATO_ITEM_ID))
+    const have = Math.min(5, bagCount(save, TUTORIAL_POTATO_ITEM_ID))
     return {
       label: `Gather potatoes ${have}/5`,
       locationId: TUTORIAL_FARM_LOCATION_ID,
@@ -488,12 +501,18 @@ export function tutorialHudHint(db: GameDatabase, save: PlayerSave): TutorialHud
         spotlight: 'sword',
       }
     }
-    if (!isTutorialShieldEquipped(save)) {
-      const daggerReady =
-        inventoryCount(save, TUTORIAL_STARTER_DAGGER_ID) > 0 &&
-        inventoryCount(save, TUTORIAL_STARTER_SHIELD_ID) === 0
+    if (save.raceId === TUTORIAL_GOBLIN_RACE_ID) {
+      if (!isTutorialDaggerEquipped(save) && bagCount(save, TUTORIAL_STARTER_DAGGER_ID) > 0) {
+        return {
+          label: 'Equip your dagger',
+          locationId: TUTORIAL_FARM_LOCATION_ID,
+          activityId: null,
+          spotlight: 'dagger',
+        }
+      }
+    } else if (!isTutorialShieldEquipped(save)) {
       return {
-        label: daggerReady ? 'Equip your dagger' : 'Equip your shield',
+        label: 'Equip your shield',
         locationId: TUTORIAL_FARM_LOCATION_ID,
         activityId: null,
         spotlight: 'shield',

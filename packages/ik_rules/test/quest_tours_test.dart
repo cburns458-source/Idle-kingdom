@@ -217,7 +217,11 @@ void main() {
     expect(getQuestProgress(advice.save, 'QST-0006').status, 'active');
     expect(gettingStarted(advice.save).talkLine, contains('sword and shield'));
 
-    final finished = applyTutorialCowKill(db, advice.save, 'ENM-0001');
+    final finished = applyTutorialCowKill(
+      db,
+      applyQuestDefeatProgress(db, advice.save, 'ENM-0001'),
+      'ENM-0001',
+    );
     expect(finished.completed, isTrue);
     expect(getQuestProgress(finished.save, 'QST-0006').status, 'completed');
     expect(gettingStarted(finished.save).completedNote, contains('Good luck on your adventure'));

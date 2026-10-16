@@ -22,6 +22,7 @@ import { inventoryCount } from '../production/recipes'
 import {
   applyQuestActionProgress,
   applyQuestAutoStartOnSeed,
+  applyQuestDefeatProgress,
   applyQuestLocationProgressResult,
   applyQuestProcessProgress,
   applyQuestTalkProgress,
@@ -407,7 +408,11 @@ describe('quest tours', () => {
     expect(getQuestProgress(advice.save, 'QST-0006').status).toBe('active')
     expect(npcConversation(launch, advice.save, fennel).quests[0]?.talkLine).toMatch(/sword and shield/i)
 
-    const finished = applyTutorialCowKill(launch, advice.save, 'ENM-0001')
+    const finished = applyTutorialCowKill(
+      launch,
+      applyQuestDefeatProgress(launch, advice.save, 'ENM-0001', 1),
+      'ENM-0001',
+    )
     expect(finished.completed).toBe(true)
     expect(getQuestProgress(finished.save, 'QST-0006').status).toBe('completed')
     expect(

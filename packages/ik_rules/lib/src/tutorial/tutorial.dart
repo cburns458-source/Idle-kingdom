@@ -14,7 +14,6 @@ import '../combat/food.dart';
 import '../equipment/loadout.dart';
 import '../inventory/add_items.dart';
 import '../js_compat.dart';
-import '../quests/progress.dart';
 import '../quests/quests.dart';
 import '../quests/steps.dart';
 import '../save/generated/save_models.dart';
@@ -37,6 +36,7 @@ const String tutorialCowEnemyId = 'ENM-0001';
 const String tutorialStarterSwordId = 'ITEM-0124';
 const String tutorialStarterShieldId = 'ITEM-0145';
 const String tutorialStarterDaggerId = 'ITEM-0125';
+const String tutorialGoblinRaceId = 'RACE-0005';
 const String tutorialWeaponSlotId = 'SLOT-0001';
 const String tutorialOffhandSlotId = 'SLOT-0002';
 const num tutorialGatherGuaranteeCount = 5;
@@ -69,7 +69,17 @@ const List<String> _tutorialCookPathLocationIds = <String>[
   tutorialKitchenLocationId,
 ];
 
-enum TutorialSpotlightId { fennel, fields, mapTown, kitchenCook, sword, shield, pasture, foodSlot }
+enum TutorialSpotlightId {
+  fennel,
+  fields,
+  mapTown,
+  kitchenCook,
+  sword,
+  shield,
+  dagger,
+  pasture,
+  foodSlot,
+}
 
 class TutorialHudHint {
   const TutorialHudHint({
@@ -358,8 +368,7 @@ TutorialCowKillResult applyTutorialCowKill(GameDatabase db, PlayerSave save, Str
     return TutorialCowKillResult(save: _stopRunningAction(save), completed: true);
   }
 
-  var next = applyQuestDefeatProgress(db, save, enemyId);
-  next = applyQuestStepUnlocks(db, next);
+  var next = applyQuestStepUnlocks(db, save);
   final finished = completeQuest(db, next, tutorialQuestId, ignoreLocation: true);
   if (!finished.ok || finished.save == null) {
     return TutorialCowKillResult(save: _stopRunningAction(next), completed: false);
@@ -383,6 +392,9 @@ String? tutorialAutoDialogueId(PlayerSave save) {
 
 bool isTutorialSwordEquipped(PlayerSave save) =>
     slotStack(save, tutorialWeaponSlotId)?.itemId == tutorialStarterSwordId;
+
+bool isTutorialDaggerEquipped(PlayerSave save) =>
+    slotStack(save, tutorialOffhandSlotId)?.itemId == tutorialStarterDaggerId;
 
 /// Shield for most races; Goblins (RACE-0005) start with a wooden dagger in the same slot.
 bool isTutorialShieldEquipped(PlayerSave save) {
@@ -444,12 +456,17 @@ TutorialHudHint? tutorialHudHint(GameDatabase db, PlayerSave save) {
         spotlight: TutorialSpotlightId.sword,
       );
     }
-    if (!isTutorialShieldEquipped(save)) {
-      final daggerReady =
-          _bagCount(save, tutorialStarterDaggerId) > 0 &&
-          _bagCount(save, tutorialStarterShieldId) == 0;
-      return TutorialHudHint(
-        label: daggerReady ? 'Equip your dagger' : 'Equip your shield',
+    if (save.raceId == tutorialGoblinRaceId) {
+      if (!isTutorialDaggerEquipped(save) && _bagCount(save, tutorialStarterDaggerId) > 0) {
+        return const TutorialHudHint(
+          label: 'Equip your dagger',
+          locationId: tutorialFarmLocationId,
+          spotlight: TutorialSpotlightId.dagger,
+        );
+      }
+    } else if (!isTutorialShieldEquipped(save)) {
+      return const TutorialHudHint(
+        label: 'Equip your shield',
         locationId: tutorialFarmLocationId,
         spotlight: TutorialSpotlightId.shield,
       );

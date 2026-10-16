@@ -27,6 +27,7 @@ import { talkWithQuestNpc } from '../../game/npcs/conversation'
 import {
   applyQuestActionProgress,
   applyQuestAutoStartOnSeed,
+  applyQuestDefeatProgress,
   applyQuestPlantProgress,
   applyQuestTalkProgress,
 } from '../../game/quests/progress'
@@ -478,6 +479,7 @@ export function runDialogueScript(db: GameDatabase, initial: PlayerSave, ops: Op
         save = withTutorialFlag(save, str(op, 'flag'), op.on !== false)
         break
       case 'tutorialCowKill': {
+        save = applyQuestDefeatProgress(db, save, TUTORIAL_COW_ENEMY_ID, 1)
         const result = applyTutorialCowKill(db, save, TUTORIAL_COW_ENEMY_ID)
         out = { completed: result.completed }
         save = result.save

@@ -85,6 +85,18 @@ void main() {
     );
   }
 
+  num cowDefeatCount(PlayerSave save) {
+    return getQuestProgress(save, tutorialQuestId).counters?['defeat:$tutorialCowEnemyId'] ?? 0;
+  }
+
+  TutorialCowKillResult finishCowKill(PlayerSave save) {
+    return applyTutorialCowKill(
+      db,
+      applyQuestDefeatProgress(db, save, tutorialCowEnemyId),
+      tutorialCowEnemyId,
+    );
+  }
+
   PlayerSave withLatchedSteps(PlayerSave save, List<String> stepIds) {
     return applyQuestStepUnlocks(
       db,
@@ -298,6 +310,17 @@ void main() {
         combatEnemyId: tutorialCowEnemyId,
         combatEnemyHp: 1,
       );
+      expect(cowDefeatCount(before), 0);
+      final helperOnly = applyTutorialCowKill(db, before, tutorialCowEnemyId);
+      expect(helperOnly.completed, isFalse);
+      expect(cowDefeatCount(helperOnly.save), 0);
+
+      final incremented = applyQuestDefeatProgress(db, fighting, tutorialCowEnemyId);
+      expect(cowDefeatCount(incremented), 1);
+      final viaHelper = applyTutorialCowKill(db, incremented, tutorialCowEnemyId);
+      expect(viaHelper.completed, isTrue);
+      expect(viaHelper.save.unlockedBookIds.where((id) => id == 'BOOK-0001').length, 1);
+
       final victory = applyCombatVictory(db, fighting, action, enemy, () => 0, now);
       expect(getQuestProgress(victory.save, tutorialQuestId).status, 'completed');
       expect(victory.save.currentActivityId, isNull);
@@ -306,11 +329,12 @@ void main() {
       expect(isTutorialLocationAllowed(victory.save, copperMine), isTrue);
       expect(isTutorialSkillMenuAllowed(victory.save), isTrue);
       expect(victory.save.dialogueFlags, contains(tutorialFarewellFlag));
-      expect(victory.save.unlockedBookIds, contains('BOOK-0001'));
+      expect(victory.save.unlockedBookIds.where((id) => id == 'BOOK-0001').length, 1);
 
       final twice = applyTutorialCowKill(db, victory.save, tutorialCowEnemyId);
       expect(twice.completed, isFalse);
       expect(getQuestProgress(twice.save, tutorialQuestId).status, 'completed');
+      expect(twice.save.unlockedBookIds.where((id) => id == 'BOOK-0001').length, 1);
     },
   );
 
@@ -360,8 +384,20 @@ void main() {
       tutorialStarterSwordId,
     );
     expect(tutorialHudHint(db, goblin)?.label, 'Equip your dagger');
+    expect(tutorialHudHint(db, goblin)?.spotlight, TutorialSpotlightId.dagger);
+    expect(tutorialHudHint(db, goblin)?.spotlight, isNot(TutorialSpotlightId.shield));
     final goblinReady = withEquipped(goblin, tutorialOffhandSlotId, tutorialStarterDaggerId);
     expect(tutorialHudHint(db, goblinReady)?.label, 'Fight a cow in the pasture');
+    expect(tutorialHudHint(db, goblinReady)?.spotlight, TutorialSpotlightId.pasture);
+    expect(tutorialHudHint(db, goblinReady)?.spotlight, isNot(TutorialSpotlightId.shield));
+
+    final noDagger = goblin.copyWith(
+      inventory: goblin.inventory
+          .where((stack) => stack.itemId != tutorialStarterDaggerId)
+          .toList(),
+    );
+    expect(tutorialHudHint(db, noDagger)?.label, 'Fight a cow in the pasture');
+    expect(tutorialHudHint(db, noDagger)?.spotlight, isNot(TutorialSpotlightId.shield));
 
     final human = withEquipped(
       combatStepSave('RACE-0001'),
@@ -369,8 +405,21 @@ void main() {
       tutorialStarterSwordId,
     );
     expect(tutorialHudHint(db, human)?.label, 'Equip your shield');
+    expect(tutorialHudHint(db, human)?.spotlight, TutorialSpotlightId.shield);
     final humanReady = withEquipped(human, tutorialOffhandSlotId, tutorialStarterShieldId);
     expect(tutorialHudHint(db, humanReady)?.label, 'Fight a cow in the pasture');
+  });
+
+  test('HUD potato count sums every bag stack', () {
+    final base = activeTutorial();
+    final save = base.copyWith(
+      inventory: [
+        ...base.inventory.where((stack) => stack.itemId != tutorialPotatoItemId),
+        const InventoryStack(itemId: tutorialPotatoItemId, quantity: 2),
+        const InventoryStack(itemId: tutorialPotatoItemId, quantity: 3),
+      ],
+    );
+    expect(tutorialHudHint(db, save)?.label, 'Gather potatoes 5/5');
   });
 
   test('first five potato gathers give exactly one potato and no other drop', () {
@@ -461,7 +510,7 @@ void main() {
     expect(empty.dialogueFlags, contains(tutorialFoodGrantFlag));
     expect(stackQty(empty, tutorialBakedPotatoItemId), tutorialFoodTopUpQty);
 
-    final finished = applyTutorialCowKill(db, combatStepSave(), tutorialCowEnemyId);
+    final finished = finishCowKill(combatStepSave());
     expect(finished.completed, isTrue);
     final afterWin = applyCombatDefeat(db, withoutFood(finished.save), now);
     expect(afterWin.dialogueFlags, isNot(contains(tutorialFoodGrantFlag)));
@@ -665,6 +714,7 @@ void main() {
     expect(save.equipment.slots[tutorialOffhandSlotId]?.itemId, tutorialStarterDaggerId);
     expect(isTutorialShieldEquipped(save), isTrue);
     expect(tutorialHudHint(db, save)?.label, isNot('Equip your shield'));
+    expect(tutorialHudHint(db, save)?.spotlight, isNot(TutorialSpotlightId.shield));
 
     final sword = equipItemFromInventory(db, save, tutorialStarterSwordId);
     expect(sword.ok, isTrue, reason: sword.reason);
@@ -769,7 +819,7 @@ void main() {
   });
 
   test('cow win line DNODE-0026 leads to farewell', () {
-    final killed = applyTutorialCowKill(db, combatStepSave(), tutorialCowEnemyId);
+    final killed = finishCowKill(combatStepSave());
     expect(killed.completed, isTrue);
     expect(killed.save.dialogueFlags, contains(tutorialFarewellFlag));
     expect(tutorialAutoDialogueId(killed.save), 'DLG-0006');

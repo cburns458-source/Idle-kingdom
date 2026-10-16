@@ -78,6 +78,7 @@ import {
   tutorialHudHint,
 } from './tutorial'
 import { getQuest, getQuestProgress } from '../quests/quests'
+import { applyQuestDefeatProgress } from '../quests/progress'
 import { applyQuestStepUnlocks, getCurrentStepId, isStepLatched } from '../quests/steps'
 
 const rawDatabase = JSON.parse(readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'))
@@ -139,6 +140,14 @@ function withEquipped(save: PlayerSave, slotId: string, itemId: string): PlayerS
       },
     },
   }
+}
+
+function cowDefeatCount(save: PlayerSave): number {
+  return Number(getQuestProgress(save, TUTORIAL_QUEST_ID).counters?.[`defeat:${TUTORIAL_COW_ENEMY_ID}`] ?? 0)
+}
+
+function finishCowKill(save: PlayerSave) {
+  return applyTutorialCowKill(db, applyQuestDefeatProgress(db, save, TUTORIAL_COW_ENEMY_ID, 1), TUTORIAL_COW_ENEMY_ID)
 }
 
 function withLatchedSteps(save: PlayerSave, stepIds: string[]): PlayerSave {
@@ -320,6 +329,17 @@ describe('mandatory Getting Started tutorial', () => {
       combatEnemyId: TUTORIAL_COW_ENEMY_ID,
       combatEnemyHp: 1,
     }
+    expect(cowDefeatCount(before)).toBe(0)
+    const helperOnly = applyTutorialCowKill(db, before, TUTORIAL_COW_ENEMY_ID)
+    expect(helperOnly.completed).toBe(false)
+    expect(cowDefeatCount(helperOnly.save)).toBe(0)
+
+    const incremented = applyQuestDefeatProgress(db, fighting, TUTORIAL_COW_ENEMY_ID, 1)
+    expect(cowDefeatCount(incremented)).toBe(1)
+    const viaHelper = applyTutorialCowKill(db, incremented, TUTORIAL_COW_ENEMY_ID)
+    expect(viaHelper.completed).toBe(true)
+    expect(viaHelper.save.unlockedBookIds.filter((id) => id === 'BOOK-0001')).toHaveLength(1)
+
     const victory = applyCombatVictory(db, fighting, action, enemy, () => 0, NOW)
     expect(getQuestProgress(victory.save, TUTORIAL_QUEST_ID).status).toBe('completed')
     expect(victory.save.currentActivityId).toBeNull()
@@ -328,11 +348,12 @@ describe('mandatory Getting Started tutorial', () => {
     expect(isTutorialLocationAllowed(victory.save, COPPER_MINE)).toBe(true)
     expect(isTutorialSkillMenuAllowed(victory.save)).toBe(true)
     expect(victory.save.dialogueFlags).toContain(TUTORIAL_FAREWELL_FLAG)
-    expect(victory.save.unlockedBookIds).toContain('BOOK-0001')
+    expect(victory.save.unlockedBookIds.filter((id) => id === 'BOOK-0001')).toHaveLength(1)
 
     const twice = applyTutorialCowKill(db, victory.save, TUTORIAL_COW_ENEMY_ID)
     expect(twice.completed).toBe(false)
     expect(getQuestProgress(twice.save, TUTORIAL_QUEST_ID).status).toBe('completed')
+    expect(twice.save.unlockedBookIds.filter((id) => id === 'BOOK-0001')).toHaveLength(1)
   })
 
   it('locks in-progress players back without dropping items or bazaar state', () => {
@@ -374,13 +395,37 @@ describe('mandatory Getting Started tutorial', () => {
   it('asks goblins to equip the wooden dagger instead of a shield', () => {
     const goblin = withEquipped(combatStepSave('RACE-0005'), TUTORIAL_WEAPON_SLOT_ID, TUTORIAL_STARTER_SWORD_ID)
     expect(tutorialHudHint(db, goblin)?.label).toBe('Equip your dagger')
+    expect(tutorialHudHint(db, goblin)?.spotlight).toBe('dagger')
+    expect(tutorialHudHint(db, goblin)?.spotlight).not.toBe('shield')
     const goblinReady = withEquipped(goblin, TUTORIAL_OFFHAND_SLOT_ID, TUTORIAL_STARTER_DAGGER_ID)
     expect(tutorialHudHint(db, goblinReady)?.label).toBe('Fight a cow in the pasture')
+    expect(tutorialHudHint(db, goblinReady)?.spotlight).toBe('pasture')
+    expect(tutorialHudHint(db, goblinReady)?.spotlight).not.toBe('shield')
+
+    const noDagger = {
+      ...goblin,
+      inventory: goblin.inventory.filter((stack) => stack.itemId !== TUTORIAL_STARTER_DAGGER_ID),
+    }
+    expect(tutorialHudHint(db, noDagger)?.label).toBe('Fight a cow in the pasture')
+    expect(tutorialHudHint(db, noDagger)?.spotlight).not.toBe('shield')
 
     const human = withEquipped(combatStepSave('RACE-0001'), TUTORIAL_WEAPON_SLOT_ID, TUTORIAL_STARTER_SWORD_ID)
     expect(tutorialHudHint(db, human)?.label).toBe('Equip your shield')
+    expect(tutorialHudHint(db, human)?.spotlight).toBe('shield')
     const humanReady = withEquipped(human, TUTORIAL_OFFHAND_SLOT_ID, TUTORIAL_STARTER_SHIELD_ID)
     expect(tutorialHudHint(db, humanReady)?.label).toBe('Fight a cow in the pasture')
+  })
+
+  it('HUD potato count sums every bag stack', () => {
+    const save = {
+      ...activeTutorial(),
+      inventory: [
+        ...activeTutorial().inventory.filter((stack) => stack.itemId !== TUTORIAL_POTATO_ITEM_ID),
+        { itemId: TUTORIAL_POTATO_ITEM_ID, quantity: 2 },
+        { itemId: TUTORIAL_POTATO_ITEM_ID, quantity: 3 },
+      ],
+    }
+    expect(tutorialHudHint(db, save)?.label).toBe('Gather potatoes 5/5')
   })
 
   it('first five potato gathers give exactly one potato and no other drop', () => {
@@ -466,7 +511,7 @@ describe('mandatory Getting Started tutorial', () => {
     expect(empty.dialogueFlags).toContain(TUTORIAL_FOOD_GRANT_FLAG)
     expect(stackQty(empty, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
 
-    const finished = applyTutorialCowKill(db, combatStepSave(), TUTORIAL_COW_ENEMY_ID)
+    const finished = finishCowKill(combatStepSave())
     expect(finished.completed).toBe(true)
     const afterWin = applyCombatDefeat(db, withoutFood(finished.save), NOW)
     expect(afterWin.dialogueFlags).not.toContain(TUTORIAL_FOOD_GRANT_FLAG)
@@ -686,6 +731,7 @@ describe('mandatory Getting Started tutorial', () => {
     expect(save.equipment.slots[TUTORIAL_OFFHAND_SLOT_ID]?.itemId).toBe(TUTORIAL_STARTER_DAGGER_ID)
     expect(isTutorialShieldEquipped(save)).toBe(true)
     expect(tutorialHudHint(db, save)?.label).not.toBe('Equip your shield')
+    expect(tutorialHudHint(db, save)?.spotlight).not.toBe('shield')
 
     const sword = equipItemFromInventory(db, save, TUTORIAL_STARTER_SWORD_ID)
     expect(sword.ok).toBe(true)
@@ -789,7 +835,7 @@ describe('mandatory Getting Started tutorial', () => {
   })
 
   it('cow win line DNODE-0026 leads to farewell', () => {
-    const killed = applyTutorialCowKill(db, combatStepSave(), TUTORIAL_COW_ENEMY_ID)
+    const killed = finishCowKill(combatStepSave())
     expect(killed.completed).toBe(true)
     expect(killed.save.dialogueFlags).toContain(TUTORIAL_FAREWELL_FLAG)
     expect(tutorialAutoDialogueId(killed.save)).toBe('DLG-0006')
