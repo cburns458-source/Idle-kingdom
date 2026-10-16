@@ -24,7 +24,7 @@ void main() {
     final equipment = db.equipment.singleWhere((row) => row.equipmentId == 'EQP-0067');
     final shop = getShop(db, 'SHP-0003')!;
     expect(item.raw['Base Sell Value'], 157);
-    expect(item.raw['Description'], 'Equipped spells are 20% stronger.');
+    expect(item.raw['Description'], 'A tome that makes equipped spells 20% stronger.');
     expect(equipment.hpBonus, isNull);
     expect(equipment.damageReduction, isNull);
     expect(equipment.capabilitiesEffects, contains('spell_power_pct=20'));

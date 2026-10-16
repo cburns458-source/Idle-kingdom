@@ -241,7 +241,7 @@ def main() -> None:
             "Fishing Enchantment",
             "Eligible fishing tool",
             "+5% Fishing action time reduction",
-            "Enchanting Tablet; Essence; Raw Eel",
+            "Enchanting Tablet; Essence; Eel",
         ),
         ench(
             "ENCH-0017",
