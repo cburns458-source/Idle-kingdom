@@ -3,6 +3,7 @@ import 'package:ik_rules/ik_rules.dart';
 
 import 'cloud_save.dart';
 import 'fake_exchange.dart';
+import 'feedback.dart';
 import 'guild_rules.dart';
 import 'market.dart';
 import 'remote.dart';
@@ -1391,6 +1392,9 @@ class FakeTransport implements RemoteTransport {
         }
         return _invokeGame(body);
       }
+      if (function == remoteSubmitFeedbackFunction) {
+        return _invokeSubmitFeedback(body);
+      }
       if (function != remoteSendChatFunction) {
         return RemoteInvokeResult.failed('No such function: $function');
       }
@@ -2115,6 +2119,141 @@ class FakeTransport implements RemoteTransport {
     return RemoteInvokeResult.ok(<String, Object?>{'blocked_user_ids': ids});
   }
 
+  RemoteInvokeResult _invokeSubmitFeedback(RemoteRow body) {
+    final sender = _current;
+    if (sender == null) return const RemoteInvokeResult.failed(feedbackSignInRequired);
+    final kind = '${body['kind'] ?? ''}';
+    final title = '${body['title'] ?? ''}';
+    final details = '${body['body'] ?? ''}';
+    final target = body['targetUsername'] is String ? body['targetUsername'] as String : null;
+    final request = FeedbackRequest(
+      kind: kind,
+      title: title,
+      body: details,
+      targetUsername: target,
+      reportReason: body['reportReason'] is String ? body['reportReason'] as String : null,
+    );
+    final refusal = feedbackRequestError(request);
+    if (refusal != null) {
+      return RemoteInvokeResult.ok(<String, Object?>{'error': refusal});
+    }
+
+    final now = _clockMs();
+    final coolRows = _socialRows('chat_cooldowns');
+    num? lastMs;
+    for (final row in coolRows) {
+      if (row['user_id'] == sender.userId && row['channel_key'] == feedbackCooldownChannelKey) {
+        lastMs = DateTime.tryParse('${row['last_sent_at'] ?? ''}')?.millisecondsSinceEpoch;
+      }
+    }
+    if (lastMs != null && now - lastMs < feedbackCooldownMs) {
+      return RemoteInvokeResult.ok(<String, Object?>{
+        'error': feedbackCooldownMessage,
+        'retryAfterSeconds': ((lastMs + feedbackCooldownMs - now) / 1000).ceil(),
+        'code': feedbackCodeCooldown,
+      });
+    }
+
+    final rows = tables.putIfAbsent(RemoteTables.playerFeedback, () => <RemoteRow>[]);
+    final cutoff = now - feedbackDailyWindowMs;
+    final recent = <RemoteRow>[
+      for (final row in rows)
+        if (row['user_id'] == sender.userId)
+          if ((DateTime.tryParse('${row['created_at'] ?? ''}')?.millisecondsSinceEpoch ?? 0) >
+              cutoff)
+            row,
+    ];
+    if (recent.length >= feedbackDailyCap) {
+      final oldest = recent
+          .map(
+            (row) => DateTime.tryParse('${row['created_at'] ?? ''}')?.millisecondsSinceEpoch ?? now,
+          )
+          .reduce((a, b) => a < b ? a : b);
+      return RemoteInvokeResult.ok(<String, Object?>{
+        'error': feedbackDailyCapMessage,
+        'retryAfterSeconds': ((oldest + feedbackDailyWindowMs - now) / 1000).ceil(),
+        'code': feedbackCodeDailyCap,
+      });
+    }
+
+    final hash = feedbackBodyHashInput(kind, title, details, target);
+    for (final row in recent) {
+      if (row['body_hash'] == hash) {
+        return RemoteInvokeResult.ok(<String, Object?>{'id': row['id']});
+      }
+    }
+
+    if (kind == feedbackKindPlayer) {
+      final reported = _reportRpc(<String, Object?>{
+        'p_target': _feedbackTargetUserId(target ?? ''),
+        'p_reason': request.reportReason ?? reportReasonOther,
+      });
+      final data = reported.data;
+      if (data != null && data['ok'] == false) {
+        return RemoteInvokeResult.ok(<String, Object?>{
+          'error': data['reason'] ?? 'That player was not found.',
+        });
+      }
+      if (!reported.ok) {
+        return RemoteInvokeResult.ok(<String, Object?>{
+          'error': reported.reason ?? feedbackSendFailed,
+        });
+      }
+    }
+
+    final minuteCutoff = now - const Duration(minutes: 1).inMilliseconds;
+    var postedThisMinute = 0;
+    for (final row in rows) {
+      if (row['discord_status'] != 'posted') continue;
+      final at = DateTime.tryParse('${row['created_at'] ?? ''}');
+      if (at != null && at.millisecondsSinceEpoch > minuteCutoff) postedThisMinute += 1;
+    }
+    final queued = postedThisMinute >= feedbackGlobalPerMinute;
+
+    final id = _nextId('fbk');
+    rows.add(<String, Object?>{
+      'id': id,
+      'user_id': sender.userId,
+      'username': _publicChatUsername(sender),
+      'kind': kind,
+      'category': kind == feedbackKindPlayer ? (request.reportReason ?? 'player') : kind,
+      'title': title.trim(),
+      'body': details.trim(),
+      'context': body['context'] is Map ? body['context'] : const <String, Object?>{},
+      'body_hash': hash,
+      'status': 'new',
+      'discord_status': queued ? 'pending' : 'posted',
+      'created_at': _clockIso(),
+    });
+    final at = coolRows.indexWhere(
+      (row) => row['user_id'] == sender.userId && row['channel_key'] == feedbackCooldownChannelKey,
+    );
+    final cool = <String, Object?>{
+      'user_id': sender.userId,
+      'channel_key': feedbackCooldownChannelKey,
+      'last_sent_at': _clockIso(),
+    };
+    if (at < 0) {
+      coolRows.add(cool);
+    } else {
+      coolRows[at] = cool;
+    }
+    return RemoteInvokeResult.ok(<String, Object?>{'id': id});
+  }
+
+  String _feedbackTargetUserId(String target) {
+    if (target.isEmpty) return '';
+    for (final row in tables[RemoteTables.profiles]!) {
+      final name = row['username'];
+      if (name is String &&
+          name.toLowerCase() == target.toLowerCase() &&
+          row['user_id'] is String) {
+        return row['user_id'] as String;
+      }
+    }
+    return target;
+  }
+
   RemoteInvokeResult _reportRpc(RemoteRow args) {
     final me = _current?.userId;
     if (me == null) return const RemoteInvokeResult.failed('Sign in first.');
@@ -2362,6 +2501,7 @@ class _FakeProject {
     RemoteTables.friendships: <RemoteRow>[],
     RemoteTables.pvpSnapshots: <RemoteRow>[],
     RemoteTables.rankedPvpResults: <RemoteRow>[],
+    RemoteTables.playerFeedback: <RemoteRow>[],
   };
 
   final Map<String, FakeAccount> accounts = <String, FakeAccount>{};

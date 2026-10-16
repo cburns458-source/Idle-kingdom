@@ -10,6 +10,7 @@ import '../session/multiplayer_controller.dart';
 import '../session/pick_local_png.dart';
 import '../theme.dart';
 import 'account_panel.dart';
+import 'feedback_sheet.dart';
 import 'page_header.dart';
 import 'player_sprite.dart';
 
@@ -75,6 +76,15 @@ class _MenuViewState extends State<MenuView> {
       _artNotice = _playerArtReset;
       _artError = false;
     });
+  }
+
+  Future<void> _openFeedback(BuildContext context) async {
+    final sent = await showFeedbackSheet(
+      context: context,
+      gameArea: controller.save.currentLocationId,
+      onSubmit: widget.multiplayer.submitFeedback,
+    );
+    if (sent == true && mounted) controller.announce('Sent');
   }
 
   @override
@@ -146,6 +156,29 @@ class _MenuViewState extends State<MenuView> {
               ),
             ),
             const SizedBox(height: 10),
+            ListenableBuilder(
+              listenable: widget.multiplayer,
+              builder: (context, _) {
+                if (!widget.multiplayer.isSignedIn) return const SizedBox.shrink();
+                return Column(
+                  children: [
+                    _SettingsFold(
+                      heading: 'Feedback',
+                      children: [
+                        GamePanel(
+                          framed: true,
+                          child: GameButton(
+                            label: 'Report / Suggestion',
+                            onPressed: () => _openFeedback(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                );
+              },
+            ),
             _SettingsFold(
               heading: 'UI',
               children: [

@@ -8,6 +8,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'cloud_save.dart';
 import 'config.dart';
 import 'dev_commands.dart';
+import 'feedback.dart';
 import 'guild_rules.dart';
 import 'local_backend.dart';
 import 'market.dart';
@@ -1296,6 +1297,15 @@ class RemoteMultiplayerService implements MultiplayerService {
     }
     await _local.reportPlayer(targetUserId, stored);
     return const ActionResult.ok();
+  }
+
+  @override
+  Future<FeedbackSubmitResult> submitFeedback(FeedbackRequest request) async {
+    if (!isSignedIn) return const FeedbackSubmitResult.failed(feedbackSignInRequired);
+    final refusal = feedbackRequestError(request);
+    if (refusal != null) return FeedbackSubmitResult.failed(refusal);
+    final result = await transport.invoke(remoteSubmitFeedbackFunction, request.toInvokeBody());
+    return feedbackResultFromInvoke(result.data, result.ok ? null : result.reason);
   }
 
   @override

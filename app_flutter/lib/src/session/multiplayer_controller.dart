@@ -1191,6 +1191,10 @@ class MultiplayerController extends ChangeNotifier {
     });
   }
 
+  Future<FeedbackSubmitResult> submitFeedback(FeedbackRequest request) {
+    return service.submitFeedback(request);
+  }
+
   static String _blocksUploadedKey(String userId) => 'idle-kingdoms.client.blocks-uploaded.$userId';
 
   /// Uploads this device's ignores once, then merges the account's block list.

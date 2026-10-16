@@ -206,6 +206,14 @@ Checklist, in order:
    Status: applied on test Oct 16 2026 (file `20261016190000`, MCP
    `20261016122648` / `guild_achievements_skip_rising_count`); live pending.
 
+10. [ ] `20261016200000_adm04_player_feedback.sql` (ADM-04). `player_feedback`
+    table, RLS on, no client writes, optional self-select, revoke from anon.
+    Apply to test with this PR; live only after Conor merges `test-launch`
+    into `main`. Do not apply to live before the `submit-feedback` function
+    is on `restoria-idlerpg`.
+    Status: applied on test Oct 16 2026 (MCP `adm04_player_feedback` plus
+    `adm04_player_feedback_revoke_writes`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.
@@ -282,6 +290,18 @@ per environment.
 
 `CLOUDFLARE_API_TOKEN` may stay a repository secret if both environments
 should share it.
+
+### Supabase function secrets (test project)
+
+Set these on the Restoria **test** project only (Edge Functions → Secrets).
+Never put the values in the client, the repo, or GitHub. Conor sets them.
+
+| Secret | Purpose |
+| --- | --- |
+| `FEEDBACK_DISCORD_WEBHOOK_URL` | Staff-only Discord forum webhook for ADM-04 submit-feedback |
+| `FEEDBACK_DISCORD_TAG_IDS` | JSON map of forum tag ids, e.g. `{"bug":"…","idea":"…","report":"…"}`. Optional; missing keys are skipped. |
+
+Live gets its own webhook later, after Conor merges `test-launch` into `main`.
 
 ## Token scopes
 

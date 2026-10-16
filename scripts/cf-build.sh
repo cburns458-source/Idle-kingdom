@@ -39,6 +39,18 @@ SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\n'*}"
 SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY%%$'\r'*}"
 SUPABASE_ANON_KEY="$(printf '%s' "$SUPABASE_ANON_KEY" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
 
+APP_BUILD="${APP_BUILD%%$'\n'*}"
+APP_BUILD="${APP_BUILD%%$'\r'*}"
+APP_BUILD="$(printf '%s' "${APP_BUILD:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+APP_ENV="${APP_ENV%%$'\n'*}"
+APP_ENV="${APP_ENV%%$'\r'*}"
+APP_ENV="$(printf '%s' "${APP_ENV:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+if [[ -z "$APP_BUILD" && -d "$ROOT/.git" ]]; then
+  APP_BUILD="$(git -C "$ROOT" rev-parse --short=12 HEAD 2>/dev/null || true)"
+fi
+APP_BUILD="${APP_BUILD:-dev}"
+APP_ENV="${APP_ENV:-local}"
+
 if [[ -n "${SUPABASE_URL:-}" && -n "${SUPABASE_ANON_KEY:-}" ]]; then
   if ! printf '%s' "$SUPABASE_URL" | grep -Eq '^https://[a-z0-9]{20}\.supabase\.co$'; then
     echo "SUPABASE_URL must be exactly https://<20-char-ref>.supabase.co (no path, slash, quotes, or spaces)." >&2
@@ -48,10 +60,14 @@ if [[ -n "${SUPABASE_URL:-}" && -n "${SUPABASE_ANON_KEY:-}" ]]; then
   fi
   flutter build web --release --pwa-strategy=none \
     --dart-define="SUPABASE_URL=$SUPABASE_URL" \
-    --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY"
+    --dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" \
+    --dart-define="APP_BUILD=$APP_BUILD" \
+    --dart-define="APP_ENV=$APP_ENV"
 else
   echo "SUPABASE_URL and SUPABASE_ANON_KEY are unset; building a local-only preview bundle." >&2
-  flutter build web --release --pwa-strategy=none
+  flutter build web --release --pwa-strategy=none \
+    --dart-define="APP_BUILD=$APP_BUILD" \
+    --dart-define="APP_ENV=$APP_ENV"
 fi
 
 if [[ ! -f "$OUT/index.html" ]]; then
