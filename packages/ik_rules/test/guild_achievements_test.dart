@@ -21,11 +21,11 @@ void main() {
     ]);
     expect(guildAchievements.map((row) => row.name).toList(), <String>[
       'Foundations laid',
-      'Counting room raised',
-      'Boxing ring raised',
-      'Indoor garden raised',
-      'Arcana station raised',
-      'Monster cage raised',
+      'Raised walls',
+      'Under one roof',
+      'Banners high',
+      'Arcane corner',
+      'A hall fit for kings',
       'Deep pockets',
       'Deeper pockets',
       'Stocked vault',

@@ -73,7 +73,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   {
     id: 'gach_foundations',
     name: 'Foundations laid',
-    description: 'Finish the first hall tier.',
+    description: 'Build the first tier of the guild hall.',
     rewardKind: 'emblem',
     rewardId: 'emblem_foundations',
     kind: 'hall_tier',
@@ -82,8 +82,8 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   },
   {
     id: 'gach_hall_2',
-    name: 'Counting room raised',
-    description: 'Finish the counting room.',
+    name: 'Raised walls',
+    description: 'Build tier 2 of the guild hall.',
     rewardKind: 'emblem',
     rewardId: 'emblem_counting',
     kind: 'hall_tier',
@@ -92,8 +92,8 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   },
   {
     id: 'gach_hall_3',
-    name: 'Boxing ring raised',
-    description: 'Finish the boxing ring.',
+    name: 'Under one roof',
+    description: 'Build tier 3 of the guild hall.',
     rewardKind: 'emblem',
     rewardId: 'emblem_boxing',
     kind: 'hall_tier',
@@ -102,8 +102,8 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   },
   {
     id: 'gach_hall_4',
-    name: 'Indoor garden raised',
-    description: 'Finish the indoor garden.',
+    name: 'Banners high',
+    description: 'Build tier 4 of the guild hall.',
     rewardKind: 'emblem',
     rewardId: 'emblem_garden',
     kind: 'hall_tier',
@@ -112,8 +112,8 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   },
   {
     id: 'gach_hall_arcana',
-    name: 'Arcana station raised',
-    description: 'Finish the arcana station.',
+    name: 'Arcane corner',
+    description: 'Build the Arcana station in the guild hall.',
     rewardKind: 'emblem',
     rewardId: 'emblem_arcana',
     kind: 'hall_tier',
@@ -122,8 +122,8 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   },
   {
     id: 'gach_hall_5',
-    name: 'Monster cage raised',
-    description: 'Finish the monster cage. One million gold chipped in.',
+    name: 'A hall fit for kings',
+    description: 'Build tier 5 of the guild hall.',
     rewardKind: 'emblem',
     rewardId: 'emblem_cage',
     kind: 'hall_tier',
@@ -133,7 +133,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   {
     id: 'gach_gold_100k',
     name: 'Deep pockets',
-    description: 'Chip 100,000 gold into the hall.',
+    description: 'Chip in 100,000 gold toward the guild hall.',
     rewardKind: 'emblem',
     rewardId: 'emblem_pockets',
     kind: 'gold',
@@ -142,7 +142,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   {
     id: 'gach_gold_500k',
     name: 'Deeper pockets',
-    description: 'Chip 500,000 gold into the hall.',
+    description: 'Chip in 500,000 gold toward the guild hall.',
     rewardKind: 'emblem',
     rewardId: 'emblem_deeper_pockets',
     kind: 'gold',
@@ -151,7 +151,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   {
     id: 'gach_materials',
     name: 'Stocked vault',
-    description: 'Spend 100,000 materials building hall tiers.',
+    description: 'Use 100,000 materials building the guild hall.',
     rewardKind: 'border',
     rewardId: 'border_vault',
     kind: 'materials',
@@ -160,7 +160,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   {
     id: 'gach_donors_10',
     name: 'Many hands',
-    description: 'Ten distinct members donate gold or hall materials.',
+    description: 'Have 10 different members chip in.',
     rewardKind: 'border',
     rewardId: 'border_hands',
     kind: 'donors',
@@ -169,7 +169,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   {
     id: 'gach_donors_25',
     name: 'More hands',
-    description: 'Twenty-five distinct members donate gold or hall materials.',
+    description: 'Have 25 different members chip in.',
     rewardKind: 'border',
     rewardId: 'border_more_hands',
     kind: 'donors',
@@ -178,7 +178,7 @@ export const GUILD_ACHIEVEMENTS: readonly GuildAchievementDef[] = [
   {
     id: 'gach_rising_strength',
     name: 'Rising strength',
-    description: 'Twenty-five members reach total level 500.',
+    description: 'Have 25 members reach total level 500.',
     rewardKind: 'border',
     rewardId: 'border_strength',
     kind: 'members_level',
