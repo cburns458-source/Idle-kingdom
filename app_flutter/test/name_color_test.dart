@@ -171,7 +171,7 @@ void main() {
     );
     await net.selectChatTab(ChatTab.global, rival.currentLocationId);
     await tester.pumpAndSettle();
-    final name = tester.widget<Text>(find.text('Vari: '));
+    final name = tester.widget<Text>(find.text('The Undying Vari: '));
     expect(name.style?.color, const Color(0xFFFFAA33));
   });
 

@@ -53,8 +53,32 @@ describe('chatTitleFromSavePayload', () => {
     save.cosmetics.unlocked.push('COS-0013')
     save.cosmetics.equipped[TITLE_COSMETIC_SLOT_ID] = 'COS-0013'
     expect(edgeChatTitleFromSavePayload(save, rawDatabase)).toBe('Oruvani')
+    expect(edgeChatTitleFromSavePayload(save, rawDatabase)).not.toBe('Sir')
     const starter = { ...createNewSave(launch), title: 'Sir' }
     starter.cosmetics.equipped[TITLE_COSMETIC_SLOT_ID] = STARTER_TITLE_COSMETIC_ID
     expect(edgeChatTitleFromSavePayload(starter, rawDatabase)).toBe('The Undying')
+    expect(edgeChatTitleFromSavePayload(starter, rawDatabase)).not.toBe('Sir')
+  })
+
+  it('resolves every prefix faith title (cosmetic_faith_*_title) from the catalog', () => {
+    const faithTitles = [
+      { cosmeticId: 'COS-0013', text: 'Oruvani', key: 'cosmetic_faith_vaelithra_title' },
+      { cosmeticId: 'COS-0014', text: 'Khareth', key: 'cosmetic_faith_khavessa_title' },
+      { cosmeticId: 'COS-0015', text: 'Nymorathen', key: 'cosmetic_faith_nymorai_title' },
+      { cosmeticId: 'COS-0016', text: 'Drazhari', key: 'cosmetic_faith_drazhkar_title' },
+      { cosmeticId: 'COS-0017', text: 'Veyrathel', key: 'cosmetic_faith_veyrathi_title' },
+      { cosmeticId: 'COS-0018', text: 'Korvathi', key: 'cosmetic_faith_korvethan_title' },
+      { cosmeticId: 'COS-0019', text: 'Elyndri', key: 'cosmetic_faith_elyndara_title' },
+    ] as const
+    for (const { cosmeticId, text, key } of faithTitles) {
+      const cosmetic = launch.Cosmetics.find((row) => row['Cosmetic ID'] === cosmeticId)
+      expect(cosmetic?.['Title Placement'], cosmeticId).toBe('prefix')
+      const item = launch.Items.find((row) => row['Item ID'] === cosmetic?.['Item ID'])
+      expect(item?.['Internal Key'], cosmeticId).toBe(key)
+      const save = createNewSave(launch)
+      save.cosmetics.unlocked.push(cosmeticId)
+      save.cosmetics.equipped[TITLE_COSMETIC_SLOT_ID] = cosmeticId
+      expect(edgeChatTitleFromSavePayload({ ...save, title: 'Sir' }, rawDatabase)).toBe(text)
+    }
   })
 })
