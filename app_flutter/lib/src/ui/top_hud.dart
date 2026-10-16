@@ -344,7 +344,7 @@ class _HealthReadout extends StatelessWidget {
                   gradient: Meters.hudHp,
                   height: 7,
                   trackColor: Palette.ink,
-                  borderColor: const Color(0x599A7B32),
+                  borderColor: UiChrome.of(context).edge,
                 ),
               ),
             ),

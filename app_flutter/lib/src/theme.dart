@@ -334,14 +334,17 @@ class _GameButtonState extends State<GameButton> {
     final chrome = UiChrome.of(context);
     final confirm = widget.tone == GameButtonTone.confirm;
     final primary = widget.tone == GameButtonTone.primary;
+    final disabled = widget.onPressed == null && !widget.waiting;
     final down = _pressed && widget.onPressed != null && !widget.waiting;
     final gradient = confirm
-        ? (down || widget.selected ? Palette.confirmPressed : Palette.confirmFill)
+        ? (disabled
+              ? Palette.confirmDisabledFill
+              : (down || widget.selected ? Palette.confirmPressed : Palette.confirmFill))
         : primary
         ? (down || widget.selected ? chrome.primaryPressed : chrome.primaryFill)
         : (down || widget.selected ? chrome.secondaryPressed : chrome.secondaryFill);
     final labelColor = confirm
-        ? Palette.confirmLabel
+        ? (disabled ? Palette.confirmDisabledLabel : Palette.confirmLabel)
         : primary
         ? chrome.primaryLabel
         : chrome.secondaryLabel;
@@ -351,7 +354,7 @@ class _GameButtonState extends State<GameButton> {
       label: widget.semanticLabel ?? widget.label,
       child: ExcludeSemantics(
         child: Opacity(
-          opacity: widget.waiting || widget.onPressed != null ? 1 : 0.55,
+          opacity: confirm || widget.waiting || widget.onPressed != null ? 1 : 0.55,
           child: PixelInkPlate(
             onTap: widget.waiting ? null : widget.onPressed,
             onHighlightChanged: (value) {
@@ -360,7 +363,7 @@ class _GameButtonState extends State<GameButton> {
             },
             selected: widget.selected,
             step: widget.dense ? PixelChrome.stepTight : PixelChrome.step,
-            strokeWidth: widget.selected ? 2.5 : 2,
+            strokeWidth: widget.selected ? 3 : 2,
             shadow: false,
             material: PixelPlateMaterial.grain,
             gradient: gradient,
@@ -1196,6 +1199,36 @@ class _PanelForeground extends InheritedWidget {
 
   @override
   bool updateShouldNotify(_PanelForeground oldWidget) => false;
+}
+
+/// Gold copy that stays readable: [Palette.goldInk] on tan plates (dark ink),
+/// [Palette.gold] on dark boards (light parchment).
+Color goldForeground(BuildContext context) {
+  final inherited = DefaultTextStyle.of(context).style.color;
+  final onLightPanel = inherited != null && inherited.computeLuminance() < 0.45;
+  return onLightPanel ? Palette.goldInk : Palette.gold;
+}
+
+/// Gold heading / amount copy that picks [goldForeground] from its own surface.
+class GoldCopy extends StatelessWidget {
+  const GoldCopy(this.text, {super.key, this.style, this.maxLines, this.overflow, this.textAlign});
+
+  final String text;
+  final TextStyle? style;
+  final int? maxLines;
+  final TextOverflow? overflow;
+  final TextAlign? textAlign;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: maxLines,
+      overflow: overflow,
+      textAlign: textAlign,
+      style: (style ?? const TextStyle()).copyWith(color: goldForeground(context)),
+    );
+  }
 }
 
 /// Small muted caption, the equivalent of the CSS `.muted.tiny` pairing.

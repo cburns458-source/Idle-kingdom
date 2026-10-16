@@ -516,22 +516,20 @@ class _ShopPanelState extends State<ShopPanel> {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: GoldCopy(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: GameFont.l,
-                    fontWeight: FontWeight.w400,
-                    color: Palette.gold,
-                  ),
+                  style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
               if (plaza)
-                Text(
-                  key: const Key('plaza-points-balance'),
-                  '${formatThousands(plazaPointsOf(save))} plaza points',
-                  style: const TextStyle(color: Palette.currency),
+                Builder(
+                  builder: (context) => Text(
+                    key: const Key('plaza-points-balance'),
+                    '${formatThousands(plazaPointsOf(save))} plaza points',
+                    style: TextStyle(color: goldForeground(context)),
+                  ),
                 )
               else
                 GoldAmount(

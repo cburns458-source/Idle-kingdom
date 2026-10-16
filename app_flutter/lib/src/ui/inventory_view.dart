@@ -662,6 +662,7 @@ class _InventoryViewState extends State<InventoryView> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: GameButton(
+                        key: Key('attack-style-${entry.$1}'),
                         label: entry.$2,
                         selected: style == entry.$1,
                         tone: style == entry.$1 ? GameButtonTone.primary : GameButtonTone.secondary,
@@ -1162,7 +1163,9 @@ class _SortMenu extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: chrome.secondaryFill,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(color: chrome.embossFace),
+          border: Border.all(
+            color: mode != InventorySortMode.group ? chrome.embossFaceSelected : chrome.embossFace,
+          ),
           boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
         ),
         child: const Padding(

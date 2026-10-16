@@ -75,7 +75,8 @@ void main() {
     expect(title.style?.color, isNot(Palette.parchmentText));
 
     final unlock = tester.widget<Text>(find.text('· Leather straps'));
-    expect(unlock.style?.color, Palette.gold);
+    expect(unlock.style?.color, Palette.goldInk);
+    expect(unlock.style?.color, isNot(Palette.gold));
     expect(unlock.style?.color, isNot(chrome.embossFace));
   });
 }

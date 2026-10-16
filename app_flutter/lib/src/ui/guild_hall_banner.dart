@@ -36,7 +36,12 @@ class GuildHallBanner extends StatelessWidget {
       width: size * 1.6,
       height: size,
       child: CustomPaint(
-        painter: _BannerPainter(banner: banner, fill: fill, accent: accent),
+        painter: _BannerPainter(
+          banner: banner,
+          fill: fill,
+          accent: accent,
+          border: UiChrome.of(context).embossFace,
+        ),
       ),
     );
     if (onPressed == null) return flag;
@@ -45,11 +50,17 @@ class GuildHallBanner extends StatelessWidget {
 }
 
 class _BannerPainter extends CustomPainter {
-  _BannerPainter({required this.banner, required this.fill, required this.accent});
+  _BannerPainter({
+    required this.banner,
+    required this.fill,
+    required this.accent,
+    required this.border,
+  });
 
   final GuildBanner banner;
   final Color fill;
   final Color accent;
+  final Color border;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -59,7 +70,7 @@ class _BannerPainter extends CustomPainter {
     final borderId = banner.border;
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = borderId == 'border_strength' ? Palette.gold : accent
+      ..color = borderId == 'border_strength' ? border : accent
       ..strokeWidth = switch (borderId) {
         'border_vault' => 2,
         'border_hands' => 2,
@@ -145,7 +156,8 @@ class _BannerPainter extends CustomPainter {
       old.banner.emblem != banner.emblem ||
       old.banner.border != banner.border ||
       old.fill != fill ||
-      old.accent != accent;
+      old.accent != accent ||
+      old.border != border;
 }
 
 /// Picker for the four engine banner fields. Locked cosmetics stay off the pad.
@@ -270,6 +282,7 @@ class _BannerSheetState extends State<_BannerSheet> {
                           ),
                           fill: Colors.transparent,
                           accent: guildBannerPaletteColor(_banner.accent),
+                          border: UiChrome.of(context).embossFace,
                         ),
                       ),
                     ),
@@ -316,6 +329,7 @@ class _BannerSheetState extends State<_BannerSheet> {
                           ),
                           fill: guildBannerPaletteColor(_banner.background),
                           accent: guildBannerPaletteColor(_banner.accent),
+                          border: UiChrome.of(context).embossFace,
                         ),
                       ),
                     ),

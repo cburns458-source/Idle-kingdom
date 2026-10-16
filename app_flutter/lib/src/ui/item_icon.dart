@@ -60,12 +60,20 @@ class GoldAmount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inherited = style;
+    final color = inherited?.color;
+    final amountColor = (color == null || color == Palette.currency)
+        ? goldForeground(context)
+        : color;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           formatThousands(amount),
-          style: style ?? const TextStyle(fontWeight: FontWeight.w400, color: Palette.currency),
+          style: (inherited ?? const TextStyle(fontWeight: FontWeight.w400)).copyWith(
+            color: amountColor,
+            fontWeight: inherited?.fontWeight ?? FontWeight.w400,
+          ),
         ),
         const SizedBox(width: 4),
         GameImage(goldIconPath(), width: size, height: size),

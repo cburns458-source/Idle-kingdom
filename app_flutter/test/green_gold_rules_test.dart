@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/item_icon.dart';
+import 'package:idle_kingdoms/src/ui/world_map_view.dart';
 
 void main() {
   test('semantic tokens match Vari\'s green/gold rules', () {
@@ -12,10 +13,33 @@ void main() {
     expect(Palette.progress, Palette.skillXp);
     expect(Palette.border, isNot(Palette.gold));
     expect(Palette.edge, isNot(const Color(0x73A7872D)));
+    expect(Palette.goldInk, isNot(Palette.gold));
     expect(PixelChrome.goldFace, Palette.gold);
     expect(PixelChrome.goldHighlight, Palette.goldHighlight);
     expect(PixelChrome.goldShade, Palette.goldShade);
     expect(PixelChrome.wood, Palette.wood);
+  });
+
+  test('gold ink and confirm cream clear 4.5:1 on tan, ash, and green fills', () {
+    expect(contrastRatio(Palette.goldInk, Palette.panelTan), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.goldInk, UiChrome.stone.panel), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.gold, Palette.wood), greaterThanOrEqualTo(4.5));
+    for (final fill in [...Palette.confirmFill.colors, ...Palette.confirmPressed.colors]) {
+      expect(contrastRatio(Palette.confirmLabel, fill), greaterThanOrEqualTo(4.5));
+    }
+  });
+
+  test('you-are-here is a filled marker; selected is a green rim', () {
+    final here = mapNodeMarkerStyle(isHere: true, isSelected: false);
+    final picked = mapNodeMarkerStyle(isHere: false, isSelected: true);
+    final both = mapNodeMarkerStyle(isHere: true, isSelected: true);
+    expect(here.fill, Palette.borderSelected);
+    expect(here.border, isNot(Palette.borderSelected));
+    expect(picked.fill, Palette.parchmentText);
+    expect(picked.border, Palette.borderSelected);
+    expect(both.fill, Palette.borderSelected);
+    expect(both.border, here.border);
+    expect(both.border, isNot(picked.border));
   });
 
   test('wood and stone share selected green and rare gold rims', () {
@@ -108,6 +132,27 @@ void main() {
     expect(plates[1].gradient, Palette.confirmFill);
   });
 
+  testWidgets('disabled confirm is grey on wood and stone, not faded green', (tester) async {
+    for (final chrome in [UiChrome.wood, UiChrome.stone]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: UiChromeScope(
+            chrome: chrome,
+            child: const Scaffold(
+              body: GameButton(label: 'Buy', tone: GameButtonTone.confirm, onPressed: null),
+            ),
+          ),
+        ),
+      );
+      final plate = tester.widget<PixelInkPlate>(find.byType(PixelInkPlate));
+      expect(plate.gradient, Palette.confirmDisabledFill);
+      expect(plate.gradient, isNot(Palette.confirmFill));
+      final label = tester.widget<Text>(find.text('Buy'));
+      expect(label.style?.color, Palette.confirmDisabledLabel);
+    }
+  });
+
   testWidgets('GoldAmount defaults to currency gold', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -117,6 +162,33 @@ void main() {
     );
     final amount = tester.widget<Text>(find.text('12'));
     expect(amount.style?.color, Palette.currency);
+  });
+
+  testWidgets('GoldAmount on a tan panel uses gold ink', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.wood,
+          child: const Scaffold(body: GamePanel(child: GoldAmount(amount: 12))),
+        ),
+      ),
+    );
+    final amount = tester.widget<Text>(find.text('12'));
+    expect(amount.style?.color, Palette.goldInk);
+  });
+
+  testWidgets('GoldCopy on a tan panel uses gold ink', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.wood,
+          child: const Scaffold(body: GamePanel(child: GoldCopy('Shop'))),
+        ),
+      ),
+    );
+    expect(tester.widget<Text>(find.text('Shop')).style?.color, Palette.goldInk);
   });
 
   testWidgets('GamePanel highlight is selected, not rare', (tester) async {

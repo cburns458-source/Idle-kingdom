@@ -357,15 +357,11 @@ class _ArenaPanelState extends State<ArenaPanel> {
           Row(
             children: [
               const Expanded(
-                child: Text(
+                child: GoldCopy(
                   'Arena',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: GameFont.l,
-                    fontWeight: FontWeight.w400,
-                    color: Palette.gold,
-                  ),
+                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
               GoldAmount(

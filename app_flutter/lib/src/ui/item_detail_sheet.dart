@@ -368,13 +368,9 @@ class _EquipmentComparePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const GoldCopy(
             'Compare',
-            style: TextStyle(
-              fontSize: GameFont.m,
-              fontWeight: FontWeight.w400,
-              color: Palette.gold,
-            ),
+            style: TextStyle(fontSize: GameFont.m, fontWeight: FontWeight.w400),
           ),
           const SizedBox(height: 6),
           _CompareItemBlock(
@@ -399,7 +395,7 @@ class _EquipmentComparePanel extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 3),
                 child: Text(
                   note,
-                  style: const TextStyle(fontSize: GameFont.s, color: Palette.gold),
+                  style: TextStyle(fontSize: GameFont.s, color: UiChrome.of(context).panelMuted),
                 ),
               ),
           ],
@@ -444,7 +440,7 @@ class _CompareItemBlock extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 2),
             child: Text(
               '$label: $value',
-              style: TextStyle(fontSize: GameFont.s, color: _lineColor(kind)),
+              style: TextStyle(fontSize: GameFont.s, color: _lineColor(context, kind)),
             ),
           ),
       ],
@@ -452,11 +448,12 @@ class _CompareItemBlock extends StatelessWidget {
   }
 }
 
-Color _lineColor(EquipCompareDeltaKind kind) {
+Color _lineColor(BuildContext context, EquipCompareDeltaKind kind) {
+  final chrome = UiChrome.of(context);
   return switch (kind) {
-    EquipCompareDeltaKind.improved => Palette.softGreen,
+    EquipCompareDeltaKind.improved => Palette.success,
     EquipCompareDeltaKind.reduced => Palette.danger,
-    EquipCompareDeltaKind.unchanged => Palette.muted,
-    EquipCompareDeltaKind.special => Palette.gold,
+    EquipCompareDeltaKind.unchanged => chrome.panelMuted,
+    EquipCompareDeltaKind.special => chrome.panelInk,
   };
 }

@@ -945,7 +945,9 @@ class _QuestMenuLine extends StatelessWidget {
         children: [
           Text(
             step.state == 'done' ? '✓' : '•',
-            style: TextStyle(color: step.state == 'done' ? Palette.softGreen : Palette.gold),
+            style: TextStyle(
+              color: step.state == 'done' ? Palette.success : UiChrome.of(context).panelInk,
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -991,7 +993,7 @@ Future<void> showQuestRewards(
             for (final reward in rewards)
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child: Text('· $reward', style: const TextStyle(color: Palette.gold)),
+                child: Text('· $reward', style: TextStyle(color: goldForeground(context))),
               ),
           const SizedBox(height: 10),
           GameButton(

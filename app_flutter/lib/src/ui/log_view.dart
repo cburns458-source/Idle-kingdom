@@ -154,13 +154,9 @@ class _LogViewState extends State<LogView> {
                 Expanded(child: MutedText(_tab.lead)),
               if (completion.section(_tab.section) case final section?) ...[
                 const SizedBox(width: 8),
-                Text(
+                GoldCopy(
                   section.label,
-                  style: const TextStyle(
-                    fontSize: GameFont.s,
-                    fontWeight: FontWeight.w400,
-                    color: Palette.gold,
-                  ),
+                  style: const TextStyle(fontSize: GameFont.s, fontWeight: FontWeight.w400),
                 ),
               ],
             ],
@@ -392,7 +388,7 @@ class _LogRow extends StatelessWidget {
 
   Widget _body(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final titleColor = _inkColor(highlight ? Palette.gold : chrome.panelInk);
+    final titleColor = _inkColor(highlight ? goldForeground(context) : chrome.panelInk);
     final mutedColor = dimmed ? chrome.panelMuted.withValues(alpha: dimAlpha) : chrome.panelMuted;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -455,7 +451,7 @@ class _QuestJournalRow extends StatelessWidget {
               row.name,
               style: TextStyle(
                 fontWeight: FontWeight.w400,
-                color: row.completed ? Palette.gold : UiChrome.of(context).panelInk,
+                color: row.completed ? goldForeground(context) : UiChrome.of(context).panelInk,
               ),
             ),
             subtitle: MutedText(row.detail),
@@ -549,7 +545,7 @@ class _MiniquestJournalRow extends StatelessWidget {
     final titleColor = row.ready
         ? Palette.success
         : row.completed
-        ? Palette.gold
+        ? goldForeground(context)
         : chrome.panelInk;
     final subtitle = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -676,7 +672,9 @@ class _QuestSortMenu extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: chrome.secondaryFill,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(color: chrome.embossFace),
+          border: Border.all(
+            color: mode != QuestLogSort.content ? chrome.embossFaceSelected : chrome.embossFace,
+          ),
           boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
         ),
         child: const Padding(

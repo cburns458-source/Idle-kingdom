@@ -373,7 +373,7 @@ class _CodexViewState extends State<CodexView> {
                   style: TextStyle(
                     fontSize: GameFont.m,
                     fontWeight: FontWeight.w600,
-                    color: Palette.gold,
+                    color: goldForeground(context),
                   ),
                 ),
               );

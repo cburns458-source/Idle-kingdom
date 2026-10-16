@@ -341,7 +341,7 @@ class _LocationViewState extends State<LocationView> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(color: const Color(0x479A7B32)),
+          border: Border.all(color: UiChrome.of(context).edge),
         ),
         child: ClipRect(
           child: RepaintBoundary(
@@ -1259,7 +1259,7 @@ class _FloatingOptionBand extends StatelessWidget {
           : BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.zero /* pixel step 3 */,
-              border: Border.all(color: const Color(0x479A7B32)),
+              border: Border.all(color: UiChrome.of(context).edge),
             ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

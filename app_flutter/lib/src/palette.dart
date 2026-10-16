@@ -20,10 +20,13 @@ abstract final class Palette {
   static const chatItemLink = Color(0xFF7CC8F0);
 
   /// Mid gold between antique brass and bright jewelry — amounts, rare rims,
-  /// headings on tan plates.
+  /// headings on dark boards.
   static const gold = Color(0xFFA7872D);
   static const goldHighlight = Color(0xFFBFA445);
   static const goldShade = Color(0xFF5A420E);
+
+  /// Gold copy on tan / ash plates. Dark enough for ~4.5:1 on [panelTan].
+  static const goldInk = Color(0xFF4A3608);
 
   /// Outer board / wood chrome.
   static const wood = Color(0xFF2A1C12);
@@ -80,18 +83,28 @@ abstract final class Palette {
   /// Cream label on green confirm buttons.
   static const confirmLabel = Color(0xFFF4FFE8);
 
-  /// Confirm / buy / claim / pay fill. Same green on wood and stone.
+  /// Confirm / buy / claim / pay fill. Darker than [skillXp] so the cream
+  /// label clears ~4.5:1. Same green on wood and stone.
   static const confirmFill = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF3EBE68), Color(0xFF2E8B57)],
+    colors: [Color(0xFF287A4C), Color(0xFF1F5E3B)],
   );
 
   static const confirmPressed = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF2E8B57), Color(0xFF1F5E3B)],
+    colors: [Color(0xFF1F5E3B), Color(0xFF16452B)],
   );
+
+  /// Disabled confirm fill. Neutral grey on wood and stone — not faded green.
+  static const confirmDisabledFill = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF6E6E6E), Color(0xFF4A4A4A)],
+  );
+
+  static const confirmDisabledLabel = Color(0xFFE8E6E0);
 
   /// Hairline wood used for panel edges. Prefer [UiChrome.edge] so stone packs
   /// swap to iron instead of brown.

@@ -835,6 +835,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameButton(
+      key: Key('bazaar-filter-$label'),
       label: label,
       compact: true,
       dense: true,

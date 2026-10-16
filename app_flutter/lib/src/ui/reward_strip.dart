@@ -62,7 +62,7 @@ class _RewardRow extends StatelessWidget {
         for (final levelUp in bundle.xpRewards.where((xp) => xp.leveledUp))
           Text(
             'level ${levelUp.level} ${levelUp.skillName} achieved',
-            style: const TextStyle(fontSize: GameFont.s, color: Palette.gold),
+            style: TextStyle(fontSize: GameFont.s, color: goldForeground(context)),
           ),
       ],
     );

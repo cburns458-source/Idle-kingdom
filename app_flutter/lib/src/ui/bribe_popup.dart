@@ -52,11 +52,11 @@ Future<bool> showBribeConfirmPopup({
             const SizedBox(height: 8),
             Text(
               '${formatThousands(quote.goldCost)} gold',
-              style: const TextStyle(color: Palette.currency),
+              style: TextStyle(color: goldForeground(context)),
             ),
             Text(
               'You have ${formatThousands(quote.goldOwned)} gold',
-              style: const TextStyle(color: Palette.currency),
+              style: TextStyle(color: goldForeground(context)),
             ),
             if (!quote.canAfford) ...[
               const SizedBox(height: 8),

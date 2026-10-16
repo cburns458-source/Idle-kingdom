@@ -437,6 +437,7 @@ void main() {
     expect(find.textContaining('Miniquests'), findsOne);
     expect(find.textContaining('Hide locked'), findsOne);
     expect(find.byTooltip('Sort'), findsOne);
+    expect(_questSortChipBorder(tester), UiChrome.wood.embossFace);
     expect(find.text('Status'), findsNothing);
     expect(find.text('Release'), findsNothing);
 
@@ -458,6 +459,7 @@ void main() {
     await pumpPanel(tester, LogView(controller: again));
     await tester.tap(find.text('Quests'));
     await tester.pump();
+    expect(_questSortChipBorder(tester), Palette.borderSelected);
     await tester.tap(find.byTooltip('Sort'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -470,4 +472,11 @@ void main() {
       isTrue,
     );
   });
+}
+
+Color _questSortChipBorder(WidgetTester tester) {
+  final box = tester.widget<DecoratedBox>(
+    find.descendant(of: find.byTooltip('Sort'), matching: find.byType(DecoratedBox)).first,
+  );
+  return (box.decoration as BoxDecoration).border!.top.color;
 }
