@@ -1,5 +1,5 @@
 -- Forged hall payloads must not move gold_contributed or completed_tiers.
--- Run against a project that has 20261016150000_guild_commit_hall_caught_up_save.
+-- Run against a project that has 20261016160000_guild_hall_paid_off_gold.
 
 \pset pager off
 
@@ -21,6 +21,7 @@ declare
   v_null_debt numeric;
   v_paid_off numeric;
   v_paid_off_null_debt numeric;
+  v_was_paid_off boolean;
 begin
   v_forged := public.guild_hall_apply_save_deltas(
     '{"gold": 500, "inventory": []}'::jsonb,
@@ -236,16 +237,17 @@ begin
     raise exception 'paid-off hall with debt_remaining 0 should become 1M: %', v_paid_off;
   end if;
 
-  -- Paid-off hall with null debt_remaining: the WHERE uses only debt_remaining,
-  -- not debt_paid_off, so this row is skipped and gold_contributed stays 0.
-  -- That is a bug when debt_paid_off is true.
-  if coalesce(null::numeric, 1000000) < 1000000 then
-    v_paid_off_null_debt := greatest(0, least(1000000, 1000000 - coalesce(null::numeric, 1000000)));
-  else
-    v_paid_off_null_debt := 0;
-  end if;
-  if v_paid_off_null_debt <> 0 then
-    raise exception 'paid-off + null debt_remaining migrates as % (expected current formula 0)', v_paid_off_null_debt;
+  -- Paid-off hall with null debt_remaining: 20261016120000 skipped it (WHERE
+  -- never reads debt_paid_off). 20261016160000 sets gold_contributed to 1M.
+  v_was_paid_off := true;
+  v_paid_off_null_debt := case
+    when v_was_paid_off then 1000000
+    when coalesce(null::numeric, 1000000) < 1000000 then
+      greatest(0, least(1000000, 1000000 - coalesce(null::numeric, 1000000)))
+    else 0
+  end;
+  if v_paid_off_null_debt <> 1000000 then
+    raise exception 'paid-off + null debt_remaining should become 1M: %', v_paid_off_null_debt;
   end if;
 end;
 $$;
