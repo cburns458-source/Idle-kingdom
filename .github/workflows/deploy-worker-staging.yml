@@ -23,6 +23,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: 77df1b8f6f00664859462a7a8b4441f5
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      APP_BUILD: ${{ github.sha }}
+      APP_ENV: staging
     steps:
       - uses: actions/checkout@v4
 

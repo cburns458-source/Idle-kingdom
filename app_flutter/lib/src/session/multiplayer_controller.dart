@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:ik_content/ik_content.dart';
@@ -6,8 +7,11 @@ import 'package:ik_net/ik_net.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import 'game_controller.dart';
 import 'hosted_save_adopt.dart';
 import 'loadout_command.dart';
+
+const String needsConnectionReason = GameController.needsConnectionReason;
 
 /// Switches the client does not apply until the server answers.
 ///
@@ -37,7 +41,8 @@ class MultiplayerController extends ChangeNotifier {
     required this.service,
     required this.storage,
     required this.clock,
-    this.cloudUnavailable = false,
+    this.disconnected = false,
+    this.reconnectDelay,
   });
 
   /// The wall clock, for the read cursor a DM tab writes.
@@ -46,8 +51,14 @@ class MultiplayerController extends ChangeNotifier {
   final LoadedDatabase database;
   final MultiplayerService service;
 
-  /// True when this build was given a hosted backend that could not be reached.
-  final bool cloudUnavailable;
+  /// Backoff wait between reconnect syncs. Tests inject an empty wait.
+  final Future<void> Function(int failedAttempt)? reconnectDelay;
+
+  /// True while a signed-in session cannot reach the hosted backend.
+  bool disconnected;
+
+  Timer? _reconnectTimer;
+  int _reconnectAttempt = 0;
 
   /// Where the DM read cursors live, next to the save and the backend document.
   final SaveStorage storage;
@@ -237,8 +248,7 @@ class MultiplayerController extends ChangeNotifier {
   Timer? _accountSaveTimer;
   Timer? _hourTimer;
 
-  /// A named save this device still holds from before accounts owned the save.
-  /// Used once if the account has no playable row yet, then forgotten.
+  /// Leftover device saves are discarded, never imported onto an account.
   PlayerSave? pendingLeftover;
 
   /// Why the account row did not load on resume, when it was not simply empty.
@@ -369,6 +379,7 @@ class MultiplayerController extends ChangeNotifier {
     _alive = false;
     _accountSaveTimer?.cancel();
     _loadoutTimer?.cancel();
+    _reconnectTimer?.cancel();
     stopPolling();
     super.dispose();
   }
@@ -497,7 +508,7 @@ class MultiplayerController extends ChangeNotifier {
   /// Signs out after writing the account save, then drops the character here.
   Future<void> signOut(PlayerSave save) {
     return run(() async {
-      await flushAccountSave(save);
+      await _flushAccountSave(save: save, disconnectOnUnreachable: false);
       await service.clearPresence();
       await service.signOut();
       _clearAccountLocally();
@@ -607,15 +618,7 @@ class MultiplayerController extends ChangeNotifier {
     return hasNamedCharacter(save) && save.raceId != null;
   }
 
-  PlayerSave? _bestLeftover(PlayerSave localHint) {
-    if (isPlayableSave(pendingLeftover)) return pendingLeftover;
-    if (hasNamedCharacter(pendingLeftover)) return pendingLeftover;
-    if (isPlayableSave(localHint)) return localHint;
-    if (hasNamedCharacter(localHint)) return localHint;
-    return null;
-  }
-
-  /// Loads the account row, or promotes a leftover named save onto the account.
+  /// Loads the account row. Leftover device saves are never imported or pushed.
   Future<PlayerSave?> _adoptAccountSave(
     PlayerSave localHint,
     void Function(PlayerSave save, {num? nowMs}) adopt,
@@ -623,10 +626,10 @@ class MultiplayerController extends ChangeNotifier {
     _cloudLoadProblem = null;
     final nowMs = await service.authoritativeNowMs();
     final pulled = await service.pullSave();
+    pendingLeftover = null;
+    onAccountSaveReady?.call();
     if (pulled.ok && hasNamedCharacter(pulled.save)) {
       adopt(pulled.save!, nowMs: nowMs);
-      pendingLeftover = null;
-      onAccountSaveReady?.call();
       return pulled.save;
     }
     if (!pulled.ok &&
@@ -634,16 +637,9 @@ class MultiplayerController extends ChangeNotifier {
         pulled.reason != 'No cloud save for this account yet.') {
       _cloudLoadProblem = pulled.reason;
     }
-    final leftover = _bestLeftover(localHint);
-    if (leftover != null) {
-      if (!identical(leftover, localHint)) adopt(leftover, nowMs: nowMs);
-      if (isPlayableSave(leftover)) {
-        await service.pushSave(db, leftover, force: true);
-      }
-      pendingLeftover = null;
-      onAccountSaveReady?.call();
-      return leftover;
-    }
+    // The live character can still publish ranking after signup. A leftover
+    // device file is not force-pushed onto a new account.
+    if (hasNamedCharacter(localHint)) return localHint;
     return null;
   }
 
@@ -688,6 +684,9 @@ class MultiplayerController extends ChangeNotifier {
     String command, [
     Map<String, Object?> args = const <String, Object?>{},
   ]) {
+    if (disconnected) {
+      return Future<CloudSyncResult>.value(const CloudSyncResult.failed(needsConnectionReason));
+    }
     if (hostedLoadoutCommands.contains(command)) {
       _scheduleLoadoutFlush();
       final live = currentSave?.call();
@@ -731,6 +730,13 @@ class MultiplayerController extends ChangeNotifier {
         }
 
         final result = await _runHostedCommand(outgoing, outgoingArgs);
+        if (!result.ok && _isUnreachable(result.reason)) {
+          _enterDisconnected();
+          if (!done.isCompleted) {
+            done.complete(const CloudSyncResult.failed(needsConnectionReason));
+          }
+          return;
+        }
         final skipAdopt = _queuedCommands > 1 || _loadoutDirty;
         if (result.ok && result.save != null) {
           if (!skipAdopt) _adoptHosted(result.save!, command: outgoing);
@@ -753,6 +759,13 @@ class MultiplayerController extends ChangeNotifier {
         }
         if (!done.isCompleted) done.complete(result);
       } catch (error) {
+        if (_isUnreachable(error.toString())) {
+          _enterDisconnected();
+          if (!done.isCompleted) {
+            done.complete(const CloudSyncResult.failed(needsConnectionReason));
+          }
+          return;
+        }
         final failed = CloudSyncResult.failed(error.toString());
         if (!done.isCompleted) done.complete(failed);
       } finally {
@@ -762,12 +775,125 @@ class MultiplayerController extends ChangeNotifier {
     return done.future;
   }
 
+  bool _isUnreachable(String? reason) => isUnreachableRemoteError(reason);
+
+  /// Marks the session disconnected and starts reconnect syncs.
+  void markDisconnected() => _enterDisconnected();
+
+  void _clearPendingLoadout() {
+    _loadoutTimer?.cancel();
+    _loadoutTimer = null;
+    _loadoutDirty = false;
+    _loadoutRetries = 0;
+  }
+
+  bool _isAuthError(String? reason) => isExpiredAuthError(reason);
+
+  void _enterDisconnected() {
+    _clearPendingLoadout();
+    final was = disconnected;
+    disconnected = true;
+    if (!was) {
+      notifyListeners();
+      _scheduleReconnect();
+    }
+  }
+
+  Future<void> _signOutFromExpiredSession() async {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempt = 0;
+    disconnected = false;
+    _clearPendingLoadout();
+    try {
+      await service.signOut();
+    } on Object {
+      // The session is already dead; still drop the local copy.
+    }
+    _clearAccountLocally();
+    _notice = remoteSignInAgain;
+    notifyListeners();
+  }
+
+  void _stopReconnectWithNotice(String notice) {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempt = 0;
+    disconnected = false;
+    _notice = notice;
+    notifyListeners();
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    if (!_alive || !disconnected) return;
+    final attempt = _reconnectAttempt;
+    _reconnectAttempt += 1;
+    final injected = reconnectDelay;
+    if (injected != null) {
+      unawaited(_reconnectAfter(injected, attempt));
+      return;
+    }
+    final exp = attempt <= 1 ? 0 : attempt - 1;
+    final ms = min(15000, 1000 * (1 << min(exp, 4)));
+    _reconnectTimer = Timer(Duration(milliseconds: ms), () {
+      unawaited(retrySync());
+    });
+  }
+
+  Future<void> _reconnectAfter(Future<void> Function(int failedAttempt) delay, int attempt) async {
+    await delay(attempt <= 0 ? 1 : attempt);
+    if (!_alive || !disconnected) return;
+    await retrySync();
+  }
+
+  /// Pulls the hosted save. On success the live client adopts it and actions resume.
+  Future<bool> retrySync() async {
+    if (!_alive || !disconnected) return !disconnected;
+    try {
+      final result = await service.gameSync(force: true);
+      if (!_alive) return false;
+      if (result.ok && result.save != null) {
+        disconnected = false;
+        _reconnectTimer?.cancel();
+        _reconnectTimer = null;
+        _reconnectAttempt = 0;
+        _clearPendingLoadout();
+        _adoptHosted(result.save!);
+        notifyListeners();
+        return true;
+      }
+      if (_isAuthError(result.reason)) {
+        await _signOutFromExpiredSession();
+        return false;
+      }
+      if (_isUnreachable(result.reason)) {
+        _scheduleReconnect();
+        return false;
+      }
+      _stopReconnectWithNotice(result.reason ?? 'Game function returned no save.');
+      return false;
+    } on Object catch (error) {
+      if (_isAuthError(error.toString())) {
+        await _signOutFromExpiredSession();
+        return false;
+      }
+      if (_isUnreachable(error.toString())) {
+        _scheduleReconnect();
+        return false;
+      }
+      _stopReconnectWithNotice(error.toString());
+      return false;
+    }
+  }
+
   void _scheduleLoadoutFlush({Duration delay = loadoutCoalesceDelay}) {
     if (delay == loadoutCoalesceDelay) _loadoutRetries = 0;
     _loadoutDirty = true;
     _loadoutTimer?.cancel();
     _loadoutTimer = Timer(delay, () {
-      if (!_alive || !_loadoutDirty) return;
+      if (!_alive || !_loadoutDirty || disconnected) return;
       unawaited(submitGameCommand('set_loadout'));
     });
   }
@@ -784,6 +910,8 @@ class MultiplayerController extends ChangeNotifier {
     final result = await _runHostedCommand('set_loadout', loadoutCommandArgs(live));
     if (result.ok) {
       _loadoutRetries = 0;
+    } else if (_isUnreachable(result.reason)) {
+      _enterDisconnected();
     } else {
       await _loadoutFailed(result.reason);
     }
@@ -795,6 +923,10 @@ class MultiplayerController extends ChangeNotifier {
   /// so the same slots go again a little later. Only a real refusal, such as
   /// a piece the server's bag does not hold, reloads the server's gear.
   Future<void> _loadoutFailed(String? reason) async {
+    if (_isUnreachable(reason)) {
+      _enterDisconnected();
+      return;
+    }
     final transient = remoteMissingGameFunction(reason) || reason == remoteUnknownGameCommand;
     if (!transient) {
       _loadoutRetries = 0;
@@ -871,23 +1003,40 @@ class MultiplayerController extends ChangeNotifier {
   /// rewinds the action bar and puts sold items back in the bag.
   Future<void> flushAccountSave([PlayerSave? save]) => _flushAccountSave(save: save);
 
-  Future<void> _flushAccountSave({PlayerSave? save, bool enqueue = true}) async {
+  Future<void> _flushAccountSave({
+    PlayerSave? save,
+    bool enqueue = true,
+    bool disconnectOnUnreachable = true,
+  }) async {
     _accountSaveTimer?.cancel();
     _accountSaveTimer = null;
     final outgoing = save ?? _pendingAccountSave;
     _pendingAccountSave = null;
     if (!isSignedIn || _suppressUploads || !isPlayableSave(outgoing)) return;
+
+    Future<void> send() async {
+      try {
+        final result = await service.pushSave(db, outgoing!, force: false);
+        if (disconnectOnUnreachable && !result.ok && _isUnreachable(result.reason)) {
+          _enterDisconnected();
+        }
+      } on Object catch (error) {
+        if (disconnectOnUnreachable && _isUnreachable(error.toString())) {
+          _enterDisconnected();
+        }
+      }
+    }
+
     if (!enqueue) {
-      await service.pushSave(db, outgoing!, force: false);
+      await send();
       return;
     }
     final done = Completer<void>();
     _commandTail = _commandTail
         .then((_) async {
           if (!isSignedIn || _suppressUploads) return;
-          await service.pushSave(db, outgoing!, force: false);
+          await send();
         })
-        .catchError((Object _) {})
         .whenComplete(done.complete);
     return done.future;
   }
@@ -976,8 +1125,12 @@ class MultiplayerController extends ChangeNotifier {
       await _refresh(save);
       final problem = service.takeReadProblem();
       if (problem != null) {
-        _notice = problem;
-        notifyListeners();
+        if (_isUnreachable(problem)) {
+          _enterDisconnected();
+        } else {
+          _notice = problem;
+          notifyListeners();
+        }
       }
     } on Object catch (error) {
       _notice = unexpectedSocialError(error);
@@ -1189,6 +1342,10 @@ class MultiplayerController extends ChangeNotifier {
       final result = await service.reportPlayer(userId, reason);
       return result.ok ? 'Report sent.' : result.reason;
     });
+  }
+
+  Future<FeedbackSubmitResult> submitFeedback(FeedbackRequest request) {
+    return service.submitFeedback(request);
   }
 
   static String _blocksUploadedKey(String userId) => 'idle-kingdoms.client.blocks-uploaded.$userId';

@@ -24,6 +24,7 @@ void main() {
     addTearDown(net.dispose);
     final save = startedCharacter(database).copyWith(characterName: 'Vari');
     await net.signUp('vari@example.com', 'Vari', 'secret', save, adopt: (save, {nowMs}) {});
+    await net.service.pushSave(database.launch, save);
     net.setNameColorDraft('#FA3');
     await net.publishRanking(save, ignoreDebounce: true);
     await net.selectChatTab(ChatTab.global, save.currentLocationId);
@@ -79,6 +80,7 @@ void main() {
     addTearDown(net.dispose);
     final farm = startedCharacter(database).copyWith(characterName: 'Vari');
     await net.signUp('vari@example.com', 'Vari', 'secret', farm, adopt: (save, {nowMs}) {});
+    await net.service.pushSave(database.launch, farm);
     net.setNameColorDraft('#FA3');
     await net.publishRanking(farm, ignoreDebounce: true);
     await net.selectChatTab(ChatTab.global, farm.currentLocationId);

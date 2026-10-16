@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/session/game_controller.dart';
@@ -243,7 +245,15 @@ void main() {
     final transport = FakeTransport();
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
-    final net = buildRemoteMultiplayer(database, transport: transport);
+    final hold = Completer<void>();
+    addTearDown(() {
+      if (!hold.isCompleted) hold.complete();
+    });
+    final net = buildRemoteMultiplayer(
+      database,
+      transport: transport,
+      reconnectDelay: (_) => hold.future,
+    );
     addTearDown(net.dispose);
     expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
 
@@ -252,7 +262,8 @@ void main() {
         'ClientException: Failed to fetch, uri=https://example.supabase.co/rest/v1/profiles';
     await net.refresh(controller.save);
 
-    expect(net.notice, remoteUnreachable);
+    expect(net.disconnected, isTrue);
+    expect(net.notice, isNull);
   });
 
   testWidgets('a social screen that cannot read says so', (tester) async {

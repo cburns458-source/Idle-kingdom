@@ -288,24 +288,24 @@ void main() {
     expect(find.byKey(const Key('auth-email')), findsOne);
   });
 
-  testWidgets('a local build does not claim the cloud is unavailable', (tester) async {
+  testWidgets('a connected session does not show the reconnecting banner', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     final net = buildMultiplayer(database);
     addTearDown(controller.dispose);
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net);
 
-    expect(find.text('Cloud unavailable — progress is not syncing.'), findsNothing);
+    expect(find.text(reconnectingBanner), findsNothing);
   });
 
-  testWidgets('a hosted backend that cannot be reached shows a banner', (tester) async {
+  testWidgets('a disconnected session shows the reconnecting banner', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
-    final net = buildMultiplayer(database, cloudUnavailable: true);
+    final net = buildMultiplayer(database, disconnected: true);
     addTearDown(controller.dispose);
     addTearDown(net.dispose);
     await pumpShell(tester, controller, multiplayer: net);
 
-    expect(find.text('Cloud unavailable — progress is not syncing.'), findsOne);
+    expect(find.text(reconnectingBanner), findsOne);
   });
 
   testWidgets('a full bag while crafting shows a pause toast', (tester) async {

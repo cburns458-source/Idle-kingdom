@@ -293,6 +293,7 @@ void main() {
     expect(controller.recentRewards.single.id, 'kept');
 
     expect(controller.travelTo('LOC-0001', mainMapId), isTrue);
+    expect(controller.save.currentLocationId, 'LOC-0001');
     expect(controller.recentRewards.single.id, 'kept');
   });
 

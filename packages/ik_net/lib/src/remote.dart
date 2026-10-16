@@ -44,6 +44,7 @@ class RemoteTables {
   static const String friendships = 'friendships';
   static const String pvpSnapshots = 'pvp_snapshots';
   static const String rankedPvpResults = 'ranked_pvp_results';
+  static const String playerFeedback = 'player_feedback';
 }
 
 /// Postgres RPCs from migration 026 that signed-in clients may call.
@@ -119,6 +120,9 @@ String? reportReasonForStorage(String raw) {
 
 /// The edge function that writes chat, since a client may not insert directly.
 const String remoteSendChatFunction = 'send-chat';
+
+/// ADM-04: signed-in reports and suggestions. The webhook URL never leaves the function.
+const String remoteSubmitFeedbackFunction = 'submit-feedback';
 
 /// The Bazaar exchange. Reads and writes both, since neither its tables nor the
 /// routines behind them are reachable by a signed-in client.

@@ -8,6 +8,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 import 'cloud_save.dart';
 import 'config.dart';
 import 'dev_commands.dart';
+import 'feedback.dart';
 import 'guild_rules.dart';
 import 'local_backend.dart';
 import 'market.dart';
@@ -47,6 +48,7 @@ class RemoteMultiplayerService implements MultiplayerService {
        ),
        _sessions = SessionStore(storage),
        _local = LocalMultiplayerService(storage: storage, ports: ports) {
+    _discardLocalSession();
     _guilds = RemoteGuildBackend(
       transport: this.transport,
       sessionOf: () => session,
@@ -203,11 +205,29 @@ class RemoteMultiplayerService implements MultiplayerService {
 
   num _nowMs() => _local.backend.ports.nowMs();
 
-  @override
-  MultiplayerSession? get session => _sessions.read();
+  /// A leftover `local:` token is from an old offline build sharing this key.
+  /// It is never a hosted session, so it must not count as signed in.
+  static bool _isLocalSessionToken(String token) => token.startsWith('local:');
+
+  void _discardLocalSession() {
+    final current = _sessions.read();
+    if (current != null && _isLocalSessionToken(current.accessToken)) {
+      _sessions.write(null);
+    }
+  }
 
   @override
-  bool get isSignedIn => _sessions.isSignedIn;
+  MultiplayerSession? get session {
+    final current = _sessions.read();
+    if (current != null && _isLocalSessionToken(current.accessToken)) {
+      _sessions.write(null);
+      return null;
+    }
+    return current;
+  }
+
+  @override
+  bool get isSignedIn => session != null;
 
   @override
   bool get hostedCommands => true;
@@ -1296,6 +1316,15 @@ class RemoteMultiplayerService implements MultiplayerService {
     }
     await _local.reportPlayer(targetUserId, stored);
     return const ActionResult.ok();
+  }
+
+  @override
+  Future<FeedbackSubmitResult> submitFeedback(FeedbackRequest request) async {
+    if (!isSignedIn) return const FeedbackSubmitResult.failed(feedbackSignInRequired);
+    final refusal = feedbackRequestError(request);
+    if (refusal != null) return FeedbackSubmitResult.failed(refusal);
+    final result = await transport.invoke(remoteSubmitFeedbackFunction, request.toInvokeBody());
+    return feedbackResultFromInvoke(result.data, result.ok ? null : result.reason);
   }
 
   @override
