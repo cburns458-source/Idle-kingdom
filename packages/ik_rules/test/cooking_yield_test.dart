@@ -3,32 +3,32 @@ import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
-/// Recipe → (output item, output quantity, Base Sell Value). Only fish and meat make 2.
+/// Recipe → (output item, output quantity, Base Sell Value). Small meat/fish make 1, medium 2, large 3; everything else makes 1.
 const Map<String, (String, int, int)> _cookingYields = {
   'RCP-0001': ('ITEM-0058', 1, 1), // Baked potato
-  'RCP-0002': ('ITEM-0059', 2, 1), // Cooked perch
-  'RCP-0009': ('ITEM-0066', 2, 2), // Cooked beef
+  'RCP-0002': ('ITEM-0059', 1, 1), // Perch fillet
+  'RCP-0009': ('ITEM-0066', 3, 2), // Beef steak
   'RCP-0061': ('ITEM-0343', 1, 1), // Dried kelp
-  'RCP-0007': ('ITEM-0064', 2, 1), // Cooked rabbit
-  'RCP-0003': ('ITEM-0060', 2, 1), // Cooked trout
-  'RCP-0076': ('ITEM-0424', 2, 1), // Cooked duck
+  'RCP-0007': ('ITEM-0064', 1, 1), // Roast rabbit
+  'RCP-0003': ('ITEM-0060', 1, 1), // Trout fillet
+  'RCP-0076': ('ITEM-0424', 1, 1), // Roast duck
   'RCP-0063': ('ITEM-0358', 1, 9), // Crawfish stew
   'RCP-0068': ('ITEM-0364', 1, 1), // Soup stock
-  'RCP-0008': ('ITEM-0065', 2, 7), // Cooked pheasant
-  'RCP-0004': ('ITEM-0061', 2, 6), // Cooked salmon
+  'RCP-0008': ('ITEM-0065', 2, 7), // Pheasant breast
+  'RCP-0004': ('ITEM-0061', 2, 6), // Salmon steak
   'RCP-0012': ('ITEM-0068', 1, 19), // Pheasant stew
-  'RCP-0077': ('ITEM-0425', 2, 6), // Cooked boar meat
-  'RCP-0010': ('ITEM-0067', 2, 29), // Cooked venison
+  'RCP-0077': ('ITEM-0425', 3, 6), // Boar chop
+  'RCP-0010': ('ITEM-0067', 3, 29), // Venison steak
   'RCP-0064': ('ITEM-0359', 1, 12), // Red crab stew
-  'RCP-0005': ('ITEM-0062', 2, 29), // Cooked bass
+  'RCP-0005': ('ITEM-0062', 2, 29), // Bass fillet
   'RCP-0013': ('ITEM-0069', 1, 108), // Venison stew
-  'RCP-0067': ('ITEM-0362', 2, 4), // Cooked catfish
-  'RCP-0006': ('ITEM-0063', 2, 48), // Cooked shark
+  'RCP-0067': ('ITEM-0362', 2, 4), // Catfish fillet
+  'RCP-0006': ('ITEM-0063', 3, 48), // Shark steak
   'RCP-0065': ('ITEM-0360', 1, 120), // Dungeness stew
   'RCP-0060': ('ITEM-0302', 1, 850), // Squid noodle soup
-  'RCP-0044': ('ITEM-0391', 2, 53), // Cooked marlin
+  'RCP-0044': ('ITEM-0391', 3, 53), // Marlin steak
   'RCP-0066': ('ITEM-0361', 1, 1330), // Lobster stew
-  'RCP-0070': ('ITEM-0393', 2, 99), // Cooked swordfish
+  'RCP-0070': ('ITEM-0393', 3, 99), // Swordfish steak
 };
 
 /// Stew recipe → XP. Each stew crafts 1; XP is half of the prior 2-output values, except squid.
@@ -64,7 +64,7 @@ void main() {
     expect(ids, _cookingYields.keys.toList()..sort());
   });
 
-  test('makes 2 per craft for fish and meat only; stews, baked potato, soup stock, and dried kelp make 1', () {
+  test('sizes meat and fish (small 1, medium 2, large 3); stews, baked potato, soup stock, and dried kelp make 1', () {
     for (final MapEntry(key: recipeId, value: (itemId, quantity, _)) in _cookingYields.entries) {
       final recipe = db.recipes.firstWhere((row) => row.recipeId == recipeId);
       expect(recipe.raw['Output Item ID'], itemId, reason: recipeId);

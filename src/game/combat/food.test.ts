@@ -36,7 +36,7 @@ function withFoodAndSpells(
   return { ...base, currentHp: 900, equipment: { ...base.equipment, slots } }
 }
 
-describe('cooked beef and tablet recipes', () => {
+describe('beef steak and tablet recipes', () => {
   it('cooks beef at level 1 for 12s / 240 XP and heals 40', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const recipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0009')!
@@ -84,16 +84,16 @@ describe('cooked beef and tablet recipes', () => {
     expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['XP Reward']).toBe(1850)
     const marlin = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0044')!
     expect(marlin.Status).toBe('Planned')
-    expect(marlin['Display Name']).toBe('Cooked marlin')
+    expect(marlin['Display Name']).toBe('Marlin steak')
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0127')?.Status).toBe('Planned')
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0127')?.['Display Name']).toBe(
-      'Cooked marlin',
+      'Marlin steak',
     )
     expect(launch.Actions.find((row) => row['Action ID'] === 'ACN-0104')?.['Proficiency Level']).toBe(63)
     expect(launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0060')?.['Proficiency Level']).toBe(66)
   })
 
-  it('adds cooked duck at 11 as a trout twin and cooked boar at 26 as a salmon twin', () => {
+  it('adds roast duck at 11 as a trout twin and boar chop at 26 as a salmon twin', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const duckRecipe = launch.Recipes.find((row) => row['Recipe ID'] === 'RCP-0076')!
     const duckAction = launch.Actions.find((row) => row['Action ID'] === 'ACN-0243')!

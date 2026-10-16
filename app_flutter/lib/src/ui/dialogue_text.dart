@@ -131,7 +131,7 @@ class DialogueText {
       ? 'They have nothing to say right now.'
       : 'That conversation could not be started.';
 
-  /// "Baked Potato x4, Cooked Perch x2" — every entry, in the engine's order.
+  /// "Baked Potato x4, Perch fillet x2" — every entry, in the engine's order.
   String favouritesList(List<DialogueItemDelta> favourites) =>
       [for (final line in favourites) '${itemName(line.itemId)} x${_count(line.qty)}'].join(', ');
 

@@ -169,7 +169,7 @@ void main() {
     expect(find.widgetWithText(GameButton, 'Meat'), findsWidgets);
     expect(find.widgetWithText(GameButton, 'Stew'), findsWidgets);
     expect(find.widgetWithText(GameButton, 'Other'), findsWidgets);
-    expect(find.textContaining('Cooked perch'), findsWidgets);
+    expect(find.textContaining('Perch fillet'), findsWidgets);
   });
 
   testWidgets('smithing lists material groups instead of every item', (tester) async {

@@ -108,7 +108,7 @@ Tests: `dialogue_engine_test.dart`, `engine.test.ts`, `save_parity_test.dart`, n
 
 ## Conor's decisions (Oct 12)
 - Dialogue may give and take items (grant_item and take_item are approved). Every grant is one-time unless marked `repeatable`.
-- Grand Feast hand-in takes 10 Baked Potato and 10 Cooked Perch.
+- Grand Feast hand-in takes 10 Baked Potato and 10 Perch fillet.
 - Getting Started end: Fennel only checks for the cooked potatoes and takes nothing.
 - The quest marker icon waits for the asset pack. `questMarked` still ships in the engine output, and the UI can ignore it until then.
 - **Whatever completes the quest (and shows the reward popup) grants the rewards.** A dialogue choice that ends a quest runs `complete_quest` and grants nothing itself; the quest's own reward columns pay once, on completion. Both quests below stay `Reward Mode` legacy.
