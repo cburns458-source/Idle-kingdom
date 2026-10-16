@@ -65,6 +65,9 @@ enum GameScreen {
   menu,
 }
 
+/// Mid-session drop: the game stays up but every action is paused.
+const String reconnectingBanner = 'Reconnecting — actions are paused.';
+
 /// Sits on the chin. Kept low on the location screen so it does not cover
 /// Expand list or the activity buttons.
 const double chatLauncherBottom = 74;
@@ -1112,13 +1115,13 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               ListenableBuilder(
                 listenable: multiplayer,
                 builder: (context, _) {
-                  if (!multiplayer.cloudUnavailable) return const SizedBox.shrink();
+                  if (!multiplayer.disconnected) return const SizedBox.shrink();
                   return const Material(
                     color: Palette.danger,
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       child: Text(
-                        'Cloud unavailable — progress is not syncing.',
+                        reconnectingBanner,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white, fontSize: GameFont.s),
                       ),

@@ -371,26 +371,31 @@ void main() {
     expect(inventoryCount(controller.save, _purseId), 1);
   });
 
-  testWidgets('offline and signed out still pay locally', (tester) async {
-    final commands = <String>[];
-    final controller = await openBribe(
-      tester,
-      guardReady(),
-      hostedPlay: false,
-      submitGameCommand: (command, [args = const <String, Object?>{}]) async {
-        commands.add(command);
-        return 'Sign in to play.';
-      },
-    );
+  testWidgets('signed-out bribe is refused and changes nothing', (tester) async {
+    final controller = await openBribe(tester, guardReady());
+    controller.hostedPlay = () => false;
     await openConfirm(tester);
-    expect(find.textContaining('connection to the server'), findsNothing);
 
     await tester.tap(find.byKey(const Key('bribe-pay')));
     await tester.pumpAndSettle();
 
-    expect(commands, ['quest_bribe']);
-    expect(controller.save.gold, 100);
-    expect(inventoryCount(controller.save, _purseId), 1);
-    expect(controller.message, 'The purse changes hands.');
+    expect(controller.save.gold, 300);
+    expect(inventoryCount(controller.save, _purseId), 0);
+    expect(hasQuestFlag(controller.save, _questId, 'choice:bribe'), isFalse);
+    expect(find.textContaining('Sign in to play.'), findsWidgets);
+  });
+
+  testWidgets('disconnected bribe is refused and changes nothing', (tester) async {
+    final controller = await openBribe(tester, guardReady());
+    controller.playDisconnected = () => true;
+    await openConfirm(tester);
+
+    await tester.tap(find.byKey(const Key('bribe-pay')));
+    await tester.pumpAndSettle();
+
+    expect(controller.save.gold, 300);
+    expect(inventoryCount(controller.save, _purseId), 0);
+    expect(hasQuestFlag(controller.save, _questId, 'choice:bribe'), isFalse);
+    expect(find.text(GameController.needsConnectionReason), findsWidgets);
   });
 }

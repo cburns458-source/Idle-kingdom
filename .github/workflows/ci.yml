@@ -54,6 +54,8 @@ jobs:
       # `npm:` packages in a `node_modules` this job has no reason to install.
       - run: deno check */index.ts
         working-directory: supabase/functions
+      - run: deno test submit-feedback/handler_test.ts
+        working-directory: supabase/functions
 
   dart:
     name: Dart packages (analyze, format, parity replay)

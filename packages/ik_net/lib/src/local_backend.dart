@@ -8,6 +8,7 @@ import 'package:ik_runtime/ik_runtime.dart';
 
 import 'config.dart';
 import 'demo_world.dart';
+import 'feedback.dart';
 import 'guild_rules.dart';
 import 'local_db.dart';
 import 'moderation.dart';
@@ -898,6 +899,76 @@ class LocalMultiplayerBackend {
       ),
     );
     _write(db);
+  }
+
+  final List<Map<String, Object?>> _feedback = <Map<String, Object?>>[];
+  final Map<String, num> _feedbackCooldownMs = <String, num>{};
+
+  FeedbackSubmitResult submitFeedback(String userId, FeedbackRequest request) {
+    final now = ports.nowMs();
+    final last = _feedbackCooldownMs[userId];
+    if (last != null && now - last < feedbackCooldownMs) {
+      return FeedbackSubmitResult.failed(
+        feedbackCooldownMessage,
+        retryAfterSeconds: ((last + feedbackCooldownMs - now) / 1000).ceil(),
+        code: feedbackCodeCooldown,
+      );
+    }
+    final cutoff = now - feedbackDailyWindowMs;
+    final recent = _feedback.where((row) {
+      if (row['user_id'] != userId) return false;
+      final at = DateTime.tryParse('${row['created_at'] ?? ''}');
+      return at != null && at.millisecondsSinceEpoch > cutoff;
+    }).toList();
+    if (recent.length >= feedbackDailyCap) {
+      final oldest = recent
+          .map(
+            (row) => DateTime.tryParse('${row['created_at'] ?? ''}')?.millisecondsSinceEpoch ?? now,
+          )
+          .reduce((a, b) => a < b ? a : b);
+      return FeedbackSubmitResult.failed(
+        feedbackDailyCapMessage,
+        retryAfterSeconds: ((oldest + feedbackDailyWindowMs - now) / 1000).ceil(),
+        code: feedbackCodeDailyCap,
+      );
+    }
+    final hash = feedbackBodyHashInput(
+      request.kind,
+      request.title,
+      request.body,
+      request.targetUsername,
+    );
+    for (final row in recent) {
+      if (row['body_hash'] == hash) {
+        return FeedbackSubmitResult.ok('${row['id']}');
+      }
+    }
+    if (request.kind == feedbackKindPlayer) {
+      final target = request.targetUsername?.trim() ?? '';
+      final profile = _db().profiles
+          .where((row) => row.username.toLowerCase() == target.toLowerCase())
+          .firstOrNull;
+      if (profile == null) {
+        return const FeedbackSubmitResult.failed('That player was not found.');
+      }
+      if (profile.userId == userId) {
+        return const FeedbackSubmitResult.failed('You cannot report yourself.');
+      }
+      final stored = reportReasonForStorage(request.reportReason ?? 'Other') ?? reportReasonOther;
+      reportUser(userId, profile.userId, stored);
+    }
+    final id = _newId('fbk');
+    _feedback.add(<String, Object?>{
+      'id': id,
+      'user_id': userId,
+      'title': request.title.trim(),
+      'body': request.body.trim(),
+      'kind': request.kind,
+      'body_hash': hash,
+      'created_at': _nowIso(),
+    });
+    _feedbackCooldownMs[userId] = now;
+    return FeedbackSubmitResult.ok(id);
   }
 
   // --- Guilds ---------------------------------------------------------------
