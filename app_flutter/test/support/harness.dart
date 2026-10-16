@@ -54,7 +54,21 @@ const TestAccount testAccount = TestAccount(
 
 /// A named human with the starter kit, which is what activity requirements
 /// expect: gathering needs the tools the race grants.
+///
+/// Getting Started is already finished so widget tests see the open world.
+/// Use [tutorialCharacter] when the lock itself is under test.
 PlayerSave startedCharacter(LoadedDatabase database) {
+  final save = tutorialCharacter(database);
+  return save.copyWith(
+    quests: [
+      ...save.quests.where((row) => row.questId != tutorialQuestId),
+      const QuestProgress(questId: tutorialQuestId, status: 'completed', progress: 1),
+    ],
+  );
+}
+
+/// Same starter as [startedCharacter], still locked in Getting Started.
+PlayerSave tutorialCharacter(LoadedDatabase database) {
   final base = createNewSave(database.launch, testStartMs);
   final assigned = assignRace(database.launch, base.copyWith(characterName: 'Tester'), 'RACE-0001');
   return assigned.save!.copyWith(hasSeenFennelIntro: true);

@@ -4,6 +4,7 @@ import type { ActivityRow, GameDatabase } from '../data/types'
 import { ALCHEMY_SKILL_ID, COOKING_SKILL_ID } from '../equipment/specialist'
 import { canKnowRecipe } from '../recipes/knowledge'
 import type { PlayerSave } from '../save/types'
+import { isTutorialRecipeAllowed } from '../tutorial/tutorial'
 import { requirementsForEntity } from '../activity/requirements'
 
 export interface RecipeIngredient {
@@ -186,7 +187,8 @@ export function recipesForActivity(
     (recipe) =>
       isCompleteRecipe(recipe) &&
       recipeMatchesFacility(recipe['Facility ID'], facilityId) &&
-      canKnowRecipe(save, db, recipe),
+      canKnowRecipe(save, db, recipe) &&
+      isTutorialRecipeAllowed(save, recipe['Recipe ID']),
   ).sort((a, b) => a['Proficiency Level'] - b['Proficiency Level'])
 }
 

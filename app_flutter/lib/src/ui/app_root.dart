@@ -124,6 +124,18 @@ class _BootGateState extends State<_BootGate> {
         save: result.save,
       );
     };
+    session.hallCompanyActive = () {
+      if (!game.session.hasSave || game.save.currentLocationId != guildHallLocationId) {
+        return false;
+      }
+      final me = multiplayer.session?.userId;
+      final guildName = multiplayer.guild?.name;
+      if (me == null || guildName == null || guildName.isEmpty) return false;
+      return multiplayer.presence.any(
+        (row) =>
+            row.userId != me && row.locationId == guildHallLocationId && row.guildName == guildName,
+      );
+    };
     repository.onWrite = multiplayer.scheduleAccountSave;
     if (multiplayer.isSignedIn) {
       await multiplayer.resumeAccount(game.save, adopt: game.adoptAccountSave);

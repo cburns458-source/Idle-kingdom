@@ -58,6 +58,15 @@ void main() {
     fail('the game never reached the state this step was waiting for');
   }
 
+  PlayerSave finishTutorial(PlayerSave save) {
+    return save.copyWith(
+      quests: [
+        ...save.quests.where((row) => row.questId != tutorialQuestId),
+        const QuestProgress(questId: tutorialQuestId, status: 'completed', progress: 1),
+      ],
+    );
+  }
+
   /// Travels to [locationId] the way a player would: browsing the map it is on.
   void travelTo(String locationId) {
     final location = db.locations.firstWhereOrNull((row) => row.locationId == locationId);
@@ -87,7 +96,7 @@ void main() {
 
   test('travel, gathering, combat, and cooking all pay out through the session', () {
     session.boot();
-    session.apply(assignRace(db, session.save, 'RACE-0001').save!);
+    session.apply(finishTutorial(assignRace(db, session.save, 'RACE-0001').save!));
 
     // Travel on the shipped connections.
     travelTo(meadow);
@@ -133,7 +142,7 @@ void main() {
 
   test('a shop in town can be reached, and quests and achievements keep up', () {
     session.boot();
-    session.apply(assignRace(db, session.save, 'RACE-0001').save!);
+    session.apply(finishTutorial(assignRace(db, session.save, 'RACE-0001').save!));
 
     final store = db.shops.firstWhereOrNull((shop) => shop.shopId == 'SHP-0001') ?? db.shops.first;
     travelTo(store.raw['Location ID'] as String);

@@ -51,11 +51,11 @@ describe('playable races', () => {
         expect(itemIds).toContain(itemId)
       }
       if (race['Race ID'] === 'RACE-0005') {
-        expect(itemIds).toContain('ITEM-0225')
+        expect(itemIds).toContain('ITEM-0125')
         expect(itemIds).not.toContain('ITEM-0145')
       } else {
         expect(itemIds).toContain('ITEM-0145')
-        expect(itemIds).not.toContain('ITEM-0225')
+        expect(itemIds).not.toContain('ITEM-0125')
       }
     }
   })
@@ -100,7 +100,7 @@ describe('playable races', () => {
         expect(assigned.save.inventory.find((s) => s.itemId === itemId)?.quantity).toBe(1)
       }
       if (raceId === 'RACE-0005') {
-        expect(assigned.save.inventory.find((s) => s.itemId === 'ITEM-0225')?.quantity).toBe(1)
+        expect(assigned.save.inventory.find((s) => s.itemId === 'ITEM-0125')?.quantity).toBe(1)
       } else {
         expect(assigned.save.inventory.find((s) => s.itemId === 'ITEM-0145')?.quantity).toBe(1)
       }

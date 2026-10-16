@@ -10,6 +10,8 @@ import { applyQuestAutoStartOnSeed, applyQuestPlantProgress, questPlantRequiresC
 import { applyQuestAutoCompleteOnPlant, getQuestProgress } from '../quests/quests'
 import { dialogueStepType, getQuestSteps, isStepComplete } from '../quests/steps'
 import type { LocationTimer, PlayerSave } from '../save/types'
+import { GUILD_HALL_LOCATION_ID } from '../world/constants'
+import { applyGuildHallCompanyXp } from '../guild/rooms'
 
 export const BOTANY_SKILL_ID = 'SKL-0014'
 export const THIEVERY_SKILL_ID = 'SKL-0015'
@@ -162,6 +164,7 @@ export const BOTANY_PATCH_LOCATIONS = new Set([
   'LOC-0043',
   'LOC-0036',
   'LOC-0009',
+  GUILD_HALL_LOCATION_ID,
 ])
 
 export function locationHasCompostCollect(locationId: string): boolean {
@@ -930,6 +933,7 @@ export function collectLocationTimer(
   kind: TimerSpotKind | string,
   nowMs: number = Date.now(),
   random: () => number = Math.random,
+  guildmatesPresent = false,
 ):
   | {
       ok: true
@@ -1028,6 +1032,9 @@ export function collectLocationTimer(
     })
   }
 
+  if (locationId === GUILD_HALL_LOCATION_ID && timer.kind === 'botany') {
+    xpGained = applyGuildHallCompanyXp(xpGained, guildmatesPresent)
+  }
   next = applyXp(next, db, skillId, xpGained).save
   const bonusXp: Array<{ skillId: string; xp: number }> = []
   const awards = [{ skillId, xp: xpGained }]

@@ -215,11 +215,14 @@ void main() {
     expect(advice.ok, isTrue, reason: advice.reason);
     expect(advice.itemDeltas, isEmpty);
     expect(getQuestProgress(advice.save, 'QST-0006').status, 'active');
-    expect(gettingStarted(advice.save).talkLine, contains('Good luck on your adventure'));
+    expect(gettingStarted(advice.save).talkLine, contains('sword and shield'));
 
-    final finished = chooseDialogue(db, advice.save, 'DLG-0006', 'DNODE-0009', 'DCH-0012');
-    expect(finished.ok, isTrue, reason: finished.reason);
-    expect(finished.bookDeltas, ['BOOK-0001']);
+    final finished = applyTutorialCowKill(
+      db,
+      applyQuestDefeatProgress(db, advice.save, 'ENM-0001'),
+      'ENM-0001',
+    );
+    expect(finished.completed, isTrue);
     expect(getQuestProgress(finished.save, 'QST-0006').status, 'completed');
     expect(gettingStarted(finished.save).completedNote, contains('Good luck on your adventure'));
     expect(isBookUnlocked(finished.save, 'BOOK-0001'), isTrue);

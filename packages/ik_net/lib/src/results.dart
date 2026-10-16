@@ -131,13 +131,17 @@ class GuildHallActionResult {
     this.save,
     this.paidOffJustNow = false,
     this.tiersFinishedNow = const <String>[],
+    this.goldChipped = 0,
+    this.donatedItem,
   }) : reason = null;
 
   const GuildHallActionResult.failed(this.reason)
     : hall = null,
       save = null,
       paidOffJustNow = false,
-      tiersFinishedNow = const <String>[];
+      tiersFinishedNow = const <String>[],
+      goldChipped = 0,
+      donatedItem = null;
 
   final GuildHallState? hall;
   final PlayerSave? save;
@@ -145,6 +149,8 @@ class GuildHallActionResult {
 
   /// Tier ids this donation finished, so the screen can say what just opened.
   final List<String> tiersFinishedNow;
+  final num goldChipped;
+  final GuildLogDonationItem? donatedItem;
   final String? reason;
 
   bool get ok => reason == null;

@@ -2,6 +2,7 @@ import { withRecalculatedVitals } from '../equipment/vitals'
 import type { GameDatabase } from '../data/types'
 import type { PlayerSave } from '../save/types'
 import { grantRaceStartingItems, raceById } from './races'
+import { ensureGettingStartedAccepted } from '../tutorial/tutorial'
 
 export type AssignRaceResult =
   | { ok: true; save: PlayerSave; grantedStarterKit: boolean }
@@ -24,6 +25,7 @@ export function assignRace(
   let next: PlayerSave = { ...save, raceId }
   if (firstSelection) {
     next = grantRaceStartingItems(db, next, raceId)
+    next = ensureGettingStartedAccepted(db, next)
   }
   next = withRecalculatedVitals(db, next)
   return { ok: true, save: next, grantedStarterKit: firstSelection }

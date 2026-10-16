@@ -1,4 +1,5 @@
 import type { GameDatabase } from '../data/types'
+import { isTutorialRecipeAllowed } from '../tutorial/tutorial'
 import type { ActivityTransition, PlayerSave } from '../save/types'
 import { isDeathPaused, RECOVERING_BLOCKED_REASON } from '../combat/engine'
 import type { RandomFn } from './pools'
@@ -208,6 +209,9 @@ export function requestProductionStart(
 
   const validation = validateActivityStart(db, save, activityId)
   if (!validation.ok) return validation
+  if (!isTutorialRecipeAllowed(save, recipeId)) {
+    return { ok: false, reason: 'Not available yet.' }
+  }
 
   let next = save
   if (hasRunningPrimaryActivity(save) || save.activityTransition) {

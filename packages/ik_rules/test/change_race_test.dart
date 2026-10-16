@@ -16,6 +16,15 @@ PlayerSave _withTotalLevel(PlayerSave save, num target) {
   );
 }
 
+PlayerSave _finishGettingStarted(PlayerSave save) {
+  return save.copyWith(
+    quests: [
+      ...save.quests.where((row) => row.questId != tutorialQuestId),
+      const QuestProgress(questId: tutorialQuestId, status: 'completed', progress: 1),
+    ],
+  );
+}
+
 PlayerSave _payFor(PlayerSave save, String raceId) {
   final cost = raceChangeCostFor(raceId)!;
   var next = save.copyWith(gold: save.gold + cost.gold);
@@ -39,12 +48,15 @@ void main() {
     );
     expect(miniQuestLog(db, atHall, nowMs), isEmpty);
 
-    final ready = _withTotalLevel(atHall, raceChangeTotalLevel);
+    final ready = _withTotalLevel(_finishGettingStarted(atHall), raceChangeTotalLevel);
     expect(
       npcsAtLocationForSave(db, ready, 'LOC-0015', nowMs).map((npc) => npc.npcId),
       contains(vesperId),
     );
-    expect(miniQuestLog(db, ready, nowMs).map((row) => row.questId), [raceChangeMiniquestId]);
+    expect(
+      miniQuestLog(db, ready, nowMs).map((row) => row.questId),
+      contains(raceChangeMiniquestId),
+    );
   });
 
   test('keeps A Change of Skin out of the quest journal', () {
@@ -67,7 +79,10 @@ void main() {
   test('changes race for mid-level goods and starts a weekly cooldown', () {
     final assigned = assignRace(db, createNewSave(db, nowMs), 'RACE-0001');
     final ready = _payFor(
-      _withTotalLevel(assigned.save!.copyWith(currentLocationId: 'LOC-0015'), raceChangeTotalLevel),
+      _withTotalLevel(
+        _finishGettingStarted(assigned.save!).copyWith(currentLocationId: 'LOC-0015'),
+        raceChangeTotalLevel,
+      ),
       'RACE-0006',
     );
     final offer = raceChangeOffer(db, ready, nowMs);

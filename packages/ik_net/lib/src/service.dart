@@ -164,6 +164,12 @@ abstract interface class MultiplayerService {
 
   Future<ActionResult> setGuildEmblem(String guildId, GuildEmblem emblem);
 
+  /// Sets the hall banner. Leaders and officers only; emblem/border must be unlocked.
+  Future<ActionResult> setGuildBanner(String guildId, GuildBanner banner);
+
+  /// Current/target progress for every guild achievement, including unlocked rows.
+  Future<List<GuildAchievementProgress>> guildAchievementProgress(String guildId);
+
   /// Sets the public guild motto (`guilds.description`).
   Future<ActionResult> setGuildMotto(String guildId, String motto);
 
@@ -265,6 +271,33 @@ abstract interface class MultiplayerService {
     int inventoryIndex,
     num quantity,
   );
+
+  Future<GuildHallActionResult> depositGuildBank(PlayerSave save, int inventoryIndex, num quantity);
+
+  Future<GuildHallActionResult> withdrawGuildBank(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  });
+
+  Future<GuildHallActionResult> takeGuildBankUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  });
+
+  Future<GuildHallActionResult> moveGuildBankToUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  });
+
+  Future<List<GuildLogEntry>> guildLog(String guildId);
+
+  Future<String?> setGuildPermissions(String guildId, GuildPermissionTable table);
 
   Future<List<ArenaOpponent>> hallBoxingOpponents();
 
@@ -783,6 +816,18 @@ class LocalMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<ActionResult> setGuildBanner(String guildId, GuildBanner banner) async {
+    final current = session;
+    if (current == null) return const ActionResult.failed('Sign in required.');
+    return _backend.setGuildBanner(current.userId, guildId, banner);
+  }
+
+  @override
+  Future<List<GuildAchievementProgress>> guildAchievementProgress(String guildId) async {
+    return _backend.guildAchievementProgress(guildId);
+  }
+
+  @override
   Future<ActionResult> setGuildMotto(String guildId, String motto) async {
     final current = session;
     if (current == null) return const ActionResult.failed('Sign in required.');
@@ -980,6 +1025,63 @@ class LocalMultiplayerService implements MultiplayerService {
       return const GuildHallActionResult.failed('Sign in to use the guild hall.');
     }
     return _backend.contributeHallItem(current.userId, save, inventoryIndex, quantity);
+  }
+
+  @override
+  Future<GuildHallActionResult> depositGuildBank(
+    PlayerSave save,
+    int inventoryIndex,
+    num quantity,
+  ) async {
+    final current = session;
+    if (current == null) return const GuildHallActionResult.failed('Sign in first.');
+    return _backend.depositGuildBank(current.userId, save, inventoryIndex, quantity);
+  }
+
+  @override
+  Future<GuildHallActionResult> withdrawGuildBank(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final current = session;
+    if (current == null) return const GuildHallActionResult.failed('Sign in first.');
+    return _backend.withdrawGuildBank(current.userId, save, itemId, quantity, enchantmentId);
+  }
+
+  @override
+  Future<GuildHallActionResult> takeGuildBankUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final current = session;
+    if (current == null) return const GuildHallActionResult.failed('Sign in first.');
+    return _backend.takeHallBankUpForGrabs(current.userId, save, itemId, quantity, enchantmentId);
+  }
+
+  @override
+  Future<GuildHallActionResult> moveGuildBankToUpForGrabs(
+    PlayerSave save,
+    String itemId,
+    num quantity, {
+    String? enchantmentId,
+  }) async {
+    final current = session;
+    if (current == null) return const GuildHallActionResult.failed('Sign in first.');
+    return _backend.moveHallBankToUpForGrabs(current.userId, save, itemId, quantity, enchantmentId);
+  }
+
+  @override
+  Future<List<GuildLogEntry>> guildLog(String guildId) async => _backend.guildLog(guildId);
+
+  @override
+  Future<String?> setGuildPermissions(String guildId, GuildPermissionTable table) async {
+    final current = session;
+    if (current == null) return 'Sign in first.';
+    return _backend.setGuildPermissions(current.userId, guildId, table);
   }
 
   @override

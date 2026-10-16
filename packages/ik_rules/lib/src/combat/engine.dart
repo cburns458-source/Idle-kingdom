@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
 import '../achievements/progress.dart';
+import '../guild/rooms.dart';
 import '../activity/held_action.dart';
 import '../activity/rewards.dart';
 import '../activity/xp.dart';
@@ -17,6 +18,7 @@ import '../potions/effects.dart';
 import '../projects/enchantments.dart';
 import '../quests/progress.dart';
 import '../religion/religion.dart';
+import '../tutorial/tutorial.dart';
 import '../rng/mulberry32.dart';
 import '../cosmetics/cosmetics.dart';
 import '../save/generated/save_models.dart';
@@ -563,15 +565,17 @@ CombatVictoryResult applyCombatVictory(
   ActionRow action,
   EnemyRow enemy,
   RandomFn random,
-  num nowMs,
-) {
+  num nowMs, [
+  bool guildmatesPresent = false,
+]) {
   final maxHp = playerMaxHp(db, save);
   var next = save.copyWith(
     maxHp: maxHp,
     currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
   );
 
-  final xpAmount = enemyCombatXp(enemy);
+  final skipLoot = isGuildHallCageActivity(save.currentActivityId ?? '');
+  final xpAmount = applyGuildHallCompanyXp(enemyCombatXp(enemy), guildmatesPresent);
   // Prefer fishing-mode bosses and Fishing-tagged fight actions (Mother Squid /
   // Squidling fallthrough). Ordinary fights split XP across Might / Vitality.
   final fishingMode =
@@ -596,6 +600,26 @@ CombatVictoryResult applyCombatVictory(
       xpAwards.add((skillId: vitalitySkillId, xp: split.vitalityXp));
       if (split.mightXp <= 0) xpSkillId = vitalitySkillId;
     }
+  }
+
+  if (skipLoot) {
+    next = withBossRespawn(tickPotionAction(clearCombatSave(next)), enemy, nowMs);
+    next = withoutHeldAction(next, save.currentActivityId);
+    next = creditXpAwards(next, xpAwards, nowMs);
+    return CombatVictoryResult(
+      save: next,
+      xpGained: xpAmount,
+      xpSkillId: xpSkillId,
+      xpAwards: xpAwards,
+      goldGained: 0,
+      loot: const <LootGrant>[],
+      cosmeticsGranted: const <ActionCosmeticGrant>[],
+      booksGranted: const <ActionBookGrant>[],
+      leftBehind: const <LootGrant>[],
+      foodConsumed: false,
+      foodHealed: 0,
+      foodName: null,
+    );
   }
 
   final minGold = jsNumber(enemy.raw['Minimum Gold'] ?? 0);
@@ -644,6 +668,7 @@ CombatVictoryResult applyCombatVictory(
   // Auto-eat happens at the end of an ongoing combat round, not on a kill.
   next = withBossRespawn(tickPotionAction(clearCombatSave(next)), enemy, nowMs);
   next = applyQuestDefeatProgress(db, next, jsString(enemy.raw['Enemy ID']), 1);
+  next = applyTutorialCowKill(db, next, jsString(enemy.raw['Enemy ID'])).save;
   next = applyBountyDefeatProgress(next, jsString(enemy.raw['Enemy ID']), 1, nowMs);
   next = withoutHeldAction(next, save.currentActivityId);
   next = creditLootTracker(
@@ -675,7 +700,7 @@ CombatVictoryResult applyCombatVictory(
 PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
   final pauseSec = configNumber(db, 'death_pause', 30);
   final maxHp = playerMaxHp(db, save);
-  return withoutHeldAction(
+  final defeated = withoutHeldAction(
     tickPotionAction(
       clearCombatSave(
         revokeCosmetic(
@@ -694,6 +719,7 @@ PlayerSave applyCombatDefeat(GameDatabase db, PlayerSave save, num nowMs) {
     ),
     save.currentActivityId,
   );
+  return applyTutorialCombatDefeat(db, defeated);
 }
 
 /// HP restored when the death pause ends.

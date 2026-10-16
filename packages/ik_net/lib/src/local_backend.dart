@@ -530,6 +530,14 @@ class LocalMultiplayerBackend {
         )
         .toList();
     _overlayPvpLiveStats(db, userId, save);
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership != null) {
+      db.members = [
+        for (final row in db.members)
+          if (row.userId == userId) row.copyWith(totalLevel: totalLevel(save)) else row,
+      ];
+      _unlockGuildAchievements(db, membership.guildId);
+    }
     _write(db);
   }
 
@@ -948,6 +956,8 @@ class LocalMultiplayerBackend {
         totalLevel: snapshot.totalLevel,
       ),
     );
+    _logJoin(db, guild.id, session.userId, snapshot.username, guildRoleLeader);
+    _unlockGuildAchievements(db, guild.id);
     db.profiles = _withGuild(db.profiles, session.userId, guild);
     db.projects.add(
       GuildProject(
@@ -1065,6 +1075,8 @@ class LocalMultiplayerBackend {
       db.guests = db.guests
           .where((row) => !(row.guildId == guildId && row.userId == session.userId))
           .toList();
+      _logJoin(db, guild.id, session.userId, snapshot.username, guildRoleRecruit);
+      _unlockGuildAchievements(db, guild.id);
       _write(db);
       return const ApplyToGuildResult.ok(joined: true);
     }
@@ -1218,6 +1230,8 @@ class LocalMultiplayerBackend {
       db.guests = db.guests
           .where((row) => !(row.guildId == guild.id && row.userId == application.userId))
           .toList();
+      _logJoin(db, guild.id, application.userId, snapshot.username, guildRoleRecruit);
+      _unlockGuildAchievements(db, guild.id);
     }
     _write(db);
     return const ActionResult.ok();
@@ -1229,13 +1243,17 @@ class LocalMultiplayerBackend {
     if (guild == null) return const ActionResult.failed('Guild not found.');
     final refusal = removeGuildMemberRefusal(guild, actorId, targetUserId);
     if (refusal != null) return ActionResult.failed(refusal);
-    if (!db.members.any((row) => row.guildId == guildId && row.userId == targetUserId)) {
+    final target = db.members.firstWhereOrNull(
+      (row) => row.guildId == guildId && row.userId == targetUserId,
+    );
+    if (target == null) {
       return const ActionResult.failed('Not a member of that guild.');
     }
     db.members = db.members
         .where((row) => !(row.guildId == guildId && row.userId == targetUserId))
         .toList();
     db.profiles = _withGuild(db.profiles, targetUserId, null);
+    _logLeave(db, guildId, targetUserId, target.username, target.role);
     _write(db);
     return const ActionResult.ok();
   }
@@ -1267,12 +1285,32 @@ class LocalMultiplayerBackend {
     }
     final refusal = memberRoleRefusal(guild, targetUserId, role);
     if (refusal != null) return ActionResult.failed(refusal);
+    final target = db.members.firstWhereOrNull(
+      (row) => row.guildId == guildId && row.userId == targetUserId,
+    );
     db.members = db.members
         .map(
           (row) =>
               row.guildId == guildId && row.userId == targetUserId ? row.copyWith(role: role) : row,
         )
         .toList();
+    if (target != null) {
+      _appendLog(
+        db,
+        GuildLogEntry(
+          id: _newId('glg'),
+          guildId: guildId,
+          kind: guildLogKindRankChange,
+          createdAt: _nowIso(),
+          actorUserId: targetUserId,
+          actorUsername: target.username,
+          role: role,
+          targetUserId: targetUserId,
+          targetUsername: target.username,
+          message: '${target.username} is now $role.',
+        ),
+      );
+    }
     _write(db);
     return const ActionResult.ok();
   }
@@ -1345,6 +1383,65 @@ class LocalMultiplayerBackend {
     );
     _write(db);
     return const ActionResult.ok();
+  }
+
+  ActionResult setGuildBanner(String actorId, String guildId, Object? banner) {
+    final guild = getGuild(guildId);
+    if (guild == null) return const ActionResult.failed('That guild could not be found.');
+    final role = guildMembers(guildId)
+        .where((row) => row.userId == actorId)
+        .map((row) => row.role)
+        .firstOrNull;
+    if (!isGuildOfficerOrLeader(guild, actorId, role)) {
+      return const ActionResult.failed(guildBannerRoleRefusal);
+    }
+    final parsed = normalizeGuildBanner(
+      banner is GuildBanner ? banner.toJson() : banner,
+      guild.achievements.map((row) => row.achievementId),
+    );
+    if (!parsed.ok || parsed.banner == null) {
+      return ActionResult.failed(parsed.reason ?? guildBannerColourRefusal);
+    }
+    final db = _db();
+    final index = db.guilds.indexWhere((row) => row.id == guildId);
+    if (index < 0) return const ActionResult.failed('That guild could not be found.');
+    db.guilds[index] = db.guilds[index].copyWith(banner: parsed.banner);
+    _write(db);
+    return const ActionResult.ok();
+  }
+
+  List<GuildAchievementProgress> guildAchievementProgress(String guildId) {
+    final db = _db();
+    _unlockGuildAchievements(db, guildId);
+    _write(db);
+    final guild = getGuild(guildId);
+    final hall = guildHall(guildId) ?? GuildHallState.fresh(guildId);
+    var strong = 0;
+    final unlocked = <String, String>{
+      for (final row in guild?.achievements ?? const <GuildAchievementUnlock>[])
+        row.achievementId: row.unlockedAt,
+    };
+    if (!shouldCountRisingStrengthMembers(unlocked)) {
+      strong = guildAchievementMembersAtLevel.toInt();
+    } else {
+      for (final member in db.members.where((row) => row.guildId == guildId)) {
+        final cloud = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
+        if (guildMemberSaveTotalLevel(cloud?.payload) >= guildAchievementMemberLevel) {
+          strong += 1;
+        }
+      }
+    }
+    return evaluateGuildAchievements(
+      GuildAchievementSnapshot(
+        completedTiers: hall.completedTiers,
+        goldContributed: hall.goldContributed,
+        goldContributedBy: hall.goldContributedBy,
+        donatedBy: hall.donatedBy,
+        membersAtLevel500: strong,
+        unlocked: unlocked,
+      ),
+      _nowIso(),
+    ).progress;
   }
 
   ActionResult setGuildMotto(String actorId, String guildId, String motto) {
@@ -1421,8 +1518,11 @@ class LocalMultiplayerBackend {
       db.projects = db.projects.where((row) => row.guildId != membership.guildId).toList();
       db.challenges = db.challenges.where((row) => row.guildId != membership.guildId).toList();
       db.halls = db.halls.where((row) => row.guildId != membership.guildId).toList();
+      db.logs = db.logs.where((row) => row.guildId != membership.guildId).toList();
       db.applications = db.applications.where((row) => row.guildId != membership.guildId).toList();
       db.guests = db.guests.where((row) => row.guildId != membership.guildId).toList();
+    } else {
+      _logLeave(db, membership.guildId, userId, membership.username, membership.role);
     }
     db.members = db.members.where((row) => row.userId != userId).toList();
     db.profiles = _withGuild(db.profiles, userId, null);
@@ -1460,7 +1560,131 @@ class LocalMultiplayerBackend {
 
   void _putHall(LocalDb db, GuildHallState hall) {
     db.halls = db.halls.where((row) => row.guildId != hall.guildId).toList();
-    db.halls.add(hall);
+    db.halls.add(hall.copyWith(hallRevision: hall.hallRevision + 1));
+    _unlockGuildAchievements(db, hall.guildId);
+  }
+
+  void _unlockGuildAchievements(LocalDb db, String guildId) {
+    final hallIndex = db.halls.indexWhere((row) => row.guildId == guildId);
+    final hall = hallIndex >= 0 ? db.halls[hallIndex] : GuildHallState.fresh(guildId);
+    final guildIndex = db.guilds.indexWhere((row) => row.id == guildId);
+    if (guildIndex < 0) return;
+    final unlocked = <String, String>{
+      for (final row in db.guilds[guildIndex].achievements) row.achievementId: row.unlockedAt,
+    };
+    var strong = 0;
+    if (!shouldCountRisingStrengthMembers(unlocked)) {
+      strong = guildAchievementMembersAtLevel.toInt();
+    } else {
+      for (final member in db.members.where((row) => row.guildId == guildId)) {
+        final cloud = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
+        if (guildMemberSaveTotalLevel(cloud?.payload) >= guildAchievementMemberLevel) {
+          strong += 1;
+        }
+      }
+    }
+    final evaluated = evaluateGuildAchievements(
+      GuildAchievementSnapshot(
+        completedTiers: hall.completedTiers,
+        goldContributed: hall.goldContributed,
+        goldContributedBy: hall.goldContributedBy,
+        donatedBy: hall.donatedBy,
+        membersAtLevel500: strong,
+        unlocked: unlocked,
+      ),
+      _nowIso(),
+    );
+    db.guilds[guildIndex] = db.guilds[guildIndex].copyWith(
+      achievements: [
+        for (final entry in evaluated.unlocked.entries)
+          GuildAchievementUnlock(achievementId: entry.key, unlockedAt: entry.value),
+      ],
+    );
+  }
+
+  void _appendHallLogs(LocalDb db, String guildId, String userId, GuildHallActionResult result) {
+    if (!result.ok) return;
+    final actor = db.members.firstWhereOrNull((row) => row.userId == userId);
+    final name = actor?.username ?? 'Adventurer';
+    if (result.goldChipped > 0 || result.donatedItem != null) {
+      _appendLog(
+        db,
+        GuildLogEntry(
+          id: _newId('glg'),
+          guildId: guildId,
+          kind: guildLogKindDonation,
+          createdAt: _nowIso(),
+          actorUserId: userId,
+          actorUsername: name,
+          message: '',
+          gold: result.goldChipped,
+          items: result.donatedItem == null
+              ? const <GuildLogDonationItem>[]
+              : <GuildLogDonationItem>[result.donatedItem!],
+        ),
+      );
+    }
+    for (final tierId in result.tiersFinishedNow) {
+      _appendLog(
+        db,
+        GuildLogEntry(
+          id: _newId('glg'),
+          guildId: guildId,
+          kind: guildLogKindTierComplete,
+          createdAt: _nowIso(),
+          actorUserId: userId,
+          actorUsername: name,
+          tierId: tierId,
+          message: guildHallTierFinishLine(tierId) ?? '',
+        ),
+      );
+    }
+  }
+
+  void _logJoin(LocalDb db, String guildId, String userId, String username, String role) {
+    _appendLog(
+      db,
+      GuildLogEntry(
+        id: _newId('glg'),
+        guildId: guildId,
+        kind: guildLogKindJoin,
+        createdAt: _nowIso(),
+        actorUserId: userId,
+        actorUsername: username,
+        role: role,
+        message: '$username joined the guild.',
+      ),
+    );
+  }
+
+  void _logLeave(LocalDb db, String guildId, String userId, String username, String role) {
+    _appendLog(
+      db,
+      GuildLogEntry(
+        id: _newId('glg'),
+        guildId: guildId,
+        kind: guildLogKindLeave,
+        createdAt: _nowIso(),
+        actorUserId: userId,
+        actorUsername: username,
+        role: role,
+        message: '$username left the guild.',
+      ),
+    );
+  }
+
+  void _appendLog(LocalDb db, GuildLogEntry incoming) {
+    final newest = db.logs.where((row) => row.guildId == incoming.guildId).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final merged = mergeGuildLogDonation(newest.isEmpty ? null : newest.first, incoming);
+    if (merged.merged && merged.entry != null) {
+      db.logs = [
+        for (final row in db.logs)
+          if (row.id == merged.entry!.id) merged.entry! else row,
+      ];
+      return;
+    }
+    db.logs.add(incoming);
   }
 
   GuildHallState? guildHall(String guildId) {
@@ -1477,12 +1701,13 @@ class LocalMultiplayerBackend {
     if (membership == null) {
       return const GuildHallActionResult.failed('Join a guild first.');
     }
-    if (!canPayGuildDebt(membership.role)) {
-      return const GuildHallActionResult.failed('Recruits cannot pay the hall debt.');
+    if (!canChipInGuildGold(membership.role)) {
+      return const GuildHallActionResult.failed('Recruits cannot chip in gold.');
     }
-    final paid = payGuildHallDebt(_ensureHall(db, membership.guildId), userId, save, amount);
+    final paid = chipInGuildHallGold(_ensureHall(db, membership.guildId), userId, save, amount);
     if (!paid.ok) return paid;
     _putHall(db, paid.hall!);
+    _appendHallLogs(db, membership.guildId, userId, paid);
     _write(db);
     return paid;
   }
@@ -1503,11 +1728,155 @@ class LocalMultiplayerBackend {
       save,
       inventoryIndex,
       quantity,
+      userId: userId,
     );
     if (!given.ok) return given;
     _putHall(db, given.hall!);
+    _appendHallLogs(db, membership.guildId, userId, given);
     _write(db);
     return given;
+  }
+
+  GuildHallActionResult depositGuildBank(
+    String userId,
+    PlayerSave save,
+    int inventoryIndex,
+    num quantity,
+  ) {
+    final db = _db();
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) return const GuildHallActionResult.failed('Join a guild first.');
+    final hall = _ensureHall(db, membership.guildId);
+    if (!guildHallBankUnlocked(hall.completedTiers)) {
+      return const GuildHallActionResult.failed('The counting room is not built yet.');
+    }
+    final guild = db.guilds.firstWhereOrNull((row) => row.id == membership.guildId);
+    final table = guild?.permissions ?? defaultGuildPermissionTable();
+    if (!guildMay(membership.role, guildPermissionDeposit, table)) {
+      return const GuildHallActionResult.failed('You cannot deposit in the guild bank.');
+    }
+    final deposited = depositToGuildBank(
+      hall.bank,
+      save,
+      inventoryIndex,
+      quantity,
+      () => _newId('gb'),
+      db: gameDatabase,
+    );
+    if (!deposited.ok)
+      return GuildHallActionResult.failed(deposited.reason ?? 'Could not deposit.');
+    _putHall(db, hall.copyWith(bank: deposited.bank));
+    _write(db);
+    return GuildHallActionResult.ok(hall.copyWith(bank: deposited.bank), save: deposited.save);
+  }
+
+  GuildHallActionResult withdrawGuildBank(
+    String userId,
+    PlayerSave save,
+    String itemId,
+    num quantity, [
+    String? enchantmentId,
+  ]) {
+    final db = _db();
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) return const GuildHallActionResult.failed('Join a guild first.');
+    final hall = _ensureHall(db, membership.guildId);
+    if (!guildHallBankUnlocked(hall.completedTiers)) {
+      return const GuildHallActionResult.failed('The counting room is not built yet.');
+    }
+    final guild = db.guilds.firstWhereOrNull((row) => row.id == membership.guildId);
+    final table = guild?.permissions ?? defaultGuildPermissionTable();
+    if (!guildMay(membership.role, guildPermissionWithdraw, table)) {
+      return const GuildHallActionResult.failed('You cannot withdraw from the guild bank.');
+    }
+    if (!guildMayWithdrawAtLevel(membership.totalLevel)) {
+      return const GuildHallActionResult.failed(guildBankLevelWithdrawRefusal);
+    }
+    final taken = withdrawFromGuildBank(hall.bank, save, itemId, quantity, enchantmentId);
+    if (!taken.ok) return GuildHallActionResult.failed(taken.reason ?? 'Could not withdraw.');
+    final next = hall.copyWith(bank: taken.bank);
+    _putHall(db, next);
+    _write(db);
+    return GuildHallActionResult.ok(next, save: taken.save);
+  }
+
+  GuildHallActionResult takeHallBankUpForGrabs(
+    String userId,
+    PlayerSave save,
+    String itemId,
+    num quantity, [
+    String? enchantmentId,
+  ]) {
+    final db = _db();
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) return const GuildHallActionResult.failed('Join a guild first.');
+    final hall = _ensureHall(db, membership.guildId);
+    if (!guildHallBankUnlocked(hall.completedTiers)) {
+      return const GuildHallActionResult.failed('The counting room is not built yet.');
+    }
+    if (!guildMayWithdrawAtLevel(totalLevel(save))) {
+      return const GuildHallActionResult.failed(guildBankLevelTakeRefusal);
+    }
+    final taken = takeGuildBankUpForGrabs(hall.bank, save, itemId, quantity, enchantmentId);
+    if (!taken.ok) return GuildHallActionResult.failed(taken.reason ?? 'Could not take.');
+    final next = hall.copyWith(bank: taken.bank);
+    _putHall(db, next);
+    _write(db);
+    return GuildHallActionResult.ok(next, save: taken.save);
+  }
+
+  GuildHallActionResult moveHallBankToUpForGrabs(
+    String userId,
+    PlayerSave save,
+    String itemId,
+    num quantity, [
+    String? enchantmentId,
+  ]) {
+    final db = _db();
+    final membership = db.members.firstWhereOrNull((row) => row.userId == userId);
+    if (membership == null) return const GuildHallActionResult.failed('Join a guild first.');
+    final hall = _ensureHall(db, membership.guildId);
+    if (!guildHallBankUnlocked(hall.completedTiers)) {
+      return const GuildHallActionResult.failed('The counting room is not built yet.');
+    }
+    final guild = db.guilds.firstWhereOrNull((row) => row.id == membership.guildId);
+    final table = guild?.permissions ?? defaultGuildPermissionTable();
+    if (!guildMay(membership.role, guildPermissionMoveUpForGrabs, table)) {
+      return const GuildHallActionResult.failed('You cannot move items to Up for grabs.');
+    }
+    final moved = moveGuildBankToUpForGrabs(
+      hall.bank,
+      save,
+      itemId,
+      quantity,
+      enchantmentId,
+      () => _newId('gb'),
+    );
+    if (!moved.ok) return GuildHallActionResult.failed(moved.reason ?? 'Could not move.');
+    final next = hall.copyWith(bank: moved.bank);
+    _putHall(db, next);
+    _write(db);
+    return GuildHallActionResult.ok(next, save: moved.save);
+  }
+
+  List<GuildLogEntry> guildLog(String guildId) {
+    final db = _db();
+    final rows = db.logs.where((row) => row.guildId == guildId).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return rows;
+  }
+
+  String? setGuildPermissions(String userId, String guildId, GuildPermissionTable table) {
+    final db = _db();
+    final guild = db.guilds.firstWhereOrNull((row) => row.id == guildId);
+    if (guild == null) return 'Guild not found.';
+    if (guild.leaderId != userId) return 'Only the leader can change permissions.';
+    db.guilds = [
+      for (final row in db.guilds)
+        if (row.id == guildId) row.copyWith(permissions: table) else row,
+    ];
+    _write(db);
+    return null;
   }
 
   List<ArenaOpponent> hallBoxingOpponents(String userId) {

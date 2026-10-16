@@ -1,4 +1,5 @@
 import { createDefaultEquipmentPresets } from '../equipment/presets'
+import { applyTutorialLockback } from '../tutorial/tutorial'
 import { grantPetsForCollectedCritters } from '../critters/pets'
 import {
   ensureStartingHuntingTool,
@@ -1191,6 +1192,28 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
     fromVersion: 65,
     toVersion: 66,
     migrate: (save) => dropRemovedRen01Items({ ...save, saveVersion: 66 }),
+  },
+  {
+    fromVersion: 66,
+    toVersion: 67,
+    migrate: (save) =>
+      applyTutorialLockback({
+        ...save,
+        tutorialGuaranteedGathers: Math.max(
+          0,
+          Math.floor(Number((save as PlayerSave & { tutorialGuaranteedGathers?: unknown }).tutorialGuaranteedGathers) || 0),
+        ),
+        tutorialGuaranteedCooks: Math.max(
+          0,
+          Math.floor(Number((save as PlayerSave & { tutorialGuaranteedCooks?: unknown }).tutorialGuaranteedCooks) || 0),
+        ),
+        tutorialFoodGrantDeathAt:
+          typeof (save as PlayerSave & { tutorialFoodGrantDeathAt?: unknown }).tutorialFoodGrantDeathAt ===
+          'string'
+            ? (save as PlayerSave).tutorialFoodGrantDeathAt
+            : null,
+        saveVersion: 67,
+      }),
   },
 ]
 

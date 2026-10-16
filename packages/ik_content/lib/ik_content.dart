@@ -8,6 +8,7 @@
 library;
 
 export 'src/bank_amenities.dart';
+export 'src/guild_amenities.dart';
 export 'src/db_row.dart';
 export 'src/generated/rows.dart';
 export 'src/indexes.dart';

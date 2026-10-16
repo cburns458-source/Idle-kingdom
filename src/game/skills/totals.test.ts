@@ -118,6 +118,9 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     xpTrackerPausedAtMs: null,
     mailbox: [],
     unlockedBookIds: [],
+    tutorialGuaranteedGathers: 0,
+    tutorialGuaranteedCooks: 0,
+    tutorialFoodGrantDeathAt: null,
   }
 }
 

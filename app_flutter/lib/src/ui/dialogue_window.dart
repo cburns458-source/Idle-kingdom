@@ -7,6 +7,28 @@ import 'dialogue_text.dart';
 import 'game_popup.dart';
 import 'social_bits.dart';
 
+/// Visible choices a player can see (hidden+disabled rows stay out).
+List<DialogueChoiceView> visibleDialogueChoices(Iterable<DialogueChoiceView> choices) {
+  return [
+    for (final choice in choices)
+      if (!(choice.hidden && !choice.enabled)) choice,
+  ];
+}
+
+/// Tap-to-advance when a line has no branching choices.
+VoidCallback? dialogueTapAdvance({
+  required List<DialogueChoiceView> visible,
+  required void Function(String choiceId) onChoose,
+  required VoidCallback onClose,
+}) {
+  if (visible.length > 1) return null;
+  if (visible.length == 1) {
+    final choice = visible.single;
+    return choice.enabled ? () => onChoose(choice.choiceId) : null;
+  }
+  return onClose;
+}
+
 /// Reusable standalone dialogue card (extracted look from NPC talk).
 class DialogueWindow extends StatelessWidget {
   const DialogueWindow({
@@ -33,10 +55,7 @@ class DialogueWindow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final groups = progress ?? view.stepProgress;
-    final choices = [
-      for (final choice in view.choices)
-        if (!(choice.hidden && !choice.enabled)) choice,
-    ];
+    final choices = visibleDialogueChoices(view.choices);
     return GamePanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -89,6 +108,88 @@ class DialogueWindow extends StatelessWidget {
   }
 }
 
+/// Fennel's tutorial lines: portrait + current line along the bottom.
+///
+/// Tap advances a single-choice line. Branching choices stay as buttons.
+class FennelDialoguePanel extends StatelessWidget {
+  const FennelDialoguePanel({
+    super.key,
+    required this.view,
+    required this.text,
+    required this.onChoose,
+    required this.onClose,
+    this.progress,
+    this.message,
+    this.error,
+  });
+
+  final DialogueView view;
+  final DialogueText text;
+  final void Function(String choiceId) onChoose;
+  final VoidCallback onClose;
+  final List<StepProgressGroup>? progress;
+  final String? message;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    final groups = progress ?? view.stepProgress;
+    final choices = visibleDialogueChoices(view.choices);
+    final advance = dialogueTapAdvance(visible: choices, onChoose: onChoose, onClose: onClose);
+    return Material(
+      key: const Key('fennel-dialogue-panel'),
+      color: Colors.transparent,
+      child: GamePanel(
+        onTap: advance,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                IgnorePointer(child: NpcPortrait(npcId: view.npcId, size: 68)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(view.line, style: const TextStyle(fontSize: GameFont.m)),
+                ),
+              ],
+            ),
+            for (final group in groups)
+              for (final line in group.items) ...[
+                const SizedBox(height: 4),
+                Text(text.progressLine(group, line), style: const TextStyle(fontSize: GameFont.s)),
+              ],
+            if (message case final notice?) ...[const SizedBox(height: 4), MutedText(notice)],
+            if (error case final err?) ...[
+              const SizedBox(height: 6),
+              Text(
+                err,
+                style: const TextStyle(color: Palette.danger, fontSize: GameFont.s),
+              ),
+            ],
+            if (choices.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                children: [
+                  for (final choice in choices)
+                    GameButton(
+                      label: text.choiceLabel(choice, view.stepProgress) ?? choice.label,
+                      onPressed: choice.enabled ? () => onChoose(choice.choiceId) : null,
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Bag `no_room` popup. [noRoom] picks a full stack or the make-room line.
 Future<void> showDialogueBagFullPopup({
   required BuildContext context,
@@ -130,6 +231,7 @@ class StandaloneDialogueHost extends StatefulWidget {
     required this.dialogueId,
     required this.onClose,
     this.request,
+    this.docked = false,
   });
 
   final GameController controller;
@@ -138,6 +240,9 @@ class StandaloneDialogueHost extends StatefulWidget {
 
   /// Defaults to the local engine plus a `dialogue_choose` commit.
   final DialogueRequest? request;
+
+  /// Bottom-of-screen Fennel panel used by the tutorial overlay.
+  final bool docked;
 
   @override
   State<StandaloneDialogueHost> createState() => _StandaloneDialogueHostState();
@@ -289,6 +394,7 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
     if (view == null) {
       return GamePanel(
         child: Column(
+          mainAxisSize: widget.docked ? MainAxisSize.min : MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(_error ?? _text.startFailure(null), style: const TextStyle(color: Palette.danger)),
@@ -302,14 +408,26 @@ class _StandaloneDialogueHostState extends State<StandaloneDialogueHost> {
       );
     }
     final shown = {for (final group in view.stepProgress) (group.questId, group.stepId)};
+    final progress = [
+      ...view.stepProgress,
+      for (final group in _touched)
+        if (!shown.contains((group.questId, group.stepId))) group,
+    ];
+    if (widget.docked) {
+      return FennelDialoguePanel(
+        view: view,
+        text: _text,
+        progress: progress,
+        onChoose: _choose,
+        onClose: widget.onClose,
+        message: _message,
+        error: _error,
+      );
+    }
     return DialogueWindow(
       view: view,
       text: _text,
-      progress: [
-        ...view.stepProgress,
-        for (final group in _touched)
-          if (!shown.contains((group.questId, group.stepId))) group,
-      ],
+      progress: progress,
       onChoose: _choose,
       onClose: widget.onClose,
       message: _message,

@@ -173,6 +173,9 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     lootTrackerPausedAtMs: nowMs,
     xpTrackerPausedAtMs: nowMs,
     mailbox: [],
+    tutorialGuaranteedGathers: 0,
+    tutorialGuaranteedCooks: 0,
+    tutorialFoodGrantDeathAt: null,
   }
   return syncSystemMail(save, nowMs)
 }

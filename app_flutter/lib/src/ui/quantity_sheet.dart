@@ -28,6 +28,10 @@ Future<int?> askQuantity(
   /// (sell offer price: no Max, buy offer price: Max = gold).
   bool showMax = true,
 
+  /// When true, digits that would pass [max] become [max] instead of sitting
+  /// over the ceiling until confirm.
+  bool clampToMax = false,
+
   /// Shop offer pads. When set, the keypad can take the item off the offer.
   /// A confirmed remove returns [quantityRemoveSentinel].
   String? removeLabel,
@@ -44,6 +48,7 @@ Future<int?> askQuantity(
       min: min,
       max: max,
       showMax: showMax,
+      clampToMax: clampToMax,
       removeLabel: removeLabel,
     ),
   );
@@ -59,6 +64,7 @@ class _QuantitySheet extends StatefulWidget {
     required this.min,
     required this.max,
     required this.showMax,
+    required this.clampToMax,
     this.removeLabel,
   });
 
@@ -70,6 +76,7 @@ class _QuantitySheet extends StatefulWidget {
   final int min;
   final int? max;
   final bool showMax;
+  final bool clampToMax;
   final String? removeLabel;
 
   @override
@@ -89,7 +96,14 @@ class _QuantitySheetState extends State<_QuantitySheet> {
       _error = null;
       final next = !_edited || _text == '0' ? digit : '$_text$digit';
       _edited = true;
-      if (next.length <= 9) _text = next;
+      if (next.length > 9) return;
+      final parsed = int.tryParse(next);
+      final ceiling = widget.max;
+      if (widget.clampToMax && ceiling != null && parsed != null && parsed > ceiling) {
+        _text = '$ceiling';
+        return;
+      }
+      _text = next;
     });
   }
 
@@ -109,6 +123,10 @@ class _QuantitySheetState extends State<_QuantitySheet> {
     }
     final ceiling = widget.max;
     if (ceiling != null && parsed > ceiling) {
+      if (widget.clampToMax) {
+        Navigator.of(context).pop(ceiling);
+        return;
+      }
       setState(() => _error = 'Maximum is ${formatThousands(ceiling)}.');
       return;
     }
@@ -141,6 +159,7 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                     decoration: chromeSlotFill(context, border: Border.all(color: Palette.edge)),
                     child: Text(
                       _text,
+                      key: const Key('quantity-input'),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: GameFont.xl,
