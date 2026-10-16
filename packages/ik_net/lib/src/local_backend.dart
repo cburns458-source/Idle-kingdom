@@ -1417,10 +1417,18 @@ class LocalMultiplayerBackend {
     final guild = getGuild(guildId);
     final hall = guildHall(guildId) ?? GuildHallState.fresh(guildId);
     var strong = 0;
-    for (final member in db.members.where((row) => row.guildId == guildId)) {
-      final cloud = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
-      if (guildMemberSaveTotalLevel(cloud?.payload) >= guildAchievementMemberLevel) {
-        strong += 1;
+    final unlocked = <String, String>{
+      for (final row in guild?.achievements ?? const <GuildAchievementUnlock>[])
+        row.achievementId: row.unlockedAt,
+    };
+    if (!shouldCountRisingStrengthMembers(unlocked)) {
+      strong = guildAchievementMembersAtLevel.toInt();
+    } else {
+      for (final member in db.members.where((row) => row.guildId == guildId)) {
+        final cloud = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
+        if (guildMemberSaveTotalLevel(cloud?.payload) >= guildAchievementMemberLevel) {
+          strong += 1;
+        }
       }
     }
     return evaluateGuildAchievements(
@@ -1430,10 +1438,7 @@ class LocalMultiplayerBackend {
         goldContributedBy: hall.goldContributedBy,
         donatedBy: hall.donatedBy,
         membersAtLevel500: strong,
-        unlocked: <String, String>{
-          for (final row in guild?.achievements ?? const <GuildAchievementUnlock>[])
-            row.achievementId: row.unlockedAt,
-        },
+        unlocked: unlocked,
       ),
       _nowIso(),
     ).progress;
@@ -1562,18 +1567,22 @@ class LocalMultiplayerBackend {
   void _unlockGuildAchievements(LocalDb db, String guildId) {
     final hallIndex = db.halls.indexWhere((row) => row.guildId == guildId);
     final hall = hallIndex >= 0 ? db.halls[hallIndex] : GuildHallState.fresh(guildId);
-    var strong = 0;
-    for (final member in db.members.where((row) => row.guildId == guildId)) {
-      final cloud = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
-      if (guildMemberSaveTotalLevel(cloud?.payload) >= guildAchievementMemberLevel) {
-        strong += 1;
-      }
-    }
     final guildIndex = db.guilds.indexWhere((row) => row.id == guildId);
     if (guildIndex < 0) return;
     final unlocked = <String, String>{
       for (final row in db.guilds[guildIndex].achievements) row.achievementId: row.unlockedAt,
     };
+    var strong = 0;
+    if (!shouldCountRisingStrengthMembers(unlocked)) {
+      strong = guildAchievementMembersAtLevel.toInt();
+    } else {
+      for (final member in db.members.where((row) => row.guildId == guildId)) {
+        final cloud = db.saves.firstWhereOrNull((row) => row.userId == member.userId);
+        if (guildMemberSaveTotalLevel(cloud?.payload) >= guildAchievementMemberLevel) {
+          strong += 1;
+        }
+      }
+    }
     final evaluated = evaluateGuildAchievements(
       GuildAchievementSnapshot(
         completedTiers: hall.completedTiers,

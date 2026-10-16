@@ -1672,15 +1672,6 @@ class FakeTransport implements RemoteTransport {
         break;
       }
     }
-    var strong = 0;
-    for (final row in tables[RemoteTables.guildMembers]!) {
-      if (row['guild_id'] != guildId) continue;
-      final memberId = row['user_id'];
-      if (memberId is! String) continue;
-      if (guildMemberSaveTotalLevel(_saveForUser(memberId)) >= guildAchievementMemberLevel) {
-        strong += 1;
-      }
-    }
     final unlocked = <String, String>{
       for (final row in tables[RemoteTables.guildAchievements]!)
         if (row['guild_id'] == guildId &&
@@ -1688,6 +1679,19 @@ class FakeTransport implements RemoteTransport {
             row['unlocked_at'] is String)
           row['achievement_id'] as String: row['unlocked_at'] as String,
     };
+    var strong = 0;
+    if (!shouldCountRisingStrengthMembers(unlocked)) {
+      strong = guildAchievementMembersAtLevel.toInt();
+    } else {
+      for (final row in tables[RemoteTables.guildMembers]!) {
+        if (row['guild_id'] != guildId) continue;
+        final memberId = row['user_id'];
+        if (memberId is! String) continue;
+        if (guildMemberSaveTotalLevel(_saveForUser(memberId)) >= guildAchievementMemberLevel) {
+          strong += 1;
+        }
+      }
+    }
     final evaluated = evaluateGuildAchievements(
       GuildAchievementSnapshot(
         completedTiers: hall.completedTiers,

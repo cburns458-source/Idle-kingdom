@@ -198,6 +198,13 @@ Checklist, in order:
    into `main`. Do not edit `20261016170000`.
    Status: applied on test Oct 16 2026 (file `20261016180000`, MCP
    `20261016120815` / `guild_achievements_qa`); live pending.
+9. [ ] `20261016190000_guild_achievements_skip_rising_count.sql` (SOC-01).
+   Skip the Rising strength hosted-save scan once unlocked; save-payload
+   trigger only evaluates when a member newly reaches total level 500.
+   Apply to test with this PR; live only after Conor merges `test-launch`
+   into `main`. Do not edit `20261016170000` or `20261016180000`.
+   Status: applied on test Oct 16 2026 (file `20261016190000`, MCP
+   `20261016122648` / `guild_achievements_skip_rising_count`); live pending.
 
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16

@@ -179,6 +179,38 @@ void main() {
     );
   });
 
+  test('skips the Rising strength member count once it is unlocked', () {
+    expect(shouldCountRisingStrengthMembers(const <String, String>{}), isTrue);
+    final reached = evaluateGuildAchievements(
+      const GuildAchievementSnapshot(
+        completedTiers: <String>[],
+        goldContributed: 0,
+        membersAtLevel500: 25,
+      ),
+      _now,
+    );
+    expect(shouldCountRisingStrengthMembers(reached.unlocked), isFalse);
+    final skipped = evaluateGuildAchievements(
+      GuildAchievementSnapshot(
+        completedTiers: const <String>[],
+        goldContributed: 0,
+        membersAtLevel500: 0,
+        unlocked: reached.unlocked,
+      ),
+      '2026-10-16T13:00:00.000Z',
+    );
+    expect(skipped.newlyUnlocked, isEmpty);
+    expect(skipped.unlocked['gach_rising_strength'], _now);
+    final sql = File(
+      '${parityRepoRoot().path}/supabase/migrations/20261016190000_guild_achievements_skip_rising_count.sql',
+    ).readAsStringSync();
+    expect(
+      sql.indexOf("a.achievement_id = 'gach_rising_strength'"),
+      lessThan(sql.indexOf('bazaar_user_total_level')),
+    );
+    expect(sql, contains('v_new_level < 500 or v_old_level >= 500'));
+  });
+
   test('keeps rising strength unlocked after a member leaves', () {
     // Vari: Rising strength stays unlocked after members leave.
     final reached = evaluateGuildAchievements(

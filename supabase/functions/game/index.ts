@@ -1156,7 +1156,6 @@ async function loadHallContext(admin: Client, userId: string): Promise<HallConte
   const goldContributedBy = (hall.gold_contributed_by ?? hall.debt_paid_by ?? {}) as Record<string, number>
   const donatedBy = (hall.donated_by ?? {}) as Record<string, boolean>
   const nowMs = Date.now()
-  const strongCount = await countMembersAtSaveLevel500(admin, member.guild_id as string, nowMs)
   const { data: unlockRows } = await admin
     .from('guild_achievements')
     .select('achievement_id, unlocked_at')
@@ -1167,6 +1166,9 @@ async function loadHallContext(admin: Client, userId: string): Promise<HallConte
     const at = row.unlocked_at
     if (id && typeof at === 'string') unlockedAchievements[id] = at
   }
+  const strongCount = unlockedAchievements.gach_rising_strength
+    ? 25
+    : await countMembersAtSaveLevel500(admin, member.guild_id as string, nowMs)
   const { data: mates } = await admin
     .from('guild_members')
     .select('user_id')

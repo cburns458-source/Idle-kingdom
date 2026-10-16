@@ -566,6 +566,54 @@ void main() {
     );
   });
 
+  test('an unlocked guild skips the Rising strength member count', () {
+    final storage = MemorySaveStorage();
+    final backend = LocalMultiplayerBackend(storage: storage);
+    final leader = backend.signUp('leader-skip@example.com', 'Leader', 'secret').session!;
+    final leaderSave = _withTotalLevel(
+      createNewSave(database, 1).copyWith(gold: guildCreateGoldCost),
+      500,
+    );
+    backend.writeCloudSave(leader.userId, leaderSave);
+    final created = backend.createGuild(
+      leader,
+      const CreateGuildInput(
+        name: 'Oak Skip',
+        tag: 'SKP',
+        description: '',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      leaderSave.gold,
+    );
+    expect(created.ok, isTrue);
+    final guildId = created.guild!.id;
+    for (var i = 0; i < 24; i++) {
+      final member = backend.signUp('skip$i@example.com', 'S$i', 'secret').session!;
+      backend.writeCloudSave(member.userId, _withTotalLevel(createNewSave(database, 1), 500));
+      expect(backend.applyToGuild(member, guildId, '').ok, isTrue);
+    }
+    expect(
+      backend.getGuild(guildId)!.achievements.map((row) => row.achievementId),
+      contains('gach_rising_strength'),
+    );
+    expect(shouldCountRisingStrengthMembers(const <String, String>{}), isTrue);
+    expect(
+      shouldCountRisingStrengthMembers(<String, String>{
+        'gach_rising_strength': '2026-10-16T12:00:00.000Z',
+      }),
+      isFalse,
+    );
+
+    final db = LocalDb.fromJson(jsonDecode(storage.getItem(multiplayerLocalDbKey)!));
+    db.saves = <CloudSaveRecord>[];
+    storage.setItem(multiplayerLocalDbKey, jsonEncode(db.toJson()));
+    final progress = backend
+        .guildAchievementProgress(guildId)
+        .singleWhere((row) => row.id == 'gach_rising_strength');
+    expect(progress.unlocked, isTrue);
+    expect(progress.current, 25);
+  });
+
   test(
     'a member with no save counts as 0; forging roster total_level does not unlock Rising strength',
     () {

@@ -16,6 +16,7 @@ import {
   guildMaySetBanner,
   guildMemberSaveTotalLevel,
   normalizeGuildBanner,
+  shouldCountRisingStrengthMembers,
   type GuildAchievementSnapshot,
 } from './achievements'
 import {
@@ -158,6 +159,28 @@ describe('guild achievements and banner', () => {
     ).not.toContain('gach_rising_strength')
   })
 
+  it('skips the Rising strength member count once it is unlocked', () => {
+    expect(shouldCountRisingStrengthMembers(undefined)).toBe(true)
+    expect(shouldCountRisingStrengthMembers({})).toBe(true)
+    const reached = evaluateGuildAchievements(snapshot({ membersAtLevel500: 25 }), NOW)
+    expect(shouldCountRisingStrengthMembers(reached.unlocked)).toBe(false)
+    const skipped = evaluateGuildAchievements(
+      snapshot({ membersAtLevel500: 0, unlocked: reached.unlocked }),
+      '2026-10-16T13:00:00.000Z',
+    )
+    expect(skipped.newlyUnlocked).toEqual([])
+    expect(skipped.unlocked.gach_rising_strength).toBe(NOW)
+    const qaSql = readFileSync(
+      resolve(process.cwd(), 'supabase/migrations/20261016190000_guild_achievements_skip_rising_count.sql'),
+      'utf8',
+    )
+    const skipAt = qaSql.indexOf("a.achievement_id = 'gach_rising_strength'")
+    const countAt = qaSql.indexOf('bazaar_user_total_level')
+    expect(skipAt).toBeGreaterThan(0)
+    expect(countAt).toBeGreaterThan(skipAt)
+    expect(qaSql).toContain('v_new_level < 500 or v_old_level >= 500')
+  })
+
   it('keeps rising strength unlocked after a member leaves', () => {
     // Vari: Rising strength stays unlocked after members leave.
     const reached = evaluateGuildAchievements(snapshot({ membersAtLevel500: 25 }), NOW)
@@ -196,6 +219,7 @@ describe('guild achievements and banner', () => {
     const gameSource = readFileSync(resolve(process.cwd(), 'supabase/functions/game/index.ts'), 'utf8')
     expect(gameSource).toContain('countMembersAtSaveLevel500')
     expect(gameSource).toContain('hostedTotalLevel')
+    expect(gameSource).toContain('unlockedAchievements.gach_rising_strength')
     expect(gameSource).not.toMatch(/\.gte\('total_level',\s*500\)/)
     const qaSql = readFileSync(
       resolve(process.cwd(), 'supabase/migrations/20261016180000_guild_achievements_qa.sql'),

@@ -1,6 +1,7 @@
 -- Guild achievement helpers and banner palette. Run against a project that
--- has 20261016170000_guild_achievements_and_banner and
--- 20261016180000_guild_achievements_qa.
+-- has 20261016170000_guild_achievements_and_banner,
+-- 20261016180000_guild_achievements_qa, and
+-- 20261016190000_guild_achievements_skip_rising_count.
 
 \pset pager off
 
@@ -53,6 +54,16 @@ begin
   if position('P0001' in pg_get_functiondef('public.guild_set_banner(uuid,jsonb)'::regprocedure)) = 0 then
     raise exception 'guild_set_banner must catch P0001';
   end if;
+  if position('v_rising_unlocked' in pg_get_functiondef('public.guild_evaluate_achievements(uuid)'::regprocedure)) = 0 then
+    raise exception 'evaluate must skip the rising strength scan once unlocked';
+  end if;
+  if position('bazaar_user_total_level' in pg_get_functiondef('public.guild_evaluate_achievements(uuid)'::regprocedure))
+     < position('v_rising_unlocked' in pg_get_functiondef('public.guild_evaluate_achievements(uuid)'::regprocedure)) then
+    raise exception 'existence check must come before the hosted-save scan';
+  end if;
+  if position('v_new_level < 500' in pg_get_functiondef('public.guild_saves_evaluate_achievements()'::regprocedure)) = 0 then
+    raise exception 'save trigger must skip unless a member newly reaches 500';
+  end if;
 end $$;
 
 \echo '--- rising strength uses hosted saves and stays unlocked after a leave ---'
@@ -62,6 +73,7 @@ declare
   v_leader uuid;
   v_user uuid;
   v_leaver uuid;
+  v_old text;
   i integer;
 begin
   insert into auth.users (id)
@@ -102,6 +114,27 @@ begin
   ) then
     raise exception 'save-based 500 should unlock rising strength even when roster total_level is 1';
   end if;
+
+  v_old := pg_get_functiondef('public.bazaar_user_total_level(uuid)'::regprocedure);
+  begin
+    create or replace function public.bazaar_user_total_level(p_user_id uuid)
+    returns integer
+    language plpgsql
+    as $f$
+    begin
+      raise exception 'rising strength count should be skipped';
+    end;
+    $f$;
+    perform public.guild_evaluate_achievements(v_guild);
+    update public.player_saves
+       set payload = payload
+     where user_id = v_leader;
+    execute v_old;
+  exception
+    when others then
+      execute v_old;
+      raise;
+  end;
 
   v_leaver := 'aaaaaaaa-0000-4000-8000-000000000025'::uuid;
   delete from public.guild_members where guild_id = v_guild and user_id = v_leaver;

@@ -62,6 +62,11 @@ export function guildMemberSaveTotalLevel(save: Pick<PlayerSave, 'skills'> | nul
   return save == null ? 0 : totalLevel(save)
 }
 
+/** False once Rising strength is unlocked; skip the hosted-save member scan. */
+export function shouldCountRisingStrengthMembers(unlocked: Record<string, string> | undefined): boolean {
+  return unlocked?.gach_rising_strength == null
+}
+
 export type GuildAchievementKind = 'hall_tier' | 'gold' | 'materials' | 'donors' | 'members_level'
 
 export type GuildAchievementDef = {

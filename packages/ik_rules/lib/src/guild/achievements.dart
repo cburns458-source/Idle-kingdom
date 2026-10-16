@@ -58,6 +58,10 @@ const num guildAchievementMembersAtLevel = 25;
 /// A member with no save counts as 0. Do not use guild_members.total_level.
 num guildMemberSaveTotalLevel(PlayerSave? save) => save == null ? 0 : totalLevel(save);
 
+/// False once Rising strength is unlocked; skip the hosted-save member scan.
+bool shouldCountRisingStrengthMembers(Map<String, String> unlocked) =>
+    unlocked['gach_rising_strength'] == null;
+
 const String guildAchievementKindHallTier = 'hall_tier';
 const String guildAchievementKindGold = 'gold';
 const String guildAchievementKindMaterials = 'materials';
