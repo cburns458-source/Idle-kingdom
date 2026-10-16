@@ -7,6 +7,7 @@ import 'dev_commands.dart';
 import 'local_backend.dart';
 import 'market.dart';
 import 'presence.dart';
+import 'feedback.dart';
 import 'remote.dart';
 import 'results.dart';
 import 'session_store.dart';
@@ -104,6 +105,8 @@ abstract interface class MultiplayerService {
   Future<void> blockPlayer(String targetUserId);
 
   Future<ActionResult> reportPlayer(String targetUserId, String reason);
+
+  Future<FeedbackSubmitResult> submitFeedback(FeedbackRequest request);
 
   Future<ActionResult> sendFriendRequest(String targetUserId);
 
@@ -615,6 +618,15 @@ class LocalMultiplayerService implements MultiplayerService {
     if (stored == null) return const ActionResult.failed('Choose a reason.');
     _backend.reportUser(current.userId, targetUserId, stored);
     return const ActionResult.ok();
+  }
+
+  @override
+  Future<FeedbackSubmitResult> submitFeedback(FeedbackRequest request) async {
+    final current = session;
+    if (current == null) return const FeedbackSubmitResult.failed(feedbackSignInRequired);
+    final refusal = feedbackRequestError(request);
+    if (refusal != null) return FeedbackSubmitResult.failed(refusal);
+    return _backend.submitFeedback(current.userId, request);
   }
 
   @override
