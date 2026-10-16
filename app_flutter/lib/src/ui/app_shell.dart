@@ -1303,11 +1303,18 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
           if (autoDialogueId == null && hint?.spotlight != null)
             Positioned.fill(child: TutorialSpotlight(target: hint!.spotlight)),
           if (autoDialogueId != null)
-            Positioned.fill(
-              child: StandaloneDialogueHost(
-                controller: controller,
-                dialogueId: autoDialogueId,
-                onClose: () => setState(() {}),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: StandaloneDialogueHost(
+                  controller: controller,
+                  dialogueId: autoDialogueId,
+                  docked: true,
+                  onClose: () => setState(() {}),
+                ),
               ),
             ),
           if (fennelIntroPending(save))

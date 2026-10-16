@@ -768,7 +768,7 @@ class _InventoryViewState extends State<InventoryView> {
                     final stack = save.inventory[index];
                     final item = controller.indexes.itemsById[stack.itemId];
                     final equippable = _isEquippable(stack.itemId);
-                    return _ItemTile(
+                    Widget tile = _ItemTile(
                       item: item,
                       quantity: stack.quantity,
                       enchanted: stack.enchantmentId != null,
@@ -788,6 +788,16 @@ class _InventoryViewState extends State<InventoryView> {
                       },
                       onLongPress: () => _showDetail(stack: stack, inventoryIndex: index),
                     );
+                    final spotlight = switch (stack.itemId) {
+                      tutorialStarterSwordId => TutorialSpotlightId.sword,
+                      tutorialStarterDaggerId ||
+                      tutorialStarterShieldId => TutorialSpotlightId.shield,
+                      _ => null,
+                    };
+                    if (spotlight != null) {
+                      tile = TutorialAnchor(id: spotlight, prefer: true, child: tile);
+                    }
+                    return tile;
                   },
                 );
               },
