@@ -28,6 +28,13 @@ abstract final class Palette {
   /// Gold copy on tan / ash plates. Dark enough for ~4.5:1 on [panelTan].
   static const goldInk = Color(0xFF4A3608);
 
+  /// Gold amounts on recessed item-slot wells. Lighter than [gold] so copy
+  /// clears 4.5:1 on both wood `#3D2A1A` and stone `#3D3D3D` slots.
+  static const currencyOnSlot = Color(0xFFD1AD49);
+
+  /// Green copy on tan / ash plates. Dark enough for ~4.5:1 on [panelTan].
+  static const successInk = Color(0xFF154229);
+
   /// Outer board / wood chrome.
   static const wood = Color(0xFF2A1C12);
   static const softGreen = Color(0xFF2E8B57);

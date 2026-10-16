@@ -310,19 +310,21 @@ String faithDescription(ReligionRow faith) {
   return raw.trim();
 }
 
-/// Quest flavour keyed by Religions `Display Name`. Names must match the data.
-const Map<String, String> faithFlavourByName = <String, String>{
-  'Vaelithra': 'Bow to the god Oruveth and receive their guidance in tending the forest.',
-  'Khavessa': 'Bow to the god Theryvak and receive their guidance in the patient hunt.',
-  'Nymorai': 'Bow to the god Ulvaryn and receive their guidance on the waters.',
-  'Drazhkar': 'Bow to the god Azhurak and receive their guidance in battle.',
-  'Korvethan': 'Bow to the god Gorveth and receive their guidance in the deep stone.',
-  'Elyndara': 'Bow to the god Saelun and receive their guidance in the harvest.',
-  'Veyrathi': 'Bow to the god Zorvael and receive their guidance in fortune.',
+/// Quest flavour keyed by Religions `Religion ID`.
+const Map<String, String> faithFlavourById = <String, String>{
+  'REL-0001': 'Bow to the god Oruveth and receive their guidance in tending the forest.',
+  'REL-0002': 'Bow to the god Theryvak and receive their guidance in the patient hunt.',
+  'REL-0003': 'Bow to the god Ulvaryn and receive their guidance on the waters.',
+  'REL-0004': 'Bow to the god Azhurak and receive their guidance in battle.',
+  'REL-0005': 'Bow to the god Zorvael and receive their guidance in fortune.',
+  'REL-0006': 'Bow to the god Gorveth and receive their guidance in the deep stone.',
+  'REL-0007': 'Bow to the god Saelun and receive their guidance in the harvest.',
 };
 
 String faithFlavourLine(ReligionRow faith) {
-  return faithFlavourByName[faith.displayName] ?? '';
+  final id = faith.raw['Religion ID'];
+  if (id is! String) return '';
+  return faithFlavourById[id] ?? '';
 }
 
 /// One faith bonus, split into amount, optional skill, and stat from the row.
@@ -369,7 +371,7 @@ FaithBonusView faithBonusView(GameDatabase db, ReligionBonusRow bonus) {
   final statLabel = switch (bonusType) {
     'skill_drop_chance_percent' => 'drop chance',
     'max_hp_percent' => 'maximum HP',
-    'gold_gain_percent' => 'gold from enemies and actions',
+    'gold_gain_percent' => 'Gold from enemies and actions',
     _ => bonusType is String && bonusType.trim().isNotEmpty ? bonusType : '',
   };
   return FaithBonusView(amountLabel: amountLabel, statLabel: statLabel, skillName: skillName);

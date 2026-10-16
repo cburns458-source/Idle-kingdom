@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/feedback_sheet.dart';
 import 'package:ik_content/ik_content.dart';
 
 import 'support/harness.dart';
@@ -20,9 +21,11 @@ void main() {
     await openChinScreen(tester, 'Settings');
 
     expect(find.text('Feedback'), findsOne);
-    expect(find.text('Report a bug'), findsOne);
-    expect(find.text('Share an idea'), findsOne);
-    expect(find.text('Open Discord'), findsOne);
+    expect(find.text('Report / Suggestion'), findsOne);
+    expect(find.text('Report a bug'), findsNothing);
+    expect(find.text('Share an idea'), findsNothing);
+    expect(find.text('Open Discord'), findsNothing);
+    expect(find.text('Join Discord'), findsOne);
     expect(find.text('UI look'), findsNothing);
 
     await tester.tap(find.text('UI'));
@@ -30,7 +33,24 @@ void main() {
     expect(find.text('UI look'), findsOne);
   });
 
-  testWidgets('Feedback options are parchment on wood, green when selected', (tester) async {
+  testWidgets('Report / Suggestion opens the ADM-04 form', (tester) async {
+    final controller = buildController(database, seed: startedCharacter(database));
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(900, 2400));
+
+    await openChinScreen(tester, 'Settings');
+    await tester.tap(find.text('Report / Suggestion'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(FeedbackForm), findsOne);
+    expect(find.text('Bug'), findsOne);
+    expect(find.text('Suggestion'), findsOne);
+    expect(find.text('Player'), findsOne);
+    expect(find.text('Send'), findsOne);
+  });
+
+  testWidgets('UI look options are parchment on wood, green when selected', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller, size: const Size(900, 2400));
@@ -38,34 +58,14 @@ void main() {
     await openChinScreen(tester, 'Settings');
     expect(controller.uiChromePack, UiChromePack.wood);
 
-    final unselected = tester.widget<Text>(find.text('Report a bug'));
-    expect(unselected.style?.color, Palette.parchmentText);
-    expect(unselected.style?.color, isNot(UiChrome.wood.panelInk));
-
-    await tester.tap(find.widgetWithText(GameTextButton, 'Report a bug'));
+    await tester.tap(find.text('UI'));
     await tester.pump();
-    expect(tester.widget<Text>(find.text('Report a bug')).style?.color, Palette.borderSelected);
-    expect(tester.widget<Text>(find.text('Share an idea')).style?.color, Palette.parchmentText);
-  });
 
-  testWidgets('Feedback options stay parchment on stone, green when selected', (tester) async {
-    final controller = buildController(database, seed: startedCharacter(database));
-    addTearDown(controller.dispose);
-    controller.setUiChromePack(UiChromePack.stone);
-    await pumpShell(tester, controller, size: const Size(900, 2400));
+    final selected = tester.widget<Text>(find.text('Wood'));
+    expect(selected.style?.color, Palette.successInk);
+    expect(contrastRatio(Palette.successInk, Palette.panelTan), greaterThanOrEqualTo(4.5));
 
-    await openChinScreen(tester, 'Settings');
-    expect(controller.uiChromePack, UiChromePack.stone);
-
-    expect(tester.widget<Text>(find.text('Share an idea')).style?.color, Palette.parchmentText);
-    expect(
-      tester.widget<Text>(find.text('Share an idea')).style?.color,
-      isNot(UiChrome.stone.panelInk),
-    );
-
-    await tester.tap(find.widgetWithText(GameTextButton, 'Share an idea'));
-    await tester.pump();
-    expect(tester.widget<Text>(find.text('Share an idea')).style?.color, Palette.borderSelected);
-    expect(tester.widget<Text>(find.text('Report a bug')).style?.color, Palette.parchmentText);
+    final unselected = tester.widget<Text>(find.text('Stone'));
+    expect(unselected.style?.color, UiChrome.wood.panelInk);
   });
 }

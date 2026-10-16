@@ -83,13 +83,14 @@ void main() {
     );
   });
 
-  test('flavour lines are keyed by Display Name and match every Launch faith', () {
-    final names = religions(database.launch).map((faith) => faith.displayName).toSet();
-    expect(faithFlavourByName.keys.toSet(), names);
+  test('flavour lines are keyed by Religion ID and match every Launch faith', () {
+    final ids = religions(database.launch).map((faith) => faith.religionId).toSet();
+    expect(faithFlavourById.keys.toSet(), ids);
     for (final faith in religions(database.launch)) {
       final line = faithFlavourLine(faith);
       expect(line, isNotEmpty);
-      expect(line, faithFlavourByName[faith.displayName]);
+      expect(line, faithFlavourById[faith.religionId]);
+      expect(faithFlavourById.containsKey(faith.displayName), isFalse);
     }
   });
 
@@ -114,6 +115,9 @@ void main() {
         } else {
           expect(view.skillName, isNull);
           expect(view.detailLine, view.statLabel);
+          if (row.raw['Bonus Type'] == 'gold_gain_percent') {
+            expect(view.statLabel, 'Gold from enemies and actions');
+          }
         }
       }
     }

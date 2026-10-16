@@ -14,6 +14,8 @@ void main() {
     expect(Palette.border, isNot(Palette.gold));
     expect(Palette.edge, isNot(const Color(0x73A7872D)));
     expect(Palette.goldInk, isNot(Palette.gold));
+    expect(Palette.successInk, isNot(Palette.success));
+    expect(Palette.currencyOnSlot, isNot(Palette.currency));
     expect(PixelChrome.goldFace, Palette.gold);
     expect(PixelChrome.goldHighlight, Palette.goldHighlight);
     expect(PixelChrome.goldShade, Palette.goldShade);
@@ -27,6 +29,20 @@ void main() {
     for (final fill in [...Palette.confirmFill.colors, ...Palette.confirmPressed.colors]) {
       expect(contrastRatio(Palette.confirmLabel, fill), greaterThanOrEqualTo(4.5));
     }
+  });
+
+  test('green ink and selected green clear 4.5:1 on tan, ash, wood, and stone', () {
+    expect(contrastRatio(Palette.successInk, Palette.panelTan), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.successInk, UiChrome.stone.panel), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.skillXp, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.skillXp, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+  });
+
+  test('shop slot currency clears 4.5:1 on wood and stone wells', () {
+    expect(contrastRatio(Palette.currencyOnSlot, UiChrome.wood.slot), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.currencyOnSlot, UiChrome.stone.slot), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.currency, UiChrome.wood.slot), lessThan(4.5));
+    expect(contrastRatio(Palette.currency, UiChrome.stone.slot), lessThan(4.5));
   });
 
   test('unselected option parchment clears 4.5:1 on wood and stone boards', () {
@@ -231,8 +247,27 @@ void main() {
           ),
         ),
       );
-      expect(tester.widget<Text>(find.text('Share an idea')).style?.color, Palette.borderSelected);
+      expect(tester.widget<Text>(find.text('Share an idea')).style?.color, Palette.skillXp);
+      expect(contrastRatio(Palette.skillXp, chrome.board), greaterThanOrEqualTo(4.5));
     }
+  });
+
+  testWidgets('GameTextButton selected green on a tan panel uses success ink', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.wood,
+          child: Scaffold(
+            body: GamePanel(
+              child: GameTextButton(label: 'Bug', selected: true, onPressed: () {}),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.widget<Text>(find.text('Bug')).style?.color, Palette.successInk);
+    expect(contrastRatio(Palette.successInk, Palette.panelTan), greaterThanOrEqualTo(4.5));
   });
 
   testWidgets('GamePanel highlight is selected, not rare', (tester) async {

@@ -160,7 +160,7 @@ class _SkillMenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = entry.emphasized ? Palette.success : UiChrome.of(context).panelInk;
+    final baseColor = entry.emphasized ? Palette.successInk : UiChrome.of(context).panelInk;
     final color = entry.dimmed ? baseColor.withValues(alpha: 0.55) : baseColor;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

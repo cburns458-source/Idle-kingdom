@@ -359,6 +359,7 @@ class _LogRow extends StatelessWidget {
     this.trailing,
     this.leading,
     this.highlight = false,
+    this.success = false,
     this.dimmed = false,
   });
 
@@ -374,6 +375,9 @@ class _LogRow extends StatelessWidget {
   /// Gold title for achievements and marks the save has reached.
   final bool highlight;
 
+  /// Green title for completed / success rows.
+  final bool success;
+
   /// Greys the whole row out, for something not earned yet.
   final bool dimmed;
 
@@ -388,7 +392,13 @@ class _LogRow extends StatelessWidget {
 
   Widget _body(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final titleColor = _inkColor(highlight ? goldForeground(context) : chrome.panelInk);
+    final titleColor = _inkColor(
+      highlight
+          ? goldForeground(context)
+          : success
+          ? Palette.successInk
+          : chrome.panelInk,
+    );
     final mutedColor = dimmed ? chrome.panelMuted.withValues(alpha: dimAlpha) : chrome.panelMuted;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -433,7 +443,7 @@ class _QuestJournalRow extends StatelessWidget {
           title: row.name,
           detail: row.detail,
           trailing: row.statusLabel,
-          highlight: row.completed,
+          success: row.completed,
         ),
       );
     }
@@ -451,7 +461,7 @@ class _QuestJournalRow extends StatelessWidget {
               row.name,
               style: TextStyle(
                 fontWeight: FontWeight.w400,
-                color: row.completed ? goldForeground(context) : UiChrome.of(context).panelInk,
+                color: row.completed ? Palette.successInk : UiChrome.of(context).panelInk,
               ),
             ),
             subtitle: MutedText(row.detail),
@@ -475,7 +485,7 @@ class _QuestJournalRow extends StatelessWidget {
                               step.state == 'done' ? '✓' : '•',
                               style: TextStyle(
                                 color: step.state == 'done'
-                                    ? Palette.softGreen
+                                    ? Palette.successInk
                                     : UiChrome.of(context).panelInk,
                               ),
                             ),
@@ -542,11 +552,7 @@ class _MiniquestJournalRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final titleColor = row.ready
-        ? Palette.success
-        : row.completed
-        ? goldForeground(context)
-        : chrome.panelInk;
+    final titleColor = row.ready || row.completed ? Palette.successInk : chrome.panelInk;
     final subtitle = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -605,7 +611,7 @@ class _MiniquestJournalRow extends StatelessWidget {
                             Text(
                               step.state == 'done' ? '✓' : '•',
                               style: TextStyle(
-                                color: step.state == 'done' ? Palette.softGreen : chrome.panelInk,
+                                color: step.state == 'done' ? Palette.successInk : chrome.panelInk,
                               ),
                             ),
                             const SizedBox(width: 8),

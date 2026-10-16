@@ -301,6 +301,7 @@ void main() {
     expect(find.text('Rewards'), findsOne);
     expect(find.text('10,000 Cooking XP'), findsOne);
     expect(find.textContaining('Golden spud'), findsOne);
+    expect(tester.widget<Text>(find.text('The Grand Feast')).style?.color, Palette.successInk);
   });
 
   testWidgets('the Log no longer carries a recipe book page', (tester) async {

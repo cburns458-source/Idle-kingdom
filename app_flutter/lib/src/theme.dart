@@ -421,7 +421,7 @@ class _GameButtonState extends State<GameButton> {
 /// Selected option copy is always green. Unselected copy is parchment on dark
 /// wood/stone boards (≥4.5:1) and pack ink on tan/ash plates.
 Color gameOptionLabelColor(BuildContext context, {required bool selected}) {
-  if (selected) return Palette.borderSelected;
+  if (selected) return successForeground(context);
   final inherited = DefaultTextStyle.of(context).style.color;
   final onPanel =
       _PanelForeground.of(context) || (inherited != null && inherited.computeLuminance() < 0.45);
@@ -1215,6 +1215,14 @@ Color goldForeground(BuildContext context) {
   final inherited = DefaultTextStyle.of(context).style.color;
   final onLightPanel = inherited != null && inherited.computeLuminance() < 0.45;
   return onLightPanel ? Palette.goldInk : Palette.gold;
+}
+
+/// Green copy that stays readable: [Palette.successInk] on tan plates,
+/// [Palette.skillXp] on dark boards (≥4.5:1 on wood and stone).
+Color successForeground(BuildContext context) {
+  final inherited = DefaultTextStyle.of(context).style.color;
+  final onLightPanel = inherited != null && inherited.computeLuminance() < 0.45;
+  return onLightPanel ? Palette.successInk : Palette.skillXp;
 }
 
 /// Gold heading / amount copy that picks [goldForeground] from its own surface.

@@ -950,7 +950,9 @@ class _QuestMenuLine extends StatelessWidget {
           Text(
             step.state == 'done' ? '✓' : '•',
             style: TextStyle(
-              color: step.state == 'done' ? Palette.success : UiChrome.of(context).panelInk,
+              color: step.state == 'done'
+                  ? successForeground(context)
+                  : UiChrome.of(context).panelInk,
             ),
           ),
           const SizedBox(width: 8),

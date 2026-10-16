@@ -589,7 +589,7 @@ class _ShopPanelState extends State<ShopPanel> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: GameFont.xs,
-                    color: Palette.currency,
+                    color: Palette.currencyOnSlot,
                     height: 1.1,
                   ),
                 ),
