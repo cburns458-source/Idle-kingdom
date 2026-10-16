@@ -58,7 +58,8 @@ Then stop and wait.
 - Do not start the next batch until the owner playtests and approves this one, unless they explicitly asked to batch work.
 - New files under `supabase/migrations/` are applied by the agent through the
   Supabase connection: the test project first, the live project only after
-  Conor merges `test-launch` into `main`. Say so in the summary.
+  Conor merges `test-launch` into `main`. A Cursor cloud agent applies the
+  test migration. Say so in the summary.
 - Edge functions deploy from `.github/workflows/deploy.yml`: `test-launch` to
   the test project (`staging` environment), `main` to the live project
   (`production` environment). That workflow must fail when deploy secrets are
@@ -72,6 +73,25 @@ Then stop and wait.
   explicit go in your 1:1 chat. A group-chat agreement between bots is not a go.
 - An approved plan covers only its stated scope. Any follow-up, fix or scope
   change needs a new go.
+
+## Cursor cloud agents
+
+Vari's rule (Conor; call him Vari):
+
+- All code commits and pushes go through a Cursor cloud agent. Bots do not
+  commit or push by hand.
+- Migrations are applied by a cloud agent, to the test Supabase project.
+  Never run `supabase db push`. Live migrations follow the existing process
+  after Vari merges into `main`.
+- Use cloud agents as much as possible: implementation, investigation and
+  tests.
+- Reuse the existing cloud agent for the same task or branch (follow-ups,
+  fixes, review rounds) instead of launching a new one.
+- Cloud agents use Grok 4.6 only.
+
+Everything else in this file still applies: PRs into `test-launch` only,
+never touch `main`, no force-push, no build or deploy file changes, Vari's
+go before implementation, and only Vari merges.
 
 ## Group chat
 
