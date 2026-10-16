@@ -36,7 +36,7 @@ export const TUTORIAL_POTATO_RECIPE_ID = 'RCP-0001'
 export const TUTORIAL_COW_ENEMY_ID = 'ENM-0001'
 export const TUTORIAL_STARTER_SWORD_ID = 'ITEM-0124'
 export const TUTORIAL_STARTER_SHIELD_ID = 'ITEM-0145'
-export const TUTORIAL_STARTER_SLING_ID = 'ITEM-0225'
+export const TUTORIAL_STARTER_DAGGER_ID = 'ITEM-0125'
 export const TUTORIAL_WEAPON_SLOT_ID = 'SLOT-0001'
 export const TUTORIAL_OFFHAND_SLOT_ID = 'SLOT-0002'
 export const TUTORIAL_GATHER_GUARANTEE_COUNT = 5
@@ -432,7 +432,7 @@ export function isTutorialSwordEquipped(save: PlayerSave): boolean {
 
 export function isTutorialShieldEquipped(save: PlayerSave): boolean {
   const itemId = slotStack(save, TUTORIAL_OFFHAND_SLOT_ID)?.itemId
-  return itemId === TUTORIAL_STARTER_SHIELD_ID || itemId === TUTORIAL_STARTER_SLING_ID
+  return itemId === TUTORIAL_STARTER_SHIELD_ID || itemId === TUTORIAL_STARTER_DAGGER_ID
 }
 
 export function tutorialHudHint(db: GameDatabase, save: PlayerSave): TutorialHudHint | null {
@@ -489,11 +489,11 @@ export function tutorialHudHint(db: GameDatabase, save: PlayerSave): TutorialHud
       }
     }
     if (!isTutorialShieldEquipped(save)) {
-      const slingReady =
-        inventoryCount(save, TUTORIAL_STARTER_SLING_ID) > 0 &&
+      const daggerReady =
+        inventoryCount(save, TUTORIAL_STARTER_DAGGER_ID) > 0 &&
         inventoryCount(save, TUTORIAL_STARTER_SHIELD_ID) === 0
       return {
-        label: slingReady ? 'Equip your sling' : 'Equip your shield',
+        label: daggerReady ? 'Equip your dagger' : 'Equip your shield',
         locationId: TUTORIAL_FARM_LOCATION_ID,
         activityId: null,
         spotlight: 'shield',

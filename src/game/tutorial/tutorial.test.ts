@@ -36,14 +36,20 @@ import {
   TUTORIAL_KITCHEN_LOCATION_ID,
   TUTORIAL_LOCKBACK_FLAG,
   TUTORIAL_LOSS_FLAG,
+  TUTORIAL_OFFHAND_SLOT_ID,
   TUTORIAL_PASTURE_ACTIVITY_ID,
   TUTORIAL_POTATO_ITEM_ID,
   TUTORIAL_POTATO_RECIPE_ID,
   TUTORIAL_QUEST_ID,
+  TUTORIAL_STARTER_DAGGER_ID,
+  TUTORIAL_STARTER_SHIELD_ID,
+  TUTORIAL_STARTER_SWORD_ID,
+  TUTORIAL_WEAPON_SLOT_ID,
   tutorialCombatStepActive,
   tutorialForcedAction,
   tutorialGuaranteedCooksUsed,
   tutorialGuaranteedGathersUsed,
+  tutorialHudHint,
 } from './tutorial'
 import { getQuest, getQuestProgress } from '../quests/quests'
 import { applyQuestStepUnlocks, getCurrentStepId, isStepLatched } from '../quests/steps'
@@ -73,8 +79,10 @@ function withoutFood(save: PlayerSave): PlayerSave {
   }
 }
 
-function combatStepSave(): PlayerSave {
-  let save = withoutFood(activeTutorial())
+function combatStepSave(raceId = 'RACE-0001'): PlayerSave {
+  const assigned = assignRace(db, { ...createNewSave(db, NOW), currentLocationId: FARM }, raceId)
+  if (!assigned.ok) throw new Error(assigned.reason)
+  let save = withoutFood(assigned.save)
   save = {
     ...save,
     quests: save.quests.map((quest) =>
@@ -92,6 +100,19 @@ function combatStepSave(): PlayerSave {
     ),
   }
   return applyQuestStepUnlocks(db, save)
+}
+
+function withEquipped(save: PlayerSave, slotId: string, itemId: string): PlayerSave {
+  return {
+    ...save,
+    equipment: {
+      ...save.equipment,
+      slots: {
+        ...save.equipment.slots,
+        [slotId]: { itemId, quantity: 1 },
+      },
+    },
+  }
 }
 
 function withItem(save: PlayerSave, itemId: string, quantity: number): PlayerSave {
@@ -291,5 +312,17 @@ describe('mandatory Getting Started tutorial', () => {
     )
     expect(isStepLatched(save, TUTORIAL_QUEST_ID, 'QSTP-0016')).toBe(true)
     expect(ensureGettingStartedAccepted(db, save)).toBe(save)
+  })
+
+  it('asks goblins to equip the wooden dagger instead of a shield', () => {
+    const goblin = withEquipped(combatStepSave('RACE-0005'), TUTORIAL_WEAPON_SLOT_ID, TUTORIAL_STARTER_SWORD_ID)
+    expect(tutorialHudHint(db, goblin)?.label).toBe('Equip your dagger')
+    const goblinReady = withEquipped(goblin, TUTORIAL_OFFHAND_SLOT_ID, TUTORIAL_STARTER_DAGGER_ID)
+    expect(tutorialHudHint(db, goblinReady)?.label).toBe('Fight a cow in the pasture')
+
+    const human = withEquipped(combatStepSave('RACE-0001'), TUTORIAL_WEAPON_SLOT_ID, TUTORIAL_STARTER_SWORD_ID)
+    expect(tutorialHudHint(db, human)?.label).toBe('Equip your shield')
+    const humanReady = withEquipped(human, TUTORIAL_OFFHAND_SLOT_ID, TUTORIAL_STARTER_SHIELD_ID)
+    expect(tutorialHudHint(db, humanReady)?.label).toBe('Fight a cow in the pasture')
   })
 })

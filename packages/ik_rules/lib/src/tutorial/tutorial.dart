@@ -36,7 +36,7 @@ const String tutorialPotatoRecipeId = 'RCP-0001';
 const String tutorialCowEnemyId = 'ENM-0001';
 const String tutorialStarterSwordId = 'ITEM-0124';
 const String tutorialStarterShieldId = 'ITEM-0145';
-const String tutorialStarterSlingId = 'ITEM-0225';
+const String tutorialStarterDaggerId = 'ITEM-0125';
 const String tutorialWeaponSlotId = 'SLOT-0001';
 const String tutorialOffhandSlotId = 'SLOT-0002';
 const num tutorialGatherGuaranteeCount = 5;
@@ -384,10 +384,10 @@ String? tutorialAutoDialogueId(PlayerSave save) {
 bool isTutorialSwordEquipped(PlayerSave save) =>
     slotStack(save, tutorialWeaponSlotId)?.itemId == tutorialStarterSwordId;
 
-/// Shield for most races; Goblins (RACE-0005) start with a sling in the same slot.
+/// Shield for most races; Goblins (RACE-0005) start with a wooden dagger in the same slot.
 bool isTutorialShieldEquipped(PlayerSave save) {
   final itemId = slotStack(save, tutorialOffhandSlotId)?.itemId;
-  return itemId == tutorialStarterShieldId || itemId == tutorialStarterSlingId;
+  return itemId == tutorialStarterShieldId || itemId == tutorialStarterDaggerId;
 }
 
 TutorialHudHint? tutorialHudHint(GameDatabase db, PlayerSave save) {
@@ -445,11 +445,11 @@ TutorialHudHint? tutorialHudHint(GameDatabase db, PlayerSave save) {
       );
     }
     if (!isTutorialShieldEquipped(save)) {
-      final slingReady =
-          _bagCount(save, tutorialStarterSlingId) > 0 &&
+      final daggerReady =
+          _bagCount(save, tutorialStarterDaggerId) > 0 &&
           _bagCount(save, tutorialStarterShieldId) == 0;
       return TutorialHudHint(
-        label: slingReady ? 'Equip your sling' : 'Equip your shield',
+        label: daggerReady ? 'Equip your dagger' : 'Equip your shield',
         locationId: tutorialFarmLocationId,
         spotlight: TutorialSpotlightId.shield,
       );

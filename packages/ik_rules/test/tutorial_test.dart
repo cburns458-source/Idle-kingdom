@@ -47,8 +47,14 @@ void main() {
     return quantity > 0 ? addItemToInventory(cleared, itemId, quantity) : cleared;
   }
 
-  PlayerSave combatStepSave() {
-    var save = withoutFood(activeTutorial());
+  PlayerSave combatStepSave([String raceId = 'RACE-0001']) {
+    final assigned = assignRace(
+      db,
+      createNewSave(db, now).copyWith(currentLocationId: farm),
+      raceId,
+    );
+    expect(assigned.ok, isTrue, reason: assigned.reason);
+    var save = withoutFood(assigned.save!);
     save = save.copyWith(
       quests: [
         for (final quest in save.quests)
@@ -66,6 +72,17 @@ void main() {
       ],
     );
     return applyQuestStepUnlocks(db, save);
+  }
+
+  PlayerSave withEquipped(PlayerSave save, String slotId, String itemId) {
+    return save.copyWith(
+      equipment: EquipmentLoadout(
+        slots: {
+          ...save.equipment.slots,
+          slotId: EquippedStack(itemId: itemId, quantity: 1),
+        },
+      ),
+    );
   }
 
   PlayerSave reload(PlayerSave save) => parseSave(jsonDecode(jsonEncode(save.toJson())), now);
@@ -300,5 +317,25 @@ void main() {
     expect(getCurrentStepId(db, save, getQuest(db, tutorialQuestId)!), tutorialCombatStepId);
     expect(isStepLatched(save, tutorialQuestId, 'QSTP-0016'), isTrue);
     expect(ensureGettingStartedAccepted(db, save), save);
+  });
+
+  test('asks goblins to equip the wooden dagger instead of a shield', () {
+    final goblin = withEquipped(
+      combatStepSave('RACE-0005'),
+      tutorialWeaponSlotId,
+      tutorialStarterSwordId,
+    );
+    expect(tutorialHudHint(db, goblin)?.label, 'Equip your dagger');
+    final goblinReady = withEquipped(goblin, tutorialOffhandSlotId, tutorialStarterDaggerId);
+    expect(tutorialHudHint(db, goblinReady)?.label, 'Fight a cow in the pasture');
+
+    final human = withEquipped(
+      combatStepSave('RACE-0001'),
+      tutorialWeaponSlotId,
+      tutorialStarterSwordId,
+    );
+    expect(tutorialHudHint(db, human)?.label, 'Equip your shield');
+    final humanReady = withEquipped(human, tutorialOffhandSlotId, tutorialStarterShieldId);
+    expect(tutorialHudHint(db, humanReady)?.label, 'Fight a cow in the pasture');
   });
 }
