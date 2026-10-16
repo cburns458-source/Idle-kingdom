@@ -179,6 +179,22 @@ void main() {
     );
   });
 
+  test('unlocks Rising strength when the 25th member joins at 500 through the join trigger', () {
+    final sql = File('${parityRepoRoot().path}/supabase/tests/guild_achievements_banner_test.sql')
+        .readAsStringSync();
+    expect(sql, contains('perform public.guild_evaluate_achievements(v_guild)'));
+    final joinStart = sql.indexOf('-- Separate case: the 25th member joining');
+    final joinEnd = sql.indexOf(
+      "raise exception '25th member joining at 500 must unlock rising strength through the join trigger'",
+    );
+    expect(joinStart, greaterThan(0));
+    expect(joinEnd, greaterThan(joinStart));
+    expect(
+      sql.substring(joinStart, joinEnd),
+      isNot(contains('perform public.guild_evaluate_achievements')),
+    );
+  });
+
   test('skips the Rising strength member count once it is unlocked', () {
     expect(shouldCountRisingStrengthMembers(const <String, String>{}), isTrue);
     final reached = evaluateGuildAchievements(
