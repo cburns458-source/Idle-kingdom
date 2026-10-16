@@ -1,12 +1,23 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { completeGatheringAction, generateNextAction, validateActivityStart } from '../activity/engine'
+import {
+  beginActivitySave,
+  completeGatheringAction,
+  generateNextAction,
+  validateActivityStart,
+} from '../activity/engine'
+import { requestActivityStart } from '../activity/transition'
 import { activityVisibleForSave } from '../activity/requirements'
 import { addItemToInventory } from '../activity/rewards'
-import { applyCombatDefeat, applyCombatVictory, enemyForAction } from '../combat/engine'
+import {
+  applyCombatDefeat,
+  applyCombatVictory,
+  applyDeathRecovery,
+  enemyForAction,
+} from '../combat/engine'
 import { isEdibleItem } from '../combat/food'
-import { FOOD_SLOT_ID } from '../equipment/loadout'
+import { equipItemFromInventory, FOOD_SLOT_ID } from '../equipment/loadout'
 import { prepareDatabase } from '../data/loadDatabase'
 import { npcsAtLocationForSave } from '../npcs/knowledge'
 import { completeProductionCraft } from '../production/engine'
@@ -15,6 +26,8 @@ import { assignRace } from '../races/assignRace'
 import { migrateSave } from '../save/migrations'
 import { createNewSave, parseSave } from '../save/saveStore'
 import { SAVE_VERSION, type PlayerSave } from '../save/types'
+import { applyGameCommand } from '../server/authority'
+import { resolveUnattendedProgress } from '../unattended/resolve'
 import { canTravelTo, applyTravelArrival } from '../world/travel'
 import {
   applyTutorialCowKill,
@@ -22,30 +35,40 @@ import {
   ensureGettingStartedAccepted,
   isTutorialActivityAllowed,
   isTutorialBazaarAllowed,
+  isTutorialGuildHallAllowed,
   isTutorialLocationAllowed,
   isTutorialLocked,
+  isTutorialShieldEquipped,
   isTutorialSkillMenuAllowed,
+  isTutorialSwordEquipped,
   TUTORIAL_BAKED_POTATO_ITEM_ID,
   TUTORIAL_COMBAT_STEP_ID,
   TUTORIAL_COOK_ACTIVITY_ID,
+  TUTORIAL_COOK_STEP_ID,
   TUTORIAL_COW_ACTION_ID,
   TUTORIAL_COW_ENEMY_ID,
   TUTORIAL_FAREWELL_FLAG,
   TUTORIAL_FIELDS_ACTIVITY_ID,
   TUTORIAL_FOOD_GRANT_FLAG,
+  TUTORIAL_FOOD_TOP_UP_QTY,
+  TUTORIAL_GATHER_STEP_ID,
   TUTORIAL_KITCHEN_LOCATION_ID,
   TUTORIAL_LOCKBACK_FLAG,
   TUTORIAL_LOSS_FLAG,
   TUTORIAL_OFFHAND_SLOT_ID,
   TUTORIAL_PASTURE_ACTIVITY_ID,
+  TUTORIAL_POTATO_ACTION_ID,
   TUTORIAL_POTATO_ITEM_ID,
   TUTORIAL_POTATO_RECIPE_ID,
   TUTORIAL_QUEST_ID,
+  TUTORIAL_SHOW_COOKED_STEP_ID,
+  TUTORIAL_SHOW_POTATOES_STEP_ID,
   TUTORIAL_STARTER_DAGGER_ID,
   TUTORIAL_STARTER_SHIELD_ID,
   TUTORIAL_STARTER_SWORD_ID,
   TUTORIAL_WEAPON_SLOT_ID,
   tutorialCombatStepActive,
+  tutorialCurrentStepId,
   tutorialForcedAction,
   tutorialGuaranteedCooksUsed,
   tutorialGuaranteedGathersUsed,
@@ -113,6 +136,37 @@ function withEquipped(save: PlayerSave, slotId: string, itemId: string): PlayerS
       },
     },
   }
+}
+
+function withLatchedSteps(save: PlayerSave, stepIds: string[]): PlayerSave {
+  return applyQuestStepUnlocks(db, {
+    ...save,
+    quests: save.quests.map((quest) =>
+      quest.questId === TUTORIAL_QUEST_ID
+        ? { ...quest, counters: Object.fromEntries(stepIds.map((stepId) => [`step:${stepId}`, 1])) }
+        : quest,
+    ),
+  })
+}
+
+function fightingCow(save: PlayerSave, enemyHp: number, playerHp: number): PlayerSave {
+  return {
+    ...beginActivitySave(save, TUTORIAL_PASTURE_ACTIVITY_ID, new Date(NOW).toISOString()),
+    unattendedProgressAt: new Date(NOW).toISOString(),
+    currentActionId: TUTORIAL_COW_ACTION_ID,
+    combatEnemyId: TUTORIAL_COW_ENEMY_ID,
+    combatEnemyHp: enemyHp,
+    currentHp: playerHp,
+    combatRoundStartedAt: new Date(NOW).toISOString(),
+  }
+}
+
+function stackQty(save: PlayerSave, itemId: string): number {
+  return save.inventory.reduce((total, stack) => total + (stack.itemId === itemId ? stack.quantity : 0), 0)
+}
+
+function reload(save: PlayerSave): PlayerSave {
+  return parseSave(JSON.parse(JSON.stringify(save)), NOW)
 }
 
 function withItem(save: PlayerSave, itemId: string, quantity: number): PlayerSave {
@@ -324,5 +378,351 @@ describe('mandatory Getting Started tutorial', () => {
     expect(tutorialHudHint(db, human)?.label).toBe('Equip your shield')
     const humanReady = withEquipped(human, TUTORIAL_OFFHAND_SLOT_ID, TUTORIAL_STARTER_SHIELD_ID)
     expect(tutorialHudHint(db, humanReady)?.label).toBe('Fight a cow in the pasture')
+  })
+
+  it('first five potato gathers give exactly one potato and no other drop', () => {
+    let save = activeTutorial()
+    const potato = db.Actions.find((row) => row['Action ID'] === TUTORIAL_POTATO_ACTION_ID)!
+    for (let i = 0; i < 5; i += 1) {
+      const before = stackQty(save, TUTORIAL_POTATO_ITEM_ID)
+      const done = completeGatheringAction(db, save, potato, () => 0.999, NOW)
+      save = done.save
+      expect(done.result.loot).toHaveLength(1)
+      expect(done.result.loot[0]?.itemId).toBe(TUTORIAL_POTATO_ITEM_ID)
+      expect(done.result.loot[0]?.quantity).toBe(1)
+      expect(stackQty(save, TUTORIAL_POTATO_ITEM_ID)).toBe(before + 1)
+    }
+    expect(tutorialForcedAction(db, save, TUTORIAL_FIELDS_ACTIVITY_ID)).toBeNull()
+    const later = generateNextAction(db, save, TUTORIAL_FIELDS_ACTIVITY_ID, () => 0.999, NOW)
+    expect(later?.action['Action ID']).not.toBe(TUTORIAL_POTATO_ACTION_ID)
+    expect(tutorialGuaranteedGathersUsed(reload(save))).toBe(5)
+  })
+
+  it('sixth potato cook uses normal odds after the guarantee', () => {
+    let save: PlayerSave = {
+      ...activeTutorial(),
+      currentLocationId: TUTORIAL_KITCHEN_LOCATION_ID,
+      productionRecipeId: TUTORIAL_POTATO_RECIPE_ID,
+      productionQuantityRemaining: 6,
+      productionQuantityTotal: 6,
+    }
+    save = withItem(save, TUTORIAL_POTATO_ITEM_ID, 6)
+    save = withLatchedSteps(save, [TUTORIAL_GATHER_STEP_ID, TUTORIAL_SHOW_POTATOES_STEP_ID])
+    for (let i = 0; i < 5; i += 1) {
+      const craft = completeProductionCraft(db, save, NOW + i, () => 0.999)
+      expect(craft?.failed).toBe(false)
+      save = craft!.save
+    }
+    expect(tutorialGuaranteedCooksUsed(save)).toBe(5)
+    const sixth = completeProductionCraft(db, save, NOW + 5, () => 0.999)
+    if (!sixth) throw new Error('expected a sixth cook result')
+    expect(sixth.failed).toBe(true)
+    expect(sixth.outputQty).toBe(0)
+    expect(tutorialGuaranteedCooksUsed(sixth.save)).toBe(5)
+    expect(tutorialGuaranteedCooksUsed(reload(sixth.save))).toBe(5)
+  })
+
+  it('first pasture fight stays a Cow after a loss, never a bull', () => {
+    const bullActionId = 'ACN-0002'
+    const bullEnemyId = 'ENM-0002'
+    const lost = applyCombatDefeat(db, combatStepSave(), NOW)
+    expect(getQuestProgress(lost, TUTORIAL_QUEST_ID).status).toBe('active')
+    expect(getCurrentStepId(db, lost, getQuest(db, TUTORIAL_QUEST_ID)!)).toBe(TUTORIAL_COMBAT_STEP_ID)
+    expect(tutorialCombatStepActive(lost)).toBe(true)
+    expect(tutorialForcedAction(db, lost, TUTORIAL_PASTURE_ACTIVITY_ID)?.['Action ID']).toBe(
+      TUTORIAL_COW_ACTION_ID,
+    )
+    expect(tutorialForcedAction(db, lost, TUTORIAL_PASTURE_ACTIVITY_ID)?.['Action ID']).not.toBe(
+      bullActionId,
+    )
+
+    const recovered = applyDeathRecovery(db, lost)
+    expect(validateActivityStart(db, recovered, TUTORIAL_PASTURE_ACTIVITY_ID).ok).toBe(true)
+    const retry = generateNextAction(db, recovered, TUTORIAL_PASTURE_ACTIVITY_ID, () => 0.999, NOW + 60_000)
+    if (!retry) throw new Error('expected a retry cow action')
+    expect(retry.action['Action ID']).toBe(TUTORIAL_COW_ACTION_ID)
+    expect(enemyForAction(db, retry.action)?.['Enemy ID']).toBe(TUTORIAL_COW_ENEMY_ID)
+    expect(retry.action['Action ID']).not.toBe(bullActionId)
+    expect(enemyForAction(db, retry.action)?.['Enemy ID']).not.toBe(bullEnemyId)
+  })
+
+  it('food top-up is only on the Cow step after a zero-food death', () => {
+    const gatheringDeath = applyCombatDefeat(db, withoutFood(activeTutorial()), NOW)
+    expect(gatheringDeath.dialogueFlags).not.toContain(TUTORIAL_FOOD_GRANT_FLAG)
+    expect(stackQty(gatheringDeath, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(0)
+
+    const cooking = withLatchedSteps(withoutFood(activeTutorial()), [
+      TUTORIAL_GATHER_STEP_ID,
+      TUTORIAL_SHOW_POTATOES_STEP_ID,
+    ])
+    const cookingDeath = applyCombatDefeat(db, cooking, NOW)
+    expect(cookingDeath.dialogueFlags).not.toContain(TUTORIAL_FOOD_GRANT_FLAG)
+    expect(stackQty(cookingDeath, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(0)
+
+    const empty = applyCombatDefeat(db, combatStepSave(), NOW)
+    expect(empty.dialogueFlags).toContain(TUTORIAL_FOOD_GRANT_FLAG)
+    expect(stackQty(empty, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
+
+    const finished = applyTutorialCowKill(db, combatStepSave(), TUTORIAL_COW_ENEMY_ID)
+    expect(finished.completed).toBe(true)
+    const afterWin = applyCombatDefeat(db, withoutFood(finished.save), NOW)
+    expect(afterWin.dialogueFlags).not.toContain(TUTORIAL_FOOD_GRANT_FLAG)
+    expect(stackQty(afterWin, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(0)
+  })
+
+  it('reloading or retrying a refused food grant does not grant twice', () => {
+    const granted = applyCombatDefeat(db, combatStepSave(), NOW)
+    expect(stackQty(granted, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
+    const retried = applyCombatDefeat(db, reload(granted), NOW)
+    expect(retried.tutorialFoodGrantDeathAt).toBe(granted.tutorialFoodGrantDeathAt)
+    expect(stackQty(retried, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
+
+    const snapshot = applyCombatDefeat(db, combatStepSave(), NOW)
+    const refusedReplay = applyCombatDefeat(db, snapshot, NOW + 1000)
+    expect(stackQty(refusedReplay, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
+  })
+
+  it('food top-up during offline catch-up is once per death', () => {
+    const dying = fightingCow(combatStepSave(), 100, 1)
+    const resolved = resolveUnattendedProgress(db, dying, NOW + 8000, () => 0.99)
+    expect(resolved.combatDeaths).toBeGreaterThan(0)
+    expect(resolved.save.dialogueFlags).toContain(TUTORIAL_FOOD_GRANT_FLAG)
+    expect(stackQty(resolved.save, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
+    const again = applyCombatDefeat(db, resolved.save, NOW + 8000)
+    expect(stackQty(again, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
+  })
+
+  it('server-authoritative catch-up grants food once and a refused retry does not double', () => {
+    const dying = fightingCow(combatStepSave(), 100, 1)
+    const first = applyGameCommand(rawDatabase, {
+      command: 'set_meta',
+      args: { hasSeenFennelIntro: true },
+      save: dying,
+      nowMs: NOW + 8000,
+      random: () => 0.99,
+    })
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+    expect(first.save.dialogueFlags).toContain(TUTORIAL_FOOD_GRANT_FLAG)
+    expect(stackQty(first.save, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
+
+    const refusedTravel = applyGameCommand(rawDatabase, {
+      command: 'travel',
+      args: { destinationId: COPPER_MINE, browseMapId: MAIN_MAP },
+      save: first.save,
+      nowMs: NOW + 9000,
+      random: () => 0,
+    })
+    expect(refusedTravel.ok).toBe(false)
+    const retried = applyGameCommand(rawDatabase, {
+      command: 'set_meta',
+      args: { hasSeenFennelIntro: true },
+      save: first.save,
+      nowMs: NOW + 9000,
+      random: () => 0.99,
+    })
+    expect(retried.ok).toBe(true)
+    if (!retried.ok) return
+    expect(stackQty(retried.save, TUTORIAL_BAKED_POTATO_ITEM_ID)).toBe(TUTORIAL_FOOD_TOP_UP_QTY)
+  })
+
+  it('one Cow kill through catch-up or reload mid-fight completes once', () => {
+    const action = db.Actions.find((row) => row['Action ID'] === TUTORIAL_COW_ACTION_ID)!
+    const enemy = db.Enemies.find((row) => row['Enemy ID'] === TUTORIAL_COW_ENEMY_ID)!
+    const fighting = fightingCow(combatStepSave(), 1, 1000)
+    const victory = applyCombatVictory(db, reload(fighting), action, enemy, () => 0, NOW)
+    expect(getQuestProgress(victory.save, TUTORIAL_QUEST_ID).status).toBe('completed')
+    expect(victory.save.currentActivityId).toBeNull()
+    expect(victory.save.unlockedBookIds).toContain('BOOK-0001')
+    expect(isTutorialLocked(victory.save)).toBe(false)
+
+    const away = resolveUnattendedProgress(db, fightingCow(combatStepSave(), 1, 1000), NOW + 8000, () => 0)
+    expect(away.combatVictories).toBeGreaterThan(0)
+    expect(getQuestProgress(away.save, TUTORIAL_QUEST_ID).status).toBe('completed')
+    expect(away.save.currentActivityId).toBeNull()
+    expect(away.save.unlockedBookIds.filter((id) => id === 'BOOK-0001')).toHaveLength(1)
+    const twice = applyTutorialCowKill(db, away.save, TUTORIAL_COW_ENEMY_ID)
+    expect(twice.completed).toBe(false)
+    expect(away.save.unlockedBookIds.filter((id) => id === 'BOOK-0001')).toHaveLength(1)
+  })
+
+  it('losing to the Cow leaves the step open and retryable', () => {
+    const lost = applyCombatDefeat(db, combatStepSave(), NOW)
+    expect(getQuestProgress(lost, TUTORIAL_QUEST_ID).status).toBe('active')
+    expect(getCurrentStepId(db, lost, getQuest(db, TUTORIAL_QUEST_ID)!)).toBe(TUTORIAL_COMBAT_STEP_ID)
+    expect(isTutorialLocked(lost)).toBe(true)
+    expect(isTutorialLocationAllowed(lost, COPPER_MINE)).toBe(false)
+    const recovered = applyDeathRecovery(db, lost)
+    expect(requestActivityStart(db, recovered, TUTORIAL_PASTURE_ACTIVITY_ID, NOW, () => 0.999).ok).toBe(
+      true,
+    )
+    const retry = generateNextAction(db, recovered, TUTORIAL_PASTURE_ACTIVITY_ID, () => 0.999, NOW)
+    expect(retry?.action['Action ID']).toBe(TUTORIAL_COW_ACTION_ID)
+  })
+
+  it('v66 to v67 keeps partway progress and items, and locks the player back', () => {
+    let mid = withItem(activeTutorial(TOWN), TUTORIAL_POTATO_ITEM_ID, 3)
+    mid = withLatchedSteps(mid, [TUTORIAL_GATHER_STEP_ID, TUTORIAL_SHOW_POTATOES_STEP_ID])
+    mid = {
+      ...mid,
+      currentLocationId: TUTORIAL_KITCHEN_LOCATION_ID,
+      currentActivityId: TUTORIAL_COOK_ACTIVITY_ID,
+      gold: 77,
+      claimedMerchantTipIds: ['NPC-0008'],
+      tutorialGuaranteedGathers: 4,
+      tutorialGuaranteedCooks: 2,
+    }
+    const migrated = migrateSave({ ...mid, saveVersion: 66 }, NOW)
+    expect(migrated.saveVersion).toBe(67)
+    expect(migrated.dialogueFlags).toContain(TUTORIAL_LOCKBACK_FLAG)
+    expect(isStepLatched(migrated, TUTORIAL_QUEST_ID, TUTORIAL_GATHER_STEP_ID)).toBe(true)
+    expect(isStepLatched(migrated, TUTORIAL_QUEST_ID, TUTORIAL_SHOW_POTATOES_STEP_ID)).toBe(true)
+    expect(getCurrentStepId(db, migrated, getQuest(db, TUTORIAL_QUEST_ID)!)).toBe(TUTORIAL_COOK_STEP_ID)
+    expect(stackQty(migrated, TUTORIAL_POTATO_ITEM_ID)).toBe(3)
+    expect(migrated.gold).toBe(77)
+    expect(migrated.claimedMerchantTipIds).toEqual(['NPC-0008'])
+    expect(migrated.currentLocationId).toBe(TUTORIAL_KITCHEN_LOCATION_ID)
+  })
+
+  it('v66 to v67 stops idle actions and travel in now-hidden places', () => {
+    const hidden = {
+      ...activeTutorial(COPPER_MINE),
+      currentActivityId: 'ACT-0002',
+      unlockedLocationIds: [COPPER_MINE, TOWN],
+    }
+    const migrated = migrateSave({ ...hidden, saveVersion: 66 }, NOW)
+    expect(migrated.currentLocationId).toBe(FARM)
+    expect(migrated.currentActivityId).toBeNull()
+    expect(canTravelTo(db, FARM, COPPER_MINE, MAIN_MAP, migrated)).toBe(false)
+    expect(validateActivityStart(db, migrated, 'ACT-0002').ok).toBe(false)
+  })
+
+  it('v66 to v67 leaves finished players and bazaar-adjacent state unchanged', () => {
+    const finished = {
+      ...withItem(activeTutorial(TOWN), TUTORIAL_POTATO_ITEM_ID, 4),
+      quests: [{ questId: TUTORIAL_QUEST_ID, status: 'completed' as const, progress: 1 }],
+      currentActivityId: 'ACT-0008',
+      gold: 120,
+      claimedMerchantTipIds: ['NPC-0008'],
+    }
+    const locked = applyTutorialLockback(finished)
+    expect(locked.currentLocationId).toBe(TOWN)
+    expect(locked.currentActivityId).toBe('ACT-0008')
+    expect(locked.gold).toBe(120)
+    expect(locked.claimedMerchantTipIds).toEqual(['NPC-0008'])
+    expect(stackQty(locked, TUTORIAL_POTATO_ITEM_ID)).toBe(4)
+    expect(locked.dialogueFlags).not.toContain(TUTORIAL_LOCKBACK_FLAG)
+
+    const migrated = migrateSave({ ...finished, saveVersion: 66 }, NOW)
+    expect(migrated.saveVersion).toBe(67)
+    expect(migrated.currentLocationId).toBe(TOWN)
+    expect(migrated.currentActivityId).toBe('ACT-0008')
+    expect(migrated.gold).toBe(120)
+    expect(migrated.claimedMerchantTipIds).toEqual(['NPC-0008'])
+    expect(stackQty(migrated, TUTORIAL_POTATO_ITEM_ID)).toBe(4)
+    expect(getQuestProgress(migrated, TUTORIAL_QUEST_ID).status).toBe('completed')
+    expect(migrated.dialogueFlags).not.toContain(TUTORIAL_LOCKBACK_FLAG)
+  })
+
+  it('new accounts start Getting Started at step 1', () => {
+    const save = activeTutorial()
+    expect(tutorialCurrentStepId(db, save)).toBe(TUTORIAL_GATHER_STEP_ID)
+    expect(getCurrentStepId(db, save, getQuest(db, TUTORIAL_QUEST_ID)!)).toBe(TUTORIAL_GATHER_STEP_ID)
+    expect(tutorialGuaranteedGathersUsed(save)).toBe(0)
+    expect(tutorialGuaranteedCooksUsed(save)).toBe(0)
+    expect(isStepLatched(save, TUTORIAL_QUEST_ID, TUTORIAL_GATHER_STEP_ID)).toBe(false)
+  })
+
+  it('unlock flags cannot skip locked places before their step', () => {
+    const gather = {
+      ...activeTutorial(),
+      unlockedLocationIds: [TOWN, COPPER_MINE, TUTORIAL_KITCHEN_LOCATION_ID],
+    }
+    expect(isTutorialLocationAllowed(gather, TUTORIAL_KITCHEN_LOCATION_ID)).toBe(false)
+    expect(isTutorialLocationAllowed(gather, TOWN)).toBe(false)
+    expect(isTutorialLocationAllowed(gather, COPPER_MINE)).toBe(false)
+    expect(isTutorialActivityAllowed(gather, TUTORIAL_COOK_ACTIVITY_ID)).toBe(false)
+    expect(isTutorialActivityAllowed(gather, TUTORIAL_PASTURE_ACTIVITY_ID)).toBe(false)
+    expect(canTravelTo(db, FARM, TOWN, MAIN_MAP, gather)).toBe(false)
+    expect(canTravelTo(db, FARM, COPPER_MINE, MAIN_MAP, gather)).toBe(false)
+    expect(isTutorialBazaarAllowed(gather)).toBe(false)
+    expect(isTutorialGuildHallAllowed(gather)).toBe(false)
+
+    const cooking = withLatchedSteps(gather, [TUTORIAL_GATHER_STEP_ID, TUTORIAL_SHOW_POTATOES_STEP_ID])
+    expect(isTutorialLocationAllowed(cooking, TUTORIAL_KITCHEN_LOCATION_ID)).toBe(true)
+    expect(isTutorialActivityAllowed(cooking, TUTORIAL_COOK_ACTIVITY_ID)).toBe(true)
+    expect(isTutorialActivityAllowed(cooking, TUTORIAL_PASTURE_ACTIVITY_ID)).toBe(false)
+    expect(canTravelTo(db, FARM, COPPER_MINE, MAIN_MAP, cooking)).toBe(false)
+
+    const combat = withLatchedSteps(gather, [
+      TUTORIAL_GATHER_STEP_ID,
+      TUTORIAL_SHOW_POTATOES_STEP_ID,
+      TUTORIAL_COOK_STEP_ID,
+      TUTORIAL_SHOW_COOKED_STEP_ID,
+    ])
+    expect(isTutorialLocationAllowed(combat, TUTORIAL_KITCHEN_LOCATION_ID)).toBe(false)
+    expect(isTutorialActivityAllowed(combat, TUTORIAL_COOK_ACTIVITY_ID)).toBe(false)
+    expect(isTutorialActivityAllowed(combat, TUTORIAL_PASTURE_ACTIVITY_ID)).toBe(true)
+    expect(canTravelTo(db, FARM, COPPER_MINE, MAIN_MAP, combat)).toBe(false)
+    expect(
+      validateActivityStart(db, { ...combat, currentLocationId: TUTORIAL_KITCHEN_LOCATION_ID }, TUTORIAL_COOK_ACTIVITY_ID)
+        .ok,
+    ).toBe(false)
+  })
+
+  it('equip step accepts Human starting sword and shield from inventory', () => {
+    let save = combatStepSave()
+    const sword = equipItemFromInventory(db, save, TUTORIAL_STARTER_SWORD_ID)
+    expect(sword.ok).toBe(true)
+    if (!sword.ok) return
+    save = sword.save
+    const shield = equipItemFromInventory(db, save, TUTORIAL_STARTER_SHIELD_ID)
+    expect(shield.ok).toBe(true)
+    if (!shield.ok) return
+    save = shield.save
+    expect(isTutorialSwordEquipped(save)).toBe(true)
+    expect(isTutorialShieldEquipped(save)).toBe(true)
+    expect(tutorialHudHint(db, save)?.spotlight).toBe('pasture')
+  })
+
+  it('equip step accepts Goblin starting wooden dagger from inventory', () => {
+    let save = combatStepSave('RACE-0005')
+    expect(stackQty(save, TUTORIAL_STARTER_DAGGER_ID)).toBe(1)
+    expect(stackQty(save, TUTORIAL_STARTER_SHIELD_ID)).toBe(0)
+    const sword = equipItemFromInventory(db, save, TUTORIAL_STARTER_SWORD_ID)
+    expect(sword.ok).toBe(true)
+    if (!sword.ok) return
+    save = sword.save
+    expect(isTutorialSwordEquipped(save)).toBe(true)
+    const dagger = equipItemFromInventory(db, save, TUTORIAL_STARTER_DAGGER_ID)
+    expect(dagger.ok).toBe(true)
+    if (!dagger.ok) return
+    save = dagger.save
+    expect(save.equipment.slots[TUTORIAL_OFFHAND_SLOT_ID]?.itemId).toBe(TUTORIAL_STARTER_DAGGER_ID)
+    expect(isTutorialShieldEquipped(save)).toBe(true)
+    expect(tutorialHudHint(db, save)?.spotlight).toBe('pasture')
+  })
+
+  it('step progress survives reload and a refused travel save', () => {
+    const save = combatStepSave()
+    const refused = applyTravelArrival(db, save, COPPER_MINE, NOW)
+    expect(refused.currentLocationId).toBe(FARM)
+    expect(isStepLatched(refused, TUTORIAL_QUEST_ID, TUTORIAL_SHOW_COOKED_STEP_ID)).toBe(true)
+    expect(getCurrentStepId(db, refused, getQuest(db, TUTORIAL_QUEST_ID)!)).toBe(TUTORIAL_COMBAT_STEP_ID)
+    const reloaded = reload(refused)
+    expect(isStepLatched(reloaded, TUTORIAL_QUEST_ID, TUTORIAL_SHOW_COOKED_STEP_ID)).toBe(true)
+    expect(getCurrentStepId(db, reloaded, getQuest(db, TUTORIAL_QUEST_ID)!)).toBe(TUTORIAL_COMBAT_STEP_ID)
+    expect(tutorialGuaranteedGathersUsed(reloaded)).toBe(tutorialGuaranteedGathersUsed(save))
+
+    const serverRefused = applyGameCommand(rawDatabase, {
+      command: 'travel',
+      args: { destinationId: COPPER_MINE, browseMapId: MAIN_MAP },
+      save,
+      nowMs: NOW,
+      random: () => 0,
+    })
+    expect(serverRefused.ok).toBe(false)
+    expect(isStepLatched(save, TUTORIAL_QUEST_ID, TUTORIAL_SHOW_COOKED_STEP_ID)).toBe(true)
+    expect(getCurrentStepId(db, save, getQuest(db, TUTORIAL_QUEST_ID)!)).toBe(TUTORIAL_COMBAT_STEP_ID)
   })
 })
