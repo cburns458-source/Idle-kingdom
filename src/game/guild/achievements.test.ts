@@ -159,6 +159,21 @@ describe('guild achievements and banner', () => {
     ).not.toContain('gach_rising_strength')
   })
 
+  it('unlocks Rising strength when the 25th member joins at 500 through the join trigger', () => {
+    const sql = readFileSync(
+      resolve(process.cwd(), 'supabase/tests/guild_achievements_banner_test.sql'),
+      'utf8',
+    )
+    expect(sql).toContain('perform public.guild_evaluate_achievements(v_guild)')
+    const joinStart = sql.indexOf('-- Separate case: the 25th member joining')
+    const joinEnd = sql.indexOf(
+      "raise exception '25th member joining at 500 must unlock rising strength through the join trigger'",
+    )
+    expect(joinStart).toBeGreaterThan(0)
+    expect(joinEnd).toBeGreaterThan(joinStart)
+    expect(sql.slice(joinStart, joinEnd)).not.toContain('perform public.guild_evaluate_achievements')
+  })
+
   it('skips the Rising strength member count once it is unlocked', () => {
     expect(shouldCountRisingStrengthMembers(undefined)).toBe(true)
     expect(shouldCountRisingStrengthMembers({})).toBe(true)

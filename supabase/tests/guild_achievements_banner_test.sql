@@ -115,6 +115,88 @@ begin
     raise exception 'save-based 500 should unlock rising strength even when roster total_level is 1';
   end if;
 
+  -- Separate case: the 25th member joining at 500+ unlocks through the
+  -- guild_members insert trigger alone. Saves are written before the join so
+  -- the player_saves trigger is a no-op. Do not call guild_evaluate_achievements.
+  insert into auth.users (id)
+  select ('cccccccc-0000-4000-8000-0000000000' || lpad(i::text, 2, '0'))::uuid
+    from generate_series(1, 25) as s(i)
+  on conflict (id) do nothing;
+  insert into public.guilds (id, name, tag, leader_id)
+  values (
+    'cccccccc-cccc-cccc-cccc-cccccccccc01',
+    'Join QA',
+    'J25',
+    'cccccccc-0000-4000-8000-000000000001'::uuid
+  );
+  for i in 1..24 loop
+    v_user := ('cccccccc-0000-4000-8000-0000000000' || lpad(i::text, 2, '0'))::uuid;
+    insert into public.player_saves (user_id, save_version, payload)
+    values (
+      v_user,
+      1,
+      jsonb_build_object(
+        'skills', jsonb_build_array(jsonb_build_object('skillId', 'SKL-0001', 'level', 500, 'xp', 0))
+      )
+    )
+    on conflict (user_id) do update
+      set payload = excluded.payload;
+    insert into public.guild_members (guild_id, user_id, role, username, total_level)
+    values (
+      'cccccccc-cccc-cccc-cccc-cccccccccc01',
+      v_user,
+      case when i = 1 then 'leader' else 'member' end,
+      'J' || i,
+      1
+    );
+  end loop;
+  if exists (
+    select 1 from public.guild_achievements
+     where guild_id = 'cccccccc-cccc-cccc-cccc-cccccccccc01'
+       and achievement_id = 'gach_rising_strength'
+  ) then
+    raise exception '24 members at 500 must not unlock rising strength';
+  end if;
+  v_user := 'cccccccc-0000-4000-8000-000000000025'::uuid;
+  insert into public.player_saves (user_id, save_version, payload)
+  values (
+    v_user,
+    1,
+    jsonb_build_object(
+      'skills', jsonb_build_array(jsonb_build_object('skillId', 'SKL-0001', 'level', 500, 'xp', 0))
+    )
+  )
+  on conflict (user_id) do update
+    set payload = excluded.payload;
+  insert into public.guild_members (guild_id, user_id, role, username, total_level)
+  values (
+    'cccccccc-cccc-cccc-cccc-cccccccccc01',
+    v_user,
+    'member',
+    'J25',
+    1
+  );
+  if not exists (
+    select 1 from public.guild_achievements
+     where guild_id = 'cccccccc-cccc-cccc-cccc-cccccccccc01'
+       and achievement_id = 'gach_rising_strength'
+  ) then
+    raise exception '25th member joining at 500 must unlock rising strength through the join trigger';
+  end if;
+  delete from public.guild_achievements where guild_id = 'cccccccc-cccc-cccc-cccc-cccccccccc01';
+  delete from public.guild_members where guild_id = 'cccccccc-cccc-cccc-cccc-cccccccccc01';
+  delete from public.guilds where id = 'cccccccc-cccc-cccc-cccc-cccccccccc01';
+  delete from public.player_saves
+   where user_id in (
+     select ('cccccccc-0000-4000-8000-0000000000' || lpad(i::text, 2, '0'))::uuid
+       from generate_series(1, 25) as s(i)
+   );
+  delete from auth.users
+   where id in (
+     select ('cccccccc-0000-4000-8000-0000000000' || lpad(i::text, 2, '0'))::uuid
+       from generate_series(1, 25) as s(i)
+   );
+
   v_old := pg_get_functiondef('public.bazaar_user_total_level(uuid)'::regprocedure);
   begin
     create or replace function public.bazaar_user_total_level(p_user_id uuid)
