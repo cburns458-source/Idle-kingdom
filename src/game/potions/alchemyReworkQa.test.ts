@@ -113,7 +113,7 @@ describe('alchemy rework QA', () => {
   const sourceItem = (id: string) => source.Items.find((row) => row['Item ID'] === id)!
   const equipment = (itemId: string) => launch.Equipment.find((row) => row['Item ID'] === itemId)
 
-  it('content version is 2026-10-16-tutorial-guild-hall-potion-descriptions in both loaders', () {
+  it('content version is 2026-10-16-tutorial-guild-hall-potion-descriptions in both loaders', () => {
     const tsSource = readFileSync(resolve(process.cwd(), 'src/game/data/loadDatabase.ts'), 'utf8')
     const dartSource = readFileSync(
       resolve(process.cwd(), 'packages/ik_content/lib/src/load_database.dart'),
