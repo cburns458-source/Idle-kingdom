@@ -142,8 +142,10 @@ void main() {
       if (description.isNotEmpty) {
         expect(find.descendant(of: picker(), matching: find.text(description)), findsNothing);
       }
-      expect(faithFlavourLine(faith), '');
-      expected.addAll(religionBonusSummaryLines(db(), faith.religionId));
+      for (final bonus in faithBonusViews(db(), faith.religionId)) {
+        expected.add(bonus.amountLabel);
+        expected.add(bonus.detailLine);
+      }
     }
     expect(pickerTexts(tester).toSet(), expected);
   });
@@ -168,22 +170,27 @@ void main() {
       expect(god, isNotNull);
       final description = faithDescription(faith);
       expect(description, isNotEmpty);
-      final bonuses = religionBonusSummaryLines(db(), faith.religionId);
+      final bonuses = faithBonusViews(db(), faith.religionId);
       expect(bonuses, isNotEmpty);
+      expect(bonuses, hasLength(religionBonusesFor(db(), faith.religionId).length));
 
       final headerTop = tester
           .getTopLeft(find.descendant(of: picker(), matching: find.text(faith.displayName)))
           .dy;
       final godTop = tester.getTopLeft(find.descendant(of: picker(), matching: find.text(god!))).dy;
-      final bonusTop = tester
-          .getTopLeft(find.descendant(of: picker(), matching: find.text(bonuses.first)))
+      final amountTop = tester
+          .getTopLeft(find.descendant(of: picker(), matching: find.text(bonuses.first.amountLabel)))
+          .dy;
+      final detailTop = tester
+          .getTopLeft(find.descendant(of: picker(), matching: find.text(bonuses.first.detailLine)))
           .dy;
       final descriptionTop = tester
           .getTopLeft(find.descendant(of: picker(), matching: find.text(description)))
           .dy;
       expect(headerTop, lessThan(godTop));
-      expect(godTop + 8, lessThan(bonusTop));
-      expect(bonusTop + 8, lessThan(descriptionTop));
+      expect(godTop + 8, lessThan(amountTop));
+      expect(amountTop, lessThan(detailTop));
+      expect(detailTop + 8, lessThan(descriptionTop));
       expect(find.byKey(Key('faith-flavour-${faith.religionId}')), findsNothing);
 
       await tester.tap(find.byKey(const Key('faith-back')));

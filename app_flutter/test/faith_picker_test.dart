@@ -83,18 +83,29 @@ void main() {
     );
   });
 
-  test('flavour is empty until Quest fills the map or a Flavour column', () {
-    expect(faithFlavourById, isEmpty);
-    expect(faithFlavourLine(const ReligionRow(<String, Object?>{})), '');
-    expect(faithFlavourLine(const ReligionRow(<String, Object?>{'Flavour': '  '})), '');
-    expect(
-      faithFlavourLine(
-        const ReligionRow(<String, Object?>{'Flavour': '  Keepers of the grove.  '}),
-      ),
-      'Keepers of the grove.',
-    );
-    for (final faith in religions(database.launch)) {
-      expect(faithFlavourLine(faith), '');
+  test('every faith bonus names the amount, skill, and stat from the row', () {
+    final faiths = religions(database.launch);
+    expect(faiths, isNotEmpty);
+    for (final faith in faiths) {
+      final rows = religionBonusesFor(database.launch, faith.religionId);
+      final views = faithBonusViews(database.launch, faith.religionId);
+      expect(views, hasLength(rows.length));
+      expect(views, isNotEmpty);
+      for (var i = 0; i < rows.length; i++) {
+        final row = rows[i];
+        final view = views[i];
+        final amount = jsNumberToString(jsNumber(row.raw['Bonus Value'] ?? 0));
+        expect(view.amountLabel, '+$amount%');
+        expect(view.statLabel, isNotEmpty);
+        if (row.raw['Bonus Type'] == 'skill_drop_chance_percent') {
+          expect(view.skillName, isNotNull);
+          expect(view.skillName, isNot(row.raw['Reference ID']));
+          expect(view.detailLine, '${view.skillName} ${view.statLabel}');
+        } else {
+          expect(view.skillName, isNull);
+          expect(view.detailLine, view.statLabel);
+        }
+      }
     }
   });
 
@@ -130,12 +141,13 @@ void main() {
       if (description.isNotEmpty) {
         expect(find.descendant(of: picker(), matching: find.text(description)), findsNothing);
       }
-      expect(faithFlavourLine(faith), '');
       expect(find.byKey(Key('faith-flavour-${faith.religionId}')), findsNothing);
-      final bonuses = religionBonusSummaryLines(database.launch, faith.religionId);
+      final bonuses = faithBonusViews(database.launch, faith.religionId);
       expect(bonuses, isNotEmpty);
-      for (final line in bonuses) {
-        expect(find.descendant(of: row, matching: find.text(line)), findsOne);
+      expect(bonuses, hasLength(religionBonusesFor(database.launch, faith.religionId).length));
+      for (final bonus in bonuses) {
+        expect(find.descendant(of: row, matching: find.text(bonus.amountLabel)), findsOne);
+        expect(find.descendant(of: row, matching: find.text(bonus.detailLine)), findsOne);
       }
     }
 
@@ -163,8 +175,9 @@ void main() {
     if (god != null) {
       expect(find.descendant(of: picker(), matching: find.text(god)), findsOne);
     }
-    for (final line in religionBonusSummaryLines(database.launch, faith.religionId)) {
-      expect(find.descendant(of: picker(), matching: find.text(line)), findsOne);
+    for (final bonus in faithBonusViews(database.launch, faith.religionId)) {
+      expect(find.descendant(of: picker(), matching: find.text(bonus.amountLabel)), findsOne);
+      expect(find.descendant(of: picker(), matching: find.text(bonus.detailLine)), findsOne);
     }
     expect(find.byKey(Key('faith-flavour-${faith.religionId}')), findsNothing);
     final description = faithDescription(faith);

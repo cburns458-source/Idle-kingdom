@@ -159,8 +159,7 @@ class _FaithList extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: _FaithNameRow(
                       faith: faith,
-                      bonuses: religionBonusSummaryLines(db, faith.religionId),
-                      flavour: faithFlavourLine(faith),
+                      bonuses: faithBonusViews(db, faith.religionId),
                       current: currentId == faith.religionId,
                       onTap: () => onOpen(faith.religionId),
                     ),
@@ -204,8 +203,7 @@ class _FaithPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final god = faithGodName(faith);
-    final bonuses = religionBonusSummaryLines(db, faith.religionId);
-    final flavour = faithFlavourLine(faith);
+    final bonuses = faithBonusViews(db, faith.religionId);
     final description = faithDescription(faith);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -236,14 +234,7 @@ class _FaithPage extends StatelessWidget {
                   ),
                 if (bonuses.isNotEmpty) ...[
                   if (god != null && god.isNotEmpty) const SizedBox(height: 12),
-                  for (var i = 0; i < bonuses.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 4),
-                    Text(bonuses[i], key: Key('faith-bonus-${faith.religionId}-$i')),
-                  ],
-                ],
-                if (flavour.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(flavour, key: Key('faith-flavour-${faith.religionId}')),
+                  _FaithBonusList(religionId: faith.religionId, bonuses: bonuses),
                 ],
                 if (description.isNotEmpty) ...[const SizedBox(height: 12), Text(description)],
                 const SizedBox(height: 12),
@@ -313,37 +304,103 @@ String faithDescription(ReligionRow faith) {
   return raw.trim();
 }
 
-/// Quest-owned one-liners keyed by religion id. Empty until Quest fills a line.
-///
-/// Also reads a `Flavour` / `Flavor` column if that field lands in the row.
-/// Do not invent copy here.
-const Map<String, String> faithFlavourById = <String, String>{};
+/// One faith bonus, split into amount, optional skill, and stat from the row.
+class FaithBonusView {
+  const FaithBonusView({required this.amountLabel, required this.statLabel, this.skillName});
 
-String faithFlavourLine(ReligionRow faith) {
-  final id = faith.raw['Religion ID'];
-  if (id is String && id.isNotEmpty) {
-    final mapped = faithFlavourById[id]?.trim() ?? '';
-    if (mapped.isNotEmpty) return mapped;
+  final String amountLabel;
+  final String statLabel;
+  final String? skillName;
+
+  /// Skill (when the bonus is tied to one) plus the stat, e.g. `Woodcutting drop chance`.
+  String get detailLine {
+    final skill = skillName;
+    if (skill != null && skill.isNotEmpty) return '$skill $statLabel';
+    return statLabel;
   }
-  for (final key in const ['Flavour', 'Flavor']) {
-    final raw = faith.raw[key];
-    if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+}
+
+/// Every bonus this faith gives, in database order. Nothing is dropped.
+List<FaithBonusView> faithBonusViews(GameDatabase db, String religionId) {
+  return [for (final bonus in religionBonusesFor(db, religionId)) faithBonusView(db, bonus)];
+}
+
+FaithBonusView faithBonusView(GameDatabase db, ReligionBonusRow bonus) {
+  final value = jsNumber(bonus.raw['Bonus Value'] ?? 0);
+  final amount = value.isFinite ? jsNumberToString(value) : '0';
+  final bonusType = bonus.raw['Bonus Type'];
+  final percent = bonusType is String && bonusType.endsWith('_percent');
+  final amountLabel = percent ? '+$amount%' : '+$amount';
+  final reference = bonus.raw['Reference ID'];
+  String? skillName;
+  if (reference is String && reference.isNotEmpty) {
+    String? displayName;
+    for (final row in db.skills) {
+      if (row.raw['Skill ID'] != reference) continue;
+      final name = row.raw['Display Name'];
+      if (name is String) displayName = name;
+      break;
+    }
+    skillName = displayName != null && displayName.trim().isNotEmpty
+        ? displayName.trim()
+        : reference;
   }
-  return '';
+  final statLabel = switch (bonusType) {
+    'skill_drop_chance_percent' => 'drop chance',
+    'max_hp_percent' => 'maximum HP',
+    'gold_gain_percent' => 'gold from enemies and actions',
+    _ => bonusType is String && bonusType.trim().isNotEmpty ? bonusType : '',
+  };
+  return FaithBonusView(amountLabel: amountLabel, statLabel: statLabel, skillName: skillName);
+}
+
+class _FaithBonusList extends StatelessWidget {
+  const _FaithBonusList({required this.religionId, required this.bonuses, this.compact = false});
+
+  final String religionId;
+  final List<FaithBonusView> bonuses;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < bonuses.length; i++) ...[
+          if (i > 0) SizedBox(height: compact ? 8 : 10),
+          KeyedSubtree(
+            key: Key('faith-bonus-$religionId-$i'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  bonuses[i].amountLabel,
+                  style: TextStyle(
+                    fontSize: compact ? GameFont.s : GameFont.m,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(bonuses[i].detailLine, style: const TextStyle(fontSize: GameFont.s)),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _FaithNameRow extends StatelessWidget {
   const _FaithNameRow({
     required this.faith,
     required this.bonuses,
-    required this.flavour,
     required this.current,
     required this.onTap,
   });
 
   final ReligionRow faith;
-  final List<String> bonuses;
-  final String flavour;
+  final List<FaithBonusView> bonuses;
   final bool current;
   final VoidCallback onTap;
 
@@ -367,23 +424,8 @@ class _FaithNameRow extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w400),
               ),
               if (bonuses.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                for (var i = 0; i < bonuses.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 4),
-                  Text(
-                    bonuses[i],
-                    key: Key('faith-bonus-${faith.religionId}-$i'),
-                    style: const TextStyle(fontSize: GameFont.s),
-                  ),
-                ],
-              ],
-              if (flavour.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(
-                  flavour,
-                  key: Key('faith-flavour-${faith.religionId}'),
-                  style: const TextStyle(fontSize: GameFont.s),
-                ),
+                _FaithBonusList(religionId: faith.religionId, bonuses: bonuses, compact: true),
               ],
             ],
           ),
