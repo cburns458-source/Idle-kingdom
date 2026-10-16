@@ -21,6 +21,10 @@ import {
   DEFAULT_SKIN_TONE_ID,
   OUTFIT_COSMETIC_SLOT_ID,
   PET_COSMETIC_SLOT_ID,
+  REMOVED_ANCIENT_BINDING_ACTION_ID,
+  REMOVED_ANCIENT_BINDING_ITEM_ID,
+  REMOVED_ANCIENT_BINDING_RECIPE_ID,
+  REMOVED_REGULAR_BOW_ITEM_ID,
   RETIRED_COOKED_BABY_GIANT_SQUID_ITEM_ID,
   SAVE_VERSION,
   SQUID_NOODLE_SOUP_ITEM_ID,
@@ -147,6 +151,100 @@ function migrateEquipmentSlotsToStacks(save: PlayerSave): PlayerSave {
     ...save,
     inventory,
     equipment: { slots: nextSlots },
+  }
+}
+
+const REN01_REMOVED_ITEM_IDS = new Set([REMOVED_REGULAR_BOW_ITEM_ID, REMOVED_ANCIENT_BINDING_ITEM_ID])
+
+function isRemovedRen01ItemId(itemId: string | null | undefined): boolean {
+  return typeof itemId === 'string' && REN01_REMOVED_ITEM_IDS.has(itemId)
+}
+
+function dropRemovedRen01Stacks<T extends { itemId: string }>(stacks: T[] | undefined): T[] {
+  return (stacks ?? []).filter((stack) => !isRemovedRen01ItemId(stack.itemId))
+}
+
+function dropRemovedRen01Equipped(stack: EquippedStack | null | undefined): EquippedStack | null {
+  if (!stack || isRemovedRen01ItemId(stack.itemId)) return null
+  return stack
+}
+
+function dropRemovedRen01Items(save: PlayerSave): PlayerSave {
+  const slots: Record<string, EquippedStack | null> = {}
+  for (const [slotId, stack] of Object.entries(save.equipment.slots)) {
+    slots[slotId] = dropRemovedRen01Equipped(stack)
+  }
+  const presets = (save.equipmentPresets ?? []).map((preset) => ({
+    ...preset,
+    slots: Object.fromEntries(
+      Object.entries(preset.slots ?? {}).map(([slotId, stack]) => [
+        slotId,
+        dropRemovedRen01Equipped(stack),
+      ]),
+    ),
+  }))
+  const mailbox = (save.mailbox ?? []).map((message) => ({
+    ...message,
+    attachments: dropRemovedRen01Stacks(message.attachments),
+  }))
+  const locationTimers = (save.locationTimers ?? [])
+    .map((timer) => ({
+      ...timer,
+      plantedItemIds: timer.plantedItemIds?.filter((itemId) => !isRemovedRen01ItemId(itemId)),
+      baitItemIds: timer.baitItemIds?.filter((itemId) => !isRemovedRen01ItemId(itemId)),
+    }))
+    .filter(
+      (timer) => !isRemovedRen01ItemId(timer.inputItemId) && !isRemovedRen01ItemId(timer.outputItemId),
+    )
+  const lootTrackers = Object.fromEntries(
+    Object.entries(save.lootTrackers ?? {}).map(([key, entry]) => [
+      key,
+      {
+        ...entry,
+        items: Object.fromEntries(
+          Object.entries(entry.items ?? {}).filter(([itemId]) => !isRemovedRen01ItemId(itemId)),
+        ),
+      },
+    ]),
+  )
+  const shopPurchasesToday = Object.fromEntries(
+    Object.entries(save.shopPurchasesToday ?? {}).filter(([key]) => {
+      const itemId = key.split(':')[1]
+      return !isRemovedRen01ItemId(itemId)
+    }),
+  )
+  const heldActionByActivityId = Object.fromEntries(
+    Object.entries(save.heldActionByActivityId ?? {}).filter(
+      ([, actionId]) => actionId !== REMOVED_ANCIENT_BINDING_ACTION_ID,
+    ),
+  )
+  const dropRecipe =
+    save.productionRecipeId === REMOVED_ANCIENT_BINDING_RECIPE_ID ||
+    save.activityTransition?.productionRecipeId === REMOVED_ANCIENT_BINDING_RECIPE_ID
+  const dropAction = save.currentActionId === REMOVED_ANCIENT_BINDING_ACTION_ID
+  return {
+    ...save,
+    inventory: dropRemovedRen01Stacks(save.inventory),
+    bank: dropRemovedRen01Stacks(save.bank),
+    equipment: { ...save.equipment, slots },
+    equipmentPresets: presets,
+    mailbox,
+    locationTimers,
+    lootTrackers,
+    shopPurchasesToday,
+    heldActionByActivityId,
+    productionRecipeId: dropRecipe ? null : save.productionRecipeId,
+    productionQuantityTotal: dropRecipe ? null : save.productionQuantityTotal,
+    productionQuantityRemaining: dropRecipe ? null : save.productionQuantityRemaining,
+    currentActionId: dropRecipe || dropAction ? null : save.currentActionId,
+    actionStartedAt: dropRecipe || dropAction ? null : save.actionStartedAt,
+    actionDurationMs: dropRecipe || dropAction ? null : save.actionDurationMs,
+    currentActivityId: dropRecipe || dropAction ? null : save.currentActivityId,
+    activityStartedAt: dropRecipe || dropAction ? null : save.activityStartedAt,
+    activityTransition:
+      save.activityTransition?.productionRecipeId === REMOVED_ANCIENT_BINDING_RECIPE_ID
+        ? null
+        : save.activityTransition,
   }
 }
 
@@ -1088,6 +1186,11 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         saveVersion: 65,
       }
     },
+  },
+  {
+    fromVersion: 65,
+    toVersion: 66,
+    migrate: (save) => dropRemovedRen01Items({ ...save, saveVersion: 66 }),
   },
 ]
 

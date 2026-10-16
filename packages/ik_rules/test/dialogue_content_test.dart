@@ -248,7 +248,7 @@ void main() {
     expect(bagCount(king, _goldenSpud), 0);
   });
 
-  test('finishing Green Thumb gives exactly 4 Potato Seed, 3 Carrot Seed and the Guide, once', () {
+  test('finishing Green Thumb gives exactly 4 Potato seed, 3 Carrot seed and the Guide, once', () {
     var save = greenThumbActive();
     final potatoBefore = bagCount(save, _potatoSeed);
     final carrotBefore = bagCount(save, _carrotSeed);

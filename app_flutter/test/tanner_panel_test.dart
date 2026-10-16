@@ -47,7 +47,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('Offer — 6 leather / 12 gold'), findsOne);
 
-    await tester.tap(find.byTooltip('Goat Hide'));
+    await tester.tap(find.byTooltip('Goat hide'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to offer'));
     await tester.pumpAndSettle();

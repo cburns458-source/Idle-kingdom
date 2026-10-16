@@ -29,9 +29,9 @@ describe('axe enchantment eligibility', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, inventory: [] }
-    save = addItemToInventory(save, 'ITEM-0132', 1) // Copper Axe
-    save = addItemToInventory(save, 'ITEM-0110', 1) // Copper Hatchet
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe
+    save = addItemToInventory(save, 'ITEM-0132', 1) // Copper axe
+    save = addItemToInventory(save, 'ITEM-0110', 1) // Copper hatchet
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper pickaxe
 
     const gathering = getEnchantment(launch, 'ENCH-0002')!
     const combat = getEnchantment(launch, 'ENCH-0003')!
@@ -56,8 +56,8 @@ describe('axe enchantment eligibility', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, inventory: [] }
-    save = addItemToInventory(save, 'ITEM-0170', 1) // Silver Necklace
-    save = addItemToInventory(save, 'ITEM-0171', 1) // Silver Ring
+    save = addItemToInventory(save, 'ITEM-0170', 1) // Silver necklace
+    save = addItemToInventory(save, 'ITEM-0171', 1) // Silver ring
 
     const gathering = getEnchantment(launch, 'ENCH-0002')!
     const combat = getEnchantment(launch, 'ENCH-0003')!
@@ -75,14 +75,14 @@ describe('axe enchantment eligibility', () => {
     expect(combatIds).toContain('ITEM-0171')
   })
 
-  it('allows Critical Strike Chance on weapons and jewelry but not Lucky Necklace', () => {
+  it('allows Critical Strike Chance on weapons and jewelry but not Lucky necklace', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, inventory: [] }
-    save = addItemToInventory(save, 'ITEM-0124', 1) // Wooden Sword
-    save = addItemToInventory(save, 'ITEM-0170', 1) // Silver Necklace
-    save = addItemToInventory(save, 'ITEM-0180', 1) // Lucky Necklace
-    save = addItemToInventory(save, 'ITEM-0110', 1) // Copper Hatchet (gathering)
+    save = addItemToInventory(save, 'ITEM-0124', 1) // Wooden sword
+    save = addItemToInventory(save, 'ITEM-0170', 1) // Silver necklace
+    save = addItemToInventory(save, 'ITEM-0180', 1) // Lucky necklace
+    save = addItemToInventory(save, 'ITEM-0110', 1) // Copper hatchet (gathering)
 
     const crit = getEnchantment(launch, 'ENCH-0008')!
     const ids = eligibleEnchantmentTargets(launch, save, crit).map(
@@ -95,11 +95,11 @@ describe('axe enchantment eligibility', () => {
     expect(ids).not.toContain('ITEM-0110')
   })
 
-  it('blocks the Lucky Necklace from all enchantments', () => {
+  it('blocks the Lucky necklace from all enchantments', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, inventory: [] }
-    save = addItemToInventory(save, 'ITEM-0180', 1) // Lucky Necklace
+    save = addItemToInventory(save, 'ITEM-0180', 1) // Lucky necklace
 
     const gathering = getEnchantment(launch, 'ENCH-0002')!
     const combat = getEnchantment(launch, 'ENCH-0003')!

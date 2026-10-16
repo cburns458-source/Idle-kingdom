@@ -60,7 +60,7 @@ describe('water at Alchemy stations', () => {
     for (const loc of kitchens) {
       const save = { ...base, currentLocationId: loc }
       expect(ingredientOwned(launch, save, WATER_ITEM_ID), loc).toBe(Number.POSITIVE_INFINITY)
-      // Kitchen Scraps uses the same location list, so it is free here too.
+      // Kitchen scraps uses the same location list, so it is free here too.
       expect(ingredientOwned(launch, save, KITCHEN_SCRAPS_ITEM_ID), loc).toBe(Number.POSITIVE_INFINITY)
     }
     const away = { ...base, currentLocationId: 'LOC-0001' }
@@ -104,7 +104,7 @@ describe('water at Alchemy stations', () => {
     expect(cancelled.inventory.find((s) => s.itemId === WATER_ITEM_ID)?.quantity).toBe(2)
   })
 
-  it('does not treat Kitchen Scraps as free at the apothecary, and max brew counts stay herb-gated', () => {
+  it('does not treat Kitchen scraps as free at the apothecary, and max brew counts stay herb-gated', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const base = { ...createNewSave(launch), currentLocationId: 'LOC-0026' }
     expect(ingredientOwned(launch, base, KITCHEN_SCRAPS_ITEM_ID)).toBe(0)

@@ -386,7 +386,7 @@ describe('shops', () => {
     expect(nextDay.save.shopPurchasesToday['SHP-0001:ITEM-0100']).toBe(1)
   })
 
-  it('sells Alchemist Goggles at the Apothecary for 138 gold, one per day', () => {
+  it('sells Alchemist goggles at the Apothecary for 138 gold, one per day', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const shop = launch.Shops.find((row) => row['Shop ID'] === 'SHP-0010')!
     const goggles = 'ITEM-0318'

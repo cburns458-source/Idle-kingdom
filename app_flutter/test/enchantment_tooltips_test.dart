@@ -20,8 +20,8 @@ void main() {
   const clayId = 'ITEM-0002';
   const essenceId = 'ITEM-0011';
   const enchantmentId = 'ENCH-0001';
-  const copperAxe = 'Copper Axe';
-  const enchantment = 'Item Enchantment';
+  const copperAxe = 'Copper axe';
+  const enchantment = 'Item enchantment';
   const enchantedAxeTooltip = '$copperAxe\n$enchantment';
   const enchantedAxeLabel = '$copperAxe • $enchantment';
 

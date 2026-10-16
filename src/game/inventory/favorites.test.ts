@@ -19,7 +19,7 @@ describe('inventory favorites', () => {
     let save = createNewSave(launch)
     save = { ...save, inventory: [] }
     save = addItemToInventory(save, 'ITEM-0025', 2) // Potato
-    save = addItemToInventory(save, 'ITEM-0058', 1) // Baked Potato
+    save = addItemToInventory(save, 'ITEM-0058', 1) // Baked potato
     expect(save.inventory.map((stack) => stack.itemId)).toEqual(['ITEM-0025', 'ITEM-0058'])
 
     const favorited = toggleInventoryFavorite(save, 1)
@@ -40,7 +40,7 @@ describe('inventory favorites', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, inventory: [] }
-    save = addItemToInventory(save, 'ITEM-0124', 1) // Wooden Sword
+    save = addItemToInventory(save, 'ITEM-0124', 1) // Wooden sword
     const favorited = toggleInventoryFavorite(save, 0)
     expect(favorited).toBeTruthy()
     save = favorited!

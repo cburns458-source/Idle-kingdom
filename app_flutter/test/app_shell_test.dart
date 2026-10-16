@@ -1109,7 +1109,7 @@ void main() {
       'action',
       'ACN-0027',
       const [
-        LootGrant(itemId: 'ITEM-0010', quantity: 146, displayName: 'Tungsten Ore'),
+        LootGrant(itemId: 'ITEM-0010', quantity: 146, displayName: 'Tungsten ore'),
         LootGrant(itemId: 'ITEM-0012', quantity: 2, displayName: 'Sapphire'),
       ],
       258,

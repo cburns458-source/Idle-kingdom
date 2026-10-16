@@ -33,7 +33,7 @@ void main() {
     expect(find.text('Meadow'), findsWidgets);
     expect(find.text('Gather meadow supplies'), findsWidgets);
     expect(find.text('Small-game Hunting and Harvesting area.'), findsNothing);
-    expect(find.text('Wild Roots and Fernleaf Harvesting.'), findsNothing);
+    expect(find.text('Wild roots and Fernleaf Harvesting.'), findsNothing);
   });
 
   /// Same tall location panel as [pumpLocation], but keeps the controller so a

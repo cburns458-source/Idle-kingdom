@@ -34,7 +34,7 @@ describe('itemAssetPath', () => {
       itemAssetPath(
         item({
           'Item ID': 'ITEM-0003',
-          'Display Name': 'Copper Ore',
+          'Display Name': 'Copper ore',
           'Icon Asset Key': 'copper_ore',
         }),
       ),
@@ -49,12 +49,12 @@ describe('itemAssetPath', () => {
     expect(itemAssetPath('ITEM-0103')).toContain('item_fishing_tool.webp')
   })
 
-  it('draws Golden Spud with its own item icon', () => {
+  it('draws Golden spud with its own item icon', () => {
     expect(
       itemAssetPath(
         item({
           'Item ID': 'ITEM-0026',
-          'Display Name': 'Golden Spud',
+          'Display Name': 'Golden spud',
           'Internal Key': 'golden_spud',
           'Icon Asset Key': 'golden_spud',
         }),
@@ -66,7 +66,7 @@ describe('itemAssetPath', () => {
     const path = itemAssetPath(
       item({
         'Item ID': 'ITEM-0157',
-        'Display Name': 'Iron Platelegs',
+        'Display Name': 'Iron platelegs',
         'Internal Key': 'iron_platelegs',
         Category: 'Armor',
         Subtype: 'Platelegs',
@@ -93,7 +93,7 @@ describe('itemAssetPath', () => {
       itemAssetPath(
         item({
           'Item ID': 'ITEM-0174',
-          'Display Name': 'Sapphire Necklace',
+          'Display Name': 'Sapphire necklace',
           'Internal Key': 'sapphire_necklace',
           Category: 'Jewelry',
           Subtype: 'Necklace',

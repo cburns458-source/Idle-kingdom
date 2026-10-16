@@ -300,14 +300,14 @@ void main() {
     controller.noteReward(
       overflowBundle('tick-1', const [
         LootGrant(itemId: clayId, quantity: 2, displayName: 'Clay'),
-        LootGrant(itemId: oreId, quantity: 1, displayName: 'Copper Ore'),
+        LootGrant(itemId: oreId, quantity: 1, displayName: 'Copper ore'),
       ]),
     );
     await pumpPopup(tester);
 
     expect(find.text(leftBehindPopupMessage), findsOne);
     expect(find.text('Clay x2'), findsOne);
-    expect(find.text('Copper Ore x1'), findsOne);
+    expect(find.text('Copper ore x1'), findsOne);
   });
 
   testWidgets('a second overflow batch merges into the open popup', (tester) async {
@@ -325,14 +325,14 @@ void main() {
     controller.noteReward(
       overflowBundle('tick-2', const [
         LootGrant(itemId: clayId, quantity: 1, displayName: 'Clay'),
-        LootGrant(itemId: oreId, quantity: 3, displayName: 'Copper Ore'),
+        LootGrant(itemId: oreId, quantity: 3, displayName: 'Copper ore'),
       ]),
     );
     await tester.pump();
 
     expect(find.text(leftBehindPopupMessage), findsOne);
     expect(find.text('Clay x3'), findsOne);
-    expect(find.text('Copper Ore x3'), findsOne);
+    expect(find.text('Copper ore x3'), findsOne);
   });
 
   testWidgets('the bag badge shows, survives rebuild, and clears when the bag opens', (
@@ -452,7 +452,7 @@ void main() {
           effectiveElapsedMs: 0,
           leftBehind: const [
             LootGrant(itemId: clayId, quantity: 4, displayName: 'Clay'),
-            LootGrant(itemId: oreId, quantity: 2, displayName: 'Copper Ore'),
+            LootGrant(itemId: oreId, quantity: 2, displayName: 'Copper ore'),
           ],
         ),
       ),
@@ -467,7 +467,7 @@ void main() {
 
     expect(find.text(leftBehindPopupMessage), findsOne);
     expect(find.text('Clay x4'), findsOne);
-    expect(find.text('Copper Ore x2'), findsOne);
+    expect(find.text('Copper ore x2'), findsOne);
   });
 
   test('offline catch-up does not count left-behind twice through noteReward', () {
@@ -475,7 +475,7 @@ void main() {
     addTearDown(controller.dispose);
     const grants = [
       LootGrant(itemId: clayId, quantity: 4, displayName: 'Clay'),
-      LootGrant(itemId: oreId, quantity: 2, displayName: 'Copper Ore'),
+      LootGrant(itemId: oreId, quantity: 2, displayName: 'Copper ore'),
     ];
     controller.adoptBoot(
       SessionBoot(
@@ -512,11 +512,11 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
-    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.tap(find.byTooltip('Wooden axe'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to offer'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Wooden Hatchet'));
+    await tester.tap(find.byTooltip('Wooden hatchet'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to offer'));
     await tester.pumpAndSettle();
@@ -637,7 +637,7 @@ void main() {
 
   testWidgets('quest reward no_room names the slots and commits nothing', (tester) async {
     // Qty 6 leaves each delivery pile in place, so turning in frees no slot.
-    // Chef's Hat then needs one new slot against a full bag.
+    // Chef's hat then needs one new slot against a full bag.
     const roseId = 'NPC-0005';
     const roseQuest = 'QST-0002';
     const rabbitsFoot = 'ITEM-0038';
@@ -774,7 +774,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
-    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.tap(find.byTooltip('Wooden axe'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to offer'));
     await tester.pumpAndSettle();

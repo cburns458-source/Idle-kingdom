@@ -52,14 +52,14 @@ describe('primary activity engine', () => {
       withoutBow.save.skills.find((skill) => skill.skillId === 'SKL-0001')?.xp ?? 0,
     ).toBe(0)
 
-    // Equip a Regular Bow (bow_combat_xp capability) directly for the test —
+    // Equip a Cedar bow (bow_combat_xp capability) directly for the test —
     // equipping it through the normal flow requires Hunting 10.
     // Default new-save stance is Offensive → all bonus Might.
     save = {
       ...save,
       equipment: {
         ...save.equipment,
-        slots: { ...save.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0135', quantity: 1 } },
+        slots: { ...save.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0136', quantity: 1 } },
       },
     }
     const withBow = completeGatheringAction(launch, save, huntButterfly, () => 0)
@@ -98,7 +98,7 @@ describe('primary activity engine', () => {
       currentLocationId: 'LOC-0009',
       equipment: {
         ...save.equipment,
-        slots: { ...save.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0135', quantity: 1 } },
+        slots: { ...save.equipment.slots, 'SLOT-0001': { itemId: 'ITEM-0136', quantity: 1 } },
       },
     }
     const generated = generateNextAction(launch, save, 'ACT-0012', () => 0)

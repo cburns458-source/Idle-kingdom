@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 65
+export const SAVE_VERSION = 66
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -11,6 +11,11 @@ export const STARTING_HUNTING_TOOL_ID = 'ITEM-0108'
 export const RETIRED_FISHING_NET_ITEM_ID = 'ITEM-0104'
 /** Retired cook. Existing copies become Squid Noodle Soup. */
 export const RETIRED_COOKED_BABY_GIANT_SQUID_ITEM_ID = 'ITEM-0192'
+/** Deleted in REN-01. v66 drops leftover copies if any save still holds them. */
+export const REMOVED_REGULAR_BOW_ITEM_ID = 'ITEM-0135'
+export const REMOVED_ANCIENT_BINDING_ITEM_ID = 'ITEM-0290'
+export const REMOVED_ANCIENT_BINDING_RECIPE_ID = 'RCP-0057'
+export const REMOVED_ANCIENT_BINDING_ACTION_ID = 'ACN-0161'
 export const SQUID_NOODLE_SOUP_ITEM_ID = 'ITEM-0302'
 export const WEAPON_TOOL_SLOT_ID = 'SLOT-0001'
 /** New-player starter kit item IDs. */

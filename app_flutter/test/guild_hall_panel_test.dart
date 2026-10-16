@@ -95,7 +95,7 @@ void main() {
 
     // The first step is named, with its materials and how far along they are.
     expect(find.text('Build the Hall'), findsOne);
-    expect(find.textContaining('Cedar Log 0 / 1,000'), findsOne);
+    expect(find.textContaining('Cedar log 0 / 1,000'), findsOne);
   });
 
   testWidgets('the store house takes donations and never gives them back', (tester) async {
@@ -125,7 +125,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.save.inventory, isEmpty);
-    expect(find.textContaining('Cedar Log 400 / 1,000'), findsOne);
+    expect(find.textContaining('Cedar log 400 / 1,000'), findsOne);
     expect(find.text('Out'), findsNothing);
   });
 

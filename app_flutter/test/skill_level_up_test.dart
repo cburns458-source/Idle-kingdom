@@ -13,7 +13,7 @@ void main() {
     database = loadDatabaseFromRepo();
   });
 
-  testWidgets('a crafting level-up lists Leather Straps', (tester) async {
+  testWidgets('a crafting level-up lists Leather straps', (tester) async {
     final controller = buildController(database, seed: startedCharacter(database));
     addTearDown(controller.dispose);
     await pumpShell(tester, controller);
@@ -26,7 +26,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Level 10 Crafting'), findsOne);
-    expect(find.text('· Leather Straps'), findsOne);
+    expect(find.text('· Leather straps'), findsOne);
     await tester.tap(find.text('Continue'));
     await tester.pump();
     expect(find.text('Level 10 Crafting'), findsNothing);
@@ -74,7 +74,7 @@ void main() {
     expect(title.style?.color, chrome.panelInk);
     expect(title.style?.color, isNot(Palette.parchmentText));
 
-    final unlock = tester.widget<Text>(find.text('· Leather Straps'));
+    final unlock = tester.widget<Text>(find.text('· Leather straps'));
     expect(unlock.style?.color, chrome.embossFace);
     expect(unlock.style?.color, isNot(Palette.gold));
   });

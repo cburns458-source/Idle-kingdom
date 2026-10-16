@@ -37,7 +37,7 @@ describe('clothes', () => {
     ])
   })
 
-  it('lets a new character wear Leather Gloves and the specialist hats', () => {
+  it('lets a new character wear Leather gloves and the specialist hats', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), inventory: [] as { itemId: string; quantity: number }[] }
     save = addItemToInventory(save, LEATHER_GLOVES_ID, 1)
@@ -60,7 +60,7 @@ describe('clothes', () => {
     expect(wizard.save.equipment.slots[HELMET_SLOT_ID]?.itemId).toBe(WIZARD_HAT_ID)
   })
 
-  it('lets a new character wear a Leather Helmet', () => {
+  it('lets a new character wear a Leather helmet', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = { ...createNewSave(launch), inventory: [] as { itemId: string; quantity: number }[] }
     save = addItemToInventory(save, LEATHER_HELMET_ID, 1)

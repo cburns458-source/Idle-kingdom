@@ -31,7 +31,7 @@ void main() {
     final unit = playerBuyPrice(database.launch, getShop(database.launch, shopId)!, woodenAxeId)!;
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
-    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.tap(find.byTooltip('Wooden axe'));
     await tester.pumpAndSettle();
 
     // The keypad opens on 1; make it 2 and add it to the offer.
@@ -64,7 +64,7 @@ void main() {
     expect(find.text('${unit}g · 1'), findsOne);
     expect(find.textContaining('left'), findsNothing);
 
-    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.tap(find.byTooltip('Wooden axe'));
     await tester.pumpAndSettle();
     expect(find.textContaining("left in today's stock"), findsOne);
     await tester.tap(find.text('Add to offer'));
@@ -122,13 +122,13 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
-    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.tap(find.byTooltip('Wooden axe'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to offer'));
     await tester.pumpAndSettle();
     expect(find.text('×1'), findsOne);
 
-    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.tap(find.byTooltip('Wooden axe'));
     await tester.pumpAndSettle();
     expect(find.text('Update offer'), findsOne);
     await tester.tap(find.text('Remove from offer'));
@@ -146,7 +146,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
-    await tester.tap(find.byTooltip('Wooden Axe'));
+    await tester.tap(find.byTooltip('Wooden axe'));
     await tester.pumpAndSettle();
     // With no gold the keypad offers no ceiling, but the trade still checks.
     await tester.tap(find.text('Add to offer'));
@@ -172,7 +172,7 @@ void main() {
     expect(find.text('Confirm trade'), findsNothing);
   });
 
-  testWidgets('buys Leather Gloves from the Clothier', (tester) async {
+  testWidgets('buys Leather gloves from the Clothier', (tester) async {
     const clothierId = 'SHP-0006';
     const glovesId = 'ITEM-0298';
     final controller = buildController(
@@ -184,8 +184,8 @@ void main() {
     final unit = playerBuyPrice(database.launch, getShop(database.launch, clothierId)!, glovesId)!;
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: clothierId));
-    await tester.ensureVisible(find.byTooltip('Leather Gloves'));
-    await tester.tap(find.byTooltip('Leather Gloves'));
+    await tester.ensureVisible(find.byTooltip('Leather gloves'));
+    await tester.tap(find.byTooltip('Leather gloves'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to offer'));
     await tester.pumpAndSettle();
@@ -196,7 +196,7 @@ void main() {
     expect(inventoryCount(controller.save, glovesId), 1);
   });
 
-  testWidgets('buys a Leather Helmet from the Clothier', (tester) async {
+  testWidgets('buys a Leather helmet from the Clothier', (tester) async {
     const clothierId = 'SHP-0006';
     const helmetId = 'ITEM-0308';
     final controller = buildController(
@@ -208,8 +208,8 @@ void main() {
     final unit = playerBuyPrice(database.launch, getShop(database.launch, clothierId)!, helmetId)!;
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: clothierId));
-    await tester.ensureVisible(find.byTooltip('Leather Helmet'));
-    await tester.tap(find.byTooltip('Leather Helmet'));
+    await tester.ensureVisible(find.byTooltip('Leather helmet'));
+    await tester.tap(find.byTooltip('Leather helmet'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to offer'));
     await tester.pumpAndSettle();

@@ -107,7 +107,7 @@ describe('equipment loadout', () => {
   it('moves the entire potion stack into the potion slot and returns it on unequip', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0070', 4) // Luck Potion
+    save = addItemToInventory(save, 'ITEM-0070', 4) // Luck potion
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0070')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
@@ -190,7 +190,7 @@ describe('equipment loadout', () => {
   it('blocks equipping gear below required skill level', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0119', 1) // Steel Pickaxe, Mining 35
+    save = addItemToInventory(save, 'ITEM-0119', 1) // Steel pickaxe, Mining 35
     const result = equipItemFromInventory(launch, save, 'ITEM-0119')
     expect(result.ok).toBe(false)
     if (result.ok) return
@@ -200,7 +200,7 @@ describe('equipment loadout', () => {
   it('applies success chance bonus only to the tool\'s own skill', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe, Mining success 3
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper pickaxe, Mining success 3
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
@@ -255,7 +255,7 @@ describe('equipment loadout', () => {
   it('blocks unequip when the bag has no room for the returned item', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper pickaxe
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
@@ -281,14 +281,14 @@ describe('equipment loadout', () => {
   it('still allows a like-for-like tool swap when the bag is exactly full', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe, equip it
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper pickaxe, equip it
     const equipped = equipItemFromInventory(launch, save, 'ITEM-0111')
     expect(equipped.ok).toBe(true)
     if (!equipped.ok) return
     save = equipped.save
-    save = addItemToInventory(save, 'ITEM-0102', 1) // Wooden Pickaxe (also Mining level 1)
+    save = addItemToInventory(save, 'ITEM-0102', 1) // Wooden pickaxe (also Mining level 1)
 
-    // Fill the bag to exactly the slot cap including the incoming Wooden Pickaxe stack.
+    // Fill the bag to exactly the slot cap including the incoming Wooden pickaxe stack.
     const filler = Array.from({ length: INVENTORY_SLOT_LIMIT - save.inventory.length }, (_, i) => ({
       itemId: `FILLER-${i}`,
       quantity: 1,
@@ -361,8 +361,8 @@ describe('equipment loadout', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = { ...save, inventory: [] }
-    save = addItemToInventory(save, 'ITEM-0145', 1) // Wooden Shield
-    save = addItemToInventory(save, 'ITEM-0125', 1) // Wooden Dagger
+    save = addItemToInventory(save, 'ITEM-0145', 1) // Wooden shield
+    save = addItemToInventory(save, 'ITEM-0125', 1) // Wooden dagger
 
     const shield = equipItemFromInventory(launch, save, 'ITEM-0145')
     expect(shield.ok).toBe(true)
@@ -393,24 +393,24 @@ describe('equipment loadout', () => {
         },
       },
     }
-    save = addItemToInventory(save, 'ITEM-0225', 1) // Bronze Dagger
+    save = addItemToInventory(save, 'ITEM-0225', 1) // Bronze dagger
     const result = equipItemFromInventory(launch, save, 'ITEM-0225')
     expect(result.ok).toBe(false)
   })
 
   it('treats bows, battleaxes, warhammers, and battle staves as two-handed', () => {
     const { launch } = prepareDatabase(rawDatabase)
-    expect(isTwoHandedItem(launch, 'ITEM-0135')).toBe(true) // Regular Bow
-    expect(isTwoHandedItem(launch, 'ITEM-0142')).toBe(true) // Steel Battleaxe
+    expect(isTwoHandedItem(launch, 'ITEM-0136')).toBe(true) // Cedar bow
+    expect(isTwoHandedItem(launch, 'ITEM-0142')).toBe(true) // Steel battleaxe
     expect(isTwoHandedItem(launch, 'ITEM-0143')).toBe(true) // Warhammer
-    expect(isTwoHandedItem(launch, 'ITEM-0123')).toBe(true) // Dwarven Warhammer
-    expect(isTwoHandedItem(launch, 'ITEM-0285')).toBe(true) // Ancient Bow
+    expect(isTwoHandedItem(launch, 'ITEM-0123')).toBe(true) // Dwarven warhammer
+    expect(isTwoHandedItem(launch, 'ITEM-0285')).toBe(true) // Ancient bow
     expect(isTwoHandedItem(launch, 'ITEM-0304')).toBe(true)
     expect(isTwoHandedItem(launch, 'ITEM-0305')).toBe(true)
     expect(isTwoHandedItem(launch, 'ITEM-0306')).toBe(true)
-    expect(isTwoHandedItem(launch, 'ITEM-0122')).toBe(false) // Goblin Staff
-    expect(isTwoHandedItem(launch, 'ITEM-0307')).toBe(false) // Mage's Wand
-    expect(isTwoHandedItem(launch, 'ITEM-0124')).toBe(false) // Wooden Sword
+    expect(isTwoHandedItem(launch, 'ITEM-0122')).toBe(false) // Goblin staff
+    expect(isTwoHandedItem(launch, 'ITEM-0307')).toBe(false) // Mage's wand
+    expect(isTwoHandedItem(launch, 'ITEM-0124')).toBe(false) // Wooden sword
   })
 
   it('unequips the off-hand when a two-handed weapon is equipped', () => {
@@ -425,15 +425,15 @@ describe('equipment loadout', () => {
           : skill,
       ),
     }
-    save = addItemToInventory(save, 'ITEM-0145', 1) // Wooden Shield
-    save = addItemToInventory(save, 'ITEM-0135', 1) // Regular Bow
+    save = addItemToInventory(save, 'ITEM-0145', 1) // Wooden shield
+    save = addItemToInventory(save, 'ITEM-0136', 1) // Cedar bow
     const shield = equipItemFromInventory(launch, save, 'ITEM-0145')
     expect(shield.ok).toBe(true)
     if (!shield.ok) return
-    const bow = equipItemFromInventory(launch, shield.save, 'ITEM-0135')
+    const bow = equipItemFromInventory(launch, shield.save, 'ITEM-0136')
     expect(bow.ok).toBe(true)
     if (!bow.ok) return
-    expect(bow.save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId).toBe('ITEM-0135')
+    expect(bow.save.equipment.slots[WEAPON_TOOL_SLOT_ID]?.itemId).toBe('ITEM-0136')
     expect(bow.save.equipment.slots[OFFHAND_SLOT_ID]).toBeNull()
     expect(bow.save.inventory.find((stack) => stack.itemId === 'ITEM-0145')?.quantity).toBe(1)
   })
@@ -450,9 +450,9 @@ describe('equipment loadout', () => {
           : skill,
       ),
     }
-    save = addItemToInventory(save, 'ITEM-0135', 1)
+    save = addItemToInventory(save, 'ITEM-0136', 1)
     save = addItemToInventory(save, 'ITEM-0145', 1)
-    const bow = equipItemFromInventory(launch, save, 'ITEM-0135')
+    const bow = equipItemFromInventory(launch, save, 'ITEM-0136')
     expect(bow.ok).toBe(true)
     if (!bow.ok) return
     const shield = equipItemFromInventory(launch, bow.save, 'ITEM-0145')
@@ -460,7 +460,7 @@ describe('equipment loadout', () => {
     if (!shield.ok) return
     expect(shield.save.equipment.slots[OFFHAND_SLOT_ID]?.itemId).toBe('ITEM-0145')
     expect(shield.save.equipment.slots[WEAPON_TOOL_SLOT_ID]).toBeNull()
-    expect(shield.save.inventory.find((stack) => stack.itemId === 'ITEM-0135')?.quantity).toBe(1)
+    expect(shield.save.inventory.find((stack) => stack.itemId === 'ITEM-0136')?.quantity).toBe(1)
   })
 
   it('blocks a two-hander when the bag cannot hold the off-hand item', () => {
@@ -479,7 +479,7 @@ describe('equipment loadout', () => {
     save = equipStackToSlot(save, OFFHAND_SLOT_ID, 'ITEM-0145', 1)
     const filler = launch.Items.filter(
       (item) =>
-        item['Item ID'] !== 'ITEM-0135' &&
+        item['Item ID'] !== 'ITEM-0136' &&
         item['Item ID'] !== 'ITEM-0145' &&
         item['Item ID'] !== 'ITEM-0124',
     ).slice(0, INVENTORY_SLOT_LIMIT - 1)
@@ -487,10 +487,10 @@ describe('equipment loadout', () => {
       ...save,
       inventory: [
         ...filler.map((item) => ({ itemId: item['Item ID'], quantity: 1 })),
-        { itemId: 'ITEM-0135', quantity: 1 },
+        { itemId: 'ITEM-0136', quantity: 1 },
       ],
     }
-    const result = equipItemFromInventory(launch, save, 'ITEM-0135')
+    const result = equipItemFromInventory(launch, save, 'ITEM-0136')
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.reason).toMatch(/inventory space/i)

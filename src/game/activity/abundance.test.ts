@@ -15,7 +15,7 @@ function seqRandom(values: number[]): () => number {
   return () => values[Math.min(i++, values.length - 1)]!
 }
 
-describe('Abundance Spell drop doubling', () => {
+describe('Abundance spell drop doubling', () => {
   it('doubles item quantity on a successful drop when the chance roll succeeds', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)

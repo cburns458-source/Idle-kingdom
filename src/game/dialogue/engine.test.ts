@@ -22,7 +22,7 @@ describe('standalone dialogue engine', () => {
 
     const yes = chooseDialogue(db, save, 'DLG-0001', started.view!.nodeId, 'DCH-0001')
     expect(yes.ok).toBe(true)
-    expect(yes.message).toMatch(/Potato/)
+    expect(yes.message).toMatch(/potato/i)
     save = yes.save
 
     const thanks = chooseDialogue(db, save, 'DLG-0001', yes.view!.nodeId, 'DCH-0003')

@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 65;
+const int saveVersion = 66;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -27,6 +27,15 @@ const String retiredFishingNetItemId = 'ITEM-0104';
 
 /// Retired cook. Existing copies become Squid Noodle Soup.
 const String retiredCookedBabyGiantSquidItemId = 'ITEM-0192';
+
+/// Deleted in REN-01. v66 drops leftover copies if any save still holds them.
+const String removedRegularBowItemId = 'ITEM-0135';
+
+const String removedAncientBindingItemId = 'ITEM-0290';
+
+const String removedAncientBindingRecipeId = 'RCP-0057';
+
+const String removedAncientBindingActionId = 'ACN-0161';
 
 const String squidNoodleSoupItemId = 'ITEM-0302';
 

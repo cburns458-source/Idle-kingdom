@@ -130,8 +130,8 @@ void main() {
     expect(find.byTooltip('Gear'), findsOne);
     await tester.tap(find.byTooltip('Gear'));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Wooden Sword'), findsOne);
-    expect(find.byTooltip('Wooden Shield'), findsOne);
+    expect(find.byTooltip('Wooden sword'), findsOne);
+    expect(find.byTooltip('Wooden shield'), findsOne);
   });
 
   testWidgets('the player profile card is wide enough for skills and long names', (tester) async {

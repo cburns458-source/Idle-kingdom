@@ -15,7 +15,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'support/harness.dart';
 
 /// The real content plus the SYS-01 parity patch: QST-9001 (King: hand in 10
-/// Baked Potato + 10 Cooked Perch) and QST-9002 (Fennel: show 5 Baked Potato).
+/// Baked potato + 10 Cooked perch) and QST-9002 (Fennel: show 5 Baked potato).
 LoadedDatabase _patchedDatabase() {
   final raw = jsonDecode(
     File('../content/data/game-database.json').readAsStringSync(),
@@ -78,7 +78,7 @@ void main() {
     return save.copyWith(inventory: inventory);
   }
 
-  /// QST-9001 on its hand-in step with 6 Baked Potato and all 10 Cooked Perch already handed in.
+  /// QST-9001 on its hand-in step with 6 Baked potato and all 10 Cooked perch already handed in.
   PlayerSave feastSixHandedIn() {
     var save = choose(character(), _king, _kingNode, 'DCH-9001');
     save = bag(bag(save, _bakedPotato, 6), _cookedPerch, 10);
@@ -147,11 +147,11 @@ void main() {
     testWidgets('shows handed-in progress and how many will be handed in', (tester) async {
       await open(tester, bag(feastSixHandedIn(), _bakedPotato, 7), _king);
 
-      expect(find.text('Baked Potato 6/10 handed in'), findsOne);
-      expect(find.text('Cooked Perch 10/10 handed in'), findsOne);
+      expect(find.text('Baked potato 6/10 handed in'), findsOne);
+      expect(find.text('Cooked perch 10/10 handed in'), findsOne);
       // DCH-9002 (step_ready) and DCH-9006 (quest_active) both hand in.
-      expect(find.text('Hand in 4 Baked Potato'), findsNWidgets(2));
-      expect(button(tester, 'Hand in 4 Baked Potato').onPressed, isNotNull);
+      expect(find.text('Hand in 4 Baked potato'), findsNWidgets(2));
+      expect(button(tester, 'Hand in 4 Baked potato').onPressed, isNotNull);
       expectNoBank(tester);
     });
 
@@ -161,8 +161,8 @@ void main() {
       );
       await open(tester, bag(save, _bakedPotato, 0), _king);
 
-      expect(find.text('Baked Potato 6/10 handed in'), findsOne);
-      expect(find.text('Bring Baked Potato (6/10 handed in)'), findsNWidgets(2));
+      expect(find.text('Baked potato 6/10 handed in'), findsOne);
+      expect(find.text('Bring Baked potato (6/10 handed in)'), findsNWidgets(2));
       expect(find.textContaining('Hand in'), findsNothing);
       expectNoBank(tester);
     });
@@ -170,11 +170,11 @@ void main() {
     testWidgets('a hand-in records the new count', (tester) async {
       final controller = await open(tester, bag(feastSixHandedIn(), _bakedPotato, 7), _king);
 
-      await tester.tap(find.text('Hand in 4 Baked Potato').first);
+      await tester.tap(find.text('Hand in 4 Baked potato').first);
       await tester.pump();
 
       expect(bagCount(controller.save, _bakedPotato), 3);
-      expect(controller.message, contains('Baked Potato 10/10 handed in'));
+      expect(controller.message, contains('Baked potato 10/10 handed in'));
       expectNoBank(tester);
     });
   });
@@ -189,12 +189,12 @@ void main() {
         onClose: () => closed += 1,
       );
 
-      expect(find.text('Baked Potato: you have 3/5'), findsOne);
-      expect(find.text('Show 5 Baked Potato'), findsOne);
+      expect(find.text('Baked potato: you have 3/5'), findsOne);
+      expect(find.text('Show 5 Baked potato'), findsOne);
 
-      await tester.tap(find.text('Show 5 Baked Potato'));
+      await tester.tap(find.text('Show 5 Baked potato'));
       await tester.pump();
-      expect(find.text('You need 5 Baked Potato (you have 3).'), findsOne);
+      expect(find.text('You need 5 Baked potato (you have 3).'), findsOne);
       expect(find.textContaining('placeholder'), findsNothing);
       expect(closed, 0);
       expectNoBank(tester);
@@ -202,8 +202,8 @@ void main() {
       controller.commit(bag(controller.save, _bakedPotato, 5));
       await tester.pumpWidget(const SizedBox());
       final reopened = await open(tester, controller.save, _fennel, onClose: () => closed += 1);
-      final ready = find.text('Show 5 Baked Potato');
-      expect(find.text('Baked Potato: you have 5/5'), findsOne);
+      final ready = find.text('Show 5 Baked potato');
+      expect(find.text('Baked potato: you have 5/5'), findsOne);
       await tester.tap(ready);
       await tester.pump();
       expect(closed, 1);
@@ -215,10 +215,10 @@ void main() {
       final save = choose(bag(showing(), _bakedPotato, 5), _fennel, _fennelNode, 'DCH-9012');
       await open(tester, save, _fennel);
 
-      expect(find.text('Baked Potato: Shown ✓'), findsOne);
+      expect(find.text('Baked potato: Shown ✓'), findsOne);
       expect(find.text('Shown ✓'), findsOne);
       expect(button(tester, 'Shown ✓').onPressed, isNull);
-      expect(find.text('Show 5 Baked Potato'), findsNothing);
+      expect(find.text('Show 5 Baked potato'), findsNothing);
     });
 
     testWidgets('only the bag counts', (tester) async {
@@ -227,7 +227,7 @@ void main() {
       );
       await open(tester, save, _fennel);
 
-      expect(find.text('Baked Potato: you have 0/5'), findsOne);
+      expect(find.text('Baked potato: you have 0/5'), findsOne);
       expectNoBank(tester);
     });
   });
@@ -277,7 +277,7 @@ void main() {
       save = stacks(save, _bakedPotato, [(4, true)]);
       await open(tester, save, _king);
 
-      expect(button(tester, 'Hand in 4 Baked Potato').onPressed, isNotNull);
+      expect(button(tester, 'Hand in 4 Baked potato').onPressed, isNotNull);
       for (final text in shownText(tester)) {
         expect(text.toLowerCase(), isNot(contains('favour')), reason: text);
       }
@@ -297,15 +297,15 @@ void main() {
         },
       );
 
-      await tester.tap(find.text('Hand in 4 Baked Potato').first);
-      await tester.tap(find.text('Hand in 4 Baked Potato').first);
+      await tester.tap(find.text('Hand in 4 Baked potato').first);
+      await tester.tap(find.text('Hand in 4 Baked potato').first);
       await tester.pump();
       expect(calls, 1);
 
       pending.complete(failed(save, 'not_available'));
       await tester.pump();
-      await tester.tap(find.text('Hand in 4 Baked Potato').first);
-      await tester.tap(find.text('Hand in 4 Baked Potato').first);
+      await tester.tap(find.text('Hand in 4 Baked potato').first);
+      await tester.tap(find.text('Hand in 4 Baked potato').first);
       await tester.pump();
       expect(calls, 2);
     });
@@ -313,8 +313,8 @@ void main() {
     testWidgets('a double tap on the local engine hands in once', (tester) async {
       final controller = await open(tester, bag(feastSixHandedIn(), _bakedPotato, 7), _king);
 
-      await tester.tap(find.text('Hand in 4 Baked Potato').first);
-      await tester.tap(find.text('Hand in 4 Baked Potato').first);
+      await tester.tap(find.text('Hand in 4 Baked potato').first);
+      await tester.tap(find.text('Hand in 4 Baked potato').first);
       await tester.pump();
 
       expect(bagCount(controller.save, _bakedPotato), 3);
@@ -323,7 +323,7 @@ void main() {
 
   group('full bag', () {
     testWidgets('names only the new slots the gifts need', (tester) async {
-      // DCH-9025 grants Golden Spud, Potato and Baked Potato. Potato stacks onto
+      // DCH-9025 grants Golden spud, Potato and Baked potato. Potato stacks onto
       // the bag, so 2 new slots are needed with 1 free.
       var save = bag(character(), _potato, 1);
       save = fillBag(save, 1);
@@ -447,11 +447,11 @@ void main() {
       final controller = await open(tester, favouriteFeast(), _king);
       final before = jsonEncode(controller.save.toJson());
 
-      await tester.tap(find.text('Hand in 4 Baked Potato and 2 Cooked Perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
       await tester.pumpAndSettle();
 
       expect(find.textContaining(prompt), findsOne);
-      expect(find.textContaining('Baked Potato x4, Cooked Perch x2'), findsOne);
+      expect(find.textContaining('Baked potato x4, Cooked perch x2'), findsOne);
       expect(jsonEncode(controller.save.toJson()), before);
       expectNoBank(tester);
 
@@ -460,7 +460,7 @@ void main() {
 
       expect(find.textContaining(prompt), findsNothing);
       expect(jsonEncode(controller.save.toJson()), before);
-      expect(find.text('Baked Potato 6/10 handed in'), findsOne);
+      expect(find.text('Baked potato 6/10 handed in'), findsOne);
       expect(
         find.byWidgetPredicate((w) => w is Text && w.style?.color == Palette.danger),
         findsNothing,
@@ -492,7 +492,7 @@ void main() {
         },
       );
 
-      await tester.tap(find.text('Hand in 4 Baked Potato and 2 Cooked Perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Yes'));
       await tester.pumpAndSettle();
@@ -522,7 +522,7 @@ void main() {
           );
         },
       );
-      await tester.tap(find.text('Hand in 3 Cooked Perch').first);
+      await tester.tap(find.text('Hand in 3 Cooked perch').first);
       await tester.pumpAndSettle();
       expect(sent, [('DCH-9002', false)]);
       expect(find.textContaining(prompt), findsOne);
@@ -531,7 +531,7 @@ void main() {
     testWidgets('Yes on the local engine commits the hand-in', (tester) async {
       final controller = await open(tester, favouriteFeast(), _king);
 
-      await tester.tap(find.text('Hand in 4 Baked Potato and 2 Cooked Perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Yes'));
       await tester.pumpAndSettle();
@@ -560,7 +560,7 @@ void main() {
         },
       );
 
-      await tester.tap(find.text('Hand in 4 Baked Potato and 2 Cooked Perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Yes'));
       await tester.pumpAndSettle();
@@ -587,10 +587,10 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Hand in 4 Baked Potato and 2 Cooked Perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Baked Potato x4, Cooked Perch x2, Potato x7'), findsOne);
+      expect(find.textContaining('Baked potato x4, Cooked perch x2, Potato x7'), findsOne);
     });
   });
 
@@ -610,7 +610,7 @@ void main() {
           _king,
           request: (view, choiceId, {required useFavourites}) async => failed(save, code),
         );
-        await tester.tap(find.text('Hand in 4 Baked Potato').first);
+        await tester.tap(find.text('Hand in 4 Baked potato').first);
         await tester.pump();
         expect(find.text(expected), findsOne);
         expect(find.textContaining('placeholder'), findsNothing);
@@ -626,7 +626,7 @@ void main() {
       );
       await tester.tap(enabled);
       await tester.pump();
-      expect(find.text('You have no Baked Potato to hand in.'), findsOne);
+      expect(find.text('You have no Baked potato to hand in.'), findsOne);
       expectNoBank(tester);
     });
   });
@@ -661,7 +661,7 @@ void main() {
                 QuestArrivalCompletion(
                   questId: 'QST-9001',
                   questName: 'The feast',
-                  rewards: <String>['Golden Spud'],
+                  rewards: <String>['Golden spud'],
                   pendingSkillXp: 0,
                   message: 'Thank you.',
                 ),
@@ -684,7 +684,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(find.text('Hand in 4 Baked Potato').first);
+    await tester.tap(find.text('Hand in 4 Baked potato').first);
     await tester.pump();
     for (var i = 0; i < 20 && find.text('Collect').evaluate().isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 50));

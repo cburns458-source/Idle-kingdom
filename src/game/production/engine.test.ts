@@ -171,7 +171,7 @@ describe('standard production', () => {
     const cooking = resolved.save.skills.find((skill) => skill.skillId === 'SKL-0007')
     expect(cooking?.xp).toBe(600)
     expect(resolved.messages).toEqual([
-      expect.stringMatching(/^Crafted 2 Baked Potato \(\+\d+ XP\)$/),
+      expect.stringMatching(/^Crafted 2 Baked potato \(\+\d+ XP\)$/),
     ])
   })
 
@@ -244,7 +244,7 @@ describe('standard production', () => {
     const save = createNewSave(launch)
     const luck = getRecipe(launch, 'RCP-0053')!
     expect(canKnowRecipe(save, launch, luck)).toBe(false)
-    // Fernleaf Tonic (RCP-0078) is the only level-1 Alchemy recipe.
+    // Fernleaf tonic (RCP-0078) is the only level-1 Alchemy recipe.
     expect(recipesForActivity(launch, save, 'ACT-0020').map((row) => row['Recipe ID'])).toEqual([
       'RCP-0078',
     ])

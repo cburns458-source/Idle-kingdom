@@ -30,6 +30,135 @@ SaveJson _bumped(SaveJson save, int version) {
   return next;
 }
 
+const Set<String> _ren01RemovedItemIds = <String>{
+  removedRegularBowItemId,
+  removedAncientBindingItemId,
+};
+
+bool _isRemovedRen01ItemId(Object? itemId) =>
+    itemId is String && _ren01RemovedItemIds.contains(itemId);
+
+List<Object?> _dropRemovedRen01Stacks(List<Object?> stacks) {
+  return [
+    for (final entry in stacks)
+      if (entry is! SaveJson || !_isRemovedRen01ItemId(entry['itemId'])) entry,
+  ];
+}
+
+Object? _dropRemovedRen01Equipped(Object? stack) {
+  final object = asObject(stack);
+  if (object == null) return stack;
+  return _isRemovedRen01ItemId(object['itemId']) ? null : object;
+}
+
+bool _dropRemovedRen01Craft(SaveJson save) {
+  if (save['productionRecipeId'] == removedAncientBindingRecipeId) return true;
+  final transition = asObject(save['activityTransition']);
+  return transition?['productionRecipeId'] == removedAncientBindingRecipeId;
+}
+
+SaveJson _dropRemovedRen01Items(SaveJson save) {
+  final next = copySave(save);
+  next['inventory'] = _dropRemovedRen01Stacks(arrayOrEmpty(save, 'inventory'));
+  next['bank'] = _dropRemovedRen01Stacks(arrayOrEmpty(save, 'bank'));
+  final slots = objectOrEmpty(objectAt(save, 'equipment') ?? <String, Object?>{}, 'slots');
+  next['equipment'] = <String, Object?>{
+    'slots': <String, Object?>{
+      for (final entry in slots.entries) entry.key: _dropRemovedRen01Equipped(entry.value),
+    },
+  };
+  next['equipmentPresets'] = <Object?>[
+    for (final row in arrayOrEmpty(save, 'equipmentPresets'))
+      if (row is SaveJson)
+        <String, Object?>{
+          ...row,
+          'slots': <String, Object?>{
+            for (final entry in objectOrEmpty(row, 'slots').entries)
+              entry.key: _dropRemovedRen01Equipped(entry.value),
+          },
+        }
+      else
+        row,
+  ];
+  next['mailbox'] = <Object?>[
+    for (final row in arrayOrEmpty(save, 'mailbox'))
+      if (row is SaveJson)
+        <String, Object?>{
+          ...row,
+          'attachments': _dropRemovedRen01Stacks(arrayOrEmpty(row, 'attachments')),
+        }
+      else
+        row,
+  ];
+  final locationTimers = <Object?>[];
+  for (final row in arrayOrEmpty(save, 'locationTimers')) {
+    if (row is! SaveJson) {
+      locationTimers.add(row);
+      continue;
+    }
+    if (_isRemovedRen01ItemId(row['inputItemId']) || _isRemovedRen01ItemId(row['outputItemId'])) {
+      continue;
+    }
+    locationTimers.add(<String, Object?>{
+      ...row,
+      if (row['plantedItemIds'] is List)
+        'plantedItemIds': [
+          for (final id in row['plantedItemIds']! as List)
+            if (!_isRemovedRen01ItemId(id)) id,
+        ],
+      if (row['baitItemIds'] is List)
+        'baitItemIds': [
+          for (final id in row['baitItemIds']! as List)
+            if (!_isRemovedRen01ItemId(id)) id,
+        ],
+    });
+  }
+  next['locationTimers'] = locationTimers;
+  final nextLoot = <String, Object?>{};
+  for (final entry in objectOrEmpty(save, 'lootTrackers').entries) {
+    final tracker = asObject(entry.value);
+    if (tracker == null) {
+      nextLoot[entry.key] = entry.value;
+      continue;
+    }
+    nextLoot[entry.key] = <String, Object?>{
+      ...tracker,
+      'items': <String, Object?>{
+        for (final item in objectOrEmpty(tracker, 'items').entries)
+          if (!_isRemovedRen01ItemId(item.key)) item.key: item.value,
+      },
+    };
+  }
+  next['lootTrackers'] = nextLoot;
+  next['shopPurchasesToday'] = <String, Object?>{
+    for (final entry in objectOrEmpty(save, 'shopPurchasesToday').entries)
+      if (!_isRemovedRen01ItemId(entry.key.split(':').elementAtOrNull(1))) entry.key: entry.value,
+  };
+  next['heldActionByActivityId'] = <String, Object?>{
+    for (final entry in objectOrEmpty(save, 'heldActionByActivityId').entries)
+      if (entry.value != removedAncientBindingActionId) entry.key: entry.value,
+  };
+  final dropRecipe = _dropRemovedRen01Craft(save);
+  final dropAction = save['currentActionId'] == removedAncientBindingActionId;
+  if (dropRecipe) {
+    next['productionRecipeId'] = null;
+    next['productionQuantityTotal'] = null;
+    next['productionQuantityRemaining'] = null;
+  }
+  if (dropRecipe || dropAction) {
+    next['currentActionId'] = null;
+    next['actionStartedAt'] = null;
+    next['actionDurationMs'] = null;
+    next['currentActivityId'] = null;
+    next['activityStartedAt'] = null;
+  }
+  final transition = asObject(save['activityTransition']);
+  if (transition?['productionRecipeId'] == removedAncientBindingRecipeId) {
+    next['activityTransition'] = null;
+  }
+  return next;
+}
+
 /// `save.field ?? null`: keep what is there, otherwise store an explicit null.
 ///
 /// Assigning an absent key writes the null the TypeScript spread would, which is
@@ -1029,6 +1158,11 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       next['activePotionEffect'] = patched;
       return next;
     },
+  ),
+  SaveMigration(
+    fromVersion: 65,
+    toVersion: 66,
+    migrate: (save, _) => _bumped(_dropRemovedRen01Items(save), 66),
   ),
 ];
 

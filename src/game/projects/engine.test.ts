@@ -24,7 +24,7 @@ describe('special production', () => {
     ])
   })
 
-  it("lists and crafts Falconer's Gloves at the Artisans workshop", () => {
+  it("lists and crafts Falconer's gloves at the Artisans workshop", () => {
     const { launch } = prepareDatabase(rawDatabase)
     const project = launch.Projects.find((row) => row['Project ID'] === 'PRJ-0049')
     expect(project).toBeDefined()
@@ -69,7 +69,7 @@ describe('special production', () => {
     const result = completeSpecialProject(launch, save, 'PRJ-0049', 1)
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.outputLabel).toBe("Falconer's Gloves")
+    expect(result.outputLabel).toBe("Falconer's gloves")
     expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0167')?.quantity).toBe(1)
   })
 
@@ -113,20 +113,20 @@ describe('special production', () => {
       'PRJ-0177',
     ])
     expect(listed.find((project) => project['Project ID'] === 'PRJ-0139')?.['Display Name']).toBe(
-      'Strength Spell',
+      'Strength spell',
     )
     expect(listed.find((project) => project['Project ID'] === 'PRJ-0139')?.['Output Item / Target ID']).toBe(
       'ITEM-0295',
     )
     expect(launch.Items.find((item) => item['Item ID'] === 'ITEM-0295')?.['Display Name']).toBe(
-      'Strength Spell',
+      'Strength spell',
     )
     expect(listed.every((project) => project['Required Skill 1 Level']! > 1)).toBe(true)
     // Level-1 saves still see projects; completion remains hard-gated.
     expect(save.skills.find((skill) => skill.skillId === 'SKL-0013')?.level ?? 1).toBe(1)
   })
 
-  it('crafts Strength Spell as a named inventory item', () => {
+  it('crafts Strength spell as a named inventory item', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = {
@@ -147,10 +147,10 @@ describe('special production', () => {
     const result = completeSpecialProject(launch, save, 'PRJ-0139', 1)
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.outputLabel).toBe('Strength Spell')
+    expect(result.outputLabel).toBe('Strength spell')
     expect(result.save.inventory.find((stack) => stack.itemId === 'ITEM-0295')?.quantity).toBe(1)
     expect(launch.Items.find((item) => item['Item ID'] === 'ITEM-0295')?.['Display Name']).toBe(
-      'Strength Spell',
+      'Strength spell',
     )
   })
 
@@ -162,7 +162,7 @@ describe('special production', () => {
     }
   })
 
-  it('crafts Strength Spell with zero Crafting skill now that the requirement is removed', () => {
+  it('crafts Strength spell with zero Crafting skill now that the requirement is removed', () => {
     const { launch } = prepareDatabase(rawDatabase)
     let save = createNewSave(launch)
     save = {

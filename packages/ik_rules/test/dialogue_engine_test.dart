@@ -27,7 +27,7 @@ void main() {
     expect(started.ok, isTrue);
     final yes = chooseDialogue(db, save, 'DLG-0001', started.view!.nodeId, 'DCH-0001');
     expect(yes.ok, isTrue, reason: yes.reason);
-    expect(yes.message, contains('Potato'));
+    expect(yes.message!.toLowerCase(), contains('potato'));
     expect(yes.view?.nodeId, 'DNODE-0002');
     save = yes.save;
     expect(save.inventory.any((stack) => stack.itemId == 'ITEM-0058'), isTrue);

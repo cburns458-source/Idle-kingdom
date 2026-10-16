@@ -39,7 +39,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, CodexView(controller: controller, initialItemId: 'ITEM-0058'));
-    expect(find.text('Baked Potato'), findsWidgets);
+    expect(find.text('Baked potato'), findsWidgets);
     expect(find.text('Crafted by'), findsOne);
     expect(find.byKey(const Key('codex-link-ITEM-0025')), findsOne);
 
@@ -100,7 +100,7 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, CodexView(controller: controller, initialItemId: 'ITEM-0439'));
-    expect(find.text('Fernleaf Tonic (6)'), findsWidgets);
+    expect(find.text('Fernleaf tonic (6)'), findsWidgets);
     expect(find.text('Heals 5%, 6 uses'), findsOne);
   });
 
@@ -112,7 +112,7 @@ void main() {
     expect(find.text('Mine copper ore'), findsWidgets);
     expect(find.textContaining('Primary · 71.3% drop'), findsOne);
     expect(find.textContaining('Gems · 0.5% drop'), findsOne);
-    expect(find.text('Copper Ore'), findsWidgets);
+    expect(find.text('Copper ore'), findsWidgets);
     expect(find.text('Sapphire'), findsWidgets);
     expect(find.textContaining('Drop rate 100%'), findsWidgets);
 
@@ -130,9 +130,9 @@ void main() {
     expect(find.textContaining('Primary · 63.8% drop'), findsOne);
     expect(find.textContaining('Secondary · 5% drop'), findsOne);
     expect(find.text('Venison'), findsWidgets);
-    expect(find.text('Elk Hide'), findsWidgets);
-    expect(find.text('Elk Horns'), findsWidgets);
-    expect(find.text('Animal Tendons'), findsWidgets);
+    expect(find.text('Elk hide'), findsWidgets);
+    expect(find.text('Elk horns'), findsWidgets);
+    expect(find.text('Animal tendons'), findsWidgets);
     expect(find.textContaining('Drop rate 45%'), findsOne);
     expect(find.textContaining('Drop rate 50%'), findsOne);
     expect(find.textContaining('Drop rate 5%'), findsWidgets);
@@ -242,7 +242,7 @@ void main() {
     expect(find.text('Goblin Chief'), findsWidgets);
     expect(find.textContaining('Primary · 30% drop'), findsOne);
     expect(find.textContaining('Secondary · 50% drop'), findsOne);
-    expect(find.text('Goblin Staff'), findsWidgets);
+    expect(find.text('Goblin staff'), findsWidgets);
     expect(find.textContaining('Drop rate 100%'), findsOne);
   });
 

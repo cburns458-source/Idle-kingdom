@@ -3,7 +3,15 @@ import { isValidCharacterName, normalizeCharacterName } from '../../game/save/ch
 import { migrateSave, SAVE_MIGRATIONS } from '../../game/save/migrations'
 import { createNewSave, parseSave, touchSave } from '../../game/save/saveStore'
 import { ensureStartingHuntingTool } from '../../game/save/startingGear'
-import { SAVE_VERSION, type PlayerSave } from '../../game/save/types'
+import {
+  REMOVED_ANCIENT_BINDING_ACTION_ID,
+  REMOVED_ANCIENT_BINDING_ITEM_ID,
+  REMOVED_ANCIENT_BINDING_RECIPE_ID,
+  REMOVED_REGULAR_BOW_ITEM_ID,
+  SAVE_VERSION,
+  WEAPON_TOOL_SLOT_ID,
+  type PlayerSave,
+} from '../../game/save/types'
 import { scenario, type JsonValue, type ParityScenario } from '../types'
 import { contentDatabase } from './contentDatabase'
 import { asJson, baseSave, FIXED_TIMESTAMP_MS, gearedSave } from './saveFixtures'
@@ -114,7 +122,7 @@ function legacySave(db: GameDatabase, version: number): LegacyJson {
 }
 
 /** Versions worth replaying: the oldest, both settings rewrites, and the newest. */
-const LEGACY_VERSIONS = [1, 3, 4, 9, 12, 16, 19, 20, 21, 22, 23, 30, 31, 32, 43, 47, 48, 50, 55, 61, 63, 64, SAVE_VERSION]
+const LEGACY_VERSIONS = [1, 3, 4, 9, 12, 16, 19, 20, 21, 22, 23, 30, 31, 32, 43, 47, 48, 50, 55, 61, 63, 64, 65, SAVE_VERSION]
 
 /** Names covering trimming, internal runs of whitespace, clipping, and rejection. */
 const RAW_NAMES = [
@@ -133,6 +141,69 @@ function anchorlessLegacySave(): LegacyJson {
   const save = legacySave(contentDatabase(), 8)
   delete save.updatedAt
   return save
+}
+
+/** v65 save still holding Regular Bow / Ancient Binding in every place v66 sweeps. */
+function v65RemovedRen01Save(): LegacyJson {
+  const save = legacySave(contentDatabase(), 65)
+  const slots = {
+    ...((save.equipment as { slots?: Record<string, JsonValue | null> } | undefined)?.slots ?? {}),
+    [WEAPON_TOOL_SLOT_ID]: { itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 1 },
+  }
+  const presets = Array.isArray(save.equipmentPresets)
+    ? (save.equipmentPresets as Array<Record<string, JsonValue>>).map((preset, index) =>
+        index === 0
+          ? {
+              ...preset,
+              slots: {
+                ...((preset.slots as Record<string, JsonValue> | undefined) ?? {}),
+                [WEAPON_TOOL_SLOT_ID]: { itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 1 },
+              },
+            }
+          : preset,
+      )
+    : []
+  return {
+    ...save,
+    inventory: [
+      { itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 1 },
+      { itemId: 'ITEM-0003', quantity: 4 },
+      { itemId: REMOVED_ANCIENT_BINDING_ITEM_ID, quantity: 2 },
+    ],
+    bank: [{ itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 3 }],
+    equipment: { slots },
+    equipmentPresets: presets,
+    mailbox: [
+      {
+        id: 'mail-ren01',
+        catalogId: null,
+        subject: 'A bow',
+        body: 'Keep this Regular Bow.',
+        sentAt: '2026-01-01T00:00:00.000Z',
+        readAt: null,
+        attachments: [{ itemId: REMOVED_REGULAR_BOW_ITEM_ID, quantity: 1 }],
+        claimedAt: null,
+      },
+    ],
+    productionRecipeId: REMOVED_ANCIENT_BINDING_RECIPE_ID,
+    productionQuantityTotal: 1,
+    productionQuantityRemaining: 1,
+    currentActionId: REMOVED_ANCIENT_BINDING_ACTION_ID,
+    currentActivityId: 'ACT-0001',
+    actionStartedAt: '2026-01-01T00:00:00.000Z',
+    actionDurationMs: 12000,
+    activityStartedAt: '2026-01-01T00:00:00.000Z',
+    heldActionByActivityId: { 'ACT-0001': REMOVED_ANCIENT_BINDING_ACTION_ID },
+    activityTransition: {
+      kind: 'starting',
+      activityId: 'ACT-0001',
+      followUpActivityId: null,
+      productionRecipeId: REMOVED_ANCIENT_BINDING_RECIPE_ID,
+      productionQuantity: 1,
+      startedAt: '2026-01-01T00:00:00.000Z',
+      durationMs: 1000,
+    },
+  }
 }
 
 /** Inputs `parseSave` must reject, one per guard. */
@@ -223,6 +294,17 @@ export const saveScenarios: ParityScenario[] = [
       },
       () => migrationResult(legacySave(contentDatabase(), version)),
     ),
+  ),
+
+  scenario(
+    'save/migrations',
+    'from-v65-removed-ren01-items',
+    {
+      source: 'content',
+      nowMs: NOW_MS,
+      legacy: v65RemovedRen01Save() as JsonValue,
+    },
+    () => migrationResult(v65RemovedRen01Save()),
   ),
 
   scenario(

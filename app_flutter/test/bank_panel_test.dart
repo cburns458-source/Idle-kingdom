@@ -67,13 +67,13 @@ void main() {
 
     await pumpPanel(tester, BankPanel(controller: controller));
     expect(find.byTooltip('Clay'), findsOne);
-    expect(find.byTooltip('Copper Ore'), findsOne);
+    expect(find.byTooltip('Copper ore'), findsOne);
 
     await tester.enterText(find.byType(TextField), 'copper');
     await tester.pump();
 
     expect(find.byTooltip('Clay'), findsNothing);
-    expect(find.byTooltip('Copper Ore'), findsOne);
+    expect(find.byTooltip('Copper ore'), findsOne);
   });
 
   testWidgets('groups the bag column the same way as inventory', (tester) async {
@@ -89,8 +89,8 @@ void main() {
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, BankPanel(controller: controller));
-    final ore = tester.getRect(find.byTooltip('Copper Ore'));
-    final sword = tester.getRect(find.byTooltip('Iron Sword'));
+    final ore = tester.getRect(find.byTooltip('Copper ore'));
+    final sword = tester.getRect(find.byTooltip('Iron sword'));
     expect(ore.center.dx, lessThan(sword.center.dx));
   });
 

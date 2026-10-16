@@ -29,7 +29,7 @@ void main() {
     await openWardrobe(tester);
 
     expect(find.text('Wardrobe'), findsOne);
-    expect(find.text("Traveler's Tunic"), findsOne);
+    expect(find.text("Traveler's tunic"), findsOne);
     expect(controller.save.hasSeenWardrobeIntro, isTrue);
   });
 
@@ -43,7 +43,7 @@ void main() {
     await tester.pump();
     expect(equippedCosmeticId(controller.save, 'CSLOT-0001'), isNull);
 
-    await tester.tap(find.text("Traveler's Tunic"));
+    await tester.tap(find.text("Traveler's tunic"));
     await tester.pump();
     expect(equippedCosmeticId(controller.save, 'CSLOT-0001'), 'COS-0001');
   });
@@ -58,7 +58,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('No Pet unlocked yet.'), findsOne);
-    expect(find.text("Traveler's Tunic"), findsNothing);
+    expect(find.text("Traveler's tunic"), findsNothing);
 
     await tester.tap(find.text('Titles'));
     await tester.pump();
@@ -215,7 +215,7 @@ void main() {
     expect(find.text('You found a Cosmetic!'), findsNothing);
 
     await openWardrobe(tester);
-    await tester.ensureVisible(find.text("Traveler's Tunic"));
-    expect(find.text("Traveler's Tunic"), findsOne);
+    await tester.ensureVisible(find.text("Traveler's tunic"));
+    expect(find.text("Traveler's tunic"), findsOne);
   });
 }

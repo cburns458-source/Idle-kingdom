@@ -17,10 +17,10 @@ void main() {
     return save;
   }
 
-  test('crafting 9 to 10 unlocks Leather Straps', () {
+  test('crafting 9 to 10 unlocks Leather straps', () {
     final save = atLevel('SKL-0009', 10);
     final unlocks = skillUnlocksBetween(db, save, 'SKL-0009', 9, 10);
-    expect(unlocks.recipes, contains('Leather Straps'));
+    expect(unlocks.recipes, contains('Leather straps'));
   });
 
   test('combat level-ups never list fight or enemy action names', () {
@@ -44,17 +44,17 @@ void main() {
     final save = atLevel(artisanrySkillId, 25);
     final unlocks = skillUnlocksBetween(db, save, artisanrySkillId, 24, 25);
     expect(unlocks.projects, contains('Bola'));
-    expect(unlocks.projects, contains('Lucky Necklace'));
-    expect(unlocks.projects, isNot(contains('Cedar Bow')));
+    expect(unlocks.projects, contains('Lucky necklace'));
+    expect(unlocks.projects, isNot(contains('Cedar bow')));
   });
 
-  test('arcana 39 to 40 lists Magic Bola only after the Archmage', () {
+  test('arcana 39 to 40 lists Magic bola only after the Archmage', () {
     final locked = skillUnlocksBetween(db, atLevel(arcanaSkillId, 40), arcanaSkillId, 39, 40);
-    expect(locked.projects, isNot(contains('Magic Bola')));
+    expect(locked.projects, isNot(contains('Magic bola')));
 
     final taught = atLevel(arcanaSkillId, 40, mentors: [archmageId]);
     final unlocks = skillUnlocksBetween(db, taught, arcanaSkillId, 39, 40);
-    expect(unlocks.projects, contains('Magic Bola'));
+    expect(unlocks.projects, contains('Magic bola'));
   });
 
   test('mining 4 to 5 lists each action as a proficient gerund phrase', () {

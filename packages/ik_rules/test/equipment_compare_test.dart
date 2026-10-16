@@ -62,8 +62,8 @@ void main() {
     save = wear(save, weaponToolSlotId, 'ITEM-0124');
     final result = compareEquipmentCandidate(db, save, itemId: 'ITEM-0128');
     expect(result.ok, isTrue, reason: result.reason);
-    expect(result.equippedName, 'Wooden Sword');
-    expect(result.candidateName, 'Iron Sword');
+    expect(result.equippedName, 'Wooden sword');
+    expect(result.candidateName, 'Iron sword');
 
     final wooden = playerDamageRange(db, save);
     final ironPreview = previewEquippedSave(
@@ -153,7 +153,7 @@ void main() {
     expect(result.ok, isTrue, reason: result.reason);
     expect(result.displaced, isNotEmpty);
     expect(result.displaced.single.slotId, offhandSlotId);
-    expect(result.equippedName, 'Wooden Sword + Wooden Shield');
+    expect(result.equippedName, 'Wooden sword + Wooden shield');
     expect(result.notes.any((line) => line.startsWith('Also clears')), isTrue);
 
     final withoutHands = save.copyWith(

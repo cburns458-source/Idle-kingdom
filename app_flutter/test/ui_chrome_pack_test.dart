@@ -89,7 +89,7 @@ void main() {
                     GameDropdown<String>(
                       label: 'Recipe',
                       value: 'a',
-                      items: const [GameDropdownItem(value: 'a', label: 'Baked Potato (Lv 1)')],
+                      items: const [GameDropdownItem(value: 'a', label: 'Baked potato (Lv 1)')],
                       onChanged: (_) {},
                     ),
                   ],
@@ -105,7 +105,7 @@ void main() {
     expect(chat.color, UiChrome.stone.board);
     expect(chat.color, isNot(Palette.parchmentDeep));
 
-    final field = tester.widget<Text>(find.text('Baked Potato (Lv 1)'));
+    final field = tester.widget<Text>(find.text('Baked potato (Lv 1)'));
     expect(field.style?.color, UiChrome.stone.primaryLabel);
     expect(field.style?.color, isNot(UiChrome.stone.panelInk));
 

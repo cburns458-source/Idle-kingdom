@@ -31,7 +31,7 @@ void main() {
     );
   }
 
-  test('requires Alchemy 30 to wear the Alchemist Goggles', () {
+  test('requires Alchemy 30 to wear the Alchemist goggles', () {
     final row = db.equipment.singleWhere((entry) => entry.equipmentId == 'EQP-0196');
     expect(row.itemId, alchemistGogglesItemId);
     expect(row.requiredSkillId, 'SKL-0010');
@@ -46,7 +46,7 @@ void main() {
     expect(enough.save!.equipment.slots['SLOT-0003']?.itemId, alchemistGogglesItemId);
   });
 
-  test('sells Alchemist Goggles at the Apothecary for 138 gold, one per day', () {
+  test('sells Alchemist goggles at the Apothecary for 138 gold, one per day', () {
     final shop = getShop(db, 'SHP-0010')!;
     final entry = shopStockEntries(shop).singleWhere((row) => row.itemId == alchemistGogglesItemId);
     expect(entry.slot, 6);

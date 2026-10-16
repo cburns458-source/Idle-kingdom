@@ -27,20 +27,7 @@ const List<String> _woodenFishingTools = <String>['ITEM-0103'];
 const List<String> _woodenHuntingTools = <String>['ITEM-0108', 'ITEM-0109'];
 const List<String> _woodenCombatGear = <String>['ITEM-0124', 'ITEM-0125', 'ITEM-0145'];
 
-const Set<String> _combatGearWords = <String>{
-  'Sword',
-  'Dagger',
-  'Shield',
-  'Helmet',
-  'Chestplate',
-  'Platelegs',
-  'Boots',
-  'Gloves',
-  'Warhammer',
-  'Battleaxe',
-  'Bow',
-  'Spear',
-};
+const String _magicBolaItemId = 'ITEM-0315';
 
 const List<String> _combatArmorWords = <String>[
   'Helmet',
@@ -306,16 +293,14 @@ SkillMenuPlacement skillMenuPlacementForOutput(
     return const SkillMenuPlacement(tabId: 'other', tabLabel: 'Other');
   }
   if (skillId == artisanrySkillId) {
-    if (_isBowName(displayName)) {
+    final item = _itemForOutput(db, outputId, displayName);
+    if (_isBowItem(item)) {
       return const SkillMenuPlacement(tabId: 'bows', tabLabel: 'Bows');
     }
-    final item = outputId.isNotEmpty
-        ? db.items.firstWhereOrNull((row) => row.itemId == outputId)
-        : _itemByName(db, displayName);
-    if (_isJewelryItem(item, displayName)) {
+    if (_isJewelryItem(item)) {
       return const SkillMenuPlacement(tabId: 'jewelry', tabLabel: 'Jewelry');
     }
-    final material = _armorMaterial(displayName);
+    final material = _armorMaterial(item?.displayName ?? displayName);
     if (material != null && _isGroupedArmorMaterial(material)) {
       return SkillMenuPlacement(
         tabId: 'other',
@@ -326,10 +311,11 @@ SkillMenuPlacement skillMenuPlacementForOutput(
     return const SkillMenuPlacement(tabId: 'other', tabLabel: 'Other');
   }
   if (skillId == arcanaSkillId) {
-    if (_isSpellName(displayName)) {
+    final item = _itemForOutput(db, outputId, displayName);
+    if (_isSpellItem(item, displayName)) {
       return const SkillMenuPlacement(tabId: 'spells', tabLabel: 'Spells');
     }
-    if (_isArcanaWeaponName(displayName, outputId)) {
+    if (_isArcanaWeaponItem(item, outputId, displayName)) {
       return const SkillMenuPlacement(tabId: 'equipment', tabLabel: 'Equipment');
     }
     return const SkillMenuPlacement(tabId: 'enchants', tabLabel: 'Enchants');
@@ -337,7 +323,7 @@ SkillMenuPlacement skillMenuPlacementForOutput(
   if (skillId == thieverySkillMenuId) {
     final action = outputId.isNotEmpty
         ? db.actions.firstWhereOrNull((row) => row.actionId == outputId)
-        : db.actions.firstWhereOrNull((row) => row.displayName == displayName);
+        : db.actions.firstWhereOrNull((row) => _namesEqual(row.displayName, displayName));
     if (action != null && isThieveryShopAction(action)) {
       return const SkillMenuPlacement(tabId: 'shops', tabLabel: 'Shops');
     }
@@ -610,10 +596,10 @@ List<SkillMenuTab> _cookingTabs(GameDatabase db) {
 
 String _alchemyOutputItemId(GameDatabase db, String displayName, String outputId) {
   if (outputId.isNotEmpty) return outputId;
-  final action = db.actions.firstWhereOrNull((row) => row.displayName == displayName);
+  final action = db.actions.firstWhereOrNull((row) => _namesEqual(row.displayName, displayName));
   final targetId = action?.targetId;
   if (targetId != null && targetId.isNotEmpty) return targetId;
-  final recipe = db.recipes.firstWhereOrNull((row) => row.displayName == displayName);
+  final recipe = db.recipes.firstWhereOrNull((row) => _namesEqual(row.displayName, displayName));
   return recipe?.outputItemId ?? '';
 }
 
@@ -674,13 +660,14 @@ List<SkillMenuTab> _artisanryTabs(GameDatabase db) {
   final other = <SkillMenuListItem>[];
   final seenLeather = <String>{};
   for (final project in projectsForSkill(db, artisanrySkillId)) {
-    final item = _itemByName(db, project.displayName);
-    if (_isBowName(project.displayName)) {
+    final outputId = _projectOutputId(db, project.id);
+    final item = _itemForOutput(db, outputId, project.displayName);
+    if (_isBowItem(item)) {
       bows.add(project);
-    } else if (_isJewelryItem(item, project.displayName)) {
+    } else if (_isJewelryItem(item)) {
       jewelry.add(project);
     } else {
-      final material = _armorMaterial(project.displayName);
+      final material = _armorMaterial(item?.displayName ?? project.displayName);
       if (material != null && _isGroupedArmorMaterial(material)) {
         final key = '${project.level ?? ''}|$material';
         if (!seenLeather.add(key)) continue;
@@ -714,9 +701,10 @@ List<SkillMenuTab> _arcanaTabs(GameDatabase db) {
   for (final project in projectsForSkill(db, arcanaSkillId)) {
     if (_isArcanaEssenceMenuItem(project)) continue;
     final outputId = _projectOutputId(db, project.id);
-    if (_isSpellName(project.displayName)) {
+    final item = _itemForOutput(db, outputId, project.displayName);
+    if (_isSpellItem(item, project.displayName)) {
       spells.add(project);
-    } else if (_isArcanaWeaponName(project.displayName, outputId)) {
+    } else if (_isArcanaWeaponItem(item, outputId, project.displayName)) {
       weapons.add(project);
     } else if (_isEnchantmentName(project.displayName, outputId)) {
       enchantments.add(project);
@@ -743,7 +731,7 @@ List<SkillMenuListItem> _combatGearItems(GameDatabase db, String skillId) {
       SkillMenuListItem(
         id: item.id,
         displayName: item.displayName,
-        level: _equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
+        level: _equipLevelForSkill(db, item, skillId) ?? item.level,
       ),
   ];
 }
@@ -848,12 +836,12 @@ List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
       SkillMenuListItem(
         id: item.id,
         displayName: item.displayName,
-        level: _equipLevelForSkill(db, item.displayName, skillId) ?? item.level,
+        level: _equipLevelForSkill(db, item, skillId) ?? item.level,
       ),
   ]);
   if (skillId == fishingSkillId) {
     final pot = db.items.firstWhereOrNull((row) => row.itemId == fishingPotItemId);
-    if (pot != null && entries.every((item) => item.displayName != pot.displayName)) {
+    if (pot != null && entries.every((item) => item.id != pot.itemId)) {
       entries.add(SkillMenuListItem(id: pot.itemId, displayName: pot.displayName, level: 14));
     }
     return _dedupeByName(entries);
@@ -861,8 +849,8 @@ List<SkillMenuListItem> _gatheringToolEntries(GameDatabase db, String skillId) {
   return entries;
 }
 
-num? _equipLevelForSkill(GameDatabase db, String displayName, String skillId) {
-  final item = db.items.firstWhereOrNull((row) => row.displayName == displayName);
+num? _equipLevelForSkill(GameDatabase db, SkillMenuListItem entry, String skillId) {
+  final item = _itemForMenuEntry(db, entry);
   if (item == null) return null;
   final equipment = db.equipment.firstWhereOrNull((row) => row.itemId == item.itemId);
   if (equipment == null || equipment.requiredSkillId != skillId) return null;
@@ -874,16 +862,16 @@ num? _equipLevelForSkill(GameDatabase db, String displayName, String skillId) {
 ) {
   switch (skillId) {
     case miningSkillId:
-      return (woodenIds: _woodenMiningTools, match: (item, name) => _endsWithWord(name, 'Pickaxe'));
+      return (woodenIds: _woodenMiningTools, match: (item, _) => _itemHasTag(item, 'mining_tool'));
     case woodcuttingSkillId:
-      return (
-        woodenIds: _woodenWoodcuttingTools,
-        match: (item, name) => _isWoodcuttingToolName(name),
-      );
+      return (woodenIds: _woodenWoodcuttingTools, match: (item, _) => _isWoodcuttingToolItem(item));
     case fishingSkillId:
-      return (woodenIds: _woodenFishingTools, match: (item, name) => _isFishingToolName(name));
+      return (woodenIds: _woodenFishingTools, match: (item, _) => _isFishingToolItem(item));
     case huntingSkillId:
-      return (woodenIds: _woodenHuntingTools, match: (item, name) => _isHuntingToolName(name));
+      return (
+        woodenIds: _woodenHuntingTools,
+        match: (item, _) => _itemHasTag(item, 'hunting_tool'),
+      );
     default:
       return null;
   }
@@ -1000,65 +988,99 @@ String? _weaponMaterial(String name) {
   return null;
 }
 
+bool _namesEqual(String? a, String? b) {
+  return (a ?? '').trim().toLowerCase() == (b ?? '').trim().toLowerCase();
+}
+
 bool _endsWithWord(String name, String word) {
-  return name == word || name.endsWith(' $word');
+  final haystack = name.trim().toLowerCase();
+  final needle = word.trim().toLowerCase();
+  return haystack == needle || haystack.endsWith(' $needle');
 }
 
-bool _isWoodcuttingToolName(String name) {
-  if (_endsWithWord(name, 'Battleaxe')) return false;
-  return _endsWithWord(name, 'Axe') || _endsWithWord(name, 'Hatchet');
+Set<String> _itemTags(ItemRow? item) {
+  if (item == null) return const <String>{};
+  return <String>{
+    for (final part in (item.functionalSourceTags ?? '').split(RegExp(r'[;,]')))
+      if (part.trim().isNotEmpty) part.trim().toLowerCase(),
+  };
 }
 
-bool _isFishingToolName(String name) {
-  return name.contains('Fishing Rod') || _endsWithWord(name, 'Harpoon') || name == 'Fishing Pot';
+bool _itemHasTag(ItemRow? item, String tag) => _itemTags(item).contains(tag.toLowerCase());
+
+bool _isWoodcuttingToolItem(ItemRow item) {
+  return _itemHasTag(item, 'woodcutting_tool') && item.subtype?.toLowerCase() != 'battleaxe';
 }
 
-bool _isHuntingToolName(String name) {
-  return _endsWithWord(name, 'Bow') ||
-      _endsWithWord(name, 'Spear') ||
-      name == 'Sling' ||
-      name == 'Bola' ||
-      name == 'Magic Bola';
+bool _isFishingToolItem(ItemRow item) {
+  return _itemHasTag(item, 'fishing_tool') || _itemHasTag(item, 'fishing_pot');
 }
 
-bool _isBowName(String name) => _endsWithWord(name, 'Bow');
-
-bool _isJewelryItem(ItemRow? item, String name) {
-  if (item?.category == 'Jewelry') return true;
-  return name.contains('Necklace') || name.contains('Ring');
+bool _isBowItem(ItemRow? item) {
+  if (item == null) return false;
+  return item.subtype == 'Bow' || _itemHasTag(item, 'bow_combat_xp');
 }
+
+bool _isJewelryItem(ItemRow? item) => item?.category == 'Jewelry';
 
 bool _isCombatGearItem(ItemRow item) {
   if (item.category == 'Tool' || item.category == 'Jewelry') return false;
-  if (item.displayName.contains('Necklace') ||
-      item.displayName.contains('Ring') ||
-      item.displayName.contains('Backpack')) {
+  if (_isWoodcuttingToolItem(item) ||
+      _itemHasTag(item, 'mining_tool') ||
+      _isFishingToolItem(item)) {
     return false;
   }
-  if (_isWoodcuttingToolName(item.displayName) ||
-      _endsWithWord(item.displayName, 'Pickaxe') ||
-      _isFishingToolName(item.displayName)) {
-    return false;
-  }
-  return _combatGearWords.any((word) => _endsWithWord(item.displayName, word));
+  final category = (item.category ?? '').toLowerCase();
+  return category == 'weapon' ||
+      category == 'armor' ||
+      category == 'shield / off-hand' ||
+      _itemHasTag(item, 'combat_weapon') ||
+      _itemHasTag(item, 'combat_armor') ||
+      _itemHasTag(item, 'combat_defense');
 }
 
-bool _isSpellName(String name) => name.contains('Spell');
+bool _isSpellItem(ItemRow? item, String name) {
+  if (item?.category == 'Spell' || _itemHasTag(item, 'spell')) return true;
+  return RegExp(r'\bspell\b', caseSensitive: false).hasMatch(name) &&
+      item?.category != 'Spell Component';
+}
 
-bool _isArcanaWeaponName(String name, String outputId) {
+bool _isArcanaWeaponItem(ItemRow? item, String outputId, String name) {
   if (outputId.startsWith('ENCH-')) return false;
-  return RegExp(r'staff of\b', caseSensitive: false).hasMatch(name) ||
-      RegExp(r'\bstaff\b', caseSensitive: false).hasMatch(name) ||
-      RegExp(r'\bwand\b', caseSensitive: false).hasMatch(name) ||
-      name == 'Magic Bola';
+  if (item?.itemId == _magicBolaItemId || _namesEqual(name, 'Magic bola')) return true;
+  final subtype = item?.subtype?.toLowerCase() ?? '';
+  if (subtype == 'staff' || subtype == 'wand') return true;
+  return _itemHasTag(item, 'staff') || _itemHasTag(item, 'wand');
 }
 
 bool _isEnchantmentName(String name, String outputId) {
-  return outputId.startsWith('ENCH-') || name.contains('Enchantment') || name.contains('Enchanted');
+  return outputId.startsWith('ENCH-') ||
+      name.toLowerCase().contains('enchantment') ||
+      name.toLowerCase().contains('enchanted');
 }
 
 ItemRow? _itemByName(GameDatabase db, String name) {
-  return db.items.firstWhereOrNull((item) => item.displayName == name);
+  return db.items.firstWhereOrNull((item) => item.displayName == name) ??
+      db.items.firstWhereOrNull((item) => _namesEqual(item.displayName, name));
+}
+
+ItemRow? _itemForOutput(GameDatabase db, String outputId, String displayName) {
+  if (outputId.isNotEmpty) {
+    final byId = db.items.firstWhereOrNull((row) => row.itemId == outputId);
+    if (byId != null) return byId;
+  }
+  return _itemByName(db, displayName);
+}
+
+ItemRow? _itemForMenuEntry(GameDatabase db, SkillMenuListItem entry) {
+  final byId = db.items.firstWhereOrNull((row) => row.itemId == entry.id);
+  if (byId != null) return byId;
+  final outputId = _projectOutputId(db, entry.id);
+  if (outputId.isNotEmpty) {
+    final byOutput = db.items.firstWhereOrNull((row) => row.itemId == outputId);
+    if (byOutput != null) return byOutput;
+  }
+  return _itemByName(db, entry.displayName);
 }
 
 String _projectOutputId(GameDatabase db, String projectId) {

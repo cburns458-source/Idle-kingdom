@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:ik_content/ik_content.dart';
 
+import '../js_compat.dart';
 import '../save/generated/save_models.dart';
 
 BookRow? bookById(GameDatabase db, String bookId) {
@@ -49,6 +50,6 @@ BookUnlockNotice? bookUnlockNotice(GameDatabase db, String bookId, bool isFirstE
 List<BookRow> libraryBookRows(GameDatabase db, PlayerSave save) {
   final unlocked = save.unlockedBookIds.toSet();
   final rows = db.books.where((row) => unlocked.contains(row.bookId)).toList();
-  rows.sort((a, b) => a.displayName.compareTo(b.displayName));
+  rows.sort((a, b) => jsLocaleCompare(a.displayName, b.displayName));
   return rows;
 }

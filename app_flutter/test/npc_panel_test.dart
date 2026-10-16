@@ -194,7 +194,7 @@ void main() {
 
     await tester.tap(find.text('Continue'));
     await tester.pump();
-    expect(find.textContaining("Rabbit's Foot"), findsNothing);
+    expect(find.textContaining("Rabbit's foot"), findsNothing);
     expect(find.textContaining('1500 / 1000'), findsNothing);
     expect(find.text('Turn in'), findsOne);
 

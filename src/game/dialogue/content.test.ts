@@ -268,7 +268,7 @@ describe('Fennel and King dialogue content', () => {
     expect(bagCount(king, GOLDEN_SPUD)).toBe(0)
   })
 
-  it('finishing Green Thumb gives exactly 4 Potato Seed, 3 Carrot Seed and the Guide, once', () => {
+  it('finishing Green Thumb gives exactly 4 Potato seed, 3 Carrot seed and the Guide, once', () => {
     let save = greenThumbActive()
     const before = { potato: bagCount(save, POTATO_SEED), carrot: bagCount(save, CARROT_SEED) }
     const results: DialogueResult[] = []

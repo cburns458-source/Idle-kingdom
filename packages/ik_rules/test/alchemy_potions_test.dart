@@ -159,7 +159,7 @@ void main() {
       'actionsRemaining': 6,
     };
     final migrated = parseSave(json, 0);
-    expect(migrated.saveVersion, 65);
+    expect(migrated.saveVersion, saveVersion);
     expect(migrated.activePotionEffect?.enemyMaxHpDamagePercent, 10);
     expect(migrated.activePotionEffect?.instantHealMaxHpPercent, isNull);
     expect(migrated.activePotionEffect?.regenMaxHpPercentPerRound, isNull);

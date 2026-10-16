@@ -26,7 +26,7 @@ void main() {
     test('uses the row icon key before the heuristic', () {
       expect(
         itemIconStem(
-          item(itemId: 'ITEM-0003', displayName: 'Copper Ore', iconAssetKey: 'copper_ore'),
+          item(itemId: 'ITEM-0003', displayName: 'Copper ore', iconAssetKey: 'copper_ore'),
         ),
         'copper_ore',
       );
@@ -38,12 +38,12 @@ void main() {
       expect(itemIconStem(item(itemId: 'ITEM-0295', displayName: 'Spell')), 'spell');
     });
 
-    test('draws Golden Spud with its own item icon', () {
+    test('draws Golden spud with its own item icon', () {
       expect(
         itemIconStem(
           item(
             itemId: 'ITEM-0026',
-            displayName: 'Golden Spud',
+            displayName: 'Golden spud',
             internalKey: 'golden_spud',
             iconAssetKey: 'golden_spud',
           ),
@@ -57,7 +57,7 @@ void main() {
         itemIconStem(
           item(
             itemId: 'ITEM-0157',
-            displayName: 'Iron Platelegs',
+            displayName: 'Iron platelegs',
             internalKey: 'iron_platelegs',
             category: 'Armor',
             subtype: 'Platelegs',
@@ -87,7 +87,7 @@ void main() {
         itemIconStem(
           item(
             itemId: 'ITEM-0174',
-            displayName: 'Sapphire Necklace',
+            displayName: 'Sapphire necklace',
             internalKey: 'sapphire_necklace',
             category: 'Jewelry',
             subtype: 'Necklace',

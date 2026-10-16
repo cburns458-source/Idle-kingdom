@@ -133,7 +133,7 @@ describe('items the exchange will not carry', () => {
     expect(BOUND_ITEM_REFUSAL).toBe("That stays with you; it can't be traded.")
   })
 
-  it('keeps Golden Spud, Chef’s Hat, and Pirate Insignia on the exchange', () => {
+  it('keeps Golden spud, Chef’s Hat, and Pirate insignia on the exchange', () => {
     expect(itemRefusal(GOLDEN_SPUD, CATALOG)).toBeNull()
     expect(itemRefusal(CHEFS_HAT, CATALOG)).toBeNull()
     expect(itemRefusal(PIRATE_INSIGNIA, CATALOG)).toBeNull()

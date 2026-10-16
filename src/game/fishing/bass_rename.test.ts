@@ -12,9 +12,9 @@ describe('tuna renamed to bass', () => {
     const { launch } = prepareDatabase(rawDatabase)
     const raw = launch.Items.find((row) => row['Item ID'] === 'ITEM-0050')!
     const cooked = launch.Items.find((row) => row['Item ID'] === 'ITEM-0062')!
-    expect(raw['Display Name']).toBe('Raw Bass')
+    expect(raw['Display Name']).toBe('Raw bass')
     expect(raw['Internal Key']).toBe('raw_bass')
-    expect(cooked['Display Name']).toBe('Cooked Bass')
+    expect(cooked['Display Name']).toBe('Cooked bass')
     expect(cooked['Internal Key']).toBe('cooked_bass')
 
     const catchAction = launch.Actions.find((row) => row['Action ID'] === 'ACN-0102')!

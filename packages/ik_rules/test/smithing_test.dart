@@ -222,7 +222,7 @@ void main() {
       nowMs: 0,
     );
     expect(forged.ok, isTrue);
-    expect(forged.outputLabel, 'Tungsten Sword');
+    expect(forged.outputLabel, 'Tungsten sword');
     expect(inventoryCount(forged.save!, _tungstenSword), 1);
   });
 
@@ -255,7 +255,7 @@ void main() {
       nowMs: 0,
     );
     expect(forged.ok, isTrue);
-    expect(forged.outputLabel, 'Titanium Sword');
+    expect(forged.outputLabel, 'Titanium sword');
     expect(inventoryCount(forged.save!, _titaniumSword), 1);
   });
 

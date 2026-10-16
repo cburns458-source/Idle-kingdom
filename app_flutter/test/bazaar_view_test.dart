@@ -200,14 +200,14 @@ void main() {
 
     // Nothing has traded yet, so there is no average to quote, but the item is
     // still listed: a buy order is worth placing when nobody is selling.
-    expect(find.text('Iron Ore'), findsOne);
+    expect(find.text('Iron ore'), findsOne);
     expect(find.textContaining('No trades yet'), findsWidgets);
 
     await tester.enterText(find.byType(TextField), 'titanium');
     await tester.pump();
 
-    expect(find.text('Titanium Ore'), findsOne);
-    expect(find.text('Iron Ore'), findsNothing);
+    expect(find.text('Titanium ore'), findsOne);
+    expect(find.text('Iron ore'), findsNothing);
   });
 
   testWidgets('sell offers only the bag stacks the exchange will take', (tester) async {
@@ -228,7 +228,7 @@ void main() {
     // The favourite is named with its reason rather than quietly dropped, and
     // gold is not mentioned at all because it is the currency, not a good.
     expect(find.text('Staying with you'), findsOne);
-    expect(find.text('Titanium Ore — $bazaarFavoriteNotTraded'), findsOne);
+    expect(find.text('Titanium ore — $bazaarFavoriteNotTraded'), findsOne);
     expect(find.textContaining('Gold —'), findsNothing);
   });
 
@@ -243,7 +243,7 @@ void main() {
     await pumpBazaar(tester, player.net, player.save);
     await startOrder(tester, bazaarSell);
 
-    // Same row as Iron Ore: name, what is carried, and a price line. No section,
+    // Same row as Iron ore: name, what is carried, and a price line. No section,
     // no marker, and no refusal text until the player tries to list it.
     expect(find.text('Machete'), findsOne);
     expect(find.textContaining('Carrying 1'), findsOne);
@@ -292,7 +292,7 @@ void main() {
     final player = await hostedPlayer(tester, bag: <InventoryStack>[_stack(_ironOre, 40)]);
     await pumpBazaar(tester, player.net, player.save);
     await startOrder(tester, bazaarSell);
-    await tester.tap(find.text('Iron Ore'));
+    await tester.tap(find.text('Iron ore'));
     await tester.pump();
     await tester.pump();
 
@@ -323,7 +323,7 @@ void main() {
     await startOrder(tester, bazaarBuy);
     await tester.enterText(find.byType(TextField), 'iron ore');
     await tester.pump();
-    await tester.tap(find.text('Iron Ore'));
+    await tester.tap(find.text('Iron ore'));
     await tester.pump();
     await tester.pump();
 
@@ -345,7 +345,7 @@ void main() {
     await startOrder(tester, bazaarBuy);
     await tester.enterText(find.byType(TextField), 'iron ore');
     await tester.pump();
-    await tester.tap(find.text('Iron Ore'));
+    await tester.tap(find.text('Iron ore'));
     await tester.pump();
     await tester.pump();
 
@@ -372,7 +372,7 @@ void main() {
     final seller = await hostedPlayer(tester, bag: <InventoryStack>[_stack(_ironOre, 40)]);
     await pumpBazaar(tester, seller.net, seller.save);
     await startOrder(tester, bazaarSell);
-    await tester.tap(find.text('Iron Ore'));
+    await tester.tap(find.text('Iron ore'));
     await tester.pump();
     await tester.pump();
 
@@ -396,7 +396,7 @@ void main() {
     await startOrder(tester, bazaarBuy);
     await tester.enterText(find.byType(TextField), 'iron ore');
     await tester.pump();
-    await tester.tap(find.text('Iron Ore'));
+    await tester.tap(find.text('Iron ore'));
     await tester.pump();
     await tester.pump();
 
@@ -432,7 +432,7 @@ void main() {
     );
     await pumpBazaar(tester, player.net, player.save);
 
-    expect(find.text('Selling Iron Ore ×40'), findsOne);
+    expect(find.text('Selling Iron ore ×40'), findsOne);
     expect(find.text('30 each · 0 of 40 traded'), findsOne);
     // That slot is no longer offering to start anything, and the other two are.
     expect(find.textContaining('— empty'), findsNWidgets(bazaarOfferSlots - 1));
@@ -441,7 +441,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(player.net.market.orders, isEmpty);
-    expect(find.text('Iron Ore ×40'), findsOne);
+    expect(find.text('Iron ore ×40'), findsOne);
     expect(find.text('Cancelled offer'), findsOne);
   });
 
@@ -460,7 +460,7 @@ void main() {
     );
     await pumpBazaar(tester, player.net, player.save);
 
-    expect(find.text('Iron Ore ×10'), findsOne);
+    expect(find.text('Iron ore ×10'), findsOne);
     expect(find.text('Bought'), findsOne);
     expect(find.text('200 gold'), findsOne);
     expect(find.text('Change from a buy offer'), findsOne);
@@ -508,13 +508,13 @@ void main() {
     await pumpBazaar(tester, player.net, player.save);
 
     expect(find.text('Recent trades'), findsOne);
-    expect(find.text('Sold Titanium Ore ×10'), findsNothing);
+    expect(find.text('Sold Titanium ore ×10'), findsNothing);
 
     await tester.tap(find.byKey(const Key('bazaar-recent-trades')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('Sold Titanium Ore ×10'), findsOne);
+    expect(find.text('Sold Titanium ore ×10'), findsOne);
     expect(find.text('500 each · 4,950 gold received'), findsOne);
     expect(find.text('Tax 50'), findsOne);
   });

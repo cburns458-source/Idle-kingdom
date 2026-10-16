@@ -28,8 +28,8 @@ describe('auto-equip for activity requirements', () => {
     let save = createNewSave(launch)
     save = { ...save, currentLocationId: 'LOC-0005' }
     save = forceUnequip(save, 'SLOT-0001')
-    save = addItemToInventory(save, 'ITEM-0102', 1) // Wooden Pickaxe
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe (higher ATR / tier)
+    save = addItemToInventory(save, 'ITEM-0102', 1) // Wooden pickaxe
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper pickaxe (higher ATR / tier)
 
     const blocked = validateActivityStart(launch, save, 'ACT-0005')
     expect(blocked.ok).toBe(false)
@@ -37,7 +37,7 @@ describe('auto-equip for activity requirements', () => {
 
     const proposal = proposeAutoEquipForActivity(launch, save, 'ACT-0005', blocked.reason)
     expect(proposal?.itemId).toBe('ITEM-0111')
-    expect(proposal?.itemName).toMatch(/Copper Pickaxe/i)
+    expect(proposal?.itemName).toMatch(/Copper pickaxe/i)
   })
 
   it('skips tools the player cannot equip yet', () => {
@@ -45,8 +45,8 @@ describe('auto-equip for activity requirements', () => {
     let save = createNewSave(launch)
     save = { ...save, currentLocationId: 'LOC-0005' }
     save = forceUnequip(save, 'SLOT-0001')
-    save = addItemToInventory(save, 'ITEM-0119', 1) // Steel Pickaxe, Mining 35
-    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper Pickaxe
+    save = addItemToInventory(save, 'ITEM-0119', 1) // Steel pickaxe, Mining 35
+    save = addItemToInventory(save, 'ITEM-0111', 1) // Copper pickaxe
 
     const blocked = validateActivityStart(launch, save, 'ACT-0005')
     expect(blocked.ok).toBe(false)

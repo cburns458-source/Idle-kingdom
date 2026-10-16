@@ -27,7 +27,7 @@ describe('hunting Animal Tendon drops', () => {
       expect.objectContaining({ itemId: 'ITEM-0044', quantity: 1 }),
     )
 
-    // Primary weight 0 → Raw Rabbit; secondary chance 0 → tendons.
+    // Primary weight 0 → Raw rabbit; secondary chance 0 → tendons.
     const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0, 0, 0]))
     expect(rabbitDrop.loot).toContainEqual(
       expect.objectContaining({ itemId: 'ITEM-0052', quantity: 1 }),
@@ -47,7 +47,7 @@ describe('hunting Animal Tendon drops', () => {
     )
   })
 
-  it('can roll Rabbit Hide from the rabbit main table', () => {
+  it('can roll Rabbit hide from the rabbit main table', () => {
     const save = createNewSave(launch)
     const rabbit = launch.Actions.find((row) => row['Action ID'] === 'ACN-0016')!
     const rabbitDrop = resolveActionRewards(launch, save, rabbit, seqRandom([0, 0.95, 1, 1]))

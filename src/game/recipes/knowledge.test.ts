@@ -44,8 +44,8 @@ describe('recipe knowledge', () => {
     const entries = listRecipeBookEntries(save, launch)
     expect(entries.some((entry) => entry.kind === 'recipe')).toBe(true)
     expect(entries.some((entry) => entry.known)).toBe(true)
-    const gloves = entries.find((entry) => entry.name === "Falconer's Gloves")
-    expect(gloves?.materials).toContain('Great Stag Hide')
+    const gloves = entries.find((entry) => entry.name === "Falconer's gloves")
+    expect(gloves?.materials).toContain('Great stag hide')
     expect(gloves?.materials).toContain('Thread')
     expect(gloves?.materials).not.toContain('Ancient Binding')
     expect(gloves?.materials).not.toContain('ITEM-0290')
@@ -76,13 +76,13 @@ describe('recipe knowledge', () => {
     expect(canKnowRecipe(thiefCrafter, launch, lockpicks!)).toBe(true)
     const marlin = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0044')
     expect(marlin?.Status).toBe('Planned')
-    expect(marlin?.['Display Name']).toBe('Cooked Marlin')
+    expect(marlin?.['Display Name']).toBe('Cooked marlin')
     expect(marlin?.['Ingredient 1 Item ID']).toBe(
       launch.Items.find((item) => item['Internal Key'] === 'raw_marlin')?.['Item ID'],
     )
     expect(marlin?.['Ingredient 3 Item ID']).toBeNull()
-    const soup = entries.find((entry) => entry.name === 'Squid Noodle Soup')
-    expect(soup?.materials).toContain('Soup Stock')
+    const soup = entries.find((entry) => entry.name === 'Squid noodle soup')
+    expect(soup?.materials).toContain('Soup stock')
     expect(soup?.materials).not.toContain('Starroot')
   })
 
@@ -94,20 +94,20 @@ describe('recipe knowledge', () => {
     expect(cooking.some((entry) => entry.known)).toBe(true)
     expect(cooking.some((entry) => !entry.known)).toBe(true)
     expect(cooking.every((entry) => entry.skill === 'Cooking')).toBe(true)
-    expect(cooking.some((entry) => entry.name === 'Squid Noodle Soup' && !entry.known)).toBe(true)
-    expect(cooking.some((entry) => entry.name === 'Cooked Baby Giant Squid')).toBe(false)
+    expect(cooking.some((entry) => entry.name === 'Squid noodle soup' && !entry.known)).toBe(true)
+    expect(cooking.some((entry) => entry.name === 'Cooked baby giant squid')).toBe(false)
     const artisanry = recipeBookForSkill(save, launch, 'SKL-0012')
-    expect(artisanry.some((entry) => entry.name === 'Leather Helmet' && entry.known)).toBe(true)
-    expect(artisanry.some((entry) => entry.name === 'Leather Gloves' && entry.known)).toBe(true)
+    expect(artisanry.some((entry) => entry.name === 'Leather helmet' && entry.known)).toBe(true)
+    expect(artisanry.some((entry) => entry.name === 'Leather gloves' && entry.known)).toBe(true)
     expect(artisanry.some((entry) => entry.name === 'Regular Bow')).toBe(false)
-    expect(artisanry.some((entry) => entry.name === 'Cedar Bow' && !entry.known)).toBe(true)
+    expect(artisanry.some((entry) => entry.name === 'Cedar bow' && !entry.known)).toBe(true)
     expect(artisanry.some((entry) => entry.name === 'Quiver' && !entry.known)).toBe(true)
     expect(
-      artisanry.find((entry) => entry.name === 'Cedar Bow')?.knowledgeSource,
+      artisanry.find((entry) => entry.name === 'Cedar bow')?.knowledgeSource,
     ).toBe('Mentor: Quill')
 
     const taught = recipeBookForSkill({ ...save, unlockedNpcIds: ['NPC-0002'] }, launch, 'SKL-0012')
-    expect(taught.some((entry) => entry.name === 'Cedar Bow' && entry.known)).toBe(true)
+    expect(taught.some((entry) => entry.name === 'Cedar bow' && entry.known)).toBe(true)
     expect(taught.some((entry) => entry.name === 'Quiver' && entry.known)).toBe(true)
   })
 
@@ -129,7 +129,7 @@ describe('recipe knowledge', () => {
     const smithing = recipeBookView(save, launch, 'SKL-0011')
     expect(smithing.tabs.map((tab) => tab.label)).toContain('Basic metal')
     const steel = smithing.tabs[0]?.sections.find((section) => section.title === 'Steel items')
-    expect(steel?.entries.some((entry) => entry.name === 'Steel Sword')).toBe(true)
+    expect(steel?.entries.some((entry) => entry.name === 'Steel sword')).toBe(true)
     expect(steel?.entries.some((entry) => entry.name === 'Steel items')).toBe(false)
 
     const artisanry = recipeBookView(save, launch, 'SKL-0012')
@@ -141,7 +141,7 @@ describe('recipe knowledge', () => {
     expect(
       other?.sections
         .flatMap((section) => section.entries)
-        .some((entry) => entry.name === 'Leather Helmet'),
+        .some((entry) => entry.name === 'Leather helmet'),
     ).toBe(true)
   })
 })
