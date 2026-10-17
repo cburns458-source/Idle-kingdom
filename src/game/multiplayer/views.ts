@@ -90,7 +90,9 @@ export function guildBrowseRows(
       subtitle: [
         policyLabel(row.joinPolicy),
         `${row.memberCount}/${GUILD_MAX_MEMBERS}`,
-        ...(includeMotto ? [row.description || 'No description.'] : []),
+        ...(includeMotto && (row.description ?? '').trim()
+          ? [(row.description ?? '').trim()]
+          : []),
       ].join(' · '),
       emblem: row.emblem,
       tag: row.tag,
@@ -297,10 +299,10 @@ export function guildApplicationRows(applications: GuildApplication[]): GuildApp
       applicationId: application.id,
       username: application.username,
       message: guest
-        ? application.message
-          ? `Guest: ${application.message}`
-          : 'Guest request.'
-        : application.message || 'No message.',
+        ? (application.message ?? '').trim()
+          ? `Guest: ${(application.message ?? '').trim()}`
+          : ''
+        : (application.message ?? '').trim(),
     }
     if (guest) row.guest = true
     return row

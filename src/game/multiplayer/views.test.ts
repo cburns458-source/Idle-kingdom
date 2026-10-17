@@ -140,7 +140,7 @@ describe('guild browser views', () => {
     expect(open.subtitle).toBe('Accept applications · 3/25 · For the kingdom')
     expect(open.actionLabel).toBe('Join')
     expect(open.guestLabel).toBe('Guest')
-    expect(closed.subtitle).toBe('Closed · 3/25 · No description.')
+    expect(closed.subtitle).toBe('Closed · 3/25')
     expect(
       guildBrowseRows([listing({ id: 'gld_2', joinPolicy: 'closed', description: '' })], '', false)[0]
         .subtitle,
@@ -338,9 +338,9 @@ describe('guild home views', () => {
     ])
     expect(rows.map((row) => row.message)).toEqual([
       'Please',
-      'No message.',
+      '',
       'Guest: Hi',
-      'Guest request.',
+      '',
     ])
     expect(rows[2].guest).toBe(true)
     expect(rows[0].guest).toBeUndefined()

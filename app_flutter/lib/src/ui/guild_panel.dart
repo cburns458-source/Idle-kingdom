@@ -303,7 +303,8 @@ class _GuildPanelState extends State<GuildPanel> {
     final rosterGuests = net.guests;
     final rosterCount = rows.length * 2;
     final guestListCount = rosterGuests.isNotEmpty ? 3 + rosterGuests.length * 2 : 0;
-    final showMottoBlock = net.chatAllowed;
+    final motto = guild.description.trim();
+    final showMottoBlock = net.chatAllowed && motto.isNotEmpty;
     final showGuildBoard = net.chatAllowed;
     final homeLeadCount = 4 + (showMottoBlock ? 2 : 0) + (showGuildBoard ? 2 : 0);
     final footerStart =
@@ -345,7 +346,7 @@ class _GuildPanelState extends State<GuildPanel> {
             if (index == cursor) {
               return _GuildTextBlock(
                 title: 'Motto',
-                body: guild.description.trim().isEmpty ? 'No motto yet.' : guild.description,
+                body: motto,
                 canEdit: header.canEditMotto,
                 onEdit: () => _editGuildMotto(guild),
               );

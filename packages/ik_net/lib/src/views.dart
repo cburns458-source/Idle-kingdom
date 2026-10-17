@@ -91,14 +91,14 @@ List<GuildBrowseRow> guildBrowseRows(
 ]) {
   return filterGuildListings(rows, query).map((row) {
     final full = row.memberCount >= guildMaxMembers;
-    final description = row.description.isEmpty ? 'No description.' : row.description;
+    final motto = row.description.trim();
     return GuildBrowseRow(
       guildId: row.id,
       title: '[${row.tag}] ${row.name}',
       subtitle: <String>[
         _policyLabel(row.joinPolicy),
         '${row.memberCount}/$guildMaxMembers',
-        if (includeMotto) description,
+        if (includeMotto && motto.isNotEmpty) motto,
       ].join(' · '),
       emblem: row.emblem,
       tag: row.tag,
@@ -500,8 +500,8 @@ List<GuildApplicationRow> guildApplicationRows(List<GuildApplication> applicatio
           applicationId: application.id,
           username: application.username,
           message: application.guest
-              ? (application.message.isEmpty ? 'Guest request.' : 'Guest: ${application.message}')
-              : (application.message.isEmpty ? 'No message.' : application.message),
+              ? (application.message.trim().isEmpty ? '' : 'Guest: ${application.message.trim()}')
+              : application.message.trim(),
           guest: application.guest,
         ),
       )

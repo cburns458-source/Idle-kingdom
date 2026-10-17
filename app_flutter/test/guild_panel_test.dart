@@ -128,6 +128,60 @@ void main() {
     expect(find.text('Keep the watch.'), findsNothing);
   });
 
+  testWidgets('blank motto and application messages leave no row or placeholder', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+
+    await pumpPanel(tester, guildScreen(net, controller));
+    await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+    expect(find.text('No description.'), findsNothing);
+
+    final outsiderController = buildController(database, seed: startedCharacter(database));
+    addTearDown(outsiderController.dispose);
+    final outsider = buildRemoteMultiplayer(database, transport: FakeTransport.joining(transport));
+    addTearDown(outsider.dispose);
+    expect((await outsider.service.signUp('look@example.com', 'Looker', 'secret')).ok, isTrue);
+    await outsider.refresh(outsiderController.save);
+    await pumpPanel(tester, guildScreen(outsider, outsiderController));
+    await tester.pumpAndSettle();
+
+    expect(find.text('[IRN] Iron League'), findsOneWidget);
+    expect(find.textContaining('No description.'), findsNothing);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.textContaining('Accept applications · 1/$guildMaxMembers'), findsOneWidget);
+
+    expect((await net.service.setGuildJoinPolicy(net.guildId!, guildJoinClosed)).ok, isTrue);
+    final hopefulController = buildController(database, seed: startedCharacter(database));
+    addTearDown(hopefulController.dispose);
+    final hopeful = buildRemoteMultiplayer(database, transport: FakeTransport.joining(transport));
+    addTearDown(hopeful.dispose);
+    expect((await hopeful.service.signUp('hope@example.com', 'Hopeful', 'secret')).ok, isTrue);
+    expect((await hopeful.service.applyToGuild(net.guildId!, '')).ok, isTrue);
+
+    await net.refresh(controller.save);
+    await pumpPanel(tester, guildScreen(net, controller));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pending applications'), findsOneWidget);
+    expect(find.text('Hopeful'), findsOneWidget);
+    expect(find.text('No message.'), findsNothing);
+    expect(find.text('Guest request.'), findsNothing);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+  });
+
   testWidgets('the create sheet says what it is still waiting for', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(
