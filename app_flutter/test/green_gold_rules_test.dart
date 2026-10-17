@@ -26,9 +26,25 @@ void main() {
     expect(contrastRatio(Palette.goldInk, Palette.panelTan), greaterThanOrEqualTo(4.5));
     expect(contrastRatio(Palette.goldInk, UiChrome.stone.panel), greaterThanOrEqualTo(4.5));
     expect(contrastRatio(Palette.gold, Palette.wood), greaterThanOrEqualTo(4.5));
-    for (final fill in [...Palette.confirmFill.colors, ...Palette.confirmPressed.colors]) {
+    for (final fill in [
+      ...Palette.confirmFill.colors,
+      ...Palette.confirmPressed.colors,
+      ...Palette.confirmSelected.colors,
+    ]) {
       expect(contrastRatio(Palette.confirmLabel, fill), greaterThanOrEqualTo(4.5));
     }
+    expect(contrastRatio(Palette.heading, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.heading, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.parchmentText, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.parchmentText, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+    expect(
+      contrastRatio(UiChrome.wood.primaryLabel, UiChrome.wood.primarySelected.colors.first),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      contrastRatio(UiChrome.wood.secondaryLabel, UiChrome.wood.secondarySelected.colors.first),
+      greaterThanOrEqualTo(4.5),
+    );
   });
 
   test('green ink and selected green clear 4.5:1 on tan, ash, wood, and stone', () {
@@ -52,15 +68,17 @@ void main() {
     expect(contrastRatio(UiChrome.stone.panelInk, UiChrome.stone.panel), greaterThanOrEqualTo(4.5));
   });
 
-  test('you-are-here is a filled marker; selected is a green rim', () {
+  test('you-are-here is a filled gold marker; selected is a gold rim', () {
     final here = mapNodeMarkerStyle(isHere: true, isSelected: false);
     final picked = mapNodeMarkerStyle(isHere: false, isSelected: true);
     final both = mapNodeMarkerStyle(isHere: true, isSelected: true);
-    expect(here.fill, Palette.borderSelected);
+    expect(here.fill, Palette.goldHighlight);
+    expect(here.fill, isNot(Palette.borderSelected));
     expect(here.border, isNot(Palette.borderSelected));
     expect(picked.fill, Palette.parchmentText);
-    expect(picked.border, Palette.borderSelected);
-    expect(both.fill, Palette.borderSelected);
+    expect(picked.border, Palette.gold);
+    expect(picked.border, isNot(Palette.borderSelected));
+    expect(both.fill, Palette.goldHighlight);
     expect(both.border, here.border);
     expect(both.border, isNot(picked.border));
   });
@@ -127,7 +145,7 @@ void main() {
     expect(both.rare, isTrue);
   });
 
-  testWidgets('selected GameButton embosses a green rim; confirm uses the green fill', (
+  testWidgets('selected GameButton uses a brighter fill and the pack rim, not a green rim', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -140,6 +158,7 @@ void main() {
               children: [
                 GameButton(label: 'Hall', selected: true, onPressed: () {}),
                 GameButton(label: 'Pay', tone: GameButtonTone.confirm, onPressed: () {}),
+                const GameButton(label: 'Wait', onPressed: null),
               ],
             ),
           ),
@@ -148,11 +167,15 @@ void main() {
     );
 
     final plates = tester.widgetList<PixelInkPlate>(find.byType(PixelInkPlate)).toList();
-    expect(plates, hasLength(2));
-    expect(plates[0].selected, isTrue);
-    expect(plates[0].gradient, UiChrome.stone.primaryPressed);
+    expect(plates, hasLength(3));
+    expect(plates[0].selected, isFalse);
+    expect(plates[0].emboss, isTrue);
+    expect(plates[0].gradient, UiChrome.stone.primarySelected);
+    expect(plates[0].gradient, isNot(UiChrome.stone.primaryPressed));
     expect(plates[1].selected, isFalse);
     expect(plates[1].gradient, Palette.confirmFill);
+    expect(plates[2].gradient, Palette.confirmDisabledFill);
+    expect(tester.widget<Text>(find.text('Wait')).style?.color, Palette.confirmDisabledLabel);
   });
 
   testWidgets('disabled confirm is grey on wood and stone, not faded green', (tester) async {

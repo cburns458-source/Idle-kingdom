@@ -84,7 +84,7 @@ abstract final class Palette {
   /// Success, affordable, claimable.
   static const success = softGreen;
 
-  /// Progress and XP bars, wait spinners.
+  /// Progress and XP bars. Wait spinners use parchment, not this green.
   static const progress = skillXp;
 
   /// Cream label on green confirm buttons.
@@ -96,6 +96,13 @@ abstract final class Palette {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [Color(0xFF287A4C), Color(0xFF1F5E3B)],
+  );
+
+  /// Brighter confirm fill for a selected / active confirm button.
+  static const confirmSelected = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF2A8251), Color(0xFF287A4C)],
   );
 
   static const confirmPressed = LinearGradient(

@@ -335,6 +335,7 @@ class PixelInkPlate extends StatelessWidget {
     this.selected = false,
     this.rare = false,
     this.shadow = true,
+    this.emboss,
     this.material = PixelPlateMaterial.auto,
   });
 
@@ -349,6 +350,9 @@ class PixelInkPlate extends StatelessWidget {
   final bool selected;
   final bool rare;
   final bool shadow;
+
+  /// Defaults to on when [selected] or [rare], so unselected chips stay rimless.
+  final bool? emboss;
   final PixelPlateMaterial material;
 
   @override
@@ -372,7 +376,7 @@ class PixelInkPlate extends StatelessWidget {
           selected: selected,
           rare: rare,
           shadow: false,
-          emboss: selected || rare,
+          emboss: emboss ?? (selected || rare),
           material: material,
           child: child,
         ),
