@@ -2054,7 +2054,7 @@
     {
       "Item ID": "ITEM-0059",
       "Internal Key": "cooked_perch",
-      "Display Name": "Cooked perch",
+      "Display Name": "Perch fillet",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2062,7 +2062,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A cooked perch.",
+      "Description": "A cooked perch fillet.",
       "Icon Asset Key": "cooked_perch",
       "Notes": null,
       "Base Sell Value": 1,
@@ -2072,7 +2072,7 @@
     {
       "Item ID": "ITEM-0060",
       "Internal Key": "cooked_trout",
-      "Display Name": "Cooked trout",
+      "Display Name": "Trout fillet",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2080,7 +2080,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A cooked trout.",
+      "Description": "A cooked trout fillet.",
       "Icon Asset Key": "cooked_trout",
       "Notes": null,
       "Base Sell Value": 1,
@@ -2090,7 +2090,7 @@
     {
       "Item ID": "ITEM-0061",
       "Internal Key": "cooked_salmon",
-      "Display Name": "Cooked salmon",
+      "Display Name": "Salmon steak",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2098,7 +2098,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A cooked salmon.",
+      "Description": "A cooked salmon steak.",
       "Icon Asset Key": "cooked_salmon",
       "Notes": null,
       "Base Sell Value": 6,
@@ -2108,7 +2108,7 @@
     {
       "Item ID": "ITEM-0062",
       "Internal Key": "cooked_bass",
-      "Display Name": "Cooked bass",
+      "Display Name": "Bass fillet",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2116,7 +2116,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A cooked bass.",
+      "Description": "A cooked bass fillet.",
       "Icon Asset Key": "cooked_bass",
       "Notes": null,
       "Base Sell Value": 29,
@@ -2126,7 +2126,7 @@
     {
       "Item ID": "ITEM-0063",
       "Internal Key": "cooked_shark",
-      "Display Name": "Cooked shark",
+      "Display Name": "Shark steak",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2134,7 +2134,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A cooked shark.",
+      "Description": "A thick cooked shark steak.",
       "Icon Asset Key": "cooked_shark",
       "Notes": null,
       "Base Sell Value": 48,
@@ -2144,7 +2144,7 @@
     {
       "Item ID": "ITEM-0064",
       "Internal Key": "cooked_rabbit",
-      "Display Name": "Cooked rabbit",
+      "Display Name": "Roast rabbit",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2152,7 +2152,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A cooked rabbit.",
+      "Description": "A whole roasted rabbit.",
       "Icon Asset Key": "cooked_rabbit",
       "Notes": null,
       "Base Sell Value": 1,
@@ -2162,7 +2162,7 @@
     {
       "Item ID": "ITEM-0065",
       "Internal Key": "cooked_pheasant",
-      "Display Name": "Cooked pheasant",
+      "Display Name": "Pheasant breast",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2170,7 +2170,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A roasted pheasant.",
+      "Description": "A roasted pheasant breast.",
       "Icon Asset Key": "cooked_pheasant",
       "Notes": null,
       "Base Sell Value": 7,
@@ -2180,7 +2180,7 @@
     {
       "Item ID": "ITEM-0066",
       "Internal Key": "cooked_beef",
-      "Display Name": "Cooked beef",
+      "Display Name": "Beef steak",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2188,7 +2188,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Cooked beef.",
+      "Description": "A cooked beef steak.",
       "Icon Asset Key": "cooked_beef",
       "Notes": null,
       "Base Sell Value": 2,
@@ -2198,7 +2198,7 @@
     {
       "Item ID": "ITEM-0067",
       "Internal Key": "cooked_venison",
-      "Display Name": "Cooked venison",
+      "Display Name": "Venison steak",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -2206,7 +2206,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Cooked venison.",
+      "Description": "A cooked venison steak.",
       "Icon Asset Key": "cooked_venison",
       "Notes": null,
       "Base Sell Value": 29,
@@ -6749,7 +6749,7 @@
     {
       "Item ID": "ITEM-0362",
       "Internal Key": "cooked_catfish",
-      "Display Name": "Cooked catfish",
+      "Display Name": "Catfish fillet",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -6757,7 +6757,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A cooked catfish.",
+      "Description": "A cooked catfish fillet.",
       "Icon Asset Key": "cooked_catfish",
       "Notes": null,
       "Base Sell Value": 4,
@@ -7283,7 +7283,7 @@
     {
       "Item ID": "ITEM-0391",
       "Internal Key": "cooked_marlin",
-      "Display Name": "Cooked marlin",
+      "Display Name": "Marlin steak",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -7291,7 +7291,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A cooked marlin.",
+      "Description": "A cooked marlin steak.",
       "Icon Asset Key": "cooked_marlin",
       "Notes": null,
       "Base Sell Value": 53,
@@ -7319,7 +7319,7 @@
     {
       "Item ID": "ITEM-0393",
       "Internal Key": "cooked_swordfish",
-      "Display Name": "Cooked swordfish",
+      "Display Name": "Swordfish steak",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -7327,7 +7327,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Expansion",
-      "Description": "A cooked swordfish.",
+      "Description": "A cooked swordfish steak.",
       "Icon Asset Key": "cooked_swordfish",
       "Notes": "Future expansion — hidden from Launch until wired into the world.",
       "Base Sell Value": 99,
@@ -7877,7 +7877,7 @@
     {
       "Item ID": "ITEM-0424",
       "Internal Key": "cooked_duck",
-      "Display Name": "Cooked duck",
+      "Display Name": "Roast duck",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -7885,7 +7885,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "A roasted duck.",
+      "Description": "A whole roasted duck.",
       "Icon Asset Key": "cooked_duck",
       "Notes": "Placeholder art: cooked pheasant.",
       "Base Sell Value": 1,
@@ -7895,7 +7895,7 @@
     {
       "Item ID": "ITEM-0425",
       "Internal Key": "cooked_boar_meat",
-      "Display Name": "Cooked boar meat",
+      "Display Name": "Boar chop",
       "Category": "Food",
       "Subtype": "Equippable food",
       "Associated Skill ID": "SKL-0007",
@@ -7903,7 +7903,7 @@
       "Functional / Source Tags": "cooking_output; food_slot; combat_healing",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Description": "Cooked boar meat.",
+      "Description": "A roasted boar chop.",
       "Icon Asset Key": "cooked_boar_meat",
       "Notes": "Placeholder art: cooked beef.",
       "Base Sell Value": 6,
@@ -17315,7 +17315,7 @@
     {
       "Action ID": "ACN-0116",
       "Internal Key": "cook_cooked_perch",
-      "Display Name": "Cooked perch",
+      "Display Name": "Perch fillet",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17335,7 +17335,7 @@
     {
       "Action ID": "ACN-0117",
       "Internal Key": "cook_cooked_trout",
-      "Display Name": "Cooked trout",
+      "Display Name": "Trout fillet",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17355,7 +17355,7 @@
     {
       "Action ID": "ACN-0118",
       "Internal Key": "cook_cooked_rabbit",
-      "Display Name": "Cooked rabbit",
+      "Display Name": "Roast rabbit",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17375,7 +17375,7 @@
     {
       "Action ID": "ACN-0119",
       "Internal Key": "cook_cooked_salmon",
-      "Display Name": "Cooked salmon",
+      "Display Name": "Salmon steak",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17395,7 +17395,7 @@
     {
       "Action ID": "ACN-0120",
       "Internal Key": "cook_cooked_beef",
-      "Display Name": "Cooked beef",
+      "Display Name": "Beef steak",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17415,7 +17415,7 @@
     {
       "Action ID": "ACN-0121",
       "Internal Key": "cook_cooked_pheasant",
-      "Display Name": "Cooked pheasant",
+      "Display Name": "Pheasant breast",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17455,7 +17455,7 @@
     {
       "Action ID": "ACN-0123",
       "Internal Key": "cook_cooked_bass",
-      "Display Name": "Cooked bass",
+      "Display Name": "Bass fillet",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17475,7 +17475,7 @@
     {
       "Action ID": "ACN-0124",
       "Internal Key": "cook_cooked_venison",
-      "Display Name": "Cooked venison",
+      "Display Name": "Venison steak",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17515,7 +17515,7 @@
     {
       "Action ID": "ACN-0126",
       "Internal Key": "cook_cooked_shark",
-      "Display Name": "Cooked shark",
+      "Display Name": "Shark steak",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -17535,7 +17535,7 @@
     {
       "Action ID": "ACN-0127",
       "Internal Key": "cook_cooked_marlin",
-      "Display Name": "Cooked marlin",
+      "Display Name": "Marlin steak",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -18818,7 +18818,7 @@
     {
       "Action ID": "ACN-0197",
       "Internal Key": "cook_cooked_catfish",
-      "Display Name": "Cooked catfish",
+      "Display Name": "Catfish fillet",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -19264,7 +19264,7 @@
     {
       "Action ID": "ACN-0218",
       "Internal Key": "cook_cooked_swordfish",
-      "Display Name": "Cooked swordfish",
+      "Display Name": "Swordfish steak",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -19768,7 +19768,7 @@
     {
       "Action ID": "ACN-0243",
       "Internal Key": "cook_cooked_duck",
-      "Display Name": "Cooked duck",
+      "Display Name": "Roast duck",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -19788,7 +19788,7 @@
     {
       "Action ID": "ACN-0244",
       "Internal Key": "cook_cooked_boar_meat",
-      "Display Name": "Cooked boar meat",
+      "Display Name": "Boar chop",
       "Category": "Standard Production",
       "Relevant Skill ID": "SKL-0007",
       "Target Type": "Item",
@@ -23605,7 +23605,7 @@
     {
       "Reward Entry ID": "RWE-0113",
       "Reward Table ID": "RWT-0068",
-      "Reward Table Name": "Cooked perch output",
+      "Reward Table Name": "Perch fillet output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0059",
@@ -23620,7 +23620,7 @@
     {
       "Reward Entry ID": "RWE-0114",
       "Reward Table ID": "RWT-0069",
-      "Reward Table Name": "Cooked trout output",
+      "Reward Table Name": "Trout fillet output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0060",
@@ -23635,7 +23635,7 @@
     {
       "Reward Entry ID": "RWE-0115",
       "Reward Table ID": "RWT-0070",
-      "Reward Table Name": "Cooked rabbit output",
+      "Reward Table Name": "Roast rabbit output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0064",
@@ -23650,7 +23650,7 @@
     {
       "Reward Entry ID": "RWE-0116",
       "Reward Table ID": "RWT-0071",
-      "Reward Table Name": "Cooked salmon output",
+      "Reward Table Name": "Salmon steak output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0061",
@@ -23665,7 +23665,7 @@
     {
       "Reward Entry ID": "RWE-0117",
       "Reward Table ID": "RWT-0072",
-      "Reward Table Name": "Cooked beef output",
+      "Reward Table Name": "Beef steak output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0066",
@@ -23680,7 +23680,7 @@
     {
       "Reward Entry ID": "RWE-0118",
       "Reward Table ID": "RWT-0073",
-      "Reward Table Name": "Cooked pheasant output",
+      "Reward Table Name": "Pheasant breast output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0065",
@@ -23710,7 +23710,7 @@
     {
       "Reward Entry ID": "RWE-0120",
       "Reward Table ID": "RWT-0075",
-      "Reward Table Name": "Cooked bass output",
+      "Reward Table Name": "Bass fillet output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0062",
@@ -23725,7 +23725,7 @@
     {
       "Reward Entry ID": "RWE-0121",
       "Reward Table ID": "RWT-0076",
-      "Reward Table Name": "Cooked venison output",
+      "Reward Table Name": "Venison steak output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0067",
@@ -23755,7 +23755,7 @@
     {
       "Reward Entry ID": "RWE-0123",
       "Reward Table ID": "RWT-0078",
-      "Reward Table Name": "Cooked shark output",
+      "Reward Table Name": "Shark steak output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0063",
@@ -25105,7 +25105,7 @@
     {
       "Reward Entry ID": "RWE-9203",
       "Reward Table ID": "RWT-0170",
-      "Reward Table Name": "Cooked marlin output",
+      "Reward Table Name": "Marlin steak output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0391",
@@ -25120,7 +25120,7 @@
     {
       "Reward Entry ID": "RWE-9204",
       "Reward Table ID": "RWT-0171",
-      "Reward Table Name": "Cooked swordfish output",
+      "Reward Table Name": "Swordfish steak output",
       "Purpose": "Standard Production output",
       "Reward Type": "Item",
       "Reward ID / Value": "ITEM-0393",
@@ -26465,7 +26465,7 @@
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Confirmed",
-      "Notes": "Cooked perch"
+      "Notes": "Perch fillet"
     },
     {
       "Reward Entry ID": "RWE-T01281",
@@ -26480,7 +26480,7 @@
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Confirmed",
-      "Notes": "Cooked bass"
+      "Notes": "Bass fillet"
     },
     {
       "Reward Entry ID": "RWE-T01282",
@@ -26495,7 +26495,7 @@
       "Skill ID": null,
       "XP Amount": null,
       "Status": "Confirmed",
-      "Notes": "Cooked venison"
+      "Notes": "Venison steak"
     },
     {
       "Reward Entry ID": "RWE-T01760",
@@ -26842,10 +26842,10 @@
     {
       "Recipe ID": "RCP-0002",
       "Internal Key": "cook_cooked_perch",
-      "Display Name": "Cooked perch",
+      "Display Name": "Perch fillet",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0059",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 1,
       "Base Duration Seconds": 12,
@@ -26867,10 +26867,10 @@
     {
       "Recipe ID": "RCP-0003",
       "Internal Key": "cook_cooked_trout",
-      "Display Name": "Cooked trout",
+      "Display Name": "Trout fillet",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0060",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 10,
       "Base Duration Seconds": 12,
@@ -26892,7 +26892,7 @@
     {
       "Recipe ID": "RCP-0004",
       "Internal Key": "cook_cooked_salmon",
-      "Display Name": "Cooked salmon",
+      "Display Name": "Salmon steak",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0061",
       "Output Quantity": 2,
@@ -26917,7 +26917,7 @@
     {
       "Recipe ID": "RCP-0005",
       "Internal Key": "cook_cooked_bass",
-      "Display Name": "Cooked bass",
+      "Display Name": "Bass fillet",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0062",
       "Output Quantity": 2,
@@ -26942,10 +26942,10 @@
     {
       "Recipe ID": "RCP-0006",
       "Internal Key": "cook_cooked_shark",
-      "Display Name": "Cooked shark",
+      "Display Name": "Shark steak",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0063",
-      "Output Quantity": 2,
+      "Output Quantity": 3,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 55,
       "Base Duration Seconds": 12,
@@ -26967,10 +26967,10 @@
     {
       "Recipe ID": "RCP-0007",
       "Internal Key": "cook_cooked_rabbit",
-      "Display Name": "Cooked rabbit",
+      "Display Name": "Roast rabbit",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0064",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 6,
       "Base Duration Seconds": 12,
@@ -26992,7 +26992,7 @@
     {
       "Recipe ID": "RCP-0008",
       "Internal Key": "cook_cooked_pheasant",
-      "Display Name": "Cooked pheasant",
+      "Display Name": "Pheasant breast",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0065",
       "Output Quantity": 2,
@@ -27017,10 +27017,10 @@
     {
       "Recipe ID": "RCP-0009",
       "Internal Key": "cook_cooked_beef",
-      "Display Name": "Cooked beef",
+      "Display Name": "Beef steak",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0066",
-      "Output Quantity": 2,
+      "Output Quantity": 3,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 1,
       "Base Duration Seconds": 12,
@@ -27042,10 +27042,10 @@
     {
       "Recipe ID": "RCP-0010",
       "Internal Key": "cook_cooked_venison",
-      "Display Name": "Cooked venison",
+      "Display Name": "Venison steak",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0067",
-      "Output Quantity": 2,
+      "Output Quantity": 3,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 36,
       "Base Duration Seconds": 12,
@@ -27592,10 +27592,10 @@
     {
       "Recipe ID": "RCP-0044",
       "Internal Key": "cook_cooked_marlin",
-      "Display Name": "Cooked marlin",
+      "Display Name": "Marlin steak",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0391",
-      "Output Quantity": 2,
+      "Output Quantity": 3,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 70,
       "Base Duration Seconds": 12,
@@ -28117,7 +28117,7 @@
     {
       "Recipe ID": "RCP-0067",
       "Internal Key": "cook_cooked_catfish",
-      "Display Name": "Cooked catfish",
+      "Display Name": "Catfish fillet",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0362",
       "Output Quantity": 2,
@@ -28192,10 +28192,10 @@
     {
       "Recipe ID": "RCP-0070",
       "Internal Key": "cook_cooked_swordfish",
-      "Display Name": "Cooked swordfish",
+      "Display Name": "Swordfish steak",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0393",
-      "Output Quantity": 2,
+      "Output Quantity": 3,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 85,
       "Base Duration Seconds": 12,
@@ -28342,10 +28342,10 @@
     {
       "Recipe ID": "RCP-0076",
       "Internal Key": "cook_cooked_duck",
-      "Display Name": "Cooked duck",
+      "Display Name": "Roast duck",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0424",
-      "Output Quantity": 2,
+      "Output Quantity": 1,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 11,
       "Base Duration Seconds": 12,
@@ -28367,10 +28367,10 @@
     {
       "Recipe ID": "RCP-0077",
       "Internal Key": "cook_cooked_boar_meat",
-      "Display Name": "Cooked boar meat",
+      "Display Name": "Boar chop",
       "Skill ID": "SKL-0007",
       "Output Item ID": "ITEM-0425",
-      "Output Quantity": 2,
+      "Output Quantity": 3,
       "Facility ID": "FAC-0001",
       "Proficiency Level": 26,
       "Base Duration Seconds": 12,
@@ -34860,7 +34860,7 @@
       "Dialogue ID": "QDL-0007",
       "Quest ID": "QST-0001",
       "NPC ID": "NPC-0001",
-      "Line": "The feast is days away and my kitchens are in shambles. Ten baked potatoes, golden and crisp, and ten cooked perch besides. Use the Main Hall kitchen to cook what you need. Bring them here when they are ready.",
+      "Line": "The feast is days away and my kitchens are in shambles. Ten baked potatoes, golden and crisp, and ten perch fillets besides. Use the Main Hall kitchen to cook what you need. Bring them here when they are ready.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null
@@ -35488,7 +35488,7 @@
     {
       "Node ID": "DNODE-0019",
       "Dialogue ID": "DLG-0011",
-      "Line": "Splendid! Ten baked potatoes, golden and crisp, and ten cooked perch besides. Use the Main Hall kitchen, and bring them to me as they are ready. A few at a time will do.",
+      "Line": "Splendid! Ten baked potatoes, golden and crisp, and ten perch fillets besides. Use the Main Hall kitchen, and bring them to me as they are ready. A few at a time will do.",
       "Status": "Planned",
       "Release Phase": "Launch",
       "Notes": null

@@ -297,12 +297,12 @@ describe('skill menu entries', () => {
     const meat = cooking.tabs.find((tab) => tab.id === 'meat')?.sections[0]?.entries ?? []
     const stew = cooking.tabs.find((tab) => tab.id === 'stew')?.sections[0]?.entries ?? []
     const other = cooking.tabs.find((tab) => tab.id === 'other')?.sections[0]?.entries ?? []
-    expect(fish.some((item) => item.displayName === 'Cooked perch')).toBe(true)
-    expect(fish.some((item) => item.displayName === 'Cooked swordfish')).toBe(false)
-    expect(fish.some((item) => item.displayName === 'Cooked marlin')).toBe(true)
-    expect(other.some((item) => item.displayName === 'Cooked swordfish')).toBe(false)
-    expect(other.some((item) => item.displayName === 'Cooked marlin')).toBe(false)
-    expect(meat.some((item) => item.displayName === 'Cooked beef')).toBe(true)
+    expect(fish.some((item) => item.displayName === 'Perch fillet')).toBe(true)
+    expect(fish.some((item) => item.displayName === 'Swordfish steak')).toBe(false)
+    expect(fish.some((item) => item.displayName === 'Marlin steak')).toBe(true)
+    expect(other.some((item) => item.displayName === 'Swordfish steak')).toBe(false)
+    expect(other.some((item) => item.displayName === 'Marlin steak')).toBe(false)
+    expect(meat.some((item) => item.displayName === 'Beef steak')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Crawfish stew')).toBe(true)
     expect(stew.some((item) => item.displayName === 'Soup stock')).toBe(true)
     expect(other.some((item) => item.displayName.toLowerCase().includes('potato'))).toBe(true)

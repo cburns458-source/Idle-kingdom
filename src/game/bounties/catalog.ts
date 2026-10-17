@@ -95,7 +95,7 @@ export const BOUNTY_CATALOG: BountyDefinition[] = [
   {
     id: 'BNT-0010',
     title: 'Trout Tray',
-    description: 'Cook cooked trout.',
+    description: 'Cook trout fillet.',
     kind: 'process',
     targetId: 'RCP-0003',
     amount: 3,

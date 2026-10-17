@@ -89,7 +89,7 @@ function stepOf(save: PlayerSave, questId: string): string | null {
   return getCurrentStepId(db, save, getQuest(db, questId)!)
 }
 
-/** Ten baked potatoes and ten cooked perch in the bag, plus the cooking tick that latches the Cook step. */
+/** Ten baked potatoes and ten perch fillets in the bag, plus the cooking tick that latches the Cook step. */
 function cookTheOrder(save: PlayerSave): PlayerSave {
   const cooked = setCount(setCount(save, BAKED_POTATO, 10), COOKED_PERCH, 10)
   return applyQuestProcessProgress(db, cooked, 'RCP-0001')

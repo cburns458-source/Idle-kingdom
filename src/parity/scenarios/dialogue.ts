@@ -160,7 +160,7 @@ function choice(
 
 /**
  * Test-only content. QST-9001 mirrors the Grand Feast plan (King starts it,
- * hand in 10 Baked Potato + 10 Cooked Perch, complete), QST-9002 the Getting
+ * hand in 10 Baked Potato + 10 Perch fillet, complete), QST-9002 the Getting
  * Started ending (show 5 Baked Potato), QST-9003/9004 a legacy and a dialogue
  * quest with the same leftover reward cells.
  */

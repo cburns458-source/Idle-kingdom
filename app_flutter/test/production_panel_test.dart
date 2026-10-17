@@ -124,7 +124,7 @@ void main() {
     // Picking another recipe starts over at one, since its materials differ.
     await tester.tap(find.byType(GameDropdown<String>));
     await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Cooked perch').last);
+    await tester.tap(find.textContaining('Perch fillet').last);
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(GameButton, '1'), findsOne);

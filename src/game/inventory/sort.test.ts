@@ -80,12 +80,12 @@ describe('inventory group sort', () => {
       'ITEM-0009', // Titanium ore
     ])
     expect(sorter.groupOf('ITEM-0058')).toBe(GROUP_COOKING) // Baked potato
-    expect(sorter.groupOf('ITEM-0061')).toBe(GROUP_COOKING) // Cooked salmon
+    expect(sorter.groupOf('ITEM-0061')).toBe(GROUP_COOKING) // Salmon steak
     expect(names(['ITEM-0061', 'ITEM-0058'])).toEqual(['ITEM-0058', 'ITEM-0061'])
   })
 
   it('places cooked food before raw fish', () => {
-    expect(sorter.groupOf('ITEM-0061')).toBe(GROUP_COOKING) // Cooked salmon
+    expect(sorter.groupOf('ITEM-0061')).toBe(GROUP_COOKING) // Salmon steak
     expect(sorter.groupOf('ITEM-0049')).toBe(GROUP_FISHING) // Raw salmon
     expect(names(['ITEM-0049', 'ITEM-0061'])).toEqual(['ITEM-0061', 'ITEM-0049'])
   })

@@ -96,7 +96,7 @@ Files: `app_flutter/lib/src/ui/dialogue_window.dart` (`DialogueWindow`, `Standal
 | Choice label | `hand_in` choice, step done | `Handed in ✓` |
 | Choice label | `show_items` choice | `Show 5 Baked Potato` (`need`), then `Shown ✓` once the step is done |
 | Popup (OK) | `no_room` | `Your bag is full. Make room for N more items and try again.` N = `slotsNeeded` (new slots only; stacks already in the bag cost none). "1 more item" when N = 1. |
-| Popup (Yes / No) | `confirm_favourites` | `Some items are favourited. Do you still want to use them?` then every `favourites` entry: `Baked Potato x4, Cooked Perch x2` |
+| Popup (Yes / No) | `confirm_favourites` | `Some items are favourited. Do you still want to use them?` then every `favourites` entry: `Baked Potato x4, Perch fillet x2` |
 | Under the line | `missing_items` | `You need 5 Baked Potato (you have 3).` per missing item |
 | Under the line | `nothing_to_hand_in` | `You have no Baked Potato to hand in.` (items still wanted) |
 | Under the line | `not_available` | `That isn’t available right now.` |
