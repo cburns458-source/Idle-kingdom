@@ -60,7 +60,7 @@ class _LogViewState extends State<LogView> {
               style: TextStyle(
                 fontSize: GameFont.s,
                 fontWeight: FontWeight.w400,
-                color: Palette.progress,
+                color: Palette.heading,
               ),
             ),
           )
@@ -85,7 +85,7 @@ class _LogViewState extends State<LogView> {
                   style: TextStyle(
                     fontSize: GameFont.s,
                     fontWeight: FontWeight.w400,
-                    color: Palette.progress,
+                    color: Palette.heading,
                   ),
                 ),
               ],
@@ -325,7 +325,7 @@ class _DifficultyBand extends StatelessWidget {
                     const SizedBox(height: 4),
                     MeterBar(
                       value: completion.total <= 0 ? 0 : completion.done / completion.total,
-                      color: Palette.progress,
+                      color: Palette.heading,
                       height: 6,
                     ),
                   ],
@@ -676,11 +676,9 @@ class _QuestSortMenu extends StatelessWidget {
       ],
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: chrome.secondaryFill,
+          gradient: mode != QuestLogSort.content ? chrome.secondarySelected : chrome.secondaryFill,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(
-            color: mode != QuestLogSort.content ? chrome.embossFaceSelected : chrome.embossFace,
-          ),
+          border: Border.all(color: chrome.embossFace),
           boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
         ),
         child: const Padding(

@@ -31,8 +31,10 @@ class UiChrome {
     required this.frameGradient,
     required this.primaryFill,
     required this.primaryPressed,
+    required this.primarySelected,
     required this.secondaryFill,
     required this.secondaryPressed,
+    required this.secondarySelected,
     required this.primaryLabel,
     required this.secondaryLabel,
     required this.iconButtonFill,
@@ -63,8 +65,10 @@ class UiChrome {
   final LinearGradient frameGradient;
   final LinearGradient primaryFill;
   final LinearGradient primaryPressed;
+  final LinearGradient primarySelected;
   final LinearGradient secondaryFill;
   final LinearGradient secondaryPressed;
+  final LinearGradient secondarySelected;
   final Color primaryLabel;
   final Color secondaryLabel;
   final Color iconButtonFill;
@@ -120,6 +124,11 @@ class UiChrome {
       end: Alignment.bottomCenter,
       colors: [Color(0xFF6E4A28), Color(0xFF3F2A16)],
     ),
+    primarySelected: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF976638), Color(0xFF6E4A28)],
+    ),
     secondaryFill: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
@@ -129,6 +138,11 @@ class UiChrome {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [Color(0xFF4A3422), Color(0xFF2F2115)],
+    ),
+    secondarySelected: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF926642), Color(0xFF5E4330)],
     ),
     primaryLabel: const Color(0xFFFFF6E4),
     secondaryLabel: const Color(0xFFFFF4D4),
@@ -178,6 +192,11 @@ class UiChrome {
       end: Alignment.bottomCenter,
       colors: [Color(0xFF585858), Color(0xFF3A3A3A)],
     ),
+    primarySelected: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF717171), Color(0xFF5E5E5E)],
+    ),
     secondaryFill: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
@@ -187,6 +206,11 @@ class UiChrome {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [Color(0xFF3A3A3A), Color(0xFF242424)],
+    ),
+    secondarySelected: const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF676767), Color(0xFF4F4F4F)],
     ),
     primaryLabel: const Color(0xFFF2F0EA),
     secondaryLabel: const Color(0xFFE8E6E0),
