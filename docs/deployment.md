@@ -237,6 +237,14 @@ Checklist, in order:
     edit `20261017010000` or `20261017020000`.
     Status: applied on test Oct 17 2026 (file `20261017030000`); live pending.
 
+14. [ ] `20261017040000_mass_claim_comment_and_damage_share_lock.sql` (SOC-04).
+    Documents claim-before-save plus rollback on version conflict. Share-locks
+    the encounter in `mass_record_damage` so settle cannot race the status
+    check. Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`. Do not edit `20261017010000`,
+    `20261017020000`, or `20261017030000`.
+    Status: applied on test Oct 17 2026 (file `20261017040000`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.

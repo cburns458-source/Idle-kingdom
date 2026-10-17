@@ -6,6 +6,15 @@ import 'validate.dart';
 /// [validateTradeability] calling it quest-only.
 const Set<String> tradeabilityCodeSourcedItemIds = <String>{};
 
+/// Boss-drop pets that stay with the player. They have a non-quest source
+/// (the kill table) and must stay untradeable without tripping the
+/// "other source" warning. Do not skip every `cosmetic` tag; other pets
+/// stay tradeable and still warn if someone marks them bound.
+const Set<String> tradeabilityBoundBossPetItemIds = <String>{
+  'ITEM-0404', // COS-0012 baby dragon
+  'ITEM-0443', // COS-0020 baby squid
+};
+
 final RegExp _itemIdPattern = RegExp(r'^ITEM-\d+$');
 final RegExp _grantItemPattern = RegExp(r'grant_item:(ITEM-\d+)');
 
@@ -146,7 +155,8 @@ List<ValidationIssue> validateTradeability(
     }
     if (!tradeable && sources.hasOtherSource(itemId)) {
       final tags = '${item.raw['Functional / Source Tags'] ?? ''}';
-      if (tags.contains('plaza_shop') || tags.contains('cosmetic')) continue;
+      if (tags.contains('plaza_shop')) continue;
+      if (tradeabilityBoundBossPetItemIds.contains(itemId)) continue;
       issues.add(
         ValidationIssue(
           severity: IssueSeverity.warning,
