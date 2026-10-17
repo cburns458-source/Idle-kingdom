@@ -150,12 +150,12 @@ class _MailList extends StatelessWidget {
                   SizedBox(
                     width: 10,
                     child: message.readAt == null
-                        ? const DecoratedBox(
+                        ? DecoratedBox(
                             decoration: BoxDecoration(
-                              color: Palette.success,
+                              color: successForeground(context),
                               shape: BoxShape.circle,
                             ),
-                            child: SizedBox(width: 8, height: 8),
+                            child: const SizedBox(width: 8, height: 8),
                           )
                         : null,
                   ),
@@ -170,7 +170,9 @@ class _MailList extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontWeight: FontWeight.w400,
-                            color: message.readAt == null ? Palette.success : Palette.parchmentText,
+                            color: message.readAt == null
+                                ? successForeground(context)
+                                : Palette.parchmentText,
                           ),
                         ),
                         MutedText(formatSaveDate(message.sentAt) ?? message.sentAt),
@@ -245,7 +247,7 @@ class _MailDetail extends StatelessWidget {
           ],
           if (notice != null) ...[
             const SizedBox(height: 8),
-            Text(notice!, style: const TextStyle(color: Palette.success)),
+            Text(notice!, style: TextStyle(color: successForeground(context))),
           ],
         ],
       ),

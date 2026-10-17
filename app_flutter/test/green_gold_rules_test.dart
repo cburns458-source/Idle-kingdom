@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/item_icon.dart';
+import 'package:idle_kingdoms/src/ui/overlay_notice.dart';
 import 'package:idle_kingdoms/src/ui/world_map_view.dart';
 
 void main() {
@@ -29,6 +30,53 @@ void main() {
     for (final fill in [...Palette.confirmFill.colors, ...Palette.confirmPressed.colors]) {
       expect(contrastRatio(Palette.confirmLabel, fill), greaterThanOrEqualTo(4.5));
     }
+    expect(contrastRatio(Palette.heading, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.heading, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.parchmentText, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.parchmentText, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+    expect(
+      contrastRatio(UiChrome.wood.primaryLabel, UiChrome.wood.primaryFill.colors.first),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      contrastRatio(UiChrome.wood.secondaryLabel, UiChrome.wood.secondaryFill.colors.first),
+      greaterThanOrEqualTo(4.5),
+    );
+    for (final fill in [...Palette.selectedFill.colors, ...Palette.selectedPressed.colors]) {
+      expect(contrastRatio(Palette.selectedLabel, fill), greaterThanOrEqualTo(4.5));
+    }
+    for (final fill in Palette.confirmDisabledFill.colors) {
+      expect(contrastRatio(Palette.confirmDisabledLabel, fill), greaterThanOrEqualTo(4.5));
+    }
+  });
+
+  test('selected gold fill is ≥1.5:1 vs idle green and brown', () {
+    expect(Palette.confirmSelected, Palette.selectedFill);
+    expect(UiChrome.wood.primarySelected, Palette.selectedFill);
+    expect(UiChrome.stone.primarySelected, Palette.selectedFill);
+    expect(
+      contrastRatio(Palette.selectedFill.colors.first, Palette.confirmFill.colors.first),
+      greaterThanOrEqualTo(1.5),
+    );
+    expect(
+      contrastRatio(Palette.selectedFill.colors.first, UiChrome.wood.primaryFill.colors.first),
+      greaterThanOrEqualTo(1.5),
+    );
+    expect(
+      contrastRatio(Palette.selectedFill.colors.first, UiChrome.stone.primaryFill.colors.first),
+      greaterThanOrEqualTo(1.5),
+    );
+  });
+
+  test('gold copy on parchment uses goldInk, not gold', () {
+    expect(contrastRatio(Palette.gold, Palette.parchmentText), lessThan(4.5));
+    expect(contrastRatio(Palette.goldInk, Palette.parchmentText), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.goldInk, Palette.panelTan), greaterThanOrEqualTo(4.5));
+  });
+
+  test('colorScheme.secondary is gold, not green', () {
+    expect(buildAppTheme().colorScheme.secondary, Palette.gold);
+    expect(buildAppTheme().colorScheme.secondary, isNot(Palette.softGreen));
   });
 
   test('green ink and selected green clear 4.5:1 on tan, ash, wood, and stone', () {
@@ -36,6 +84,61 @@ void main() {
     expect(contrastRatio(Palette.successInk, UiChrome.stone.panel), greaterThanOrEqualTo(4.5));
     expect(contrastRatio(Palette.skillXp, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
     expect(contrastRatio(Palette.skillXp, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.skillXp, UiChrome.wood.slot), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.skillXp, UiChrome.stone.slot), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.heading, Palette.goldShade), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.borderSelected, UiChrome.wood.board), lessThan(4.5));
+  });
+
+  testWidgets('OverlayChipButton defaults to a gold plate, not green', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.wood,
+          child: Scaffold(
+            body: OverlayChipButton(
+              tooltip: 'XP',
+              onPressed: () {},
+              child: const Text('XP', style: TextStyle(color: Palette.heading)),
+            ),
+          ),
+        ),
+      ),
+    );
+    final chip = tester.widgetList<Material>(find.byType(Material)).firstWhere((row) {
+      return row.shape is PixelSteppedBorder;
+    });
+    expect((chip.shape! as PixelSteppedBorder).side.color, Palette.gold.withValues(alpha: 0.70));
+    expect(
+      (chip.shape! as PixelSteppedBorder).side.color,
+      isNot(Palette.softGreenShade.withValues(alpha: 0.70)),
+    );
+    final ink = tester.widget<Ink>(find.byType(Ink));
+    expect(ink.decoration, isA<BoxDecoration>());
+    expect((ink.decoration! as BoxDecoration).color, Palette.goldShade);
+    expect((ink.decoration! as BoxDecoration).color, isNot(Palette.softGreen));
+  });
+
+  testWidgets('sub-map back arrow is parchment gold, not green', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.wood,
+          child: Scaffold(
+            body: OverlayChipButton(
+              tooltip: 'Back to Town',
+              onPressed: () {},
+              child: const Icon(Icons.arrow_back, size: 18, color: Palette.heading),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.widget<Icon>(find.byIcon(Icons.arrow_back)).color, Palette.heading);
+    expect(tester.widget<Icon>(find.byIcon(Icons.arrow_back)).color, isNot(Palette.softGreenShade));
+    expect(contrastRatio(Palette.heading, Palette.goldShade), greaterThanOrEqualTo(4.5));
   });
 
   test('shop slot currency clears 4.5:1 on wood and stone wells', () {
@@ -52,15 +155,18 @@ void main() {
     expect(contrastRatio(UiChrome.stone.panelInk, UiChrome.stone.panel), greaterThanOrEqualTo(4.5));
   });
 
-  test('you-are-here is a filled marker; selected is a green rim', () {
+  test('you-are-here is a filled gold marker; selected is a gold rim', () {
     final here = mapNodeMarkerStyle(isHere: true, isSelected: false);
     final picked = mapNodeMarkerStyle(isHere: false, isSelected: true);
     final both = mapNodeMarkerStyle(isHere: true, isSelected: true);
-    expect(here.fill, Palette.borderSelected);
+    expect(here.fill, Palette.goldHighlight);
+    expect(here.fill, isNot(Palette.borderSelected));
     expect(here.border, isNot(Palette.borderSelected));
     expect(picked.fill, Palette.parchmentText);
-    expect(picked.border, Palette.borderSelected);
-    expect(both.fill, Palette.borderSelected);
+    expect(picked.border, Palette.goldInk);
+    expect(picked.border, isNot(Palette.gold));
+    expect(picked.border, isNot(Palette.borderSelected));
+    expect(both.fill, Palette.goldHighlight);
     expect(both.border, here.border);
     expect(both.border, isNot(picked.border));
   });
@@ -127,9 +233,7 @@ void main() {
     expect(both.rare, isTrue);
   });
 
-  testWidgets('selected GameButton embosses a green rim; confirm uses the green fill', (
-    tester,
-  ) async {
+  testWidgets('selected GameButton uses a gold inset plate, not a green rim', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(),
@@ -139,7 +243,14 @@ void main() {
             body: Column(
               children: [
                 GameButton(label: 'Hall', selected: true, onPressed: () {}),
-                GameButton(label: 'Pay', tone: GameButtonTone.confirm, onPressed: () {}),
+                GameButton(
+                  label: 'Pay',
+                  tone: GameButtonTone.confirm,
+                  selected: true,
+                  onPressed: () {},
+                ),
+                GameButton(label: 'Buy', tone: GameButtonTone.confirm, onPressed: () {}),
+                const GameButton(label: 'Wait', onPressed: null),
               ],
             ),
           ),
@@ -148,14 +259,32 @@ void main() {
     );
 
     final plates = tester.widgetList<PixelInkPlate>(find.byType(PixelInkPlate)).toList();
-    expect(plates, hasLength(2));
-    expect(plates[0].selected, isTrue);
-    expect(plates[0].gradient, UiChrome.stone.primaryPressed);
+    expect(plates, hasLength(4));
+    expect(plates[0].selected, isFalse);
+    expect(plates[0].inset, isTrue);
+    expect(plates[0].emboss, isTrue);
+    expect(plates[0].innerHighlight, Palette.parchmentText);
+    expect(plates[0].gradient, Palette.selectedFill);
+    expect(plates[0].gradient, isNot(UiChrome.stone.primaryFill));
+    expect(tester.widget<Text>(find.text('Hall')).style?.color, Palette.goldInk);
     expect(plates[1].selected, isFalse);
-    expect(plates[1].gradient, Palette.confirmFill);
+    expect(plates[1].inset, isTrue);
+    expect(plates[1].gradient, Palette.selectedFill);
+    expect(plates[1].gradient, isNot(Palette.confirmFill));
+    expect(tester.widget<Text>(find.text('Pay')).style?.color, Palette.goldInk);
+    expect(plates[2].inset, isFalse);
+    expect(plates[2].innerHighlight, isNull);
+    expect(plates[2].gradient, Palette.confirmFill);
+    expect(tester.widget<Text>(find.text('Buy')).style?.color, Palette.confirmLabel);
+    expect(plates[3].gradient, Palette.confirmDisabledFill);
+    expect(plates[3].emboss, isFalse);
+    expect(plates[3].inset, isFalse);
+    expect(tester.widget<Text>(find.text('Wait')).style?.color, Palette.confirmDisabledLabel);
   });
 
-  testWidgets('disabled confirm is grey on wood and stone, not faded green', (tester) async {
+  testWidgets('disabled confirm is flat dark grey on wood and stone, not faded green', (
+    tester,
+  ) async {
     for (final chrome in [UiChrome.wood, UiChrome.stone]) {
       await tester.pumpWidget(
         MaterialApp(
@@ -171,8 +300,14 @@ void main() {
       final plate = tester.widget<PixelInkPlate>(find.byType(PixelInkPlate));
       expect(plate.gradient, Palette.confirmDisabledFill);
       expect(plate.gradient, isNot(Palette.confirmFill));
+      expect(plate.emboss, isFalse);
+      expect(plate.inset, isFalse);
+      expect(plate.shadow, isFalse);
       final label = tester.widget<Text>(find.text('Buy'));
       expect(label.style?.color, Palette.confirmDisabledLabel);
+      for (final fill in Palette.confirmDisabledFill.colors) {
+        expect(contrastRatio(Palette.confirmDisabledLabel, fill), greaterThanOrEqualTo(4.5));
+      }
     }
   });
 
@@ -283,5 +418,22 @@ void main() {
     final plate = tester.widget<PixelPlate>(find.byType(PixelPlate).first);
     expect(plate.selected, isTrue);
     expect(plate.rare, isFalse);
+  });
+
+  testWidgets('OverlayNotice success copy uses success ink on the tan plate', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.wood,
+          child: const Scaffold(
+            body: OverlayNotice(text: 'Bought.', tone: Palette.success),
+          ),
+        ),
+      ),
+    );
+    expect(tester.widget<Text>(find.text('Bought.')).style?.color, Palette.successInk);
+    expect(contrastRatio(Palette.successInk, Palette.panelTan), greaterThanOrEqualTo(4.5));
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 }

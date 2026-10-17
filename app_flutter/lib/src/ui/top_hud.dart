@@ -116,7 +116,7 @@ class TopHud extends StatelessWidget {
           context,
           border: Border(
             bottom: BorderSide(
-              color: batterySaver ? Palette.borderSelected : UiChrome.of(context).edge,
+              color: batterySaver ? Palette.gold : UiChrome.of(context).edge,
               width: batterySaver ? 4 : 1,
             ),
           ),

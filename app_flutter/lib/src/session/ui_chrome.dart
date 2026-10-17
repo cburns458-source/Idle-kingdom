@@ -31,8 +31,10 @@ class UiChrome {
     required this.frameGradient,
     required this.primaryFill,
     required this.primaryPressed,
+    required this.primarySelected,
     required this.secondaryFill,
     required this.secondaryPressed,
+    required this.secondarySelected,
     required this.primaryLabel,
     required this.secondaryLabel,
     required this.iconButtonFill,
@@ -63,8 +65,10 @@ class UiChrome {
   final LinearGradient frameGradient;
   final LinearGradient primaryFill;
   final LinearGradient primaryPressed;
+  final LinearGradient primarySelected;
   final LinearGradient secondaryFill;
   final LinearGradient secondaryPressed;
+  final LinearGradient secondarySelected;
   final Color primaryLabel;
   final Color secondaryLabel;
   final Color iconButtonFill;
@@ -120,6 +124,7 @@ class UiChrome {
       end: Alignment.bottomCenter,
       colors: [Color(0xFF6E4A28), Color(0xFF3F2A16)],
     ),
+    primarySelected: Palette.selectedFill,
     secondaryFill: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
@@ -130,6 +135,7 @@ class UiChrome {
       end: Alignment.bottomCenter,
       colors: [Color(0xFF4A3422), Color(0xFF2F2115)],
     ),
+    secondarySelected: Palette.selectedFill,
     primaryLabel: const Color(0xFFFFF6E4),
     secondaryLabel: const Color(0xFFFFF4D4),
     iconButtonFill: const Color(0xFF45301F),
@@ -178,6 +184,7 @@ class UiChrome {
       end: Alignment.bottomCenter,
       colors: [Color(0xFF585858), Color(0xFF3A3A3A)],
     ),
+    primarySelected: Palette.selectedFill,
     secondaryFill: const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
@@ -188,6 +195,7 @@ class UiChrome {
       end: Alignment.bottomCenter,
       colors: [Color(0xFF3A3A3A), Color(0xFF242424)],
     ),
+    secondarySelected: Palette.selectedFill,
     primaryLabel: const Color(0xFFF2F0EA),
     secondaryLabel: const Color(0xFFE8E6E0),
     iconButtonFill: const Color(0xFF363636),

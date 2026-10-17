@@ -37,16 +37,16 @@ const TextStyle mapNodeLabelStyle = TextStyle(
 /// Labels wrap to this many lines, and only then end in an ellipsis.
 const int mapNodeLabelMaxLines = 2;
 
-/// You-are-here is a filled green marker; selected (when it is not here) is a
-/// parchment fill with a green rim. Same on wood and stone.
+/// You-are-here is a filled gold marker; selected (when it is not here) is
+/// a parchment fill with a gold-ink rim. Same on wood and stone.
 ({Color fill, Color border, double width}) mapNodeMarkerStyle({
   required bool isHere,
   required bool isSelected,
 }) {
   return (
-    fill: isHere ? Palette.borderSelected : Palette.parchmentText,
+    fill: isHere ? Palette.goldHighlight : Palette.parchmentText,
     border: isSelected && !isHere
-        ? Palette.borderSelected
+        ? Palette.goldInk
         : isHere
         ? Palette.ink
         : Palette.parchment,

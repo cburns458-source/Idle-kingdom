@@ -843,9 +843,9 @@ class _InventoryViewState extends State<InventoryView> {
         ),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: Palette.progress,
+            activeTrackColor: Palette.parchmentText,
             inactiveTrackColor: UiChrome.of(context).edge,
-            thumbColor: Palette.progress,
+            thumbColor: Palette.parchmentText,
             overlayShape: SliderComponentShape.noOverlay,
             trackHeight: 4,
           ),
@@ -1161,11 +1161,11 @@ class _SortMenu extends StatelessWidget {
       ],
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: chrome.secondaryFill,
+          gradient: mode != InventorySortMode.group
+              ? chrome.secondarySelected
+              : chrome.secondaryFill,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(
-            color: mode != InventorySortMode.group ? chrome.embossFaceSelected : chrome.embossFace,
-          ),
+          border: Border.all(color: chrome.embossFace),
           boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
         ),
         child: const Padding(
@@ -1268,7 +1268,7 @@ class _ItemTile extends StatelessWidget {
                 if (enchanted)
                   const Text(
                     '★',
-                    style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
+                    style: TextStyle(fontSize: GameFont.s, color: Palette.skillXp),
                   ),
                 if (favorite)
                   const Padding(

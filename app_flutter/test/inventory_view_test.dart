@@ -390,7 +390,29 @@ void main() {
             ),
           )
           .selected,
+      isFalse,
+    );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('attack-style-offensive')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .inset,
       isTrue,
+    );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('attack-style-offensive')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .gradient,
+      UiChrome.wood.primarySelected,
     );
 
     await tester.tap(find.widgetWithText(GameButton, 'Balanced'));
@@ -481,6 +503,7 @@ void main() {
     expect(find.text('Sell items'), findsOne);
     expect(find.byTooltip('Sort'), findsOne);
     expect(_sortChipBorder(tester), UiChrome.wood.embossFace);
+    expect(_sortChipGradient(tester), UiChrome.wood.secondaryFill);
     expect(find.byType(TextField), findsNothing);
 
     expect(
@@ -492,7 +515,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(CheckedPopupMenuItem<InventorySortMode>, 'A–Z'));
     await tester.pumpAndSettle();
-    expect(_sortChipBorder(tester), Palette.borderSelected);
+    expect(_sortChipBorder(tester), UiChrome.wood.embossFace);
+    expect(_sortChipGradient(tester), UiChrome.wood.secondarySelected);
     expect(
       visibleBagOrder(tester, ['Baked potato', 'Copper bar', 'Copper ore', 'Iron sword', 'Potato']),
       ['Baked potato', 'Copper bar', 'Copper ore', 'Iron sword', 'Potato'],
@@ -870,6 +894,7 @@ void main() {
     expect(find.textContaining('Eat at'), findsOne);
     expect(find.byKey(const Key('auto-eat')), findsOne);
     expect(find.text('Auto-eat on'), findsOne);
+    expect(tester.widget<GameButton>(find.byKey(const Key('auto-eat'))).selected, isTrue);
     expect(
       tester
           .widget<PixelInkPlate>(
@@ -879,7 +904,29 @@ void main() {
             ),
           )
           .selected,
+      isFalse,
+    );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('auto-eat')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .inset,
       isTrue,
+    );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('auto-eat')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .gradient,
+      UiChrome.wood.primarySelected,
     );
     expect(find.byKey(const Key('eat-now')), findsNothing);
 
@@ -961,9 +1008,13 @@ void main() {
   });
 }
 
-Color _sortChipBorder(WidgetTester tester) {
+BoxDecoration _sortChipDecoration(WidgetTester tester) {
   final box = tester.widget<DecoratedBox>(
     find.descendant(of: find.byTooltip('Sort'), matching: find.byType(DecoratedBox)).first,
   );
-  return (box.decoration as BoxDecoration).border!.top.color;
+  return box.decoration as BoxDecoration;
 }
+
+Color _sortChipBorder(WidgetTester tester) => _sortChipDecoration(tester).border!.top.color;
+
+Gradient? _sortChipGradient(WidgetTester tester) => _sortChipDecoration(tester).gradient;

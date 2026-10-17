@@ -256,7 +256,7 @@ ThemeData buildAppTheme() {
     colorScheme: base.colorScheme.copyWith(
       primary: Palette.currency,
       onPrimary: Palette.ink,
-      secondary: Palette.softGreen,
+      secondary: Palette.gold,
       surface: Palette.parchmentDeep,
       onSurface: Palette.parchmentText,
       error: Palette.danger,
@@ -266,12 +266,10 @@ ThemeData buildAppTheme() {
     dividerColor: Palette.edge,
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith((states) {
-        return states.contains(WidgetState.selected) ? const Color(0xFFF4FFE8) : Palette.muted;
+        return states.contains(WidgetState.selected) ? Palette.parchmentText : Palette.muted;
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
-        return states.contains(WidgetState.selected)
-            ? const Color(0xFF5F7A45)
-            : const Color(0xFF45301F);
+        return states.contains(WidgetState.selected) ? Palette.goldShade : const Color(0xFF45301F);
       }),
       trackOutlineColor: WidgetStateProperty.all(Palette.edge),
     ),
@@ -308,7 +306,8 @@ class GameButton extends StatefulWidget {
   /// Smaller than [compact] — header chips such as Sell items.
   final bool dense;
 
-  /// Thicker rim and a darkened fill for the active tab or conversation.
+  /// Gold parchment fill and an inset bevel for the active tab or conversation.
+  /// The pack rim stays — selected is not a green rim.
   final bool selected;
 
   final String? tooltip;
@@ -336,77 +335,86 @@ class _GameButtonState extends State<GameButton> {
     final primary = widget.tone == GameButtonTone.primary;
     final disabled = widget.onPressed == null && !widget.waiting;
     final down = _pressed && widget.onPressed != null && !widget.waiting;
-    final gradient = confirm
-        ? (disabled
-              ? Palette.confirmDisabledFill
-              : (down || widget.selected ? Palette.confirmPressed : Palette.confirmFill))
-        : primary
-        ? (down || widget.selected ? chrome.primaryPressed : chrome.primaryFill)
-        : (down || widget.selected ? chrome.secondaryPressed : chrome.secondaryFill);
-    final labelColor = confirm
-        ? (disabled ? Palette.confirmDisabledLabel : Palette.confirmLabel)
-        : primary
-        ? chrome.primaryLabel
-        : chrome.secondaryLabel;
+    final selected = widget.selected && !disabled;
+    final LinearGradient gradient;
+    final Color labelColor;
+    if (disabled) {
+      gradient = Palette.confirmDisabledFill;
+      labelColor = Palette.confirmDisabledLabel;
+    } else if (selected) {
+      labelColor = Palette.selectedLabel;
+      gradient = down ? Palette.selectedPressed : Palette.selectedFill;
+    } else if (confirm) {
+      labelColor = Palette.confirmLabel;
+      gradient = down ? Palette.confirmPressed : Palette.confirmFill;
+    } else {
+      labelColor = primary ? chrome.primaryLabel : chrome.secondaryLabel;
+      gradient = down
+          ? (primary ? chrome.primaryPressed : chrome.secondaryPressed)
+          : (primary ? chrome.primaryFill : chrome.secondaryFill);
+    }
     final button = Semantics(
       button: true,
       enabled: widget.onPressed != null && !widget.waiting,
       label: widget.semanticLabel ?? widget.label,
       child: ExcludeSemantics(
-        child: Opacity(
-          opacity: confirm || widget.waiting || widget.onPressed != null ? 1 : 0.55,
-          child: PixelInkPlate(
-            onTap: widget.waiting ? null : widget.onPressed,
-            onHighlightChanged: (value) {
-              if (_pressed == value) return;
-              setState(() => _pressed = value);
-            },
-            selected: widget.selected,
-            step: widget.dense ? PixelChrome.stepTight : PixelChrome.step,
-            strokeWidth: widget.selected ? 3 : 2,
-            shadow: false,
-            material: PixelPlateMaterial.grain,
-            gradient: gradient,
-            padding: widget.dense
-                ? EdgeInsets.symmetric(horizontal: widget.symbol ? 5 : 7, vertical: 3)
+        child: PixelInkPlate(
+          onTap: widget.waiting ? null : widget.onPressed,
+          onHighlightChanged: (value) {
+            if (_pressed == value) return;
+            setState(() => _pressed = value);
+          },
+          selected: false,
+          inset: selected || down,
+          innerHighlight: selected ? Palette.parchmentText : null,
+          emboss: !disabled,
+          step: widget.dense ? PixelChrome.stepTight : PixelChrome.step,
+          strokeWidth: 2,
+          shadow: false,
+          material: PixelPlateMaterial.grain,
+          gradient: gradient,
+          padding: widget.dense
+              ? EdgeInsets.symmetric(horizontal: widget.symbol ? 5 : 7, vertical: 3)
+              : widget.compact
+              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 5)
+              : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: ConstrainedBox(
+            constraints: widget.dense
+                ? const BoxConstraints(minHeight: 24)
                 : widget.compact
-                ? const EdgeInsets.symmetric(horizontal: 8, vertical: 5)
-                : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: ConstrainedBox(
-              constraints: widget.dense
-                  ? const BoxConstraints(minHeight: 24)
-                  : widget.compact
-                  ? const BoxConstraints(minHeight: 28)
-                  : const BoxConstraints(minHeight: 32, minWidth: 64),
-              child: Align(
-                alignment: Alignment.center,
-                child: widget.waiting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Palette.progress),
-                      )
-                    : Text(
-                        widget.label,
-                        textAlign: TextAlign.center,
-                        maxLines: widget.compact || widget.dense ? 1 : 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: widget.symbol ? null : gameFontFamily,
-                          fontFamilyFallback: widget.symbol
-                              ? const ['Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji']
-                              : null,
-                          fontSize: widget.symbol
-                              ? GameFont.m
-                              : widget.dense
-                              ? GameFont.xs
-                              : GameFont.s,
-                          fontWeight: FontWeight.w400,
-                          height: widget.symbol ? 1 : null,
-                          color: labelColor,
-                        ),
+                ? const BoxConstraints(minHeight: 28)
+                : const BoxConstraints(minHeight: 32, minWidth: 64),
+            child: Align(
+              alignment: Alignment.center,
+              child: widget.waiting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Palette.parchmentText,
                       ),
-              ),
+                    )
+                  : Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      maxLines: widget.compact || widget.dense ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: widget.symbol ? null : gameFontFamily,
+                        fontFamilyFallback: widget.symbol
+                            ? const ['Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji']
+                            : null,
+                        fontSize: widget.symbol
+                            ? GameFont.m
+                            : widget.dense
+                            ? GameFont.xs
+                            : GameFont.s,
+                        fontWeight: FontWeight.w400,
+                        height: widget.symbol ? 1 : null,
+                        color: labelColor,
+                      ),
+                    ),
             ),
           ),
         ),
@@ -731,9 +739,9 @@ class GameSwitch extends StatelessWidget {
               step: PixelChrome.stepTight,
               strokeWidth: 1.5,
               shadow: false,
-              selected: value,
+              selected: false,
               material: PixelPlateMaterial.grain,
-              fillColor: value ? const Color(0xFF5F7A45) : UiChrome.of(context).slot,
+              fillColor: value ? Palette.goldShade : UiChrome.of(context).slot,
               padding: const EdgeInsets.all(2),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 120),
@@ -747,7 +755,7 @@ class GameSwitch extends StatelessWidget {
                     strokeWidth: 1.5,
                     shadow: false,
                     material: PixelPlateMaterial.none,
-                    fillColor: value ? Palette.borderSelected : const Color(0xFFCBB894),
+                    fillColor: value ? Palette.parchmentText : const Color(0xFFCBB894),
                     child: const SizedBox.expand(),
                   ),
                 ),
@@ -1036,16 +1044,16 @@ class OverlayChipButton extends StatelessWidget {
   final double width;
   final double height;
 
-  /// The nearby chip is brown rather than the map's parchment green.
+  /// The nearby chip is brown rather than the map's gold parchment plate.
   final bool dark;
 
   /// Thicker pack rim when people are here; pass [highlightColor] for allies.
   final bool highlight;
 
-  /// Overrides the pack rim — green for a friend or guildmate.
+  /// Overrides the pack rim — gold on the dark well for a friend or guildmate.
   final Color? highlightColor;
 
-  /// Skip the green/brown plate so a framed icon can be the whole button.
+  /// Skip the gold/brown plate so a framed icon can be the whole button.
   final bool plain;
 
   @override
@@ -1056,9 +1064,7 @@ class OverlayChipButton extends StatelessWidget {
         : BorderSide(
             color:
                 rim ??
-                (dark
-                    ? UiChrome.of(context).embossFace
-                    : Palette.softGreenShade.withValues(alpha: 0.70)),
+                (dark ? UiChrome.of(context).embossFace : Palette.gold.withValues(alpha: 0.70)),
             width: rim != null ? 2 : 1,
           );
     return Tooltip(
@@ -1074,7 +1080,7 @@ class OverlayChipButton extends StatelessWidget {
               ? null
               : chromeSlotFill(
                   context,
-                  color: dark ? UiChrome.of(context).slot : Palette.softGreen,
+                  color: dark ? UiChrome.of(context).slot : Palette.goldShade,
                 ),
           child: InkWell(
             onTap: onPressed,
