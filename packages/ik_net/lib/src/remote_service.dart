@@ -1470,8 +1470,13 @@ class RemoteMultiplayerService implements MultiplayerService {
       _guilds.applyToGuild(guildId, message);
 
   @override
-  Future<ApplyToGuildResult> joinAsGuest(String guildId, String message) =>
-      _guilds.joinAsGuest(guildId, message);
+  Future<ApplyToGuildResult> joinAsGuest(String guildId, String message) async {
+    final status = await accountStatus();
+    if (!status.chatAllowed || status.deletionPending) {
+      return const ApplyToGuildResult.failed(ageGateError);
+    }
+    return _guilds.joinAsGuest(guildId, message);
+  }
 
   @override
   Future<ActionResult> leaveGuest() => _guilds.leaveGuest();

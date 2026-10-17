@@ -321,6 +321,12 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017155300`, MCP
     `20261017102030` / `account_purge_half_made_guilds`); live pending.
 
+23. [ ] `20261017155400_account_age_month_guest.sql` (ADM-08 / Ui). Guest
+    requests require `chat_allowed` to send or accept. Empty member
+    applications still work. TEST only; live pending.
+    Status: applied on test Oct 17 2026 (file `20261017155400`, version
+    `20261017155400` / `account_age_month_guest`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.

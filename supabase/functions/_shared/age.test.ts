@@ -55,6 +55,8 @@ describe('chat age gate', () => {
     expect(ageBandFromYears(12)).toBe('0-12')
     expect(ageBandFromYears(13)).toBe('13-15')
     expect(needsBirthMonth(2013, asOf)).toBe(true)
+    expect(needsBirthMonth(2012, asOf)).toBe(false)
+    expect(needsBirthMonth(2014, asOf)).toBe(false)
     expect(needsBirthMonth(2000, asOf)).toBe(false)
   })
 })

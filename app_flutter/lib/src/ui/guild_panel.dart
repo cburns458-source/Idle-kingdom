@@ -849,14 +849,16 @@ class _OtherGuildsPageState extends State<_OtherGuildsPage> {
                       title: row.title,
                       subtitle: row.subtitle,
                       leading: GuildEmblemBadge(emblem: row.emblem),
-                      trailing: GameButton(
-                        label: row.guestLabel,
-                        tone: GameButtonTone.secondary,
-                        compact: true,
-                        onPressed: net.busy
-                            ? null
-                            : () => net.joinAsGuest(row.guildId, _joinWrite(net, save), save),
-                      ),
+                      trailing: net.chatAllowed
+                          ? GameButton(
+                              label: row.guestLabel,
+                              tone: GameButtonTone.secondary,
+                              compact: true,
+                              onPressed: net.busy
+                                  ? null
+                                  : () => net.joinAsGuest(row.guildId, _joinWrite(net, save), save),
+                            )
+                          : null,
                       onTap: () {
                         final listing = listingById[row.guildId];
                         if (listing == null) return;
@@ -1002,22 +1004,22 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                             if (i == 0) return const SizedBox(height: 10);
                             if (i == 1) {
                               if (widget.mode == _GuildDetailMode.joinOrGuest) {
+                                final join = GameButton(
+                                  label: browse.actionLabel,
+                                  tone: GameButtonTone.secondary,
+                                  compact: true,
+                                  onPressed: browse.full || net.busy
+                                      ? null
+                                      : () => net.applyToGuild(
+                                          browse.guildId,
+                                          _joinWrite(net, save),
+                                          save,
+                                        ),
+                                );
+                                if (!net.chatAllowed) return join;
                                 return Row(
                                   children: [
-                                    Expanded(
-                                      child: GameButton(
-                                        label: browse.actionLabel,
-                                        tone: GameButtonTone.secondary,
-                                        compact: true,
-                                        onPressed: browse.full || net.busy
-                                            ? null
-                                            : () => net.applyToGuild(
-                                                browse.guildId,
-                                                _joinWrite(net, save),
-                                                save,
-                                              ),
-                                      ),
-                                    ),
+                                    Expanded(child: join),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: GameButton(
@@ -1036,6 +1038,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                                   ],
                                 );
                               }
+                              if (!net.chatAllowed) return const SizedBox.shrink();
                               return GameButton(
                                 label: browse.guestLabel,
                                 tone: GameButtonTone.secondary,

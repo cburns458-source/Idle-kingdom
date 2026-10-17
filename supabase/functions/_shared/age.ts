@@ -55,14 +55,9 @@ export function chatAllowedFromAge(input: {
   return storeBandAllowsChat(input.ageBand ?? '')
 }
 
-export function needsBirthMonth(
-  birthYear: number,
-  asOf: Date = new Date(),
-): boolean {
-  const youngest = accountAgeYears(birthYear, 12, asOf)
-  const oldest = accountAgeYears(birthYear, 1, asOf)
-  if (youngest == null || oldest == null) return true
-  return youngest < CHAT_AGE_THRESHOLD + 1 && oldest >= CHAT_AGE_THRESHOLD - 1
+/** True only when the year alone cannot settle whether they are 13 yet. */
+export function needsBirthMonth(birthYear: number, asOf: Date = new Date()): boolean {
+  return asOf.getUTCFullYear() - birthYear === CHAT_AGE_THRESHOLD
 }
 
 export function ageGateResponse(allowed: boolean): { status: 403; error: string; code: string } | null {

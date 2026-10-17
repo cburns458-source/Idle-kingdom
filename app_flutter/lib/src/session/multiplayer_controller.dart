@@ -1899,7 +1899,8 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> joinAsGuest(String guildId, String message, PlayerSave save) {
     return run(veil: 'guest', () async {
-      final result = await service.joinAsGuest(guildId, chatAllowed ? message : '');
+      if (!chatAllowed) return ageGateError;
+      final result = await service.joinAsGuest(guildId, message);
       if (!result.ok) return result.reason;
       final joined = result.joined ?? false;
       await refresh(save);

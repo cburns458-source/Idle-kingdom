@@ -186,6 +186,11 @@ class FakeTransport implements RemoteTransport {
   AccountSocialStatus statusFor(String userId) =>
       accountStatuses[userId] ?? const AccountSocialStatus.playable();
 
+  bool _mayChat(String userId) {
+    final status = statusFor(userId);
+    return status.chatAllowed && !status.deletionPending && pendingDeletions[userId] == null;
+  }
+
   /// The Bazaar exchange, which is a function call rather than a set of tables
   /// because its tables are closed to clients.
   FakeExchange get exchange => _project.exchange ??= FakeExchange(
@@ -631,6 +636,10 @@ class FakeTransport implements RemoteTransport {
     if (table == RemoteTables.guildApplications) {
       final userId = written['user_id'];
       final message = '${written['message'] ?? ''}'.trim();
+      final guest = written['guest'] == true;
+      if (userId is String && guest && !_mayChat(userId)) {
+        return const RemoteQueryResult.failed(ageGateError);
+      }
       if (userId is String && message.isNotEmpty && !statusFor(userId).chatAllowed) {
         return const RemoteQueryResult.failed(ageGateError);
       }
@@ -2059,6 +2068,7 @@ class FakeTransport implements RemoteTransport {
     }
 
     if (function == RemoteRpcs.guildJoinGuest) {
+      if (!_mayChat(me)) return _refused(ageGateError);
       final guildId = args['p_guild_id'];
       final guild = _guildRow(guildId);
       if (guild == null) return _refused(remoteGuildMissing);
@@ -2104,10 +2114,12 @@ class FakeTransport implements RemoteTransport {
       if (guild['leader_id'] != me && actor?['role'] != guildRoleOfficer) {
         return _refused('Only the guild leader or an officer can decide applications.');
       }
+      final applicant = '${application['user_id']}';
+      if (args['p_accept'] == true && application['guest'] == true && !_mayChat(applicant)) {
+        return _refused(ageGateError);
+      }
       applications.remove(application);
       if (args['p_accept'] != true) return const <String, Object?>{'ok': true};
-
-      final applicant = '${application['user_id']}';
       final memberOf = _membershipFor(applicant)?['guild_id'];
       final facts = _memberFacts(applicant, application['username'] as String?);
       if (application['guest'] == true) {

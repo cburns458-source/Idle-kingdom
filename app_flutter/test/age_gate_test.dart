@@ -59,6 +59,7 @@ void main() {
 
     await pumpPanel(tester, AgeGateSheet(multiplayer: net));
     expect(find.byKey(const Key('age-year')), findsOneWidget);
+    expect(find.byKey(const Key('age-month')), findsNothing);
     expect(find.text(ageGateTitle), findsNothing);
     expect(find.text(ageGateBody), findsNothing);
 
@@ -116,5 +117,75 @@ void main() {
     expect(find.text('Friend request'), findsNothing);
     expect(find.text('Private message'), findsNothing);
     expect(find.text('Ignore'), findsOneWidget);
+  });
+
+  testWidgets('the month dropdown appears only for the year that cannot settle 13', (tester) async {
+    final controller = buildController(database);
+    final transport = FakeTransport();
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    transport.seedAccount(email: 'teen@example.com', username: 'Teen');
+    await net.signIn(
+      'teen@example.com',
+      'secret',
+      controller.save,
+      adopt: controller.adoptAccountSave,
+    );
+    transport.setAccountStatus(net.session!.userId, const AccountSocialStatus.unanswered());
+    await net.refreshAccountStatus();
+
+    final nowYear = DateTime.now().toUtc().year;
+    await pumpPanel(
+      tester,
+      AgeGateSheet(key: const Key('age-settled'), multiplayer: net, initialYear: nowYear - 14),
+    );
+    expect(find.byKey(const Key('age-month')), findsNothing);
+
+    await pumpPanel(
+      tester,
+      AgeGateSheet(key: const Key('age-borderline'), multiplayer: net, initialYear: nowYear - 13),
+    );
+    expect(find.byKey(const Key('age-month')), findsOneWidget);
+    expect(find.text('Birth month'), findsOneWidget);
+    expect(find.textContaining('optional'), findsNothing);
+    expect(find.textContaining('skip'), findsNothing);
+    expect(find.textContaining('December'), findsNothing);
+
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(net.accountStatus.ageAnswered, isTrue);
+    expect(net.chatAllowed, isFalse);
+  });
+
+  testWidgets('picking a month on the borderline year uses that month', (tester) async {
+    final controller = buildController(database);
+    final transport = FakeTransport();
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(controller.dispose);
+    addTearDown(net.dispose);
+    transport.seedAccount(email: 'born@example.com', username: 'Born');
+    await net.signIn(
+      'born@example.com',
+      'secret',
+      controller.save,
+      adopt: controller.adoptAccountSave,
+    );
+    transport.setAccountStatus(net.session!.userId, const AccountSocialStatus.unanswered());
+    await net.refreshAccountStatus();
+
+    await pumpPanel(
+      tester,
+      AgeGateSheet(multiplayer: net, initialYear: DateTime.now().toUtc().year - 13),
+    );
+    await tester.tap(find.byKey(const Key('age-month')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('January').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(net.accountStatus.ageAnswered, isTrue);
+    expect(net.chatAllowed, isTrue);
   });
 }

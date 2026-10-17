@@ -61,7 +61,15 @@ void main() {
     expect(chatAllowedFromAge(answered: false, birthYear: 2000, birthMonth: 1), isFalse);
     expect(storeBandAllowsChat('0-12'), isFalse);
     expect(storeBandAllowsChat('13-15'), isTrue);
+  });
+
+  test('the month question is only needed when this year minus the birth year is 13', () {
     expect(needsBirthMonth(2013, asOf), isTrue);
+    expect(needsBirthMonth(2012, asOf), isFalse);
+    expect(needsBirthMonth(2014, asOf), isFalse);
+    expect(needsBirthMonth(2000, asOf), isFalse);
+    expect(accountAgeYears(2013, null, asOf), 12);
+    expect(accountAgeYears(2013, 9, asOf), 13);
   });
 
   test('hosted send-chat, reads, and friend requests all 403 when chat is off', () async {

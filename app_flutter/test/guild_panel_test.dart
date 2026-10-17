@@ -566,4 +566,49 @@ void main() {
     expect(onTheSheet(find.text('Disband')), findsNothing);
     expect(onTheSheet(find.text('Guild setup didn\'t finish.')), findsNothing);
   });
+
+  testWidgets('under-13 and frozen accounts hide the Guest request button', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+    await pumpPanel(tester, guildScreen(net, controller));
+    await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+
+    Future<void> openAs(String email, {required bool underThirteen, required bool frozen}) async {
+      final outsiderController = buildController(database, seed: startedCharacter(database));
+      addTearDown(outsiderController.dispose);
+      final outsider = buildRemoteMultiplayer(
+        database,
+        transport: FakeTransport.joining(transport),
+      );
+      addTearDown(outsider.dispose);
+      expect((await outsider.service.signUp(email, 'Looker', 'secret')).ok, isTrue);
+      transport.setAccountStatus(
+        outsider.session!.userId,
+        AccountSocialStatus(ageAnswered: true, chatAllowed: !underThirteen),
+      );
+      if (frozen) {
+        transport.pendingDeletions[outsider.session!.userId] = DateTime.utc(2026, 10, 31);
+      }
+      await outsider.refreshAccountStatus();
+      await outsider.refresh(outsiderController.save);
+      await pumpPanel(tester, guildScreen(outsider, outsiderController));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('[IRN] Iron League').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Guest'), findsNothing);
+      expect(find.text('Join'), findsOneWidget);
+    }
+
+    await openAs('kid@example.com', underThirteen: true, frozen: false);
+    await openAs('ice@example.com', underThirteen: false, frozen: true);
+  });
 }

@@ -5,6 +5,21 @@ const int chatAgeThreshold = 13;
 const String ageGateCode = 'age_gate';
 const String ageGateError = 'Chat is not available for this account.';
 
+const List<String> birthMonthNames = <String>[
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 const List<String> storeAgeBands = <String>['0-12', '13-15', '16-17', '18+'];
 
 bool isStoreAgeBand(String value) => storeAgeBands.contains(value);
@@ -46,11 +61,11 @@ bool chatAllowedFromAge({
   return storeBandAllowsChat(ageBand ?? '');
 }
 
+/// True only when the year alone cannot settle whether they are 13 yet:
+/// current year minus birth year equals 13.
 bool needsBirthMonth(int birthYear, [DateTime? asOf]) {
-  final youngest = accountAgeYears(birthYear, 12, asOf);
-  final oldest = accountAgeYears(birthYear, 1, asOf);
-  if (youngest == null || oldest == null) return true;
-  return youngest < chatAgeThreshold + 1 && oldest >= chatAgeThreshold - 1;
+  final now = asOf ?? DateTime.now().toUtc();
+  return now.year - birthYear == chatAgeThreshold;
 }
 
 /// A store-declared range from Apple or Google.

@@ -224,6 +224,64 @@ void main() {
     expect((await visitor.leaveGuest()).reason, 'Not a guest of a guild.');
   });
 
+  test('under-13 and frozen accounts cannot send a guest request', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final kid = await _player(transport, 'kid@example.com', 'Kid');
+    final frozen = await _player(transport, 'ice@example.com', 'Ice');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+
+    transport.setAccountStatus(
+      kid.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await kid.joinAsGuest(guildId, '')).ok, isFalse);
+    expect((await kid.joinAsGuest(guildId, '')).reason, ageGateError);
+    expect(await leader.guildApplications(guildId), isEmpty);
+    expect(await leader.guildGuests(guildId), isEmpty);
+
+    transport.setAccountStatus(
+      frozen.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: true),
+    );
+    transport.pendingDeletions[frozen.session!.userId] = DateTime.utc(2026, 10, 31);
+    expect((await frozen.joinAsGuest(guildId, '')).ok, isFalse);
+    expect((await frozen.joinAsGuest(guildId, '')).reason, ageGateError);
+    expect((await frozen.applyToGuild(guildId, '')).ok, isTrue);
+  });
+
+  test('accepting a guest request fails if the requester is gated now', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final visitor = await _player(transport, 'visitor@example.com', 'Visitor');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+
+    expect((await visitor.joinAsGuest(guildId, '')).ok, isTrue);
+    final pending = await leader.guildApplications(guildId);
+    expect(pending, hasLength(1));
+    expect(pending.single.guest, isTrue);
+
+    transport.setAccountStatus(
+      visitor.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await leader.decideGuildApplication(pending.single.id, true)).ok, isFalse);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).reason, ageGateError);
+    expect(await leader.guildGuests(guildId), isEmpty);
+    expect((await leader.guildApplications(guildId)).single.id, pending.single.id);
+
+    transport.setAccountStatus(visitor.session!.userId, const AccountSocialStatus.playable());
+    transport.pendingDeletions[visitor.session!.userId] = DateTime.utc(2026, 10, 31);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).ok, isFalse);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).reason, ageGateError);
+    expect(await leader.guildGuests(guildId), isEmpty);
+    expect((await leader.guildApplications(guildId)).single.id, pending.single.id);
+
+    transport.pendingDeletions.remove(visitor.session!.userId);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).ok, isTrue);
+    expect((await leader.guildGuests(guildId)).map((row) => row.username), ['Visitor']);
+  });
+
   test('an officer decides applications and removes guests, not members', () async {
     final transport = FakeTransport();
     final leader = await _player(transport, 'lead@example.com', 'Lead');

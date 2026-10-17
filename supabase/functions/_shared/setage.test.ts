@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { staffBirthYearOk, STAFF_BIRTH_YEAR_ERROR } from './age.ts'
-import { parseSetAgeTokens, SETAGE_USAGE, setAgeAuditRow } from './setage.ts'
+import { parseSetAgeTokens, SETAGE_MONTH_ERROR, SETAGE_USAGE, setAgeAuditRow } from './setage.ts'
 
 describe('staff /setage', () => {
   const asOf = new Date('2026-10-17T00:00:00.000Z')
@@ -19,6 +19,16 @@ describe('staff /setage', () => {
       username: 'Hero',
       year: 2012,
       month: null,
+    })
+    expect(parseSetAgeTokens(['Hero', '2013', '9'], asOf)).toEqual({
+      ok: true,
+      username: 'Hero',
+      year: 2013,
+      month: 9,
+    })
+    expect(parseSetAgeTokens(['Hero', '2013', '13'], asOf)).toEqual({
+      ok: false,
+      reason: SETAGE_MONTH_ERROR,
     })
   })
 
