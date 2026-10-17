@@ -134,6 +134,55 @@ void main() {
     expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
   });
 
+  testWidgets('an empty motto shows only the edit button to a chatting officer', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+
+    await pumpPanel(tester, guildScreen(net, controller));
+    await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+
+    expect(find.byKey(const Key('guild-motto-edit')), findsOneWidget);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+
+    final recruitController = buildController(database, seed: startedCharacter(database));
+    addTearDown(recruitController.dispose);
+    final recruit = buildRemoteMultiplayer(database, transport: FakeTransport.joining(transport));
+    addTearDown(recruit.dispose);
+    expect((await recruit.service.signUp('recruit@example.com', 'Recruit', 'secret')).ok, isTrue);
+    await hostTheSave(recruit, transport, recruitController);
+    expect((await recruit.service.applyToGuild(net.guildId!, '')).ok, isTrue);
+    await recruit.refresh(recruitController.save);
+    await pumpPanel(tester, guildScreen(recruit, recruitController));
+    await tester.pumpAndSettle();
+
+    expect(find.text('[IRN] Iron League'), findsOneWidget);
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+
+    transport.setAccountStatus(
+      net.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    await net.refreshAccountStatus();
+    await pumpPanel(tester, guildScreen(net, controller));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+  });
+
   testWidgets('blank motto and application messages leave no row or placeholder', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(
