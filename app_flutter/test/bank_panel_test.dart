@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/bank_panel.dart';
+import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:idle_kingdoms/src/ui/item_icon.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
+import 'package:idle_kingdoms/src/ui/top_hud.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -145,6 +147,33 @@ void main() {
       LocationView(controller: meadow, multiplayer: buildMultiplayer(database), onOpenMap: () {}),
     );
     expect(find.text('Item storage'), findsNothing);
+  });
+
+  testWidgets('HUD gold stays visible with the bank open', (tester) async {
+    const gold = 7777;
+    final controller = buildController(
+      database,
+      seed: stashed(
+        inventory: [const InventoryStack(itemId: clayId, quantity: 2)],
+        bank: [const InventoryStack(itemId: oreId, quantity: 3)],
+      ).copyWith(currentLocationId: townBankId, gold: gold),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(900, 1600));
+
+    await selectLocationBandTab(tester, 'Bank');
+    await tester.tap(find.widgetWithText(GameButton, 'Bank').last);
+    await tester.pump();
+
+    expect(find.byType(BankPanel), findsOne);
+    expect(find.byType(GoldAmount), findsNothing);
+    final hudGold = find.byKey(const Key('hud-gold'));
+    expect(hudGold.hitTestable(), findsOne);
+    expect(find.descendant(of: hudGold, matching: find.text(formatThousands(gold))), findsOne);
+    final goldRect = tester.getRect(hudGold);
+    final hud = tester.getRect(find.byType(TopHud));
+    expect(goldRect.top, greaterThanOrEqualTo(hud.top));
+    expect(goldRect.bottom, lessThanOrEqualTo(hud.bottom + 1));
   });
 
   testWidgets('counts sit on Bank and Bag headers and gold stays off the menu', (tester) async {

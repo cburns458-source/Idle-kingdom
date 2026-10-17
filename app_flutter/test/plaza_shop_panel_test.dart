@@ -57,6 +57,13 @@ void main() {
     final buttons = tester.widgetList<GameButton>(find.widgetWithText(GameButton, 'Buy')).toList();
     expect(buttons, hasLength(plazaShopStock.length));
     expect(buttons.every((button) => button.onPressed == null), isTrue);
+    for (final button in buttons) {
+      final plate = tester.widget<PixelInkPlate>(
+        find.descendant(of: find.byWidget(button), matching: find.byType(PixelInkPlate)),
+      );
+      expect(plate.gradient, Palette.confirmDisabledFill);
+      expect(plate.gradient, isNot(Palette.confirmFill));
+    }
   });
 
   testWidgets('offline and local play disable Buy and a tap changes nothing', (tester) async {

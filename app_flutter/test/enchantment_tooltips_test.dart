@@ -258,15 +258,17 @@ void main() {
     testWidgets('a Wizard\'s Shop sell tile shows the enchantment; stock stays plain', (
       tester,
     ) async {
+      final shop = getShop(database.launch, wizardsShopId)!;
+      final unit = playerSellPrice(database.launch, shop, copperAxeId, enchanted: true)!;
+      final essencePrice = playerBuyPrice(database.launch, shop, essenceId)!;
+      final gold = essencePrice + 1000;
       final controller = buildController(
         database,
         seed: startedCharacter(
           database,
-        ).copyWith(currentLocationId: wizardsTowerId, gold: 1000, inventory: const [enchantedAxe]),
+        ).copyWith(currentLocationId: wizardsTowerId, gold: gold, inventory: const [enchantedAxe]),
       );
       addTearDown(controller.dispose);
-      final shop = getShop(database.launch, wizardsShopId)!;
-      final unit = playerSellPrice(database.launch, shop, copperAxeId, enchanted: true)!;
 
       await pumpPanel(tester, ShopPanel(controller: controller, shopId: wizardsShopId));
 
@@ -299,7 +301,7 @@ void main() {
       await tester.pump();
       expect(inventoryCount(controller.save, copperAxeId), 0);
       expect(inventoryCount(controller.save, essenceId), 0);
-      expect(controller.save.gold, 1000 + unit);
+      expect(controller.save.gold, gold + unit);
     });
 
     testWidgets('a general store tile pooling plain and enchanted copies stays plain', (

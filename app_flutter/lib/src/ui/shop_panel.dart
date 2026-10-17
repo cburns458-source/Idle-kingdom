@@ -84,6 +84,13 @@ class _ShopPanelState extends State<ShopPanel> {
     );
   }
 
+  /// Gold left on the counter after the current offer: purse plus sells, minus buys.
+  num _goldOnCounter(ShopRow shop) {
+    return save.gold +
+        _total(_sells, (id) => _sellUnit(shop, id)) -
+        _total(_buys, (id) => playerBuyPrice(db, shop, id));
+  }
+
   /// What this shop will take off the player, ignoring what cannot be traded.
   List<_SellLine> _sellable(ShopRow shop) {
     final mode = shopEnchantedSellMode(shop);
@@ -121,27 +128,32 @@ class _ShopPanelState extends State<ShopPanel> {
         setState(() => _error = 'That item is sold out for today.');
         return;
       }
+      if (already > 0) {
+        setState(() {
+          _error = null;
+          _buys.remove(itemId);
+        });
+        return;
+      }
+      if (unit > 0 && _goldOnCounter(shop) < unit) return;
       setState(() {
         _error = null;
-        if (_buys.remove(itemId) == null) _buys[itemId] = 1;
+        _buys[itemId] = 1;
       });
       return;
     }
 
     final editing = already > 0;
-    final budget =
-        save.gold +
-        _total(_sells, (id) => _sellUnit(shop, id)) -
-        _total(_buys, (id) => playerBuyPrice(db, shop, id));
-    final available = budget + already * unit;
+    final available = _goldOnCounter(shop) + already * unit;
     final affordable = unit <= 0 ? null : (available / unit).floor();
-    num? max;
-    if (affordable != null && affordable >= 1) max = affordable;
+    num? max = affordable;
     if (remaining != null) {
       max = max == null ? remaining : (max < remaining ? max : remaining);
     }
     if (max != null && max < 1) {
-      setState(() => _error = 'That item is sold out for today.');
+      if (remaining != null && remaining < 1) {
+        setState(() => _error = 'That item is sold out for today.');
+      }
       return;
     }
     final quantity = await askQuantity(
@@ -329,6 +341,7 @@ class _ShopPanelState extends State<ShopPanel> {
     final buyTotal = _total(_buys, (id) => playerBuyPrice(db, shop, id));
     final sellTotal = _total(_sells, (id) => _sellUnit(shop, id));
     final net = sellTotal - buyTotal;
+    final canPay = _goldOnCounter(shop) >= 0;
     final nowMs = controller.session.clock();
     final stock = shopStockForPlayer(db, save, shop);
     final sellable = _sellable(shop);
@@ -366,7 +379,7 @@ class _ShopPanelState extends State<ShopPanel> {
                 child: GameButton(
                   label: 'Confirm trade',
                   tone: GameButtonTone.confirm,
-                  onPressed: _buys.isEmpty && _sells.isEmpty ? null : _confirm,
+                  onPressed: (_buys.isEmpty && _sells.isEmpty) || !canPay ? null : _confirm,
                 ),
               ),
             ],
@@ -395,11 +408,15 @@ class _ShopPanelState extends State<ShopPanel> {
                 itemCount: stock.length,
                 itemBuilder: (context, i) {
                   final entry = stock[i];
+                  final unit = playerBuyPrice(db, shop, entry.itemId);
+                  final offered = _buys[entry.itemId];
+                  final available = _goldOnCounter(shop) + (offered ?? 0) * (unit ?? 0);
                   return _tileFor(
                     itemId: entry.itemId,
-                    unit: playerBuyPrice(db, shop, entry.itemId),
-                    offered: _buys[entry.itemId],
+                    unit: unit,
+                    offered: offered,
                     remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
+                    canAfford: unit == null || unit <= 0 || available >= unit,
                     onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
                   );
                 },
@@ -560,13 +577,15 @@ class _ShopPanelState extends State<ShopPanel> {
     num? owned,
     num? offered,
     num? remaining,
+    bool canAfford = true,
     List<String> enchantments = const <String>[],
   }) {
     final item = controller.indexes.itemsById[itemId];
     final name = item?.displayName ?? itemId;
     final label = enchantedItemLabel(name, enchantments.isEmpty ? null : enchantments.join(', '));
     final soldOut = remaining != null && remaining <= 0;
-    final enabled = unit != null && (owned == null || owned > 0) && !soldOut;
+    final enabled =
+        unit != null && (owned == null || owned > 0) && !soldOut && (offered != null || canAfford);
 
     return FloatingItemSlot(
       tooltip: itemTileTooltip(name, enchantments.isEmpty ? null : enchantments.join('\n')),
