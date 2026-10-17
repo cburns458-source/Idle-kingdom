@@ -260,6 +260,9 @@ class _BootGateState extends State<BootGate> {
     });
     game.submitGameCommand = (command, [args = const <String, Object?>{}]) async {
       final result = await multiplayer.submitGameCommand(command, args);
+      if (command.startsWith('mass_')) {
+        game.acceptMassSnapshot(result.mass);
+      }
       return result.ok ? null : (result.reason ?? 'Try again.');
     };
     game.submitHostedCommand = (command, [args = const <String, Object?>{}]) async {

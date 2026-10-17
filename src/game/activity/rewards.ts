@@ -166,6 +166,7 @@ export function resolveActionRewards(
   save: PlayerSave,
   action: ActionRow,
   random: RandomFn = Math.random,
+  dropChanceScale = 1,
 ): {
   save: PlayerSave
   loot: LootGrant[]
@@ -179,7 +180,8 @@ export function resolveActionRewards(
   const leftBehind: LootGrant[] = []
   const cosmeticsGranted: ActionCosmeticGrant[] = []
   const booksGranted: ActionBookGrant[] = []
-  let goldGained = Number(action['Guaranteed Gold'] ?? 0)
+  const scale = Number.isFinite(dropChanceScale) ? Math.max(0, dropChanceScale) : 1
+  let goldGained = Number(action['Guaranteed Gold'] ?? 0) * scale
 
   const skillDropBonus = alignmentSkillDropChanceBonusPercent(
     db,
@@ -191,7 +193,7 @@ export function resolveActionRewards(
     if (!tableId) return
     const dropChance = applyFlatDropChanceBonus(
       applyRelativeDropChance(
-        typeof chance === 'number' ? chance : 0,
+        (typeof chance === 'number' ? chance : 0) * scale,
         totalRelativeDropChanceBonusPercent(db, save) +
           equippedSkillRelativeDropChanceBonusPercent(db, save, action['Relevant Skill ID']),
       ),

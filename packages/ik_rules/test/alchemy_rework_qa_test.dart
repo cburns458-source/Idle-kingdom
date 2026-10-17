@@ -5,7 +5,7 @@ import 'package:ik_parity/ik_parity.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:test/test.dart';
 
-const _expectedContentVersion = '2026-10-16-tutorial-guild-hall-potion-descriptions';
+const _expectedContentVersion = '2026-10-17-mass-bosses';
 const _nowMs = 1760486400000; // 2026-10-15T00:00:00.000Z
 const _apothecary = 'LOC-0026';
 const _kitchens = <String>['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049'];

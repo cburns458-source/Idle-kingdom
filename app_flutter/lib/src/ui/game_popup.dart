@@ -228,6 +228,63 @@ Future<bool> showGameAlert({
   return result ?? false;
 }
 
+enum MassBossChoice { cancel, solo, mass }
+
+Future<MassBossChoice> showMassBossChoice({
+  required BuildContext context,
+  required String bossName,
+}) async {
+  final result = await showGamePopup<MassBossChoice>(
+    context: context,
+    placement: GamePopupPlacement.center,
+    builder: (context) {
+      return GamePopupCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Fight together?',
+              style: TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Take on $bossName alone, or wait up to 60 seconds for other players and share the fight.',
+              style: const TextStyle(height: 1.4),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                GameButton(
+                  label: 'Cancel',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  onPressed: () => Navigator.of(context).pop(MassBossChoice.cancel),
+                ),
+                const SizedBox(width: 8),
+                GameButton(
+                  label: 'Solo',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  onPressed: () => Navigator.of(context).pop(MassBossChoice.solo),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GameButton(
+                    label: 'Mass',
+                    onPressed: () => Navigator.of(context).pop(MassBossChoice.mass),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    },
+  );
+  return result ?? MassBossChoice.cancel;
+}
+
 /// Choice from a confirm that also offers "Don't ask again".
 enum DontAskAgainChoice { cancel, confirm, dontAskAgain }
 

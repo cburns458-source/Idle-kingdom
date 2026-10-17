@@ -1495,6 +1495,24 @@ Future<void> _startOrComingSoon(
         );
     }
   }
+  if (isMassBossActivity(activity.activityId)) {
+    final bossName = (activity.contextualName ?? activity.internalKey).replaceFirst(
+      RegExp(r'^Fight\s+', caseSensitive: false),
+      '',
+    );
+    final choice = await showMassBossChoice(context: context, bossName: bossName);
+    if (!context.mounted) return;
+    switch (choice) {
+      case MassBossChoice.cancel:
+        return;
+      case MassBossChoice.mass:
+        final reason = await controller.joinMass(activity.activityId);
+        if (reason != null) controller.report(reason);
+        return;
+      case MassBossChoice.solo:
+        break;
+    }
+  }
   controller.startActivity(activity.activityId);
 }
 

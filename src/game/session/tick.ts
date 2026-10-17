@@ -492,6 +492,9 @@ export function advanceSession(
 
   const activityId = out.current.currentActivityId
   if (!activityId) return out.result()
+  // Mass fights resolve on the server. Local ticks must not apply damage or
+  // pick a solo encounter while the save is attached to a mass instance.
+  if (out.current.massEncounterId) return out.result()
 
   // Legacy inter-round eat pause (no active round clock). Mid-round eat is
   // handled below and does not block the attack.

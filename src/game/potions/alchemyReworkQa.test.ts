@@ -46,7 +46,7 @@ const rawDatabase = JSON.parse(
   readFileSync(resolve(process.cwd(), 'content/data/game-database.json'), 'utf8'),
 )
 
-const EXPECTED_CONTENT_VERSION = '2026-10-16-tutorial-guild-hall-potion-descriptions'
+const EXPECTED_CONTENT_VERSION = '2026-10-17-mass-bosses'
 const NOW_MS = Date.parse('2026-10-15T00:00:00.000Z')
 const APOTHECARY = 'LOC-0026'
 const KITCHENS = ['LOC-0023', 'LOC-0015', 'LOC-0030', 'LOC-0053', 'LOC-0049']

@@ -151,6 +151,7 @@ export function createNewSave(db: GameDatabase, nowMs: number = Date.now()): Pla
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
+    massEncounterId: null,
     bossRespawnUntilByEnemyId: {},
     activePotionEffect: null,
     deathPauseUntil: null,

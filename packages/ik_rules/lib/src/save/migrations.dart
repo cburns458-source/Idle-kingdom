@@ -1185,6 +1185,15 @@ final List<SaveMigration> saveMigrations = <SaveMigration>[
       return _applyTutorialLockbackJson(next);
     },
   ),
+  SaveMigration(
+    fromVersion: 67,
+    toVersion: 68,
+    migrate: (save, _) {
+      final next = _bumped(save, 68);
+      next['massEncounterId'] = save['massEncounterId'] is String ? save['massEncounterId'] : null;
+      return next;
+    },
+  ),
 ];
 
 const List<String> _tutorialStepOrder = <String>[

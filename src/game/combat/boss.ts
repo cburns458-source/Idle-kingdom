@@ -10,6 +10,76 @@ export const DEFAULT_BOSS_RESPAWN_SECONDS = 10
 export const DEFAULT_BOSS_INK_CHANCE = 0.35
 export const DEFAULT_BOSS_SQUIDLING_COUNT = 3
 
+/** Extra players each add this fraction of solo HP. */
+export const MASS_HP_PER_EXTRA_PLAYER = 0.5
+/** Mass drop-chance factor in `0.9 * healthMultiplier / n`. Solo stays 1×. */
+export const MASS_DROP_CHANCE_FACTOR = 0.9
+export const MASS_COUNTDOWN_SECONDS = 60
+export const MASS_PLAYER_CAP = 100
+export const MASS_IDLE_CLOSE_SECONDS = 60
+export const MASS_MIN_DAMAGE_RATIO = 0.03
+export const MASS_MIN_DAMAGE_SHARE = 0.25
+
+export const DRAGON_ENEMY_ID = 'ENM-0006'
+export const MOTHER_SQUID_ENEMY_ID = 'ENM-0023'
+export const DRAGON_ACTIVITY_ID = 'ACT-0024'
+export const MOTHER_SQUID_ACTIVITY_ID = 'ACT-0045'
+export const DRAGON_LOCATION_ID = 'LOC-0021'
+export const MOTHER_SQUID_LOCATION_ID = 'LOC-0042'
+
+export const MASS_BOSS_ACTIVITY_ENEMY: Record<string, string> = {
+  [DRAGON_ACTIVITY_ID]: DRAGON_ENEMY_ID,
+  [MOTHER_SQUID_ACTIVITY_ID]: MOTHER_SQUID_ENEMY_ID,
+}
+
+export const MASS_BOSS_ENEMY_LOCATION: Record<string, string> = {
+  [DRAGON_ENEMY_ID]: DRAGON_LOCATION_ID,
+  [MOTHER_SQUID_ENEMY_ID]: MOTHER_SQUID_LOCATION_ID,
+}
+
+export const MASS_BOSS_ENEMY_ACTIVITY: Record<string, string> = {
+  [DRAGON_ENEMY_ID]: DRAGON_ACTIVITY_ID,
+  [MOTHER_SQUID_ENEMY_ID]: MOTHER_SQUID_ACTIVITY_ID,
+}
+
+export function isMassBossActivity(activityId: string | null | undefined): boolean {
+  if (!activityId) return false
+  return Object.prototype.hasOwnProperty.call(MASS_BOSS_ACTIVITY_ENEMY, activityId)
+}
+
+export function isMassBossEnemy(enemyId: string | null | undefined): boolean {
+  if (!enemyId) return false
+  return Object.prototype.hasOwnProperty.call(MASS_BOSS_ENEMY_LOCATION, enemyId)
+}
+
+/** `1 + 0.5 * (n - 1)` for n locked players. */
+export function massHealthMultiplier(playerCount: number): number {
+  const n = Math.max(1, Math.floor(playerCount))
+  return 1 + MASS_HP_PER_EXTRA_PLAYER * (n - 1)
+}
+
+/** Mass encounter HP from a solo HP and locked player count. */
+export function massHpFor(soloHp: number, playerCount: number): number {
+  return Math.max(1, Math.floor(soloHp * massHealthMultiplier(playerCount)))
+}
+
+/**
+ * Per-player drop-chance scale. Solo n=1 stays 1×; otherwise
+ * `0.9 * healthMultiplier / n`.
+ */
+export function massDropScale(playerCount: number): number {
+  const n = Math.max(1, Math.floor(playerCount))
+  if (n <= 1) return 1
+  return (MASS_DROP_CHANCE_FACTOR * massHealthMultiplier(n)) / n
+}
+
+/** Minimum damage for a reward roll: `min(3%, 25%/n)` of boss total HP. */
+export function massMinimumDamage(totalHp: number, playerCount: number): number {
+  const n = Math.max(1, Math.floor(playerCount))
+  const ratio = Math.min(MASS_MIN_DAMAGE_RATIO, MASS_MIN_DAMAGE_SHARE / n)
+  return Math.max(0, totalHp * ratio)
+}
+
 export type BossDamageMode = 'fishing'
 
 export interface BossProfile {

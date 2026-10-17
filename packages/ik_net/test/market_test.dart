@@ -187,6 +187,8 @@ void main() {
         hearthguardGreavesId,
         hearthguardGauntletsId,
         hearthguardBootsId,
+        'ITEM-0404',
+        'ITEM-0443',
       });
       final machete = <String, Object?>{'itemId': _machete, 'quantity': 1};
       final spud = <String, Object?>{'itemId': _goldenSpud, 'quantity': 1};

@@ -110,6 +110,8 @@ describe('items the exchange will not carry', () => {
         HEARTHGUARD_GREAVES,
         HEARTHGUARD_GAUNTLETS,
         HEARTHGUARD_BOOTS,
+        'ITEM-0404',
+        'ITEM-0443',
       ].sort(),
     )
     expect(isTradableItem(MACHETE, CATALOG)).toBe(false)

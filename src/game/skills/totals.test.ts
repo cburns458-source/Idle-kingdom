@@ -96,6 +96,7 @@ function sampleSave(skills: Array<{ skillId: string; level: number; xp: number }
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
+    massEncounterId: null,
     bossRespawnUntilByEnemyId: {},
     activePotionEffect: null,
     deathPauseUntil: null,

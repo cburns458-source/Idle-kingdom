@@ -37,6 +37,7 @@ class CloudSyncResult {
     this.themMaxHp,
     this.opponent,
     this.claim,
+    this.mass,
   }) : reason = null,
        remote = null,
        noRoom = null;
@@ -60,7 +61,8 @@ class CloudSyncResult {
        youMaxHp = null,
        themMaxHp = null,
        opponent = null,
-       claim = null;
+       claim = null,
+       mass = null;
 
   final PlayerSave? save;
   final CloudSyncSource? source;
@@ -91,6 +93,7 @@ class CloudSyncResult {
   final num? themMaxHp;
   final ArenaOpponent? opponent;
   final BountyClaimRecord? claim;
+  final MassEncounterSnapshot? mass;
 
   bool get ok => reason == null;
 

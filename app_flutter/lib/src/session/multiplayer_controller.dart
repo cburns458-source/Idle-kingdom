@@ -24,6 +24,8 @@ const _hostedSwitchCommands = <String>{
   'start_production',
   'travel',
   'travel_guild_hall',
+  'mass_join',
+  'mass_leave',
 };
 
 /// The screen-facing half of multiplayer.

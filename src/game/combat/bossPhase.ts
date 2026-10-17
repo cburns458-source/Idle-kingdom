@@ -18,6 +18,11 @@ export interface SquidlingVictoryResult {
   bossResumed: boolean
 }
 
+/** Squidling HP scaled with the mass group. Solo multiplier is 1. */
+export function massSquidlingHp(baseHp: number, healthMultiplier: number): number {
+  return Math.max(1, Math.floor(baseHp * Math.max(0, healthMultiplier)))
+}
+
 export function beginBossAddsEncounter(
   db: GameDatabase,
   save: PlayerSave,
@@ -25,6 +30,7 @@ export function beginBossAddsEncounter(
   profile: BossProfile,
   pendingHp: number,
   roundEndIso: string,
+  healthMultiplier = 1,
 ): PlayerSave {
   const squidling = getEnemy(db, profile.squidlingEnemyId!)
   if (!squidling) return save
@@ -36,7 +42,7 @@ export function beginBossAddsEncounter(
     combatBossAddsTriggered: true,
     combatBossInkActive: false,
     combatEnemyId: squidling['Enemy ID'],
-    combatEnemyHp: squidling['Maximum HP'],
+    combatEnemyHp: massSquidlingHp(squidling['Maximum HP'], healthMultiplier),
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
     ...openCombatRoundClock(db, Date.parse(roundEndIso)),
@@ -48,6 +54,7 @@ export function applySquidlingVictory(
   save: PlayerSave,
   squidling: EnemyRow,
   roundEndIso: string,
+  healthMultiplier = 1,
 ): SquidlingVictoryResult {
   const xpAmount = enemyCombatXp(squidling)
   let next = applyXp(save, db, FISHING_SKILL_ID, xpAmount).save
@@ -81,7 +88,7 @@ export function applySquidlingVictory(
         ...next,
         combatBossAddsRemaining: remaining,
         combatEnemyId: nextSquidling['Enemy ID'],
-        combatEnemyHp: nextSquidling['Maximum HP'],
+        combatEnemyHp: massSquidlingHp(nextSquidling['Maximum HP'], healthMultiplier),
         combatBossInkActive: false,
         combatSkipEnemyAttack: false,
         ...openCombatRoundClock(db, Date.parse(roundEndIso)),

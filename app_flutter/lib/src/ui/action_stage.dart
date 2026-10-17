@@ -76,6 +76,9 @@ class ActionStage extends StatelessWidget {
     // A death blow keeps the last fight on screen for a beat, then Recovering
     // takes over. Victory skips the "defeated" banner — hit floaters are enough.
     if (controller.showRecoveringStage) return _RecoveringStage(controller: controller);
+    if (controller.massEncounter?.isLobby == true) {
+      return _MassLobbyStage(controller: controller);
+    }
     if (save.combatEnemyId != null || controller.combatBlowHold || controller.defeatedFlash) {
       return _CombatStage(controller: controller);
     }
@@ -796,6 +799,45 @@ class _FighterCaption extends StatelessWidget {
   }
 }
 
+class _MassLobbyStage extends StatelessWidget {
+  const _MassLobbyStage({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final mass = controller.massEncounter;
+    final ends = mass?.countdownEndsAt;
+    final endMs = ends == null ? null : DateTime.tryParse(ends)?.millisecondsSinceEpoch;
+    final remaining = endMs == null
+        ? 60
+        : math.max(0, ((endMs - controller.session.clock()) / 1000).ceil());
+    final names = [
+      for (final row in mass?.participants ?? const <MassParticipantView>[])
+        if (row.present) row.username,
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            names.isEmpty ? 'Waiting for players…' : 'Mass fight starts in ${remaining}s',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: GameFont.m, color: _sceneNameColor),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            names.isEmpty ? 'You are first in line.' : names.join(', '),
+            textAlign: TextAlign.center,
+            style: const TextStyle(height: 1.3, color: Palette.parchmentText),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CombatStage extends StatelessWidget {
   const _CombatStage({required this.controller});
 
@@ -807,9 +849,18 @@ class _CombatStage extends StatelessWidget {
     final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
     final enemy = enemyId == null ? null : getEnemy(controller.db, enemyId);
     final enemyName = _combatEnemyDisplayName(controller.db, save, enemy);
+    final mass = controller.massEncounter;
+    final shownEnemyName = mass != null && mass.isFighting
+        ? '$enemyName · ${mass.lockedCount.round()} players'
+        : enemyName;
+    final massMax = controller.massEnemyMaxHp;
     final enemyMaxHp = math.max(
       1,
-      enemy == null ? 1 : enemyEncounterMaxHp(controller.db, save, enemy).toInt(),
+      massMax > 0 && !isBossAddFight(save)
+          ? massMax.toInt()
+          : enemy == null
+          ? 1
+          : enemyEncounterMaxHp(controller.db, save, enemy).toInt(),
     );
     final round = controller.lastRound;
     final seq = controller.lastRoundSeq;
@@ -837,7 +888,7 @@ class _CombatStage extends StatelessWidget {
         ),
         scene: _Portrait(
           assetPath: null,
-          semanticsLabel: enemyName,
+          semanticsLabel: shownEnemyName,
           height: _enemyArtHeight,
           slotHeight: _portraitSlotHeight,
           alignment: Alignment.centerLeft,
@@ -938,11 +989,11 @@ class _CombatStage extends StatelessWidget {
           builder: (context) {
             final hp = controller.stagedEnemyHp;
             return _FighterCaption(
-              name: enemyName,
+              name: shownEnemyName,
               hpLabel: '${hp.round()}/${enemyMaxHp.round()}',
               alignEnd: true,
               meter: _Meter(
-                label: '$enemyName health',
+                label: '$shownEnemyName health',
                 semanticsValue: '${hp.round()} / ${enemyMaxHp.round()}',
                 value: (hp / enemyMaxHp).clamp(0, 1).toDouble(),
                 gradient: Meters.hudHp,

@@ -7525,11 +7525,11 @@
       "Associated Skill ID": null,
       "Equipment Slot ID": null,
       "Base Sell Value": 0,
-      "Tradeable": true,
+      "Tradeable": false,
       "Icon Asset Key": "cosmetic_pet_baby_dragon",
       "Description": "A rare companion that hatches after a dragon falls.",
       "Functional / Source Tags": "cosmetic; pet",
-      "Notes": "Unlocked the first time a Baby Dragon pet drop is rolled from a dragon.",
+      "Notes": "Unlocked the first time a Baby dragon pet drop is rolled from a dragon. Untradeable.",
       "Stackable": null
     },
     {
@@ -8214,6 +8214,24 @@
       "Notes": "Icon is a copy of the greater_strength_potion art. Adds +30 min / +90 max flat damage. Lasts 6 fights.",
       "Base Sell Value": 240,
       "Tradeable": true,
+      "Stackable": null
+    },
+    {
+      "Item ID": "ITEM-0443",
+      "Internal Key": "cosmetic_pet_baby_squid",
+      "Display Name": "Baby squid pet",
+      "Category": "Cosmetic",
+      "Subtype": "Pet",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Associated Skill ID": null,
+      "Equipment Slot ID": null,
+      "Base Sell Value": 0,
+      "Tradeable": false,
+      "Icon Asset Key": "cosmetic_pet_baby_squid",
+      "Description": "A baby squid that follows its keeper everywhere.",
+      "Functional / Source Tags": "cosmetic; pet",
+      "Notes": "Unlocked the first time a Baby squid pet drop is rolled from Mother squid. Untradeable.",
       "Stackable": null
     }
   ],
@@ -16862,11 +16880,11 @@
       "Guaranteed Gold": null,
       "Drop Chance": 40,
       "Reward Table ID": "RWT-0018",
-      "Secondary Drop Chance": 1,
+      "Secondary Drop Chance": 0.1,
       "Secondary Reward Table ID": "RWT-0180",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Main scale/ruby/titanium. Baby Dragon pet secondary 1%."
+      "Notes": "Main scale/ruby/titanium. Baby dragon pet secondary 0.1%."
     },
     {
       "Action ID": "ACN-0094",
@@ -18434,11 +18452,11 @@
       "Guaranteed Gold": null,
       "Drop Chance": 36,
       "Reward Table ID": "RWT-0012",
-      "Secondary Drop Chance": null,
-      "Secondary Reward Table ID": null,
+      "Secondary Drop Chance": 0.1,
+      "Secondary Reward Table ID": "RWT-0203",
       "Status": "Planned",
       "Release Phase": "Launch",
-      "Notes": "Fishing ATR and level set player damage against Mother Squid."
+      "Notes": "Fishing ATR and level set player damage against Mother squid. Baby squid pet secondary 0.1%."
     },
     {
       "Action ID": "ACN-0179",
@@ -26811,6 +26829,21 @@
       "XP Amount": null,
       "Status": "Planned",
       "Notes": null
+    },
+    {
+      "Reward Entry ID": "RWE-T02030",
+      "Reward Table ID": "RWT-0203",
+      "Reward Table Name": "Baby squid pet",
+      "Purpose": "Secondary output",
+      "Reward Type": "Cosmetic",
+      "Reward ID / Value": "COS-0020",
+      "Weight": 100,
+      "Minimum Quantity": 1,
+      "Maximum Quantity": 1,
+      "Skill ID": null,
+      "XP Amount": null,
+      "Status": "Confirmed",
+      "Notes": "One-time unlock of the Baby squid pet cosmetic."
     }
   ],
   "Recipes": [
@@ -36740,6 +36773,15 @@
       "Status": "Confirmed",
       "Release Phase": "Launch",
       "Notes": "Title Elyndri for REL-0007 (Elyndara). Granted on first pick. Equippable only while following this faith."
+    },
+    {
+      "Cosmetic ID": "COS-0020",
+      "Item ID": "ITEM-0443",
+      "Cosmetic Slot ID": "CSLOT-0002",
+      "Acquisition Tags": "squid_drop",
+      "Status": "Confirmed",
+      "Release Phase": "Launch",
+      "Notes": "Baby squid pet. Granted once from Mother squid kill secondary."
     }
   ],
   "AppearanceOptions": [

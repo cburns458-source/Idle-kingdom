@@ -146,7 +146,7 @@ List<ValidationIssue> validateTradeability(
     }
     if (!tradeable && sources.hasOtherSource(itemId)) {
       final tags = '${item.raw['Functional / Source Tags'] ?? ''}';
-      if (tags.contains('plaza_shop')) continue;
+      if (tags.contains('plaza_shop') || tags.contains('cosmetic')) continue;
       issues.add(
         ValidationIssue(
           severity: IssueSeverity.warning,

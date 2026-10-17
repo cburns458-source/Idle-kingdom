@@ -45,6 +45,8 @@ void main() {
         _hearthguardGreaves,
         _hearthguardGauntlets,
         _hearthguardBoots,
+        'ITEM-0404',
+        'ITEM-0443',
       });
       for (final itemId in <String>[_goldenSpud, _chefsHat, _pirateInsignia]) {
         expect(_item(db, itemId).isTradeable, isTrue, reason: itemId);

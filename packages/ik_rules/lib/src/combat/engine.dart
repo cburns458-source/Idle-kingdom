@@ -223,13 +223,16 @@ PlayerSave beginCombatSave(
   PlayerSave save,
   ActionRow action,
   EnemyRow enemy,
-  String nowIso,
-) {
+  String nowIso, [
+  num? encounterMaxHp,
+]) {
   final potion = tryConsumePotionForScope(db, save, 'one_combat_encounter');
   final effect = potion.effect ?? potion.save.activePotionEffect;
   final maxHp = playerMaxHp(db, potion.save);
   final healedHp = applyPotionInstantHeal(potion.save.currentHp, maxHp, effect);
-  final enemyMaxHp = enemyEncounterMaxHp(db, potion.save, enemy);
+  final enemyMaxHp = encounterMaxHp != null && encounterMaxHp.isFinite
+      ? math.max(1, encounterMaxHp.floor())
+      : enemyEncounterMaxHp(db, potion.save, enemy);
   final startedAtMs = jsDateParse(nowIso);
   final atMs = startedAtMs.toDouble().isFinite ? startedAtMs : 0;
   return openCombatRoundClock(
@@ -567,6 +570,7 @@ CombatVictoryResult applyCombatVictory(
   RandomFn random,
   num nowMs, [
   bool guildmatesPresent = false,
+  num dropScale = 1,
 ]) {
   final maxHp = playerMaxHp(db, save);
   var next = save.copyWith(
@@ -574,7 +578,9 @@ CombatVictoryResult applyCombatVictory(
     currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
   );
 
-  final skipLoot = isGuildHallCageActivity(save.currentActivityId ?? '');
+  final skipLoot =
+      isGuildHallCageActivity(save.currentActivityId ?? '') ||
+      !(dropScale.isFinite && dropScale > 0);
   final xpAmount = applyGuildHallCompanyXp(enemyCombatXp(enemy), guildmatesPresent);
   // Prefer fishing-mode bosses and Fishing-tagged fight actions (Mother Squid /
   // Squidling fallthrough). Ordinary fights split XP across Might / Vitality.
@@ -628,12 +634,14 @@ CombatVictoryResult applyCombatVictory(
       ? minGold + (random() * (maxGold - minGold + 1)).floor()
       : minGold;
 
+  final lootScale = dropScale.isFinite ? math.max(0, dropScale) : 1;
   // Use action reward table / drop chance (aligned with enemy table in data).
-  final rewarded = resolveActionRewards(db, next, action, random);
+  final rewarded = resolveActionRewards(db, next, action, random, lootScale);
   next = rewarded.save;
   var goldGained = rewarded.goldGained;
-  if (goldRoll > 0) {
-    final racedGold = applyAlignmentGoldGain(db, save, goldRoll);
+  final scaledGoldRoll = (goldRoll * lootScale).floor();
+  if (scaledGoldRoll > 0) {
+    final racedGold = applyAlignmentGoldGain(db, save, scaledGoldRoll);
     next = next.copyWith(gold: next.gold + racedGold);
     goldGained += racedGold;
   }
