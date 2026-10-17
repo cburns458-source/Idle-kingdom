@@ -1044,7 +1044,7 @@ class OverlayChipButton extends StatelessWidget {
   final double width;
   final double height;
 
-  /// The nearby chip is brown rather than the map's parchment green.
+  /// The nearby chip is brown rather than the map's gold parchment plate.
   final bool dark;
 
   /// Thicker pack rim when people are here; pass [highlightColor] for allies.
@@ -1053,7 +1053,7 @@ class OverlayChipButton extends StatelessWidget {
   /// Overrides the pack rim — gold on the dark well for a friend or guildmate.
   final Color? highlightColor;
 
-  /// Skip the green/brown plate so a framed icon can be the whole button.
+  /// Skip the gold/brown plate so a framed icon can be the whole button.
   final bool plain;
 
   @override
@@ -1064,9 +1064,7 @@ class OverlayChipButton extends StatelessWidget {
         : BorderSide(
             color:
                 rim ??
-                (dark
-                    ? UiChrome.of(context).embossFace
-                    : Palette.softGreenShade.withValues(alpha: 0.70)),
+                (dark ? UiChrome.of(context).embossFace : Palette.gold.withValues(alpha: 0.70)),
             width: rim != null ? 2 : 1,
           );
     return Tooltip(
@@ -1082,7 +1080,7 @@ class OverlayChipButton extends StatelessWidget {
               ? null
               : chromeSlotFill(
                   context,
-                  color: dark ? UiChrome.of(context).slot : Palette.softGreen,
+                  color: dark ? UiChrome.of(context).slot : Palette.goldShade,
                 ),
           child: InkWell(
             onTap: onPressed,

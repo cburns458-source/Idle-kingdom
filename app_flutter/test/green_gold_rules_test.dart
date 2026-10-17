@@ -84,6 +84,61 @@ void main() {
     expect(contrastRatio(Palette.successInk, UiChrome.stone.panel), greaterThanOrEqualTo(4.5));
     expect(contrastRatio(Palette.skillXp, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
     expect(contrastRatio(Palette.skillXp, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.skillXp, UiChrome.wood.slot), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.skillXp, UiChrome.stone.slot), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.heading, Palette.goldShade), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.borderSelected, UiChrome.wood.board), lessThan(4.5));
+  });
+
+  testWidgets('OverlayChipButton defaults to a gold plate, not green', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.wood,
+          child: Scaffold(
+            body: OverlayChipButton(
+              tooltip: 'XP',
+              onPressed: () {},
+              child: const Text('XP', style: TextStyle(color: Palette.heading)),
+            ),
+          ),
+        ),
+      ),
+    );
+    final chip = tester.widgetList<Material>(find.byType(Material)).firstWhere((row) {
+      return row.shape is PixelSteppedBorder;
+    });
+    expect((chip.shape! as PixelSteppedBorder).side.color, Palette.gold.withValues(alpha: 0.70));
+    expect(
+      (chip.shape! as PixelSteppedBorder).side.color,
+      isNot(Palette.softGreenShade.withValues(alpha: 0.70)),
+    );
+    final ink = tester.widget<Ink>(find.byType(Ink));
+    expect(ink.decoration, isA<BoxDecoration>());
+    expect((ink.decoration! as BoxDecoration).color, Palette.goldShade);
+    expect((ink.decoration! as BoxDecoration).color, isNot(Palette.softGreen));
+  });
+
+  testWidgets('sub-map back arrow is parchment gold, not green', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: UiChromeScope(
+          chrome: UiChrome.wood,
+          child: Scaffold(
+            body: OverlayChipButton(
+              tooltip: 'Back to Town',
+              onPressed: () {},
+              child: const Icon(Icons.arrow_back, size: 18, color: Palette.heading),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.widget<Icon>(find.byIcon(Icons.arrow_back)).color, Palette.heading);
+    expect(tester.widget<Icon>(find.byIcon(Icons.arrow_back)).color, isNot(Palette.softGreenShade));
+    expect(contrastRatio(Palette.heading, Palette.goldShade), greaterThanOrEqualTo(4.5));
   });
 
   test('shop slot currency clears 4.5:1 on wood and stone wells', () {

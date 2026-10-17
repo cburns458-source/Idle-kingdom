@@ -294,12 +294,17 @@ class _PlantTile extends StatelessWidget {
             Positioned(
               left: 0,
               top: 0,
-              child: Text(
-                '$selectedCount',
-                style: const TextStyle(
-                  fontSize: GameFont.s,
-                  fontWeight: FontWeight.w400,
-                  color: Palette.borderSelected,
+              child: DefaultTextStyle(
+                style: const TextStyle(color: Palette.parchmentText),
+                child: Builder(
+                  builder: (context) => Text(
+                    '$selectedCount',
+                    style: TextStyle(
+                      fontSize: GameFont.s,
+                      fontWeight: FontWeight.w400,
+                      color: successForeground(context),
+                    ),
+                  ),
                 ),
               ),
             ),
