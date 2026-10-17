@@ -161,18 +161,21 @@ class _MenuViewState extends State<MenuView> {
               builder: (context, _) {
                 if (!widget.multiplayer.isSignedIn) return const SizedBox.shrink();
                 return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _SettingsFold(
-                      heading: 'Feedback',
-                      children: [
-                        GamePanel(
-                          framed: true,
-                          child: GameButton(
+                    GamePanel(
+                      framed: true,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text('Feedback', style: TextStyle(fontWeight: FontWeight.w400)),
+                          const SizedBox(height: 10),
+                          GameButton(
                             label: 'Report / Suggestion',
                             onPressed: () => _openFeedback(context),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 10),
                   ],
@@ -481,7 +484,7 @@ class _MenuViewState extends State<MenuView> {
             Text(
               notice,
               style: TextStyle(
-                color: _artError ? Palette.warning : Palette.gold,
+                color: _artError ? Palette.warning : Palette.success,
                 fontSize: GameFont.s,
               ),
             ),

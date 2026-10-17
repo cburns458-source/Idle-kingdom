@@ -172,7 +172,7 @@ class _RecipeBookRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final baseTitleColor = entry.emphasized ? Palette.gold : chrome.panelInk;
+    final baseTitleColor = entry.emphasized ? Palette.successInk : chrome.panelInk;
     final titleColor = entry.dimmed ? baseTitleColor.withValues(alpha: 0.55) : baseTitleColor;
     final mutedColor = entry.dimmed ? chrome.panelMuted.withValues(alpha: 0.55) : null;
     return Padding(

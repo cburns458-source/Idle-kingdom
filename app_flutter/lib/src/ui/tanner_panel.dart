@@ -99,7 +99,7 @@ class _TannerPanelState extends State<TannerPanel> {
           Row(
             children: [
               const Expanded(
-                child: Text(
+                child: GoldCopy(
                   'Tanner',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -108,7 +108,7 @@ class _TannerPanelState extends State<TannerPanel> {
               ),
               GoldAmount(
                 amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
+                style: const TextStyle(color: Palette.currency),
               ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
@@ -141,6 +141,7 @@ class _TannerPanelState extends State<TannerPanel> {
                       : !canAfford
                       ? 'Need gold'
                       : 'Confirm tan',
+                  tone: GameButtonTone.confirm,
                   onPressed: hasOffer && canAfford ? _confirm : null,
                 ),
               ),
@@ -157,7 +158,7 @@ class _TannerPanelState extends State<TannerPanel> {
             const SizedBox(height: 6),
             Text(
               receipt,
-              style: const TextStyle(color: Palette.gold, fontSize: GameFont.s),
+              style: const TextStyle(color: Palette.success, fontSize: GameFont.s),
             ),
           ],
           const SizedBox(height: 12),
@@ -222,7 +223,7 @@ class _TannerPanelState extends State<TannerPanel> {
               right: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: const BoxDecoration(color: Color(0xE69A7B32)),
+                decoration: const BoxDecoration(color: Palette.borderSelected),
                 child: Text(
                   '×${formatThousands(offered)}',
                   style: const TextStyle(

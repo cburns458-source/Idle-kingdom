@@ -156,7 +156,10 @@ class _QuantitySheetState extends State<_QuantitySheet> {
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: chromeSlotFill(context, border: Border.all(color: Palette.edge)),
+                    decoration: chromeSlotFill(
+                      context,
+                      border: Border.all(color: UiChrome.of(context).edge),
+                    ),
                     child: Text(
                       _text,
                       key: const Key('quantity-input'),

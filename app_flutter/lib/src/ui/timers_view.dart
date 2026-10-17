@@ -70,14 +70,18 @@ class _TimersViewState extends State<TimersView> {
                 padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
                 child: Text(
                   'Timers',
-                  style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    fontSize: GameFont.xl,
+                    fontWeight: FontWeight.w400,
+                    color: Palette.heading,
+                  ),
                 ),
               ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Text(
                 'Timers start at locations. Travel appears when a spot is ready to collect.',
-                style: TextStyle(color: chrome.embossFace, height: 1.35, fontSize: GameFont.s),
+                style: TextStyle(color: chrome.panelMuted, height: 1.35, fontSize: GameFont.s),
               ),
             ),
             Expanded(
@@ -166,7 +170,7 @@ class _TimerSection extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             spots.isEmpty ? emptyLabel : '${spots.length} spot${spots.length == 1 ? '' : 's'}',
-            style: TextStyle(color: chrome.embossFace, fontSize: GameFont.s),
+            style: TextStyle(color: chrome.panelMuted, fontSize: GameFont.s),
           ),
           if (spots.isEmpty)
             const SizedBox(height: 4)
@@ -249,7 +253,7 @@ class _TimerRow extends StatelessWidget {
               ),
               Text(
                 status,
-                style: TextStyle(color: chrome.embossFace, fontSize: GameFont.s),
+                style: TextStyle(color: chrome.panelMuted, fontSize: GameFont.s),
               ),
             ],
           ),

@@ -381,6 +381,17 @@ void main() {
       tester.widget<GameButton>(find.widgetWithText(GameButton, 'Offensive')).selected,
       isTrue,
     );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('attack-style-offensive')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .selected,
+      isTrue,
+    );
 
     await tester.tap(find.widgetWithText(GameButton, 'Balanced'));
     await tester.pump();
@@ -469,6 +480,7 @@ void main() {
     await pumpPanel(tester, InventoryView(controller: controller));
     expect(find.text('Sell items'), findsOne);
     expect(find.byTooltip('Sort'), findsOne);
+    expect(_sortChipBorder(tester), UiChrome.wood.embossFace);
     expect(find.byType(TextField), findsNothing);
 
     expect(
@@ -480,6 +492,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(CheckedPopupMenuItem<InventorySortMode>, 'A–Z'));
     await tester.pumpAndSettle();
+    expect(_sortChipBorder(tester), Palette.borderSelected);
     expect(
       visibleBagOrder(tester, ['Baked potato', 'Copper bar', 'Copper ore', 'Iron sword', 'Potato']),
       ['Baked potato', 'Copper bar', 'Copper ore', 'Iron sword', 'Potato'],
@@ -622,7 +635,7 @@ void main() {
     }
 
     expect(chipBorder(const Key('preset-chip-0')).side.width, 3);
-    expect(chipBorder(const Key('preset-chip-0')).side.color, Palette.gold);
+    expect(chipBorder(const Key('preset-chip-0')).side.color, Palette.borderSelected);
 
     final wornAgain = equipItemFromInventory(database.launch, controller.save, 'ITEM-0110');
     expect(wornAgain.ok, isTrue);
@@ -857,6 +870,17 @@ void main() {
     expect(find.textContaining('Eat at'), findsOne);
     expect(find.byKey(const Key('auto-eat')), findsOne);
     expect(find.text('Auto-eat on'), findsOne);
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('auto-eat')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .selected,
+      isTrue,
+    );
     expect(find.byKey(const Key('eat-now')), findsNothing);
 
     await tester.tap(find.byKey(const Key('auto-eat')));
@@ -935,4 +959,11 @@ void main() {
     expect(find.descendant(of: popup, matching: find.byType(GamePanel)), findsOne);
     expect(find.descendant(of: popup, matching: find.byType(FloatingItemSlot)), findsWidgets);
   });
+}
+
+Color _sortChipBorder(WidgetTester tester) {
+  final box = tester.widget<DecoratedBox>(
+    find.descendant(of: find.byTooltip('Sort'), matching: find.byType(DecoratedBox)).first,
+  );
+  return (box.decoration as BoxDecoration).border!.top.color;
 }

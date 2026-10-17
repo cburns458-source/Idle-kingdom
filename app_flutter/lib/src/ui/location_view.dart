@@ -341,7 +341,7 @@ class _LocationViewState extends State<LocationView> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.zero /* pixel step 3 */,
-          border: Border.all(color: const Color(0x479A7B32)),
+          border: Border.all(color: UiChrome.of(context).edge),
         ),
         child: ClipRect(
           child: RepaintBoundary(
@@ -473,11 +473,10 @@ class _LocationViewState extends State<LocationView> {
                                               origin: popupOrigin(context),
                                             ),
                                             dark: true,
-                                            highlightColor: widget.multiplayer.peers.isEmpty
-                                                ? null
-                                                : widget.multiplayer.nearbyHasAllies
+                                            highlight: widget.multiplayer.peers.isNotEmpty,
+                                            highlightColor: widget.multiplayer.nearbyHasAllies
                                                 ? Palette.softGreen
-                                                : Palette.gold,
+                                                : null,
                                             child: GameImage(
                                               uiNearbyAssetPath(),
                                               width: 32,
@@ -1260,7 +1259,7 @@ class _FloatingOptionBand extends StatelessWidget {
           : BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.zero /* pixel step 3 */,
-              border: Border.all(color: const Color(0x479A7B32)),
+              border: Border.all(color: UiChrome.of(context).edge),
             ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1536,7 +1535,7 @@ class _ActivityCard extends StatelessWidget {
               onPressed: () => controller.toggleFavorite(activityId),
               icon: favorited ? Icons.star : Icons.star_border,
               size: 28,
-              iconColor: favorited ? Palette.gold : null,
+              iconColor: favorited ? Palette.rare : null,
             ),
       title: activity.contextualName ?? activityId,
       lines: [

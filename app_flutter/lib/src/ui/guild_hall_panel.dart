@@ -172,7 +172,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
               ),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text(
+                child: GoldCopy(
                   'Guild Hall',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -181,7 +181,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
               ),
               GoldAmount(
                 amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
+                style: const TextStyle(color: Palette.currency),
               ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
@@ -202,6 +202,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                       _HallTab.bank => 'Bank',
                       _HallTab.achievements => 'Achievements',
                     },
+                    selected: _tab == tab,
                     tone: _tab == tab ? GameButtonTone.primary : GameButtonTone.secondary,
                     onPressed: () => setState(() => _tab = tab),
                   ),
@@ -284,21 +285,22 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    row.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      color: row.unlocked ? Palette.gold : Palette.muted,
-                    ),
-                  ),
+                  child: row.unlocked
+                      ? GoldCopy(row.name, style: const TextStyle(fontWeight: FontWeight.w400))
+                      : Text(
+                          row.name,
+                          style: const TextStyle(fontWeight: FontWeight.w400, color: Palette.muted),
+                        ),
                 ),
-                Text(
-                  '${formatThousands(row.current)} / ${formatThousands(row.target)}',
-                  style: TextStyle(
-                    color: row.unlocked ? Palette.gold : Palette.muted,
-                    fontSize: GameFont.s,
-                  ),
-                ),
+                row.unlocked
+                    ? GoldCopy(
+                        '${formatThousands(row.current)} / ${formatThousands(row.target)}',
+                        style: const TextStyle(fontSize: GameFont.s),
+                      )
+                    : Text(
+                        '${formatThousands(row.current)} / ${formatThousands(row.target)}',
+                        style: const TextStyle(color: Palette.muted, fontSize: GameFont.s),
+                      ),
               ],
             ),
           ),
@@ -325,6 +327,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
         GameButton(
           key: const Key('guild-gold-chip-in'),
           label: 'Chip in',
+          tone: GameButtonTone.confirm,
           onPressed: canChip ? _chipIn : null,
         ),
         const SizedBox(height: 12),
@@ -355,36 +358,40 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
   }
 
   Widget _tierBlock(GuildHallState hall, GuildHallTier tier) {
-    final next = nextGuildHallTier(hall.completedTiers);
-    final finished = hall.completedTiers.contains(tier.id);
-    final active = !finished && next?.id == tier.id;
-    final color = finished
-        ? Palette.gold
-        : active
-        ? null
-        : Palette.muted;
-    final needs = guildHallTierNeeds(tier, hall.storehouse);
-    return Opacity(
-      opacity: finished || active ? 1 : 0.45,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              tier.name,
-              style: TextStyle(fontWeight: FontWeight.w400, color: color),
+    return Builder(
+      builder: (context) {
+        final next = nextGuildHallTier(hall.completedTiers);
+        final finished = hall.completedTiers.contains(tier.id);
+        final active = !finished && next?.id == tier.id;
+        final color = finished
+            ? goldForeground(context)
+            : active
+            ? Palette.borderSelected
+            : Palette.muted;
+        final needs = guildHallTierNeeds(tier, hall.storehouse);
+        return Opacity(
+          opacity: finished || active ? 1 : 0.45,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  tier.name,
+                  style: TextStyle(fontWeight: FontWeight.w400, color: color),
+                ),
+                for (final need in needs)
+                  Text(
+                    '${_itemNameFor(need.itemId)} '
+                    '${formatThousands(finished ? need.needed : need.counted)} / '
+                    '${formatThousands(need.needed)}',
+                    style: TextStyle(color: color, fontSize: GameFont.s),
+                  ),
+              ],
             ),
-            for (final need in needs)
-              Text(
-                '${_itemNameFor(need.itemId)} '
-                '${formatThousands(finished ? need.needed : need.counted)} / '
-                '${formatThousands(need.needed)}',
-                style: TextStyle(color: color ?? Palette.muted, fontSize: GameFont.s),
-              ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

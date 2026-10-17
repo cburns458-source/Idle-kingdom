@@ -358,7 +358,7 @@ class _ProjectDetails extends StatelessWidget {
               GoldAmount(
                 amount: detail.goldCost,
                 style: TextStyle(
-                  color: detail.goldOwned < detail.goldCost ? Palette.danger : Palette.gold,
+                  color: detail.goldOwned < detail.goldCost ? Palette.danger : Palette.currency,
                   fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
                 ),
@@ -388,10 +388,14 @@ Future<void> showProjectReceipt(BuildContext context, {required ProjectReceipt r
           for (final line in receipt.lines)
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: Text('· $line', style: const TextStyle(color: Palette.gold)),
+              child: Text('· $line', style: const TextStyle(color: Palette.success)),
             ),
           const SizedBox(height: 10),
-          GameButton(label: 'Collect', onPressed: () => Navigator.of(context).pop()),
+          GameButton(
+            label: 'Collect',
+            tone: GameButtonTone.confirm,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         ],
       ),
     ),

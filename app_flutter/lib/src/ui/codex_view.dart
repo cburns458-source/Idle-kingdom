@@ -352,7 +352,6 @@ class _CodexViewState extends State<CodexView> {
     if (items.isEmpty) {
       return const Center(child: MutedText('Nothing in the Codex matches.'));
     }
-    final chrome = UiChrome.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: FloatingItemWell(
@@ -374,7 +373,7 @@ class _CodexViewState extends State<CodexView> {
                   style: TextStyle(
                     fontSize: GameFont.m,
                     fontWeight: FontWeight.w600,
-                    color: chrome.embossFace,
+                    color: goldForeground(context),
                   ),
                 ),
               );

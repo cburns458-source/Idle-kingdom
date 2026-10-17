@@ -23,7 +23,7 @@ class IngredientChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: chromeSlotFill(
           context,
-          border: Border.all(color: short ? Palette.danger : Palette.edge),
+          border: Border.all(color: short ? Palette.danger : UiChrome.of(context).edge),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

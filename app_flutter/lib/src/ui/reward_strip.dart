@@ -62,7 +62,7 @@ class _RewardRow extends StatelessWidget {
         for (final levelUp in bundle.xpRewards.where((xp) => xp.leveledUp))
           Text(
             'level ${levelUp.level} ${levelUp.skillName} achieved',
-            style: TextStyle(fontSize: GameFont.s, color: UiChrome.of(context).embossFace),
+            style: TextStyle(fontSize: GameFont.s, color: goldForeground(context)),
           ),
       ],
     );

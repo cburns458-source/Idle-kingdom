@@ -238,9 +238,37 @@ void main() {
       tester.getTopLeft(find.text('Confirm trade')).dy,
       lessThan(tester.getTopLeft(find.text('Buy')).dy),
     );
+    expect(
+      tester.getTopLeft(find.text('Buy')).dy,
+      lessThan(tester.getTopLeft(find.text('Sell')).dy),
+    );
     final grids = tester.widgetList<GridView>(find.byType(GridView)).toList();
     expect(grids, isNotEmpty);
     expect(grids.every((grid) => grid.physics is! NeverScrollableScrollPhysics), isTrue);
+  });
+
+  testWidgets('Buy stacks above Sell at desktop and phone widths', (tester) async {
+    for (final size in const [Size(900, 2400), Size(360, 740)]) {
+      final controller = buildController(
+        database,
+        seed: shopper(inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+      );
+      addTearDown(controller.dispose);
+      await pumpPanel(
+        tester,
+        ShopPanel(controller: controller, shopId: shopId),
+        size: size,
+      );
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getTopLeft(find.text('Buy')).dy,
+        lessThan(tester.getTopLeft(find.text('Sell')).dy),
+      );
+      expect(
+        tester.getCenter(find.text('Buy')).dx,
+        closeTo(tester.getCenter(find.text('Sell')).dx, 1),
+      );
+    }
   });
 
   testWidgets('a phone-sized location keeps Confirm trade on screen', (tester) async {

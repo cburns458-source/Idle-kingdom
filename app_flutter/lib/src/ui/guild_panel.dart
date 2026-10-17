@@ -1250,7 +1250,7 @@ class _Swatch extends StatelessWidget {
           color: Color(0xFF000000 | (int.tryParse(color.replaceFirst('#', ''), radix: 16) ?? 0)),
           borderRadius: BorderRadius.zero /* pixel step 2 */,
           border: Border.all(
-            color: selected ? Palette.gold : Palette.edge,
+            color: selected ? Palette.borderSelected : UiChrome.of(context).edge,
             width: selected ? 2 : 1,
           ),
         ),
@@ -1278,7 +1278,7 @@ class _SymbolButton extends StatelessWidget {
         decoration: chromeSlotFill(
           context,
           border: Border.all(
-            color: selected ? Palette.gold : Palette.edge,
+            color: selected ? Palette.borderSelected : UiChrome.of(context).edge,
             width: selected ? 2 : 1,
           ),
         ),

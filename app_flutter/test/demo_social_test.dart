@@ -82,7 +82,7 @@ void main() {
     return (shape as RoundedRectangleBorder).side.color;
   }
 
-  testWidgets('nearby chip is gold for strangers and green for guildmates', (tester) async {
+  testWidgets('nearby chip is a pack rim for strangers and green for guildmates', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: demoMiraLocationId),
@@ -97,7 +97,8 @@ void main() {
 
     expect(net.peers, isNotEmpty);
     expect(net.nearbyHasAllies, isFalse);
-    expect(nearbyChipRim(tester), Palette.gold);
+    expect(nearbyChipRim(tester), UiChrome.wood.embossFace);
+    expect(nearbyChipRim(tester), isNot(Palette.gold));
 
     await net.applyToGuild(demoGuildId, 'Reporting in', controller.save);
     await tester.pump();

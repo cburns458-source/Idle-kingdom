@@ -2,9 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'palette.dart';
 import 'pixel_chrome.dart';
 import 'session/battery_saver_pref.dart';
 import 'session/ui_chrome.dart';
+export 'palette.dart';
 export 'pixel_chrome.dart';
 export 'session/ui_chrome.dart';
 
@@ -34,80 +36,6 @@ double contrastRatio(Color a, Color b) {
   final light = first > second ? first : second;
   final dark = first > second ? second : first;
   return (light + 0.05) / (dark + 0.05);
-}
-
-/// The palette the game is drawn in: wood boards, tan panels, dull gold.
-abstract final class Palette {
-  static const parchmentText = Color(0xFFF4E7C8);
-  static const parchment = Color(0xFF5C4027);
-  static const parchmentDeep = Color(0xFF3D2A1A);
-
-  /// Item links in chat. Light sky blue — readable on wood and stone boards,
-  /// and distinct from parchment body text and default gold names.
-  static const chatItemLink = Color(0xFF7CC8F0);
-
-  /// Mid gold between antique brass and bright jewelry — rims, amounts, emboss.
-  static const gold = Color(0xFFA7872D);
-  static const goldHighlight = Color(0xFFBFA445);
-  static const goldShade = Color(0xFF5A420E);
-
-  /// Outer board / wood chrome.
-  static const wood = Color(0xFF2A1C12);
-  static const softGreen = Color(0xFF2E8B57);
-  static const softGreenShade = Color(0xFF1F5E3B);
-
-  /// Skills-page XP bars: the same hue as [softGreen], brighter.
-  static const skillXp = Color(0xFF3EBE68);
-  static const ink = Color(0xFF1F1610);
-  static const danger = Color(0xFFC2603F);
-
-  /// Secondary body text, the old client's `.muted`.
-  static const muted = Color(0xFFCBB894);
-
-  /// Muted copy on tan inner panels.
-  static const panelMuted = Color(0xFF6B5338);
-
-  /// Body ink on tan inner panels.
-  static const panelInk = Color(0xFF2A1C12);
-
-  /// Location and panel headings.
-  static const heading = Color(0xFFE8D090);
-
-  /// Body copy on top of location art.
-  static const overlayText = Color(0xFFF2E6C8);
-
-  /// Danger and combat warnings, the old client's `.danger-note`.
-  static const warning = Color(0xFFEFB07A);
-
-  /// Hairline gold used for panel edges.
-  static const edge = Color(0x73A7872D);
-
-  /// The behind-everything wash — dark wood base under the plank texture.
-  static const shellGradient = LinearGradient(
-    begin: Alignment(-0.6, -1),
-    end: Alignment(0.6, 1),
-    colors: [Color(0xFF1A120C), Color(0xFF2A1C12), Color(0xFF14100A)],
-    stops: [0, 0.45, 1],
-  );
-
-  /// The frame the game is played inside — outer brown board.
-  static const frameGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFF3D2A1A), Color(0xFF2A1C12)],
-  );
-
-  /// Outer wood board (HUD, nav, shell chrome).
-  static const board = wood;
-
-  /// Tan inner fill for menus and content panels.
-  static const panelTan = Color(0xFFC4A882);
-
-  /// Opaque card fill for docks, tiles, and panels (tan inset).
-  static const panel = panelTan;
-
-  /// Recessed item-slot well on tan panels.
-  static const slot = Color(0xFF3D2A1A);
 }
 
 /// Zoom that fills a portrait window with the bundled sprite's head.
@@ -326,7 +254,7 @@ ThemeData buildAppTheme() {
   );
   return base.copyWith(
     colorScheme: base.colorScheme.copyWith(
-      primary: Palette.gold,
+      primary: Palette.currency,
       onPrimary: Palette.ink,
       secondary: Palette.softGreen,
       surface: Palette.parchmentDeep,
@@ -345,13 +273,14 @@ ThemeData buildAppTheme() {
             ? const Color(0xFF5F7A45)
             : const Color(0xFF45301F);
       }),
-      trackOutlineColor: WidgetStateProperty.all(const Color(0x739A7B32)),
+      trackOutlineColor: WidgetStateProperty.all(Palette.edge),
     ),
   );
 }
 
-/// Which of the two button faces to wear: a lighter brown for doing, a darker brown for the rest.
-enum GameButtonTone { primary, secondary }
+/// Which button face to wear: lighter brown for doing, darker brown for the
+/// rest, green for confirm / buy / claim / pay.
+enum GameButtonTone { primary, secondary, confirm }
 
 /// The stepped, gold-embossed pixel button the game does everything with.
 class GameButton extends StatefulWidget {
@@ -403,15 +332,29 @@ class _GameButtonState extends State<GameButton> {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
+    final confirm = widget.tone == GameButtonTone.confirm;
     final primary = widget.tone == GameButtonTone.primary;
+    final disabled = widget.onPressed == null && !widget.waiting;
     final down = _pressed && widget.onPressed != null && !widget.waiting;
+    final gradient = confirm
+        ? (disabled
+              ? Palette.confirmDisabledFill
+              : (down || widget.selected ? Palette.confirmPressed : Palette.confirmFill))
+        : primary
+        ? (down || widget.selected ? chrome.primaryPressed : chrome.primaryFill)
+        : (down || widget.selected ? chrome.secondaryPressed : chrome.secondaryFill);
+    final labelColor = confirm
+        ? (disabled ? Palette.confirmDisabledLabel : Palette.confirmLabel)
+        : primary
+        ? chrome.primaryLabel
+        : chrome.secondaryLabel;
     final button = Semantics(
       button: true,
       enabled: widget.onPressed != null && !widget.waiting,
       label: widget.semanticLabel ?? widget.label,
       child: ExcludeSemantics(
         child: Opacity(
-          opacity: widget.waiting || widget.onPressed != null ? 1 : 0.55,
+          opacity: confirm || widget.waiting || widget.onPressed != null ? 1 : 0.55,
           child: PixelInkPlate(
             onTap: widget.waiting ? null : widget.onPressed,
             onHighlightChanged: (value) {
@@ -420,12 +363,10 @@ class _GameButtonState extends State<GameButton> {
             },
             selected: widget.selected,
             step: widget.dense ? PixelChrome.stepTight : PixelChrome.step,
-            strokeWidth: widget.selected ? 2.5 : 2,
+            strokeWidth: widget.selected ? 3 : 2,
             shadow: false,
             material: PixelPlateMaterial.grain,
-            gradient: primary
-                ? (down || widget.selected ? chrome.primaryPressed : chrome.primaryFill)
-                : (down || widget.selected ? chrome.secondaryPressed : chrome.secondaryFill),
+            gradient: gradient,
             padding: widget.dense
                 ? EdgeInsets.symmetric(horizontal: widget.symbol ? 5 : 7, vertical: 3)
                 : widget.compact
@@ -443,7 +384,7 @@ class _GameButtonState extends State<GameButton> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Palette.gold),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Palette.progress),
                       )
                     : Text(
                         widget.label,
@@ -462,7 +403,7 @@ class _GameButtonState extends State<GameButton> {
                               : GameFont.s,
                           fontWeight: FontWeight.w400,
                           height: widget.symbol ? 1 : null,
-                          color: primary ? chrome.primaryLabel : chrome.secondaryLabel,
+                          color: labelColor,
                         ),
                       ),
               ),
@@ -475,6 +416,16 @@ class _GameButtonState extends State<GameButton> {
     if (widget.tooltip == null) return button;
     return Tooltip(message: widget.tooltip!, child: button);
   }
+}
+
+/// Selected option copy is always green. Unselected copy is parchment on dark
+/// wood/stone boards (≥4.5:1) and pack ink on tan/ash plates.
+Color gameOptionLabelColor(BuildContext context, {required bool selected}) {
+  if (selected) return successForeground(context);
+  final inherited = DefaultTextStyle.of(context).style.color;
+  final onPanel =
+      _PanelForeground.of(context) || (inherited != null && inherited.computeLuminance() < 0.45);
+  return onPanel ? UiChrome.of(context).panelInk : Palette.parchmentText;
 }
 
 /// Borderless label used on dense settings rows (privacy chips, list actions).
@@ -492,8 +443,6 @@ class GameTextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chrome = UiChrome.of(context);
-    final ink = chrome.panelInk;
     return Semantics(
       button: true,
       enabled: onPressed != null,
@@ -512,7 +461,7 @@ class GameTextButton extends StatelessWidget {
                   fontFamily: gameFontFamily,
                   fontSize: GameFont.s,
                   fontWeight: FontWeight.w400,
-                  color: selected ? chrome.embossFace : ink,
+                  color: gameOptionLabelColor(context, selected: selected),
                   height: 1.1,
                 ),
               ),
@@ -547,7 +496,7 @@ class GameIconButton extends StatelessWidget {
   /// larger than the chip itself. Null keeps the tap area at [size].
   final double? tapTarget;
 
-  /// Defaults to cream parchment; pass [Palette.gold] for selected favorites.
+  /// Defaults to cream parchment; pass [Palette.rare] for favorited marks.
   final Color? iconColor;
 
   @override
@@ -782,6 +731,7 @@ class GameSwitch extends StatelessWidget {
               step: PixelChrome.stepTight,
               strokeWidth: 1.5,
               shadow: false,
+              selected: value,
               material: PixelPlateMaterial.grain,
               fillColor: value ? const Color(0xFF5F7A45) : UiChrome.of(context).slot,
               padding: const EdgeInsets.all(2),
@@ -797,7 +747,7 @@ class GameSwitch extends StatelessWidget {
                     strokeWidth: 1.5,
                     shadow: false,
                     material: PixelPlateMaterial.none,
-                    fillColor: value ? Palette.gold : const Color(0xFFCBB894),
+                    fillColor: value ? Palette.borderSelected : const Color(0xFFCBB894),
                     child: const SizedBox.expand(),
                   ),
                 ),
@@ -931,7 +881,7 @@ class GamePanel extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
-  /// Gold, thicker edge for the viewer's own leaderboard row.
+  /// Green selected rim for the viewer's own leaderboard row.
   final bool highlight;
 
   /// Outer board rim around the inner panel plate.
@@ -1089,10 +1039,10 @@ class OverlayChipButton extends StatelessWidget {
   /// The nearby chip is brown rather than the map's parchment green.
   final bool dark;
 
-  /// Gold when strangers are here, green when a friend or guildmate is.
+  /// Thicker pack rim when people are here; pass [highlightColor] for allies.
   final bool highlight;
 
-  /// Overrides [highlight] when the nearby chip should be green instead of gold.
+  /// Overrides the pack rim — green for a friend or guildmate.
   final Color? highlightColor;
 
   /// Skip the green/brown plate so a framed icon can be the whole button.
@@ -1100,13 +1050,15 @@ class OverlayChipButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rim = highlightColor ?? (highlight ? Palette.gold : null);
+    final rim = highlightColor ?? (highlight ? UiChrome.of(context).embossFace : null);
     final side = plain
         ? BorderSide.none
         : BorderSide(
             color:
                 rim ??
-                (dark ? const Color(0x8C9A7B32) : Palette.softGreenShade.withValues(alpha: 0.70)),
+                (dark
+                    ? UiChrome.of(context).embossFace
+                    : Palette.softGreenShade.withValues(alpha: 0.70)),
             width: rim != null ? 2 : 1,
           );
     return Tooltip(
@@ -1255,6 +1207,44 @@ class _PanelForeground extends InheritedWidget {
 
   @override
   bool updateShouldNotify(_PanelForeground oldWidget) => false;
+}
+
+/// Gold copy that stays readable: [Palette.goldInk] on tan plates (dark ink),
+/// [Palette.gold] on dark boards (light parchment).
+Color goldForeground(BuildContext context) {
+  final inherited = DefaultTextStyle.of(context).style.color;
+  final onLightPanel = inherited != null && inherited.computeLuminance() < 0.45;
+  return onLightPanel ? Palette.goldInk : Palette.gold;
+}
+
+/// Green copy that stays readable: [Palette.successInk] on tan plates,
+/// [Palette.skillXp] on dark boards (≥4.5:1 on wood and stone).
+Color successForeground(BuildContext context) {
+  final inherited = DefaultTextStyle.of(context).style.color;
+  final onLightPanel = inherited != null && inherited.computeLuminance() < 0.45;
+  return onLightPanel ? Palette.successInk : Palette.skillXp;
+}
+
+/// Gold heading / amount copy that picks [goldForeground] from its own surface.
+class GoldCopy extends StatelessWidget {
+  const GoldCopy(this.text, {super.key, this.style, this.maxLines, this.overflow, this.textAlign});
+
+  final String text;
+  final TextStyle? style;
+  final int? maxLines;
+  final TextOverflow? overflow;
+  final TextAlign? textAlign;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: maxLines,
+      overflow: overflow,
+      textAlign: textAlign,
+      style: (style ?? const TextStyle()).copyWith(color: goldForeground(context)),
+    );
+  }
 }
 
 /// Small muted caption, the equivalent of the CSS `.muted.tiny` pairing.

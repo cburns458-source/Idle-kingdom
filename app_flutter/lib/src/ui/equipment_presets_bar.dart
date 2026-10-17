@@ -342,7 +342,7 @@ class _LabelChip extends StatelessWidget {
           color: Colors.transparent,
           shape: PixelSteppedBorder(
             step: step,
-            side: const BorderSide(color: Palette.edge),
+            side: BorderSide(color: UiChrome.of(context).edge),
           ),
           clipBehavior: Clip.antiAlias,
           child: Ink(
@@ -457,7 +457,7 @@ class _PresetButton extends StatelessWidget {
     final label = preset?.name ?? 'Preset ${index + 1}';
     final step = square ? 2.0 : 2.0;
     final chrome = UiChrome.of(context);
-    final fill = selected ? Color.lerp(chrome.slot, Palette.gold, 0.28)! : chrome.slot;
+    final fill = selected ? Color.lerp(chrome.slot, Palette.borderSelected, 0.28)! : chrome.slot;
     return Tooltip(
       message: '$label\n$tooltipHint',
       child: Semantics(
@@ -469,7 +469,7 @@ class _PresetButton extends StatelessWidget {
           shape: PixelSteppedBorder(
             step: step,
             side: BorderSide(
-              color: selected ? Palette.gold : Palette.edge,
+              color: selected ? Palette.borderSelected : chrome.edge,
               width: selected ? 3 : 1,
             ),
           ),
@@ -551,7 +551,7 @@ class _IconChoice extends StatelessWidget {
       shape: PixelSteppedBorder(
         step: 2,
         side: BorderSide(
-          color: selected ? chrome.embossFace : Palette.edge,
+          color: selected ? chrome.embossFaceSelected : chrome.edge,
           width: selected ? 2 : 1,
         ),
       ),
@@ -559,7 +559,7 @@ class _IconChoice extends StatelessWidget {
       child: Ink(
         decoration: chromeSlotFill(
           context,
-          color: selected ? Color.lerp(chrome.slot, chrome.embossFace, 0.18)! : chrome.slot,
+          color: selected ? Color.lerp(chrome.slot, chrome.embossFaceSelected, 0.18)! : chrome.slot,
         ),
         child: InkWell(
           onTap: onTap,
@@ -705,7 +705,7 @@ class _PresetSettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: chromeSlotFill(context, border: Border.all(color: Palette.edge)),
+      decoration: chromeSlotFill(context, border: Border.all(color: UiChrome.of(context).edge)),
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: Column(

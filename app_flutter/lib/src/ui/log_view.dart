@@ -60,7 +60,7 @@ class _LogViewState extends State<LogView> {
               style: TextStyle(
                 fontSize: GameFont.s,
                 fontWeight: FontWeight.w400,
-                color: UiChrome.of(context).embossFace,
+                color: Palette.progress,
               ),
             ),
           )
@@ -74,14 +74,18 @@ class _LogViewState extends State<LogView> {
               children: [
                 const Text(
                   'Log',
-                  style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    fontSize: GameFont.xl,
+                    fontWeight: FontWeight.w400,
+                    color: Palette.heading,
+                  ),
                 ),
                 Text(
                   '${jsNumberToString(completion.overall.percent)}% complete',
                   style: TextStyle(
                     fontSize: GameFont.s,
                     fontWeight: FontWeight.w400,
-                    color: UiChrome.of(context).embossFace,
+                    color: Palette.progress,
                   ),
                 ),
               ],
@@ -150,13 +154,9 @@ class _LogViewState extends State<LogView> {
                 Expanded(child: MutedText(_tab.lead)),
               if (completion.section(_tab.section) case final section?) ...[
                 const SizedBox(width: 8),
-                Text(
+                GoldCopy(
                   section.label,
-                  style: TextStyle(
-                    fontSize: GameFont.s,
-                    fontWeight: FontWeight.w400,
-                    color: UiChrome.of(context).embossFace,
-                  ),
+                  style: const TextStyle(fontSize: GameFont.s, fontWeight: FontWeight.w400),
                 ),
               ],
             ],
@@ -325,7 +325,7 @@ class _DifficultyBand extends StatelessWidget {
                     const SizedBox(height: 4),
                     MeterBar(
                       value: completion.total <= 0 ? 0 : completion.done / completion.total,
-                      color: UiChrome.of(context).embossFace,
+                      color: Palette.progress,
                       height: 6,
                     ),
                   ],
@@ -359,6 +359,7 @@ class _LogRow extends StatelessWidget {
     this.trailing,
     this.leading,
     this.highlight = false,
+    this.success = false,
     this.dimmed = false,
   });
 
@@ -371,8 +372,11 @@ class _LogRow extends StatelessWidget {
   final String? trailing;
   final Widget? leading;
 
-  /// Gold title for anything the save has actually reached.
+  /// Gold title for achievements and marks the save has reached.
   final bool highlight;
+
+  /// Green title for completed / success rows.
+  final bool success;
 
   /// Greys the whole row out, for something not earned yet.
   final bool dimmed;
@@ -388,7 +392,13 @@ class _LogRow extends StatelessWidget {
 
   Widget _body(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final titleColor = _inkColor(highlight ? chrome.embossFace : chrome.panelInk);
+    final titleColor = _inkColor(
+      highlight
+          ? goldForeground(context)
+          : success
+          ? Palette.successInk
+          : chrome.panelInk,
+    );
     final mutedColor = dimmed ? chrome.panelMuted.withValues(alpha: dimAlpha) : chrome.panelMuted;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -433,7 +443,7 @@ class _QuestJournalRow extends StatelessWidget {
           title: row.name,
           detail: row.detail,
           trailing: row.statusLabel,
-          highlight: row.completed,
+          success: row.completed,
         ),
       );
     }
@@ -451,9 +461,7 @@ class _QuestJournalRow extends StatelessWidget {
               row.name,
               style: TextStyle(
                 fontWeight: FontWeight.w400,
-                color: row.completed
-                    ? UiChrome.of(context).embossFace
-                    : UiChrome.of(context).panelInk,
+                color: row.completed ? Palette.successInk : UiChrome.of(context).panelInk,
               ),
             ),
             subtitle: MutedText(row.detail),
@@ -477,8 +485,8 @@ class _QuestJournalRow extends StatelessWidget {
                               step.state == 'done' ? '✓' : '•',
                               style: TextStyle(
                                 color: step.state == 'done'
-                                    ? Palette.softGreen
-                                    : UiChrome.of(context).embossFace,
+                                    ? Palette.successInk
+                                    : UiChrome.of(context).panelInk,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -544,7 +552,7 @@ class _MiniquestJournalRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
-    final titleColor = row.completed || row.ready ? chrome.embossFace : chrome.panelInk;
+    final titleColor = row.ready || row.completed ? Palette.successInk : chrome.panelInk;
     final subtitle = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -552,7 +560,7 @@ class _MiniquestJournalRow extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           _repeatText,
-          style: TextStyle(fontSize: GameFont.s, color: chrome.embossFace),
+          style: TextStyle(fontSize: GameFont.s, color: chrome.panelMuted),
         ),
       ],
     );
@@ -603,7 +611,7 @@ class _MiniquestJournalRow extends StatelessWidget {
                             Text(
                               step.state == 'done' ? '✓' : '•',
                               style: TextStyle(
-                                color: step.state == 'done' ? Palette.softGreen : chrome.embossFace,
+                                color: step.state == 'done' ? Palette.successInk : chrome.panelInk,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -671,7 +679,7 @@ class _QuestSortMenu extends StatelessWidget {
           gradient: chrome.secondaryFill,
           borderRadius: BorderRadius.zero /* pixel step 3 */,
           border: Border.all(
-            color: mode == QuestLogSort.content ? chrome.embossFace : chrome.embossFaceSelected,
+            color: mode != QuestLogSort.content ? chrome.embossFaceSelected : chrome.embossFace,
           ),
           boxShadow: const [BoxShadow(offset: Offset(0, 2), color: Color(0x40000000))],
         ),

@@ -21,7 +21,7 @@ String bankNoRoomMessage(NoRoom? noRoom, {int? slotsNeeded}) {
   return DialogueText.bagFull(n);
 }
 
-/// Town and Citadel vault: stored stacks on the left, bag on the right.
+/// Town and Citadel vault: stored stacks above the bag, stacked at every width.
 class BankPanel extends StatefulWidget {
   const BankPanel({super.key, required this.controller, this.onClose});
 
@@ -229,7 +229,7 @@ class _BankPanelState extends State<BankPanel> {
               ),
               GoldAmount(
                 amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
+                style: const TextStyle(color: Palette.currency),
               ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
@@ -256,45 +256,37 @@ class _BankPanelState extends State<BankPanel> {
           ],
           const SizedBox(height: 10),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _Column(
-                    heading: 'Bank',
-                    empty: bankLen == 0 ? 'The chest is empty.' : 'Nothing in the bank matches.',
-                    itemCount: chest.length,
-                    itemBuilder: (context, i) {
-                      final row = chest[i];
-                      return _tileFor(
-                        key: ValueKey('bank-${row.index}'),
-                        stack: row.stack,
-                        onTap: () => _withdraw(row.index, row.stack),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: _Column(
-                    heading: 'Bag',
-                    empty: save.inventory.isEmpty
-                        ? 'The bag is empty.'
-                        : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
-                        ? 'Nothing in the bag to deposit.'
-                        : 'Nothing in the bag matches.',
-                    itemCount: bag.length,
-                    itemBuilder: (context, i) {
-                      final row = bag[i];
-                      return _tileFor(
-                        key: ValueKey('bag-${row.index}'),
-                        stack: row.stack,
-                        onTap: () => _deposit(row.index, row.stack),
-                      );
-                    },
-                  ),
-                ),
-              ],
+            child: StackedInventoryPanes(
+              top: _Column(
+                heading: 'Bank',
+                empty: bankLen == 0 ? 'The chest is empty.' : 'Nothing in the bank matches.',
+                itemCount: chest.length,
+                itemBuilder: (context, i) {
+                  final row = chest[i];
+                  return _tileFor(
+                    key: ValueKey('bank-${row.index}'),
+                    stack: row.stack,
+                    onTap: () => _withdraw(row.index, row.stack),
+                  );
+                },
+              ),
+              bottom: _Column(
+                heading: 'Bag',
+                empty: save.inventory.isEmpty
+                    ? 'The bag is empty.'
+                    : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
+                    ? 'Nothing in the bag to deposit.'
+                    : 'Nothing in the bag matches.',
+                itemCount: bag.length,
+                itemBuilder: (context, i) {
+                  final row = bag[i];
+                  return _tileFor(
+                    key: ValueKey('bag-${row.index}'),
+                    stack: row.stack,
+                    onTap: () => _deposit(row.index, row.stack),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -314,18 +306,22 @@ class _BankPanelState extends State<BankPanel> {
       onTap: onTap,
       child: Stack(
         children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ItemIcon(item: item, size: 36),
-              const SizedBox(height: 2),
-              Text(
-                '×${formatThousands(stack.quantity)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: GameFont.xs, color: Palette.muted, height: 1.1),
-              ),
-            ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ItemIcon(item: item, size: 36),
+                const SizedBox(height: 2),
+                Text(
+                  '×${formatThousands(stack.quantity)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: GameFont.xs, color: Palette.muted, height: 1.1),
+                ),
+              ],
+            ),
           ),
           if (enchantment != null || favorite)
             Positioned(
@@ -339,7 +335,7 @@ class _BankPanelState extends State<BankPanel> {
                       '★',
                       style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
                     ),
-                  if (favorite) const Icon(Icons.favorite, size: 14, color: Palette.gold),
+                  if (favorite) const Icon(Icons.favorite, size: 14, color: Palette.rare),
                 ],
               ),
             ),

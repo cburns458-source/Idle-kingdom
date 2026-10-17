@@ -326,7 +326,7 @@ class _BootGateState extends State<BootGate> {
       _BootPhase.ready => AppShell(controller: _booted!.game, multiplayer: _booted!.multiplayer),
       _BootPhase.loading => DecoratedBox(
         decoration: woodShellDecoration(),
-        child: const Center(child: CircularProgressIndicator(color: Palette.gold)),
+        child: const Center(child: CircularProgressIndicator(color: Palette.progress)),
       ),
     };
   }

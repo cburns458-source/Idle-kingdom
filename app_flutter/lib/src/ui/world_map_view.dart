@@ -37,6 +37,23 @@ const TextStyle mapNodeLabelStyle = TextStyle(
 /// Labels wrap to this many lines, and only then end in an ellipsis.
 const int mapNodeLabelMaxLines = 2;
 
+/// You-are-here is a filled green marker; selected (when it is not here) is a
+/// parchment fill with a green rim. Same on wood and stone.
+({Color fill, Color border, double width}) mapNodeMarkerStyle({
+  required bool isHere,
+  required bool isSelected,
+}) {
+  return (
+    fill: isHere ? Palette.borderSelected : Palette.parchmentText,
+    border: isSelected && !isHere
+        ? Palette.borderSelected
+        : isHere
+        ? Palette.ink
+        : Palette.parchment,
+    width: isSelected || isHere ? 2.0 : 1.0,
+  );
+}
+
 /// Extra width past the measured text, so a half-pixel of rounding can never
 /// push the last glyph onto a new line.
 const double mapNodeLabelSlack = 2;
@@ -441,7 +458,8 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
     final isHere = widget.isHere;
     final isSelected = widget.isSelected;
     final label = mapNodeLabel(location, widget.browseMapId);
-    final fill = isHere ? Palette.gold : Palette.parchmentText;
+    final marker = mapNodeMarkerStyle(isHere: isHere, isSelected: isSelected);
+    final fill = marker.fill;
     Widget node = GestureDetector(
       onTap: _handleTap,
       child: Column(
@@ -469,11 +487,7 @@ class _MapNodeState extends State<_MapNode> with SingleTickerProviderStateMixin 
                                 return _mapDot(fill: fill, border: border, width: 2);
                               },
                             )
-                    : _mapDot(
-                        fill: fill,
-                        border: isSelected ? Palette.gold : Palette.parchment,
-                        width: isSelected || isHere ? 2 : 1,
-                      ),
+                    : _mapDot(fill: fill, border: marker.border, width: marker.width),
               ),
             ),
           ),

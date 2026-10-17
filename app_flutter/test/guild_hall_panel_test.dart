@@ -498,7 +498,7 @@ void main() {
           )
           .style
           ?.color,
-      Palette.gold,
+      Palette.goldInk,
     );
   });
 

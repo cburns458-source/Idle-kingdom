@@ -750,7 +750,7 @@ class _Meter extends StatelessWidget {
         gradient: gradient,
         height: 8,
         trackColor: Palette.ink,
-        borderColor: const Color(0x599A7B32),
+        borderColor: UiChrome.of(context).edge,
       ),
     );
   }
@@ -1577,7 +1577,7 @@ class _StagePotionButton extends StatelessWidget {
                               fontFamily: gameFontFamily,
                               fontSize: GameFont.m,
                               fontWeight: FontWeight.w700,
-                              color: Palette.gold,
+                              color: Palette.parchmentText,
                               shadows: const [Shadow(color: Color(0xE6000000), blurRadius: 2)],
                             ),
                           ),

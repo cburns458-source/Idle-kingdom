@@ -76,6 +76,29 @@ void main() {
     expect(find.byTooltip('Copper ore'), findsOne);
   });
 
+  testWidgets('Bank stacks above Bag at desktop and phone widths', (tester) async {
+    for (final size in const [Size(900, 2400), Size(360, 740)]) {
+      final controller = buildController(
+        database,
+        seed: stashed(
+          inventory: [const InventoryStack(itemId: clayId, quantity: 2)],
+          bank: [const InventoryStack(itemId: oreId, quantity: 3)],
+        ),
+      );
+      addTearDown(controller.dispose);
+      await pumpPanel(tester, BankPanel(controller: controller), size: size);
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getTopLeft(find.text('Bank').last).dy,
+        lessThan(tester.getTopLeft(find.text('Bag')).dy),
+      );
+      expect(
+        tester.getCenter(find.text('Bank').last).dx,
+        closeTo(tester.getCenter(find.text('Bag')).dx, 1),
+      );
+    }
+  });
+
   testWidgets('groups the bag column the same way as inventory', (tester) async {
     final controller = buildController(
       database,

@@ -357,7 +357,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
           Row(
             children: [
               const Expanded(
-                child: Text(
+                child: GoldCopy(
                   'Arena',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -366,7 +366,7 @@ class _ArenaPanelState extends State<ArenaPanel> {
               ),
               GoldAmount(
                 amount: save.gold,
-                style: const TextStyle(color: Palette.gold),
+                style: const TextStyle(color: Palette.currency),
               ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],

@@ -454,7 +454,7 @@ class _ChatSheetState extends State<ChatSheet> {
                                                       net.publishedNameColor(line.userId),
                                                     ) ??
                                                     (line.mine
-                                                        ? Palette.gold
+                                                        ? Palette.borderSelected
                                                         : Palette.parchmentText),
                                               ),
                                             ),
@@ -531,7 +531,7 @@ class _ChatSheetState extends State<ChatSheet> {
                   row.displayName,
                   style: TextStyle(
                     fontSize: GameFont.m,
-                    color: selected ? Palette.gold : Palette.parchmentText,
+                    color: selected ? Palette.borderSelected : Palette.parchmentText,
                   ),
                 ),
               ),

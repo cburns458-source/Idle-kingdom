@@ -202,6 +202,17 @@ void main() {
     // still listed: a buy order is worth placing when nobody is selling.
     expect(find.text('Iron ore'), findsOne);
     expect(find.textContaining('No trades yet'), findsWidgets);
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('bazaar-filter-All')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .selected,
+      isTrue,
+    );
 
     await tester.enterText(find.byType(TextField), 'titanium');
     await tester.pump();

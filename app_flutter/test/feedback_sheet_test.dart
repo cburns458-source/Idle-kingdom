@@ -116,6 +116,18 @@ void main() {
     expect(find.text(feedbackPlayerMissing), findsOneWidget);
   });
 
+  testWidgets('selected kind chip uses board-readable green', (tester) async {
+    await pumpForm(tester);
+    expect(tester.widget<Text>(find.text('Bug')).style?.color, Palette.skillXp);
+    expect(contrastRatio(Palette.skillXp, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.skillXp, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+
+    await tester.tap(find.text('Suggestion'));
+    await tester.pump();
+    expect(tester.widget<Text>(find.text('Suggestion')).style?.color, Palette.skillXp);
+    expect(tester.widget<Text>(find.text('Bug')).style?.color, Palette.parchmentText);
+  });
+
   testWidgets('signed-in settings shows the report button; signed-out does not', (tester) async {
     final signedOut = buildMultiplayer(database, signedIn: false);
     final game = buildController(database);
@@ -128,8 +140,7 @@ void main() {
     final signedIn = buildMultiplayer(database, signedIn: true);
     addTearDown(signedIn.dispose);
     await pumpPanel(tester, MenuView(controller: game, multiplayer: signedIn));
-    await tester.tap(find.text('Feedback'));
-    await tester.pump();
+    expect(find.text('Feedback'), findsOneWidget);
     expect(find.text('Report / Suggestion'), findsOneWidget);
   });
 }

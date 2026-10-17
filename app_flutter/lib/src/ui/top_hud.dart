@@ -116,7 +116,7 @@ class TopHud extends StatelessWidget {
           context,
           border: Border(
             bottom: BorderSide(
-              color: batterySaver ? Palette.gold : Palette.edge,
+              color: batterySaver ? Palette.borderSelected : UiChrome.of(context).edge,
               width: batterySaver ? 4 : 1,
             ),
           ),
@@ -344,7 +344,7 @@ class _HealthReadout extends StatelessWidget {
                   gradient: Meters.hudHp,
                   height: 7,
                   trackColor: Palette.ink,
-                  borderColor: const Color(0x599A7B32),
+                  borderColor: UiChrome.of(context).edge,
                 ),
               ),
             ),
@@ -466,7 +466,7 @@ class HudPortrait extends StatelessWidget {
           child: PixelPlate(
             step: PixelChrome.stepTight,
             strokeWidth: hint ? 2.5 : 2,
-            selected: hint,
+            rare: hint,
             shadow: false,
             rivets: false,
             material: PixelPlateMaterial.none,

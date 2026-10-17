@@ -194,7 +194,7 @@ class _BazaarViewState extends State<BazaarView> {
             onClose: _close,
             trailing: GoldAmount(
               amount: save.gold,
-              style: const TextStyle(color: Palette.gold),
+              style: const TextStyle(color: Palette.currency),
             ),
           ),
           const SizedBox(height: 8),
@@ -280,6 +280,7 @@ class _BazaarViewState extends State<BazaarView> {
                 : GameButton(
                     label: 'Collect',
                     compact: true,
+                    tone: GameButtonTone.confirm,
                     onPressed: net.busy ? null : _collectBox,
                   ),
           );
@@ -659,6 +660,7 @@ class _BazaarViewState extends State<BazaarView> {
                 ? const MutedText('You are not carrying any. $bazaarWithdrawFirst')
                 : GameButton(
                     label: buying ? 'Place buy order' : 'Place sell order',
+                    tone: GameButtonTone.confirm,
                     onPressed: net.busy ? null : () => _place(side, itemId),
                   ),
           _ => const SizedBox.shrink(),
@@ -833,6 +835,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GameButton(
+      key: Key('bazaar-filter-$label'),
       label: label,
       compact: true,
       dense: true,
@@ -940,7 +943,7 @@ class _Slot extends StatelessWidget {
               value: order.progress,
               minHeight: 4,
               backgroundColor: Palette.slot,
-              color: Palette.gold,
+              color: Palette.progress,
             ),
           ),
         ],

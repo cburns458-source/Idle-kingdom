@@ -34,7 +34,11 @@ class PageHeader extends StatelessWidget {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
+              style: const TextStyle(
+                fontSize: GameFont.l,
+                fontWeight: FontWeight.w400,
+                color: Palette.heading,
+              ),
             ),
           ),
           if (trailing != null) ...[trailing!, const SizedBox(width: 8)],

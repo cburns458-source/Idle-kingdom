@@ -151,7 +151,10 @@ class _MailList extends StatelessWidget {
                     width: 10,
                     child: message.readAt == null
                         ? const DecoratedBox(
-                            decoration: BoxDecoration(color: Palette.gold, shape: BoxShape.circle),
+                            decoration: BoxDecoration(
+                              color: Palette.success,
+                              shape: BoxShape.circle,
+                            ),
                             child: SizedBox(width: 8, height: 8),
                           )
                         : null,
@@ -167,7 +170,7 @@ class _MailList extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontWeight: FontWeight.w400,
-                            color: message.readAt == null ? Palette.gold : Palette.parchmentText,
+                            color: message.readAt == null ? Palette.success : Palette.parchmentText,
                           ),
                         ),
                         MutedText(formatSaveDate(message.sentAt) ?? message.sentAt),
@@ -177,7 +180,7 @@ class _MailList extends StatelessWidget {
                   if (message.attachments.isNotEmpty)
                     const Padding(
                       padding: EdgeInsets.only(left: 6),
-                      child: Icon(Icons.inventory_2_outlined, size: 14, color: Palette.gold),
+                      child: Icon(Icons.inventory_2_outlined, size: 14, color: Palette.rare),
                     ),
                 ],
               ),
@@ -231,13 +234,18 @@ class _MailDetail extends StatelessWidget {
                 ),
               ),
             if (message.claimedAt == null)
-              GameButton(label: 'Claim', compact: true, onPressed: onClaim)
+              GameButton(
+                label: 'Claim',
+                compact: true,
+                tone: GameButtonTone.confirm,
+                onPressed: onClaim,
+              )
             else
               const MutedText('Claimed.'),
           ],
           if (notice != null) ...[
             const SizedBox(height: 8),
-            Text(notice!, style: const TextStyle(color: Palette.gold)),
+            Text(notice!, style: const TextStyle(color: Palette.success)),
           ],
         ],
       ),

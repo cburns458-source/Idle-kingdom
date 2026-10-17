@@ -83,6 +83,46 @@ void main() {
     );
   });
 
+  test('flavour lines are keyed by Religion ID and match every Launch faith', () {
+    final ids = religions(database.launch).map((faith) => faith.religionId).toSet();
+    expect(faithFlavourById.keys.toSet(), ids);
+    for (final faith in religions(database.launch)) {
+      final line = faithFlavourLine(faith);
+      expect(line, isNotEmpty);
+      expect(line, faithFlavourById[faith.religionId]);
+      expect(faithFlavourById.containsKey(faith.displayName), isFalse);
+    }
+  });
+
+  test('every faith bonus names the amount, skill, and stat from the row', () {
+    final faiths = religions(database.launch);
+    expect(faiths, isNotEmpty);
+    for (final faith in faiths) {
+      final rows = religionBonusesFor(database.launch, faith.religionId);
+      final views = faithBonusViews(database.launch, faith.religionId);
+      expect(views, hasLength(rows.length));
+      expect(views, isNotEmpty);
+      for (var i = 0; i < rows.length; i++) {
+        final row = rows[i];
+        final view = views[i];
+        final amount = jsNumberToString(jsNumber(row.raw['Bonus Value'] ?? 0));
+        expect(view.amountLabel, '+$amount%');
+        expect(view.statLabel, isNotEmpty);
+        if (row.raw['Bonus Type'] == 'skill_drop_chance_percent') {
+          expect(view.skillName, isNotNull);
+          expect(view.skillName, isNot(row.raw['Reference ID']));
+          expect(view.detailLine, '${view.skillName} ${view.statLabel}');
+        } else {
+          expect(view.skillName, isNull);
+          expect(view.detailLine, view.statLabel);
+          if (row.raw['Bonus Type'] == 'gold_gain_percent') {
+            expect(view.statLabel, 'Gold from enemies and actions');
+          }
+        }
+      }
+    }
+  });
+
   testWidgets('the picker is locked at total level 99', (tester) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 99));
     await openOther(tester);
@@ -92,7 +132,7 @@ void main() {
     expect(picker(), findsNothing);
   });
 
-  testWidgets('the list is only Choose a faith… and the seven names', (tester) async {
+  testWidgets('the list shows each name and bonus, not god or description', (tester) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 100));
     await openOther(tester);
     await tapFaithAction(tester, 'Choose');
@@ -115,16 +155,27 @@ void main() {
       if (description.isNotEmpty) {
         expect(find.descendant(of: picker(), matching: find.text(description)), findsNothing);
       }
-      for (final line in religionBonusSummaryLines(database.launch, faith.religionId)) {
-        expect(find.descendant(of: picker(), matching: find.text(line)), findsNothing);
+      final flavour = faithFlavourLine(faith);
+      expect(flavour, isNotEmpty);
+      expect(find.descendant(of: row, matching: find.text(flavour)), findsOne);
+      final bonuses = faithBonusViews(database.launch, faith.religionId);
+      expect(bonuses, isNotEmpty);
+      expect(bonuses, hasLength(religionBonusesFor(database.launch, faith.religionId).length));
+      for (final bonus in bonuses) {
+        expect(find.descendant(of: row, matching: find.text(bonus.amountLabel)), findsOne);
+        expect(find.descendant(of: row, matching: find.text(bonus.detailLine)), findsOne);
       }
     }
 
     expect(find.descendant(of: picker(), matching: find.text('Free')), findsNothing);
     expect(find.byKey(const Key('faith-choose')), findsNothing);
+
+    final first = tester.getRect(find.byKey(Key('faith-${faiths.first.religionId}')));
+    final second = tester.getRect(find.byKey(Key('faith-${faiths[1].religionId}')));
+    expect(second.top - first.bottom, greaterThanOrEqualTo(12));
   });
 
-  testWidgets('tapping a name opens its page with god, description, choose, and cost', (
+  testWidgets('tapping a name opens its page with god, bonus, description, choose, and cost', (
     tester,
   ) async {
     await pumpTemple(tester, atTemple(startedCharacter(database), 100));
@@ -140,6 +191,13 @@ void main() {
     if (god != null) {
       expect(find.descendant(of: picker(), matching: find.text(god)), findsOne);
     }
+    for (final bonus in faithBonusViews(database.launch, faith.religionId)) {
+      expect(find.descendant(of: picker(), matching: find.text(bonus.amountLabel)), findsOne);
+      expect(find.descendant(of: picker(), matching: find.text(bonus.detailLine)), findsOne);
+    }
+    final flavour = faithFlavourLine(faith);
+    expect(flavour, isNotEmpty);
+    expect(find.descendant(of: picker(), matching: find.text(flavour)), findsOne);
     final description = faithDescription(faith);
     if (description.isNotEmpty) {
       expect(find.descendant(of: picker(), matching: find.text(description)), findsOne);

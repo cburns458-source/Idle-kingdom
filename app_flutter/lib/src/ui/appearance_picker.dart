@@ -51,9 +51,9 @@ class _SliderRow extends StatelessWidget {
           MutedText(slider.label),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: Palette.gold,
-              inactiveTrackColor: Palette.edge,
-              thumbColor: Palette.gold,
+              activeTrackColor: Palette.progress,
+              inactiveTrackColor: UiChrome.of(context).edge,
+              thumbColor: Palette.progress,
               overlayShape: SliderComponentShape.noOverlay,
               trackHeight: 4,
             ),

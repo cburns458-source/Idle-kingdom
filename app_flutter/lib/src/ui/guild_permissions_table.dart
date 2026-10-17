@@ -87,9 +87,9 @@ class GuildPermissionsTable extends StatelessWidget {
                         : (value) => _toggle(action, rank, value ?? false),
                     visualDensity: VisualDensity.compact,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    side: const BorderSide(color: Palette.goldShade),
+                    side: BorderSide(color: UiChrome.of(context).embossFace),
                     fillColor: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) return Palette.gold;
+                      if (states.contains(WidgetState.selected)) return Palette.borderSelected;
                       return Palette.panel;
                     }),
                   ),

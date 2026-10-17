@@ -362,6 +362,7 @@ class _ShopPanelState extends State<ShopPanel> {
               Expanded(
                 child: GameButton(
                   label: 'Confirm trade',
+                  tone: GameButtonTone.confirm,
                   onPressed: _buys.isEmpty && _sells.isEmpty ? null : _confirm,
                 ),
               ),
@@ -378,52 +379,44 @@ class _ShopPanelState extends State<ShopPanel> {
             const SizedBox(height: 6),
             Text(
               receipt,
-              style: const TextStyle(color: Palette.gold, fontSize: GameFont.s),
+              style: const TextStyle(color: Palette.success, fontSize: GameFont.s),
             ),
           ],
           const SizedBox(height: 4),
-          // Stock on the left, the bag on the right, so a trade is one glance.
+          // Stock above the bag, stacked at desktop and phone widths.
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _Column(
-                    heading: 'Buy',
-                    empty: 'No stock listed.',
-                    itemCount: stock.length,
-                    itemBuilder: (context, i) {
-                      final entry = stock[i];
-                      return _tileFor(
-                        itemId: entry.itemId,
-                        unit: playerBuyPrice(db, shop, entry.itemId),
-                        offered: _buys[entry.itemId],
-                        remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
-                        onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: _Column(
-                    heading: 'Sell',
-                    empty: 'Nothing here that this shop will buy.',
-                    itemCount: sellable.length,
-                    itemBuilder: (context, i) {
-                      final row = sellable[i];
-                      return _tileFor(
-                        itemId: row.itemId,
-                        unit: row.unit,
-                        owned: row.owned,
-                        offered: _sells[row.itemId],
-                        enchantments: row.enchantmentNames(db),
-                        onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
-                      );
-                    },
-                  ),
-                ),
-              ],
+            child: StackedInventoryPanes(
+              top: _Column(
+                heading: 'Buy',
+                empty: 'No stock listed.',
+                itemCount: stock.length,
+                itemBuilder: (context, i) {
+                  final entry = stock[i];
+                  return _tileFor(
+                    itemId: entry.itemId,
+                    unit: playerBuyPrice(db, shop, entry.itemId),
+                    offered: _buys[entry.itemId],
+                    remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
+                    onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
+                  );
+                },
+              ),
+              bottom: _Column(
+                heading: 'Sell',
+                empty: 'Nothing here that this shop will buy.',
+                itemCount: sellable.length,
+                itemBuilder: (context, i) {
+                  final row = sellable[i];
+                  return _tileFor(
+                    itemId: row.itemId,
+                    unit: row.unit,
+                    owned: row.owned,
+                    offered: _sells[row.itemId],
+                    enchantments: row.enchantmentNames(db),
+                    onTap: (unit, name) => _toggleSell(row.itemId, unit, name, row.owned),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -459,7 +452,7 @@ class _ShopPanelState extends State<ShopPanel> {
           const SizedBox(height: 6),
           Text(
             receipt,
-            style: const TextStyle(color: Palette.gold, fontSize: GameFont.s),
+            style: const TextStyle(color: Palette.success, fontSize: GameFont.s),
           ),
         ],
         const SizedBox(height: 8),
@@ -498,6 +491,7 @@ class _ShopPanelState extends State<ShopPanel> {
             label: 'Buy',
             semanticLabel: 'Buy $name',
             compact: true,
+            tone: GameButtonTone.confirm,
             onPressed: affordable ? () => _buyPlaza(entry.itemId) : null,
           ),
         ],
@@ -514,7 +508,7 @@ class _ShopPanelState extends State<ShopPanel> {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: GoldCopy(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -522,16 +516,18 @@ class _ShopPanelState extends State<ShopPanel> {
                 ),
               ),
               if (plaza)
-                Text(
-                  key: const Key('plaza-points-balance'),
-                  '${formatThousands(plazaPointsOf(save))} plaza points',
-                  style: const TextStyle(color: Palette.gold),
+                Builder(
+                  builder: (context) => Text(
+                    key: const Key('plaza-points-balance'),
+                    '${formatThousands(plazaPointsOf(save))} plaza points',
+                    style: TextStyle(color: goldForeground(context)),
+                  ),
                 )
               else
                 GoldAmount(
                   key: const Key('shop-gold-balance'),
                   amount: save.gold,
-                  style: const TextStyle(color: Palette.gold),
+                  style: const TextStyle(color: Palette.currency),
                 ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
@@ -571,26 +567,34 @@ class _ShopPanelState extends State<ShopPanel> {
       onTap: enabled ? () => onTap(unit, label) : null,
       child: Stack(
         children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ItemIcon(item: item, size: 36),
-              const SizedBox(height: 2),
-              Text(
-                unit == null
-                    ? '—'
-                    : owned != null
-                    ? '${formatThousands(unit)}g · ${formatThousands(owned)}'
-                    : remaining == null
-                    ? '${formatThousands(unit)}g'
-                    : soldOut
-                    ? 'sold out'
-                    : '${formatThousands(unit)}g · ${formatThousands(remaining)}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: GameFont.xs, color: Palette.muted, height: 1.1),
-              ),
-            ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ItemIcon(item: item, size: 36),
+                const SizedBox(height: 2),
+                Text(
+                  unit == null
+                      ? '—'
+                      : owned != null
+                      ? '${formatThousands(unit)}g · ${formatThousands(owned)}'
+                      : remaining == null
+                      ? '${formatThousands(unit)}g'
+                      : soldOut
+                      ? 'sold out'
+                      : '${formatThousands(unit)}g · ${formatThousands(remaining)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: GameFont.xs,
+                    color: Palette.currencyOnSlot,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
           ),
           if (enchantments.isNotEmpty)
             const Positioned(
@@ -607,7 +611,7 @@ class _ShopPanelState extends State<ShopPanel> {
               right: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: const BoxDecoration(color: Color(0xE69A7B32)),
+                decoration: const BoxDecoration(color: Palette.borderSelected),
                 child: Text(
                   '×${formatThousands(offered)}',
                   style: const TextStyle(
