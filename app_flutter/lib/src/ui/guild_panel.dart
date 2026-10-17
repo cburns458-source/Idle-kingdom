@@ -304,9 +304,11 @@ class _GuildPanelState extends State<GuildPanel> {
     final rosterCount = rows.length * 2;
     final guestListCount = rosterGuests.isNotEmpty ? 3 + rosterGuests.length * 2 : 0;
     final motto = guild.description.trim();
-    final showMottoBlock = net.chatAllowed && motto.isNotEmpty;
+    final showMottoText = net.chatAllowed && motto.isNotEmpty;
+    final showMottoEditOnly = net.chatAllowed && motto.isEmpty && header.canEditMotto;
+    final showMottoSlot = showMottoText || showMottoEditOnly;
     final showGuildBoard = net.chatAllowed;
-    final homeLeadCount = 4 + (showMottoBlock ? 2 : 0) + (showGuildBoard ? 2 : 0);
+    final homeLeadCount = 4 + (showMottoSlot ? 2 : 0) + (showGuildBoard ? 2 : 0);
     final footerStart =
         homeLeadCount +
         (guestGuild != null ? 2 : 0) +
@@ -342,13 +344,24 @@ class _GuildPanelState extends State<GuildPanel> {
           }
           if (index == 1) return const SizedBox(height: 10);
           var cursor = 2;
-          if (showMottoBlock) {
+          if (showMottoSlot) {
             if (index == cursor) {
-              return _GuildTextBlock(
-                title: 'Motto',
-                body: motto,
-                canEdit: header.canEditMotto,
-                onEdit: () => _editGuildMotto(guild),
+              if (showMottoText) {
+                return _GuildTextBlock(
+                  title: 'Motto',
+                  body: motto,
+                  canEdit: header.canEditMotto,
+                  onEdit: () => _editGuildMotto(guild),
+                );
+              }
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: GameIconButton(
+                  key: const Key('guild-motto-edit'),
+                  onPressed: () => _editGuildMotto(guild),
+                  tooltip: 'Edit motto',
+                  icon: Icons.edit,
+                ),
               );
             }
             if (index == cursor + 1) return const SizedBox(height: 10);

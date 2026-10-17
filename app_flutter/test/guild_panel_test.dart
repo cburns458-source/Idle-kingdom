@@ -110,12 +110,17 @@ void main() {
 
     await pumpPanel(tester, guildScreen(net, controller));
     await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+
+    expect(find.byKey(const Key('guild-motto-edit')), findsOneWidget);
+    expect(find.text('Motto'), findsNothing);
+
     expect((await net.service.setGuildMotto(net.guildId!, 'Keep the watch.')).ok, isTrue);
     await net.refresh(controller.save);
     await tester.pumpAndSettle();
 
     expect(find.text('Motto'), findsOneWidget);
     expect(find.text('Keep the watch.'), findsOneWidget);
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
 
     transport.setAccountStatus(
       net.session!.userId,
@@ -126,6 +131,7 @@ void main() {
 
     expect(find.text('Motto'), findsNothing);
     expect(find.text('Keep the watch.'), findsNothing);
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
   });
 
   testWidgets('blank motto and application messages leave no row or placeholder', (tester) async {
@@ -144,9 +150,16 @@ void main() {
     await pumpPanel(tester, guildScreen(net, controller));
     await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
 
+    expect(find.byKey(const Key('guild-motto-edit')), findsOneWidget);
     expect(find.text('Motto'), findsNothing);
     expect(find.text('No motto yet.'), findsNothing);
     expect(find.text('No description.'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('guild-motto-edit')));
+    await tester.pumpAndSettle();
+    expect(find.text('Guild motto'), findsOneWidget);
+    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
+    await tester.pumpAndSettle();
 
     final outsiderController = buildController(database, seed: startedCharacter(database));
     addTearDown(outsiderController.dispose);
@@ -160,6 +173,7 @@ void main() {
     expect(find.text('[IRN] Iron League'), findsOneWidget);
     expect(find.textContaining('No description.'), findsNothing);
     expect(find.text('Motto'), findsNothing);
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
     expect(find.textContaining('Accept applications · 1/$guildMaxMembers'), findsOneWidget);
 
     expect((await net.service.setGuildJoinPolicy(net.guildId!, guildJoinClosed)).ok, isTrue);
@@ -180,6 +194,7 @@ void main() {
     expect(find.text('Guest request.'), findsNothing);
     expect(find.text('Motto'), findsNothing);
     expect(find.text('No motto yet.'), findsNothing);
+    expect(find.byKey(const Key('guild-motto-edit')), findsOneWidget);
   });
 
   testWidgets('the create sheet says what it is still waiting for', (tester) async {
