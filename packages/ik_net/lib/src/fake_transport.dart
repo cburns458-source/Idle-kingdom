@@ -134,6 +134,10 @@ class FakeTransport implements RemoteTransport {
   /// used once. For making one step of a sequence fail rather than the next one.
   Map<String, String> get failOnce => _project.failOnce;
 
+  /// How many times a [failOnce] key should fire before it is spent. Defaults
+  /// to one. Use this when the same call is retried inside one action.
+  Map<String, int> get failTimes => _project.failTimes;
+
   /// Columns this stand-in pretends the project has not got, as a skipped
   /// migration would. A select or upsert that names one of them is refused.
   Set<String> get missingColumns => _project.missingColumns;
@@ -197,8 +201,17 @@ class FakeTransport implements RemoteTransport {
 
   String? _takeFailure(String call) {
     if (unreachable) return 'Failed to fetch';
-    final named = failOnce.remove(call);
-    if (named != null) return named;
+    if (failOnce.containsKey(call)) {
+      final named = failOnce[call]!;
+      final left = (failTimes[call] ?? 1) - 1;
+      if (left <= 0) {
+        failOnce.remove(call);
+        failTimes.remove(call);
+      } else {
+        failTimes[call] = left;
+      }
+      return named;
+    }
     final reason = failNextWith;
     if (reason == null) return null;
     failNextRepeats -= 1;
@@ -2748,6 +2761,7 @@ class _FakeProject {
   final List<String> calls = <String>[];
   final List<String> magicLinks = <String>[];
   final Map<String, String> failOnce = <String, String>{};
+  final Map<String, int> failTimes = <String, int>{};
   bool hostsGuildLifecycleRpcs = true;
   final Set<String> missingColumns = <String>{};
   final Set<String> missingTables = <String>{};

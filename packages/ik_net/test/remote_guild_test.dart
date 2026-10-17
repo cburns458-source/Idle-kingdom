@@ -607,6 +607,84 @@ void main() {
     expect(created.reason, isNot('Leave your current guild before creating another.'));
   });
 
+  test('a failed rollback retries the leader seat and still founds the guild', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['insert:${RemoteTables.guildMembers}'] = 'permission denied';
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.goldCost, guildCreateGoldCost);
+    expect(created.save, isNull);
+    final guildId = created.guildId!;
+    expect((await leader.guildMembers(guildId)).single.role, guildRoleLeader);
+    expect(
+      transport.tables[RemoteTables.profiles]!.firstWhere(
+        (row) => row['user_id'] == leader.session!.userId,
+      )['guild_id'],
+      guildId,
+    );
+    expect(await leader.guildHall(guildId), isNotNull);
+    expect(await leader.guildProjects(guildId), hasLength(1));
+  });
+
+  test('a failed rollback that cannot seat the leader does not charge gold', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['insert:${RemoteTables.guildMembers}'] = 'permission denied';
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+    transport.failOnce['upsert:${RemoteTables.guildMembers}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isFalse);
+    expect(created.reason, remoteGuildCreateFailed);
+    expect(created.goldCost, isNull);
+    expect(created.save, isNull);
+    expect(await leader.currentGuildId(), isNull);
+    expect(transport.tables[RemoteTables.guildMembers], isEmpty);
+  });
+
+  test('a failed rollback retries the profile link and still founds the guild', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.goldCost, guildCreateGoldCost);
+    expect(created.save, isNull);
+    final guildId = created.guildId!;
+    expect((await leader.guildMembers(guildId)).single.role, guildRoleLeader);
+    expect(
+      transport.tables[RemoteTables.profiles]!.firstWhere(
+        (row) => row['user_id'] == leader.session!.userId,
+      )['guild_id'],
+      guildId,
+    );
+    expect(await leader.guildHall(guildId), isNotNull);
+    expect(await leader.guildProjects(guildId), hasLength(1));
+  });
+
+  test('a failed rollback that cannot link the profile does not charge gold', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    transport.failTimes['update:${RemoteTables.profiles}'] = 2;
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isFalse);
+    expect(created.reason, remoteGuildCreateFailed);
+    expect(created.goldCost, isNull);
+    expect(created.save, isNull);
+  });
+
   test('a failed rollback still shows the founder their guild', () async {
     final transport = FakeTransport();
     transport.hostsGuildLifecycleRpcs = false;
