@@ -592,6 +592,43 @@ void main() {
     ], reason: 'the unread insert is rolled back');
   });
 
+  test('a hosted create keeps the save when the new guild cannot be read', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.missingTables.add(RemoteTables.guildsVisible);
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.save, isNotNull);
+    expect(created.save!.gold, guildCreateGoldCost * 3, reason: 'the hosted save still paid');
+    expect(created.guildId, isNotEmpty);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+    expect(created.reason, isNot(remoteGuildNameTaken));
+    expect(created.reason, isNot('Leave your current guild before creating another.'));
+  });
+
+  test('a failed rollback still shows the founder their guild', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.missingTables.add(RemoteTables.guildsVisible);
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.reason, isNot(remoteGuildNameTaken));
+    expect(created.reason, isNot('Leave your current guild before creating another.'));
+    expect(created.guildId, isNotEmpty);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+    expect(await leader.currentGuildId(), created.guildId);
+
+    transport.missingTables.remove(RemoteTables.guildsVisible);
+    final shown = await leader.guild(created.guildId!);
+    expect(shown, isNotNull);
+    expect(shown!.name, 'Iron League');
+    expect(shown.tag, 'IRN');
+  });
+
   test('a project without the Wave E functions still founds the old way', () async {
     final transport = FakeTransport();
     transport.hostsGuildLifecycleRpcs = false;

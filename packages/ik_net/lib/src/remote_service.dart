@@ -1421,11 +1421,14 @@ class RemoteMultiplayerService implements MultiplayerService {
     final guildId = await _guilds.currentGuildId();
     var founded = guildId == null ? null : await _guilds.guildById(guildId);
     founded ??= guildId == null ? null : await _guilds.guildById(guildId);
-    if (founded == null) {
-      return const CreateGuildResult.failed(remoteGuildCreateFailed);
+    if (founded != null) {
+      _noteGuild(founded);
+    } else if (guildId != null) {
+      _guildIdSeen = guildId;
     }
-    _noteGuild(founded);
-    return CreateGuildResult.ok(founded, guildCreateGoldCost, save: hosted.save);
+    // The hosted command already charged gold and wrote the guild. A missed
+    // reread must not drop that save or tell the player the create failed.
+    return CreateGuildResult.ok(founded, guildCreateGoldCost, save: hosted.save, guildId: guildId);
   }
 
   /// A project that has not deployed `guild_create` or applied its migration.

@@ -1851,9 +1851,9 @@ class MultiplayerController extends ChangeNotifier {
   /// that was refused can say so itself instead of closing and hoping the
   /// player finds the message it left behind.
   ///
-  /// A write that the following read missed is not filled in with default
-  /// permissions or banner. The form sees the error, then a refetch picks the
-  /// real row up if the guild actually landed.
+  /// A hosted create that already charged gold always keeps that save, even
+  /// when the following guild read misses. Refresh picks the row up when it
+  /// can; the player is not told the guild was not created.
   Future<String?> createGuild(
     CreateGuildInput input,
     PlayerSave save,
@@ -1863,23 +1863,26 @@ class MultiplayerController extends ChangeNotifier {
     var founded = false;
     await run(veil: 'create', () async {
       final result = await service.createGuild(input, save.gold);
-      if (!result.ok) {
-        await refresh(save);
-        if (guildId != null) {
-          founded = true;
-          return 'Guild created.';
-        }
-        return result.reason;
-      }
-      final paid = result.save;
-      if (paid != null) {
-        _adoptHosted(paid, command: 'guild_create');
-      } else {
+      if (result.save != null) {
+        _adoptHosted(result.save!, command: 'guild_create');
+      } else if (result.ok) {
         onPaid(result.goldCost!);
       }
-      founded = true;
+      if (result.ok || result.save != null) {
+        founded = true;
+        try {
+          await refresh(save);
+        } on Object {
+          // The founding already landed. A later refresh will pick the guild up.
+        }
+        return 'Guild created.';
+      }
       await refresh(save);
-      return 'Guild created.';
+      if (guildId != null) {
+        founded = true;
+        return 'Guild created.';
+      }
+      return result.reason;
     });
     if (founded) return null;
     // Refusal stays on the create sheet; do not also fire the global alert.

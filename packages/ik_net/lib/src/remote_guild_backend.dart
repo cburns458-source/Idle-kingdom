@@ -281,20 +281,28 @@ class RemoteGuildBackend {
     if (id is! String) return const CreateGuildResult.failed(remoteGuildCreateFailed);
     // RETURNING omits description / permissions / banner. Do not invent those
     // from the incomplete row — reread the visible guild, or roll the insert
-    // back and say so.
+    // back. If the rollback delete fails, the name and tag are still held, so
+    // finish founding and show the player that guild instead of a retry.
     var guild = await guildById(id);
     guild ??= await guildById(id);
     if (guild == null) {
-      await transport.delete(RemoteTables.guilds, equals: <String, Object?>{'id': id});
-      return const CreateGuildResult.failed(remoteGuildCreateFailed);
+      final rolledBack = await transport.delete(
+        RemoteTables.guilds,
+        equals: <String, Object?>{'id': id},
+      );
+      if (rolledBack == null) {
+        return const CreateGuildResult.failed(remoteGuildCreateFailed);
+      }
+      guild = await guildById(id);
     }
+    final guildId = guild?.id ?? id;
 
     final facts = await factsOf();
     final seated = await transport.insert(
       RemoteTables.guildMembers,
       guildMemberRowFor(
         GuildMember(
-          guildId: guild.id,
+          guildId: guildId,
           userId: current.userId,
           username: facts.username,
           role: guildRoleLeader,
@@ -309,20 +317,33 @@ class RemoteGuildBackend {
     if (!seated.ok) {
       // A guild with nobody in it would hold its name against everyone else,
       // and its founder could not even leave it, so it goes back.
-      await transport.delete(RemoteTables.guilds, equals: <String, Object?>{'id': guild.id});
-      return CreateGuildResult.failed(seated.reason!);
+      final rolledBack = await transport.delete(
+        RemoteTables.guilds,
+        equals: <String, Object?>{'id': guildId},
+      );
+      if (rolledBack == null) {
+        return CreateGuildResult.failed(seated.reason!);
+      }
+      return CreateGuildResult.ok(guild, guildCreateGoldCost, guildId: guildId);
     }
 
-    final tagged = await _noteOwnGuild(current.userId, guild.id);
+    final tagged = await _noteOwnGuild(current.userId, guildId);
     if (tagged != null) {
-      await transport.delete(RemoteTables.guilds, equals: <String, Object?>{'id': guild.id});
-      return CreateGuildResult.failed(friendlyRemoteError(tagged));
+      final rolledBack = await transport.delete(
+        RemoteTables.guilds,
+        equals: <String, Object?>{'id': guildId},
+      );
+      if (rolledBack == null) {
+        return CreateGuildResult.failed(friendlyRemoteError(tagged));
+      }
+      return CreateGuildResult.ok(guild, guildCreateGoldCost, guildId: guildId);
     }
     await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
-      guildHallRowFor(GuildHallState.fresh(guild.id)),
+      guildHallRowFor(GuildHallState.fresh(guildId)),
     ]);
-    await _seedGuildGoals(guild.id);
-    return CreateGuildResult.ok(guild, guildCreateGoldCost);
+    await _seedGuildGoals(guildId);
+    guild ??= await guildById(guildId);
+    return CreateGuildResult.ok(guild, guildCreateGoldCost, guildId: guildId);
   }
 
   Future<ApplyToGuildResult> applyToGuild(String guildId, String message) async {

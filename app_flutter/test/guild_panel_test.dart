@@ -95,6 +95,69 @@ void main() {
     );
   });
 
+  testWidgets('hosted create applies the save when the new guild cannot be read', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+    transport.missingTables.add(RemoteTables.guildsVisible);
+
+    final reason = await net.createGuild(
+      const CreateGuildInput(
+        name: 'Iron League',
+        tag: 'IRN',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      controller.save,
+      (_) => fail('hosted create should adopt the server save'),
+    );
+
+    expect(reason, isNull);
+    expect(net.notice, 'Guild created.');
+    expect(controller.save.gold, 5);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+  });
+
+  testWidgets('hosted create still says created when refresh cannot read the guild', (
+    tester,
+  ) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+    transport.missingTables.add(RemoteTables.guildsVisible);
+
+    final reason = await net.createGuild(
+      const CreateGuildInput(
+        name: 'Iron League',
+        tag: 'IRN',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      controller.save,
+      (_) => fail('hosted create should adopt the server save'),
+    );
+
+    expect(reason, isNull);
+    expect(net.notice, 'Guild created.');
+    expect(net.guild, isNull, reason: 'the reread and the refresh both missed the row');
+    expect(controller.save.gold, 5);
+    expect(reason, isNot(contains('not created')));
+  });
+
   testWidgets('under-13s do not see the guild motto', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(

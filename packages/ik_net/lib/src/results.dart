@@ -72,12 +72,20 @@ class ChatSendResult {
 }
 
 class CreateGuildResult {
-  const CreateGuildResult.ok(GuildRecord this.guild, num this.goldCost, {this.save})
-    : reason = null;
+  CreateGuildResult.ok(this.guild, this.goldCost, {this.save, String? guildId})
+    : reason = null,
+      guildId = guildId ?? guild?.id;
 
-  const CreateGuildResult.failed(this.reason) : guild = null, goldCost = null, save = null;
+  const CreateGuildResult.failed(this.reason)
+    : guild = null,
+      goldCost = null,
+      save = null,
+      guildId = null;
 
   final GuildRecord? guild;
+
+  /// The new guild's id when the create landed but the following read missed.
+  final String? guildId;
 
   /// What the caller should deduct once it has recorded the guild. Ignored
   /// when [save] is set, because the server has already taken it.
@@ -90,7 +98,7 @@ class CreateGuildResult {
   bool get ok => reason == null;
 
   Map<String, Object?> toJson() => ok
-      ? <String, Object?>{'ok': true, 'guild': guild!.toJson(), 'goldCost': goldCost}
+      ? <String, Object?>{'ok': true, 'guild': guild?.toJson(), 'goldCost': goldCost}
       : <String, Object?>{'ok': false, 'reason': reason};
 }
 
