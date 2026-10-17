@@ -18,7 +18,7 @@ export function parseSetAgeTokens(tokens: string[], asOf: Date = new Date()): Se
   const month = monthToken ? Number(monthToken) : null
   if (!username || !Number.isFinite(year)) return { ok: false, reason: SETAGE_USAGE }
   if (!staffBirthYearOk(year, asOf)) return { ok: false, reason: STAFF_BIRTH_YEAR_ERROR }
-  if (monthToken && (!Number.isFinite(month) || month < 1 || month > 12)) {
+  if (month != null && (!Number.isFinite(month) || month < 1 || month > 12)) {
     return { ok: false, reason: SETAGE_MONTH_ERROR }
   }
   return {
