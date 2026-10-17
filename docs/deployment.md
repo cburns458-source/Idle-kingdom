@@ -263,8 +263,8 @@ Checklist, in order:
     `20261017024002` / `account_purge_cron`); live pending.
 
 16. [ ] `20261017152000_account_age_guild_chat.sql` (ADM-08 / Ui). Year-only
-    answers treat the birthday as 31 December (a known month still uses the
-    1st). `guild_set_motto` requires `chat_allowed`. Application inserts with
+    answers treat the birthday as 31 December (item 18 below also uses the
+    last day of a known month). `guild_set_motto` requires `chat_allowed`. Application inserts with
     a non-empty `message` require `chat_allowed`; an empty message still
     applies.     Apply to test with this PR; live only after Conor merges
     `test-launch` into `main`.
@@ -277,6 +277,12 @@ Checklist, in order:
     after Conor merges `test-launch` into `main`.
     Status: applied on test Oct 17 2026 (file `20261017153000`, MCP
     `20261017025045` / `staff_setage_qa`); live pending.
+
+18. [ ] `20261017154000_account_age_month_end.sql` (ADM-08 QA). A known birth
+    month uses the last day of that month in the as-of year, same safe rule
+    as year-only = 31 December. Apply to test with this PR; live only after
+    Conor merges `test-launch` into `main`.
+    Status: pending apply on test.
 
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16

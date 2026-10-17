@@ -6,12 +6,12 @@ import 'package:test/test.dart';
 void main() {
   final asOf = DateTime.utc(2026, 10, 17);
 
-  test('chat turns on at 13 and stays off until the birthday', () {
-    expect(accountAgeYears(2013, 10, asOf), 13);
-    expect(accountAgeYears(2013, 11, asOf), 12);
-    expect(chatAllowedFromAge(answered: true, birthYear: 2013, birthMonth: 10, asOf: asOf), isTrue);
+  test('chat turns on at 13 and stays off until the last day of the birth month', () {
+    expect(accountAgeYears(2013, 9, asOf), 13);
+    expect(accountAgeYears(2013, 10, asOf), 12);
+    expect(chatAllowedFromAge(answered: true, birthYear: 2013, birthMonth: 9, asOf: asOf), isTrue);
     expect(
-      chatAllowedFromAge(answered: true, birthYear: 2013, birthMonth: 11, asOf: asOf),
+      chatAllowedFromAge(answered: true, birthYear: 2013, birthMonth: 10, asOf: asOf),
       isFalse,
     );
   });
@@ -24,13 +24,13 @@ void main() {
   });
 
   test('birthday rollover unlocks chat without a new answer', () {
-    // A known month uses the 1st, so October 2013 turns 13 on 1 Oct 2026.
+    // A known month uses its last day, so October 2013 turns 13 on 31 Oct 2026.
     expect(
       chatAllowedFromAge(
         answered: true,
         birthYear: 2013,
         birthMonth: 10,
-        asOf: DateTime.utc(2026, 9, 30),
+        asOf: DateTime.utc(2026, 10, 30),
       ),
       isFalse,
     );
@@ -39,7 +39,7 @@ void main() {
         answered: true,
         birthYear: 2013,
         birthMonth: 10,
-        asOf: DateTime.utc(2026, 10, 1),
+        asOf: DateTime.utc(2026, 10, 31),
       ),
       isTrue,
     );
@@ -52,6 +52,9 @@ void main() {
       chatAllowedFromAge(answered: true, birthYear: 2013, asOf: DateTime.utc(2026, 12, 31)),
       isTrue,
     );
+    // February uses the last day of February in the as-of year (2025 is not a leap year).
+    expect(accountAgeYears(2012, 2, DateTime.utc(2025, 2, 27)), 12);
+    expect(accountAgeYears(2012, 2, DateTime.utc(2025, 2, 28)), 13);
   });
 
   test('unanswered accounts and 0-12 store bands are refused', () {
