@@ -158,7 +158,7 @@ class _TannerPanelState extends State<TannerPanel> {
             const SizedBox(height: 6),
             Text(
               receipt,
-              style: const TextStyle(color: Palette.success, fontSize: GameFont.s),
+              style: TextStyle(color: successForeground(context), fontSize: GameFont.s),
             ),
           ],
           const SizedBox(height: 12),

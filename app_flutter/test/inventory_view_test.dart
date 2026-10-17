@@ -400,6 +400,17 @@ void main() {
               matching: find.byType(PixelInkPlate),
             ),
           )
+          .inset,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('attack-style-offensive')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
           .gradient,
       UiChrome.wood.primarySelected,
     );
@@ -894,6 +905,17 @@ void main() {
           )
           .selected,
       isFalse,
+    );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('auto-eat')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .inset,
+      isTrue,
     );
     expect(
       tester

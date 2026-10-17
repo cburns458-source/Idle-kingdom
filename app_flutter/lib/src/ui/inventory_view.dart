@@ -1268,7 +1268,7 @@ class _ItemTile extends StatelessWidget {
                 if (enchanted)
                   const Text(
                     '★',
-                    style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
+                    style: TextStyle(fontSize: GameFont.s, color: Palette.skillXp),
                   ),
                 if (favorite)
                   const Padding(

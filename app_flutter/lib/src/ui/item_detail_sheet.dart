@@ -451,7 +451,7 @@ class _CompareItemBlock extends StatelessWidget {
 Color _lineColor(BuildContext context, EquipCompareDeltaKind kind) {
   final chrome = UiChrome.of(context);
   return switch (kind) {
-    EquipCompareDeltaKind.improved => Palette.success,
+    EquipCompareDeltaKind.improved => successForeground(context),
     EquipCompareDeltaKind.reduced => Palette.danger,
     EquipCompareDeltaKind.unchanged => chrome.panelMuted,
     EquipCompareDeltaKind.special => chrome.panelInk,

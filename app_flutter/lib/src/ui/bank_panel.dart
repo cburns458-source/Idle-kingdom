@@ -333,7 +333,7 @@ class _BankPanelState extends State<BankPanel> {
                   if (enchantment != null)
                     const Text(
                       '★',
-                      style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
+                      style: TextStyle(fontSize: GameFont.s, color: Palette.skillXp),
                     ),
                   if (favorite) const Icon(Icons.favorite, size: 14, color: Palette.rare),
                 ],

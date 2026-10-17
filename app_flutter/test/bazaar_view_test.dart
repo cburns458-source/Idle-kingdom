@@ -214,6 +214,17 @@ void main() {
           .selected,
       isFalse,
     );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('bazaar-filter-All')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .inset,
+      isTrue,
+    );
 
     await tester.enterText(find.byType(TextField), 'titanium');
     await tester.pump();

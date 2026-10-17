@@ -98,12 +98,25 @@ abstract final class Palette {
     colors: [Color(0xFF287A4C), Color(0xFF1F5E3B)],
   );
 
-  /// Brighter confirm fill for a selected / active confirm button.
-  static const confirmSelected = LinearGradient(
+  /// Parchment/gold face for a selected GameButton. Cream on a slightly
+  /// brighter green cannot clear both ≥1.5:1 vs the idle fill and ≥4.5:1 for
+  /// the label, so selected switches to this gold plate with [selectedLabel].
+  static const selectedFill = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF2A8251), Color(0xFF287A4C)],
+    colors: [heading, goldHighlight],
   );
+
+  static const selectedPressed = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [goldHighlight, Color(0xFFC4A038)],
+  );
+
+  static const selectedLabel = goldInk;
+
+  /// Selected confirm uses the same gold plate as other selected buttons.
+  static const confirmSelected = selectedFill;
 
   static const confirmPressed = LinearGradient(
     begin: Alignment.topCenter,
@@ -111,11 +124,11 @@ abstract final class Palette {
     colors: [Color(0xFF1F5E3B), Color(0xFF16452B)],
   );
 
-  /// Disabled confirm fill. Neutral grey on wood and stone — not faded green.
+  /// Disabled fill. Dark grey, flat — not a faded green of similar luminance.
   static const confirmDisabledFill = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF6E6E6E), Color(0xFF4A4A4A)],
+    colors: [Color(0xFF3A3A3A), Color(0xFF242424)],
   );
 
   static const confirmDisabledLabel = Color(0xFFE8E6E0);

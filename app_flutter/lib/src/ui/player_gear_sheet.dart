@@ -146,7 +146,7 @@ class _GearSlotTile extends StatelessWidget {
                           top: 0,
                           child: Text(
                             '★',
-                            style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
+                            style: TextStyle(fontSize: GameFont.s, color: Palette.skillXp),
                           ),
                         ),
                     ],

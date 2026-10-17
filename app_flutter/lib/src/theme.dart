@@ -256,7 +256,7 @@ ThemeData buildAppTheme() {
     colorScheme: base.colorScheme.copyWith(
       primary: Palette.currency,
       onPrimary: Palette.ink,
-      secondary: Palette.softGreen,
+      secondary: Palette.gold,
       surface: Palette.parchmentDeep,
       onSurface: Palette.parchmentText,
       error: Palette.danger,
@@ -306,7 +306,8 @@ class GameButton extends StatefulWidget {
   /// Smaller than [compact] — header chips such as Sell items.
   final bool dense;
 
-  /// Brighter fill for the active tab or conversation. The pack rim stays.
+  /// Gold parchment fill and an inset bevel for the active tab or conversation.
+  /// The pack rim stays — selected is not a green rim.
   final bool selected;
 
   final String? tooltip;
@@ -334,24 +335,22 @@ class _GameButtonState extends State<GameButton> {
     final primary = widget.tone == GameButtonTone.primary;
     final disabled = widget.onPressed == null && !widget.waiting;
     final down = _pressed && widget.onPressed != null && !widget.waiting;
+    final selected = widget.selected && !disabled;
     final LinearGradient gradient;
     final Color labelColor;
     if (disabled) {
       gradient = Palette.confirmDisabledFill;
       labelColor = Palette.confirmDisabledLabel;
+    } else if (selected) {
+      labelColor = Palette.selectedLabel;
+      gradient = down ? Palette.selectedPressed : Palette.selectedFill;
     } else if (confirm) {
       labelColor = Palette.confirmLabel;
-      gradient = down
-          ? Palette.confirmPressed
-          : widget.selected
-          ? Palette.confirmSelected
-          : Palette.confirmFill;
+      gradient = down ? Palette.confirmPressed : Palette.confirmFill;
     } else {
       labelColor = primary ? chrome.primaryLabel : chrome.secondaryLabel;
       gradient = down
           ? (primary ? chrome.primaryPressed : chrome.secondaryPressed)
-          : widget.selected
-          ? (primary ? chrome.primarySelected : chrome.secondarySelected)
           : (primary ? chrome.primaryFill : chrome.secondaryFill);
     }
     final button = Semantics(
@@ -366,7 +365,9 @@ class _GameButtonState extends State<GameButton> {
             setState(() => _pressed = value);
           },
           selected: false,
-          emboss: true,
+          inset: selected || down,
+          innerHighlight: selected ? Palette.parchmentText : null,
+          emboss: !disabled,
           step: widget.dense ? PixelChrome.stepTight : PixelChrome.step,
           strokeWidth: 2,
           shadow: false,
