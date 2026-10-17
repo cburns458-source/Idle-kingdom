@@ -21,6 +21,7 @@ import '../session/quest_log_sort_pref.dart';
 import '../storage/prefs_store.dart';
 import '../theme.dart';
 import 'app_shell.dart';
+import 'delete_account_page.dart';
 
 /// Shown when this binary was built without a hosted backend.
 const String bootNoServerMessage = 'This build has no server';
@@ -326,7 +327,10 @@ class _BootGateState extends State<BootGate> {
     return switch (_phase) {
       _BootPhase.noServer => const _BootMessage(text: bootNoServerMessage),
       _BootPhase.retrying => const _BootMessage(text: bootRetryMessage),
-      _BootPhase.ready => AppShell(controller: _booted!.game, multiplayer: _booted!.multiplayer),
+      _BootPhase.ready =>
+        isDeleteAccountPath()
+            ? DeleteAccountPage(controller: _booted!.game, multiplayer: _booted!.multiplayer)
+            : AppShell(controller: _booted!.game, multiplayer: _booted!.multiplayer),
       _BootPhase.loading => DecoratedBox(
         decoration: woodShellDecoration(),
         child: const Center(child: CircularProgressIndicator(color: Palette.parchmentText)),

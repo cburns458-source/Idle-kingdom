@@ -1,6 +1,7 @@
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
+import 'age.dart';
 import 'cloud_save.dart';
 import 'fake_exchange.dart';
 import 'feedback.dart';
@@ -99,12 +100,14 @@ class FakeTransport implements RemoteTransport {
     String? userId,
   }) {
     final key = email.trim().toLowerCase();
-    accounts[key] = FakeAccount(
-      userId: userId ?? _nextId('usr'),
-      email: key,
-      password: password,
-      username: username,
-    );
+    final id = userId ?? _nextId('usr');
+    accounts[key] = FakeAccount(userId: id, email: key, password: password, username: username);
+    if (username != null && username.isNotEmpty) {
+      final profiles = tables[RemoteTables.profiles]!;
+      if (!profiles.any((row) => row['user_id'] == id)) {
+        profiles.add(<String, Object?>{'user_id': id, 'username': username, 'updated_at': stamp()});
+      }
+    }
   }
 
   /// Every call made, so a test can assert what went over the wire.
@@ -130,6 +133,10 @@ class FakeTransport implements RemoteTransport {
   /// Reasons keyed by the call they refuse, such as `insert:guild_members`, each
   /// used once. For making one step of a sequence fail rather than the next one.
   Map<String, String> get failOnce => _project.failOnce;
+
+  /// How many times a [failOnce] key should fire before it is spent. Defaults
+  /// to one. Use this when the same call is retried inside one action.
+  Map<String, int> get failTimes => _project.failTimes;
 
   /// Columns this stand-in pretends the project has not got, as a skipped
   /// migration would. A select or upsert that names one of them is refused.
@@ -163,6 +170,27 @@ class FakeTransport implements RemoteTransport {
   /// Set to answer the send-chat function with something unusable.
   RemoteRow? chatFunctionReply;
 
+  /// Per-account social flags. Missing ids are treated as already answered.
+  Map<String, AccountSocialStatus> get accountStatuses => _project.accountStatuses;
+
+  Set<String> get developerIds => _project.developerIds;
+
+  Map<String, DateTime> get lastSignInAt => _project.lastSignInAt;
+
+  Map<String, DateTime> get pendingDeletions => _project.pendingDeletions;
+
+  void setAccountStatus(String userId, AccountSocialStatus status) {
+    accountStatuses[userId] = status;
+  }
+
+  AccountSocialStatus statusFor(String userId) =>
+      accountStatuses[userId] ?? const AccountSocialStatus.playable();
+
+  bool _mayChat(String userId) {
+    final status = statusFor(userId);
+    return status.chatAllowed && !status.deletionPending && pendingDeletions[userId] == null;
+  }
+
   /// The Bazaar exchange, which is a function call rather than a set of tables
   /// because its tables are closed to clients.
   FakeExchange get exchange => _project.exchange ??= FakeExchange(
@@ -178,8 +206,17 @@ class FakeTransport implements RemoteTransport {
 
   String? _takeFailure(String call) {
     if (unreachable) return 'Failed to fetch';
-    final named = failOnce.remove(call);
-    if (named != null) return named;
+    if (failOnce.containsKey(call)) {
+      final named = failOnce[call]!;
+      final left = (failTimes[call] ?? 1) - 1;
+      if (left <= 0) {
+        failOnce.remove(call);
+        failTimes.remove(call);
+      } else {
+        failTimes[call] = left;
+      }
+      return named;
+    }
     final reason = failNextWith;
     if (reason == null) return null;
     failNextRepeats -= 1;
@@ -362,12 +399,18 @@ class FakeTransport implements RemoteTransport {
       for (final entry in like.entries) {
         selectedLikes.add('$table.${entry.key}=${entry.value}');
       }
-      final reason = _takeFailure('select:$table');
+      final specific = 'select:$table:$columns';
+      final reason = failOnce.containsKey(specific)
+          ? _takeFailure(specific)
+          : _takeFailure('select:$table');
       if (reason != null) return RemoteQueryResult.failed(reason);
       final missingTable = _missingTableRefusal(table);
       if (missingTable != null) return RemoteQueryResult.failed(missingTable);
       final missing = _missingColumnRefusal(table, columns);
       if (missing != null) return RemoteQueryResult.failed(missing);
+
+      final locked = _lockedColumnRefusal(table, columns);
+      if (locked != null) return RemoteQueryResult.failed(locked);
 
       final storedTable = table == RemoteTables.leaderboardEntries
           ? RemoteTables.leaderboard
@@ -375,6 +418,10 @@ class FakeTransport implements RemoteTransport {
           ? RemoteTables.profiles
           : table == RemoteTables.guildHallTiers
           ? RemoteTables.guildHalls
+          : table == RemoteTables.guildsVisible
+          ? RemoteTables.guilds
+          : table == RemoteTables.guildApplicationsVisible
+          ? RemoteTables.guildApplications
           : table;
       var rows = (tables[storedTable] ?? const <RemoteRow>[])
           .where((row) => equals.entries.every((filter) => row[filter.key] == filter.value))
@@ -403,6 +450,21 @@ class FakeTransport implements RemoteTransport {
               'completed_tiers': row['completed_tiers'] ?? const <Object?>[],
               'debt_paid_off': row['debt_paid_off'] == true,
             },
+        ];
+      }
+      if (table == RemoteTables.guildsVisible) {
+        final allowed = _currentChatAllowed;
+        rows = [
+          for (final row in rows) <String, Object?>{...row, if (!allowed) 'description': ''},
+        ];
+      }
+      if (table == RemoteTables.guildApplicationsVisible) {
+        final me = _current?.userId;
+        final allowed = _currentChatAllowed;
+        rows = [
+          for (final row in rows)
+            if (me != null && (row['user_id'] == me || _isGuildManager(me, row['guild_id'])))
+              <String, Object?>{...row, if (!allowed) 'message': ''},
         ];
       }
 
@@ -532,6 +594,13 @@ class FakeTransport implements RemoteTransport {
         if (table == RemoteTables.guilds) {
           final blocked = _guildLeaderGuardRefusal(at >= 0 ? stored[at] : null, next);
           if (blocked != null) return blocked;
+          final previous = at >= 0 ? stored[at]['description'] : null;
+          if (row.containsKey('description') &&
+              previous != next['description'] &&
+              _current != null &&
+              !_currentChatAllowed) {
+            return ageGateError;
+          }
         }
         if (at >= 0) {
           stored[at] = next;
@@ -556,6 +625,35 @@ class FakeTransport implements RemoteTransport {
     final key = _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
     final written = <String, Object?>{..._defaults(table), ...row};
+    final returningLocked = _lockedColumnRefusal(table, columns);
+    if (returningLocked != null) return RemoteQueryResult.failed(returningLocked);
+    if (table == RemoteTables.guilds) {
+      final description = '${written['description'] ?? ''}'.trim();
+      if (description.isNotEmpty && _current != null && !_currentChatAllowed) {
+        return const RemoteQueryResult.failed(ageGateError);
+      }
+    }
+    if (table == RemoteTables.guildApplications) {
+      final userId = written['user_id'];
+      final message = '${written['message'] ?? ''}'.trim();
+      final guest = written['guest'] == true;
+      if (userId is String && guest && !_mayChat(userId)) {
+        return const RemoteQueryResult.failed(ageGateError);
+      }
+      if (userId is String && message.isNotEmpty && !statusFor(userId).chatAllowed) {
+        return const RemoteQueryResult.failed(ageGateError);
+      }
+    }
+    if (table == RemoteTables.friendRequests) {
+      final from = written['from_user_id'];
+      final to = written['to_user_id'];
+      if (from is String && !statusFor(from).chatAllowed) {
+        return const RemoteQueryResult.failed(ageGateError);
+      }
+      if (to is String && !statusFor(to).chatAllowed) {
+        return const RemoteQueryResult.failed(ageGateError);
+      }
+    }
     if (table == RemoteTables.bountyClaims) {
       return const RemoteQueryResult.failed('permission denied for table bounty_claims');
     }
@@ -605,6 +703,12 @@ class FakeTransport implements RemoteTransport {
       if (table == RemoteTables.guilds) {
         final blocked = _guildLeaderGuardRefusal(stored[i], next);
         if (blocked != null) return blocked;
+        if (row.containsKey('description') &&
+            stored[i]['description'] != next['description'] &&
+            _current != null &&
+            !_currentChatAllowed) {
+          return ageGateError;
+        }
       }
       stored[i] = next;
       if (table == RemoteTables.guildMembers) {
@@ -709,6 +813,34 @@ class FakeTransport implements RemoteTransport {
     }
     next[remoteUsernameRenamedAtColumn] = _clockIso();
     return null;
+  }
+
+  /// Column SELECT revoked from anon/authenticated on the base tables.
+  String? _lockedColumnRefusal(String table, String columns) {
+    final asked = columns.split(',').map((part) => part.trim()).toSet();
+    if (table == RemoteTables.guilds && asked.contains('description')) {
+      return 'permission denied for column guilds.description';
+    }
+    if (table == RemoteTables.guildApplications && asked.contains('message')) {
+      return 'permission denied for column guild_applications.message';
+    }
+    return null;
+  }
+
+  bool get _currentChatAllowed {
+    final me = _current?.userId;
+    return me != null && statusFor(me).chatAllowed;
+  }
+
+  bool _isGuildManager(String userId, Object? guildId) {
+    final guild = _guildRow(guildId);
+    if (guild == null) return false;
+    if (guild['leader_id'] == userId) return true;
+    final membership = _membershipFor(userId);
+    final role = '${membership?['role'] ?? ''}';
+    return membership != null &&
+        membership['guild_id'] == guildId &&
+        (role == guildRoleLeader || role == guildRoleOfficer);
   }
 
   /// Matches the SQL trigger: only the current leader may write leader_id.
@@ -1384,6 +1516,9 @@ class FakeTransport implements RemoteTransport {
       if (function == remoteBazaarMarketFunction) {
         final caller = _current;
         if (caller == null) return const RemoteInvokeResult.failed('Not signed in.');
+        if (pendingDeletions[caller.userId] != null && body['action'] == 'place') {
+          return const RemoteInvokeResult.failed('This account is scheduled for deletion.');
+        }
         return exchange.call(
           userId: caller.userId,
           username: caller.username ?? 'Adventurer',
@@ -1399,6 +1534,9 @@ class FakeTransport implements RemoteTransport {
       if (function == remoteSubmitFeedbackFunction) {
         return _invokeSubmitFeedback(body);
       }
+      if (function == remoteDeleteAccountFunction) {
+        return _invokeDeleteAccount(body);
+      }
       if (function != remoteSendChatFunction) {
         return RemoteInvokeResult.failed('No such function: $function');
       }
@@ -1406,6 +1544,9 @@ class FakeTransport implements RemoteTransport {
 
       final sender = _current;
       if (sender == null) return const RemoteInvokeResult.failed('Not signed in.');
+      if (!statusFor(sender.userId).chatAllowed || pendingDeletions[sender.userId] != null) {
+        return const RemoteInvokeResult.failed(ageGateError);
+      }
       final row = <String, Object?>{
         'id': _nextId('msg'),
         'channel_key': body['channelKey'],
@@ -1428,6 +1569,12 @@ class FakeTransport implements RemoteTransport {
       final reason = _takeFailure('rpc:$function');
       if (reason != null) return RemoteInvokeResult.failed(reason);
 
+      if (function == RemoteRpcs.accountStatus) {
+        return _accountStatusRpc();
+      }
+      if (function == RemoteRpcs.setAccountAge) {
+        return _setAccountAgeRpc(args);
+      }
       if (function == RemoteRpcs.guildSetBanner) {
         final guildId = args['p_guild'];
         final me = _current?.userId;
@@ -1476,6 +1623,13 @@ class FakeTransport implements RemoteTransport {
         if (me == null) {
           return RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'reason': 'Sign in first.'});
         }
+        if (!statusFor(me).chatAllowed) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': ageGateError,
+            'code': ageGateCode,
+          });
+        }
         final guilds = tables[RemoteTables.guilds]!;
         final at = guilds.indexWhere((row) => row['id'] == guildId);
         if (at < 0) {
@@ -1504,6 +1658,13 @@ class FakeTransport implements RemoteTransport {
         final me = _current?.userId;
         if (me == null) {
           return RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'reason': 'Sign in first.'});
+        }
+        if (!statusFor(me).chatAllowed) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': ageGateError,
+            'code': ageGateCode,
+          });
         }
         final membership = _membershipFor(me);
         final role = '${membership?['role'] ?? ''}';
@@ -1792,11 +1953,16 @@ class FakeTransport implements RemoteTransport {
     if (guilds.any((row) => row['name'] == name || row['tag'] == tag)) {
       return _refused(remoteGuildNameTaken);
     }
+    final description = '${wanted['description'] ?? ''}'.trim();
+    if (!statusFor(userId).chatAllowed) {
+      if (description.isNotEmpty) return _refused(ageGateError);
+    }
     final guild = <String, Object?>{
       ..._defaults(RemoteTables.guilds),
       ...wanted,
       'name': name,
       'tag': tag,
+      'description': statusFor(userId).chatAllowed ? description : '',
       'leader_id': userId,
     };
     guilds.add(guild);
@@ -1902,6 +2068,7 @@ class FakeTransport implements RemoteTransport {
     }
 
     if (function == RemoteRpcs.guildJoinGuest) {
+      if (!_mayChat(me)) return _refused(ageGateError);
       final guildId = args['p_guild_id'];
       final guild = _guildRow(guildId);
       if (guild == null) return _refused(remoteGuildMissing);
@@ -1947,10 +2114,12 @@ class FakeTransport implements RemoteTransport {
       if (guild['leader_id'] != me && actor?['role'] != guildRoleOfficer) {
         return _refused('Only the guild leader or an officer can decide applications.');
       }
+      final applicant = '${application['user_id']}';
+      if (args['p_accept'] == true && application['guest'] == true && !_mayChat(applicant)) {
+        return _refused(ageGateError);
+      }
       applications.remove(application);
       if (args['p_accept'] != true) return const <String, Object?>{'ok': true};
-
-      final applicant = '${application['user_id']}';
       final memberOf = _membershipFor(applicant)?['guild_id'];
       final facts = _memberFacts(applicant, application['username'] as String?);
       if (application['guest'] == true) {
@@ -2299,6 +2468,101 @@ class FakeTransport implements RemoteTransport {
     return const RemoteInvokeResult.ok(<String, Object?>{'ok': true});
   }
 
+  RemoteInvokeResult _accountStatusRpc() {
+    final me = _current;
+    if (me == null) {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'age_answered': false,
+        'chat_allowed': false,
+        'deletion_pending': false,
+      });
+    }
+    final status = statusFor(me.userId);
+    final pending = pendingDeletions[me.userId];
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'age_answered': status.ageAnswered,
+      'chat_allowed': status.chatAllowed && pending == null,
+      'deletion_pending': pending != null,
+      'deletion_purge_at': pending?.toUtc().toIso8601String(),
+    });
+  }
+
+  RemoteInvokeResult _setAccountAgeRpc(RemoteRow args) {
+    final me = _current;
+    if (me == null) return const RemoteInvokeResult.failed('Sign in first.');
+    if (statusFor(me.userId).ageAnswered && accountStatuses.containsKey(me.userId)) {
+      final current = statusFor(me.userId);
+      if (current.ageAnswered) {
+        return const RemoteInvokeResult.ok(<String, Object?>{
+          'ok': false,
+          'reason': 'Age is already set for this account.',
+        });
+      }
+    }
+    final source = '${args['p_source'] ?? 'self'}';
+    if (source != 'self') {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'Store age signals are not accepted. Enter the year you were born.',
+      });
+    }
+    final year = args['p_birth_year'];
+    final month = args['p_birth_month'];
+    final asOf = DateTime.utc(2026, 10, 17);
+    final allowed = chatAllowedFromAge(
+      answered: true,
+      birthYear: year is int ? year : int.tryParse('$year'),
+      birthMonth: month is int ? month : int.tryParse('$month'),
+      asOf: asOf,
+    );
+    setAccountStatus(me.userId, AccountSocialStatus(ageAnswered: true, chatAllowed: allowed));
+    return RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'age_answered': true,
+      'chat_allowed': allowed,
+    });
+  }
+
+  RemoteInvokeResult _invokeDeleteAccount(RemoteRow body) {
+    final me = _current;
+    if (me == null) return const RemoteInvokeResult.failed('Sign in first.');
+    final action = '${body['action'] ?? 'request'}';
+    if (action == 'restore') {
+      final purgeAt = pendingDeletions[me.userId];
+      if (purgeAt == null) {
+        return const RemoteInvokeResult.failed('This account is not waiting to be deleted.');
+      }
+      if (!purgeAt.isAfter(DateTime.utc(2026, 10, 17, 12, 5))) {
+        return const RemoteInvokeResult.failed('This account is being deleted.');
+      }
+      pendingDeletions.remove(me.userId);
+      return const RemoteInvokeResult.ok(<String, Object?>{'ok': true, 'restored': true});
+    }
+    if (developerIds.contains(me.userId)) {
+      return const RemoteInvokeResult.failed('Staff accounts cannot be deleted this way.');
+    }
+    final last = lastSignInAt[me.userId];
+    if (last != null && DateTime.utc(2026, 10, 17, 12, 5).difference(last).inMinutes > 15) {
+      return const RemoteInvokeResult.failed('Sign in again to confirm.');
+    }
+    final typed = '${body['characterName'] ?? ''}';
+    final profile = tables[RemoteTables.profiles]!.cast<RemoteRow?>().firstWhere(
+      (row) => row?['user_id'] == me.userId,
+      orElse: () => null,
+    );
+    final username = '${profile?['username'] ?? me.username ?? ''}';
+    if (typed.trim().toLowerCase() != username.trim().toLowerCase()) {
+      return const RemoteInvokeResult.failed('Type your character name to confirm.');
+    }
+    pendingDeletions[me.userId] = DateTime.utc(2026, 10, 31, 12, 5);
+    return const RemoteInvokeResult.ok(<String, Object?>{
+      'ok': true,
+      'purge_after': '2026-10-31T12:05:00.000Z',
+    });
+  }
+
   RemoteInvokeResult _usernameAvailableRpc(RemoteRow args) {
     final name = remoteUsername('${args['p_name'] ?? ''}');
     if (name.length < 2) return const RemoteInvokeResult.ok(<String, Object?>{'value': false});
@@ -2512,6 +2776,7 @@ class _FakeProject {
   final List<String> calls = <String>[];
   final List<String> magicLinks = <String>[];
   final Map<String, String> failOnce = <String, String>{};
+  final Map<String, int> failTimes = <String, int>{};
   bool hostsGuildLifecycleRpcs = true;
   final Set<String> missingColumns = <String>{};
   final Set<String> missingTables = <String>{};
@@ -2521,6 +2786,10 @@ class _FakeProject {
   FakeExchange? exchange;
   int stamps = 0;
   int ids = 0;
+  final Map<String, AccountSocialStatus> accountStatuses = <String, AccountSocialStatus>{};
+  final Set<String> developerIds = <String>{};
+  final Map<String, DateTime> lastSignInAt = <String, DateTime>{};
+  final Map<String, DateTime> pendingDeletions = <String, DateTime>{};
 }
 
 class FakeAccount {

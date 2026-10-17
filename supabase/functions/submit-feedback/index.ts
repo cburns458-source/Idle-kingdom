@@ -216,6 +216,11 @@ function liveDeps(req: Request): FeedbackDeps | Response {
     nowMs: () => Date.now(),
     postDiscord: (url, payload) => postDiscordWebhook(url, payload),
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    async accountFrozen(userId) {
+      const { data, error } = await admin.rpc('account_is_frozen', { p_user: userId })
+      if (error) return true
+      return data === true
+    },
   }
 }
 

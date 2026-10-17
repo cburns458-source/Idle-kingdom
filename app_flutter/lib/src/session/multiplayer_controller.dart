@@ -267,6 +267,61 @@ class MultiplayerController extends ChangeNotifier {
   MultiplayerSession? get session => service.session;
   bool get isSignedIn => service.isSignedIn;
 
+  AccountSocialStatus _accountStatus = const AccountSocialStatus.playable();
+
+  AccountSocialStatus get accountStatus => _accountStatus;
+
+  bool get needsAgeAnswer => isSignedIn && _accountStatus.needsAgeAnswer;
+
+  bool get chatAllowed => isSignedIn && _accountStatus.chatAllowed && !deletionPending;
+
+  bool get deletionPending => isSignedIn && _accountStatus.deletionPending;
+
+  DateTime? get deletionPurgeAt => _accountStatus.deletionPurgeAt;
+
+  Future<void> refreshAccountStatus() async {
+    if (!isSignedIn) {
+      _accountStatus = const AccountSocialStatus.playable();
+      notifyListeners();
+      return;
+    }
+    _accountStatus = await service.accountStatus();
+    notifyListeners();
+  }
+
+  Future<String?> submitAccountAge({
+    int? birthYear,
+    int? birthMonth,
+    String source = 'self',
+    String? ageBand,
+  }) async {
+    final result = await service.setAccountAge(
+      birthYear: birthYear,
+      birthMonth: birthMonth,
+      source: source,
+      ageBand: ageBand,
+    );
+    if (!result.ok) return result.reason;
+    await refreshAccountStatus();
+    return null;
+  }
+
+  Future<String?> requestAccountDeletion(String characterName) async {
+    final result = await service.requestAccountDeletion(characterName);
+    if (!result.ok) return result.reason;
+    await service.signOut();
+    _clearAccountLocally();
+    notifyListeners();
+    return null;
+  }
+
+  Future<String?> restoreAccount() async {
+    final result = await service.restoreAccount();
+    if (!result.ok) return result.reason;
+    await refreshAccountStatus();
+    return null;
+  }
+
   /// Which backend this build talks to, which the account screen says out loud.
   MultiplayerMode get mode =>
       service is RemoteMultiplayerService ? MultiplayerMode.supabase : MultiplayerMode.local;
@@ -572,6 +627,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   void _resetSignedOutState() {
+    _accountStatus = const AccountSocialStatus.playable();
     _guildId = null;
     _guild = null;
     _guestGuildId = null;
@@ -1147,6 +1203,7 @@ class MultiplayerController extends ChangeNotifier {
       return;
     }
     if (!isSignedIn) {
+      _accountStatus = const AccountSocialStatus.playable();
       _listings = await service.listGuilds();
       _board = await _readBoard(save);
       _citadelVisitors = await service.citadelVisitors();
@@ -1155,6 +1212,7 @@ class MultiplayerController extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    _accountStatus = await service.accountStatus();
     _guildId = await service.currentGuildId();
     _guestGuildId = await service.currentGuestGuildId();
     _listings = await service.listGuilds();
@@ -1305,6 +1363,7 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> sendFriendRequest(String userId) {
     return run(() async {
+      if (!chatAllowed) return null;
       final result = await service.sendFriendRequest(userId);
       await _loadSocialLists();
       if (!result.ok) return result.reason;
@@ -1679,7 +1738,7 @@ class MultiplayerController extends ChangeNotifier {
       },
       settings: settings,
     );
-    if (milestones.isEmpty) return;
+    if (milestones.isEmpty || !chatAllowed) return;
     final characterName = after.characterName?.trim();
     final name = (characterName != null && characterName.isNotEmpty)
         ? characterName
@@ -1704,6 +1763,7 @@ class MultiplayerController extends ChangeNotifier {
       return sendDirectMessage(peer, body, announceSent: false);
     }
     return run(() async {
+      if (!chatAllowed) return null;
       final channel = chatChannelForTab(
         _chatTab,
         locationId: locationId,
@@ -1765,6 +1825,7 @@ class MultiplayerController extends ChangeNotifier {
     bool announceSent = true,
   }) {
     return run(() async {
+      if (!chatAllowed) return null;
       final me = session?.userId;
       if (me == null) return 'Sign in to chat.';
       final result = await service.sendChat(ChatChannel.dm(dmPairKey(me, userId)), body);
@@ -1792,8 +1853,9 @@ class MultiplayerController extends ChangeNotifier {
   /// that was refused can say so itself instead of closing and hoping the
   /// player finds the message it left behind.
   ///
-  /// A guild that was written counts as founded even if the read after it
-  /// failed: the guild is real, and the failed read has its own notice.
+  /// A hosted create that already charged gold always keeps that save, even
+  /// when the following guild read misses. Refresh picks the row up when it
+  /// can; the player is not told the guild was not created.
   Future<String?> createGuild(
     CreateGuildInput input,
     PlayerSave save,
@@ -1803,16 +1865,22 @@ class MultiplayerController extends ChangeNotifier {
     var founded = false;
     await run(veil: 'create', () async {
       final result = await service.createGuild(input, save.gold);
-      if (!result.ok) return result.reason;
-      final paid = result.save;
-      if (paid != null) {
-        _adoptHosted(paid, command: 'guild_create');
-      } else {
+      if (result.save != null) {
+        _adoptHosted(result.save!, command: 'guild_create');
+      } else if (result.ok) {
         onPaid(result.goldCost!);
       }
-      founded = true;
+      if (result.ok || result.save != null) {
+        founded = true;
+        try {
+          await refresh(save);
+        } on Object {
+          // The founding already landed. A later refresh will pick the guild up.
+        }
+        return 'Guild created.';
+      }
       await refresh(save);
-      return 'Guild created.';
+      return result.reason;
     });
     if (founded) return null;
     // Refusal stays on the create sheet; do not also fire the global alert.
@@ -1823,7 +1891,7 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> applyToGuild(String guildId, String message, PlayerSave save) {
     return run(veil: 'join', () async {
-      final result = await service.applyToGuild(guildId, message);
+      final result = await service.applyToGuild(guildId, chatAllowed ? message : '');
       if (!result.ok) return result.reason;
       final joined = result.joined ?? false;
       await refresh(save);
@@ -1833,6 +1901,7 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> joinAsGuest(String guildId, String message, PlayerSave save) {
     return run(veil: 'guest', () async {
+      if (!chatAllowed) return ageGateError;
       final result = await service.joinAsGuest(guildId, message);
       if (!result.ok) return result.reason;
       final joined = result.joined ?? false;
@@ -1895,6 +1964,7 @@ class MultiplayerController extends ChangeNotifier {
   /// Saves the public guild motto (description).
   Future<void> saveGuildMotto(String motto, PlayerSave save) {
     return run(() async {
+      if (!chatAllowed) return null;
       final guildId = _guildId;
       if (guildId == null) return 'Join a guild first.';
       final result = await service.setGuildMotto(guildId, motto);
@@ -1907,6 +1977,7 @@ class MultiplayerController extends ChangeNotifier {
   /// Saves the private guild announcement for members.
   Future<void> saveGuildPrivateMessage(String body, PlayerSave save) {
     return run(() async {
+      if (!chatAllowed) return null;
       final guildId = _guildId;
       if (guildId == null) return 'Join a guild first.';
       final result = await service.setGuildPrivateMessage(guildId, body);

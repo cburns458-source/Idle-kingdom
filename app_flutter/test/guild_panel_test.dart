@@ -95,6 +95,220 @@ void main() {
     );
   });
 
+  testWidgets('hosted create applies the save when the new guild cannot be read', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+    transport.missingTables.add(RemoteTables.guildsVisible);
+
+    final reason = await net.createGuild(
+      const CreateGuildInput(
+        name: 'Iron League',
+        tag: 'IRN',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      controller.save,
+      (_) => fail('hosted create should adopt the server save'),
+    );
+
+    expect(reason, isNull);
+    expect(net.notice, 'Guild created.');
+    expect(controller.save.gold, 5);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+  });
+
+  testWidgets('hosted create still says created when refresh cannot read the guild', (
+    tester,
+  ) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+    transport.missingTables.add(RemoteTables.guildsVisible);
+
+    final reason = await net.createGuild(
+      const CreateGuildInput(
+        name: 'Iron League',
+        tag: 'IRN',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      controller.save,
+      (_) => fail('hosted create should adopt the server save'),
+    );
+
+    expect(reason, isNull);
+    expect(net.notice, 'Guild created.');
+    expect(net.guild, isNull, reason: 'the reread and the refresh both missed the row');
+    expect(controller.save.gold, 5);
+    expect(reason, isNot(contains('not created')));
+  });
+
+  testWidgets('under-13s do not see the guild motto', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+
+    await pumpPanel(tester, guildScreen(net, controller));
+    await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+
+    expect(find.byKey(const Key('guild-motto-edit')), findsOneWidget);
+    expect(find.text('Motto'), findsNothing);
+
+    expect((await net.service.setGuildMotto(net.guildId!, 'Keep the watch.')).ok, isTrue);
+    await net.refresh(controller.save);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Motto'), findsOneWidget);
+    expect(find.text('Keep the watch.'), findsOneWidget);
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
+
+    transport.setAccountStatus(
+      net.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    await net.refreshAccountStatus();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('Keep the watch.'), findsNothing);
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
+  });
+
+  testWidgets('an empty motto shows only the edit button to a chatting officer', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+
+    await pumpPanel(tester, guildScreen(net, controller));
+    await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+
+    expect(find.byKey(const Key('guild-motto-edit')), findsOneWidget);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+
+    final recruitController = buildController(database, seed: startedCharacter(database));
+    addTearDown(recruitController.dispose);
+    final recruit = buildRemoteMultiplayer(database, transport: FakeTransport.joining(transport));
+    addTearDown(recruit.dispose);
+    expect((await recruit.service.signUp('recruit@example.com', 'Recruit', 'secret')).ok, isTrue);
+    await hostTheSave(recruit, transport, recruitController);
+    expect((await recruit.service.applyToGuild(net.guildId!, '')).ok, isTrue);
+    await recruit.refresh(recruitController.save);
+    await pumpPanel(tester, guildScreen(recruit, recruitController));
+    await tester.pumpAndSettle();
+
+    expect(find.text('[IRN] Iron League'), findsOneWidget);
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+
+    transport.setAccountStatus(
+      net.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    await net.refreshAccountStatus();
+    await pumpPanel(tester, guildScreen(net, controller));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+  });
+
+  testWidgets('blank motto and application messages leave no row or placeholder', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+
+    await pumpPanel(tester, guildScreen(net, controller));
+    await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+
+    expect(find.byKey(const Key('guild-motto-edit')), findsOneWidget);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+    expect(find.text('No description.'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('guild-motto-edit')));
+    await tester.pumpAndSettle();
+    expect(find.text('Guild motto'), findsOneWidget);
+    await tester.tap(find.widgetWithText(GameButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    final outsiderController = buildController(database, seed: startedCharacter(database));
+    addTearDown(outsiderController.dispose);
+    final outsider = buildRemoteMultiplayer(database, transport: FakeTransport.joining(transport));
+    addTearDown(outsider.dispose);
+    expect((await outsider.service.signUp('look@example.com', 'Looker', 'secret')).ok, isTrue);
+    await outsider.refresh(outsiderController.save);
+    await pumpPanel(tester, guildScreen(outsider, outsiderController));
+    await tester.pumpAndSettle();
+
+    expect(find.text('[IRN] Iron League'), findsOneWidget);
+    expect(find.textContaining('No description.'), findsNothing);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.byKey(const Key('guild-motto-edit')), findsNothing);
+    expect(find.textContaining('Accept applications · 1/$guildMaxMembers'), findsOneWidget);
+
+    expect((await net.service.setGuildJoinPolicy(net.guildId!, guildJoinClosed)).ok, isTrue);
+    final hopefulController = buildController(database, seed: startedCharacter(database));
+    addTearDown(hopefulController.dispose);
+    final hopeful = buildRemoteMultiplayer(database, transport: FakeTransport.joining(transport));
+    addTearDown(hopeful.dispose);
+    expect((await hopeful.service.signUp('hope@example.com', 'Hopeful', 'secret')).ok, isTrue);
+    expect((await hopeful.service.applyToGuild(net.guildId!, '')).ok, isTrue);
+
+    await net.refresh(controller.save);
+    await pumpPanel(tester, guildScreen(net, controller));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pending applications'), findsOneWidget);
+    expect(find.text('Hopeful'), findsOneWidget);
+    expect(find.text('No message.'), findsNothing);
+    expect(find.text('Guest request.'), findsNothing);
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('No motto yet.'), findsNothing);
+    expect(find.byKey(const Key('guild-motto-edit')), findsOneWidget);
+  });
+
   testWidgets('the create sheet says what it is still waiting for', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(
@@ -257,7 +471,9 @@ void main() {
     addTearDown(net.dispose);
     expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
 
-    transport.failNextRepeats = remoteUnreachableAttempts;
+    // account_status is the first refresh RPC and swallows failures, so the
+    // fetch that stays dead has to miss the later profile read as well.
+    transport.failNextRepeats = remoteUnreachableAttempts * 2;
     transport.failNextWith =
         'ClientException: Failed to fetch, uri=https://example.supabase.co/rest/v1/profiles';
     await net.refresh(controller.save);
@@ -275,8 +491,10 @@ void main() {
     expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
 
     // A project missing the column this build reads is what a skipped migration
-    // looks like from here.
-    transport.failNextWith = 'column leaderboard_snapshots.value_secondary does not exist';
+    // looks like from here. Pin it to the board read so account_status does not
+    // swallow the refusal.
+    transport.failOnce['select:${RemoteTables.leaderboardEntries}'] =
+        'column leaderboard_snapshots.value_secondary does not exist';
     await net.refresh(controller.save);
 
     expect(net.notice, contains('value_secondary'));
@@ -304,5 +522,93 @@ void main() {
     expect(net.notice, isNull);
     expect(net.board.map((entry) => entry.username), contains('Rival'));
     expect(net.board.any((entry) => entry.userId == net.session?.userId), isTrue);
+  });
+
+  testWidgets('after a double failure the create form is still reachable', (tester) async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+
+    transport.failOnce['insert:${RemoteTables.guildMembers}'] = 'permission denied';
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+    transport.failOnce['upsert:${RemoteTables.guildMembers}'] = 'permission denied';
+    final leftover = await net.service.createGuild(
+      const CreateGuildInput(
+        name: 'Iron League',
+        tag: 'IRN',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      controller.save.gold,
+    );
+    expect(leftover.ok, isFalse);
+    expect(leftover.reason, remoteGuildCreateFailed);
+    expect(leftover.goldCost, isNull);
+    expect(transport.tables[RemoteTables.guildMembers], isEmpty);
+
+    await net.refresh(controller.save);
+    await pumpPanel(tester, guildScreen(net, controller));
+    expect(find.textContaining('Create guild ('), findsOneWidget);
+
+    await tester.tap(find.textContaining('Create guild ('));
+    await tester.pumpAndSettle();
+    expect(onTheSheet(find.text('Create guild')), findsOneWidget);
+    expect(onTheSheet(find.widgetWithText(TextField, 'Tag (2–4 letters)')), findsOneWidget);
+    expect(onTheSheet(find.widgetWithText(TextField, 'Name')), findsOneWidget);
+    expect(onTheSheet(find.text('Disband')), findsNothing);
+    expect(onTheSheet(find.text('Guild setup didn\'t finish.')), findsNothing);
+  });
+
+  testWidgets('under-13 and frozen accounts hide the Guest request button', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+    await pumpPanel(tester, guildScreen(net, controller));
+    await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+
+    Future<void> openAs(String email, {required bool underThirteen, required bool frozen}) async {
+      final outsiderController = buildController(database, seed: startedCharacter(database));
+      addTearDown(outsiderController.dispose);
+      final outsider = buildRemoteMultiplayer(
+        database,
+        transport: FakeTransport.joining(transport),
+      );
+      addTearDown(outsider.dispose);
+      expect((await outsider.service.signUp(email, 'Looker', 'secret')).ok, isTrue);
+      transport.setAccountStatus(
+        outsider.session!.userId,
+        AccountSocialStatus(ageAnswered: true, chatAllowed: !underThirteen),
+      );
+      if (frozen) {
+        transport.pendingDeletions[outsider.session!.userId] = DateTime.utc(2026, 10, 31);
+      }
+      await outsider.refreshAccountStatus();
+      await outsider.refresh(outsiderController.save);
+      await pumpPanel(tester, guildScreen(outsider, outsiderController));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('[IRN] Iron League').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Guest'), findsNothing);
+      expect(find.text('Join'), findsOneWidget);
+    }
+
+    await openAs('kid@example.com', underThirteen: true, frozen: false);
+    await openAs('ice@example.com', underThirteen: false, frozen: true);
   });
 }

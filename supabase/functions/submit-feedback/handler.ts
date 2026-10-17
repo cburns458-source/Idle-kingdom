@@ -6,6 +6,7 @@ import {
   type DiscordPostResult,
   type FeedbackKind,
 } from '../_shared/discord.ts'
+import { ACCOUNT_FROZEN } from '../_shared/deletion.ts'
 import {
   FEEDBACK_COOLDOWN_MS,
   FEEDBACK_DAILY_CAP,
@@ -81,6 +82,7 @@ export type FeedbackDeps = {
   nowMs: () => number
   postDiscord: (url: string, payload: unknown) => Promise<DiscordPostResult>
   sleep: (ms: number) => Promise<void>
+  accountFrozen: (userId: string) => Promise<boolean>
 }
 
 function cors(): HeadersInit {
@@ -199,6 +201,15 @@ export async function handleSubmitFeedback(req: Request, deps: FeedbackDeps): Pr
   const user = await deps.getUser(req)
   if (!user) {
     return json({ error: 'Sign in to send feedback.' }, 401)
+  }
+  let frozen = true
+  try {
+    frozen = await deps.accountFrozen(user.id)
+  } catch {
+    frozen = true
+  }
+  if (frozen) {
+    return json({ error: ACCOUNT_FROZEN }, 403)
   }
 
   let raw: unknown

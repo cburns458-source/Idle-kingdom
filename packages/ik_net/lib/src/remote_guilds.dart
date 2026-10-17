@@ -37,6 +37,18 @@ const String remoteGuildMemberColumns =
 const String remoteGuildApplicationColumns =
     'id, guild_id, user_id, username, message, created_at, guest';
 
+/// INSERT...RETURNING list for `guild_applications`. `message` is revoked
+/// from authenticated, so a RETURNING that names it fails.
+const String remoteGuildApplicationWriteColumns =
+    'id, guild_id, user_id, username, created_at, guest';
+
+/// INSERT...RETURNING list for `guilds`. `description` is revoked from
+/// authenticated, so a RETURNING that names it fails. Re-read the motto
+/// from [RemoteTables.guildsVisible] after insert.
+const String remoteGuildWriteColumns =
+    'id, name, tag, emblem, leader_id, join_policy, '
+    'rank_labels, rank_icon_theme, guest_auto_accept, created_at';
+
 const String remoteGuildGuestColumns = 'guild_id, user_id, username, appearance_json, joined_at';
 
 const String remoteGuildHallColumnsWithoutDonatedBy =
@@ -62,6 +74,7 @@ const String remoteGuildChallengeColumns =
 const String remoteGuildNameTaken = 'That guild name or tag is taken.';
 
 const String remoteGuildCreateFailed = 'The guild was not created.';
+const String remoteGuildRosterUnread = 'Could not read the guild roster.';
 const String remoteGuildMissing = 'Guild not found.';
 
 /// True when a refusal is the database saying a unique column already has that

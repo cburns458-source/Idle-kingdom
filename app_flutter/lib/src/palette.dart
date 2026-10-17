@@ -45,10 +45,19 @@ abstract final class Palette {
   static const ink = Color(0xFF1F1610);
   static const danger = Color(0xFFC2603F);
 
+  /// Error copy on wood and stone boards. Lighter than [danger] so it clears
+  /// 4.5:1 on wood `#2A1C12`, wood slot `#3D2A1A`, stone `#2C2C2C`, and stone
+  /// slot `#3D3D3D`. Button fill stays [dangerFill].
+  ///
+  /// Never render this on [panelMuted] (`#6B5338`) — that pair fails 4.5:1.
+  static const dangerText = Color(0xFFF0A080);
+
   /// Secondary body text, the old client's `.muted`.
   static const muted = Color(0xFFCBB894);
 
   /// Muted copy on tan inner panels.
+  ///
+  /// Do not put [dangerText] on this fill; the contrast is below 4.5:1.
   static const panelMuted = Color(0xFF6B5338);
 
   /// Body ink on tan inner panels.
@@ -132,6 +141,22 @@ abstract final class Palette {
   );
 
   static const confirmDisabledLabel = Color(0xFFE8E6E0);
+
+  /// Cream label on danger buttons. Same job as [confirmLabel].
+  static const dangerLabel = Color(0xFFF4FFE8);
+
+  /// Delete / destructive fill. Dark enough for the cream label to clear 4.5:1.
+  static const dangerFill = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF8B2A1F), Color(0xFF6B1F16)],
+  );
+
+  static const dangerPressed = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF6B1F16), Color(0xFF5C1812)],
+  );
 
   /// Hairline wood used for panel edges. Prefer [UiChrome.edge] so stone packs
   /// swap to iron instead of brown.

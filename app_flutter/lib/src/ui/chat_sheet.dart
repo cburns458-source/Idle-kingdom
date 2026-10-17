@@ -366,6 +366,9 @@ class _ChatSheetState extends State<ChatSheet> {
             ],
           );
         }
+        if (!net.chatAllowed) {
+          return const SizedBox.shrink();
+        }
         final tabs = chatTabs(
           selected: net.chatTab,
           citadelHub: widget.citadelHub,

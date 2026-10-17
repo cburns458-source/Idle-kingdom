@@ -6,6 +6,7 @@
 /// fixtures, and a remote backend arrives as another [MultiplayerService].
 library;
 
+export 'src/age.dart';
 export 'src/bounty_turn_in.dart';
 export 'src/chat_refs.dart';
 export 'src/cloud_save.dart';

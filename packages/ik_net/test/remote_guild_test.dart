@@ -224,6 +224,64 @@ void main() {
     expect((await visitor.leaveGuest()).reason, 'Not a guest of a guild.');
   });
 
+  test('under-13 and frozen accounts cannot send a guest request', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final kid = await _player(transport, 'kid@example.com', 'Kid');
+    final frozen = await _player(transport, 'ice@example.com', 'Ice');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+
+    transport.setAccountStatus(
+      kid.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await kid.joinAsGuest(guildId, '')).ok, isFalse);
+    expect((await kid.joinAsGuest(guildId, '')).reason, ageGateError);
+    expect(await leader.guildApplications(guildId), isEmpty);
+    expect(await leader.guildGuests(guildId), isEmpty);
+
+    transport.setAccountStatus(
+      frozen.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: true),
+    );
+    transport.pendingDeletions[frozen.session!.userId] = DateTime.utc(2026, 10, 31);
+    expect((await frozen.joinAsGuest(guildId, '')).ok, isFalse);
+    expect((await frozen.joinAsGuest(guildId, '')).reason, ageGateError);
+    expect((await frozen.applyToGuild(guildId, '')).ok, isTrue);
+  });
+
+  test('accepting a guest request fails if the requester is gated now', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final visitor = await _player(transport, 'visitor@example.com', 'Visitor');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+
+    expect((await visitor.joinAsGuest(guildId, '')).ok, isTrue);
+    final pending = await leader.guildApplications(guildId);
+    expect(pending, hasLength(1));
+    expect(pending.single.guest, isTrue);
+
+    transport.setAccountStatus(
+      visitor.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await leader.decideGuildApplication(pending.single.id, true)).ok, isFalse);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).reason, ageGateError);
+    expect(await leader.guildGuests(guildId), isEmpty);
+    expect((await leader.guildApplications(guildId)).single.id, pending.single.id);
+
+    transport.setAccountStatus(visitor.session!.userId, const AccountSocialStatus.playable());
+    transport.pendingDeletions[visitor.session!.userId] = DateTime.utc(2026, 10, 31);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).ok, isFalse);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).reason, ageGateError);
+    expect(await leader.guildGuests(guildId), isEmpty);
+    expect((await leader.guildApplications(guildId)).single.id, pending.single.id);
+
+    transport.pendingDeletions.remove(visitor.session!.userId);
+    expect((await leader.decideGuildApplication(pending.single.id, true)).ok, isTrue);
+    expect((await leader.guildGuests(guildId)).map((row) => row.username), ['Visitor']);
+  });
+
   test('an officer decides applications and removes guests, not members', () async {
     final transport = FakeTransport();
     final leader = await _player(transport, 'lead@example.com', 'Lead');
@@ -563,6 +621,231 @@ void main() {
     expect(await hopeful.currentGuildId(), isNull);
   });
 
+  test('a founding rereads the guild instead of inventing banner or permissions', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+
+    transport.failOnce['select:${RemoteTables.guildsVisible}'] =
+        'permission denied for column guilds.description';
+    final recovered = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(recovered.ok, isTrue, reason: recovered.reason);
+    expect(recovered.guild!.id, isNotEmpty);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+
+    transport.missingTables.add(RemoteTables.guildsVisible);
+    final refused = await (await _player(transport, 'other@example.com', 'Other')).createGuild(
+      const CreateGuildInput(
+        name: 'Oak Guard',
+        tag: 'OAK',
+        description: 'Keep the oaks.',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      guildCreateGoldCost,
+    );
+    expect(refused.ok, isFalse);
+    expect(refused.reason, remoteGuildCreateFailed);
+    expect(transport.tables[RemoteTables.guilds]!.map((row) => row['tag']), <Object?>[
+      'IRN',
+    ], reason: 'the unread insert is rolled back');
+  });
+
+  test('a hosted create keeps the save when the new guild cannot be read', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.missingTables.add(RemoteTables.guildsVisible);
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.save, isNotNull);
+    expect(created.save!.gold, guildCreateGoldCost * 3, reason: 'the hosted save still paid');
+    expect(created.guildId, isNotEmpty);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+    expect(created.reason, isNot(remoteGuildNameTaken));
+    expect(created.reason, isNot('Leave your current guild before creating another.'));
+  });
+
+  test('a failed rollback retries the leader seat and still founds the guild', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['insert:${RemoteTables.guildMembers}'] = 'permission denied';
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.goldCost, guildCreateGoldCost);
+    expect(created.save, isNull);
+    final guildId = created.guildId!;
+    expect((await leader.guildMembers(guildId)).single.role, guildRoleLeader);
+    expect(
+      transport.tables[RemoteTables.profiles]!.firstWhere(
+        (row) => row['user_id'] == leader.session!.userId,
+      )['guild_id'],
+      guildId,
+    );
+    expect(await leader.guildHall(guildId), isNotNull);
+    expect(await leader.guildProjects(guildId), hasLength(1));
+  });
+
+  test('a failed rollback that cannot seat the leader does not charge gold', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['insert:${RemoteTables.guildMembers}'] = 'permission denied';
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+    transport.failOnce['upsert:${RemoteTables.guildMembers}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isFalse);
+    expect(created.reason, remoteGuildCreateFailed);
+    expect(created.goldCost, isNull);
+    expect(created.save, isNull);
+    expect(await leader.currentGuildId(), isNull);
+    expect(transport.tables[RemoteTables.guildMembers], isEmpty);
+  });
+
+  test('a failed rollback retries the profile link and still founds the guild', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.goldCost, guildCreateGoldCost);
+    expect(created.save, isNull);
+    final guildId = created.guildId!;
+    expect((await leader.guildMembers(guildId)).single.role, guildRoleLeader);
+    expect(
+      transport.tables[RemoteTables.profiles]!.firstWhere(
+        (row) => row['user_id'] == leader.session!.userId,
+      )['guild_id'],
+      guildId,
+    );
+    expect(await leader.guildHall(guildId), isNotNull);
+    expect(await leader.guildProjects(guildId), hasLength(1));
+  });
+
+  test('a failed rollback that cannot link the profile does not charge gold', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    transport.failTimes['update:${RemoteTables.profiles}'] = 2;
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isFalse);
+    expect(created.reason, remoteGuildCreateFailed);
+    expect(created.goldCost, isNull);
+    expect(created.save, isNull);
+  });
+
+  test('a double failure that seats the leader leaves the normal leave path', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    transport.failTimes['update:${RemoteTables.profiles}'] = 2;
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final leftover = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(leftover.ok, isFalse);
+    expect(leftover.reason, remoteGuildCreateFailed);
+    expect(leftover.goldCost, isNull);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+    expect(transport.tables[RemoteTables.guildMembers], hasLength(1));
+    expect(await leader.currentGuildId(), transport.tables[RemoteTables.guilds]!.single['id']);
+
+    const oak = CreateGuildInput(
+      name: 'Oak Guard',
+      tag: 'OAK',
+      description: 'Keep the oaks.',
+      emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+    );
+    final again = await leader.createGuild(oak, guildCreateGoldCost);
+    expect(again.ok, isFalse);
+    expect(again.reason, 'Leave your current guild before creating another.');
+    expect(again.goldCost, isNull);
+    expect(transport.tables[RemoteTables.guilds]!.single['tag'], 'IRN');
+
+    expect((await leader.leaveGuild()).ok, isTrue);
+    expect(transport.tables[RemoteTables.guilds], isEmpty);
+    final created = await leader.createGuild(oak, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.guild!.name, 'Oak Guard');
+  });
+
+  test('a real guild with no hall is left untouched', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    transport.tables[RemoteTables.guildHalls]?.clear();
+    expect(transport.tables[RemoteTables.guildHalls], isEmpty);
+
+    const oak = CreateGuildInput(
+      name: 'Oak Guard',
+      tag: 'OAK',
+      description: 'Keep the oaks.',
+      emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+    );
+    final again = await leader.createGuild(oak, guildCreateGoldCost);
+    expect(again.ok, isFalse);
+    expect(again.reason, 'Leave your current guild before creating another.');
+    expect(again.goldCost, isNull);
+    expect(transport.tables[RemoteTables.guilds]!.single['tag'], 'IRN');
+    expect(transport.tables[RemoteTables.guildMembers], hasLength(1));
+    expect(transport.tables[RemoteTables.guildHalls], isEmpty);
+  });
+
+  test('a failed member count never deletes anything', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+
+    transport.failOnce['select:${RemoteTables.guildMembers}:user_id'] = 'permission denied';
+    final left = await leader.leaveGuild();
+    expect(left.ok, isFalse);
+    expect(left.reason, remoteGuildRosterUnread);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+    expect(transport.tables[RemoteTables.guildMembers], hasLength(1));
+  });
+
+  test('a failed read never charges gold', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['select:${RemoteTables.guildMembers}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isFalse);
+    expect(created.goldCost, isNull);
+    expect(created.save, isNull);
+    expect(transport.tables[RemoteTables.guilds], isEmpty);
+  });
+
+  test('a failed reread after a failed rollback does not charge gold', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.missingTables.add(RemoteTables.guildsVisible);
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final created = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(created.ok, isFalse);
+    expect(created.goldCost, isNull);
+    expect(created.save, isNull);
+    expect(created.reason, isNot(remoteGuildNameTaken));
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+  });
+
   test('a project without the Wave E functions still founds the old way', () async {
     final transport = FakeTransport();
     transport.hostsGuildLifecycleRpcs = false;
@@ -604,5 +887,87 @@ void main() {
     expect((await recruit.setGuildMotto(guildId, 'Nope')).ok, isFalse);
     expect((await recruit.setGuildPrivateMessage(guildId, 'Nope')).ok, isFalse);
     expect((await outsider.setGuildPrivateMessage(guildId, 'Nope')).ok, isFalse);
+  });
+
+  test('under-13s cannot write a guild motto or application message', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final hopeful = await _player(transport, 'hopeful@example.com', 'Hopeful');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+    expect((await leader.setGuildJoinPolicy(guildId, guildJoinClosed)).ok, isTrue);
+
+    transport.setAccountStatus(
+      hopeful.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await hopeful.applyToGuild(guildId, 'Let me in, please.')).ok, isFalse);
+    expect((await hopeful.applyToGuild(guildId, 'Let me in, please.')).reason, ageGateError);
+    final empty = await hopeful.applyToGuild(guildId, '');
+    expect(empty.ok, isTrue, reason: empty.reason);
+    expect(empty.joined, isFalse);
+    expect((await leader.guildApplications(guildId)).single.message, isEmpty);
+
+    transport.setAccountStatus(
+      leader.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await leader.setGuildMotto(guildId, 'For the forge')).ok, isFalse);
+    expect((await leader.setGuildMotto(guildId, 'For the forge')).reason, ageGateError);
+    expect(
+      (await leader.guild(guildId))!.description,
+      isEmpty,
+      reason: 'guilds_visible blanks the motto when the reader is not chat_allowed',
+    );
+    expect((await hopeful.listGuilds()).single.guild.description, isEmpty);
+
+    transport.setAccountStatus(leader.session!.userId, const AccountSocialStatus.playable());
+    expect((await leader.guild(guildId))!.description, 'Hammer and anvil.');
+    expect((await leader.setGuildMotto(guildId, 'For the forge')).ok, isTrue);
+    expect((await leader.guild(guildId))!.description, 'For the forge');
+  });
+
+  test('under-13s cannot found a guild with a motto', () async {
+    final transport = FakeTransport();
+    final founder = await _player(transport, 'kid@example.com', 'Kid');
+    transport.setAccountStatus(
+      founder.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    final refused = await founder.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(refused.ok, isFalse);
+    expect(refused.reason, ageGateError);
+    expect(transport.tables[RemoteTables.guilds], isEmpty);
+
+    final empty = await founder.createGuild(
+      const CreateGuildInput(
+        name: 'Quiet League',
+        tag: 'QT',
+        description: '',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      guildCreateGoldCost,
+    );
+    expect(empty.ok, isTrue, reason: empty.reason);
+    expect(empty.guild!.description, isEmpty);
+  });
+
+  test('application messages blank for under-13 readers', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final hopeful = await _player(transport, 'hopeful@example.com', 'Hopeful');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+    expect((await leader.setGuildJoinPolicy(guildId, guildJoinClosed)).ok, isTrue);
+
+    expect((await hopeful.applyToGuild(guildId, 'Let me in, please.')).ok, isTrue);
+    expect((await leader.guildApplications(guildId)).single.message, 'Let me in, please.');
+
+    transport.setAccountStatus(
+      leader.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await leader.guildApplications(guildId)).single.message, isEmpty);
+
+    transport.setAccountStatus(leader.session!.userId, const AccountSocialStatus.playable());
+    expect((await leader.guildApplications(guildId)).single.message, 'Let me in, please.');
   });
 }

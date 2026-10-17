@@ -28,6 +28,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 
+import { ACCOUNT_FROZEN } from '../_shared/deletion.ts'
 import {
   BAZAAR_SKILL_LEVEL_INVALID_CODE,
   BAZAAR_TOTAL_LEVEL_REQUIRED,
@@ -290,6 +291,7 @@ async function place(
   metadata: Record<string, unknown> | undefined,
   request: Record<string, unknown>,
 ): Promise<Response> {
+  if (await accountFrozen(admin, userId)) return refused(ACCOUNT_FROZEN)
   const side = request.side === 'buy' || request.side === 'sell' ? request.side : null
   if (side == null) return refused('Choose to buy or to sell.')
   if (!isItemId(request.itemId)) return refused('That is not a tradable item.')
@@ -430,6 +432,7 @@ async function cancel(
  * player to arrange than the game inventing a place to keep the rest.
  */
 async function collect(admin: Client, userId: string): Promise<Response> {
+  if (await accountFrozen(admin, userId)) return refused(ACCOUNT_FROZEN)
   const stored = await loadSave(admin, userId)
   if ('error' in stored) return refused(stored.error)
 
@@ -701,6 +704,12 @@ function cors(): HeadersInit {
  * working — so it comes back as a result the client can read the message out of.
  * Genuine faults still answer 401 and 500.
  */
+async function accountFrozen(admin: Client, userId: string): Promise<boolean> {
+  const { data, error } = await admin.rpc('account_is_frozen', { p_user: userId })
+  if (error) return true
+  return data === true
+}
+
 function refused(message: string, extra: Record<string, unknown> = {}): Response {
   return json({ ok: false, error: message, ...extra }, 200)
 }

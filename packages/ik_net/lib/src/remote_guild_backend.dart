@@ -7,6 +7,8 @@
 /// database, not by reading the table first.
 library;
 
+import 'dart:developer' as developer;
+
 import 'package:ik_rules/ik_rules.dart';
 
 import 'guild_rules.dart';
@@ -85,7 +87,7 @@ class RemoteGuildBackend {
 
   Future<List<GuildRecord>> _guildRows({String? guildId}) async {
     var result = await transport.select(
-      RemoteTables.guilds,
+      RemoteTables.guildsVisible,
       columns: _guildSelectColumns,
       equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
       orderBy: 'name',
@@ -94,7 +96,7 @@ class RemoteGuildBackend {
       _guildsHaveSkillMilestones = false;
       clearReadProblem?.call(remoteMissingGuildSkillMilestoneColumn);
       result = await transport.select(
-        RemoteTables.guilds,
+        RemoteTables.guildsVisible,
         columns: remoteGuildBaseColumns,
         equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
         orderBy: 'name',
@@ -103,7 +105,7 @@ class RemoteGuildBackend {
     if (!result.ok && remoteMissingGuildBannerColumn(result.reason)) {
       clearReadProblem?.call(remoteMissingGuildBannerColumn);
       result = await transport.select(
-        RemoteTables.guilds,
+        RemoteTables.guildsVisible,
         columns: remoteGuildColumnsWithoutBanner,
         equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
         orderBy: 'name',
@@ -189,14 +191,21 @@ class RemoteGuildBackend {
 
   /// The roster row for [userId], or null when they are in no guild.
   Future<GuildMember?> _membershipOf(String userId) async {
+    return (await _readMembership(userId)).member;
+  }
+
+  Future<({GuildMember? member, String? error})> _readMembership(String userId) async {
     final result = await transport.select(
       RemoteTables.guildMembers,
       columns: remoteGuildMemberColumns,
       equals: <String, Object?>{'user_id': userId},
       limit: 1,
     );
-    if (!result.ok || result.single == null) return null;
-    return guildMemberFrom(result.single!);
+    if (!result.ok) {
+      return (member: null, error: result.reason ?? 'Could not read guild membership.');
+    }
+    if (result.single == null) return (member: null, error: null);
+    return (member: guildMemberFrom(result.single!), error: null);
   }
 
   Future<String?> currentGuildId() async {
@@ -225,7 +234,7 @@ class RemoteGuildBackend {
 
   Future<List<GuildApplication>> guildApplications(String guildId) async {
     final result = await transport.select(
-      RemoteTables.guildApplications,
+      RemoteTables.guildApplicationsVisible,
       columns: remoteGuildApplicationColumns,
       equals: <String, Object?>{'guild_id': guildId},
       orderBy: 'created_at',
@@ -234,13 +243,14 @@ class RemoteGuildBackend {
     return result.rows!.map(guildApplicationFrom).toList();
   }
 
-  Future<int> _memberCount(String guildId) async {
+  Future<int?> _memberCount(String guildId) async {
     final result = await transport.select(
       RemoteTables.guildMembers,
       columns: 'user_id',
       equals: <String, Object?>{'guild_id': guildId},
     );
-    return (result.rows ?? const <RemoteRow>[]).length;
+    if (!result.ok || result.rows == null) return null;
+    return result.rows!.length;
   }
 
   // --- Joining and leaving --------------------------------------------------
@@ -251,7 +261,11 @@ class RemoteGuildBackend {
 
     final refusal = createGuildRefusal(input, goldAvailable);
     if (refusal != null) return CreateGuildResult.failed(refusal);
-    if (await _membershipOf(current.userId) != null) {
+    final membership = await _readMembership(current.userId);
+    if (membership.error != null) {
+      return CreateGuildResult.failed(membership.error!);
+    }
+    if (membership.member != null) {
       return const CreateGuildResult.failed('Leave your current guild before creating another.');
     }
 
@@ -259,14 +273,14 @@ class RemoteGuildBackend {
     var written = await transport.insert(
       RemoteTables.guilds,
       _guildCreateRow(current.userId, wanted),
-      columns: _guildSelectColumns,
+      columns: remoteGuildWriteColumns,
     );
     if (!written.ok && remoteMissingGuildSkillMilestoneColumn(written.reason)) {
       _guildsHaveSkillMilestones = false;
       written = await transport.insert(
         RemoteTables.guilds,
         _guildCreateRow(current.userId, wanted),
-        columns: remoteGuildBaseColumns,
+        columns: remoteGuildWriteColumns,
       );
     }
     if (written.ok) _guildsHaveSkillMilestones ??= true;
@@ -277,42 +291,220 @@ class RemoteGuildBackend {
     }
     final row = written.single;
     if (row == null) return const CreateGuildResult.failed(remoteGuildCreateFailed);
-    final guild = guildRecordFrom(row);
+    final id = row['id'];
+    if (id is! String) return const CreateGuildResult.failed(remoteGuildCreateFailed);
+    // RETURNING omits description / permissions / banner. Do not invent those
+    // from the incomplete row — reread the visible guild, or roll the insert
+    // back. If the rollback delete fails, the name and tag are still held, so
+    // finish founding and show the player that guild instead of a retry.
+    var guild = await guildById(id);
+    guild ??= await guildById(id);
+    if (guild == null) {
+      final rolledBack = await transport.delete(
+        RemoteTables.guilds,
+        equals: <String, Object?>{'id': id},
+      );
+      if (rolledBack == null) {
+        return const CreateGuildResult.failed(remoteGuildCreateFailed);
+      }
+      final facts = await factsOf();
+      return _completeFoundingAfterFailedRollback(
+        guildId: id,
+        guild: null,
+        userId: current.userId,
+        facts: facts,
+        rollbackReason: rolledBack,
+      );
+    }
+    final guildId = guild.id;
 
     final facts = await factsOf();
     final seated = await transport.insert(
       RemoteTables.guildMembers,
-      guildMemberRowFor(
-        GuildMember(
-          guildId: guild.id,
-          userId: current.userId,
-          username: facts.username,
-          role: guildRoleLeader,
-          joinedAt: nowIso(),
-          appearance: facts.appearance,
-          raceId: facts.raceId,
-          totalLevel: facts.totalLevel,
-        ),
-      ),
+      guildMemberRowFor(_leaderMember(guildId, current.userId, facts)),
       columns: remoteGuildMemberColumns,
     );
     if (!seated.ok) {
       // A guild with nobody in it would hold its name against everyone else,
       // and its founder could not even leave it, so it goes back.
-      await transport.delete(RemoteTables.guilds, equals: <String, Object?>{'id': guild.id});
-      return CreateGuildResult.failed(seated.reason!);
+      final rolledBack = await transport.delete(
+        RemoteTables.guilds,
+        equals: <String, Object?>{'id': guildId},
+      );
+      if (rolledBack == null) {
+        return CreateGuildResult.failed(seated.reason!);
+      }
+      return _completeFoundingAfterFailedRollback(
+        guildId: guildId,
+        guild: guild,
+        userId: current.userId,
+        facts: facts,
+        rollbackReason: rolledBack,
+      );
     }
 
-    final tagged = await _noteOwnGuild(current.userId, guild.id);
+    final tagged = await _noteOwnGuild(current.userId, guildId);
     if (tagged != null) {
-      await transport.delete(RemoteTables.guilds, equals: <String, Object?>{'id': guild.id});
-      return CreateGuildResult.failed(friendlyRemoteError(tagged));
+      final rolledBack = await transport.delete(
+        RemoteTables.guilds,
+        equals: <String, Object?>{'id': guildId},
+      );
+      if (rolledBack == null) {
+        return CreateGuildResult.failed(friendlyRemoteError(tagged));
+      }
+      return _completeFoundingAfterFailedRollback(
+        guildId: guildId,
+        guild: guild,
+        userId: current.userId,
+        facts: facts,
+        rollbackReason: rolledBack,
+      );
     }
-    await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
-      guildHallRowFor(GuildHallState.fresh(guild.id)),
-    ]);
-    await _seedGuildGoals(guild.id);
-    return CreateGuildResult.ok(guild, guildCreateGoldCost);
+    // A hall is created on the first contribution. Missing one is normal.
+    await _ensureGuildHall(guildId);
+    await _seedGuildGoals(guildId);
+    return CreateGuildResult.ok(guild, guildCreateGoldCost, guildId: guildId);
+  }
+
+  /// The founder row a new guild must have before it is shown as created.
+  GuildMember _leaderMember(String guildId, String userId, GuildMemberFacts facts) {
+    return GuildMember(
+      guildId: guildId,
+      userId: userId,
+      username: facts.username,
+      role: guildRoleLeader,
+      joinedAt: nowIso(),
+      appearance: facts.appearance,
+      raceId: facts.raceId,
+      totalLevel: facts.totalLevel,
+    );
+  }
+
+  /// Rollback could not drop the half-made guild. Finish every founding row
+  /// and only then charge gold. A guild with no leader is never a success.
+  Future<CreateGuildResult> _completeFoundingAfterFailedRollback({
+    required String guildId,
+    required GuildRecord? guild,
+    required String userId,
+    required GuildMemberFacts facts,
+    required String rollbackReason,
+  }) async {
+    final unfinished = await _ensureFoundingRows(guildId, userId, facts);
+    if (unfinished != null) {
+      developer.log(
+        'Guild $guildId rollback failed ($rollbackReason); founding unfinished: $unfinished',
+        name: 'ik_net.guilds',
+      );
+      return const CreateGuildResult.failed(remoteGuildCreateFailed);
+    }
+    final finished = guild ?? await guildById(guildId);
+    if (finished == null) {
+      return const CreateGuildResult.failed(remoteGuildCreateFailed);
+    }
+    return CreateGuildResult.ok(finished, guildCreateGoldCost, guildId: guildId);
+  }
+
+  /// Upserts the leader, profile link, hall, and starting goals. Null when
+  /// every row is present.
+  Future<String?> _ensureFoundingRows(String guildId, String userId, GuildMemberFacts facts) async {
+    final seated = await transport.upsert(RemoteTables.guildMembers, <RemoteRow>[
+      guildMemberRowFor(_leaderMember(guildId, userId, facts)),
+    ], onConflict: 'guild_id,user_id');
+    if (seated != null) return seated;
+    final member = await _membershipOf(userId);
+    if (member == null || member.guildId != guildId || member.role != guildRoleLeader) {
+      return 'The guild has no leader.';
+    }
+
+    final tagged = await _noteOwnGuild(userId, guildId);
+    if (tagged != null) return tagged;
+    final linked = await _profileGuildId(userId);
+    if (linked != guildId) return tagged ?? 'The guild was not linked to this account.';
+
+    // Hall and starting goals are best-effort. A real guild has no hall until
+    // the first contribution.
+    await _ensureGuildHall(guildId);
+    await _ensureGuildGoals(guildId);
+    return null;
+  }
+
+  /// TEST has no UPDATE policy on `guild_halls` (insert + select only). Skip
+  /// when the hall exists; otherwise insert. A conflict means it is already
+  /// there — do not upsert.
+  Future<String?> _ensureGuildHall(String guildId) async {
+    if (await _hallExists(guildId)) return null;
+    final written = await transport.insert(RemoteTables.guildHalls, <String, Object?>{
+      'guild_id': guildId,
+    }, columns: 'guild_id');
+    if (written.ok || await _hallExists(guildId)) return null;
+    return written.reason ?? 'The guild hall was not created.';
+  }
+
+  Future<bool> _hallExists(String guildId) async {
+    final hall = await transport.select(
+      RemoteTables.guildHalls,
+      columns: 'guild_id',
+      equals: <String, Object?>{'guild_id': guildId},
+      limit: 1,
+    );
+    return hall.ok && hall.single != null;
+  }
+
+  Future<String?> _profileGuildId(String userId) async {
+    final result = await transport.select(
+      RemoteTables.profiles,
+      columns: 'guild_id',
+      equals: <String, Object?>{'user_id': userId},
+      limit: 1,
+    );
+    if (!result.ok) return null;
+    final guildId = result.single?['guild_id'];
+    return guildId is String && guildId.isNotEmpty ? guildId : null;
+  }
+
+  Future<String?> _ensureGuildGoals(String guildId) async {
+    final projects = await guildProjects(guildId);
+    if (projects.isEmpty) {
+      final written = await transport.insert(
+        RemoteTables.guildProjects,
+        guildProjectRowFor(
+          GuildProject(
+            id: '',
+            guildId: guildId,
+            name: guildStorehouseProjectName,
+            description: guildStorehouseProjectDescription,
+            goalAmount: guildStorehouseProjectGoal,
+            contributed: 0,
+            rewardLabel: guildStorehouseProjectReward,
+          ),
+        ),
+        columns: remoteGuildProjectColumns,
+      );
+      if (!written.ok && (await guildProjects(guildId)).isEmpty) {
+        return written.reason ?? 'The guild project was not created.';
+      }
+    }
+    final challenges = await guildChallenges(guildId);
+    if (challenges.isEmpty) {
+      final written = await transport.insert(
+        RemoteTables.guildChallenges,
+        guildChallengeRowFor(
+          GuildChallenge(
+            id: '',
+            guildId: guildId,
+            name: guildMonsterChallengeName,
+            boardKey: boardMonstersKilled,
+            goalValue: guildMonsterChallengeGoal,
+            currentValue: 0,
+          ),
+        ),
+        columns: remoteGuildChallengeColumns,
+      );
+      if (!written.ok && (await guildChallenges(guildId)).isEmpty) {
+        return written.reason ?? 'The guild challenge was not created.';
+      }
+    }
+    return null;
   }
 
   Future<ApplyToGuildResult> applyToGuild(String guildId, String message) async {
@@ -323,7 +515,9 @@ class RemoteGuildBackend {
     if (await _membershipOf(current.userId) != null) {
       return const ApplyToGuildResult.failed('Already in a guild.');
     }
-    if (await _memberCount(guildId) >= guildMaxMembers) {
+    final count = await _memberCount(guildId);
+    if (count == null) return const ApplyToGuildResult.failed(remoteGuildRosterUnread);
+    if (count >= guildMaxMembers) {
       return ApplyToGuildResult.failed('That guild is full ($guildMaxMembers members).');
     }
 
@@ -369,7 +563,7 @@ class RemoteGuildBackend {
         message: guildApplicationMessage(message),
         guest: false,
       ),
-      columns: remoteGuildApplicationColumns,
+      columns: remoteGuildApplicationWriteColumns,
     );
     if (!asked.ok) {
       return ApplyToGuildResult.failed(
@@ -435,7 +629,7 @@ class RemoteGuildBackend {
         message: guildApplicationMessage(message),
         guest: true,
       ),
-      columns: remoteGuildApplicationColumns,
+      columns: remoteGuildApplicationWriteColumns,
     );
     if (!asked.ok) {
       return ApplyToGuildResult.failed(
@@ -468,7 +662,9 @@ class RemoteGuildBackend {
     final guild = await guildById(membership.guildId);
 
     if (guild != null && guild.leaderId == current.userId) {
-      if (await _memberCount(guild.id) > 1) {
+      final count = await _memberCount(guild.id);
+      if (count == null) return const ActionResult.failed(remoteGuildRosterUnread);
+      if (count > 1) {
         return const ActionResult.failed('Transfer leadership or remove members before leaving.');
       }
       // Everything hanging off the guild goes with it: the roster, the requests,
@@ -478,6 +674,12 @@ class RemoteGuildBackend {
         equals: <String, Object?>{'id': guild.id},
       );
       if (refused != null) return ActionResult.failed(refused);
+      // FakeTransport has no FK cascades. Postgres already dropped this row
+      // with the guild.
+      await transport.delete(
+        RemoteTables.guildMembers,
+        equals: <String, Object?>{'user_id': current.userId},
+      );
       final tagged = await _noteOwnGuild(current.userId, null);
       if (tagged != null) return ActionResult.failed(friendlyRemoteError(tagged));
       return const ActionResult.ok();
@@ -502,7 +704,7 @@ class RemoteGuildBackend {
     });
     if (hosted != null) return hosted;
     final found = await transport.select(
-      RemoteTables.guildApplications,
+      RemoteTables.guildApplicationsVisible,
       columns: remoteGuildApplicationColumns,
       equals: <String, Object?>{'id': applicationId},
       limit: 1,
@@ -558,7 +760,9 @@ class RemoteGuildBackend {
       await drop();
       return const ActionResult.failed('Applicant already joined another guild.');
     }
-    if (await _memberCount(guild.id) >= guildMaxMembers) {
+    final count = await _memberCount(guild.id);
+    if (count == null) return const ActionResult.failed(remoteGuildRosterUnread);
+    if (count >= guildMaxMembers) {
       await drop();
       return ActionResult.failed('Guild is full ($guildMaxMembers members).');
     }

@@ -77,7 +77,11 @@ export function filterGuildListings(rows: GuildListing[], query: string): GuildL
   )
 }
 
-export function guildBrowseRows(rows: GuildListing[], query = ''): GuildBrowseRow[] {
+export function guildBrowseRows(
+  rows: GuildListing[],
+  query = '',
+  includeMotto = true,
+): GuildBrowseRow[] {
   return filterGuildListings(rows, query).map((row) => {
     const full = row.memberCount >= GUILD_MAX_MEMBERS
     return {
@@ -86,7 +90,9 @@ export function guildBrowseRows(rows: GuildListing[], query = ''): GuildBrowseRo
       subtitle: [
         policyLabel(row.joinPolicy),
         `${row.memberCount}/${GUILD_MAX_MEMBERS}`,
-        row.description || 'No description.',
+        ...(includeMotto && (row.description ?? '').trim()
+          ? [(row.description ?? '').trim()]
+          : []),
       ].join(' · '),
       emblem: row.emblem,
       tag: row.tag,
@@ -293,10 +299,10 @@ export function guildApplicationRows(applications: GuildApplication[]): GuildApp
       applicationId: application.id,
       username: application.username,
       message: guest
-        ? application.message
-          ? `Guest: ${application.message}`
-          : 'Guest request.'
-        : application.message || 'No message.',
+        ? (application.message ?? '').trim()
+          ? `Guest: ${(application.message ?? '').trim()}`
+          : ''
+        : (application.message ?? '').trim(),
     }
     if (guest) row.guest = true
     return row

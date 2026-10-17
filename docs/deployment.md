@@ -245,6 +245,119 @@ Checklist, in order:
     `20261017020000`, or `20261017030000`.
     Status: applied on test Oct 17 2026 (file `20261017040000`); live pending.
 
+15. [ ] `20261017120000_account_age.sql` (ADM-08). `account_age` (server-only),
+    `chat_allowed`, `set_account_age`, `staff_set_account_age`, and chat /
+    friend / guild-message RLS. Apply to test with this PR; live only after
+    Conor merges `test-launch` into `main`. Age never blocks play.
+    Status: applied on test Oct 17 2026 (file `20261017120000`, MCP
+    `20261017020804` / `account_age`); live pending.
+
+16. [ ] `20261017130000_account_deletion.sql` (ADM-09). 14-day deletion grace,
+    FK fixes (`guilds.leader_id`, `guild_private_messages.updated_by`,
+    `bazaar_fills` buyer/seller/order, `bazaar_collect.order_id`,
+    `profiles.guild_id`, `chat_reports` SET NULL), freeze, guild hand-off,
+    purge helpers. Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`. Do not apply to live before `delete-account`
+    and `purge-accounts` are on `restoria-idlerpg`.
+    Status: applied on test Oct 17 2026 (file `20261017130000`, MCP
+    `20261017020847` / `account_deletion`); live pending.
+
+17. [ ] `20261017140000_account_age_year_only.sql` (ADM-08 follow-up). Year-only
+    answers originally treated the birthday as 1 January; `set_account_age` no
+    longer asks for a month. Item 20 below switches year-only to 31 December.
+    Apply to test with this PR; live only after Conor merges `test-launch`
+    into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017140000`, MCP
+    `20261017022050` / `account_age_year_only`); live pending.
+
+18. [ ] `20261017150000_account_age_delete_qa.sql` (ADM-08 / ADM-09 QA).
+    Clients may only submit an in-game birth year (`set_account_age` refuses
+    `store_signal`; `refresh_store_age_signal` is disabled). `chat_allowed`
+    also requires `not account_is_frozen`. Bazaar claims
+    (`bazaar_settle_collect`) freeze during the grace; fills that pay other
+    players still settle. Expired `chat_reports` drop after one year
+    regardless of which side deleted. Guild leadership is handed off only
+    at purge, not when the grace starts.
+    Apply to test with this PR; live only after Conor merges `test-launch`
+    into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017150000`, MCP
+    `20261017023958` / `account_age_delete_qa`); live pending.
+
+19. [ ] `20261017151000_account_purge_cron.sql` (ADM-09). Enables `pg_cron`
+    and `pg_net` on the **test** project and schedules hourly
+    `account_purge_cron_tick()`, which POSTs `purge-accounts` through
+    `pg_net`. The shared secret is read from Vault — never the repo. The
+    job no-ops until the Vault entries below exist. Apply to test with
+    this PR; do **not** apply to live until Conor merges and sets the live
+    Vault URL.
+    Status: applied on test Oct 17 2026 (file `20261017151000`, MCP
+    `20261017024002` / `account_purge_cron`); live pending.
+
+20. [ ] `20261017152000_account_age_guild_chat.sql` (ADM-08 / Ui). Year-only
+    answers treat the birthday as 31 December (item 22 below also uses the
+    last day of a known month). `guild_set_motto` requires `chat_allowed`. Application inserts with
+    a non-empty `message` require `chat_allowed`; an empty message still
+    applies.     Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017152000`, MCP
+    `20261017024800` / `account_age_guild_chat`); live pending.
+
+21. [ ] `20261017153000_staff_setage_qa.sql` (ADM-08 QA). `staff_set_account_age`
+    rejects future birth years and writes `developer_audit_log` for failed
+    attempts as well as successes. Apply to test with this PR; live only
+    after Conor merges `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017153000`, MCP
+    `20261017025045` / `staff_setage_qa`); live pending.
+
+22. [ ] `20261017154000_account_age_month_end.sql` (ADM-08 QA). A known birth
+    month uses the last day of that month in the as-of year, same safe rule
+    as year-only = 31 December. Apply to test with this PR; live only after
+    Conor merges `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017154000`, MCP
+    `20261017025222` / `account_age_month_end`); live pending.
+
+23. [ ] `20261017155000_account_age_guild_column_lock.sql` (ADM-08 QA).
+    BEFORE INSERT OR UPDATE trigger refuses `guilds.description` writes when
+    the signed-in caller is not `chat_allowed` (service-role / purge still
+    work). `guild_create_hosted` stores an empty motto or refuses a
+    non-empty one when the founder is not `chat_allowed`. Replaces
+    table-level SELECT on `guilds` / `guild_applications` with explicit
+    columns so anon/authenticated cannot read `description` or `message`.
+    Serves those fields through `guilds_visible` / `guild_applications_visible`
+    (blank when the reader is not `chat_allowed`). Apply to test with this
+    PR; live only after Conor merges `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017155000`, MCP
+    `20261017025955` / `account_age_guild_column_lock`); live pending.
+
+24. [ ] `20261017155100_account_age_guild_column_grants.sql` (ADM-08 QA).
+    Follow-up that actually replaces the table-level SELECT grants (a
+    column REVOKE does not punch through them). Apply to test with this PR;
+    live only after Conor merges `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017155100`, MCP
+    `20261017030023` / `account_age_guild_column_grants`); live pending.
+
+25. [ ] `20261017155200_account_age_guild_lock_revoke_trigger.sql` (ADM-08 QA).
+    Revokes EXECUTE on `guilds_description_requires_chat` so it is not an
+    RPC. Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017155200`, MCP
+    `20261017030045` / `account_age_guild_lock_revoke_trigger`); live pending.
+
+26. [ ] `20261017155300_account_purge_half_made_guilds.sql` (ADM-09). Hourly
+    `account_purge_cron_tick` (and `purge-accounts`) deletes only half-made
+    guilds: no members now, never a leader row, no hall, no achievements,
+    older than 1 hour. Never uses `guilds.leader_id`. Vari approved.
+    Apply to test with this PR; live only after Conor merges `test-launch`
+    into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017155300`, MCP
+    `20261017102030` / `account_purge_half_made_guilds`); live pending.
+
+27. [ ] `20261017155400_account_age_month_guest.sql` (ADM-08 / Ui). Guest
+    requests require `chat_allowed` to send or accept. Empty member
+    applications still work. TEST only; live pending.
+    Status: applied on test Oct 17 2026 (file `20261017155400`, version
+    `20261017155400` / `account_age_month_guest`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.
@@ -331,8 +444,43 @@ Never put the values in the client, the repo, or GitHub. Conor sets them.
 | --- | --- |
 | `FEEDBACK_DISCORD_WEBHOOK_URL` | Staff-only Discord forum webhook for ADM-04 submit-feedback |
 | `FEEDBACK_DISCORD_TAG_IDS` | JSON map of forum tag ids, e.g. `{"bug":"…","idea":"…","report":"…"}`. Optional; missing keys are skipped. |
+| `PURGE_CRON_SECRET` | Shared secret for the `purge-accounts` cron (ADM-09). The function also accepts the service role. The test project schedules this hourly via `pg_cron` + `pg_net`; see Vault setup below. |
+
+### Vault setup for the hourly purge (test project)
+
+The migration `20261017151000_account_purge_cron.sql` creates the job. It
+does **not** store a secret. Until these Vault entries exist the hourly
+tick logs a warning and returns. Conor sets them on the **test** project
+only (Database → Vault, or SQL as `postgres`):
+
+1. Create a Vault secret named `purge_cron_secret` whose value is the
+   same string as the Edge Function secret `PURGE_CRON_SECRET`.
+2. Create a Vault secret named `purge_cron_url` whose value is
+   `https://xlbwmxxtzrqjujvgqcuf.supabase.co/functions/v1/purge-accounts`.
+
+```sql
+select vault.create_secret('<same value as PURGE_CRON_SECRET>', 'purge_cron_secret', 'Hourly purge-accounts cron secret');
+select vault.create_secret(
+  'https://xlbwmxxtzrqjujvgqcuf.supabase.co/functions/v1/purge-accounts',
+  'purge_cron_url',
+  'Hourly purge-accounts URL for the test project'
+);
+```
+
+Never put the secret in the repo, the client, or GitHub. Live needs its
+own pair after Conor merges `test-launch` into `main` (live function URL
+and a live `PURGE_CRON_SECRET`).
+
+Guild leadership is handed off (or the guild is disbanded) only when
+`account_purge_data` runs — not when the 14-day grace starts. A leader
+who requested deletion stays leader until purge or restore.
+
+The Flutter web SPA serves `/delete-account` (Google Play) via
+`not_found_handling = "single-page-application"`. Privacy-policy copy is not
+in this repo; Conor writes that separately.
 
 Live gets its own webhook later, after Conor merges `test-launch` into `main`.
+Do not apply ADM-08 / ADM-09 migrations to the live project until that merge.
 
 ## Token scopes
 

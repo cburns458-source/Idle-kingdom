@@ -100,6 +100,7 @@ function deps(over: {
   webhookUrl?: string
   tagIdsJson?: string
   nowMs?: number
+  frozen?: boolean
   discord?: Array<{ status: number; retryAfterMs?: number; messageId?: string; threadId?: string; error?: string }>
 }): { deps: FeedbackDeps; store: MemoryStore; posts: unknown[] } {
   const store = over.store ?? new MemoryStore()
@@ -131,6 +132,7 @@ function deps(over: {
         }
       },
       sleep: async () => {},
+      accountFrozen: async () => over.frozen === true,
     },
   }
 }
@@ -138,6 +140,25 @@ function deps(over: {
 async function read(response: Response): Promise<{ status: number; body: Record<string, unknown> }> {
   return { status: response.status, body: (await response.json()) as Record<string, unknown> }
 }
+
+Deno.test('frozen accounts cannot send feedback', async () => {
+  const wired = deps({ frozen: true })
+  const result = await read(await handleSubmitFeedback(request(validBody()), wired.deps))
+  assertEquals(result.status, 403)
+  assertEquals(result.body.error, 'This account is scheduled for deletion.')
+  assertEquals(wired.store.rows.length, 0)
+})
+
+Deno.test('a frozen lookup error refuses feedback', async () => {
+  const wired = deps({})
+  wired.deps.accountFrozen = async () => {
+    throw new Error('lookup failed')
+  }
+  const result = await read(await handleSubmitFeedback(request(validBody()), wired.deps))
+  assertEquals(result.status, 403)
+  assertEquals(result.body.error, 'This account is scheduled for deletion.')
+  assertEquals(wired.store.rows.length, 0)
+})
 
 Deno.test('anon gets 401', async () => {
   const wired = deps({ user: null })

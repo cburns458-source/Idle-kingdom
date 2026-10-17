@@ -8,6 +8,8 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_auth_form.dart';
+import 'delete_account_sheet.dart';
+import 'game_popup.dart';
 import 'floating_slot.dart';
 import 'format.dart';
 import 'equipped_title.dart';
@@ -282,6 +284,24 @@ class _AccountPanelState extends State<AccountPanel> {
         tone: GameButtonTone.secondary,
         onPressed: net.busy ? null : () => net.signOut(widget.controller.save),
       ),
+      const SizedBox(height: 8),
+      GameButton(
+        key: const Key('delete-account'),
+        label: 'Delete account',
+        tone: GameButtonTone.danger,
+        onPressed: net.busy
+            ? null
+            : () => showGamePopup<void>(
+                context: context,
+                builder: (context) => GamePopupCard(
+                  child: DeleteAccountSheet(
+                    controller: widget.controller,
+                    multiplayer: net,
+                    embedded: true,
+                  ),
+                ),
+              ),
+      ),
       const SizedBox(height: 20),
       _PeopleFold(
         heading: 'Friends',
@@ -298,27 +318,29 @@ class _AccountPanelState extends State<AccountPanel> {
           userId: contact.userId,
         ),
       ),
-      const SizedBox(height: 10),
-      _PeopleFold(
-        heading: 'Friend requests',
-        empty: 'No incoming requests.',
-        people: net.incomingFriendRequests,
-        showOnline: true,
-        nowMs: widget.controller.session.clock(),
-        presence: net.presence,
-        locationName: _locationName,
-        trailing: (contact) => GameTextButton(
-          label: 'Accept',
-          onPressed: net.busy ? null : () => net.sendFriendRequest(contact.userId),
+      if (net.chatAllowed) ...[
+        const SizedBox(height: 10),
+        _PeopleFold(
+          heading: 'Friend requests',
+          empty: 'No incoming requests.',
+          people: net.incomingFriendRequests,
+          showOnline: true,
+          nowMs: widget.controller.session.clock(),
+          presence: net.presence,
+          locationName: _locationName,
+          trailing: (contact) => GameTextButton(
+            label: 'Accept',
+            onPressed: net.busy ? null : () => net.sendFriendRequest(contact.userId),
+          ),
+          onOpen: (contact) => openPlayerProfile(
+            context,
+            controller: widget.controller,
+            multiplayer: net,
+            userId: contact.userId,
+          ),
         ),
-        onOpen: (contact) => openPlayerProfile(
-          context,
-          controller: widget.controller,
-          multiplayer: net,
-          userId: contact.userId,
-        ),
-      ),
-      if (net.outgoingFriendRequests.isNotEmpty) ...[
+      ],
+      if (net.chatAllowed && net.outgoingFriendRequests.isNotEmpty) ...[
         const SizedBox(height: 10),
         _PeopleFold(
           heading: 'Sent requests',

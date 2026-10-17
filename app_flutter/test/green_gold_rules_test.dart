@@ -48,6 +48,19 @@ void main() {
     for (final fill in Palette.confirmDisabledFill.colors) {
       expect(contrastRatio(Palette.confirmDisabledLabel, fill), greaterThanOrEqualTo(4.5));
     }
+    for (final fill in [...Palette.dangerFill.colors, ...Palette.dangerPressed.colors]) {
+      expect(contrastRatio(Palette.dangerLabel, fill), greaterThanOrEqualTo(4.5));
+    }
+    expect(contrastRatio(Palette.dangerText, UiChrome.wood.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.dangerText, UiChrome.wood.slot), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.dangerText, UiChrome.stone.board), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.dangerText, UiChrome.stone.slot), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(Palette.danger, UiChrome.wood.board), lessThan(4.5));
+    expect(
+      contrastRatio(Palette.dangerText, Palette.panelMuted),
+      lessThan(4.5),
+      reason: 'dangerText must never render on panelMuted #6B5338',
+    );
   });
 
   test('selected gold fill is ≥1.5:1 vs idle green and brown', () {

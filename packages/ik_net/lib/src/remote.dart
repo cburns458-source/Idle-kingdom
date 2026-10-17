@@ -29,8 +29,17 @@ class RemoteTables {
   static const String chat = 'chat_messages';
   static const String bountyClaims = 'bounty_claims';
   static const String guilds = 'guilds';
+
+  /// Security-definer view that blanks `description` when the reader is not
+  /// `chat_allowed`. Client reads that include the motto go here; writes stay
+  /// on [guilds].
+  static const String guildsVisible = 'guilds_visible';
   static const String guildMembers = 'guild_members';
   static const String guildApplications = 'guild_applications';
+
+  /// Security-definer view that blanks `message` when the reader is not
+  /// `chat_allowed`, and re-applies the applications RLS predicate.
+  static const String guildApplicationsVisible = 'guild_applications_visible';
   static const String guildGuests = 'guild_guests';
   static const String guildHalls = 'guild_halls';
   static const String guildAchievements = 'guild_achievements';
@@ -79,6 +88,8 @@ class RemoteRpcs {
   static const String reportPlayer = 'report_player';
   static const String usernameAvailable = 'username_available';
   static const String renameUsername = 'rename_username';
+  static const String accountStatus = 'account_status';
+  static const String setAccountAge = 'set_account_age';
 }
 
 /// Report reasons a player can file. `Other` may carry a short note.
@@ -130,6 +141,9 @@ const String remoteBazaarMarketFunction = 'bazaar';
 
 /// Wave G game function. Phase 2 `sync` / `command` write the hosted save.
 const String remoteGameFunction = 'game';
+
+/// Request or restore a 14-day account deletion.
+const String remoteDeleteAccountFunction = 'delete-account';
 
 /// How often a signed-in device asks the server to advance time.
 const num remoteGameSyncMinIntervalMs = 120000;

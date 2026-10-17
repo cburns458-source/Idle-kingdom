@@ -7,7 +7,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
+import { ACCOUNT_FROZEN } from '../_shared/deletion.ts'
 import { gateDevCommand } from '../_shared/dev_gate.ts'
+import { parseSetAgeTokens, SETAGE_MISSING_PLAYER, setAgeAuditRow } from '../_shared/setage.ts'
 import {
   leaveMassEncounter,
   MASS_COMMANDS,
@@ -116,7 +118,7 @@ Deno.serve(async (req) => {
     return handleDevStatus(admin, user.id)
   }
   if (action === 'dev_command') {
-    return handleDevCommand(admin, user.id, payload)
+    return handleDevCommand(asUser, admin, user.id, payload)
   }
   if (action === 'shadow') {
     return handleShadow(admin, user.id)
@@ -389,6 +391,10 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       withRankedWinsRemaining({ error: 'version must be a whole number.', phase: 2 }, rankedWinsLeft),
       400,
     )
+  }
+
+  if (isGuildEconomyCommand(command) && (await accountFrozen(admin, userId))) {
+    return json({ error: ACCOUNT_FROZEN, phase: 2 }, 403)
   }
 
   const hallContext = await loadHallContext(admin, userId)
@@ -664,7 +670,12 @@ async function handleDevStatus(admin: Client, userId: string): Promise<Response>
   return json({ ok: true, phase: 2, action: 'dev_status', developer: Boolean(data?.user_id) })
 }
 
-async function handleDevCommand(admin: Client, userId: string, payload: GameBody): Promise<Response> {
+async function handleDevCommand(
+  asUser: Client,
+  admin: Client,
+  userId: string,
+  payload: GameBody,
+): Promise<Response> {
   const command = typeof payload.command === 'string' ? payload.command.trim().toLowerCase() : ''
   if (!command) return json({ error: 'Missing command.', phase: 2 }, 400)
   const tokens = Array.isArray(payload.tokens)
@@ -692,6 +703,10 @@ async function handleDevCommand(admin: Client, userId: string, payload: GameBody
   if (!gate.ok) {
     if (gate.status === 500) return json({ error: gate.error, phase: 2 }, 500)
     return json({ error: gate.error, phase: 2, action: 'dev_command' }, 403)
+  }
+
+  if (command === 'setage') {
+    return handleSetAge(asUser, admin, userId, tokens)
   }
 
   const nowMs = Date.now()
@@ -1172,6 +1187,78 @@ const GUILD_HALL_COMMANDS = new Set([
 
 function isGuildHallCommand(command: string): boolean {
   return GUILD_HALL_COMMANDS.has(command)
+}
+
+const GUILD_ECONOMY_COMMANDS = new Set([
+  'guild_pay_hall_debt',
+  'guild_chip_in_hall_gold',
+  'guild_donate_hall_item',
+  'guild_bank_deposit',
+])
+
+function isGuildEconomyCommand(command: string): boolean {
+  return GUILD_ECONOMY_COMMANDS.has(command)
+}
+
+async function accountFrozen(admin: Client, userId: string): Promise<boolean> {
+  const { data, error } = await admin.rpc('account_is_frozen', { p_user: userId })
+  if (error) return true
+  return data === true
+}
+
+async function handleSetAge(
+  asUser: Client,
+  admin: Client,
+  staffId: string,
+  tokens: string[],
+): Promise<Response> {
+  const parsed = parseSetAgeTokens(tokens)
+  if (!parsed.ok) {
+    await admin.from('developer_audit_log').insert(setAgeAuditRow(staffId, tokens, parsed.reason))
+    return json({ error: parsed.reason, phase: 2, action: 'dev_command' }, 400)
+  }
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('user_id, username')
+    .ilike('username', parsed.username)
+    .maybeSingle()
+  if (!profile?.user_id) {
+    await admin.from('developer_audit_log').insert(
+      setAgeAuditRow(staffId, tokens, SETAGE_MISSING_PLAYER),
+    )
+    return json({ error: SETAGE_MISSING_PLAYER, phase: 2, action: 'dev_command' }, 400)
+  }
+  const { data, error } = await asUser.rpc('staff_set_account_age', {
+    p_target: profile.user_id,
+    p_birth_year: parsed.year,
+    p_birth_month: parsed.month,
+  })
+  if (error) {
+    await admin.from('developer_audit_log').insert(
+      setAgeAuditRow(staffId, tokens, error.message, { target: profile.user_id }),
+    )
+    return json({ error: error.message, phase: 2, action: 'dev_command' }, 400)
+  }
+  const row = (data ?? {}) as { ok?: unknown; reason?: unknown }
+  if (row.ok !== true) {
+    // staff_set_account_age already wrote the failed-attempt audit row.
+    return json(
+      {
+        error: typeof row.reason === 'string' ? row.reason : 'Age could not be updated.',
+        phase: 2,
+        action: 'dev_command',
+      },
+      400,
+    )
+  }
+  return json({
+    ok: true,
+    phase: 2,
+    action: 'dev_command',
+    command: 'setage',
+    message: `Age updated for ${profile.username}.`,
+    wroteSave: false,
+  }, 200)
 }
 
 function hostedTotalLevel(payload: unknown, nowMs: number): number | undefined {

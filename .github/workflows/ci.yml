@@ -54,7 +54,7 @@ jobs:
       # `npm:` packages in a `node_modules` this job has no reason to install.
       - run: deno check */index.ts
         working-directory: supabase/functions
-      - run: deno test submit-feedback/handler_test.ts
+      - run: deno test submit-feedback/handler_test.ts delete-account/handler_test.ts purge-accounts/handler_test.ts
         working-directory: supabase/functions
 
   dart:
