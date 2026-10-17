@@ -63,8 +63,9 @@ void main() {
 
       final completion = logCompletion(database.launch, controller.save);
       final overall = tester.widget<Text>(find.text('${completion.overall.percent}% complete'));
-      expect(overall.style?.color, Palette.progress);
-      expect(overall.style?.color, isNot(Palette.gold));
+      expect(overall.style?.color, Palette.heading);
+      expect(overall.style?.color, isNot(Palette.progress));
+      expect(overall.style?.color, isNot(Palette.borderSelected));
 
       final section = tester.widget<Text>(find.text(completion.section('achievements')!.label));
       expect(section.style?.color, Palette.gold);
@@ -439,6 +440,7 @@ void main() {
     expect(find.textContaining('Hide locked'), findsOne);
     expect(find.byTooltip('Sort'), findsOne);
     expect(_questSortChipBorder(tester), UiChrome.wood.embossFace);
+    expect(_questSortChipGradient(tester), UiChrome.wood.secondaryFill);
     expect(find.text('Status'), findsNothing);
     expect(find.text('Release'), findsNothing);
 
@@ -460,7 +462,8 @@ void main() {
     await pumpPanel(tester, LogView(controller: again));
     await tester.tap(find.text('Quests'));
     await tester.pump();
-    expect(_questSortChipBorder(tester), Palette.borderSelected);
+    expect(_questSortChipBorder(tester), UiChrome.wood.embossFace);
+    expect(_questSortChipGradient(tester), UiChrome.wood.secondarySelected);
     await tester.tap(find.byTooltip('Sort'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -475,9 +478,14 @@ void main() {
   });
 }
 
-Color _questSortChipBorder(WidgetTester tester) {
+BoxDecoration _questSortChipDecoration(WidgetTester tester) {
   final box = tester.widget<DecoratedBox>(
     find.descendant(of: find.byTooltip('Sort'), matching: find.byType(DecoratedBox)).first,
   );
-  return (box.decoration as BoxDecoration).border!.top.color;
+  return box.decoration as BoxDecoration;
 }
+
+Color _questSortChipBorder(WidgetTester tester) =>
+    _questSortChipDecoration(tester).border!.top.color;
+
+Gradient? _questSortChipGradient(WidgetTester tester) => _questSortChipDecoration(tester).gradient;

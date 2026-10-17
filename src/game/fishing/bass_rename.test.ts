@@ -14,7 +14,7 @@ describe('tuna renamed to bass', () => {
     const cooked = launch.Items.find((row) => row['Item ID'] === 'ITEM-0062')!
     expect(raw['Display Name']).toBe('Raw bass')
     expect(raw['Internal Key']).toBe('raw_bass')
-    expect(cooked['Display Name']).toBe('Cooked bass')
+    expect(cooked['Display Name']).toBe('Bass fillet')
     expect(cooked['Internal Key']).toBe('cooked_bass')
 
     const catchAction = launch.Actions.find((row) => row['Action ID'] === 'ACN-0102')!

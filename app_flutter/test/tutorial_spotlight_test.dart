@@ -12,6 +12,17 @@ DialogueText _emptyDialogueText() {
 }
 
 void main() {
+  testWidgets('the spotlight pointer is gold, not green', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: TutorialPointer(side: TutorialPointerSide.right)),
+      ),
+    );
+    expect(tester.widget<Icon>(find.byIcon(Icons.touch_app)).color, Palette.goldHighlight);
+    expect(tester.widget<Icon>(find.byIcon(Icons.arrow_left)).color, Palette.goldHighlight);
+    expect(tester.widget<Icon>(find.byIcon(Icons.touch_app)).color, isNot(Palette.borderSelected));
+  });
+
   testWidgets('the hint bar shows the next-step line and is tappable', (tester) async {
     var taps = 0;
     await tester.pumpWidget(
@@ -26,6 +37,9 @@ void main() {
       ),
     );
     expect(find.text('Gather potatoes 3/5'), findsOneWidget);
+    expect(tester.widget<Icon>(find.byIcon(Icons.flag)).color, Palette.goldHighlight);
+    expect(tester.widget<Icon>(find.byIcon(Icons.chevron_right)).color, Palette.goldHighlight);
+    expect(tester.widget<Icon>(find.byIcon(Icons.flag)).color, isNot(Palette.borderSelected));
     await tester.tap(find.byType(TutorialHintBar));
     expect(taps, 1);
   });

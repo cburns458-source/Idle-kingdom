@@ -388,7 +388,7 @@ Future<void> showProjectReceipt(BuildContext context, {required ProjectReceipt r
           for (final line in receipt.lines)
             Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: Text('· $line', style: const TextStyle(color: Palette.success)),
+              child: Text('· $line', style: TextStyle(color: successForeground(context))),
             ),
           const SizedBox(height: 10),
           GameButton(

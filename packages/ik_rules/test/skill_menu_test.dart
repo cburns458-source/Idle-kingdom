@@ -288,12 +288,12 @@ void main() {
     expect(view.tabs.map((tab) => tab.label), ['Fish', 'Meat', 'Stew', 'Other']);
     List<SkillMenuListItem> tab(String id) =>
         view.tabs.firstWhere((row) => row.id == id).sections.first.entries;
-    expect(tab('fish').any((row) => row.displayName == 'Cooked perch'), isTrue);
-    expect(tab('fish').any((row) => row.displayName == 'Cooked swordfish'), isFalse);
-    expect(tab('fish').any((row) => row.displayName == 'Cooked marlin'), isTrue);
-    expect(tab('other').any((row) => row.displayName == 'Cooked swordfish'), isFalse);
-    expect(tab('other').any((row) => row.displayName == 'Cooked marlin'), isFalse);
-    expect(tab('meat').any((row) => row.displayName == 'Cooked beef'), isTrue);
+    expect(tab('fish').any((row) => row.displayName == 'Perch fillet'), isTrue);
+    expect(tab('fish').any((row) => row.displayName == 'Swordfish steak'), isFalse);
+    expect(tab('fish').any((row) => row.displayName == 'Marlin steak'), isTrue);
+    expect(tab('other').any((row) => row.displayName == 'Swordfish steak'), isFalse);
+    expect(tab('other').any((row) => row.displayName == 'Marlin steak'), isFalse);
+    expect(tab('meat').any((row) => row.displayName == 'Beef steak'), isTrue);
     expect(tab('stew').any((row) => row.displayName == 'Crawfish stew'), isTrue);
     expect(tab('stew').any((row) => row.displayName == 'Soup stock'), isTrue);
     expect(tab('other').any((row) => row.displayName.toLowerCase().contains('potato')), isTrue);
@@ -315,7 +315,7 @@ void main() {
       isFalse,
     );
     expect(
-      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Cooked swordfish'),
+      listRecipeBookEntries(save, launch).any((entry) => entry.name == 'Swordfish steak'),
       isFalse,
     );
     expect(
@@ -349,7 +349,7 @@ void main() {
     expect(glovesItem.raw['Release Phase'], 'Launch');
     final marlin = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
     expect(marlin.raw['Status'], 'Planned');
-    expect(marlin.raw['Display Name'], 'Cooked marlin');
+    expect(marlin.raw['Display Name'], 'Marlin steak');
     expect(marlin.raw['Ingredient 3 Item ID'], isNull);
     final soup = entries.firstWhere((entry) => entry.name == 'Squid noodle soup');
     expect(soup.materials, contains('Soup stock'));
@@ -430,10 +430,10 @@ void main() {
     expect(equipment.raw['Healing Amount'], 1100);
     final marlinAction = db.actions.firstWhere((row) => row.actionId == 'ACN-0127');
     expect(marlinAction.raw['Status'], 'Planned');
-    expect(marlinAction.displayName, 'Cooked marlin');
+    expect(marlinAction.displayName, 'Marlin steak');
     final marlinRecipe = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0044');
     expect(marlinRecipe.raw['Status'], 'Planned');
-    expect(marlinRecipe.raw['Display Name'], 'Cooked marlin');
+    expect(marlinRecipe.raw['Display Name'], 'Marlin steak');
     final action = db.actions.firstWhere((row) => row.actionId == 'ACN-0175');
     expect(action.proficiencyLevel, 66);
     expect(action.releasePhase, 'Launch');

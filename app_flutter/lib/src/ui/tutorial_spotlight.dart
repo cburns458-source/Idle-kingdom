@@ -352,7 +352,7 @@ class TutorialPointer extends StatelessWidget {
     const hand = Icon(
       Icons.touch_app,
       size: 32,
-      color: Palette.borderSelected,
+      color: Palette.goldHighlight,
       shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
     );
     final arrow = Icon(
@@ -363,7 +363,7 @@ class TutorialPointer extends StatelessWidget {
         TutorialPointerSide.above => Icons.arrow_drop_down,
       },
       size: 28,
-      color: Palette.borderSelected,
+      color: Palette.goldHighlight,
       shadows: const [Shadow(color: Colors.black54, blurRadius: 6)],
     );
     return switch (side) {
@@ -447,7 +447,7 @@ class TutorialHintBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              const Icon(Icons.flag, size: 16, color: Palette.borderSelected),
+              const Icon(Icons.flag, size: 16, color: Palette.goldHighlight),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -455,7 +455,7 @@ class TutorialHintBar extends StatelessWidget {
                   style: const TextStyle(fontSize: GameFont.s, color: Palette.parchmentText),
                 ),
               ),
-              const Icon(Icons.chevron_right, size: 18, color: Palette.borderSelected),
+              const Icon(Icons.chevron_right, size: 18, color: Palette.goldHighlight),
             ],
           ),
         ),

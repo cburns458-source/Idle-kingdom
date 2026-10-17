@@ -76,7 +76,7 @@ describe('recipe knowledge', () => {
     expect(canKnowRecipe(thiefCrafter, launch, lockpicks!)).toBe(true)
     const marlin = launch.Recipes.find((recipe) => recipe['Recipe ID'] === 'RCP-0044')
     expect(marlin?.Status).toBe('Planned')
-    expect(marlin?.['Display Name']).toBe('Cooked marlin')
+    expect(marlin?.['Display Name']).toBe('Marlin steak')
     expect(marlin?.['Ingredient 1 Item ID']).toBe(
       launch.Items.find((item) => item['Internal Key'] === 'raw_marlin')?.['Item ID'],
     )

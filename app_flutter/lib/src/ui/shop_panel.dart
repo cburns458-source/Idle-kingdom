@@ -379,7 +379,7 @@ class _ShopPanelState extends State<ShopPanel> {
             const SizedBox(height: 6),
             Text(
               receipt,
-              style: const TextStyle(color: Palette.success, fontSize: GameFont.s),
+              style: TextStyle(color: successForeground(context), fontSize: GameFont.s),
             ),
           ],
           const SizedBox(height: 4),
@@ -452,7 +452,7 @@ class _ShopPanelState extends State<ShopPanel> {
           const SizedBox(height: 6),
           Text(
             receipt,
-            style: const TextStyle(color: Palette.success, fontSize: GameFont.s),
+            style: TextStyle(color: successForeground(context), fontSize: GameFont.s),
           ),
         ],
         const SizedBox(height: 8),
@@ -602,7 +602,7 @@ class _ShopPanelState extends State<ShopPanel> {
               top: 0,
               child: Text(
                 '★',
-                style: TextStyle(fontSize: GameFont.s, color: Palette.softGreen),
+                style: TextStyle(fontSize: GameFont.s, color: Palette.skillXp),
               ),
             ),
           if (offered != null)

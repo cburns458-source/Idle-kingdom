@@ -77,10 +77,17 @@ class _OverlayNoticeState extends State<OverlayNotice> {
         duration: reduceMotion ? Duration.zero : noticeFadeDuration,
         child: GamePanel(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            widget.text,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: widget.tone, fontSize: GameFont.m, fontWeight: FontWeight.w400),
+          child: Builder(
+            builder: (context) {
+              final color = widget.tone == Palette.success
+                  ? successForeground(context)
+                  : widget.tone;
+              return Text(
+                widget.text,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: color, fontSize: GameFont.m, fontWeight: FontWeight.w400),
+              );
+            },
           ),
         ),
       ),

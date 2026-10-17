@@ -74,7 +74,7 @@ void main() {
     expect(cancelled.inventory, isEmpty);
   });
 
-  test('cooked duck twins trout and cooked boar twins salmon; pheasant moves to 17', () {
+  test('roast duck twins trout and boar chop twins salmon; pheasant moves to 17', () {
     final duck = db.recipes.firstWhere((row) => row.raw['Recipe ID'] == 'RCP-0076');
     expect(duck.raw['Proficiency Level'], 11);
     expect(duck.raw['XP Reward'], 240);

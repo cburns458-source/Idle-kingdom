@@ -15,7 +15,7 @@ import 'package:ik_rules/ik_rules.dart';
 import 'support/harness.dart';
 
 /// The real content plus the SYS-01 parity patch: QST-9001 (King: hand in 10
-/// Baked potato + 10 Cooked perch) and QST-9002 (Fennel: show 5 Baked potato).
+/// Baked potato + 10 Perch fillet) and QST-9002 (Fennel: show 5 Baked potato).
 LoadedDatabase _patchedDatabase() {
   final raw = jsonDecode(
     File('../content/data/game-database.json').readAsStringSync(),
@@ -78,7 +78,7 @@ void main() {
     return save.copyWith(inventory: inventory);
   }
 
-  /// QST-9001 on its hand-in step with 6 Baked potato and all 10 Cooked perch already handed in.
+  /// QST-9001 on its hand-in step with 6 Baked potato and all 10 Perch fillet already handed in.
   PlayerSave feastSixHandedIn() {
     var save = choose(character(), _king, _kingNode, 'DCH-9001');
     save = bag(bag(save, _bakedPotato, 6), _cookedPerch, 10);
@@ -148,7 +148,7 @@ void main() {
       await open(tester, bag(feastSixHandedIn(), _bakedPotato, 7), _king);
 
       expect(find.text('Baked potato 6/10 handed in'), findsOne);
-      expect(find.text('Cooked perch 10/10 handed in'), findsOne);
+      expect(find.text('Perch fillet 10/10 handed in'), findsOne);
       // DCH-9002 (step_ready) and DCH-9006 (quest_active) both hand in.
       expect(find.text('Hand in 4 Baked potato'), findsNWidgets(2));
       expect(button(tester, 'Hand in 4 Baked potato').onPressed, isNotNull);
@@ -447,11 +447,11 @@ void main() {
       final controller = await open(tester, favouriteFeast(), _king);
       final before = jsonEncode(controller.save.toJson());
 
-      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Perch fillet').first);
       await tester.pumpAndSettle();
 
       expect(find.textContaining(prompt), findsOne);
-      expect(find.textContaining('Baked potato x4, Cooked perch x2'), findsOne);
+      expect(find.textContaining('Baked potato x4, Perch fillet x2'), findsOne);
       expect(jsonEncode(controller.save.toJson()), before);
       expectNoBank(tester);
 
@@ -492,7 +492,7 @@ void main() {
         },
       );
 
-      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Perch fillet').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Yes'));
       await tester.pumpAndSettle();
@@ -522,7 +522,7 @@ void main() {
           );
         },
       );
-      await tester.tap(find.text('Hand in 3 Cooked perch').first);
+      await tester.tap(find.text('Hand in 3 Perch fillet').first);
       await tester.pumpAndSettle();
       expect(sent, [('DCH-9002', false)]);
       expect(find.textContaining(prompt), findsOne);
@@ -531,7 +531,7 @@ void main() {
     testWidgets('Yes on the local engine commits the hand-in', (tester) async {
       final controller = await open(tester, favouriteFeast(), _king);
 
-      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Perch fillet').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Yes'));
       await tester.pumpAndSettle();
@@ -560,7 +560,7 @@ void main() {
         },
       );
 
-      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Perch fillet').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Yes'));
       await tester.pumpAndSettle();
@@ -587,10 +587,10 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('Hand in 4 Baked potato and 2 Cooked perch').first);
+      await tester.tap(find.text('Hand in 4 Baked potato and 2 Perch fillet').first);
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Baked potato x4, Cooked perch x2, Potato x7'), findsOne);
+      expect(find.textContaining('Baked potato x4, Perch fillet x2, Potato x7'), findsOne);
     });
   });
 

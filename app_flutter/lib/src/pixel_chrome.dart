@@ -89,6 +89,8 @@ class _EmbossBorderPainter extends CustomPainter {
     required this.highlight,
     required this.shade,
     this.selected = false,
+    this.inset = false,
+    this.innerHighlight,
   });
 
   final double step;
@@ -97,11 +99,13 @@ class _EmbossBorderPainter extends CustomPainter {
   final Color highlight;
   final Color shade;
   final bool selected;
+  final bool inset;
+  final Color? innerHighlight;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final inset = strokeWidth / 2;
-    final rect = (Offset.zero & size).deflate(inset);
+    final pad = strokeWidth / 2;
+    final rect = (Offset.zero & size).deflate(pad);
 
     final shadePaint = Paint()
       ..style = PaintingStyle.stroke
@@ -121,20 +125,42 @@ class _EmbossBorderPainter extends CustomPainter {
       ..color = highlight
       ..strokeJoin = StrokeJoin.miter;
 
+    canvas.save();
+    if (inset) {
+      canvas.translate(-0.8, -0.8);
+    } else {
+      canvas.translate(0.8, 0.8);
+    }
     canvas
-      ..save()
-      ..translate(0.8, 0.8)
       ..drawRect(rect, shadePaint)
       ..restore()
       ..drawRect(rect, facePaint);
 
-    // Subtle top + left lift — muted so borders stay matte, not shiny.
-    final highlightPath = Path()
-      ..moveTo(inset, inset)
-      ..lineTo(size.width - inset, inset)
-      ..moveTo(inset, inset)
-      ..lineTo(inset, size.height - inset);
+    final highlightPath = Path();
+    if (inset) {
+      highlightPath
+        ..moveTo(pad, size.height - pad)
+        ..lineTo(size.width - pad, size.height - pad)
+        ..moveTo(size.width - pad, pad)
+        ..lineTo(size.width - pad, size.height - pad);
+    } else {
+      highlightPath
+        ..moveTo(pad, pad)
+        ..lineTo(size.width - pad, pad)
+        ..moveTo(pad, pad)
+        ..lineTo(pad, size.height - pad);
+    }
     canvas.drawPath(highlightPath, light);
+
+    if (innerHighlight != null) {
+      canvas.drawRect(
+        rect.deflate(math.max(1, strokeWidth)),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = innerHighlight!,
+      );
+    }
   }
 
   @override
@@ -142,6 +168,8 @@ class _EmbossBorderPainter extends CustomPainter {
     return oldDelegate.step != step ||
         oldDelegate.strokeWidth != strokeWidth ||
         oldDelegate.selected != selected ||
+        oldDelegate.inset != inset ||
+        oldDelegate.innerHighlight != innerHighlight ||
         oldDelegate.face != face ||
         oldDelegate.highlight != highlight ||
         oldDelegate.shade != shade;
@@ -197,6 +225,8 @@ class PixelPlate extends StatelessWidget {
     this.padding,
     this.strokeWidth = 2,
     this.selected = false,
+    this.inset = false,
+    this.innerHighlight,
     this.rare = false,
     this.rivets = false,
     this.shadow = true,
@@ -212,6 +242,12 @@ class PixelPlate extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double strokeWidth;
   final bool selected;
+
+  /// Pressed / selected bevel: shade on the top-left, light on the bottom-right.
+  final bool inset;
+
+  /// Optional inner gold/parchment stroke, used by selected GameButtons.
+  final Color? innerHighlight;
 
   /// Gold rim for a rare/featured item. Ignored when [selected] — selected is
   /// always green.
@@ -265,6 +301,8 @@ class PixelPlate extends StatelessWidget {
           step: step,
           strokeWidth: strokeWidth,
           selected: selected,
+          inset: inset,
+          innerHighlight: innerHighlight,
           face: selected
               ? chrome.embossFaceSelected
               : rareRim
@@ -333,8 +371,11 @@ class PixelInkPlate extends StatelessWidget {
     this.padding,
     this.strokeWidth = 2,
     this.selected = false,
+    this.inset = false,
+    this.innerHighlight,
     this.rare = false,
     this.shadow = true,
+    this.emboss,
     this.material = PixelPlateMaterial.auto,
   });
 
@@ -347,8 +388,13 @@ class PixelInkPlate extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double strokeWidth;
   final bool selected;
+  final bool inset;
+  final Color? innerHighlight;
   final bool rare;
   final bool shadow;
+
+  /// Defaults to on when [selected], [rare], or [inset], so unselected chips stay rimless.
+  final bool? emboss;
   final PixelPlateMaterial material;
 
   @override
@@ -370,9 +416,11 @@ class PixelInkPlate extends StatelessWidget {
           padding: padding,
           strokeWidth: strokeWidth,
           selected: selected,
+          inset: inset,
+          innerHighlight: innerHighlight,
           rare: rare,
           shadow: false,
-          emboss: selected || rare,
+          emboss: emboss ?? (selected || rare || inset),
           material: material,
           child: child,
         ),

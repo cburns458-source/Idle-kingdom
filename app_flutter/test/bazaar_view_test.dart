@@ -202,6 +202,7 @@ void main() {
     // still listed: a buy order is worth placing when nobody is selling.
     expect(find.text('Iron ore'), findsOne);
     expect(find.textContaining('No trades yet'), findsWidgets);
+    expect(tester.widget<GameButton>(find.byKey(const Key('bazaar-filter-All'))).selected, isTrue);
     expect(
       tester
           .widget<PixelInkPlate>(
@@ -211,6 +212,17 @@ void main() {
             ),
           )
           .selected,
+      isFalse,
+    );
+    expect(
+      tester
+          .widget<PixelInkPlate>(
+            find.descendant(
+              of: find.byKey(const Key('bazaar-filter-All')),
+              matching: find.byType(PixelInkPlate),
+            ),
+          )
+          .inset,
       isTrue,
     );
 

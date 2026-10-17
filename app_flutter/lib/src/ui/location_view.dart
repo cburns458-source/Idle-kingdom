@@ -454,7 +454,7 @@ class _LocationViewState extends State<LocationView> {
                                         child: const Icon(
                                           Icons.arrow_back,
                                           size: 18,
-                                          color: Palette.softGreenShade,
+                                          color: Palette.heading,
                                         ),
                                       ),
                                       const SizedBox(width: 7),
@@ -475,7 +475,7 @@ class _LocationViewState extends State<LocationView> {
                                             dark: true,
                                             highlight: widget.multiplayer.peers.isNotEmpty,
                                             highlightColor: widget.multiplayer.nearbyHasAllies
-                                                ? Palette.softGreen
+                                                ? Palette.currencyOnSlot
                                                 : null,
                                             child: GameImage(
                                               uiNearbyAssetPath(),
