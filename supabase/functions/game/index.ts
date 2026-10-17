@@ -552,16 +552,23 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
         previousEncounterId: previousMassEncounterId,
         nowMs,
         random: rng.random,
+        expectedVersion: expected,
+        rngState: rng.getState(),
       })
       if (settled.kind === 'refused') {
         return json({ error: settled.reason, phase: 2 }, 400)
       }
       if (settled.kind === 'failed') {
-        return json({ error: settled.error, phase: 2 }, settled.status)
+        return json(
+          { error: settled.error, phase: 2, conflict: settled.conflict },
+          settled.status,
+        )
       }
       commandSave = settled.save
       if (settled.snapshot) massExtras = { mass: settled.snapshot }
-      if (settled.dirty) {
+      if (settled.persistedVersion != null) {
+        written = { ok: true, version: settled.persistedVersion }
+      } else if (settled.dirty) {
         written = await writeHostedSave(admin, userId, {
           expectedVersion: expected,
           payload: settled.save,

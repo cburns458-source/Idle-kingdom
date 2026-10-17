@@ -33,6 +33,23 @@ export {
   massMinimumDamage,
 } from './boss'
 
+/** Mother squid Notes `player_base_hp_scale` (2.2) is clamped on the RPC too. */
+export const MASS_PLAYER_BASE_HP_SCALE_MIN = 0.1
+export const MASS_PLAYER_BASE_HP_SCALE_MAX = 10
+
+/**
+ * Clamp the caller-supplied squid health scale used by `mass_lock_if_due`.
+ *
+ * The game edge copies `player_base_hp_scale` from Mother squid Notes (2.2);
+ * it is not a Flutter field. The RPC argument is still caller-supplied, so a
+ * non-positive or non-finite value is ignored and a finite value is clamped
+ * to [0.1, 10] to match the SQL.
+ */
+export function clampMassPlayerBaseHpScale(scale: number | null | undefined): number | null {
+  if (scale == null || !Number.isFinite(scale) || scale <= 0) return null
+  return Math.min(MASS_PLAYER_BASE_HP_SCALE_MAX, Math.max(MASS_PLAYER_BASE_HP_SCALE_MIN, scale))
+}
+
 export type MassFightTickInput = {
   nowMs: number
   random: RandomFn

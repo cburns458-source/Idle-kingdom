@@ -53,6 +53,14 @@ void main() {
       }
     });
 
+    test('marks baby dragon and baby squid pets untradeable', () {
+      final db = assertGameDatabaseShape(_rawCopy());
+      expect(db.cosmetics.firstWhere((row) => row.cosmeticId == 'COS-0012').itemId, 'ITEM-0404');
+      expect(db.cosmetics.firstWhere((row) => row.cosmeticId == 'COS-0020').itemId, 'ITEM-0443');
+      expect(_item(db, 'ITEM-0404').isTradeable, isFalse);
+      expect(_item(db, 'ITEM-0443').isTradeable, isFalse);
+    });
+
     test('parses as a boolean, and a missing or blank cell means true', () {
       final raw = _rawCopy();
       _itemRow(raw, _goldenSpud).remove('Tradeable');

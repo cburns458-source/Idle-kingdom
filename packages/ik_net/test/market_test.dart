@@ -171,6 +171,43 @@ void main() {
       expect(bazaarTradableOnHand(save, _machete, db), 0);
       expect(bazaarTakeItems(save, _machete, 1, db), isNull);
     });
+
+    test('refuses baby dragon and baby squid pets on both sides', () {
+      final db = _database();
+      expect(db.cosmetics.firstWhere((row) => row.cosmeticId == 'COS-0012').itemId, 'ITEM-0404');
+      expect(db.cosmetics.firstWhere((row) => row.cosmeticId == 'COS-0020').itemId, 'ITEM-0443');
+      expect(bazaarItemBound(db, 'ITEM-0404'), isTrue);
+      expect(bazaarItemBound(db, 'ITEM-0443'), isTrue);
+      expect(bazaarItemRefusal(db, 'ITEM-0404'), bazaarBoundItem);
+      expect(bazaarItemRefusal(db, 'ITEM-0443'), bazaarBoundItem);
+      expect(bazaarStackRefusal(_stack('ITEM-0404', 1), db), bazaarBoundItem);
+      expect(bazaarStackRefusal(_stack('ITEM-0443', 1), db), bazaarBoundItem);
+      expect(
+        bazaarTradableOnHand(
+          _save(db, bag: <InventoryStack>[_stack('ITEM-0404', 1)]),
+          'ITEM-0404',
+          db,
+        ),
+        0,
+      );
+      expect(
+        bazaarTradableOnHand(
+          _save(db, bag: <InventoryStack>[_stack('ITEM-0443', 1)]),
+          'ITEM-0443',
+          db,
+        ),
+        0,
+      );
+      expect(
+        bazaarTakeItems(
+          _save(db, bag: <InventoryStack>[_stack('ITEM-0443', 1)]),
+          'ITEM-0443',
+          1,
+          db,
+        ),
+        isNull,
+      );
+    });
   });
 
   group('the stand-in exchange', () {

@@ -16,6 +16,23 @@ import 'stats.dart';
 
 export 'boss.dart' show massDropScale, massHealthMultiplier, massHpFor, massMinimumDamage;
 
+/// Mother squid Notes `player_base_hp_scale` (2.2) is clamped on the RPC too.
+const num massPlayerBaseHpScaleMin = 0.1;
+const num massPlayerBaseHpScaleMax = 10;
+
+/// Clamp the caller-supplied squid health scale used by `mass_lock_if_due`.
+///
+/// The game edge copies `player_base_hp_scale` from Mother squid Notes (2.2);
+/// it is not a Flutter field. The RPC argument is still caller-supplied, so a
+/// non-positive or non-finite value is ignored and a finite value is clamped
+/// to [0.1, 10] to match the SQL.
+num? clampMassPlayerBaseHpScale(num? scale) {
+  if (scale == null || scale <= 0 || scale.isNaN) return null;
+  if (scale < massPlayerBaseHpScaleMin) return massPlayerBaseHpScaleMin;
+  if (scale > massPlayerBaseHpScaleMax) return massPlayerBaseHpScaleMax;
+  return scale;
+}
+
 class MassFightTickInput {
   const MassFightTickInput({
     required this.nowMs,

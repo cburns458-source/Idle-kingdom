@@ -10,7 +10,10 @@ import {
   massHpFor,
   massMinimumDamage,
 } from './boss'
+import { cosmeticById } from '../cosmetics/cosmetics'
+import { isItemTradeable } from '../server/authority'
 import {
+  clampMassPlayerBaseHpScale,
   massEncounterHp,
   simulateMassFightTick,
 } from './mass'
@@ -74,6 +77,27 @@ describe('mass boss formulas', () => {
     expect(squidPet[0]?.['Reward ID / Value']).toBe('COS-0020')
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0443')?.Tradeable).toBe(false)
     expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0404')?.Tradeable).toBe(false)
+  })
+
+  it('keeps baby dragon and baby squid untradeable through Bazaar guards', () => {
+    const { launch } = prepareDatabase(rawDatabase)
+    const dragon = cosmeticById(launch, 'COS-0012')
+    const squid = cosmeticById(launch, 'COS-0020')
+    expect(dragon?.['Item ID']).toBe('ITEM-0404')
+    expect(squid?.['Item ID']).toBe('ITEM-0443')
+    expect(isItemTradeable(launch, 'ITEM-0404')).toBe(false)
+    expect(isItemTradeable(launch, 'ITEM-0443')).toBe(false)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0404')?.Tradeable).toBe(false)
+    expect(launch.Items.find((row) => row['Item ID'] === 'ITEM-0443')?.Tradeable).toBe(false)
+  })
+
+  it('clamps the caller-supplied squid health scale the way the RPC does', () => {
+    expect(clampMassPlayerBaseHpScale(2.2)).toBe(2.2)
+    expect(clampMassPlayerBaseHpScale(0)).toBeNull()
+    expect(clampMassPlayerBaseHpScale(-1)).toBeNull()
+    expect(clampMassPlayerBaseHpScale(Number.NaN)).toBeNull()
+    expect(clampMassPlayerBaseHpScale(999)).toBe(10)
+    expect(clampMassPlayerBaseHpScale(0.01)).toBe(0.1)
   })
 })
 

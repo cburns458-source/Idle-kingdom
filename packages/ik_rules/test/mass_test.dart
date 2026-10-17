@@ -129,4 +129,19 @@ void main() {
     );
     expect(tick.damageDealt, 0);
   });
+
+  test('keeps baby dragon and baby squid untradeable', () {
+    expect(db.cosmetics.firstWhere((row) => row.cosmeticId == 'COS-0012').itemId, 'ITEM-0404');
+    expect(db.cosmetics.firstWhere((row) => row.cosmeticId == 'COS-0020').itemId, 'ITEM-0443');
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0404').isTradeable, isFalse);
+    expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0443').isTradeable, isFalse);
+  });
+
+  test('clamps the caller-supplied squid health scale', () {
+    expect(clampMassPlayerBaseHpScale(2.2), 2.2);
+    expect(clampMassPlayerBaseHpScale(0), isNull);
+    expect(clampMassPlayerBaseHpScale(-1), isNull);
+    expect(clampMassPlayerBaseHpScale(999), 10);
+    expect(clampMassPlayerBaseHpScale(0.01), 0.1);
+  });
 }

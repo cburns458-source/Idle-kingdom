@@ -112,6 +112,29 @@ begin
   assert (snap->>'soloHp')::numeric = floor(((1000 + 3000) / 2.0) * 2.2);
   assert (snap->>'totalHp')::numeric = floor((snap->>'soloHp')::numeric * 1.5);
 
+  -- Caller-supplied squid scale is clamped to [0.1, 10].
+  delete from public.mass_encounters where enemy_id = 'ENM-0023';
+  snap := public.mass_join(a, 'ENM-0023', 'Alpha', 1000);
+  enc := (snap->>'encounterId')::uuid;
+  update public.mass_encounters set countdown_ends_at = now() - interval '1 second' where id = enc;
+  snap := public.mass_lock_if_due(enc, 0, 999);
+  assert (snap->>'soloHp')::numeric = floor(1000 * 10), 'scale 999 clamps to 10';
+
+  -- Players who left cannot record damage.
+  delete from public.mass_encounters where enemy_id = 'ENM-0006';
+  snap := public.mass_join(a, 'ENM-0006', 'Alpha', 1000);
+  enc := (snap->>'encounterId')::uuid;
+  perform public.mass_join(b, 'ENM-0006', 'Bravo', 1000);
+  update public.mass_encounters set countdown_ends_at = now() - interval '1 second' where id = enc;
+  perform public.mass_lock_if_due(enc, 1000, null);
+  perform public.mass_leave(b, enc);
+  dmg := public.mass_record_damage(b, enc, 50, 'left-round');
+  assert dmg->>'ok' = 'false', 'left player is rejected';
+  assert dmg->>'reason' = 'You left this fight.', 'left-player copy';
+  assert (dmg->>'damageAdded')::numeric = 0 or dmg->>'damageAdded' is null,
+    'left player adds no damage';
+  assert public.mass_remaining_hp(enc) = 1500, 'HP unchanged after left-player tick';
+
   delete from public.mass_encounters where enemy_id in ('ENM-0006', 'ENM-0023');
   raise notice 'mass_bosses SQL tests passed';
 end $$;

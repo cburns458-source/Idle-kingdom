@@ -6,6 +6,7 @@ import {
   applyMassVictory,
   beginCombatSave,
   bossProfile,
+  clampMassPlayerBaseHpScale,
   clearActivitySave,
   clearCombatSave,
   enemyScaledMaxHp,
@@ -17,6 +18,7 @@ import {
   simulateMassFightTick,
   withBossRespawn,
 } from './game_rules.js'
+import { persistMassClaim } from './mass_claim_edge.ts'
 
 export const MASS_COMMANDS = new Set(['mass_join', 'mass_status', 'mass_fight_tick', 'mass_leave'])
 
@@ -30,12 +32,13 @@ export type MassAuthorityResult = { ok: true; save: Record<string, unknown> } | 
 
 export type MassCommandSettlement =
   | { kind: 'refused'; reason: string }
-  | { kind: 'failed'; error: string; status: number }
+  | { kind: 'failed'; error: string; status: number; conflict?: boolean }
   | {
       kind: 'ok'
       save: Record<string, unknown>
       dirty: boolean
       snapshot: ReturnType<typeof parseMassSnapshot>
+      persistedVersion?: number
     }
 
 type RulesDb = Parameters<typeof playerBaseMaxHp>[0]
@@ -57,9 +60,11 @@ function lockArgs(db: RulesDb, enemyId: string): {
 } {
   const enemy = getEnemy(db, enemyId)
   const profile = enemy ? bossProfile(enemy) : null
+  // Mother squid Notes `player_base_hp_scale:2.2`. Copied from content, not
+  // a client field; SQL still clamps the caller-supplied RPC argument.
   return {
     p_solo_hp: enemy ? enemyScaledMaxHp(enemy) : 1,
-    p_player_base_hp_scale: profile?.playerBaseHpScale ?? null,
+    p_player_base_hp_scale: clampMassPlayerBaseHpScale(profile?.playerBaseHpScale ?? null),
   }
 }
 
@@ -80,6 +85,20 @@ function finishMassSave(db: RulesDb, save: RulesSave, enemyId: string, nowMs: nu
   return next
 }
 
+function massPayoutEligible(
+  snapshot: NonNullable<ReturnType<typeof parseMassSnapshot>>,
+  userId: string,
+): boolean {
+  if (snapshot.you?.payoutEligible === true) return true
+  if (snapshot.you?.payoutEligible === false) return false
+  const row =
+    snapshot.you ??
+    snapshot.participants.find((participant: { userId: string }) => participant.userId === userId) ??
+    null
+  if (!row) return false
+  return row.lockedIn && !row.late && row.damageDealt >= snapshot.minDamage
+}
+
 async function claimIfSettled(
   db: RulesDb,
   admin: MassRpcAdmin,
@@ -88,37 +107,58 @@ async function claimIfSettled(
   snapshot: NonNullable<ReturnType<typeof parseMassSnapshot>>,
   random: RulesRandom,
   nowMs: number,
-): Promise<{
-  save: RulesSave
-  snapshot: NonNullable<ReturnType<typeof parseMassSnapshot>>
-  dirty: boolean
-}> {
+  expectedVersion: number,
+  rngState: number,
+): Promise<
+  | {
+      kind: 'ok'
+      save: RulesSave
+      snapshot: NonNullable<ReturnType<typeof parseMassSnapshot>>
+      dirty: boolean
+      persistedVersion?: number
+    }
+  | { kind: 'failed'; error: string; status: number; conflict?: boolean }
+> {
   if (snapshot.status !== 'settled') {
-    return { save, snapshot, dirty: false }
-  }
-  const claimed = await rpcJson(admin, 'mass_claim_payout', {
-    p_user_id: userId,
-    p_encounter_id: snapshot.encounterId,
-  })
-  if (!claimed.ok) return { save, snapshot, dirty: false }
-  const payload =
-    claimed.data && typeof claimed.data === 'object' ? (claimed.data as Record<string, unknown>) : {}
-  if (payload.closed === true) {
-    return { save: finishMassSave(db, save, snapshot.enemyId, nowMs), snapshot, dirty: true }
+    return { kind: 'ok', save, snapshot, dirty: false }
   }
   const enemy = getEnemy(db, snapshot.enemyId)
   if (!enemy) {
-    return { save: finishMassSave(db, save, snapshot.enemyId, nowMs), snapshot, dirty: true }
+    return { kind: 'ok', save: finishMassSave(db, save, snapshot.enemyId, nowMs), snapshot, dirty: true }
   }
-  const eligible = payload.eligible === true
-  const dropScaleRaw = payload.dropScale ?? snapshot.dropScale
-  const dropScale = typeof dropScaleRaw === 'number' ? dropScaleRaw : Number(dropScaleRaw)
+  const eligible = massPayoutEligible(snapshot, userId)
   let next = save
-  if (eligible && payload.alreadyClaimed !== true) {
-    next = applyMassVictory(db, next, enemy, random, nowMs, dropScale).save
+  if (eligible) {
+    next = applyMassVictory(db, next, enemy, random, nowMs, snapshot.dropScale).save
   }
   next = finishMassSave(db, next, snapshot.enemyId, nowMs)
-  return { save: next, snapshot, dirty: true }
+  const persisted = await persistMassClaim({
+    admin,
+    userId,
+    encounterId: snapshot.encounterId,
+    expectedVersion,
+    payload: next,
+    rngState,
+    nowMs,
+  })
+  if (persisted.kind === 'closed') {
+    return { kind: 'ok', save: finishMassSave(db, save, snapshot.enemyId, nowMs), snapshot, dirty: true }
+  }
+  if (persisted.kind === 'failed') {
+    return {
+      kind: 'failed',
+      error: persisted.error,
+      status: persisted.status,
+      conflict: persisted.conflict,
+    }
+  }
+  return {
+    kind: 'ok',
+    save: persisted.payload as RulesSave,
+    snapshot,
+    dirty: false,
+    persistedVersion: persisted.version,
+  }
 }
 
 async function refreshEncounter(
@@ -161,12 +201,14 @@ export async function settleMassCommand(options: {
   previousEncounterId: string | null
   nowMs: number
   random: RulesRandom
+  expectedVersion: number
+  rngState: number
 }): Promise<MassCommandSettlement> {
   if (!options.commandResult.ok) {
     return { kind: 'refused', reason: options.commandResult.reason }
   }
   let save = options.commandResult.save as RulesSave
-  const { admin, db, userId, nowMs, random } = options
+  const { admin, db, userId, nowMs, random, expectedVersion, rngState } = options
 
   if (options.command === 'mass_leave') {
     await leaveMassEncounter(admin, userId, options.previousEncounterId ?? save.massEncounterId)
@@ -237,8 +279,25 @@ export async function settleMassCommand(options: {
   }
 
   if (snapshot.status === 'settled') {
-    const claimed = await claimIfSettled(db, admin, userId, save, snapshot, random, nowMs)
-    return { kind: 'ok', save: claimed.save, dirty: claimed.dirty, snapshot }
+    const claimed = await claimIfSettled(
+      db,
+      admin,
+      userId,
+      save,
+      snapshot,
+      random,
+      nowMs,
+      expectedVersion,
+      rngState,
+    )
+    if (claimed.kind === 'failed') return claimed
+    return {
+      kind: 'ok',
+      save: claimed.save,
+      dirty: claimed.dirty,
+      snapshot,
+      persistedVersion: claimed.persistedVersion,
+    }
   }
 
   if (snapshot.status !== 'fighting' || options.command === 'mass_status') {
@@ -306,10 +365,30 @@ export async function settleMassCommand(options: {
       const after = parseMassSnapshot(settled.data)
       if (after) snapshot = after
       if (snapshot.status === 'settled') {
-        const claimed = await claimIfSettled(db, admin, userId, next, snapshot, random, nowMs)
+        const claimed = await claimIfSettled(
+          db,
+          admin,
+          userId,
+          next,
+          snapshot,
+          random,
+          nowMs,
+          expectedVersion,
+          rngState,
+        )
+        if (claimed.kind === 'failed') return claimed
         next = claimed.save
         snapshot = claimed.snapshot
-        dirty = true
+        dirty = claimed.dirty
+        if (claimed.persistedVersion != null) {
+          return {
+            kind: 'ok',
+            save: next,
+            dirty: false,
+            snapshot,
+            persistedVersion: claimed.persistedVersion,
+          }
+        }
       }
     }
   }

@@ -222,6 +222,21 @@ Checklist, in order:
     function that handles `mass_*` commands is on `restoria-idlerpg`.
     Status: applied on test Oct 17 2026 (file `20261017010000`); live pending.
 
+12. [ ] `20261017020000_mass_claim_payout_atomic.sql` (SOC-04). Replaces
+    2-argument `mass_claim_payout` with a 6-argument RPC that writes
+    `player_saves` and `payout_claimed` in one transaction; a save version
+    conflict rolls the claim back. Apply to test with this PR; live only after
+    Conor merges `test-launch` into `main`. Do not apply to live before the
+    `game` function that passes the save payload is on `restoria-idlerpg`.
+    Status: applied on test Oct 17 2026 (file `20261017020000`); live pending.
+
+13. [ ] `20261017030000_mass_damage_present_and_scale.sql` (SOC-04).
+    `mass_record_damage` refuses `present = false`. `mass_lock_if_due` clamps
+    caller-supplied `p_player_base_hp_scale` to [0.1, 10]. Apply to test with
+    this PR; live only after Conor merges `test-launch` into `main`. Do not
+    edit `20261017010000` or `20261017020000`.
+    Status: applied on test Oct 17 2026 (file `20261017030000`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.

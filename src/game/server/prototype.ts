@@ -22,6 +22,7 @@ export { withBossRespawn } from '../combat/boss'
 export { beginCombatSave, clearCombatSave, getEnemy } from '../combat/engine'
 export {
   applyMassVictory,
+  clampMassPlayerBaseHpScale,
   massActivityIdForEnemy,
   massEncounterHp,
   parseMassSnapshot,
