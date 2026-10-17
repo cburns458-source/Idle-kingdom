@@ -685,6 +685,64 @@ void main() {
     expect(created.save, isNull);
   });
 
+  test('the next create finishes a leftover founding after a failed profile link', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    transport.failTimes['update:${RemoteTables.profiles}'] = 2;
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    final leftover = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(leftover.ok, isFalse);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+    expect(transport.tables[RemoteTables.guildMembers], hasLength(1));
+
+    final finished = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(finished.ok, isTrue, reason: finished.reason);
+    expect(finished.goldCost, guildCreateGoldCost);
+    expect(finished.save, isNull);
+    expect(
+      finished.guildId,
+      leftover.guildId ?? transport.tables[RemoteTables.guilds]!.single['id'],
+    );
+    expect((await leader.guildMembers(finished.guildId!)).single.role, guildRoleLeader);
+    expect(
+      transport.tables[RemoteTables.profiles]!.firstWhere(
+        (row) => row['user_id'] == leader.session!.userId,
+      )['guild_id'],
+      finished.guildId,
+    );
+    expect(await leader.guildHall(finished.guildId!), isNotNull);
+    expect(finished.reason, isNot('Leave your current guild before creating another.'));
+  });
+
+  test('the next create disbands a leftover founding that cannot be finished', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    transport.failTimes['update:${RemoteTables.profiles}'] = 2;
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+
+    expect((await leader.createGuild(_ironLeague, guildCreateGoldCost)).ok, isFalse);
+    expect(transport.tables[RemoteTables.guilds]!.single['tag'], 'IRN');
+
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    const oak = CreateGuildInput(
+      name: 'Oak Guard',
+      tag: 'OAK',
+      description: 'Keep the oaks.',
+      emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+    );
+    final created = await leader.createGuild(oak, guildCreateGoldCost);
+    expect(created.ok, isTrue, reason: created.reason);
+    expect(created.goldCost, guildCreateGoldCost);
+    expect(created.guild!.name, 'Oak Guard');
+    expect(transport.tables[RemoteTables.guilds]!.map((row) => row['tag']), <Object?>['OAK']);
+    expect(await leader.guildHall(created.guildId!), isNotNull);
+  });
+
   test('a failed rollback still shows the founder their guild', () async {
     final transport = FakeTransport();
     transport.hostsGuildLifecycleRpcs = false;

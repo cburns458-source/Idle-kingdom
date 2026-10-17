@@ -253,8 +253,13 @@ class RemoteGuildBackend {
 
     final refusal = createGuildRefusal(input, goldAvailable);
     if (refusal != null) return CreateGuildResult.failed(refusal);
-    if (await _membershipOf(current.userId) != null) {
-      return const CreateGuildResult.failed('Leave your current guild before creating another.');
+    final existing = await _membershipOf(current.userId);
+    if (existing != null) {
+      final leftover = await _adoptOrClearIncompleteFounding(current.userId, existing);
+      if (leftover != null) return leftover;
+      if (await _membershipOf(current.userId) != null) {
+        return const CreateGuildResult.failed('Leave your current guild before creating another.');
+      }
     }
 
     final wanted = guildFromCreateInput(current.userId, input, nowIso());
@@ -341,9 +346,10 @@ class RemoteGuildBackend {
         rollbackReason: rolledBack,
       );
     }
-    await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
-      guildHallRowFor(GuildHallState.fresh(guildId)),
-    ]);
+    final hallRefused = await _ensureGuildHall(guildId);
+    if (hallRefused != null) {
+      return CreateGuildResult.failed(hallRefused);
+    }
     await _seedGuildGoals(guildId);
     guild ??= await guildById(guildId);
     return CreateGuildResult.ok(guild, guildCreateGoldCost, guildId: guildId);
@@ -401,21 +407,75 @@ class RemoteGuildBackend {
     final linked = await _profileGuildId(userId);
     if (linked != guildId) return tagged ?? 'The guild was not linked to this account.';
 
-    final hallRefused = await transport.upsert(RemoteTables.guildHalls, <RemoteRow>[
-      guildHallRowFor(GuildHallState.fresh(guildId)),
-    ]);
+    final hallRefused = await _ensureGuildHall(guildId);
     if (hallRefused != null) return hallRefused;
+
+    return _ensureGuildGoals(guildId);
+  }
+
+  /// TEST has no UPDATE policy on `guild_halls` (insert + select only). Skip
+  /// when the hall exists; otherwise insert. A conflict means it is already
+  /// there — do not upsert.
+  Future<String?> _ensureGuildHall(String guildId) async {
+    if (await _hallExists(guildId)) return null;
+    final written = await transport.insert(RemoteTables.guildHalls, <String, Object?>{
+      'guild_id': guildId,
+    }, columns: 'guild_id');
+    if (written.ok || await _hallExists(guildId)) return null;
+    return written.reason ?? 'The guild hall was not created.';
+  }
+
+  Future<bool> _hallExists(String guildId) async {
     final hall = await transport.select(
       RemoteTables.guildHalls,
       columns: 'guild_id',
       equals: <String, Object?>{'guild_id': guildId},
       limit: 1,
     );
-    if (!hall.ok || hall.single == null) {
-      return hallRefused ?? 'The guild hall was not created.';
-    }
+    return hall.ok && hall.single != null;
+  }
 
-    return _ensureGuildGoals(guildId);
+  /// A leftover founding from a failed profile link: finish it, or disband it
+  /// when this player is the only member so a new create can continue.
+  Future<CreateGuildResult?> _adoptOrClearIncompleteFounding(
+    String userId,
+    GuildMember membership,
+  ) async {
+    final guild = await guildById(membership.guildId);
+    final foundedByThem = guild?.leaderId == userId || membership.role == guildRoleLeader;
+    if (!foundedByThem) return null;
+    if (!await _foundingIsIncomplete(membership.guildId, userId)) return null;
+
+    final facts = await factsOf();
+    final unfinished = await _ensureFoundingRows(membership.guildId, userId, facts);
+    if (unfinished == null) {
+      final finished = guild ?? await guildById(membership.guildId);
+      return CreateGuildResult.ok(finished, guildCreateGoldCost, guildId: membership.guildId);
+    }
+    if (await _memberCount(membership.guildId) > 1) return null;
+    final dropped = await transport.delete(
+      RemoteTables.guilds,
+      equals: <String, Object?>{'id': membership.guildId},
+    );
+    if (dropped != null) return CreateGuildResult.failed(dropped);
+    // FakeTransport has no FK cascades. Postgres already dropped this row
+    // with the guild; this only clears a leftover membership in tests.
+    final leftoverMember = await transport.delete(
+      RemoteTables.guildMembers,
+      equals: <String, Object?>{'user_id': userId},
+    );
+    if (leftoverMember != null && await _membershipOf(userId) != null) {
+      return CreateGuildResult.failed(leftoverMember);
+    }
+    final tagged = await _noteOwnGuild(userId, null);
+    if (tagged != null) return CreateGuildResult.failed(friendlyRemoteError(tagged));
+    return null;
+  }
+
+  Future<bool> _foundingIsIncomplete(String guildId, String userId) async {
+    final linked = await _profileGuildId(userId);
+    if (linked != guildId) return true;
+    return !await _hallExists(guildId);
   }
 
   Future<String?> _profileGuildId(String userId) async {
