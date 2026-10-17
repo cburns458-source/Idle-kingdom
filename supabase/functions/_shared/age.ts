@@ -6,6 +6,7 @@ export const AGE_GATE_ERROR = 'Chat is not available for this account.'
 
 export const STORE_AGE_BANDS = ['0-12', '13-15', '16-17', '18+'] as const
 export type StoreAgeBand = (typeof STORE_AGE_BANDS)[number]
+/** `store_signal` is stored for staff/legacy rows only. Clients cannot write it. */
 export type AgeSource = 'self' | 'support' | 'store_signal'
 
 export function isStoreAgeBand(value: string): value is StoreAgeBand {

@@ -7,7 +7,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
-import { accountAgeYears, ageBandFromYears } from '../_shared/age.ts'
 import { ACCOUNT_FROZEN } from '../_shared/deletion.ts'
 import { gateDevCommand } from '../_shared/dev_gate.ts'
 import {
@@ -113,7 +112,7 @@ Deno.serve(async (req) => {
     return handleDevStatus(admin, user.id)
   }
   if (action === 'dev_command') {
-    return handleDevCommand(admin, user.id, payload)
+    return handleDevCommand(asUser, admin, user.id, payload)
   }
   if (action === 'shadow') {
     return handleShadow(admin, user.id)
@@ -608,7 +607,12 @@ async function handleDevStatus(admin: Client, userId: string): Promise<Response>
   return json({ ok: true, phase: 2, action: 'dev_status', developer: Boolean(data?.user_id) })
 }
 
-async function handleDevCommand(admin: Client, userId: string, payload: GameBody): Promise<Response> {
+async function handleDevCommand(
+  asUser: Client,
+  admin: Client,
+  userId: string,
+  payload: GameBody,
+): Promise<Response> {
   const command = typeof payload.command === 'string' ? payload.command.trim().toLowerCase() : ''
   if (!command) return json({ error: 'Missing command.', phase: 2 }, 400)
   const tokens = Array.isArray(payload.tokens)
@@ -639,7 +643,7 @@ async function handleDevCommand(admin: Client, userId: string, payload: GameBody
   }
 
   if (command === 'setage') {
-    return handleSetAge(admin, userId, tokens)
+    return handleSetAge(asUser, admin, userId, tokens)
   }
 
   const nowMs = Date.now()
@@ -1135,11 +1139,16 @@ function isGuildEconomyCommand(command: string): boolean {
 
 async function accountFrozen(admin: Client, userId: string): Promise<boolean> {
   const { data, error } = await admin.rpc('account_is_frozen', { p_user: userId })
-  if (error) return false
+  if (error) return true
   return data === true
 }
 
-async function handleSetAge(admin: Client, staffId: string, tokens: string[]): Promise<Response> {
+async function handleSetAge(
+  asUser: Client,
+  admin: Client,
+  staffId: string,
+  tokens: string[],
+): Promise<Response> {
   const username = tokens[0]?.trim() ?? ''
   const year = tokens[1] ? Number(tokens[1]) : NaN
   const month = tokens[2] ? Number(tokens[2]) : null
@@ -1162,34 +1171,25 @@ async function handleSetAge(admin: Client, staffId: string, tokens: string[]): P
     return json({ error: 'That player could not be found.', phase: 2, action: 'dev_command' }, 400)
   }
   const birthMonth = month != null && Number.isFinite(month) ? month : null
-  const { error } = await admin.from('account_age').upsert(
-    {
-      user_id: profile.user_id,
-      birth_year: year,
-      birth_month: birthMonth,
-      age_band: ageBandFromYears(accountAgeYears(year, birthMonth)),
-      source: 'support',
-      refreshed_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id' },
-  )
+  const { data, error } = await asUser.rpc('staff_set_account_age', {
+    p_target: profile.user_id,
+    p_birth_year: year,
+    p_birth_month: birthMonth,
+  })
   if (error) {
-    await admin.from('developer_audit_log').insert({
-      user_id: staffId,
-      command: 'setage',
-      args: { tokens },
-      ok: false,
-      reason: error.message,
-    })
     return json({ error: error.message, phase: 2, action: 'dev_command' }, 400)
   }
-  await admin.from('developer_audit_log').insert({
-    user_id: staffId,
-    command: 'setage',
-    args: { tokens, target: profile.user_id, birth_year: year, birth_month: birthMonth },
-    ok: true,
-    reason: 'Age updated.',
-  })
+  const row = (data ?? {}) as { ok?: unknown; reason?: unknown }
+  if (row.ok !== true) {
+    return json(
+      {
+        error: typeof row.reason === 'string' ? row.reason : 'Age could not be updated.',
+        phase: 2,
+        action: 'dev_command',
+      },
+      400,
+    )
+  }
   return json({
     ok: true,
     phase: 2,

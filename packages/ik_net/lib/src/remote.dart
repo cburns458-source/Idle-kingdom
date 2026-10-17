@@ -81,7 +81,6 @@ class RemoteRpcs {
   static const String renameUsername = 'rename_username';
   static const String accountStatus = 'account_status';
   static const String setAccountAge = 'set_account_age';
-  static const String refreshStoreAgeSignal = 'refresh_store_age_signal';
 }
 
 /// Report reasons a player can file. `Other` may carry a short note.

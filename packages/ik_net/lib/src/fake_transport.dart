@@ -2384,18 +2384,21 @@ class FakeTransport implements RemoteTransport {
       }
     }
     final source = '${args['p_source'] ?? 'self'}';
+    if (source != 'self') {
+      return const RemoteInvokeResult.ok(<String, Object?>{
+        'ok': false,
+        'reason': 'Store age signals are not accepted. Enter the year you were born.',
+      });
+    }
     final year = args['p_birth_year'];
     final month = args['p_birth_month'];
-    final band = args['p_age_band'];
     final asOf = DateTime.utc(2026, 10, 17);
-    final allowed = source == 'store_signal'
-        ? storeBandAllowsChat('$band')
-        : chatAllowedFromAge(
-            answered: true,
-            birthYear: year is int ? year : int.tryParse('$year'),
-            birthMonth: month is int ? month : int.tryParse('$month'),
-            asOf: asOf,
-          );
+    final allowed = chatAllowedFromAge(
+      answered: true,
+      birthYear: year is int ? year : int.tryParse('$year'),
+      birthMonth: month is int ? month : int.tryParse('$month'),
+      asOf: asOf,
+    );
     setAccountStatus(me.userId, AccountSocialStatus(ageAnswered: true, chatAllowed: allowed));
     return RemoteInvokeResult.ok(<String, Object?>{
       'ok': true,

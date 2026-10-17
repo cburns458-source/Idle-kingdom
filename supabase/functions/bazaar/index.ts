@@ -432,6 +432,7 @@ async function cancel(
  * player to arrange than the game inventing a place to keep the rest.
  */
 async function collect(admin: Client, userId: string): Promise<Response> {
+  if (await accountFrozen(admin, userId)) return refused(ACCOUNT_FROZEN)
   const stored = await loadSave(admin, userId)
   if ('error' in stored) return refused(stored.error)
 
@@ -705,7 +706,7 @@ function cors(): HeadersInit {
  */
 async function accountFrozen(admin: Client, userId: string): Promise<boolean> {
   const { data, error } = await admin.rpc('account_is_frozen', { p_user: userId })
-  if (error) return false
+  if (error) return true
   return data === true
 }
 

@@ -51,7 +51,10 @@ bool needsBirthMonth(int birthYear, [DateTime? asOf]) {
   return youngest < chatAgeThreshold + 1 && oldest >= chatAgeThreshold - 1;
 }
 
-/// A store-declared range from Apple or Google, when the build can ask.
+/// A store-declared range from Apple or Google.
+///
+/// Client submission of [band] is disabled until there is a server-verifiable
+/// source. Only an in-game birth year is accepted from players.
 class StoreAgeSignal {
   const StoreAgeSignal({required this.band, required this.platform});
 
@@ -59,7 +62,8 @@ class StoreAgeSignal {
   final String platform;
 }
 
-/// Asks the installed store for a declared age range. Web always returns null.
+/// Asks the installed store for a declared age range. Unused: clients cannot
+/// write `store_signal` until a server-verifiable source exists.
 abstract class AgeSignalSource {
   Future<StoreAgeSignal?> requestDeclaredAge();
 }

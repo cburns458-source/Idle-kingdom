@@ -75,6 +75,19 @@ void main() {
     expect((await service.ignorePlayer('usr_rival')).ok, isTrue);
   });
 
+  test('store_signal is refused from the client', () async {
+    final transport = FakeTransport();
+    final service = RemoteMultiplayerService(
+      transport: transport,
+      storage: MemorySaveStorage(),
+      retryDelay: (_) async {},
+    );
+    expect((await service.signUp('hero@example.com', 'Hero', 'secret')).ok, isTrue);
+    transport.setAccountStatus(service.session!.userId, const AccountSocialStatus.unanswered());
+    expect((await service.setAccountAge(source: 'store_signal', ageBand: '18+')).ok, isFalse);
+    expect((await service.accountStatus()).ageAnswered, isFalse);
+  });
+
   test('an age answer is locked after the first write', () async {
     final transport = FakeTransport();
     final service = RemoteMultiplayerService(

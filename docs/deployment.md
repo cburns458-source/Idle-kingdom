@@ -238,6 +238,29 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017140000`, MCP
     `20261017022050` / `account_age_year_only`); live pending.
 
+14. [ ] `20261017150000_account_age_delete_qa.sql` (ADM-08 / ADM-09 QA).
+    Clients may only submit an in-game birth year (`set_account_age` refuses
+    `store_signal`; `refresh_store_age_signal` is disabled). `chat_allowed`
+    also requires `not account_is_frozen`. Bazaar claims
+    (`bazaar_settle_collect`) freeze during the grace; fills that pay other
+    players still settle. Expired `chat_reports` drop after one year
+    regardless of which side deleted. Guild leadership is handed off only
+    at purge, not when the grace starts.
+    Apply to test with this PR; live only after Conor merges `test-launch`
+    into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017150000`, MCP
+    `20261017023958` / `account_age_delete_qa`); live pending.
+
+15. [ ] `20261017151000_account_purge_cron.sql` (ADM-09). Enables `pg_cron`
+    and `pg_net` on the **test** project and schedules hourly
+    `account_purge_cron_tick()`, which POSTs `purge-accounts` through
+    `pg_net`. The shared secret is read from Vault — never the repo. The
+    job no-ops until the Vault entries below exist. Apply to test with
+    this PR; do **not** apply to live until Conor merges and sets the live
+    Vault URL.
+    Status: applied on test Oct 17 2026 (file `20261017151000`, MCP
+    `20261017024002` / `account_purge_cron`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.
@@ -324,7 +347,36 @@ Never put the values in the client, the repo, or GitHub. Conor sets them.
 | --- | --- |
 | `FEEDBACK_DISCORD_WEBHOOK_URL` | Staff-only Discord forum webhook for ADM-04 submit-feedback |
 | `FEEDBACK_DISCORD_TAG_IDS` | JSON map of forum tag ids, e.g. `{"bug":"…","idea":"…","report":"…"}`. Optional; missing keys are skipped. |
-| `PURGE_CRON_SECRET` | Shared secret for the `purge-accounts` cron (ADM-09). The function also accepts the service role. Set a schedule (every hour is enough) that POSTs with `Authorization: Bearer <secret>` or `x-purge-secret`. |
+| `PURGE_CRON_SECRET` | Shared secret for the `purge-accounts` cron (ADM-09). The function also accepts the service role. The test project schedules this hourly via `pg_cron` + `pg_net`; see Vault setup below. |
+
+### Vault setup for the hourly purge (test project)
+
+The migration `20261017151000_account_purge_cron.sql` creates the job. It
+does **not** store a secret. Until these Vault entries exist the hourly
+tick logs a warning and returns. Conor sets them on the **test** project
+only (Database → Vault, or SQL as `postgres`):
+
+1. Create a Vault secret named `purge_cron_secret` whose value is the
+   same string as the Edge Function secret `PURGE_CRON_SECRET`.
+2. Create a Vault secret named `purge_cron_url` whose value is
+   `https://xlbwmxxtzrqjujvgqcuf.supabase.co/functions/v1/purge-accounts`.
+
+```sql
+select vault.create_secret('<same value as PURGE_CRON_SECRET>', 'purge_cron_secret', 'Hourly purge-accounts cron secret');
+select vault.create_secret(
+  'https://xlbwmxxtzrqjujvgqcuf.supabase.co/functions/v1/purge-accounts',
+  'purge_cron_url',
+  'Hourly purge-accounts URL for the test project'
+);
+```
+
+Never put the secret in the repo, the client, or GitHub. Live needs its
+own pair after Conor merges `test-launch` into `main` (live function URL
+and a live `PURGE_CRON_SECRET`).
+
+Guild leadership is handed off (or the guild is disbanded) only when
+`account_purge_data` runs — not when the 14-day grace starts. A leader
+who requested deletion stays leader until purge or restore.
 
 The Flutter web SPA serves `/delete-account` (Google Play) via
 `not_found_handling = "single-page-application"`. Privacy-policy copy is not
