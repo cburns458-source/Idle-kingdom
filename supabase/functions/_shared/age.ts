@@ -69,3 +69,11 @@ export function ageGateResponse(allowed: boolean): { status: 403; error: string;
   if (allowed) return null
   return { status: 403, error: AGE_GATE_ERROR, code: AGE_GATE_CODE }
 }
+
+export const STAFF_BIRTH_YEAR_MIN = 1900
+export const STAFF_BIRTH_YEAR_ERROR = 'Enter a valid birth year.'
+
+/** Staff `/setage` years must be real and not in the future. */
+export function staffBirthYearOk(year: number, asOf: Date = new Date()): boolean {
+  return Number.isFinite(year) && year >= STAFF_BIRTH_YEAR_MIN && year <= asOf.getUTCFullYear()
+}

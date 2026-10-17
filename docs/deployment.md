@@ -271,6 +271,13 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017152000`, MCP
     `20261017024800` / `account_age_guild_chat`); live pending.
 
+17. [ ] `20261017153000_staff_setage_qa.sql` (ADM-08 QA). `staff_set_account_age`
+    rejects future birth years and writes `developer_audit_log` for failed
+    attempts as well as successes. Apply to test with this PR; live only
+    after Conor merges `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017153000`, MCP
+    `20261017025045` / `staff_setage_qa`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.

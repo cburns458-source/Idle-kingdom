@@ -9,6 +9,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 import { ACCOUNT_FROZEN } from '../_shared/deletion.ts'
 import { gateDevCommand } from '../_shared/dev_gate.ts'
+import { parseSetAgeTokens, SETAGE_MISSING_PLAYER, setAgeAuditRow } from '../_shared/setage.ts'
 import {
   plazaShopBuyResponseExtras,
   settlePlazaShopBuyCommand,
@@ -1149,38 +1150,36 @@ async function handleSetAge(
   staffId: string,
   tokens: string[],
 ): Promise<Response> {
-  const username = tokens[0]?.trim() ?? ''
-  const year = tokens[1] ? Number(tokens[1]) : NaN
-  const month = tokens[2] ? Number(tokens[2]) : null
-  if (!username || !Number.isFinite(year)) {
-    return json({ error: 'Usage: /setage <username> <year> [month]', phase: 2, action: 'dev_command' }, 400)
+  const parsed = parseSetAgeTokens(tokens)
+  if (!parsed.ok) {
+    await admin.from('developer_audit_log').insert(setAgeAuditRow(staffId, tokens, parsed.reason))
+    return json({ error: parsed.reason, phase: 2, action: 'dev_command' }, 400)
   }
   const { data: profile } = await admin
     .from('profiles')
     .select('user_id, username')
-    .ilike('username', username)
+    .ilike('username', parsed.username)
     .maybeSingle()
   if (!profile?.user_id) {
-    await admin.from('developer_audit_log').insert({
-      user_id: staffId,
-      command: 'setage',
-      args: { tokens },
-      ok: false,
-      reason: 'That player could not be found.',
-    })
-    return json({ error: 'That player could not be found.', phase: 2, action: 'dev_command' }, 400)
+    await admin.from('developer_audit_log').insert(
+      setAgeAuditRow(staffId, tokens, SETAGE_MISSING_PLAYER),
+    )
+    return json({ error: SETAGE_MISSING_PLAYER, phase: 2, action: 'dev_command' }, 400)
   }
-  const birthMonth = month != null && Number.isFinite(month) ? month : null
   const { data, error } = await asUser.rpc('staff_set_account_age', {
     p_target: profile.user_id,
-    p_birth_year: year,
-    p_birth_month: birthMonth,
+    p_birth_year: parsed.year,
+    p_birth_month: parsed.month,
   })
   if (error) {
+    await admin.from('developer_audit_log').insert(
+      setAgeAuditRow(staffId, tokens, error.message, { target: profile.user_id }),
+    )
     return json({ error: error.message, phase: 2, action: 'dev_command' }, 400)
   }
   const row = (data ?? {}) as { ok?: unknown; reason?: unknown }
   if (row.ok !== true) {
+    // staff_set_account_age already wrote the failed-attempt audit row.
     return json(
       {
         error: typeof row.reason === 'string' ? row.reason : 'Age could not be updated.',
