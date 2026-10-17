@@ -1851,8 +1851,9 @@ class MultiplayerController extends ChangeNotifier {
   /// that was refused can say so itself instead of closing and hoping the
   /// player finds the message it left behind.
   ///
-  /// A guild that was written counts as founded even if the read after it
-  /// failed: the guild is real, and the failed read has its own notice.
+  /// A write that the following read missed is not filled in with default
+  /// permissions or banner. The form sees the error, then a refetch picks the
+  /// real row up if the guild actually landed.
   Future<String?> createGuild(
     CreateGuildInput input,
     PlayerSave save,
@@ -1862,7 +1863,14 @@ class MultiplayerController extends ChangeNotifier {
     var founded = false;
     await run(veil: 'create', () async {
       final result = await service.createGuild(input, save.gold);
-      if (!result.ok) return result.reason;
+      if (!result.ok) {
+        await refresh(save);
+        if (guildId != null) {
+          founded = true;
+          return 'Guild created.';
+        }
+        return result.reason;
+      }
       final paid = result.save;
       if (paid != null) {
         _adoptHosted(paid, command: 'guild_create');

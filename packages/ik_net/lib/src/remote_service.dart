@@ -1419,7 +1419,11 @@ class RemoteMultiplayerService implements MultiplayerService {
     }
 
     final guildId = await _guilds.currentGuildId();
-    final founded = (guildId == null ? null : await _guilds.guildById(guildId)) ?? wanted;
+    var founded = guildId == null ? null : await _guilds.guildById(guildId);
+    founded ??= guildId == null ? null : await _guilds.guildById(guildId);
+    if (founded == null) {
+      return const CreateGuildResult.failed(remoteGuildCreateFailed);
+    }
     _noteGuild(founded);
     return CreateGuildResult.ok(founded, guildCreateGoldCost, save: hosted.save);
   }

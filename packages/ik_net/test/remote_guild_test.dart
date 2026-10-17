@@ -563,6 +563,35 @@ void main() {
     expect(await hopeful.currentGuildId(), isNull);
   });
 
+  test('a founding rereads the guild instead of inventing banner or permissions', () async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+
+    transport.failOnce['select:${RemoteTables.guildsVisible}'] =
+        'permission denied for column guilds.description';
+    final recovered = await leader.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(recovered.ok, isTrue, reason: recovered.reason);
+    expect(recovered.guild!.id, isNotEmpty);
+    expect(transport.tables[RemoteTables.guilds], hasLength(1));
+
+    transport.missingTables.add(RemoteTables.guildsVisible);
+    final refused = await (await _player(transport, 'other@example.com', 'Other')).createGuild(
+      const CreateGuildInput(
+        name: 'Oak Guard',
+        tag: 'OAK',
+        description: 'Keep the oaks.',
+        emblem: GuildEmblem(color: '#2f6b3a', symbol: 'tree'),
+      ),
+      guildCreateGoldCost,
+    );
+    expect(refused.ok, isFalse);
+    expect(refused.reason, remoteGuildCreateFailed);
+    expect(transport.tables[RemoteTables.guilds]!.map((row) => row['tag']), <Object?>[
+      'IRN',
+    ], reason: 'the unread insert is rolled back');
+  });
+
   test('a project without the Wave E functions still founds the old way', () async {
     final transport = FakeTransport();
     transport.hostsGuildLifecycleRpcs = false;

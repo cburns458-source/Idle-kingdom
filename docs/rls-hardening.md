@@ -37,6 +37,8 @@ Migrations are **not** auto-applied. Edge functions deploy from `test-launch`.
    - `chat_messages` has no insert policy for `authenticated`
    - Advisor “RLS enabled no policy” for bazaar market + moderation tables is
      expected (revoked from clients)
+   - Advisor “Security Definer View” for `public_profiles`, `guild_hall_tiers`,
+     `guilds_visible`, and `guild_applications_visible` is expected (see below)
 3. **Auth → Attack Protection:** enable **Leaked password protection**
    (HaveIBeenPwned). Not a migration.
 4. **Deploy edge functions:** merge/push this branch to `test-launch`, or run
@@ -115,6 +117,14 @@ owner confirms its plan.
 ### Ops
 
 18. **Re-run Supabase Security Advisor** after 026 and confirm only expected
-    “no policy” tables remain.
+    “no policy” tables remain. The “Security Definer View” warning on
+    `guilds_visible` and `guild_applications_visible` is also expected: those
+    views are `WITH (security_invoker = false)` on purpose. Column SELECT on
+    `guilds.description` and `guild_applications.message` is revoked from
+    anon/authenticated, so an invoker view cannot read them to blank the
+    motto or application message when `chat_allowed` is false. The definer
+    view (same pattern as `public_profiles` and `guild_hall_tiers`) can, and
+    `guild_applications_visible` re-applies the table RLS predicate
+    (`auth.uid() = user_id OR is_guild_manager(guild_id)`).
 19. **Document third-party leaderboard access** — anon `leaderboard_entries` is
     intentional; note rate limits / caching if sites appear.

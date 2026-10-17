@@ -278,9 +278,16 @@ class RemoteGuildBackend {
     final row = written.single;
     if (row == null) return const CreateGuildResult.failed(remoteGuildCreateFailed);
     final id = row['id'];
-    final guild = id is String
-        ? (await guildById(id) ?? guildRecordFrom(row))
-        : guildRecordFrom(row);
+    if (id is! String) return const CreateGuildResult.failed(remoteGuildCreateFailed);
+    // RETURNING omits description / permissions / banner. Do not invent those
+    // from the incomplete row — reread the visible guild, or roll the insert
+    // back and say so.
+    var guild = await guildById(id);
+    guild ??= await guildById(id);
+    if (guild == null) {
+      await transport.delete(RemoteTables.guilds, equals: <String, Object?>{'id': id});
+      return const CreateGuildResult.failed(remoteGuildCreateFailed);
+    }
 
     final facts = await factsOf();
     final seated = await transport.insert(
