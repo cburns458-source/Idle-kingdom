@@ -73,12 +73,22 @@ export async function handlePurgeAccounts(req: Request, deps: PurgeDeps): Promis
     if (deps.webhookUrl) {
       for (const item of data.feedback) {
         if (!item.discord_message_id) continue
-        await patch(
-          deps.webhookUrl,
-          item.discord_message_id,
-          anonymisedFeedbackWebhookPayload(),
-          item.discord_thread_id,
-        )
+        try {
+          const patched = await patch(
+            deps.webhookUrl,
+            item.discord_message_id,
+            anonymisedFeedbackWebhookPayload(),
+            item.discord_thread_id,
+          )
+          if (!patched.ok) {
+            console.error('purge-accounts: Discord anonymise failed', {
+              feedbackId: item.id,
+              status: 'status' in patched ? patched.status : undefined,
+            })
+          }
+        } catch {
+          console.error('purge-accounts: Discord anonymise failed', { feedbackId: item.id })
+        }
       }
     }
     const deleted = await deps.store.deleteAuthUser(row.user_id)

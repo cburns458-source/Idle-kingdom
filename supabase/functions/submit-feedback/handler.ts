@@ -202,7 +202,13 @@ export async function handleSubmitFeedback(req: Request, deps: FeedbackDeps): Pr
   if (!user) {
     return json({ error: 'Sign in to send feedback.' }, 401)
   }
-  if (await deps.accountFrozen(user.id)) {
+  let frozen = true
+  try {
+    frozen = await deps.accountFrozen(user.id)
+  } catch {
+    frozen = true
+  }
+  if (frozen) {
     return json({ error: ACCOUNT_FROZEN }, 403)
   }
 

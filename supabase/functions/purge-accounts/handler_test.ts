@@ -68,6 +68,22 @@ Deno.test('purge is idempotent and still deletes auth when data was already clea
   assertEquals(patches, ['msg-1'])
 })
 
+Deno.test('a Discord patch failure does not block the purge', async () => {
+  const store = new MemoryPurge()
+  store.due = [{ request_id: 'r1', user_id: 'u1', status: 'pending', data_purged: false }]
+  const response = await handlePurgeAccounts(request(), {
+    authorized: () => true,
+    store,
+    webhookUrl: 'https://discord.com/api/webhooks/1/token',
+    patchDiscord: async () => ({ ok: false }),
+  })
+  assertEquals(response.status, 200)
+  const body = (await response.json()) as Record<string, unknown>
+  assertEquals(body.purged, 1)
+  assertEquals(store.deletedUsers, ['u1'])
+  assertEquals(store.marked, ['r1'])
+})
+
 Deno.test('a failed auth delete leaves the row for the next run', async () => {
   const store = new MemoryPurge()
   store.due = [{ request_id: 'r1', user_id: 'u1', status: 'pending', data_purged: false }]

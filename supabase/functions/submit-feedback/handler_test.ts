@@ -149,6 +149,17 @@ Deno.test('frozen accounts cannot send feedback', async () => {
   assertEquals(wired.store.rows.length, 0)
 })
 
+Deno.test('a frozen lookup error refuses feedback', async () => {
+  const wired = deps({})
+  wired.deps.accountFrozen = async () => {
+    throw new Error('lookup failed')
+  }
+  const result = await read(await handleSubmitFeedback(request(validBody()), wired.deps))
+  assertEquals(result.status, 403)
+  assertEquals(result.body.error, 'This account is scheduled for deletion.')
+  assertEquals(wired.store.rows.length, 0)
+})
+
 Deno.test('anon gets 401', async () => {
   const wired = deps({ user: null })
   const result = await read(await handleSubmitFeedback(request(validBody()), wired.deps))
