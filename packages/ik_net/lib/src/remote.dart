@@ -79,6 +79,9 @@ class RemoteRpcs {
   static const String reportPlayer = 'report_player';
   static const String usernameAvailable = 'username_available';
   static const String renameUsername = 'rename_username';
+  static const String accountStatus = 'account_status';
+  static const String setAccountAge = 'set_account_age';
+  static const String refreshStoreAgeSignal = 'refresh_store_age_signal';
 }
 
 /// Report reasons a player can file. `Other` may carry a short note.
@@ -130,6 +133,9 @@ const String remoteBazaarMarketFunction = 'bazaar';
 
 /// Wave G game function. Phase 2 `sync` / `command` write the hosted save.
 const String remoteGameFunction = 'game';
+
+/// Request or restore a 14-day account deletion.
+const String remoteDeleteAccountFunction = 'delete-account';
 
 /// How often a signed-in device asks the server to advance time.
 const num remoteGameSyncMinIntervalMs = 120000;

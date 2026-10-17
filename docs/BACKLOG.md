@@ -1,6 +1,6 @@
 # Restoria master backlog
 
-**Status: Approved by Conor on 2026-10-12. Updated 2026-10-16 (Conor).**
+**Status: Approved by Conor on 2026-10-12. Updated 2026-10-17 (Conor).**
 
 This is the single master backlog for Restoria. Only Conor edits it, or a PR he
 approves. Every design call stays with Conor. Work on any item still follows
@@ -118,6 +118,8 @@ Conor's rulings, dated. Immutable once written.
 
 | Date | Decision | Evidence |
 |---|---|---|
+| 2026-10-17 | Age answers control CHAT ONLY. Everyone can create an account and play. Threshold is 13. Under 13 (or unanswered) cannot send or receive global/local/DM/guild chat, the guild message board, or friend requests. Report and block stay open. Asked once per account before the first character name; locked; staff `/setage` only, logged. Existing accounts are prompted on next login. `account_age` is server-only. Store signals (Apple/Google) when the app can ask; web uses the in-game question. | Vari (Conor); ADM-08 |
+| 2026-10-17 | Delete account: 14-day grace; Restore on login during grace (cancelled Bazaar orders stay cancelled). Confirm by signing in again, then type the character name. Chat messages are removed on purge. `chat_reports` kept 1 year with users nulled. Feedback anonymised and Discord posts edited via webhook PATCH. Guild leadership passes to top officer / longest-standing member, or the guild disbands if solo. Staff cannot self-delete. Web `/delete-account` for Google Play. | Vari (Conor); ADM-09 |
 | 2026-10-16 | Conor (Vari) parked ADM-01, ADM-02, SYS-05 and the NTF items until closer to the Android/iOS app store launch. No paid plan upgrades happen until needed. Leaked-password protection is blocked because it needs Supabase Pro. | Vari (Conor) |
 | 2026-10-16 | There is no guest play, offline play, or playing without signing in. The game needs an internet connection and a logged-in character. Unattended/offline progress (idle gains while logged out, settled by the server on next login) is not offline play and stays. | Vari (Conor) |
 | 2026-10-16 | UI-07 green and gold rules approved (covers UI-06). One change: selected items get a green highlight instead of gold. Stone UI follows the same rules as wood UI. Ui is building on `ui/ui-07-green-gold`. | Vari (Conor) |
@@ -244,14 +246,16 @@ Workflow doc: Cursor cloud agents for commits, pushes, and migrations — **#384
 7. **SOC-01** guild hall tiers, achievements and banners. Merged to `test-launch` in #390 and #391 (2026-10-16); Staging Verification, waiting on Vari's playtest. The live Supabase migration is not applied and goes live only with Vari's merge to `main`. **SOC-04** mass bosses remain Ready for Proposal (owner Sys; Eco numbers).
 8. **ADM-06** Staging `game` function v56 is on test with the 4 potions (redeployed 2026-10-16 5:31 AM PT); Staging Verification, waiting on Conor's in-game check.
 9. **ECO-04** Alchemy potion sell prices + Bazaar floors. Merged (#385).
-10. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
-11. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Status Blocked. Parked until app store infrastructure. Plan drafted (option B recommended).
-12. **Decision session on OQ-01..02, OQ-04..07, OQ-11, OQ-15.** OQ-03 answered (84/168); OQ-09 answered (tutorial lock-back); OQ-10 answered (#350). Unblocks MAP-01, ARC-01, WLD-01.
-13. **ECO-05** Pin empty search_path on `bazaar_user_total_level`. Owner Eco; include in the next Economy PR as a new migration.
-14. **MAP-01** Region map (+ **MAP-04** landing nodes). Foundation for the isles/citadel.
-15. **ARC-01** Enchant tablets and **ARC-02** Essence rework (design doc together).
-16. **QST-04** Goblin Trouble, **QST-06** Quest recipe rewards, **SKL-04** Cooking multi-output, **ITM-06** Chromium/Vanadium recolor. Content with low dependencies.
-17. **UI-05** asset pack, **UI-07** green/gold rules (covers UI-06) In Progress on `ui/ui-07-green-gold` (Vari approved 2026-10-16), **ART-01** spec sheet. Unblocks the whole UI/art track.
+10. **ADM-08** Age gate for chat (chat only; threshold 13). Review / In Progress.
+11. **ADM-09** Delete account (14-day grace, restore, scheduled purge). Review / In Progress.
+12. **ADM-03** Admin dashboard with event ledger. Visibility into exploits and economy.
+13. **SYS-05 + NTF-01/02/03/04/06** Notifications core. Status Blocked. Parked until app store infrastructure. Plan drafted (option B recommended).
+14. **Decision session on OQ-01..02, OQ-04..07, OQ-11, OQ-15.** OQ-03 answered (84/168); OQ-09 answered (tutorial lock-back); OQ-10 answered (#350). Unblocks MAP-01, ARC-01, WLD-01.
+15. **ECO-05** Pin empty search_path on `bazaar_user_total_level`. Owner Eco; include in the next Economy PR as a new migration.
+16. **MAP-01** Region map (+ **MAP-04** landing nodes). Foundation for the isles/citadel.
+17. **ARC-01** Enchant tablets and **ARC-02** Essence rework (design doc together).
+18. **QST-04** Goblin Trouble, **QST-06** Quest recipe rewards, **SKL-04** Cooking multi-output, **ITM-06** Chromium/Vanadium recolor. Content with low dependencies.
+19. **UI-05** asset pack, **UI-07** green/gold rules (covers UI-06) In Progress on `ui/ui-07-green-gold` (Vari approved 2026-10-16), **ART-01** spec sheet. Unblocks the whole UI/art track.
 
 ### P2: After
 
@@ -291,6 +295,8 @@ short roster in [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md) (see
 | ADM-05 | Telemetry? | Needs Clarification | Blocked on OQ-16 | P2 | OQ-16, ADM-03 | Ops | Vari answers OQ-16 | Desc: Telemetry — what to measure, which vendor, privacy/consent (OQ-16). Accept: TBD (owner to propose). Could start as rows in the server event ledger. |
 | ADM-06 | Regenerate the server item data bundle so the 4 new potions are on staging | Staging Verification | On staging | P1 | none | Ops | Waiting on Conor's in-game check | Desc: `supabase/functions/_shared/game-database.json` is built by `tools/bundle_game_edge.sh` and is not committed. Accept: staging `game` function serves the 4 new potions from #377. Staging `game` function is v56 (deployed 2026-10-16 5:31 AM PT) with the bundle matching `test-launch`. Waiting on Conor's in-game check (brew a Fernleaf Tonic and sell to the Apothecary; SHP-0010 buys at 4). |
 | ADM-07 | Branch cleanup report for merged coord/* and stale branches | Inbox | Inbox | Unset (Vari to decide) | none | Ops | Write a report-only list of merged `coord/*` and stale branches | Desc: Report only — list merged `coord/*` leftovers and stale `cursor/*` branches. Accept: TBD (owner to propose). No deletes until Vari says so. |
+| ADM-08 | Age gate for chat (chat only) | Review | In Progress | **P1** | none | Ops | Playtest on test after this PR lands | Desc: Age answers control CHAT ONLY. Everyone can play. Threshold 13. Under 13 / unanswered cannot send or receive global/local/DM/guild chat, the guild message board, or friend requests. Report and block stay open. Asked once per account before the first character name; locked; staff `/setage` only, logged in `developer_audit_log`. Existing accounts prompted on next login. `account_age` is server-only (never on profiles). Apple/Google store signals in app builds; web uses the in-game question. Accept: `chat_allowed(uid)` on every chat/friend write and read; chat tab hidden; no play block for any age. |
+| ADM-09 | Delete account with 14-day grace | Review | In Progress | **P1** | ADM-08 | Ops | Playtest on test; set `PURGE_CRON_SECRET` and schedule `purge-accounts` | Desc: Settings red button → re-auth → type character name → 14-day grace, Restore on login. Chat messages removed on purge. `chat_reports` kept 1 year with users nulled. Feedback anonymised; Discord webhook PATCH. Guild leadership auto-handoff or disband if solo. Staff blocked. Web `/delete-account` for Google Play. Accept: no blocking FKs; freeze trading/donations during grace; idempotent purge ending in `auth.admin.deleteUser`. |
 
 ### BUG: Bugs and fixes
 

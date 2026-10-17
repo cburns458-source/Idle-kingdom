@@ -7,6 +7,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
+import { accountAgeYears, ageBandFromYears } from '../_shared/age.ts'
+import { ACCOUNT_FROZEN } from '../_shared/deletion.ts'
 import { gateDevCommand } from '../_shared/dev_gate.ts'
 import {
   plazaShopBuyResponseExtras,
@@ -386,6 +388,10 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     )
   }
 
+  if (isGuildEconomyCommand(command) && (await accountFrozen(admin, userId))) {
+    return json({ error: ACCOUNT_FROZEN, phase: 2 }, 403)
+  }
+
   const hallContext = await loadHallContext(admin, userId)
   const rng = createTrackedMulberry32(hosted?.rng_state ?? ((nowMs ^ userId.length) >>> 0))
   const windowStartMs = hosted ? catchUpWindowStartMs(hosted) : undefined
@@ -630,6 +636,10 @@ async function handleDevCommand(admin: Client, userId: string, payload: GameBody
   if (!gate.ok) {
     if (gate.status === 500) return json({ error: gate.error, phase: 2 }, 500)
     return json({ error: gate.error, phase: 2, action: 'dev_command' }, 403)
+  }
+
+  if (command === 'setage') {
+    return handleSetAge(admin, userId, tokens)
   }
 
   const nowMs = Date.now()
@@ -1110,6 +1120,84 @@ const GUILD_HALL_COMMANDS = new Set([
 
 function isGuildHallCommand(command: string): boolean {
   return GUILD_HALL_COMMANDS.has(command)
+}
+
+const GUILD_ECONOMY_COMMANDS = new Set([
+  'guild_pay_hall_debt',
+  'guild_chip_in_hall_gold',
+  'guild_donate_hall_item',
+  'guild_bank_deposit',
+])
+
+function isGuildEconomyCommand(command: string): boolean {
+  return GUILD_ECONOMY_COMMANDS.has(command)
+}
+
+async function accountFrozen(admin: Client, userId: string): Promise<boolean> {
+  const { data, error } = await admin.rpc('account_is_frozen', { p_user: userId })
+  if (error) return false
+  return data === true
+}
+
+async function handleSetAge(admin: Client, staffId: string, tokens: string[]): Promise<Response> {
+  const username = tokens[0]?.trim() ?? ''
+  const year = tokens[1] ? Number(tokens[1]) : NaN
+  const month = tokens[2] ? Number(tokens[2]) : null
+  if (!username || !Number.isFinite(year)) {
+    return json({ error: 'Usage: /setage <username> <year> [month]', phase: 2, action: 'dev_command' }, 400)
+  }
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('user_id, username')
+    .ilike('username', username)
+    .maybeSingle()
+  if (!profile?.user_id) {
+    await admin.from('developer_audit_log').insert({
+      user_id: staffId,
+      command: 'setage',
+      args: { tokens },
+      ok: false,
+      reason: 'That player could not be found.',
+    })
+    return json({ error: 'That player could not be found.', phase: 2, action: 'dev_command' }, 400)
+  }
+  const birthMonth = month != null && Number.isFinite(month) ? month : null
+  const { error } = await admin.from('account_age').upsert(
+    {
+      user_id: profile.user_id,
+      birth_year: year,
+      birth_month: birthMonth,
+      age_band: ageBandFromYears(accountAgeYears(year, birthMonth)),
+      source: 'support',
+      refreshed_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' },
+  )
+  if (error) {
+    await admin.from('developer_audit_log').insert({
+      user_id: staffId,
+      command: 'setage',
+      args: { tokens },
+      ok: false,
+      reason: error.message,
+    })
+    return json({ error: error.message, phase: 2, action: 'dev_command' }, 400)
+  }
+  await admin.from('developer_audit_log').insert({
+    user_id: staffId,
+    command: 'setage',
+    args: { tokens, target: profile.user_id, birth_year: year, birth_month: birthMonth },
+    ok: true,
+    reason: 'Age updated.',
+  })
+  return json({
+    ok: true,
+    phase: 2,
+    action: 'dev_command',
+    command: 'setage',
+    message: `Age updated for ${profile.username}.`,
+    wroteSave: false,
+  }, 200)
 }
 
 function hostedTotalLevel(payload: unknown, nowMs: number): number | undefined {

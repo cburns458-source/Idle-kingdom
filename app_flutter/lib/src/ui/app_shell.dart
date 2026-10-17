@@ -10,6 +10,7 @@ import '../session/game_controller.dart';
 import '../session/map_walk.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'age_gate_sheet.dart';
 import 'auth_gate_sheet.dart';
 import 'away_summary_sheet.dart';
 import 'bazaar_view.dart';
@@ -31,6 +32,7 @@ import 'menu_view.dart';
 import 'skills_view.dart';
 import 'npc_panel.dart';
 import 'new_character_sheet.dart';
+import 'restore_account_sheet.dart';
 import 'skill_level_up_popup.dart';
 import 'overlay_notice.dart';
 import 'returning_overlay.dart';
@@ -941,7 +943,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
                       builder: (context, constraints) {
                         final available = constraints.biggest;
                         final frame = playableFrameSize(available);
-                        final sideChat = playableFrameHasSideChat(available);
+                        final sideChat =
+                            playableFrameHasSideChat(available) && multiplayer.chatAllowed;
                         final sideRails = sideChat && _canPlay;
                         if (!sideRails && _railTracker != null) {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1090,6 +1093,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
     if (_needsAuth) {
       return AuthGateSheet(controller: controller, multiplayer: multiplayer);
     }
+    if (multiplayer.deletionPending) {
+      return RestoreAccountSheet(multiplayer: multiplayer);
+    }
+    if (multiplayer.needsAgeAnswer) {
+      return AgeGateSheet(multiplayer: multiplayer);
+    }
     if (_needsCharacter) {
       return NewCharacterSheet(
         controller: controller,
@@ -1206,7 +1215,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin, Widg
               child: ListenableBuilder(
                 listenable: multiplayer,
                 builder: (context, _) {
-                  if (multiplayer.hideChatBubble) return const SizedBox.shrink();
+                  if (multiplayer.hideChatBubble || !multiplayer.chatAllowed) {
+                    return const SizedBox.shrink();
+                  }
                   return ChatLauncher(
                     open: _chatOpen,
                     multiplayer: multiplayer,

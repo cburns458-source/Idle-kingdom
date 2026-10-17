@@ -8,6 +8,8 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'account_auth_form.dart';
+import 'delete_account_sheet.dart';
+import 'game_popup.dart';
 import 'floating_slot.dart';
 import 'format.dart';
 import 'equipped_title.dart';
@@ -281,6 +283,23 @@ class _AccountPanelState extends State<AccountPanel> {
         label: 'Sign out',
         tone: GameButtonTone.secondary,
         onPressed: net.busy ? null : () => net.signOut(widget.controller.save),
+      ),
+      const SizedBox(height: 8),
+      TextButton(
+        key: const Key('delete-account'),
+        onPressed: net.busy
+            ? null
+            : () => showGamePopup<void>(
+                context: context,
+                builder: (context) => GamePopupCard(
+                  child: DeleteAccountSheet(
+                    controller: widget.controller,
+                    multiplayer: net,
+                    embedded: true,
+                  ),
+                ),
+              ),
+        child: const Text('Delete account', style: TextStyle(color: Palette.danger)),
       ),
       const SizedBox(height: 20),
       _PeopleFold(

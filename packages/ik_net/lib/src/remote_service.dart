@@ -5,6 +5,7 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import 'age.dart';
 import 'cloud_save.dart';
 import 'config.dart';
 import 'dev_commands.dart';
@@ -1198,6 +1199,65 @@ class RemoteMultiplayerService implements MultiplayerService {
   }
 
   @override
+  Future<AccountSocialStatus> accountStatus() async {
+    final result = await transport.rpc(RemoteRpcs.accountStatus, const <String, Object?>{});
+    if (!result.ok || result.data == null) return const AccountSocialStatus.unanswered();
+    return AccountSocialStatus.fromJson(result.data!);
+  }
+
+  @override
+  Future<ActionResult> setAccountAge({
+    int? birthYear,
+    int? birthMonth,
+    String source = 'self',
+    String? ageBand,
+  }) async {
+    final result = await transport.rpc(RemoteRpcs.setAccountAge, <String, Object?>{
+      'p_birth_year': birthYear,
+      'p_birth_month': birthMonth,
+      'p_source': source,
+      'p_age_band': ageBand,
+    });
+    if (!result.ok) return ActionResult.failed(result.reason ?? ageGateError);
+    final row = result.data ?? const <String, Object?>{};
+    if (row['ok'] == false) {
+      return ActionResult.failed('${row['reason'] ?? ageGateError}');
+    }
+    return const ActionResult.ok();
+  }
+
+  @override
+  Future<ActionResult> requestAccountDeletion(String characterName) async {
+    final result = await transport.invoke(remoteDeleteAccountFunction, <String, Object?>{
+      'action': 'request',
+      'characterName': characterName,
+    });
+    if (!result.ok) return ActionResult.failed(result.reason ?? 'Could not delete this account.');
+    final row = result.data ?? const <String, Object?>{};
+    if (row['ok'] == false) {
+      return ActionResult.failed(
+        '${row['error'] ?? row['reason'] ?? 'Could not delete this account.'}',
+      );
+    }
+    return const ActionResult.ok();
+  }
+
+  @override
+  Future<ActionResult> restoreAccount() async {
+    final result = await transport.invoke(remoteDeleteAccountFunction, const <String, Object?>{
+      'action': 'restore',
+    });
+    if (!result.ok) return ActionResult.failed(result.reason ?? 'Could not restore this account.');
+    final row = result.data ?? const <String, Object?>{};
+    if (row['ok'] == false) {
+      return ActionResult.failed(
+        '${row['error'] ?? row['reason'] ?? 'Could not restore this account.'}',
+      );
+    }
+    return const ActionResult.ok();
+  }
+
+  @override
   Future<ChatSendResult> sendChat(ChatChannel channel, String body) async {
     if (!isSignedIn) return const ChatSendResult.failed('Sign in to chat.');
     final blocked = await _remoteChatPrivacyRefusal(channel);
@@ -1207,6 +1267,10 @@ class RemoteMultiplayerService implements MultiplayerService {
       'body': body,
     });
     if (!result.ok) return ChatSendResult.failed(result.reason!);
+    final data = result.data;
+    if (data?['code'] == ageGateCode || data?['error'] == ageGateError) {
+      return const ChatSendResult.failed(ageGateError);
+    }
     final message = chatMessageFromFunction(result.data);
     if (message == null) return const ChatSendResult.failed(remoteChatSendFailed);
     return ChatSendResult.ok(message);
@@ -1215,6 +1279,8 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<List<ChatMessage>> listChat(ChatChannel channel) async {
     if (!isSignedIn) return const <ChatMessage>[];
+    final status = await accountStatus();
+    if (!status.chatAllowed) return const <ChatMessage>[];
     final result = await transport.select(
       RemoteTables.chat,
       columns: remoteChatColumns,
@@ -1245,6 +1311,8 @@ class RemoteMultiplayerService implements MultiplayerService {
   @override
   Future<List<ChatMessage>> listDirectMessages() async {
     if (!isSignedIn) return const <ChatMessage>[];
+    final status = await accountStatus();
+    if (!status.chatAllowed) return const <ChatMessage>[];
     final viewerId = session!.userId;
     final result = await transport.select(
       RemoteTables.chat,
@@ -1613,6 +1681,8 @@ class RemoteMultiplayerService implements MultiplayerService {
   Future<ActionResult> sendFriendRequest(String targetUserId) async {
     final current = session;
     if (current == null) return const ActionResult.failed('Sign in required.');
+    final status = await accountStatus();
+    if (!status.chatAllowed) return const ActionResult.failed(ageGateError);
     if (targetUserId == current.userId) {
       return const ActionResult.failed('Cannot friend yourself.');
     }

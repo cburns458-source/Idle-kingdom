@@ -2,6 +2,7 @@ import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 import 'package:ik_runtime/ik_runtime.dart';
 
+import 'age.dart';
 import 'cloud_save.dart';
 import 'dev_commands.dart';
 import 'local_backend.dart';
@@ -107,6 +108,19 @@ abstract interface class MultiplayerService {
   Future<ActionResult> reportPlayer(String targetUserId, String reason);
 
   Future<FeedbackSubmitResult> submitFeedback(FeedbackRequest request);
+
+  Future<AccountSocialStatus> accountStatus();
+
+  Future<ActionResult> setAccountAge({
+    int? birthYear,
+    int? birthMonth,
+    String source = 'self',
+    String? ageBand,
+  });
+
+  Future<ActionResult> requestAccountDeletion(String characterName);
+
+  Future<ActionResult> restoreAccount();
 
   Future<ActionResult> sendFriendRequest(String targetUserId);
 
@@ -561,6 +575,25 @@ class LocalMultiplayerService implements MultiplayerService {
     MultiplayerBoardKey boardKey, {
     int limit = 25,
   }) async => _backend.listLeaderboard(boardKey, limit);
+
+  @override
+  Future<AccountSocialStatus> accountStatus() async => const AccountSocialStatus.playable();
+
+  @override
+  Future<ActionResult> setAccountAge({
+    int? birthYear,
+    int? birthMonth,
+    String source = 'self',
+    String? ageBand,
+  }) async => const ActionResult.ok();
+
+  @override
+  Future<ActionResult> requestAccountDeletion(String characterName) async {
+    return const ActionResult.failed('Account deletion needs a hosted sign-in.');
+  }
+
+  @override
+  Future<ActionResult> restoreAccount() async => const ActionResult.ok();
 
   @override
   Future<ChatSendResult> sendChat(ChatChannel channel, String body) async {

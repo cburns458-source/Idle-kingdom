@@ -214,6 +214,23 @@ Checklist, in order:
     Status: applied on test Oct 16 2026 (MCP `adm04_player_feedback` plus
     `adm04_player_feedback_revoke_writes`); live pending.
 
+11. [ ] `20261017120000_account_age.sql` (ADM-08). `account_age` (server-only),
+    `chat_allowed`, `set_account_age`, `staff_set_account_age`, and chat /
+    friend / guild-message RLS. Apply to test with this PR; live only after
+    Conor merges `test-launch` into `main`. Age never blocks play.
+    Status: applied on test Oct 17 2026 (file `20261017120000`, MCP
+    `20261017020804` / `account_age`); live pending.
+
+12. [ ] `20261017130000_account_deletion.sql` (ADM-09). 14-day deletion grace,
+    FK fixes (`guilds.leader_id`, `guild_private_messages.updated_by`,
+    `bazaar_fills` buyer/seller/order, `bazaar_collect.order_id`,
+    `profiles.guild_id`, `chat_reports` SET NULL), freeze, guild hand-off,
+    purge helpers. Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`. Do not apply to live before `delete-account`
+    and `purge-accounts` are on `restoria-idlerpg`.
+    Status: applied on test Oct 17 2026 (file `20261017130000`, MCP
+    `20261017020847` / `account_deletion`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.
@@ -300,8 +317,14 @@ Never put the values in the client, the repo, or GitHub. Conor sets them.
 | --- | --- |
 | `FEEDBACK_DISCORD_WEBHOOK_URL` | Staff-only Discord forum webhook for ADM-04 submit-feedback |
 | `FEEDBACK_DISCORD_TAG_IDS` | JSON map of forum tag ids, e.g. `{"bug":"…","idea":"…","report":"…"}`. Optional; missing keys are skipped. |
+| `PURGE_CRON_SECRET` | Shared secret for the `purge-accounts` cron (ADM-09). The function also accepts the service role. Set a schedule (every hour is enough) that POSTs with `Authorization: Bearer <secret>` or `x-purge-secret`. |
+
+The Flutter web SPA serves `/delete-account` (Google Play) via
+`not_found_handling = "single-page-application"`. Privacy-policy copy is not
+in this repo; Conor writes that separately.
 
 Live gets its own webhook later, after Conor merges `test-launch` into `main`.
+Do not apply ADM-08 / ADM-09 migrations to the live project until that merge.
 
 ## Token scopes
 

@@ -265,6 +265,61 @@ class MultiplayerController extends ChangeNotifier {
   MultiplayerSession? get session => service.session;
   bool get isSignedIn => service.isSignedIn;
 
+  AccountSocialStatus _accountStatus = const AccountSocialStatus.playable();
+
+  AccountSocialStatus get accountStatus => _accountStatus;
+
+  bool get needsAgeAnswer => isSignedIn && _accountStatus.needsAgeAnswer;
+
+  bool get chatAllowed => isSignedIn && _accountStatus.chatAllowed && !deletionPending;
+
+  bool get deletionPending => isSignedIn && _accountStatus.deletionPending;
+
+  DateTime? get deletionPurgeAt => _accountStatus.deletionPurgeAt;
+
+  Future<void> refreshAccountStatus() async {
+    if (!isSignedIn) {
+      _accountStatus = const AccountSocialStatus.playable();
+      notifyListeners();
+      return;
+    }
+    _accountStatus = await service.accountStatus();
+    notifyListeners();
+  }
+
+  Future<String?> submitAccountAge({
+    int? birthYear,
+    int? birthMonth,
+    String source = 'self',
+    String? ageBand,
+  }) async {
+    final result = await service.setAccountAge(
+      birthYear: birthYear,
+      birthMonth: birthMonth,
+      source: source,
+      ageBand: ageBand,
+    );
+    if (!result.ok) return result.reason;
+    await refreshAccountStatus();
+    return null;
+  }
+
+  Future<String?> requestAccountDeletion(String characterName) async {
+    final result = await service.requestAccountDeletion(characterName);
+    if (!result.ok) return result.reason;
+    await service.signOut();
+    _clearAccountLocally();
+    notifyListeners();
+    return null;
+  }
+
+  Future<String?> restoreAccount() async {
+    final result = await service.restoreAccount();
+    if (!result.ok) return result.reason;
+    await refreshAccountStatus();
+    return null;
+  }
+
   /// Which backend this build talks to, which the account screen says out loud.
   MultiplayerMode get mode =>
       service is RemoteMultiplayerService ? MultiplayerMode.supabase : MultiplayerMode.local;
@@ -570,6 +625,7 @@ class MultiplayerController extends ChangeNotifier {
   }
 
   void _resetSignedOutState() {
+    _accountStatus = const AccountSocialStatus.playable();
     _guildId = null;
     _guild = null;
     _guestGuildId = null;
@@ -1145,6 +1201,7 @@ class MultiplayerController extends ChangeNotifier {
       return;
     }
     if (!isSignedIn) {
+      _accountStatus = const AccountSocialStatus.playable();
       _listings = await service.listGuilds();
       _board = await _readBoard(save);
       _citadelVisitors = await service.citadelVisitors();
@@ -1153,6 +1210,7 @@ class MultiplayerController extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    _accountStatus = await service.accountStatus();
     _guildId = await service.currentGuildId();
     _guestGuildId = await service.currentGuestGuildId();
     _listings = await service.listGuilds();
@@ -1303,6 +1361,7 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> sendFriendRequest(String userId) {
     return run(() async {
+      if (!chatAllowed) return ageGateError;
       final result = await service.sendFriendRequest(userId);
       await _loadSocialLists();
       if (!result.ok) return result.reason;
@@ -1702,6 +1761,7 @@ class MultiplayerController extends ChangeNotifier {
       return sendDirectMessage(peer, body, announceSent: false);
     }
     return run(() async {
+      if (!chatAllowed) return ageGateError;
       final channel = chatChannelForTab(
         _chatTab,
         locationId: locationId,

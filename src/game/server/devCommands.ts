@@ -46,6 +46,11 @@ export const DEV_COMMAND_HELP: DevCommandHelpLine[] = [
     usage: '/resetskills confirm',
     summary: 'Reset every skill to level 1 (requires confirm).',
   },
+  {
+    name: 'setage',
+    usage: '/setage <username> <year> [month]',
+    summary: 'Staff override for a locked age answer (logged).',
+  },
 ]
 
 function failed(save: PlayerSave, reason: string): DevCommandResult {

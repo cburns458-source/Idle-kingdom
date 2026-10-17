@@ -209,6 +209,60 @@ export async function postDiscordWebhook(
   }
 }
 
+/** PATCH a previously posted webhook message so a deleted player's copy is gone. */
+export async function patchDiscordWebhookMessage(
+  url: string,
+  messageId: string,
+  payload: unknown,
+  threadId?: string | null,
+  fetchImpl: typeof fetch = fetch,
+): Promise<DiscordPostResult> {
+  if (!isDiscordWebhookUrl(url) || !messageId.trim()) {
+    return { ok: false, status: 0, error: 'Discord webhook is not configured.' }
+  }
+  try {
+    const parsed = new URL(url)
+    parsed.pathname = `${parsed.pathname.replace(/\/$/, '')}/messages/${encodeURIComponent(messageId)}`
+    if (threadId) parsed.searchParams.set('thread_id', threadId)
+    const response = await fetchImpl(parsed.toString(), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    if (response.ok || response.status === 404) {
+      return { ok: true, status: response.status, messageId }
+    }
+    return {
+      ok: false,
+      status: response.status,
+      error: redactSecret(`Discord returned ${response.status}.`),
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      error: redactSecret(error instanceof Error ? error.message : 'Discord request failed.'),
+    }
+  }
+}
+
+export function anonymisedFeedbackWebhookPayload(): Record<string, unknown> {
+  return {
+    allowed_mentions: { parse: [] },
+    embeds: [
+      {
+        title: 'Deleted player',
+        description: 'This report was anonymised after the player deleted their account.',
+        color: DISCORD_COLOR_OTHER,
+        fields: [
+          { name: 'In-game name', value: 'Deleted player', inline: true },
+          { name: 'Player id', value: '—', inline: true },
+        ],
+      },
+    ],
+  }
+}
+
 export async function postDiscordWithRetry(
   url: string,
   payload: unknown,

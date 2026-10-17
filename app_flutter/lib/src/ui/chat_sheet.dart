@@ -366,6 +366,16 @@ class _ChatSheetState extends State<ChatSheet> {
             ],
           );
         }
+        if (!net.chatAllowed) {
+          return Column(
+            children: [
+              _header(const []),
+              const Expanded(
+                child: SignedOutNotice(title: 'Chat', prompt: ageGateChatHidden),
+              ),
+            ],
+          );
+        }
         final tabs = chatTabs(
           selected: net.chatTab,
           citadelHub: widget.citadelHub,

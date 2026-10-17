@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { AGE_GATE_CODE, AGE_GATE_ERROR } from '../_shared/age.ts'
 import rawDatabase from '../_shared/game-database.json' with { type: 'json' }
 import { chatTitleFromSavePayload } from '../_shared/player_title.ts'
 
@@ -87,6 +88,12 @@ Deno.serve(async (req) => {
     return json({ error: 'Chat has been disabled.' }, 400)
   }
 
+  const admin = connect(supabaseUrl, serviceKey)
+  const allowed = await chatAllowed(admin, user.id)
+  if (!allowed) {
+    return json({ error: AGE_GATE_ERROR, code: AGE_GATE_CODE }, 403)
+  }
+
   if (kind === 'dm') {
     const peers = dmPeers(channelKey)
     if (!peers || !peers.includes(user.id)) {
@@ -94,7 +101,6 @@ Deno.serve(async (req) => {
     }
   }
 
-  const admin = connect(supabaseUrl, serviceKey)
   const username = await resolveUsername(admin, user.id, user.user_metadata)
   const title = await resolveChatTitle(admin, user.id)
 
@@ -123,6 +129,10 @@ Deno.serve(async (req) => {
       if (!friends) {
         return json({ error: 'That player only accepts messages from friends.' }, 400)
       }
+    }
+    const peerAllowed = await chatAllowed(admin, peerId)
+    if (!peerAllowed) {
+      return json({ error: AGE_GATE_ERROR, code: AGE_GATE_CODE }, 403)
     }
   }
 
@@ -217,6 +227,12 @@ Deno.serve(async (req) => {
 
   return json({ ...inserted, title }, 200)
 })
+
+async function chatAllowed(admin: Client, userId: string): Promise<boolean> {
+  const { data, error } = await admin.rpc('chat_allowed', { p_user: userId })
+  if (error) return false
+  return data === true
+}
 
 async function enforceCooldown(
   admin: Client,
