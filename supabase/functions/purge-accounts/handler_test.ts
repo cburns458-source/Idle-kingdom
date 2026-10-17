@@ -1,5 +1,6 @@
 import { assertEquals } from 'jsr:@std/assert@1'
 import { handlePurgeAccounts, type DuePurge, type FeedbackDiscordRef, type PurgeStore } from './handler.ts'
+import { shouldPurgeHalfMadeGuild, type HalfMadeGuildProbe } from './half_made_guilds.ts'
 
 class MemoryPurge implements PurgeStore {
   due: DuePurge[] = []
@@ -7,6 +8,8 @@ class MemoryPurge implements PurgeStore {
   deletedUsers: string[] = []
   marked: string[] = []
   droppedReports = 0
+  halfMadeGuilds = 0
+  purgeHalfMadeCalls = 0
   authGone = new Set<string>()
   failDelete = new Set<string>()
   patches: Array<{ messageId: string; threadId?: string | null }> = []
@@ -32,6 +35,10 @@ class MemoryPurge implements PurgeStore {
   }
   async dropExpiredReports() {
     return this.droppedReports
+  }
+  async purgeHalfMadeGuilds() {
+    this.purgeHalfMadeCalls += 1
+    return this.halfMadeGuilds
   }
 }
 
@@ -109,4 +116,53 @@ Deno.test('unauthorised callers are refused', async () => {
     webhookUrl: '',
   })
   assertEquals(response.status, 401)
+})
+
+const NOW = new Date('2026-10-17T12:00:00.000Z')
+
+function probe(partial: Partial<HalfMadeGuildProbe> = {}): HalfMadeGuildProbe {
+  return {
+    id: 'g1',
+    createdAt: new Date('2026-10-17T10:00:00.000Z'),
+    memberCount: 0,
+    hadLeaderRow: false,
+    hasHall: false,
+    hasAchievements: false,
+    ...partial,
+  }
+}
+
+Deno.test('a half-made guild gets purged', () => {
+  assertEquals(shouldPurgeHalfMadeGuild(probe(), NOW), true)
+})
+
+Deno.test('a real guild with no members is kept', () => {
+  assertEquals(shouldPurgeHalfMadeGuild(probe({ hasHall: true }), NOW), false)
+  assertEquals(shouldPurgeHalfMadeGuild(probe({ hasAchievements: true }), NOW), false)
+})
+
+Deno.test('a real guild with no hall but with members or a leader history is kept', () => {
+  assertEquals(shouldPurgeHalfMadeGuild(probe({ memberCount: 1 }), NOW), false)
+  assertEquals(shouldPurgeHalfMadeGuild(probe({ hadLeaderRow: true }), NOW), false)
+})
+
+Deno.test('a guild under an hour old is kept', () => {
+  assertEquals(
+    shouldPurgeHalfMadeGuild(probe({ createdAt: new Date('2026-10-17T11:15:00.000Z') }), NOW),
+    false,
+  )
+})
+
+Deno.test('the hourly purge job deletes half-made guilds', async () => {
+  const store = new MemoryPurge()
+  store.halfMadeGuilds = 2
+  const response = await handlePurgeAccounts(request(), {
+    authorized: () => true,
+    store,
+    webhookUrl: '',
+  })
+  assertEquals(response.status, 200)
+  const body = (await response.json()) as Record<string, unknown>
+  assertEquals(store.purgeHalfMadeCalls, 1)
+  assertEquals(body.half_made_guilds, 2)
 })

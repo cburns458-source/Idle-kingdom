@@ -312,6 +312,15 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017155200`, MCP
     `20261017030045` / `account_age_guild_lock_revoke_trigger`); live pending.
 
+22. [ ] `20261017155300_account_purge_half_made_guilds.sql` (ADM-09). Hourly
+    `account_purge_cron_tick` (and `purge-accounts`) deletes only half-made
+    guilds: no members now, never a leader row, no hall, no achievements,
+    older than 1 hour. Never uses `guilds.leader_id`. Vari approved.
+    Apply to test with this PR; live only after Conor merges `test-launch`
+    into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017155300`, MCP
+    `20261017102030` / `account_purge_half_made_guilds`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.

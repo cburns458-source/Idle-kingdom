@@ -77,6 +77,10 @@ function liveStore(admin: Client) {
       const { data } = await admin.rpc('account_drop_expired_reports')
       return typeof data === 'number' ? data : 0
     },
+    async purgeHalfMadeGuilds() {
+      const { data } = await admin.rpc('account_purge_half_made_guilds')
+      return typeof data === 'number' ? data : 0
+    },
   }
 }
 

@@ -19,6 +19,7 @@ export type PurgeStore = {
   deleteAuthUser: (userId: string) => Promise<{ ok: boolean; alreadyGone?: boolean; error?: string }>
   markPurged: (requestId: string) => Promise<void>
   dropExpiredReports: () => Promise<number>
+  purgeHalfMadeGuilds: () => Promise<number>
 }
 
 export type PurgeDeps = {
@@ -53,6 +54,7 @@ export async function handlePurgeAccounts(req: Request, deps: PurgeDeps): Promis
   if (!deps.authorized(req)) return json({ error: 'Not authorised.' }, 401)
 
   const dropped = await deps.store.dropExpiredReports()
+  const halfMade = await deps.store.purgeHalfMadeGuilds()
   const due = await deps.store.listDue(20)
   let purged = 0
   let skipped = 0
@@ -100,5 +102,5 @@ export async function handlePurgeAccounts(req: Request, deps: PurgeDeps): Promis
     purged += 1
   }
 
-  return json({ ok: true, purged, skipped, reports_dropped: dropped }, 200)
+  return json({ ok: true, purged, skipped, reports_dropped: dropped, half_made_guilds: halfMade }, 200)
 }
