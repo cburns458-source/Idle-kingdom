@@ -158,6 +158,7 @@ export function beginCombatSave(
   action: ActionRow,
   enemy: EnemyRow,
   nowIso: string = new Date().toISOString(),
+  encounterMaxHp?: number,
 ): PlayerSave {
   const potion = tryConsumePotionForScope(db, save, 'one_combat_encounter')
   const effect = potion.effect ?? potion.save.activePotionEffect
@@ -165,6 +166,10 @@ export function beginCombatSave(
   const healedHp = applyPotionInstantHeal(potion.save.currentHp, maxHp, effect)
   const startedAtMs = Date.parse(nowIso)
   const atMs = Number.isFinite(startedAtMs) ? startedAtMs : Date.now()
+  const enemyHp =
+    typeof encounterMaxHp === 'number' && Number.isFinite(encounterMaxHp)
+      ? Math.max(1, Math.floor(encounterMaxHp))
+      : enemyEncounterMaxHp(db, potion.save, enemy)
   return {
     ...potion.save,
     maxHp,
@@ -173,7 +178,7 @@ export function beginCombatSave(
     actionStartedAt: nowIso,
     actionDurationMs: null,
     combatEnemyId: enemy['Enemy ID'],
-    combatEnemyHp: enemyEncounterMaxHp(db, potion.save, enemy),
+    combatEnemyHp: enemyHp,
     ...openCombatRoundClock(db, atMs),
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: bossProfile(enemy)?.sleepStart ?? null,
@@ -516,6 +521,7 @@ export function applyCombatVictory(
   random: RandomFn = Math.random,
   nowMs: number = Date.now(),
   guildmatesPresent = false,
+  dropScale = 1,
 ): CombatVictoryResult {
   const maxHp = playerMaxHp(db, save)
   let next: PlayerSave = {
@@ -524,7 +530,9 @@ export function applyCombatVictory(
     currentHp: currentHpAfterMaxChange(save.currentHp, save.maxHp, maxHp),
   }
 
-  const skipLoot = isGuildHallCageActivity(save.currentActivityId ?? '')
+  const skipLoot =
+    isGuildHallCageActivity(save.currentActivityId ?? '') ||
+    !(Number.isFinite(dropScale) && dropScale > 0)
   const xpAmount = applyGuildHallCompanyXp(enemyCombatXp(enemy), guildmatesPresent)
   // Prefer fishing-mode bosses and Fishing-tagged fight actions (Mother Squid /
   // Squidling fallthrough). Ordinary fights split XP across Might / Vitality.
@@ -579,12 +587,14 @@ export function applyCombatVictory(
   const goldRoll =
     maxGold > minGold ? minGold + Math.floor(random() * (maxGold - minGold + 1)) : minGold
 
+  const lootScale = Number.isFinite(dropScale) ? Math.max(0, dropScale) : 1
   // Use action reward table / drop chance (aligned with enemy table in data).
-  const rewarded = resolveActionRewards(db, next, action, random)
+  const rewarded = resolveActionRewards(db, next, action, random, lootScale)
   next = rewarded.save
   let goldGained = rewarded.goldGained
-  if (goldRoll > 0) {
-    const racedGold = applyAlignmentGoldGain(db, save, goldRoll)
+  const scaledGoldRoll = Math.floor(goldRoll * lootScale)
+  if (scaledGoldRoll > 0) {
+    const racedGold = applyAlignmentGoldGain(db, save, scaledGoldRoll)
     next = { ...next, gold: next.gold + racedGold }
     goldGained += racedGold
   }

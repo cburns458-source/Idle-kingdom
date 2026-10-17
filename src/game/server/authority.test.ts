@@ -683,6 +683,8 @@ describe('phase 2 authority', () => {
     expect(isItemTradeable(launch, 'ITEM-0313')).toBe(false)
     expect(isItemTradeable(launch, 'ITEM-0026')).toBe(true)
     expect(isItemTradeable(launch, 'ITEM-9999')).toBe(true)
+    expect(isItemTradeable(launch, 'ITEM-0404')).toBe(false)
+    expect(isItemTradeable(launch, 'ITEM-0443')).toBe(false)
   })
 
   it('wears the named item when loot has shifted the bag', () => {

@@ -11,6 +11,11 @@ import { ACCOUNT_FROZEN } from '../_shared/deletion.ts'
 import { gateDevCommand } from '../_shared/dev_gate.ts'
 import { parseSetAgeTokens, SETAGE_MISSING_PLAYER, setAgeAuditRow } from '../_shared/setage.ts'
 import {
+  leaveMassEncounter,
+  MASS_COMMANDS,
+  settleMassCommand,
+} from '../_shared/mass_boss_edge.ts'
+import {
   plazaShopBuyResponseExtras,
   settlePlazaShopBuyCommand,
   type PlazaShopBuySettlement,
@@ -444,6 +449,22 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
         202,
       )
     }
+    const previousMassEncounterId =
+      result.ok && 'saveBeforeCommand' in result
+        ? typeof result.saveBeforeCommand?.massEncounterId === 'string'
+          ? result.saveBeforeCommand.massEncounterId
+          : null
+        : null
+    if (hosted && result.ok && previousMassEncounterId && !MASS_COMMANDS.has(command)) {
+      const nextMassId =
+        result.save && typeof result.save === 'object' && 'massEncounterId' in result.save
+          ? (result.save as { massEncounterId?: unknown }).massEncounterId
+          : null
+      if (previousMassEncounterId !== nextMassId) {
+        await leaveMassEncounter(admin, userId, previousMassEncounterId)
+      }
+    }
+
     let plazaPurchase: Extract<PlazaShopBuySettlement, { kind: 'purchased' }> | null = null
     if (command === 'plaza_shop_buy' && hosted) {
       const settled = await settlePlazaShopBuyCommand({
@@ -496,6 +517,7 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
     let commandSave = result.save
     let bountyExtras: Record<string, unknown> = {}
     let wroteSave = true
+    let massExtras: Record<string, unknown> = {}
     const existingRankedFight =
       rankedContext && !('response' in rankedContext) ? rankedContext.existingRankedFight : undefined
     if (command === 'bounty_turn_in' && hosted) {
@@ -524,6 +546,45 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
       const committed = await commitGuildHall(admin, userId, hallContext, result, expected, rng.getState(), nowMs)
       if (!committed.ok) return committed.response
       written = { ok: true, version: committed.version }
+    } else if (MASS_COMMANDS.has(command) && hosted && result.ok) {
+      const { launch: rulesDb } = prepareDatabase(rawDatabase)
+      const settled = await settleMassCommand({
+        command,
+        commandResult: result,
+        admin,
+        db: rulesDb,
+        userId,
+        args,
+        previousEncounterId: previousMassEncounterId,
+        nowMs,
+        random: rng.random,
+        expectedVersion: expected,
+        rngState: rng.getState(),
+      })
+      if (settled.kind === 'refused') {
+        return json({ error: settled.reason, phase: 2 }, 400)
+      }
+      if (settled.kind === 'failed') {
+        return json(
+          { error: settled.error, phase: 2, conflict: settled.conflict },
+          settled.status,
+        )
+      }
+      commandSave = settled.save
+      if (settled.snapshot) massExtras = { mass: settled.snapshot }
+      if (settled.persistedVersion != null) {
+        written = { ok: true, version: settled.persistedVersion }
+      } else if (settled.dirty) {
+        written = await writeHostedSave(admin, userId, {
+          expectedVersion: expected,
+          payload: settled.save,
+          rngState: rng.getState(),
+          nowMs,
+        })
+      } else {
+        written = { ok: true, version: hosted.version }
+        wroteSave = false
+      }
     } else if (command === 'ranked_pvp_fight' && hosted && result.fightId) {
       const recorded = await recordRankedFight(
         admin,
@@ -585,6 +646,7 @@ async function handleCommand(admin: Client, userId: string, payload: GameBody): 
           }
         : {}),
       ...bountyExtras,
+      ...massExtras,
       ...(Array.isArray(result.achievementsUnlocked) && result.achievementsUnlocked.length > 0
         ? { achievementsUnlocked: result.achievementsUnlocked }
         : {}),

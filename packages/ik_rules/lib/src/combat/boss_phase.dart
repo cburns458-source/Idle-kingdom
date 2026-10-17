@@ -29,14 +29,21 @@ class SquidlingVictoryResult {
   final bool bossResumed;
 }
 
+/// Squidling HP scaled with the mass group. Solo multiplier is 1.
+num massSquidlingHp(num baseHp, num healthMultiplier) {
+  final multiplier = healthMultiplier < 0 ? 0 : healthMultiplier;
+  return math.max(1, (baseHp * multiplier).floor());
+}
+
 PlayerSave beginBossAddsEncounter(
   GameDatabase db,
   PlayerSave save,
   EnemyRow bossEnemy,
   BossProfile profile,
   num pendingHp,
-  String roundEndIso,
-) {
+  String roundEndIso, [
+  num healthMultiplier = 1,
+]) {
   final squidling = getEnemy(db, profile.squidlingEnemyId!);
   if (squidling == null) return save;
   return openCombatRoundClock(db, save, jsDateParse(roundEndIso)).copyWith(
@@ -46,7 +53,7 @@ PlayerSave beginBossAddsEncounter(
     combatBossAddsTriggered: true,
     combatBossInkActive: false,
     combatEnemyId: squidling.raw['Enemy ID'] as String?,
-    combatEnemyHp: squidling.maximumHp,
+    combatEnemyHp: massSquidlingHp(squidling.maximumHp, healthMultiplier),
     combatSkipEnemyAttack: false,
     combatBossSleepRoundsRemaining: null,
   );
@@ -56,8 +63,9 @@ SquidlingVictoryResult applySquidlingVictory(
   GameDatabase db,
   PlayerSave save,
   EnemyRow squidling,
-  String roundEndIso,
-) {
+  String roundEndIso, [
+  num healthMultiplier = 1,
+]) {
   final xpAmount = enemyCombatXp(squidling);
   var next = applyXp(save, db, fishingSkillId, xpAmount).save;
   final kills = (next.statistics.values['monsters_killed'] ?? 0) + 1;
@@ -92,7 +100,7 @@ SquidlingVictoryResult applySquidlingVictory(
       save: openCombatRoundClock(db, next, jsDateParse(roundEndIso)).copyWith(
         combatBossAddsRemaining: remaining,
         combatEnemyId: nextSquidling.raw['Enemy ID'] as String?,
-        combatEnemyHp: nextSquidling.maximumHp,
+        combatEnemyHp: massSquidlingHp(nextSquidling.maximumHp, healthMultiplier),
         combatBossInkActive: false,
         combatSkipEnemyAttack: false,
       ),

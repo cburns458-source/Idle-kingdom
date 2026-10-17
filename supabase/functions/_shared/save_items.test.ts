@@ -110,9 +110,13 @@ describe('items the exchange will not carry', () => {
         HEARTHGUARD_GREAVES,
         HEARTHGUARD_GAUNTLETS,
         HEARTHGUARD_BOOTS,
+        'ITEM-0404',
+        'ITEM-0443',
       ].sort(),
     )
     expect(isTradableItem(MACHETE, CATALOG)).toBe(false)
+    expect(isTradableItem('ITEM-0404', CATALOG)).toBe(false)
+    expect(isTradableItem('ITEM-0443', CATALOG)).toBe(false)
     expect(isTradableItem(GOLDEN_SPUD, CATALOG)).toBe(true)
     // Without a catalog nothing is bound, as before the column existed.
     expect(isTradableItem(MACHETE)).toBe(true)
@@ -131,6 +135,8 @@ describe('items the exchange will not carry', () => {
     // buy order is turned away exactly like a sell order.
     expect(itemRefusal(MACHETE, CATALOG)).toBe(BOUND_ITEM_REFUSAL)
     expect(itemRefusal(EXCAVATORS_PICKAXE, CATALOG)).toBe(BOUND_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-0404', CATALOG)).toBe(BOUND_ITEM_REFUSAL)
+    expect(itemRefusal('ITEM-0443', CATALOG)).toBe(BOUND_ITEM_REFUSAL)
     expect(BOUND_ITEM_REFUSAL).toBe("That stays with you; it can't be traded.")
   })
 

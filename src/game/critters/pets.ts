@@ -28,6 +28,7 @@ export const PET_COSMETIC_CRITTER_KEYS: Record<string, string> = {
   'COS-0010': 'pika',
   'COS-0011': 'raccoon',
   'COS-0012': 'baby_dragon',
+  'COS-0020': 'baby_squid',
 }
 
 export function critterKeyForPetCosmetic(cosmeticId: string): string | null {

@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'item_icon.dart';
 import 'item_label.dart';
 import 'quantity_sheet.dart';
 
@@ -211,14 +212,21 @@ class _GuildBankBodyState extends State<_GuildBankBody> {
     ];
     return ListView(
       children: [
-        const Text('Bank', style: TextStyle(fontWeight: FontWeight.w400)),
+        Row(
+          children: [
+            const Expanded(
+              child: Text('Bank', style: TextStyle(fontWeight: FontWeight.w400)),
+            ),
+            GoldAmount(key: const Key('guild-bank-gold-balance'), amount: save.gold),
+          ],
+        ),
         const SizedBox(height: 6),
         for (final row in main)
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: DockRow(
               title: _stackLabel(row.itemId, row.enchantmentId),
-              lines: [MutedText('×${formatThousands(row.quantity)}')],
+              lines: [MutedText('×${formatThousands(row.quantity)}', color: Palette.parchmentText)],
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -247,7 +255,7 @@ class _GuildBankBodyState extends State<_GuildBankBody> {
             padding: const EdgeInsets.only(bottom: 6),
             child: DockRow(
               title: _stackLabel(row.itemId, row.enchantmentId),
-              lines: [MutedText('×${formatThousands(row.quantity)}')],
+              lines: [MutedText('×${formatThousands(row.quantity)}', color: Palette.parchmentText)],
               trailing: GameButton(
                 key: Key('guild-bank-take-${row.id}'),
                 label: 'Take',
@@ -264,7 +272,9 @@ class _GuildBankBodyState extends State<_GuildBankBody> {
             padding: const EdgeInsets.only(bottom: 6),
             child: DockRow(
               title: _stackLabel(entry.$2.itemId, entry.$2.enchantmentId),
-              lines: [MutedText('×${formatThousands(entry.$2.quantity)}')],
+              lines: [
+                MutedText('×${formatThousands(entry.$2.quantity)}', color: Palette.parchmentText),
+              ],
               trailing: GameButton(
                 key: Key('guild-bank-in-${entry.$1}'),
                 label: 'In',

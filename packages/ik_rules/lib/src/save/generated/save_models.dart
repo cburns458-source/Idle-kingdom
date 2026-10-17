@@ -7,7 +7,7 @@
 
 import '../../json_support.dart';
 
-const int saveVersion = 67;
+const int saveVersion = 68;
 
 const String saveStorageKey = 'idle-kingdoms.demo.save';
 
@@ -1211,6 +1211,7 @@ class PlayerSave {
     this.combatBossAddsRemaining,
     required this.combatBossAddsTriggered,
     required this.combatBossInkActive,
+    this.massEncounterId,
     required this.bossRespawnUntilByEnemyId,
     this.activePotionEffect,
     this.deathPauseUntil,
@@ -1339,6 +1340,7 @@ class PlayerSave {
       combatBossAddsRemaining: json['combatBossAddsRemaining'] as num?,
       combatBossAddsTriggered: json['combatBossAddsTriggered'] as bool,
       combatBossInkActive: json['combatBossInkActive'] as bool,
+      massEncounterId: json['massEncounterId'] as String?,
       bossRespawnUntilByEnemyId: mapOf(
         json['bossRespawnUntilByEnemyId'],
         (Object? value) => value as String,
@@ -1592,6 +1594,10 @@ class PlayerSave {
   /// True when ink halved player damage this combat round.
   final bool combatBossInkActive;
 
+  /// Hosted mass-boss encounter id while this save is in that fight or lobby.
+  /// Local combat ticks are skipped until the server mass_fight_tick runs.
+  final String? massEncounterId;
+
   /// ISO timestamps until a defeated boss can be fought again, keyed by Enemy ID.
   final Map<String, String> bossRespawnUntilByEnemyId;
 
@@ -1747,6 +1753,7 @@ class PlayerSave {
       'combatBossAddsRemaining': combatBossAddsRemaining,
       'combatBossAddsTriggered': combatBossAddsTriggered,
       'combatBossInkActive': combatBossInkActive,
+      'massEncounterId': massEncounterId,
       'bossRespawnUntilByEnemyId': bossRespawnUntilByEnemyId,
       'activePotionEffect': activePotionEffect?.toJson(),
       'deathPauseUntil': deathPauseUntil,
@@ -1848,6 +1855,7 @@ class PlayerSave {
     Object? combatBossAddsRemaining = _unset,
     bool? combatBossAddsTriggered,
     bool? combatBossInkActive,
+    Object? massEncounterId = _unset,
     Map<String, String>? bossRespawnUntilByEnemyId,
     Object? activePotionEffect = _unset,
     Object? deathPauseUntil = _unset,
@@ -1979,6 +1987,9 @@ class PlayerSave {
           : combatBossAddsRemaining as num?,
       combatBossAddsTriggered: combatBossAddsTriggered ?? this.combatBossAddsTriggered,
       combatBossInkActive: combatBossInkActive ?? this.combatBossInkActive,
+      massEncounterId: massEncounterId == _unset
+          ? this.massEncounterId
+          : massEncounterId as String?,
       bossRespawnUntilByEnemyId: bossRespawnUntilByEnemyId ?? this.bossRespawnUntilByEnemyId,
       activePotionEffect: activePotionEffect == _unset
           ? this.activePotionEffect

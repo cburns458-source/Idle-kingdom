@@ -239,6 +239,9 @@ class GameController extends ChangeNotifier {
   InkPopup? _inkPopup;
   CombatOutcomeHold? _outcomeHold;
   num? _liveEnemyHp;
+  MassEncounterSnapshot? _mass;
+  num _lastMassPollMs = 0;
+  bool _massInFlight = false;
 
   GameDatabase get db => database.launch;
   DatabaseIndexes get indexes => database.launchIndexes;
@@ -515,6 +518,8 @@ class GameController extends ChangeNotifier {
     if (combatBlowHold || defeatedFlash) {
       return _outcomeHold?.enemyId ?? lastRound?.enemyId;
     }
+    if (save.combatEnemyId != null) return save.combatEnemyId;
+    if (_mass?.isSettled == true) return _mass!.enemyId;
     return save.combatEnemyId;
   }
 
@@ -525,7 +530,31 @@ class GameController extends ChangeNotifier {
 
   num get stagedEnemyHp {
     if (combatBlowHold || defeatedFlash) return _outcomeHold?.enemyHp ?? 0;
+    final mass = _mass;
+    if (mass != null && (mass.isFighting || mass.isSettled) && !isBossAddFight(save)) {
+      return mass.remainingHp;
+    }
     return save.combatEnemyHp ?? 0;
+  }
+
+  MassEncounterSnapshot? get massEncounter => _mass;
+
+  num get massEnemyMaxHp {
+    final mass = _mass;
+    if (mass == null || mass.totalHp <= 0) return 0;
+    return mass.totalHp;
+  }
+
+  void acceptMassSnapshot(MassEncounterSnapshot? snapshot) {
+    if (snapshot != null) {
+      _mass = snapshot;
+      notifyListeners();
+      return;
+    }
+    if (save.massEncounterId == null && _mass != null) {
+      _mass = null;
+      notifyListeners();
+    }
   }
 
   /// Damage numbers stay until the next eat, then drop.
@@ -953,6 +982,8 @@ class GameController extends ChangeNotifier {
     'start_production',
     'travel',
     'travel_guild_hall',
+    'mass_join',
+    'mass_leave',
   };
 
   /// How long a switch waits before the loading circle appears, so a fast
@@ -1152,6 +1183,7 @@ class GameController extends ChangeNotifier {
     // Tear-down can dispose while a shell ticker is still queued.
     if (!_alive) return;
     if (disconnected) return;
+    _maybePollMass();
     if (save.combatEnemyId != null) {
       _liveEnemyHp = save.combatEnemyHp;
     }
@@ -1209,6 +1241,43 @@ class GameController extends ChangeNotifier {
     } else {
       _notifyProgress();
     }
+  }
+
+  void _maybePollMass() {
+    if (!playsHosted || _massInFlight) return;
+    final encounterId = save.massEncounterId;
+    if (encounterId == null || encounterId.isEmpty) {
+      if (_mass != null) _mass = null;
+      return;
+    }
+    final nowMs = session.clock();
+    final fighting = _mass?.isFighting == true || save.combatEnemyId != null;
+    final roundDue = fighting && _massRoundDue(nowMs);
+    if (!roundDue && _lastMassPollMs != 0 && nowMs - _lastMassPollMs < 2500) {
+      return;
+    }
+    _lastMassPollMs = nowMs;
+    _massInFlight = true;
+    final command = roundDue ? 'mass_fight_tick' : 'mass_status';
+    final send = submitGameCommand;
+    if (send == null) {
+      _massInFlight = false;
+      return;
+    }
+    unawaited(
+      send(command, <String, Object?>{'encounterId': encounterId}).whenComplete(() {
+        _massInFlight = false;
+      }),
+    );
+  }
+
+  bool _massRoundDue(num nowMs) {
+    final started = save.combatRoundStartedAt;
+    if (started == null || started.isEmpty) return _mass?.isFighting == true;
+    final start = DateTime.tryParse(started)?.millisecondsSinceEpoch;
+    if (start == null) return true;
+    final roundMs = math.max(1, configNumber(db, 'combat_round_duration', 6) * 1000);
+    return nowMs >= start + roundMs;
   }
 
   void _notifyProgress({bool force = false}) {
@@ -1355,6 +1424,25 @@ class GameController extends ChangeNotifier {
   ///
   /// When the only thing missing is a tool the bag already holds, this asks
   /// rather than refuses: [autoEquip] carries the offer until it is answered.
+  Future<String?> joinMass(String activityId) async {
+    if (playBlocked) {
+      report(playBlockReason);
+      return playBlockReason;
+    }
+    if (switchBusy) return null;
+    if (!playsHosted) {
+      report('Sign in to play.');
+      return 'Sign in to play.';
+    }
+    _autoEquip = null;
+    _activityError = null;
+    _message = null;
+    _clearStageFx();
+    return _sendSwitch('mass_join', <String, Object?>{
+      'activityId': activityId,
+    }, target: activityId);
+  }
+
   void startActivity(String activityId, {bool allowAutoEquip = true, bool queueCommand = true}) {
     if (queueCommand && playBlocked) {
       report(playBlockReason);

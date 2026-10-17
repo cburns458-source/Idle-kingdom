@@ -84,6 +84,13 @@ class _ShopPanelState extends State<ShopPanel> {
     );
   }
 
+  /// Gold left on the counter after the current offer: purse plus sells, minus buys.
+  num _goldOnCounter(ShopRow shop) {
+    return save.gold +
+        _total(_sells, (id) => _sellUnit(shop, id)) -
+        _total(_buys, (id) => playerBuyPrice(db, shop, id));
+  }
+
   /// What this shop will take off the player, ignoring what cannot be traded.
   List<_SellLine> _sellable(ShopRow shop) {
     final mode = shopEnchantedSellMode(shop);
@@ -121,27 +128,32 @@ class _ShopPanelState extends State<ShopPanel> {
         setState(() => _error = 'That item is sold out for today.');
         return;
       }
+      if (already > 0) {
+        setState(() {
+          _error = null;
+          _buys.remove(itemId);
+        });
+        return;
+      }
+      if (unit > 0 && _goldOnCounter(shop) < unit) return;
       setState(() {
         _error = null;
-        if (_buys.remove(itemId) == null) _buys[itemId] = 1;
+        _buys[itemId] = 1;
       });
       return;
     }
 
     final editing = already > 0;
-    final budget =
-        save.gold +
-        _total(_sells, (id) => _sellUnit(shop, id)) -
-        _total(_buys, (id) => playerBuyPrice(db, shop, id));
-    final available = budget + already * unit;
+    final available = _goldOnCounter(shop) + already * unit;
     final affordable = unit <= 0 ? null : (available / unit).floor();
-    num? max;
-    if (affordable != null && affordable >= 1) max = affordable;
+    num? max = affordable;
     if (remaining != null) {
       max = max == null ? remaining : (max < remaining ? max : remaining);
     }
     if (max != null && max < 1) {
-      setState(() => _error = 'That item is sold out for today.');
+      if (remaining != null && remaining < 1) {
+        setState(() => _error = 'That item is sold out for today.');
+      }
       return;
     }
     final quantity = await askQuantity(
@@ -329,21 +341,33 @@ class _ShopPanelState extends State<ShopPanel> {
     final buyTotal = _total(_buys, (id) => playerBuyPrice(db, shop, id));
     final sellTotal = _total(_sells, (id) => _sellUnit(shop, id));
     final net = sellTotal - buyTotal;
+    final canPay = _goldOnCounter(shop) >= 0;
     final nowMs = controller.session.clock();
     final stock = shopStockForPlayer(db, save, shop);
     final sellable = _sellable(shop);
 
     return _frame(
       title: title,
+      headerSlot: Column(
+        key: const Key('shop-offer-summary'),
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          GoldCopy(
+            'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)}',
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.w400),
+          ),
+          GoldCopy(
+            'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
+            key: const Key('shop-offer-net'),
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.w400),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)} · '
-            'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
-            style: const TextStyle(fontWeight: FontWeight.w400),
-          ),
-          const SizedBox(height: 4),
           Row(
             children: [
               GameButton(
@@ -363,7 +387,7 @@ class _ShopPanelState extends State<ShopPanel> {
                 child: GameButton(
                   label: 'Confirm trade',
                   tone: GameButtonTone.confirm,
-                  onPressed: _buys.isEmpty && _sells.isEmpty ? null : _confirm,
+                  onPressed: (_buys.isEmpty && _sells.isEmpty) || !canPay ? null : _confirm,
                 ),
               ),
             ],
@@ -392,11 +416,15 @@ class _ShopPanelState extends State<ShopPanel> {
                 itemCount: stock.length,
                 itemBuilder: (context, i) {
                   final entry = stock[i];
+                  final unit = playerBuyPrice(db, shop, entry.itemId);
+                  final offered = _buys[entry.itemId];
+                  final available = _goldOnCounter(shop) + (offered ?? 0) * (unit ?? 0);
                   return _tileFor(
                     itemId: entry.itemId,
-                    unit: playerBuyPrice(db, shop, entry.itemId),
-                    offered: _buys[entry.itemId],
+                    unit: unit,
+                    offered: offered,
                     remaining: shopRemainingToday(save, shop, entry.itemId, nowMs),
+                    canAfford: unit == null || unit <= 0 || available >= unit,
                     onTap: (unit, name) => _addBuy(shop, entry.itemId, unit, name),
                   );
                 },
@@ -499,7 +527,12 @@ class _ShopPanelState extends State<ShopPanel> {
     );
   }
 
-  Widget _frame({required String title, required Widget child, bool plaza = false}) {
+  Widget _frame({
+    required String title,
+    required Widget child,
+    bool plaza = false,
+    Widget? headerSlot,
+  }) {
     return GamePanel(
       framed: true,
       child: Column(
@@ -507,7 +540,7 @@ class _ShopPanelState extends State<ShopPanel> {
         children: [
           Row(
             children: [
-              Expanded(
+              Flexible(
                 child: GoldCopy(
                   title,
                   maxLines: 1,
@@ -515,20 +548,21 @@ class _ShopPanelState extends State<ShopPanel> {
                   style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
-              if (plaza)
-                Builder(
-                  builder: (context) => Text(
-                    key: const Key('plaza-points-balance'),
-                    '${formatThousands(plazaPointsOf(save))} plaza points',
-                    style: TextStyle(color: goldForeground(context)),
-                  ),
-                )
-              else
-                GoldAmount(
-                  key: const Key('shop-gold-balance'),
-                  amount: save.gold,
-                  style: const TextStyle(color: Palette.currency),
-                ),
+              const SizedBox(width: 8),
+              Expanded(
+                child:
+                    headerSlot ??
+                    (plaza
+                        ? Builder(
+                            builder: (context) => Text(
+                              key: const Key('plaza-points-balance'),
+                              '${formatThousands(plazaPointsOf(save))} plaza points',
+                              textAlign: TextAlign.right,
+                              style: TextStyle(color: goldForeground(context)),
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+              ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),
@@ -551,13 +585,15 @@ class _ShopPanelState extends State<ShopPanel> {
     num? owned,
     num? offered,
     num? remaining,
+    bool canAfford = true,
     List<String> enchantments = const <String>[],
   }) {
     final item = controller.indexes.itemsById[itemId];
     final name = item?.displayName ?? itemId;
     final label = enchantedItemLabel(name, enchantments.isEmpty ? null : enchantments.join(', '));
     final soldOut = remaining != null && remaining <= 0;
-    final enabled = unit != null && (owned == null || owned > 0) && !soldOut;
+    final enabled =
+        unit != null && (owned == null || owned > 0) && !soldOut && (offered != null || canAfford);
 
     return FloatingItemSlot(
       tooltip: itemTileTooltip(name, enchantments.isEmpty ? null : enchantments.join('\n')),
@@ -566,6 +602,8 @@ class _ShopPanelState extends State<ShopPanel> {
       padding: const EdgeInsets.fromLTRB(2, 5, 2, 4),
       onTap: enabled ? () => onTap(unit, label) : null,
       child: Stack(
+        alignment: Alignment.center,
+        fit: StackFit.expand,
         children: [
           FittedBox(
             fit: BoxFit.scaleDown,

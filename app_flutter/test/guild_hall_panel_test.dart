@@ -7,6 +7,7 @@ import 'package:idle_kingdoms/src/ui/guild_bank_view.dart';
 import 'package:idle_kingdoms/src/ui/guild_hall_banner.dart';
 import 'package:idle_kingdoms/src/ui/guild_hall_gold_bar.dart';
 import 'package:idle_kingdoms/src/ui/guild_hall_panel.dart';
+import 'package:idle_kingdoms/src/ui/item_icon.dart';
 import 'package:idle_kingdoms/src/ui/guild_log_list.dart';
 import 'package:idle_kingdoms/src/ui/location_view.dart';
 import 'package:ik_content/ik_content.dart';
@@ -74,6 +75,8 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text('Guild Hall'), findsOne);
+    expect(find.byKey(const Key('guild-gold-balance')), findsOne);
+    expect(find.byType(GoldAmount), findsWidgets);
     expect(find.text('Chip in'), findsOne);
     expect(find.text('Debt'), findsNothing);
     await tester.tap(find.text('Chip in'));
@@ -380,6 +383,8 @@ void main() {
     final out = tester.widget<GameButton>(find.byKey(const Key('guild-bank-out-gb1')));
     final move = tester.widget<GameButton>(find.byKey(const Key('guild-bank-move-gb1')));
     final inn = tester.widget<GameButton>(find.byKey(const Key('guild-bank-in-0')));
+    expect(find.byKey(const Key('guild-bank-gold-balance')), findsOne);
+    expect(find.byType(GoldAmount), findsOne);
     expect(out.onPressed, isNull);
     expect(move.onPressed, isNull);
     expect(inn.onPressed, isNull);

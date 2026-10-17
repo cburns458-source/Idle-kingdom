@@ -32,6 +32,7 @@ export 'src/codex/codex.dart';
 export 'src/combat/boss.dart';
 export 'src/combat/boss_phase.dart';
 export 'src/combat/engine.dart';
+export 'src/combat/mass.dart';
 export 'src/combat/food.dart';
 export 'src/combat/pvp.dart';
 export 'src/combat/stats.dart';

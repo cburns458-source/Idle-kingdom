@@ -14,6 +14,7 @@ import 'format.dart';
 import 'equipment_presets_bar.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
+import 'mass_roster.dart';
 import 'out_of_sight.dart';
 import 'temple_stage.dart';
 
@@ -76,7 +77,16 @@ class ActionStage extends StatelessWidget {
     // A death blow keeps the last fight on screen for a beat, then Recovering
     // takes over. Victory skips the "defeated" banner — hit floaters are enough.
     if (controller.showRecoveringStage) return _RecoveringStage(controller: controller);
-    if (save.combatEnemyId != null || controller.combatBlowHold || controller.defeatedFlash) {
+    if (controller.massEncounter?.isLobby == true) {
+      return _MassLobbyStage(controller: controller);
+    }
+    if (controller.massEncounter?.isClosed == true && save.combatEnemyId == null) {
+      return const SizedBox.shrink();
+    }
+    if (controller.massEncounter?.isSettled == true ||
+        save.combatEnemyId != null ||
+        controller.combatBlowHold ||
+        controller.defeatedFlash) {
       return _CombatStage(controller: controller);
     }
     if (save.productionRecipeId != null || controller.craftPopup != null) {
@@ -281,7 +291,9 @@ Widget _groundedSceneArt(GameController controller) {
   if (controller.defeatedFlash) {
     return SizedBox(height: slotHeight);
   }
-  if (save.combatEnemyId != null || controller.combatBlowHold) {
+  if (save.combatEnemyId != null ||
+      controller.combatBlowHold ||
+      controller.massEncounter?.isSettled == true) {
     final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
     if (enemyId == null) return SizedBox(height: slotHeight);
     return _Portrait(
@@ -796,6 +808,22 @@ class _FighterCaption extends StatelessWidget {
   }
 }
 
+class _MassLobbyStage extends StatelessWidget {
+  const _MassLobbyStage({required this.controller});
+
+  final GameController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final mass = controller.massEncounter;
+    if (mass == null || mass.isClosed) return const SizedBox.shrink();
+    return _OnTheClock(
+      controller: controller,
+      builder: (context) => MassRoster(mass: mass, nowMs: controller.session.clock()),
+    );
+  }
+}
+
 class _CombatStage extends StatelessWidget {
   const _CombatStage({required this.controller});
 
@@ -807,9 +835,15 @@ class _CombatStage extends StatelessWidget {
     final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
     final enemy = enemyId == null ? null : getEnemy(controller.db, enemyId);
     final enemyName = _combatEnemyDisplayName(controller.db, save, enemy);
+    final mass = controller.massEncounter;
+    final massMax = controller.massEnemyMaxHp;
     final enemyMaxHp = math.max(
       1,
-      enemy == null ? 1 : enemyEncounterMaxHp(controller.db, save, enemy).toInt(),
+      massMax > 0 && !isBossAddFight(save)
+          ? massMax.toInt()
+          : enemy == null
+          ? 1
+          : enemyEncounterMaxHp(controller.db, save, enemy).toInt(),
     );
     final round = controller.lastRound;
     final seq = controller.lastRoundSeq;
@@ -966,11 +1000,25 @@ class _CombatStage extends StatelessWidget {
         ),
       ),
     );
-    if (ink == null) return shell;
+    Widget stage = shell;
+    if (mass != null && !mass.isClosed) {
+      stage = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          shell,
+          _OnTheClock(
+            controller: controller,
+            builder: (context) => MassRoster(mass: mass, nowMs: controller.session.clock()),
+          ),
+        ],
+      );
+    }
+    if (ink == null) return stage;
     return Stack(
       alignment: Alignment.center,
       children: [
-        shell,
+        stage,
         Positioned.fill(
           child: IgnorePointer(child: _InkSplatOverlay(key: ValueKey('ink-${ink.seq}'))),
         ),

@@ -214,14 +214,45 @@ Checklist, in order:
     Status: applied on test Oct 16 2026 (MCP `adm04_player_feedback` plus
     `adm04_player_feedback_revoke_writes`); live pending.
 
-11. [ ] `20261017120000_account_age.sql` (ADM-08). `account_age` (server-only),
+11. [ ] `20261017010000_mass_bosses.sql` (SOC-04). `mass_encounters` /
+    `mass_participants` plus security-definer RPCs (`mass_join`, `mass_leave`,
+    `mass_status`, `mass_lock_if_due`, `mass_record_damage`, `mass_settle`,
+    `mass_claim_payout`). Apply to test with this PR; live only after Conor
+    merges `test-launch` into `main`. Do not apply to live before the `game`
+    function that handles `mass_*` commands is on `restoria-idlerpg`.
+    Status: applied on test Oct 17 2026 (file `20261017010000`); live pending.
+
+12. [ ] `20261017020000_mass_claim_payout_atomic.sql` (SOC-04). Replaces
+    2-argument `mass_claim_payout` with a 6-argument RPC that writes
+    `player_saves` and `payout_claimed` in one transaction; a save version
+    conflict rolls the claim back. Apply to test with this PR; live only after
+    Conor merges `test-launch` into `main`. Do not apply to live before the
+    `game` function that passes the save payload is on `restoria-idlerpg`.
+    Status: applied on test Oct 17 2026 (file `20261017020000`); live pending.
+
+13. [ ] `20261017030000_mass_damage_present_and_scale.sql` (SOC-04).
+    `mass_record_damage` refuses `present = false`. `mass_lock_if_due` clamps
+    caller-supplied `p_player_base_hp_scale` to [0.1, 10]. Apply to test with
+    this PR; live only after Conor merges `test-launch` into `main`. Do not
+    edit `20261017010000` or `20261017020000`.
+    Status: applied on test Oct 17 2026 (file `20261017030000`); live pending.
+
+14. [ ] `20261017040000_mass_claim_comment_and_damage_share_lock.sql` (SOC-04).
+    Documents claim-before-save plus rollback on version conflict. Share-locks
+    the encounter in `mass_record_damage` so settle cannot race the status
+    check. Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`. Do not edit `20261017010000`,
+    `20261017020000`, or `20261017030000`.
+    Status: applied on test Oct 17 2026 (file `20261017040000`); live pending.
+
+15. [ ] `20261017120000_account_age.sql` (ADM-08). `account_age` (server-only),
     `chat_allowed`, `set_account_age`, `staff_set_account_age`, and chat /
     friend / guild-message RLS. Apply to test with this PR; live only after
     Conor merges `test-launch` into `main`. Age never blocks play.
     Status: applied on test Oct 17 2026 (file `20261017120000`, MCP
     `20261017020804` / `account_age`); live pending.
 
-12. [ ] `20261017130000_account_deletion.sql` (ADM-09). 14-day deletion grace,
+16. [ ] `20261017130000_account_deletion.sql` (ADM-09). 14-day deletion grace,
     FK fixes (`guilds.leader_id`, `guild_private_messages.updated_by`,
     `bazaar_fills` buyer/seller/order, `bazaar_collect.order_id`,
     `profiles.guild_id`, `chat_reports` SET NULL), freeze, guild hand-off,
@@ -231,15 +262,15 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017130000`, MCP
     `20261017020847` / `account_deletion`); live pending.
 
-13. [ ] `20261017140000_account_age_year_only.sql` (ADM-08 follow-up). Year-only
+17. [ ] `20261017140000_account_age_year_only.sql` (ADM-08 follow-up). Year-only
     answers originally treated the birthday as 1 January; `set_account_age` no
-    longer asks for a month. Item 16 below switches year-only to 31 December.
+    longer asks for a month. Item 20 below switches year-only to 31 December.
     Apply to test with this PR; live only after Conor merges `test-launch`
     into `main`.
     Status: applied on test Oct 17 2026 (file `20261017140000`, MCP
     `20261017022050` / `account_age_year_only`); live pending.
 
-14. [ ] `20261017150000_account_age_delete_qa.sql` (ADM-08 / ADM-09 QA).
+18. [ ] `20261017150000_account_age_delete_qa.sql` (ADM-08 / ADM-09 QA).
     Clients may only submit an in-game birth year (`set_account_age` refuses
     `store_signal`; `refresh_store_age_signal` is disabled). `chat_allowed`
     also requires `not account_is_frozen`. Bazaar claims
@@ -252,7 +283,7 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017150000`, MCP
     `20261017023958` / `account_age_delete_qa`); live pending.
 
-15. [ ] `20261017151000_account_purge_cron.sql` (ADM-09). Enables `pg_cron`
+19. [ ] `20261017151000_account_purge_cron.sql` (ADM-09). Enables `pg_cron`
     and `pg_net` on the **test** project and schedules hourly
     `account_purge_cron_tick()`, which POSTs `purge-accounts` through
     `pg_net`. The shared secret is read from Vault — never the repo. The
@@ -262,8 +293,8 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017151000`, MCP
     `20261017024002` / `account_purge_cron`); live pending.
 
-16. [ ] `20261017152000_account_age_guild_chat.sql` (ADM-08 / Ui). Year-only
-    answers treat the birthday as 31 December (item 18 below also uses the
+20. [ ] `20261017152000_account_age_guild_chat.sql` (ADM-08 / Ui). Year-only
+    answers treat the birthday as 31 December (item 22 below also uses the
     last day of a known month). `guild_set_motto` requires `chat_allowed`. Application inserts with
     a non-empty `message` require `chat_allowed`; an empty message still
     applies.     Apply to test with this PR; live only after Conor merges
@@ -271,21 +302,21 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017152000`, MCP
     `20261017024800` / `account_age_guild_chat`); live pending.
 
-17. [ ] `20261017153000_staff_setage_qa.sql` (ADM-08 QA). `staff_set_account_age`
+21. [ ] `20261017153000_staff_setage_qa.sql` (ADM-08 QA). `staff_set_account_age`
     rejects future birth years and writes `developer_audit_log` for failed
     attempts as well as successes. Apply to test with this PR; live only
     after Conor merges `test-launch` into `main`.
     Status: applied on test Oct 17 2026 (file `20261017153000`, MCP
     `20261017025045` / `staff_setage_qa`); live pending.
 
-18. [ ] `20261017154000_account_age_month_end.sql` (ADM-08 QA). A known birth
+22. [ ] `20261017154000_account_age_month_end.sql` (ADM-08 QA). A known birth
     month uses the last day of that month in the as-of year, same safe rule
     as year-only = 31 December. Apply to test with this PR; live only after
     Conor merges `test-launch` into `main`.
     Status: applied on test Oct 17 2026 (file `20261017154000`, MCP
     `20261017025222` / `account_age_month_end`); live pending.
 
-19. [ ] `20261017155000_account_age_guild_column_lock.sql` (ADM-08 QA).
+23. [ ] `20261017155000_account_age_guild_column_lock.sql` (ADM-08 QA).
     BEFORE INSERT OR UPDATE trigger refuses `guilds.description` writes when
     the signed-in caller is not `chat_allowed` (service-role / purge still
     work). `guild_create_hosted` stores an empty motto or refuses a
@@ -298,21 +329,21 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017155000`, MCP
     `20261017025955` / `account_age_guild_column_lock`); live pending.
 
-20. [ ] `20261017155100_account_age_guild_column_grants.sql` (ADM-08 QA).
+24. [ ] `20261017155100_account_age_guild_column_grants.sql` (ADM-08 QA).
     Follow-up that actually replaces the table-level SELECT grants (a
     column REVOKE does not punch through them). Apply to test with this PR;
     live only after Conor merges `test-launch` into `main`.
     Status: applied on test Oct 17 2026 (file `20261017155100`, MCP
     `20261017030023` / `account_age_guild_column_grants`); live pending.
 
-21. [ ] `20261017155200_account_age_guild_lock_revoke_trigger.sql` (ADM-08 QA).
+25. [ ] `20261017155200_account_age_guild_lock_revoke_trigger.sql` (ADM-08 QA).
     Revokes EXECUTE on `guilds_description_requires_chat` so it is not an
     RPC. Apply to test with this PR; live only after Conor merges
     `test-launch` into `main`.
     Status: applied on test Oct 17 2026 (file `20261017155200`, MCP
     `20261017030045` / `account_age_guild_lock_revoke_trigger`); live pending.
 
-22. [ ] `20261017155300_account_purge_half_made_guilds.sql` (ADM-09). Hourly
+26. [ ] `20261017155300_account_purge_half_made_guilds.sql` (ADM-09). Hourly
     `account_purge_cron_tick` (and `purge-accounts`) deletes only half-made
     guilds: no members now, never a leader row, no hall, no achievements,
     older than 1 hour. Never uses `guilds.leader_id`. Vari approved.
@@ -321,7 +352,7 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017155300`, MCP
     `20261017102030` / `account_purge_half_made_guilds`); live pending.
 
-23. [ ] `20261017155400_account_age_month_guest.sql` (ADM-08 / Ui). Guest
+27. [ ] `20261017155400_account_age_month_guest.sql` (ADM-08 / Ui). Guest
     requests require `chat_allowed` to send or accept. Empty member
     applications still work. TEST only; live pending.
     Status: applied on test Oct 17 2026 (file `20261017155400`, version

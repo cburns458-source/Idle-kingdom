@@ -96,6 +96,7 @@ describe('cosmetics', () => {
       'COS-0010',
       'COS-0011',
       'COS-0012',
+      'COS-0020',
     ])
   })
 })
