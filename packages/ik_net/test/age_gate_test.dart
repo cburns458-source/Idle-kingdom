@@ -16,11 +16,11 @@ void main() {
     );
   });
 
-  test('a year-only answer treats the birthday as 1 January', () {
-    expect(accountAgeYears(2013, null, asOf), 13);
-    expect(chatAllowedFromAge(answered: true, birthYear: 2013, asOf: asOf), isTrue);
-    expect(accountAgeYears(2014, null, asOf), 12);
-    expect(chatAllowedFromAge(answered: true, birthYear: 2014, asOf: asOf), isFalse);
+  test('a year-only answer treats the birthday as 31 December', () {
+    expect(accountAgeYears(2013, null, asOf), 12);
+    expect(chatAllowedFromAge(answered: true, birthYear: 2013, asOf: asOf), isFalse);
+    expect(accountAgeYears(2012, null, asOf), 13);
+    expect(chatAllowedFromAge(answered: true, birthYear: 2012, asOf: asOf), isTrue);
   });
 
   test('birthday rollover unlocks chat without a new answer', () {
@@ -41,6 +41,15 @@ void main() {
         birthMonth: 10,
         asOf: DateTime.utc(2026, 10, 1),
       ),
+      isTrue,
+    );
+    // A year-only answer is 31 December, so 2013 turns 13 on 31 Dec 2026.
+    expect(
+      chatAllowedFromAge(answered: true, birthYear: 2013, asOf: DateTime.utc(2026, 12, 30)),
+      isFalse,
+    );
+    expect(
+      chatAllowedFromAge(answered: true, birthYear: 2013, asOf: DateTime.utc(2026, 12, 31)),
       isTrue,
     );
   });

@@ -141,6 +141,10 @@ describe('guild browser views', () => {
     expect(open.actionLabel).toBe('Join')
     expect(open.guestLabel).toBe('Guest')
     expect(closed.subtitle).toBe('Closed · 3/25 · No description.')
+    expect(
+      guildBrowseRows([listing({ id: 'gld_2', joinPolicy: 'closed', description: '' })], '', false)[0]
+        .subtitle,
+    ).toBe('Closed · 3/25')
     expect(closed.actionLabel).toBe('Apply')
     expect(full.actionLabel).toBe('Full')
     expect(full.full).toBe(true)

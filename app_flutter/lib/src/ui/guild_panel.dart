@@ -29,6 +29,9 @@ String _rosterSortLabel(GuildRosterSort sort) {
   return 'Sort';
 }
 
+String _joinWrite(MultiplayerController net, PlayerSave save) =>
+    net.chatAllowed ? defaultApplicationMessage(save.characterName) : '';
+
 /// One framed board for floating guild rows (no per-row panel borders).
 Widget _floatingBoard({required Widget child}) {
   return Padding(
@@ -159,7 +162,7 @@ class _GuildPanelState extends State<GuildPanel> {
   // --- Browser --------------------------------------------------------------
 
   Widget _buildBrowser() {
-    final rows = guildBrowseRows(net.listings, _search.text);
+    final rows = guildBrowseRows(net.listings, _search.text, net.chatAllowed);
     final form = createGuildFormView(save.gold, '');
     final listingById = <String, GuildListing>{for (final row in net.listings) row.id: row};
     final guest = net.guestGuild;
@@ -300,8 +303,9 @@ class _GuildPanelState extends State<GuildPanel> {
     final rosterGuests = net.guests;
     final rosterCount = rows.length * 2;
     final guestListCount = rosterGuests.isNotEmpty ? 3 + rosterGuests.length * 2 : 0;
+    final showMottoBlock = net.chatAllowed;
     final showGuildBoard = net.chatAllowed;
-    final homeLeadCount = showGuildBoard ? 8 : 6;
+    final homeLeadCount = 4 + (showMottoBlock ? 2 : 0) + (showGuildBoard ? 2 : 0);
     final footerStart =
         homeLeadCount +
         (guestGuild != null ? 2 : 0) +
@@ -336,16 +340,19 @@ class _GuildPanelState extends State<GuildPanel> {
             );
           }
           if (index == 1) return const SizedBox(height: 10);
-          if (index == 2) {
-            return _GuildTextBlock(
-              title: 'Motto',
-              body: guild.description.trim().isEmpty ? 'No motto yet.' : guild.description,
-              canEdit: header.canEditMotto,
-              onEdit: () => _editGuildMotto(guild),
-            );
+          var cursor = 2;
+          if (showMottoBlock) {
+            if (index == cursor) {
+              return _GuildTextBlock(
+                title: 'Motto',
+                body: guild.description.trim().isEmpty ? 'No motto yet.' : guild.description,
+                canEdit: header.canEditMotto,
+                onEdit: () => _editGuildMotto(guild),
+              );
+            }
+            if (index == cursor + 1) return const SizedBox(height: 10);
+            cursor += 2;
           }
-          if (index == 3) return const SizedBox(height: 10);
-          var cursor = 4;
           if (showGuildBoard) {
             if (index == cursor) {
               final message = net.guildPrivateMessage?.trim() ?? '';
@@ -416,7 +423,7 @@ class _GuildPanelState extends State<GuildPanel> {
               final row = applications[appIndex ~/ 2];
               return SocialRow(
                 title: row.username,
-                subtitle: row.message,
+                subtitle: net.chatAllowed ? row.message : '',
                 trailing: net.guildWait == 'decide'
                     ? const GameWaitMark()
                     : Row(
@@ -793,7 +800,7 @@ class _OtherGuildsPageState extends State<_OtherGuildsPage> {
         final ownId = net.guildId;
         final skip = <String>{?ownId, if (net.guestGuildId != null) net.guestGuildId!};
         final listings = net.listings.where((row) => !skip.contains(row.id)).toList();
-        final rows = guildBrowseRows(listings, _search.text);
+        final rows = guildBrowseRows(listings, _search.text, net.chatAllowed);
         final listingById = <String, GuildListing>{for (final row in listings) row.id: row};
         final bodyCount = rows.isEmpty ? 1 : rows.length * 2;
         final itemCount = 2 + bodyCount;
@@ -834,11 +841,7 @@ class _OtherGuildsPageState extends State<_OtherGuildsPage> {
                         compact: true,
                         onPressed: net.busy
                             ? null
-                            : () => net.joinAsGuest(
-                                row.guildId,
-                                defaultApplicationMessage(save.characterName),
-                                save,
-                              ),
+                            : () => net.joinAsGuest(row.guildId, _joinWrite(net, save), save),
                       ),
                       onTap: () {
                         final listing = listingById[row.guildId];
@@ -939,7 +942,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
         final browse = widget.browseRow;
         final showBrowseActions = browse != null && widget.mode != _GuildDetailMode.own;
         final motto = guild.description.trim();
-        final showMotto = motto.isNotEmpty;
+        final showMotto = motto.isNotEmpty && net.chatAllowed;
         final prefixCount =
             1 + (_error != null ? 2 : 0) + (showMotto ? 2 : 0) + (showBrowseActions ? 2 : 0) + 3;
         final rosterCount = rows.isEmpty ? 1 : rows.length * 2;
@@ -996,7 +999,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                                             ? null
                                             : () => net.applyToGuild(
                                                 browse.guildId,
-                                                defaultApplicationMessage(save.characterName),
+                                                _joinWrite(net, save),
                                                 save,
                                               ),
                                       ),
@@ -1011,7 +1014,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                                             ? null
                                             : () => net.joinAsGuest(
                                                 browse.guildId,
-                                                defaultApplicationMessage(save.characterName),
+                                                _joinWrite(net, save),
                                                 save,
                                               ),
                                       ),
@@ -1027,7 +1030,7 @@ class _GuildDetailPageState extends State<_GuildDetailPage> {
                                     ? null
                                     : () => net.joinAsGuest(
                                         browse.guildId,
-                                        defaultApplicationMessage(save.characterName),
+                                        _joinWrite(net, save),
                                         save,
                                       ),
                               );

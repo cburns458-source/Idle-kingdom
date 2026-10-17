@@ -84,7 +84,11 @@ List<GuildListing> filterGuildListings(List<GuildListing> rows, String query) {
   }).toList();
 }
 
-List<GuildBrowseRow> guildBrowseRows(List<GuildListing> rows, [String query = '']) {
+List<GuildBrowseRow> guildBrowseRows(
+  List<GuildListing> rows, [
+  String query = '',
+  bool includeMotto = true,
+]) {
   return filterGuildListings(rows, query).map((row) {
     final full = row.memberCount >= guildMaxMembers;
     final description = row.description.isEmpty ? 'No description.' : row.description;
@@ -94,7 +98,7 @@ List<GuildBrowseRow> guildBrowseRows(List<GuildListing> rows, [String query = ''
       subtitle: <String>[
         _policyLabel(row.joinPolicy),
         '${row.memberCount}/$guildMaxMembers',
-        description,
+        if (includeMotto) description,
       ].join(' · '),
       emblem: row.emblem,
       tag: row.tag,

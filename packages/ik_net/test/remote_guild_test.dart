@@ -605,4 +605,35 @@ void main() {
     expect((await recruit.setGuildPrivateMessage(guildId, 'Nope')).ok, isFalse);
     expect((await outsider.setGuildPrivateMessage(guildId, 'Nope')).ok, isFalse);
   });
+
+  test('under-13s cannot write a guild motto or application message', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final hopeful = await _player(transport, 'hopeful@example.com', 'Hopeful');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+    expect((await leader.setGuildJoinPolicy(guildId, guildJoinClosed)).ok, isTrue);
+
+    transport.setAccountStatus(
+      hopeful.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await hopeful.applyToGuild(guildId, 'Let me in, please.')).ok, isFalse);
+    expect((await hopeful.applyToGuild(guildId, 'Let me in, please.')).reason, ageGateError);
+    final empty = await hopeful.applyToGuild(guildId, '');
+    expect(empty.ok, isTrue, reason: empty.reason);
+    expect(empty.joined, isFalse);
+    expect((await leader.guildApplications(guildId)).single.message, isEmpty);
+
+    transport.setAccountStatus(
+      leader.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await leader.setGuildMotto(guildId, 'For the forge')).ok, isFalse);
+    expect((await leader.setGuildMotto(guildId, 'For the forge')).reason, ageGateError);
+    expect((await leader.guild(guildId))!.description, 'Hammer and anvil.');
+
+    transport.setAccountStatus(leader.session!.userId, const AccountSocialStatus.playable());
+    expect((await leader.setGuildMotto(guildId, 'For the forge')).ok, isTrue);
+    expect((await leader.guild(guildId))!.description, 'For the forge');
+  });
 }

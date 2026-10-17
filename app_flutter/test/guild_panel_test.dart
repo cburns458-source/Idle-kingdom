@@ -95,6 +95,39 @@ void main() {
     );
   });
 
+  testWidgets('under-13s do not see the guild motto', (tester) async {
+    final transport = FakeTransport();
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+
+    await pumpPanel(tester, guildScreen(net, controller));
+    await fillAndSubmit(tester, name: 'Iron League', tag: 'irn');
+    expect((await net.service.setGuildMotto(net.guildId!, 'Keep the watch.')).ok, isTrue);
+    await net.refresh(controller.save);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Motto'), findsOneWidget);
+    expect(find.text('Keep the watch.'), findsOneWidget);
+
+    transport.setAccountStatus(
+      net.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    await net.refreshAccountStatus();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Motto'), findsNothing);
+    expect(find.text('Keep the watch.'), findsNothing);
+  });
+
   testWidgets('the create sheet says what it is still waiting for', (tester) async {
     final transport = FakeTransport();
     final controller = buildController(

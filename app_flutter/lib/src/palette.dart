@@ -45,6 +45,11 @@ abstract final class Palette {
   static const ink = Color(0xFF1F1610);
   static const danger = Color(0xFFC2603F);
 
+  /// Error copy on wood and stone boards. Lighter than [danger] so it clears
+  /// 4.5:1 on wood `#2A1C12`, wood slot `#3D2A1A`, stone `#2C2C2C`, and stone
+  /// slot `#3D3D3D`. Button fill stays [dangerFill].
+  static const dangerText = Color(0xFFF0A080);
+
   /// Secondary body text, the old client's `.muted`.
   static const muted = Color(0xFFCBB894);
 

@@ -575,6 +575,13 @@ class FakeTransport implements RemoteTransport {
     final key = _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
     final written = <String, Object?>{..._defaults(table), ...row};
+    if (table == RemoteTables.guildApplications) {
+      final userId = written['user_id'];
+      final message = '${written['message'] ?? ''}'.trim();
+      if (userId is String && message.isNotEmpty && !statusFor(userId).chatAllowed) {
+        return const RemoteQueryResult.failed(ageGateError);
+      }
+    }
     if (table == RemoteTables.friendRequests) {
       final from = written['from_user_id'];
       final to = written['to_user_id'];
@@ -1519,6 +1526,13 @@ class FakeTransport implements RemoteTransport {
         final me = _current?.userId;
         if (me == null) {
           return RemoteInvokeResult.ok(<String, Object?>{'ok': false, 'reason': 'Sign in first.'});
+        }
+        if (!statusFor(me).chatAllowed) {
+          return RemoteInvokeResult.ok(<String, Object?>{
+            'ok': false,
+            'reason': ageGateError,
+            'code': ageGateCode,
+          });
         }
         final guilds = tables[RemoteTables.guilds]!;
         final at = guilds.indexWhere((row) => row['id'] == guildId);

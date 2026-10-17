@@ -139,7 +139,7 @@ class _DeleteAccountSheetState extends State<DeleteAccountSheet> {
         if (_error case final error?)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text(error, style: const TextStyle(color: Palette.danger)),
+            child: Text(error, style: const TextStyle(color: Palette.dangerText)),
           ),
       ],
     );

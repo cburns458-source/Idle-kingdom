@@ -21,11 +21,11 @@ describe('chat age gate', () => {
     expect(chatAllowedFromAge({ answered: true, birthYear: 2013, birthMonth: 11, asOf })).toBe(false)
   })
 
-  it('treats a year-only answer as 1 January', () => {
-    expect(accountAgeYears(2013, null, asOf)).toBe(13)
-    expect(chatAllowedFromAge({ answered: true, birthYear: 2013, asOf })).toBe(true)
-    expect(accountAgeYears(2014, null, asOf)).toBe(12)
-    expect(chatAllowedFromAge({ answered: true, birthYear: 2014, asOf })).toBe(false)
+  it('treats a year-only answer as 31 December', () => {
+    expect(accountAgeYears(2013, null, asOf)).toBe(12)
+    expect(chatAllowedFromAge({ answered: true, birthYear: 2013, asOf })).toBe(false)
+    expect(accountAgeYears(2012, null, asOf)).toBe(13)
+    expect(chatAllowedFromAge({ answered: true, birthYear: 2012, asOf })).toBe(true)
   })
 
   it('rolls a birthday over without a new answer', () => {
@@ -33,6 +33,12 @@ describe('chat age gate', () => {
     const after = new Date('2026-10-01T00:00:00.000Z')
     expect(chatAllowedFromAge({ answered: true, birthYear: 2013, birthMonth: 10, asOf: before })).toBe(false)
     expect(chatAllowedFromAge({ answered: true, birthYear: 2013, birthMonth: 10, asOf: after })).toBe(true)
+    expect(
+      chatAllowedFromAge({ answered: true, birthYear: 2013, asOf: new Date('2026-12-30T00:00:00.000Z') }),
+    ).toBe(false)
+    expect(
+      chatAllowedFromAge({ answered: true, birthYear: 2013, asOf: new Date('2026-12-31T00:00:00.000Z') }),
+    ).toBe(true)
   })
 
   it('keeps chat off until the account answers', () => {

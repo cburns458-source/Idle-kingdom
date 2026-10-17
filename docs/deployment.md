@@ -232,9 +232,10 @@ Checklist, in order:
     `20261017020847` / `account_deletion`); live pending.
 
 13. [ ] `20261017140000_account_age_year_only.sql` (ADM-08 follow-up). Year-only
-    answers treat the birthday as 1 January; `set_account_age` no longer asks
-    for a month. Apply to test with this PR; live only after Conor merges
-    `test-launch` into `main`.
+    answers originally treated the birthday as 1 January; `set_account_age` no
+    longer asks for a month. Item 16 below switches year-only to 31 December.
+    Apply to test with this PR; live only after Conor merges `test-launch`
+    into `main`.
     Status: applied on test Oct 17 2026 (file `20261017140000`, MCP
     `20261017022050` / `account_age_year_only`); live pending.
 
@@ -260,6 +261,15 @@ Checklist, in order:
     Vault URL.
     Status: applied on test Oct 17 2026 (file `20261017151000`, MCP
     `20261017024002` / `account_purge_cron`); live pending.
+
+16. [ ] `20261017152000_account_age_guild_chat.sql` (ADM-08 / Ui). Year-only
+    answers treat the birthday as 31 December (a known month still uses the
+    1st). `guild_set_motto` requires `chat_allowed`. Application inserts with
+    a non-empty `message` require `chat_allowed`; an empty message still
+    applies.     Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017152000`, MCP
+    `20261017024800` / `account_age_guild_chat`); live pending.
 
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16

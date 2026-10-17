@@ -73,7 +73,7 @@ class _AgeGateSheetState extends State<AgeGateSheet> {
             if (_error case final error?)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(error, style: const TextStyle(color: Palette.danger)),
+                child: Text(error, style: const TextStyle(color: Palette.dangerText)),
               ),
             GameButton(label: 'Continue', onPressed: _busy ? null : _submit, waiting: _busy),
           ],

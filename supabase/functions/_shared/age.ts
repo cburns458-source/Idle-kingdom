@@ -17,23 +17,18 @@ export function storeBandAllowsChat(band: string): boolean {
   return band === '13-15' || band === '16-17' || band === '18+'
 }
 
-/** Years old on [asOf], or null when the year is missing. Month-less years use 1 Jan. */
+/** Years old on [asOf], or null when the year is missing. Month-less years use 31 Dec. */
 export function accountAgeYears(
   birthYear: number | null | undefined,
   birthMonth: number | null | undefined,
   asOf: Date = new Date(),
 ): number | null {
   if (birthYear == null || !Number.isFinite(birthYear)) return null
-  const month = birthMonth == null ? 0 : birthMonth - 1
-  const birthday = new Date(Date.UTC(birthYear, month, 1))
+  const monthIndex = birthMonth == null ? 11 : birthMonth - 1
+  const day = birthMonth == null ? 31 : 1
   let years = asOf.getUTCFullYear() - birthYear
-  const anniversary = new Date(Date.UTC(asOf.getUTCFullYear(), month, 1))
+  const anniversary = new Date(Date.UTC(asOf.getUTCFullYear(), monthIndex, day))
   if (asOf.getTime() < anniversary.getTime()) years -= 1
-  if (birthday.getUTCFullYear() !== birthYear) {
-    const fallback = new Date(Date.UTC(birthYear, 0, 1))
-    years = asOf.getUTCFullYear() - birthYear
-    if (asOf.getTime() < fallback.getTime()) years -= 1
-  }
   return years
 }
 

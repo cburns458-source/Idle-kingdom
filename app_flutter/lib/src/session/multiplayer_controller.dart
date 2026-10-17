@@ -1882,7 +1882,7 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> applyToGuild(String guildId, String message, PlayerSave save) {
     return run(veil: 'join', () async {
-      final result = await service.applyToGuild(guildId, message);
+      final result = await service.applyToGuild(guildId, chatAllowed ? message : '');
       if (!result.ok) return result.reason;
       final joined = result.joined ?? false;
       await refresh(save);
@@ -1892,7 +1892,7 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> joinAsGuest(String guildId, String message, PlayerSave save) {
     return run(veil: 'guest', () async {
-      final result = await service.joinAsGuest(guildId, message);
+      final result = await service.joinAsGuest(guildId, chatAllowed ? message : '');
       if (!result.ok) return result.reason;
       final joined = result.joined ?? false;
       await refresh(save);
@@ -1954,6 +1954,7 @@ class MultiplayerController extends ChangeNotifier {
   /// Saves the public guild motto (description).
   Future<void> saveGuildMotto(String motto, PlayerSave save) {
     return run(() async {
+      if (!chatAllowed) return null;
       final guildId = _guildId;
       if (guildId == null) return 'Join a guild first.';
       final result = await service.setGuildMotto(guildId, motto);

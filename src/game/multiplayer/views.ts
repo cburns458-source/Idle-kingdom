@@ -77,7 +77,11 @@ export function filterGuildListings(rows: GuildListing[], query: string): GuildL
   )
 }
 
-export function guildBrowseRows(rows: GuildListing[], query = ''): GuildBrowseRow[] {
+export function guildBrowseRows(
+  rows: GuildListing[],
+  query = '',
+  includeMotto = true,
+): GuildBrowseRow[] {
   return filterGuildListings(rows, query).map((row) => {
     const full = row.memberCount >= GUILD_MAX_MEMBERS
     return {
@@ -86,7 +90,7 @@ export function guildBrowseRows(rows: GuildListing[], query = ''): GuildBrowseRo
       subtitle: [
         policyLabel(row.joinPolicy),
         `${row.memberCount}/${GUILD_MAX_MEMBERS}`,
-        row.description || 'No description.',
+        ...(includeMotto ? [row.description || 'No description.'] : []),
       ].join(' · '),
       emblem: row.emblem,
       tag: row.tag,
