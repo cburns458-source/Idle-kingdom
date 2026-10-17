@@ -3,6 +3,7 @@ import 'package:ik_net/ik_net.dart';
 
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
+import 'format.dart';
 
 /// Shown on login while a 14-day deletion grace is still open.
 class RestoreAccountSheet extends StatefulWidget {
@@ -39,9 +40,6 @@ class _RestoreAccountSheetState extends State<RestoreAccountSheet> {
   @override
   Widget build(BuildContext context) {
     final until = widget.multiplayer.deletionPurgeAt;
-    final when = until == null
-        ? ''
-        : ' Deletion is scheduled for ${until.toUtc().toIso8601String().substring(0, 10)}.';
     return DecoratedBox(
       decoration: chromeBoardFill(context),
       child: SafeArea(
@@ -52,8 +50,7 @@ class _RestoreAccountSheetState extends State<RestoreAccountSheet> {
               restoreAccountTitle,
               style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
             ),
-            const SizedBox(height: 8),
-            MutedText('$restoreAccountBody$when Cancelled Bazaar offers stay cancelled.'),
+            if (until != null) ...[const SizedBox(height: 8), Text(formatLocalDay(until))],
             const SizedBox(height: 16),
             if (_error case final error?)
               Padding(

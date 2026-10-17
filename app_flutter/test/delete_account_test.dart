@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ik_net/ik_net.dart';
 import 'package:ik_net/testing.dart';
 
+import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/account_panel.dart';
 import 'package:idle_kingdoms/src/ui/delete_account_page.dart';
 import 'package:idle_kingdoms/src/ui/delete_account_sheet.dart';
+import 'package:idle_kingdoms/src/ui/format.dart';
 import 'package:idle_kingdoms/src/ui/restore_account_sheet.dart';
 
 import 'support/harness.dart';
@@ -36,15 +38,34 @@ void main() {
 
     await pumpPanel(tester, AccountPanel(controller: controller, multiplayer: net, embedded: true));
     expect(find.byKey(const Key('delete-account')), findsOneWidget);
+    expect(
+      tester.widget<GameButton>(find.byKey(const Key('delete-account'))).tone,
+      GameButtonTone.danger,
+    );
 
     await pumpPanel(
       tester,
       DeleteAccountSheet(controller: controller, multiplayer: net, embedded: true),
     );
+    expect(find.text(deleteAccountGraceLine), findsOneWidget);
+    expect(find.textContaining('Cancelled Bazaar'), findsNothing);
     await tester.enterText(find.byKey(const Key('delete-reauth-password')), 'secret');
     await tester.tap(find.text('Sign in again'));
     await tester.pumpAndSettle();
+    expect(
+      tester.widget<GameButton>(find.byKey(const Key('delete-account-confirm'))).onPressed,
+      isNull,
+    );
     await tester.enterText(find.byKey(const Key('delete-character-name')), 'Tester');
+    await tester.pump();
+    expect(
+      tester.widget<GameButton>(find.byKey(const Key('delete-account-confirm'))).onPressed,
+      isNotNull,
+    );
+    expect(
+      tester.widget<GameButton>(find.byKey(const Key('delete-account-confirm'))).tone,
+      GameButtonTone.danger,
+    );
     await tester.tap(find.byKey(const Key('delete-account-confirm')));
     await tester.pumpAndSettle();
     expect(transport.pendingDeletions, isNotEmpty);
@@ -68,6 +89,8 @@ void main() {
 
     await pumpPanel(tester, RestoreAccountSheet(multiplayer: net));
     expect(find.text(restoreAccountTitle), findsWidgets);
+    expect(find.text(formatLocalDay(DateTime.utc(2026, 10, 31))), findsOneWidget);
+    expect(find.textContaining('Cancelled Bazaar'), findsNothing);
     await tester.tap(find.byKey(const Key('restore-account')));
     await tester.pumpAndSettle();
     expect(net.deletionPending, isFalse);

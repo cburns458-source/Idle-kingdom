@@ -16,9 +16,11 @@ void main() {
     );
   });
 
-  test('a year-only answer cannot unlock chat early', () {
-    expect(accountAgeYears(2013, null, asOf), 12);
-    expect(chatAllowedFromAge(answered: true, birthYear: 2013, asOf: asOf), isFalse);
+  test('a year-only answer treats the birthday as 1 January', () {
+    expect(accountAgeYears(2013, null, asOf), 13);
+    expect(chatAllowedFromAge(answered: true, birthYear: 2013, asOf: asOf), isTrue);
+    expect(accountAgeYears(2014, null, asOf), 12);
+    expect(chatAllowedFromAge(answered: true, birthYear: 2014, asOf: asOf), isFalse);
   });
 
   test('birthday rollover unlocks chat without a new answer', () {

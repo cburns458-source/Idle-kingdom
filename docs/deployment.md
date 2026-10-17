@@ -231,6 +231,13 @@ Checklist, in order:
     Status: applied on test Oct 17 2026 (file `20261017130000`, MCP
     `20261017020847` / `account_deletion`); live pending.
 
+13. [ ] `20261017140000_account_age_year_only.sql` (ADM-08 follow-up). Year-only
+    answers treat the birthday as 1 January; `set_account_age` no longer asks
+    for a month. Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017140000`, MCP
+    `20261017022050` / `account_age_year_only`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.

@@ -21,9 +21,11 @@ describe('chat age gate', () => {
     expect(chatAllowedFromAge({ answered: true, birthYear: 2013, birthMonth: 11, asOf })).toBe(false)
   })
 
-  it('treats a year-only answer as 31 Dec so players cannot age up early', () => {
-    expect(accountAgeYears(2013, null, asOf)).toBe(12)
-    expect(chatAllowedFromAge({ answered: true, birthYear: 2013, asOf })).toBe(false)
+  it('treats a year-only answer as 1 January', () => {
+    expect(accountAgeYears(2013, null, asOf)).toBe(13)
+    expect(chatAllowedFromAge({ answered: true, birthYear: 2013, asOf })).toBe(true)
+    expect(accountAgeYears(2014, null, asOf)).toBe(12)
+    expect(chatAllowedFromAge({ answered: true, birthYear: 2014, asOf })).toBe(false)
   })
 
   it('rolls a birthday over without a new answer', () => {

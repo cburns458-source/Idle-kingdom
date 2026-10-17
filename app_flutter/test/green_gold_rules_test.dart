@@ -48,6 +48,9 @@ void main() {
     for (final fill in Palette.confirmDisabledFill.colors) {
       expect(contrastRatio(Palette.confirmDisabledLabel, fill), greaterThanOrEqualTo(4.5));
     }
+    for (final fill in [...Palette.dangerFill.colors, ...Palette.dangerPressed.colors]) {
+      expect(contrastRatio(Palette.dangerLabel, fill), greaterThanOrEqualTo(4.5));
+    }
   });
 
   test('selected gold fill is ≥1.5:1 vs idle green and brown', () {

@@ -31,8 +31,29 @@ class _DeleteAccountSheetState extends State<DeleteAccountSheet> {
 
   MultiplayerController get net => widget.multiplayer;
 
+  String get _expectedName {
+    final named = widget.controller.save.characterName?.trim();
+    if (named != null && named.isNotEmpty) return named;
+    return (net.session?.username ?? '').trim();
+  }
+
+  bool get _nameMatches {
+    final expected = _expectedName;
+    if (expected.isEmpty) return false;
+    return _name.text.trim().toLowerCase() == expected.toLowerCase();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _name.addListener(_onNameChanged);
+  }
+
+  void _onNameChanged() => setState(() {});
+
   @override
   void dispose() {
+    _name.removeListener(_onNameChanged);
     _password.dispose();
     _name.dispose();
     super.dispose();
@@ -62,7 +83,7 @@ class _DeleteAccountSheetState extends State<DeleteAccountSheet> {
   }
 
   Future<void> _delete() async {
-    if (_busy || !_reauthed) return;
+    if (_busy || !_reauthed || !_nameMatches) return;
     setState(() {
       _busy = true;
       _error = null;
@@ -86,7 +107,7 @@ class _DeleteAccountSheetState extends State<DeleteAccountSheet> {
           style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
         ),
         const SizedBox(height: 8),
-        const MutedText(deleteAccountBody),
+        const Text(deleteAccountGraceLine),
         const SizedBox(height: 16),
         if (!_reauthed) ...[
           TextField(
@@ -110,7 +131,8 @@ class _DeleteAccountSheetState extends State<DeleteAccountSheet> {
           GameButton(
             key: const Key('delete-account-confirm'),
             label: 'Delete account',
-            onPressed: _busy ? null : _delete,
+            tone: GameButtonTone.danger,
+            onPressed: _busy || !_nameMatches ? null : _delete,
             waiting: _busy,
           ),
         ],

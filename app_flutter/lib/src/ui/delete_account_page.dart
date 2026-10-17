@@ -28,11 +28,6 @@ class DeleteAccountPage extends StatelessWidget {
                   'Delete a Restoria account',
                   style: TextStyle(fontSize: GameFont.xl, fontWeight: FontWeight.w400),
                 ),
-                const SizedBox(height: 8),
-                const MutedText(
-                  'Sign in, confirm with your password, then type your character name. '
-                  'The account stays restorable for 14 days.',
-                ),
                 const SizedBox(height: 16),
                 if (!multiplayer.isSignedIn)
                   AccountAuthForm(controller: controller, multiplayer: multiplayer)

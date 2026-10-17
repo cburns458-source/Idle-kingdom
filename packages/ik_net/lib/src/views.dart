@@ -1172,11 +1172,9 @@ const String ageGateBody =
     'When were you born? This is used only to turn chat on or off. You can play either way.';
 const String ageGateChatHidden = 'Chat is off for this account.';
 const String deleteAccountTitle = 'Delete account';
-const String deleteAccountBody =
-    'This starts a 14-day wait. Sign in during that time and tap Restore account to keep everything except cancelled Bazaar offers.';
+const String deleteAccountGraceLine =
+    'Your account is deleted after 14 days unless you sign in again.';
 const String restoreAccountTitle = 'Restore account';
-const String restoreAccountBody =
-    'This account is scheduled to be deleted. Restore it to keep playing.';
 
 /// Guilds word the same prompt around guilds, since that is the tab in hand.
 const String guildSignInPrompt = 'Sign in to use guilds.';

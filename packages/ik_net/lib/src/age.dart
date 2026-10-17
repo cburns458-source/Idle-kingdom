@@ -11,13 +11,12 @@ bool isStoreAgeBand(String value) => storeAgeBands.contains(value);
 
 bool storeBandAllowsChat(String band) => band == '13-15' || band == '16-17' || band == '18+';
 
-/// Years old on [asOf]. A missing month is treated as 31 December.
+/// Years old on [asOf]. A missing month is treated as 1 January.
 int? accountAgeYears(int? birthYear, int? birthMonth, [DateTime? asOf]) {
   if (birthYear == null) return null;
   final now = asOf ?? DateTime.now().toUtc();
-  final month = birthMonth ?? 12;
-  final day = birthMonth == null ? 31 : 1;
-  final anniversary = DateTime.utc(now.year, month, day);
+  final month = birthMonth ?? 1;
+  final anniversary = DateTime.utc(now.year, month, 1);
   var years = now.year - birthYear;
   if (now.isBefore(anniversary)) years -= 1;
   return years;

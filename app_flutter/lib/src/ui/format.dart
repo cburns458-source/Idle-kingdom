@@ -52,7 +52,12 @@ String? formatSaveDate(String? iso) {
   if (iso == null || iso.isEmpty) return null;
   final parsed = DateTime.tryParse(iso);
   if (parsed == null) return null;
-  final local = parsed.toLocal();
+  return formatLocalDay(parsed);
+}
+
+/// A calendar day in the reader's own time zone: `22 Sep 2026`.
+String formatLocalDay(DateTime value) {
+  final local = value.toLocal();
   return '${local.day} ${_monthNames[local.month - 1]} ${local.year}';
 }
 

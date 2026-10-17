@@ -133,6 +133,22 @@ abstract final class Palette {
 
   static const confirmDisabledLabel = Color(0xFFE8E6E0);
 
+  /// Cream label on danger buttons. Same job as [confirmLabel].
+  static const dangerLabel = Color(0xFFF4FFE8);
+
+  /// Delete / destructive fill. Dark enough for the cream label to clear 4.5:1.
+  static const dangerFill = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF8B2A1F), Color(0xFF6B1F16)],
+  );
+
+  static const dangerPressed = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF6B1F16), Color(0xFF5C1812)],
+  );
+
   /// Hairline wood used for panel edges. Prefer [UiChrome.edge] so stone packs
   /// swap to iron instead of brown.
   static const edge = Color(0x736A4A30);

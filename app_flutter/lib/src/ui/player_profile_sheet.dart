@@ -242,36 +242,38 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
           if (!_isSelf && net.isSignedIn) ...[
             const SizedBox(height: 10),
             ..._profileActions(view.userId),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _dm,
-                    maxLength: 240,
-                    decoration: const InputDecoration(
-                      labelText: 'Private message',
-                      counterText: '',
+            if (net.chatAllowed) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _dm,
+                      maxLength: 240,
+                      decoration: const InputDecoration(
+                        labelText: 'Private message',
+                        counterText: '',
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                GameButton(
-                  label: 'Private',
-                  compact: true,
-                  onPressed: net.busy
-                      ? null
-                      : () async {
-                          await net.sendDirectMessage(
-                            view.userId,
-                            _dm.text,
-                            username: view.username,
-                          );
-                          if (mounted) _dm.clear();
-                        },
-                ),
-              ],
-            ),
+                  const SizedBox(width: 8),
+                  GameButton(
+                    label: 'Private',
+                    compact: true,
+                    onPressed: net.busy
+                        ? null
+                        : () async {
+                            await net.sendDirectMessage(
+                              view.userId,
+                              _dm.text,
+                              username: view.username,
+                            );
+                            if (mounted) _dm.clear();
+                          },
+                  ),
+                ],
+              ),
+            ],
           ],
         ],
       ),
@@ -366,23 +368,23 @@ class _PlayerProfileSheetState extends State<PlayerProfileSheet> {
       ];
     }
     return <Widget>[
-      if (net.isFriend(userId))
+      if (net.chatAllowed && net.isFriend(userId))
         GameButton(
           label: 'Remove friend',
           tone: GameButtonTone.secondary,
           compact: true,
           onPressed: net.busy ? null : () => net.removeFriend(userId),
         )
-      else if (net.hasOutgoingRequestTo(userId))
+      else if (net.chatAllowed && net.hasOutgoingRequestTo(userId))
         const MutedText('Friend request sent.')
-      else
+      else if (net.chatAllowed)
         GameButton(
           label: net.hasIncomingRequestFrom(userId) ? 'Accept friend' : 'Friend request',
           tone: GameButtonTone.secondary,
           compact: true,
           onPressed: net.busy ? null : () => net.sendFriendRequest(userId),
         ),
-      const SizedBox(height: 8),
+      if (net.chatAllowed) const SizedBox(height: 8),
       GameButton(
         label: 'Ignore',
         tone: GameButtonTone.secondary,

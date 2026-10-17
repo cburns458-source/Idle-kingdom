@@ -300,8 +300,10 @@ class _GuildPanelState extends State<GuildPanel> {
     final rosterGuests = net.guests;
     final rosterCount = rows.length * 2;
     final guestListCount = rosterGuests.isNotEmpty ? 3 + rosterGuests.length * 2 : 0;
+    final showGuildBoard = net.chatAllowed;
+    final homeLeadCount = showGuildBoard ? 8 : 6;
     final footerStart =
-        8 +
+        homeLeadCount +
         (guestGuild != null ? 2 : 0) +
         (showApplications ? 3 + applications.length * 2 : 0) +
         2 +
@@ -343,18 +345,22 @@ class _GuildPanelState extends State<GuildPanel> {
             );
           }
           if (index == 3) return const SizedBox(height: 10);
-          if (index == 4) {
-            final message = net.guildPrivateMessage?.trim() ?? '';
-            return _GuildTextBlock(
-              title: 'Guild message',
-              body: message.isEmpty ? 'No private message yet.' : message,
-              canEdit: header.canEditPrivateMessage,
-              onEdit: () => _editGuildPrivateMessage(message),
-              privateHint: 'Members only',
-            );
+          var cursor = 4;
+          if (showGuildBoard) {
+            if (index == cursor) {
+              final message = net.guildPrivateMessage?.trim() ?? '';
+              return _GuildTextBlock(
+                title: 'Guild message',
+                body: message.isEmpty ? 'No private message yet.' : message,
+                canEdit: header.canEditPrivateMessage,
+                onEdit: () => _editGuildPrivateMessage(message),
+                privateHint: 'Members only',
+              );
+            }
+            if (index == cursor + 1) return const SizedBox(height: 10);
+            cursor += 2;
           }
-          if (index == 5) return const SizedBox(height: 10);
-          if (index == 6) {
+          if (index == cursor) {
             return Row(
               children: [
                 Expanded(
@@ -376,10 +382,10 @@ class _GuildPanelState extends State<GuildPanel> {
               ],
             );
           }
-          if (index == 7) {
+          if (index == cursor + 1) {
             return const SizedBox(height: 10);
           }
-          var i = index - 8;
+          var i = index - homeLeadCount;
           if (guestGuild != null) {
             if (i == 0) {
               return SocialRow(

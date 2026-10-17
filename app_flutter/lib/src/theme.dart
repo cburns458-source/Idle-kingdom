@@ -278,7 +278,7 @@ ThemeData buildAppTheme() {
 
 /// Which button face to wear: lighter brown for doing, darker brown for the
 /// rest, green for confirm / buy / claim / pay.
-enum GameButtonTone { primary, secondary, confirm }
+enum GameButtonTone { primary, secondary, confirm, danger }
 
 /// The stepped, gold-embossed pixel button the game does everything with.
 class GameButton extends StatefulWidget {
@@ -332,6 +332,7 @@ class _GameButtonState extends State<GameButton> {
   Widget build(BuildContext context) {
     final chrome = UiChrome.of(context);
     final confirm = widget.tone == GameButtonTone.confirm;
+    final danger = widget.tone == GameButtonTone.danger;
     final primary = widget.tone == GameButtonTone.primary;
     final disabled = widget.onPressed == null && !widget.waiting;
     final down = _pressed && widget.onPressed != null && !widget.waiting;
@@ -347,6 +348,9 @@ class _GameButtonState extends State<GameButton> {
     } else if (confirm) {
       labelColor = Palette.confirmLabel;
       gradient = down ? Palette.confirmPressed : Palette.confirmFill;
+    } else if (danger) {
+      labelColor = Palette.dangerLabel;
+      gradient = down ? Palette.dangerPressed : Palette.dangerFill;
     } else {
       labelColor = primary ? chrome.primaryLabel : chrome.secondaryLabel;
       gradient = down

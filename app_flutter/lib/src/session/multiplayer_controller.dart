@@ -1361,7 +1361,7 @@ class MultiplayerController extends ChangeNotifier {
 
   Future<void> sendFriendRequest(String userId) {
     return run(() async {
-      if (!chatAllowed) return ageGateError;
+      if (!chatAllowed) return null;
       final result = await service.sendFriendRequest(userId);
       await _loadSocialLists();
       if (!result.ok) return result.reason;
@@ -1736,7 +1736,7 @@ class MultiplayerController extends ChangeNotifier {
       },
       settings: settings,
     );
-    if (milestones.isEmpty) return;
+    if (milestones.isEmpty || !chatAllowed) return;
     final characterName = after.characterName?.trim();
     final name = (characterName != null && characterName.isNotEmpty)
         ? characterName
@@ -1761,7 +1761,7 @@ class MultiplayerController extends ChangeNotifier {
       return sendDirectMessage(peer, body, announceSent: false);
     }
     return run(() async {
-      if (!chatAllowed) return ageGateError;
+      if (!chatAllowed) return null;
       final channel = chatChannelForTab(
         _chatTab,
         locationId: locationId,
@@ -1823,6 +1823,7 @@ class MultiplayerController extends ChangeNotifier {
     bool announceSent = true,
   }) {
     return run(() async {
+      if (!chatAllowed) return null;
       final me = session?.userId;
       if (me == null) return 'Sign in to chat.';
       final result = await service.sendChat(ChatChannel.dm(dmPairKey(me, userId)), body);
@@ -1965,6 +1966,7 @@ class MultiplayerController extends ChangeNotifier {
   /// Saves the private guild announcement for members.
   Future<void> saveGuildPrivateMessage(String body, PlayerSave save) {
     return run(() async {
+      if (!chatAllowed) return null;
       final guildId = _guildId;
       if (guildId == null) return 'Join a guild first.';
       final result = await service.setGuildPrivateMessage(guildId, body);

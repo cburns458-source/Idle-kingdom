@@ -257,7 +257,9 @@ void main() {
     addTearDown(net.dispose);
     expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
 
-    transport.failNextRepeats = remoteUnreachableAttempts;
+    // account_status is the first refresh RPC and swallows failures, so the
+    // fetch that stays dead has to miss the later profile read as well.
+    transport.failNextRepeats = remoteUnreachableAttempts * 2;
     transport.failNextWith =
         'ClientException: Failed to fetch, uri=https://example.supabase.co/rest/v1/profiles';
     await net.refresh(controller.save);
@@ -275,8 +277,10 @@ void main() {
     expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
 
     // A project missing the column this build reads is what a skipped migration
-    // looks like from here.
-    transport.failNextWith = 'column leaderboard_snapshots.value_secondary does not exist';
+    // looks like from here. Pin it to the board read so account_status does not
+    // swallow the refusal.
+    transport.failOnce['select:${RemoteTables.leaderboardEntries}'] =
+        'column leaderboard_snapshots.value_secondary does not exist';
     await net.refresh(controller.save);
 
     expect(net.notice, contains('value_secondary'));
