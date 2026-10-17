@@ -139,7 +139,9 @@ void main() {
     expect(find.byKey(const Key('mass-participants')), findsNothing);
   });
 
-  testWidgets('late joiner is spectating with no drops, and shares are listed', (tester) async {
+  testWidgets('late joiner is marked joined late with greyed share, and shares are listed', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(),
@@ -168,21 +170,32 @@ void main() {
     );
     expect(find.text('2/100'), findsOne);
     expect(find.byKey(const Key('mass-spectating')), findsOne);
-    expect(find.text('Spectating · no drops'), findsOne);
+    expect(find.text('Joined late, no loot'), findsNWidgets(2));
+    expect(find.text('Spectating · no drops'), findsNothing);
+    expect(find.text('Spectating'), findsNothing);
     expect(find.text('Ash'), findsOne);
     expect(find.text('80%'), findsOne);
     expect(find.text('Bea'), findsOne);
     expect(find.text('20%'), findsOne);
     expect(find.text('Cy'), findsOne);
-    expect(find.text('Spectating'), findsOne);
+    expect(find.text('0%'), findsOne);
     expect(find.byKey(const Key('mass-countdown')), findsNothing);
+    final lateShare = tester.widget<Text>(find.text('Joined late, no loot').last);
+    expect(lateShare.style?.color, rosterLateShare);
+    expect(lateShare.style?.color, isNot(Palette.skillXp));
+    expect(lateShare.style?.color, isNot(Palette.heading));
+    final lateDamage = tester.widget<Text>(find.text('0%'));
+    expect(lateDamage.style?.color, rosterLateShare);
+    expect(lateDamage.style?.color, isNot(Palette.skillXp));
   });
 
-  test('roster gold clears 4.5:1 on wood and stone boards', () {
+  test('roster gold and late-share grey clear 4.5:1 on wood and stone boards', () {
     for (final chrome in [UiChrome.wood, UiChrome.stone]) {
       expect(contrastRatio(Palette.heading, chrome.board), greaterThanOrEqualTo(4.5));
       expect(contrastRatio(Palette.heading, chrome.slot), greaterThanOrEqualTo(4.5));
       expect(contrastRatio(Palette.parchmentText, chrome.board), greaterThanOrEqualTo(4.5));
+      expect(contrastRatio(rosterLateShare, chrome.board), greaterThanOrEqualTo(4.5));
+      expect(contrastRatio(rosterLateShare, chrome.slot), greaterThanOrEqualTo(4.5));
     }
     expect(contrastRatio(Palette.gold, UiChrome.stone.board), lessThan(4.5));
   });
@@ -255,5 +268,41 @@ void main() {
     expect(find.textContaining('Dragon'), findsWidgets);
     expect(find.text('1/100'), findsOne);
     expect(find.text('Ash'), findsOne);
+    expect(find.text('100%'), findsOne);
+  });
+
+  testWidgets('settled roster keeps locked-in shares until claim, even if they left', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: Scaffold(
+          body: MassRoster(
+            mass: _snap(
+              status: 'settled',
+              lockedCount: 2,
+              remainingHp: 0,
+              participants: [
+                _player(id: 'a', name: 'Ash', damage: 70, present: false, lockedIn: true),
+                _player(id: 'b', name: 'Bea', damage: 30, present: false, lockedIn: true),
+                _player(id: 'c', name: 'Cy', damage: 0, present: true, lockedIn: false, late: true),
+              ],
+            ),
+            nowMs: 0,
+          ),
+        ),
+      ),
+    );
+    expect(find.text('2/100'), findsOne);
+    expect(find.text('Ash'), findsOne);
+    expect(find.text('70%'), findsOne);
+    expect(find.text('Bea'), findsOne);
+    expect(find.text('30%'), findsOne);
+    expect(find.text('Cy'), findsOne);
+    expect(find.text('Joined late, no loot'), findsOne);
+    expect(find.text('0%'), findsOne);
+    final lateDamage = tester.widget<Text>(find.text('0%'));
+    expect(lateDamage.style?.color, rosterLateShare);
   });
 }

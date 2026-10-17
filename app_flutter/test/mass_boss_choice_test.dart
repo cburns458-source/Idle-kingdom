@@ -33,15 +33,17 @@ void main() {
     return completer;
   }
 
-  testWidgets('mass boss prompt offers Solo, Mass, and Cancel without helper copy', (tester) async {
+  testWidgets('mass boss prompt offers Solo, Mass, Cancel, and one Mass line', (tester) async {
     await openChoice(tester);
     expect(find.text('Dragon'), findsWidgets);
     expect(find.text('Solo'), findsOne);
     expect(find.text('Mass'), findsOne);
     expect(find.text('Cancel'), findsOne);
+    expect(find.text('Fight alongside other players.'), findsOne);
     expect(find.text('Fight together?'), findsNothing);
     expect(find.textContaining('wait up to 60 seconds'), findsNothing);
     expect(find.textContaining('Take on'), findsNothing);
+    expect(find.textContaining('Spectating'), findsNothing);
   });
 
   testWidgets('Mother Squid uses the same Solo / Mass choice', (tester) async {

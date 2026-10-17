@@ -249,6 +249,7 @@ Future<MassBossChoice> showMassBossChoice({
             ),
             const SizedBox(height: 14),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GameButton(
                   label: 'Cancel',
@@ -265,9 +266,20 @@ Future<MassBossChoice> showMassBossChoice({
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: GameButton(
-                    label: 'Mass',
-                    onPressed: () => Navigator.of(context).pop(MassBossChoice.mass),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      GameButton(
+                        label: 'Mass',
+                        onPressed: () => Navigator.of(context).pop(MassBossChoice.mass),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Fight alongside other players.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: GameFont.s, color: Palette.parchmentText),
+                      ),
+                    ],
                   ),
                 ),
               ],
