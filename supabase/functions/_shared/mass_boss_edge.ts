@@ -225,6 +225,7 @@ export async function settleMassCommand(options: {
   if (refreshed.error) return { kind: 'failed', error: refreshed.error, status: 500 }
   let snapshot = refreshed.snapshot
   if (!snapshot) return { kind: 'failed', error: 'Unknown mass encounter.', status: 400 }
+  const snapshotEnemyId = snapshot.enemyId
 
   if (snapshot.status === 'closed') {
     return {
@@ -245,7 +246,7 @@ export async function settleMassCommand(options: {
       const enemy = getEnemy(db, snapshot.enemyId)
       const action = db.Actions.find(
         (candidate: { Category?: string; 'Target ID'?: string }) =>
-          candidate.Category === 'Combat' && candidate['Target ID'] === snapshot.enemyId,
+          candidate.Category === 'Combat' && candidate['Target ID'] === snapshotEnemyId,
       )
       if (enemy && action) {
         const next = {

@@ -214,6 +214,14 @@ Checklist, in order:
     Status: applied on test Oct 16 2026 (MCP `adm04_player_feedback` plus
     `adm04_player_feedback_revoke_writes`); live pending.
 
+11. [ ] `20261017010000_mass_bosses.sql` (SOC-04). `mass_encounters` /
+    `mass_participants` plus security-definer RPCs (`mass_join`, `mass_leave`,
+    `mass_status`, `mass_lock_if_due`, `mass_record_damage`, `mass_settle`,
+    `mass_claim_payout`). Apply to test with this PR; live only after Conor
+    merges `test-launch` into `main`. Do not apply to live before the `game`
+    function that handles `mass_*` commands is on `restoria-idlerpg`.
+    Status: applied on test Oct 17 2026 (file `20261017010000`); live pending.
+
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
 2026 (file `20261016160000`, MCP `20261016111026`); leave those rows as-is.
