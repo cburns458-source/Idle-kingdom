@@ -26,6 +26,7 @@ const Map<String, String> petCosmeticCritterKeys = <String, String>{
   'COS-0010': 'pika',
   'COS-0011': 'raccoon',
   'COS-0012': 'baby_dragon',
+  'COS-0020': 'baby_squid',
 };
 
 String? critterKeyForPetCosmetic(String cosmeticId) => petCosmeticCritterKeys[cosmeticId];

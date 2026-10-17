@@ -365,7 +365,7 @@ void main() {
     raw.remove('tutorialGuaranteedCooks');
     raw.remove('tutorialFoodGrantDeathAt');
     final migrated = parseSave(raw, now);
-    expect(migrated.saveVersion, 67);
+    expect(migrated.saveVersion, saveVersion);
     expect(migrated.currentLocationId, farm);
     expect(migrated.dialogueFlags, contains(tutorialLockbackFlag));
   });
@@ -596,7 +596,7 @@ void main() {
     raw.remove('tutorialGuaranteedCooks');
     raw.remove('tutorialFoodGrantDeathAt');
     final migrated = parseSave(raw, now);
-    expect(migrated.saveVersion, 67);
+    expect(migrated.saveVersion, saveVersion);
     expect(migrated.dialogueFlags, contains(tutorialLockbackFlag));
     expect(isStepLatched(migrated, tutorialQuestId, tutorialGatherStepId), isTrue);
     expect(isStepLatched(migrated, tutorialQuestId, tutorialShowPotatoesStepId), isTrue);
@@ -643,7 +643,7 @@ void main() {
     raw.remove('tutorialGuaranteedCooks');
     raw.remove('tutorialFoodGrantDeathAt');
     final migrated = parseSave(raw, now);
-    expect(migrated.saveVersion, 67);
+    expect(migrated.saveVersion, saveVersion);
     expect(migrated.currentLocationId, town);
     expect(migrated.currentActivityId, 'ACT-0008');
     expect(migrated.gold, 120);

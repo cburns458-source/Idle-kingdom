@@ -1,4 +1,9 @@
 import type { RandomFn } from '../activity/pools'
+import {
+  beginActivitySave,
+  clearActivitySave,
+  validateActivityStart,
+} from '../activity/engine'
 import { requestActivityStart, requestActivityStop, requestProductionStart } from '../activity/transition'
 import { toggleFavoriteActivity } from '../activity/favorites'
 import { eatEquippedFood, eatInventoryFood } from '../combat/food'
@@ -95,6 +100,7 @@ import { plazaPointsOf, purchasePlazaShopItem } from '../economy/plaza'
 import { prepareBountyTurnIn, applyBountyReward } from '../bounties/reward'
 import { syncBountyHour } from '../bounties/progress'
 import { hourlyBountyBoard } from '../bounties/rotation'
+import { isMassBossActivity } from '../combat/boss'
 import { simulatePvpFight, type PvpRoundResult } from '../combat/pvp'
 import {
   applyRankedPvpResult,
@@ -183,6 +189,10 @@ export type GameCommandName =
   | 'guild_bank_move_up_for_grabs'
   | 'submit_leaderboard'
   | 'save_pvp_equipment'
+  | 'mass_join'
+  | 'mass_status'
+  | 'mass_fight_tick'
+  | 'mass_leave'
 
 export type GameCommandArgs = Record<string, unknown>
 
@@ -1063,6 +1073,23 @@ function applyExistingCommand(
     case 'submit_leaderboard':
     case 'save_pvp_equipment':
       return ok(save)
+    case 'mass_join': {
+      const activityId = asString(args.activityId)
+      if (!activityId || !isMassBossActivity(activityId)) {
+        return failed('That is not a mass boss.')
+      }
+      const check = validateActivityStart(db, save, activityId)
+      if (!check.ok) return failed(check.reason ?? 'You cannot start that.')
+      return ok({
+        ...beginActivitySave(save, activityId, new Date(nowMs).toISOString()),
+        massEncounterId: null,
+      })
+    }
+    case 'mass_status':
+    case 'mass_fight_tick':
+      return ok(save)
+    case 'mass_leave':
+      return ok(clearActivitySave(save, nowMs))
     default:
       return failed('Unknown command.')
   }

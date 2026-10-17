@@ -138,6 +138,7 @@ PlayerSave createNewSave(GameDatabase db, num nowMs) {
     combatBossAddsRemaining: null,
     combatBossAddsTriggered: false,
     combatBossInkActive: false,
+    massEncounterId: null,
     bossRespawnUntilByEnemyId: const <String, String>{},
     activePotionEffect: null,
     deathPauseUntil: null,

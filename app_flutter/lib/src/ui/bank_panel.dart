@@ -21,6 +21,12 @@ String bankNoRoomMessage(NoRoom? noRoom, {int? slotsNeeded}) {
   return DialogueText.bagFull(n);
 }
 
+/// Column heading with the live slot count, e.g. `Bank 42/168`.
+String bankColumnHeading(int used) => 'Bank ${formatThousands(used)}/$bankSlotLimit';
+
+/// Column heading with the live slot count, e.g. `Bag 20/84`.
+String bagColumnHeading(int used) => 'Bag ${formatThousands(used)}/$inventorySlotLimit';
+
 /// Town and Citadel vault: stored stacks above the bag, stacked at every width.
 class BankPanel extends StatefulWidget {
   const BankPanel({super.key, required this.controller, this.onClose});
@@ -219,33 +225,30 @@ class _BankPanelState extends State<BankPanel> {
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text(
-                  'Bank',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
-                ),
+              const GoldCopy(
+                'Bank',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
               ),
-              GoldAmount(
-                amount: save.gold,
-                style: const TextStyle(color: Palette.currency),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  key: const Key('bank-search-field'),
+                  controller: _search,
+                  decoration: const InputDecoration(
+                    hintText: 'Search items',
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  ),
+                  onChanged: (_) {
+                    _invalidateCaches();
+                    setState(() {});
+                  },
+                ),
               ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
-          ),
-          MutedText(
-            'Bag ${formatThousands(save.inventory.length)}/$inventorySlotLimit · '
-            'Bank ${formatThousands(bankLen)}/$bankSlotLimit',
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _search,
-            decoration: const InputDecoration(hintText: 'Search items', isDense: true),
-            onChanged: (_) {
-              _invalidateCaches();
-              setState(() {});
-            },
           ),
           if (_error case final error?) ...[
             const SizedBox(height: 6),
@@ -258,7 +261,7 @@ class _BankPanelState extends State<BankPanel> {
           Expanded(
             child: StackedInventoryPanes(
               top: _Column(
-                heading: 'Bank',
+                heading: bankColumnHeading(bankLen),
                 empty: bankLen == 0 ? 'The chest is empty.' : 'Nothing in the bank matches.',
                 itemCount: chest.length,
                 itemBuilder: (context, i) {
@@ -271,7 +274,7 @@ class _BankPanelState extends State<BankPanel> {
                 },
               ),
               bottom: _Column(
-                heading: 'Bag',
+                heading: bagColumnHeading(save.inventory.length),
                 empty: save.inventory.isEmpty
                     ? 'The bag is empty.'
                     : bag.isEmpty && save.inventory.every(stackIsUnbankableGold)
@@ -305,6 +308,8 @@ class _BankPanelState extends State<BankPanel> {
       padding: const EdgeInsets.fromLTRB(3, 5, 3, 4),
       onTap: onTap,
       child: Stack(
+        alignment: Alignment.center,
+        fit: StackFit.expand,
         children: [
           FittedBox(
             fit: BoxFit.scaleDown,

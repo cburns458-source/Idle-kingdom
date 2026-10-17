@@ -973,6 +973,7 @@ class RemoteMultiplayerService implements MultiplayerService {
         themMaxHp: data['themMaxHp'] is num ? data['themMaxHp'] as num : null,
         opponent: _arenaOpponentFrom(data['opponent']),
         claim: _bountyClaimFrom(data['claim']),
+        mass: MassEncounterSnapshot.tryParse(data['mass']),
       );
     } catch (error) {
       return CloudSyncResult.failed(error.toString());

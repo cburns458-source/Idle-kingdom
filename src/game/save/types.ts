@@ -1,4 +1,4 @@
-export const SAVE_VERSION = 67
+export const SAVE_VERSION = 68
 export const SAVE_STORAGE_KEY = 'idle-kingdoms.demo.save'
 export const STARTING_LOCATION_ID = 'LOC-0001'
 /** Base gold before race kit; race starters grant the real starting gold. */
@@ -496,6 +496,11 @@ export interface PlayerSave {
   combatBossAddsTriggered: boolean
   /** True when ink halved player damage this combat round. */
   combatBossInkActive: boolean
+  /**
+   * Hosted mass-boss encounter id while this save is in that fight or lobby.
+   * Local combat ticks are skipped until the server mass_fight_tick runs.
+   */
+  massEncounterId: string | null
   /** ISO timestamps until a defeated boss can be fought again, keyed by Enemy ID. */
   bossRespawnUntilByEnemyId: Record<string, string>
   /** Potion consumed for the current gathering action, craft, or combat encounter. */

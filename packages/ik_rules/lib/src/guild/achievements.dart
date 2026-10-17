@@ -156,7 +156,7 @@ const List<GuildAchievementDef> guildAchievements = <GuildAchievementDef>[
   GuildAchievementDef(
     id: 'gach_gold_100k',
     name: 'Deep pockets',
-    description: 'Chip in 100,000 gold toward the guild hall.',
+    description: 'Put 100,000 gold into the guild hall as a guild.',
     rewardKind: guildBannerRewardEmblem,
     rewardId: 'emblem_pockets',
     kind: guildAchievementKindGold,
@@ -165,7 +165,7 @@ const List<GuildAchievementDef> guildAchievements = <GuildAchievementDef>[
   GuildAchievementDef(
     id: 'gach_gold_500k',
     name: 'Deeper pockets',
-    description: 'Chip in 500,000 gold toward the guild hall.',
+    description: 'Put 500,000 gold into the guild hall as a guild.',
     rewardKind: guildBannerRewardEmblem,
     rewardId: 'emblem_deeper_pockets',
     kind: guildAchievementKindGold,

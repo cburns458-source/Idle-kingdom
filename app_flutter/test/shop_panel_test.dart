@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/floating_slot.dart';
+import 'package:idle_kingdoms/src/ui/format.dart';
+import 'package:idle_kingdoms/src/ui/item_icon.dart';
 import 'package:idle_kingdoms/src/ui/shop_panel.dart';
+import 'package:idle_kingdoms/src/ui/top_hud.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
 
@@ -141,20 +145,24 @@ void main() {
     );
   });
 
-  testWidgets('refuses a trade the purse cannot cover', (tester) async {
+  testWidgets('unaffordable buys are greyed and cannot be offered', (tester) async {
     final controller = buildController(database, seed: shopper(gold: 0));
     addTearDown(controller.dispose);
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId));
+    final axe = tester.widget<FloatingItemSlot>(
+      find.ancestor(of: find.byTooltip('Wooden axe'), matching: find.byType(FloatingItemSlot)),
+    );
+    expect(axe.enabled, isFalse);
+    expect(axe.onTap, isNull);
+
     await tester.tap(find.byTooltip('Wooden axe'));
     await tester.pumpAndSettle();
-    // With no gold the keypad offers no ceiling, but the trade still checks.
-    await tester.tap(find.text('Add to offer'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Confirm trade'));
-    await tester.pump();
-
-    expect(find.textContaining('gold'), findsWidgets);
+    expect(find.text('Add to offer'), findsNothing);
+    expect(
+      tester.widget<GameButton>(find.widgetWithText(GameButton, 'Confirm trade')).onPressed,
+      isNull,
+    );
     expect(controller.save.gold, 0);
     expect(inventoryCount(controller.save, woodenAxeId), 0);
   });
@@ -293,5 +301,78 @@ void main() {
     await tester.ensureVisible(find.byTooltip('Clay'));
     expect(find.byTooltip('Clay').hitTestable(), findsOne);
     expect(find.text('Confirm trade').hitTestable(), findsOne);
+  });
+
+  testWidgets('HUD gold stays visible with the shop open', (tester) async {
+    const gold = 7777;
+    final controller = buildController(
+      database,
+      seed: shopper(
+        gold: gold,
+        inventory: [const InventoryStack(itemId: clayId, quantity: 4)],
+      ),
+    );
+    addTearDown(controller.dispose);
+    await pumpShell(tester, controller, size: const Size(900, 1600));
+
+    await selectLocationBandTab(tester, 'Shops');
+    final store = find.ancestor(of: find.text('General Store'), matching: find.byType(DockRow));
+    await tapVisible(tester, find.descendant(of: store, matching: find.bySemanticsLabel('Shop')));
+
+    expect(find.byType(ShopPanel), findsOne);
+    expect(find.byKey(const Key('shop-gold-balance')), findsNothing);
+    expect(find.byType(GoldAmount), findsNothing);
+    final hudGold = find.byKey(const Key('hud-gold'));
+    expect(hudGold.hitTestable(), findsOne);
+    expect(find.descendant(of: hudGold, matching: find.text(formatThousands(gold))), findsOne);
+    final goldRect = tester.getRect(hudGold);
+    final hud = tester.getRect(find.byType(TopHud));
+    expect(goldRect.top, greaterThanOrEqualTo(hud.top));
+    expect(goldRect.bottom, lessThanOrEqualTo(hud.bottom + 1));
+  });
+
+  testWidgets('offer sits on the header line and gold stays off the menu', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+    );
+    addTearDown(controller.dispose);
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId, onClose: () {}));
+
+    expect(find.byKey(const Key('shop-gold-balance')), findsNothing);
+    expect(find.byType(GoldAmount), findsNothing);
+    expect(find.byKey(const Key('shop-offer-summary')), findsOne);
+    expect(find.byKey(const Key('shop-offer-net')), findsOne);
+
+    final offer = tester.getRect(find.byKey(const Key('shop-offer-summary')));
+    final net = tester.getRect(find.byKey(const Key('shop-offer-net')));
+    final close = tester.getRect(find.byTooltip('Close'));
+    final title = tester.getRect(find.text('General Store'));
+    expect(offer.top, closeTo(close.top, 16));
+    expect(title.right, lessThan(offer.left + 8));
+    expect(offer.right, lessThanOrEqualTo(close.left + 8));
+    expect(net.bottom, lessThanOrEqualTo(tester.getRect(find.byType(ShopPanel)).bottom));
+    expect(find.byKey(const Key('shop-offer-net')).hitTestable(), findsOne);
+
+    final cell = tester.getRect(find.byTooltip('Clay'));
+    final icon = tester.getRect(
+      find.descendant(of: find.byTooltip('Clay'), matching: find.byType(ItemIcon)),
+    );
+    expect(icon.center.dx, closeTo(cell.center.dx, 6));
+  });
+
+  testWidgets('the offer net stays fully visible on a narrow phone', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(gold: 12, inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+    );
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      ShopPanel(controller: controller, shopId: shopId, onClose: () {}),
+      size: const Size(360, 740),
+    );
+    expect(find.byKey(const Key('shop-offer-net')).hitTestable(), findsOne);
+    expect(find.textContaining('net '), findsOne);
   });
 }

@@ -122,14 +122,16 @@ ActionRewards resolveActionRewards(
   GameDatabase db,
   PlayerSave save,
   ActionRow action,
-  RandomFn random,
-) {
+  RandomFn random, [
+  num dropChanceScale = 1,
+]) {
   var next = save;
   final loot = <LootGrant>[];
   final leftBehind = <LootGrant>[];
   final cosmeticsGranted = <ActionCosmeticGrant>[];
   final booksGranted = <ActionBookGrant>[];
-  var goldGained = jsNumber(action.raw['Guaranteed Gold'] ?? 0);
+  final scale = dropChanceScale.isFinite ? math.max(0, dropChanceScale) : 1;
+  var goldGained = jsNumber(action.raw['Guaranteed Gold'] ?? 0) * scale;
   final skillDropBonus = alignmentSkillDropChanceBonusPercent(
     db,
     save,
@@ -141,7 +143,7 @@ ActionRewards resolveActionRewards(
     if (isBlank(tableId)) return;
     final dropChance = applyFlatDropChanceBonus(
       applyRelativeDropChance(
-        chanceValue is num ? chanceValue : 0,
+        (chanceValue is num ? chanceValue : 0) * scale,
         totalRelativeDropChanceBonusPercent(db, save) +
             equippedSkillRelativeDropChanceBonusPercent(
               db,

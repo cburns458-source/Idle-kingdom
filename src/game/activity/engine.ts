@@ -181,6 +181,7 @@ export function beginActivitySave(
       actionStartedAt: null,
       actionDurationMs: null,
       activityTransition: null,
+      massEncounterId: null,
     }),
   )
 }
@@ -200,6 +201,7 @@ export function clearActivitySave(
       actionStartedAt: null,
       actionDurationMs: null,
       activityTransition: null,
+      massEncounterId: null,
     }),
   )
 }

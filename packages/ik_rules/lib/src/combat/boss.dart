@@ -14,6 +14,75 @@ const num defaultBossRespawnSeconds = 10;
 const num defaultBossInkChance = 0.35;
 const int defaultBossSquidlingCount = 3;
 
+/// Extra players each add this fraction of solo HP.
+const num massHpPerExtraPlayer = 0.5;
+
+/// Mass drop-chance factor in `0.9 * healthMultiplier / n`. Solo stays 1×.
+const num massDropChanceFactor = 0.9;
+const int massCountdownSeconds = 60;
+const int massPlayerCap = 100;
+const int massIdleCloseSeconds = 60;
+const num massMinDamageRatio = 0.03;
+const num massMinDamageShare = 0.25;
+
+const String dragonEnemyId = 'ENM-0006';
+const String motherSquidEnemyId = 'ENM-0023';
+const String dragonActivityId = 'ACT-0024';
+const String motherSquidActivityId = 'ACT-0045';
+const String dragonLocationId = 'LOC-0021';
+const String motherSquidLocationId = 'LOC-0042';
+
+const Map<String, String> massBossActivityEnemy = <String, String>{
+  dragonActivityId: dragonEnemyId,
+  motherSquidActivityId: motherSquidEnemyId,
+};
+
+const Map<String, String> massBossEnemyLocation = <String, String>{
+  dragonEnemyId: dragonLocationId,
+  motherSquidEnemyId: motherSquidLocationId,
+};
+
+const Map<String, String> massBossEnemyActivity = <String, String>{
+  dragonEnemyId: dragonActivityId,
+  motherSquidEnemyId: motherSquidActivityId,
+};
+
+bool isMassBossActivity(String? activityId) {
+  if (activityId == null || activityId.isEmpty) return false;
+  return massBossActivityEnemy.containsKey(activityId);
+}
+
+bool isMassBossEnemy(String? enemyId) {
+  if (enemyId == null || enemyId.isEmpty) return false;
+  return massBossEnemyLocation.containsKey(enemyId);
+}
+
+/// `1 + 0.5 * (n - 1)` for n locked players.
+num massHealthMultiplier(num playerCount) {
+  final n = math.max(1, playerCount.floor());
+  return 1 + massHpPerExtraPlayer * (n - 1);
+}
+
+/// Mass encounter HP from a solo HP and locked player count.
+num massHpFor(num soloHp, num playerCount) {
+  return math.max(1, (soloHp * massHealthMultiplier(playerCount)).floor());
+}
+
+/// Per-player drop-chance scale. Solo n=1 stays 1×; otherwise
+/// `0.9 * healthMultiplier / n`.
+num massDropScale(num playerCount) {
+  final n = math.max(1, playerCount.floor());
+  if (n <= 1) return 1;
+  return (massDropChanceFactor * massHealthMultiplier(n)) / n;
+}
+
+/// Minimum damage for a reward roll: `min(3%, 25%/n)` of boss total HP.
+num massMinimumDamage(num totalHp, num playerCount) {
+  final n = math.max(1, playerCount.floor());
+  final ratio = math.min(massMinDamageRatio, massMinDamageShare / n);
+  return math.max(0, totalHp * ratio);
+}
+
 class BossProfile {
   const BossProfile({
     required this.sleepStart,

@@ -448,6 +448,9 @@ SessionTickResult advanceSession(
 
   final activityId = out.current.currentActivityId;
   if (isBlank(activityId)) return out.result();
+  // Mass fights resolve on the server. Local ticks must not apply damage or
+  // pick a solo encounter while the save is attached to a mass instance.
+  if (isNotBlank(out.current.massEncounterId)) return out.result();
 
   if (isNotBlank(out.current.combatEatUntil) && isBlank(out.current.combatRoundStartedAt)) {
     final eatUntil = jsDateParse(out.current.combatEatUntil);

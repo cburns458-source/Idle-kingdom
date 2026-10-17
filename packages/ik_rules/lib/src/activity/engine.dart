@@ -204,6 +204,7 @@ PlayerSave beginActivitySave(PlayerSave save, String activityId, String nowIso) 
         actionStartedAt: null,
         actionDurationMs: null,
         activityTransition: null,
+        massEncounterId: null,
       ),
     ),
   );
@@ -221,6 +222,7 @@ PlayerSave clearActivitySave(PlayerSave save, num nowMs) {
         actionStartedAt: null,
         actionDurationMs: null,
         activityTransition: null,
+        massEncounterId: null,
       ),
     ),
   );

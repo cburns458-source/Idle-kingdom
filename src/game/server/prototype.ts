@@ -7,6 +7,29 @@ import type { PlayerSave } from '../save/types'
 import { advanceSession } from '../session/tick'
 import { resolveUnattendedProgress } from '../unattended/resolve'
 
+export { beginActivitySave, clearActivitySave } from '../activity/engine'
+export {
+  MASS_BOSS_ACTIVITY_ENEMY,
+  MASS_BOSS_ENEMY_ACTIVITY,
+  MASS_COUNTDOWN_SECONDS,
+  MASS_IDLE_CLOSE_SECONDS,
+  MASS_PLAYER_CAP,
+  bossProfile,
+  isMassBossActivity,
+  isMassBossEnemy,
+} from '../combat/boss'
+export { withBossRespawn } from '../combat/boss'
+export { beginCombatSave, clearCombatSave, getEnemy } from '../combat/engine'
+export {
+  applyMassVictory,
+  clampMassPlayerBaseHpScale,
+  massActivityIdForEnemy,
+  massEncounterHp,
+  parseMassSnapshot,
+  simulateMassFightTick,
+} from '../combat/mass'
+export type { MassEncounterSnapshot } from '../combat/mass'
+export { enemyScaledMaxHp, playerBaseMaxHp } from '../combat/stats'
 export { compareShadowSaves, runPhase1Shadow, SHADOW_PLAY_TIME_SLACK_MS } from './shadow'
 export type { Phase1ShadowResult, ShadowFieldDiff } from './shadow'
 export {

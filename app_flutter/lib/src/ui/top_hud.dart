@@ -197,6 +197,7 @@ class TopHud extends StatelessWidget {
                                 ],
                               ),
                               Row(
+                                key: const Key('hud-gold'),
                                 children: [
                                   GameImage(uiHudGoldAssetPath(), width: 11, height: 11),
                                   const SizedBox(width: 3),

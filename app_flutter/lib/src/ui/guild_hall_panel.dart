@@ -179,10 +179,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                   style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
-              GoldAmount(
-                amount: save.gold,
-                style: const TextStyle(color: Palette.currency),
-              ),
+              GoldAmount(key: const Key('guild-gold-balance'), amount: save.gold),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),
@@ -289,7 +286,10 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                       ? GoldCopy(row.name, style: const TextStyle(fontWeight: FontWeight.w400))
                       : Text(
                           row.name,
-                          style: const TextStyle(fontWeight: FontWeight.w400, color: Palette.muted),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            color: UiChrome.of(context).panelInk,
+                          ),
                         ),
                 ),
                 row.unlocked
@@ -299,7 +299,10 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                       )
                     : Text(
                         '${formatThousands(row.current)} / ${formatThousands(row.target)}',
-                        style: const TextStyle(color: Palette.muted, fontSize: GameFont.s),
+                        style: TextStyle(
+                          color: UiChrome.of(context).panelInk,
+                          fontSize: GameFont.s,
+                        ),
                       ),
               ],
             ),
@@ -339,7 +342,9 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
             padding: const EdgeInsets.only(bottom: 6),
             child: DockRow(
               title: _itemName(entry.$2),
-              lines: [MutedText('×${formatThousands(entry.$2.quantity)}')],
+              lines: [
+                MutedText('×${formatThousands(entry.$2.quantity)}', color: Palette.parchmentText),
+              ],
               trailing: GameButton(label: 'In', onPressed: () => _deposit(entry.$1, entry.$2)),
             ),
           ),
@@ -350,7 +355,10 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
             padding: const EdgeInsets.only(bottom: 6),
             child: DockRow(
               title: _itemName(stack),
-              trailing: MutedText('×${formatThousands(stack.quantity)}'),
+              trailing: MutedText(
+                '×${formatThousands(stack.quantity)}',
+                color: Palette.parchmentText,
+              ),
             ),
           ),
       ],
@@ -363,32 +371,25 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
         final next = nextGuildHallTier(hall.completedTiers);
         final finished = hall.completedTiers.contains(tier.id);
         final active = !finished && next?.id == tier.id;
-        final color = finished
-            ? goldForeground(context)
-            : active
-            ? Palette.borderSelected
-            : Palette.muted;
+        final color = finished || active ? goldForeground(context) : UiChrome.of(context).panelInk;
         final needs = guildHallTierNeeds(tier, hall.storehouse);
-        return Opacity(
-          opacity: finished || active ? 1 : 0.45,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                tier.name,
+                style: TextStyle(fontWeight: FontWeight.w400, color: color),
+              ),
+              for (final need in needs)
                 Text(
-                  tier.name,
-                  style: TextStyle(fontWeight: FontWeight.w400, color: color),
+                  '${_itemNameFor(need.itemId)} '
+                  '${formatThousands(finished ? need.needed : need.counted)} / '
+                  '${formatThousands(need.needed)}',
+                  style: TextStyle(color: color, fontSize: GameFont.s),
                 ),
-                for (final need in needs)
-                  Text(
-                    '${_itemNameFor(need.itemId)} '
-                    '${formatThousands(finished ? need.needed : need.counted)} / '
-                    '${formatThousands(need.needed)}',
-                    style: TextStyle(color: color, fontSize: GameFont.s),
-                  ),
-              ],
-            ),
+            ],
           ),
         );
       },

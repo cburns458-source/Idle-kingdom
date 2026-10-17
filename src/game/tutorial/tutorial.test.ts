@@ -379,7 +379,7 @@ describe('mandatory Getting Started tutorial', () => {
     expect(finished.dialogueFlags).not.toContain(TUTORIAL_LOCKBACK_FLAG)
 
     const migrated = migrateSave({ ...mid, saveVersion: 66 }, NOW)
-    expect(migrated.saveVersion).toBe(67)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.currentLocationId).toBe(FARM)
     expect(migrated.dialogueFlags).toContain(TUTORIAL_LOCKBACK_FLAG)
   })
@@ -622,7 +622,7 @@ describe('mandatory Getting Started tutorial', () => {
       tutorialGuaranteedCooks: 2,
     }
     const migrated = migrateSave({ ...mid, saveVersion: 66 }, NOW)
-    expect(migrated.saveVersion).toBe(67)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.dialogueFlags).toContain(TUTORIAL_LOCKBACK_FLAG)
     expect(isStepLatched(migrated, TUTORIAL_QUEST_ID, TUTORIAL_GATHER_STEP_ID)).toBe(true)
     expect(isStepLatched(migrated, TUTORIAL_QUEST_ID, TUTORIAL_SHOW_POTATOES_STEP_ID)).toBe(true)
@@ -687,7 +687,7 @@ describe('mandatory Getting Started tutorial', () => {
     expect(JSON.parse(JSON.stringify(locked))).not.toHaveProperty('bazaar_orders')
 
     const migrated = migrateSave({ ...save, saveVersion: 66 }, NOW)
-    expect(migrated.saveVersion).toBe(67)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.dialogueFlags).toContain(TUTORIAL_LOCKBACK_FLAG)
     expect(migrated.gold).toBe(goldBefore)
     expect(stackQty(migrated, TUTORIAL_POTATO_ITEM_ID)).toBe(potatoesBefore)
@@ -715,7 +715,7 @@ describe('mandatory Getting Started tutorial', () => {
     expect(locked.dialogueFlags).not.toContain(TUTORIAL_LOCKBACK_FLAG)
 
     const migrated = migrateSave({ ...finished, saveVersion: 66 }, NOW)
-    expect(migrated.saveVersion).toBe(67)
+    expect(migrated.saveVersion).toBe(SAVE_VERSION)
     expect(migrated.currentLocationId).toBe(TOWN)
     expect(migrated.currentActivityId).toBe('ACT-0008')
     expect(migrated.gold).toBe(120)

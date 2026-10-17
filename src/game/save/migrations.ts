@@ -1215,6 +1215,18 @@ export const SAVE_MIGRATIONS: SaveMigration[] = [
         saveVersion: 67,
       }),
   },
+  {
+    fromVersion: 67,
+    toVersion: 68,
+    migrate: (save) => ({
+      ...save,
+      massEncounterId:
+        typeof (save as PlayerSave & { massEncounterId?: unknown }).massEncounterId === 'string'
+          ? (save as PlayerSave).massEncounterId
+          : null,
+      saveVersion: 68,
+    }),
+  },
 ]
 
 export function migrateSave(save: PlayerSave, nowMs: number = Date.now()): PlayerSave {

@@ -39,6 +39,7 @@ num _maxUnattendedSteps(GameDatabase db) {
 
 /// Next discrete combat clock edge: mid-round eat or end-of-round clash.
 num? _nextCombatDueMs(GameDatabase db, PlayerSave save) {
+  if (isNotBlank(save.massEncounterId)) return null;
   if (isNotBlank(save.combatEatUntil) && isBlank(save.combatRoundStartedAt)) {
     final eatUntil = jsDateParse(save.combatEatUntil);
     return eatUntil.toDouble().isFinite ? eatUntil : null;
@@ -260,7 +261,7 @@ UnattendedResult resolveUnattendedProgress(
       messages.add('Recovered from defeat while away.');
       lastResolvedMs = math.max(pauseEnded, anchor);
       final activityId = resumed.currentActivityId;
-      if (isBlank(activityId)) {
+      if (isBlank(activityId) || isNotBlank(resumed.massEncounterId)) {
         current = resumed;
         break;
       }
@@ -277,6 +278,7 @@ UnattendedResult resolveUnattendedProgress(
     }
 
     if (isBlank(current.currentActivityId)) break;
+    if (isNotBlank(current.massEncounterId)) break;
     // Production is batch-resolved above against the capped clock.
     if (isNotBlank(current.productionRecipeId)) break;
 

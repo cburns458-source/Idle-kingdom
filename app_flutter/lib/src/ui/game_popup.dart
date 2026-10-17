@@ -228,6 +228,70 @@ Future<bool> showGameAlert({
   return result ?? false;
 }
 
+enum MassBossChoice { cancel, solo, mass }
+
+Future<MassBossChoice> showMassBossChoice({
+  required BuildContext context,
+  required String bossName,
+}) async {
+  final result = await showGamePopup<MassBossChoice>(
+    context: context,
+    placement: GamePopupPlacement.center,
+    builder: (context) {
+      return GamePopupCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              bossName,
+              style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GameButton(
+                  label: 'Cancel',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  onPressed: () => Navigator.of(context).pop(MassBossChoice.cancel),
+                ),
+                const SizedBox(width: 8),
+                GameButton(
+                  label: 'Solo',
+                  tone: GameButtonTone.secondary,
+                  compact: true,
+                  onPressed: () => Navigator.of(context).pop(MassBossChoice.solo),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      GameButton(
+                        label: 'Mass',
+                        onPressed: () => Navigator.of(context).pop(MassBossChoice.mass),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Fight alongside other players.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: GameFont.s, color: Palette.parchmentText),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    },
+  );
+  return result ?? MassBossChoice.cancel;
+}
+
 /// Choice from a confirm that also offers "Don't ask again".
 enum DontAskAgainChoice { cancel, confirm, dontAskAgain }
 

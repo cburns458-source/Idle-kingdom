@@ -45,6 +45,7 @@ function maxUnattendedSteps(db: GameDatabase): number {
 }
 
 function nextCombatDueMs(db: GameDatabase, save: PlayerSave): number | null {
+  if (save.massEncounterId) return null
   if (save.combatEatUntil && !save.combatRoundStartedAt) {
     const eatUntil = Date.parse(save.combatEatUntil)
     return Number.isFinite(eatUntil) ? eatUntil : null
@@ -235,7 +236,7 @@ export function resolveUnattendedProgress(
       messages.push('Recovered from defeat while away.')
       lastResolvedMs = Math.max(pauseEnded, anchor)
       const activityId = resumed.currentActivityId
-      if (!activityId) {
+      if (!activityId || resumed.massEncounterId) {
         current = resumed
         break
       }
@@ -257,6 +258,7 @@ export function resolveUnattendedProgress(
     }
 
     if (!current.currentActivityId) break
+    if (current.massEncounterId) break
     // Production is batch-resolved above against the capped clock.
     if (current.productionRecipeId) break
 
