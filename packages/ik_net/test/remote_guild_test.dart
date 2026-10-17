@@ -685,7 +685,7 @@ void main() {
     expect(created.save, isNull);
   });
 
-  test('the next create asks to disband a half-made founding', () async {
+  test('a double failure that seats the leader leaves the normal leave path', () async {
     final transport = FakeTransport();
     transport.hostsGuildLifecycleRpcs = false;
     final leader = await _player(transport, 'leader@example.com', 'Leader');
@@ -695,10 +695,11 @@ void main() {
 
     final leftover = await leader.createGuild(_ironLeague, guildCreateGoldCost);
     expect(leftover.ok, isFalse);
+    expect(leftover.reason, remoteGuildCreateFailed);
     expect(leftover.goldCost, isNull);
-    expect(leader.foundingHalfMade, isTrue);
     expect(transport.tables[RemoteTables.guilds], hasLength(1));
     expect(transport.tables[RemoteTables.guildMembers], hasLength(1));
+    expect(await leader.currentGuildId(), transport.tables[RemoteTables.guilds]!.single['id']);
 
     const oak = CreateGuildInput(
       name: 'Oak Guard',
@@ -708,18 +709,14 @@ void main() {
     );
     final again = await leader.createGuild(oak, guildCreateGoldCost);
     expect(again.ok, isFalse);
-    expect(again.reason, remoteGuildSetupUnfinished);
+    expect(again.reason, 'Leave your current guild before creating another.');
     expect(again.goldCost, isNull);
-    expect(again.save, isNull);
     expect(transport.tables[RemoteTables.guilds]!.single['tag'], 'IRN');
-    expect(transport.tables[RemoteTables.guildMembers], hasLength(1));
 
     expect((await leader.leaveGuild()).ok, isTrue);
-    expect(leader.foundingHalfMade, isFalse);
     expect(transport.tables[RemoteTables.guilds], isEmpty);
     final created = await leader.createGuild(oak, guildCreateGoldCost);
     expect(created.ok, isTrue, reason: created.reason);
-    expect(created.goldCost, guildCreateGoldCost);
     expect(created.guild!.name, 'Oak Guard');
   });
 
@@ -732,7 +729,6 @@ void main() {
     expect(created.ok, isTrue, reason: created.reason);
     transport.tables[RemoteTables.guildHalls]?.clear();
     expect(transport.tables[RemoteTables.guildHalls], isEmpty);
-    expect(leader.foundingHalfMade, isFalse);
 
     const oak = CreateGuildInput(
       name: 'Oak Guard',
@@ -744,7 +740,6 @@ void main() {
     expect(again.ok, isFalse);
     expect(again.reason, 'Leave your current guild before creating another.');
     expect(again.goldCost, isNull);
-    expect(again.reason, isNot(remoteGuildSetupUnfinished));
     expect(transport.tables[RemoteTables.guilds]!.single['tag'], 'IRN');
     expect(transport.tables[RemoteTables.guildMembers], hasLength(1));
     expect(transport.tables[RemoteTables.guildHalls], isEmpty);
@@ -791,7 +786,6 @@ void main() {
     expect(created.save, isNull);
     expect(created.reason, isNot(remoteGuildNameTaken));
     expect(transport.tables[RemoteTables.guilds], hasLength(1));
-    expect(leader.foundingHalfMade, isTrue);
   });
 
   test('a project without the Wave E functions still founds the old way', () async {

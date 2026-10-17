@@ -234,9 +234,6 @@ class RemoteMultiplayerService implements MultiplayerService {
   bool get hostedCommands => true;
 
   @override
-  bool get foundingHalfMade => _guilds.foundingHalfMade;
-
-  @override
   Future<String?> refreshSession() => transport.refreshSession();
 
   @override

@@ -72,11 +72,6 @@ class RemoteGuildBackend {
   /// it; once we see that, later reads and writes skip the missing column.
   bool? _guildsHaveSkillMilestones;
 
-  /// Set when a create left a guild this player must disband themselves.
-  bool _halfMadeFounding = false;
-
-  bool get foundingHalfMade => _halfMadeFounding;
-
   String get _guildSelectColumns =>
       _guildsHaveSkillMilestones == false ? remoteGuildBaseColumns : remoteGuildColumns;
 
@@ -271,9 +266,6 @@ class RemoteGuildBackend {
       return CreateGuildResult.failed(membership.error!);
     }
     if (membership.member != null) {
-      if (_halfMadeFounding) {
-        return const CreateGuildResult.failed(remoteGuildSetupUnfinished);
-      }
       return const CreateGuildResult.failed('Leave your current guild before creating another.');
     }
 
@@ -371,7 +363,6 @@ class RemoteGuildBackend {
     // A hall is created on the first contribution. Missing one is normal.
     await _ensureGuildHall(guildId);
     await _seedGuildGoals(guildId);
-    _halfMadeFounding = false;
     return CreateGuildResult.ok(guild, guildCreateGoldCost, guildId: guildId);
   }
 
@@ -400,7 +391,6 @@ class RemoteGuildBackend {
   }) async {
     final unfinished = await _ensureFoundingRows(guildId, userId, facts);
     if (unfinished != null) {
-      _halfMadeFounding = true;
       developer.log(
         'Guild $guildId rollback failed ($rollbackReason); founding unfinished: $unfinished',
         name: 'ik_net.guilds',
@@ -409,10 +399,8 @@ class RemoteGuildBackend {
     }
     final finished = guild ?? await guildById(guildId);
     if (finished == null) {
-      _halfMadeFounding = true;
       return const CreateGuildResult.failed(remoteGuildCreateFailed);
     }
-    _halfMadeFounding = false;
     return CreateGuildResult.ok(finished, guildCreateGoldCost, guildId: guildId);
   }
 
@@ -668,10 +656,7 @@ class RemoteGuildBackend {
     final current = sessionOf();
     if (current == null) return const ActionResult.failed('Sign in first.');
     final hosted = await _lifecycle(RemoteRpcs.guildLeave, const <String, Object?>{});
-    if (hosted != null) {
-      if (hosted.ok) _halfMadeFounding = false;
-      return hosted;
-    }
+    if (hosted != null) return hosted;
     final membership = await _membershipOf(current.userId);
     if (membership == null) return const ActionResult.failed('Not in a guild.');
     final guild = await guildById(membership.guildId);
@@ -697,7 +682,6 @@ class RemoteGuildBackend {
       );
       final tagged = await _noteOwnGuild(current.userId, null);
       if (tagged != null) return ActionResult.failed(friendlyRemoteError(tagged));
-      _halfMadeFounding = false;
       return const ActionResult.ok();
     }
 
@@ -708,7 +692,6 @@ class RemoteGuildBackend {
     if (refused != null) return ActionResult.failed(refused);
     final tagged = await _noteOwnGuild(current.userId, null);
     if (tagged != null) return ActionResult.failed(friendlyRemoteError(tagged));
-    _halfMadeFounding = false;
     return const ActionResult.ok();
   }
 

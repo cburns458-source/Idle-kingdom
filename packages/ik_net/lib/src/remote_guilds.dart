@@ -74,7 +74,6 @@ const String remoteGuildChallengeColumns =
 const String remoteGuildNameTaken = 'That guild name or tag is taken.';
 
 const String remoteGuildCreateFailed = 'The guild was not created.';
-const String remoteGuildSetupUnfinished = 'Guild setup didn\'t finish.';
 const String remoteGuildRosterUnread = 'Could not read the guild roster.';
 const String remoteGuildMissing = 'Guild not found.';
 

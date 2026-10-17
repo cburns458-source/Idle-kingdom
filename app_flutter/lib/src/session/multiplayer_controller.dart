@@ -327,9 +327,6 @@ class MultiplayerController extends ChangeNotifier {
   /// The guild the player belongs to, once a refresh has looked.
   String? get guildId => _guildId;
   GuildRecord? get guild => _guild;
-
-  /// A failed create left a guild the player must disband themselves.
-  bool get foundingHalfMade => service.foundingHalfMade;
   String? get guestGuildId => _guestGuildId;
   GuildRecord? get guestGuild => _guestGuild;
   List<GuildMember> get members => _members;

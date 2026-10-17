@@ -258,12 +258,7 @@ class _GuildPanelState extends State<GuildPanel> {
       maxWidth: 400,
       maxHeight: 600,
       builder: (context) => GamePopupCard(
-        child: _CreateGuildSheet(
-          gold: save.gold,
-          halfMade: net.foundingHalfMade,
-          onSubmit: _foundGuild,
-          onDisband: () => net.leaveGuild(save),
-        ),
+        child: _CreateGuildSheet(gold: save.gold, onSubmit: _foundGuild),
       ),
     );
   }
@@ -1317,22 +1312,12 @@ class _SymbolButton extends StatelessWidget {
 }
 
 class _CreateGuildSheet extends StatefulWidget {
-  const _CreateGuildSheet({
-    required this.gold,
-    required this.onSubmit,
-    this.halfMade = false,
-    this.onDisband,
-  });
+  const _CreateGuildSheet({required this.gold, required this.onSubmit});
 
   final num gold;
 
-  /// A previous create left a half-made guild. Show disband instead of the form.
-  final bool halfMade;
-
   /// Founds the guild, answering with why it did not happen.
   final Future<String?> Function(CreateGuildInput input) onSubmit;
-
-  final Future<void> Function()? onDisband;
 
   @override
   State<_CreateGuildSheet> createState() => _CreateGuildSheetState();
@@ -1349,8 +1334,6 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
 
   /// What the last press was told, which outranks what the form guessed.
   String? _refused;
-
-  late bool _halfMade = widget.halfMade;
 
   @override
   void dispose() {
@@ -1375,34 +1358,11 @@ class _CreateGuildSheetState extends State<_CreateGuildSheet> {
     setState(() {
       _sending = false;
       _refused = refused;
-      _halfMade = refused == remoteGuildSetupUnfinished;
     });
-  }
-
-  Future<void> _disband() async {
-    setState(() => _sending = true);
-    await widget.onDisband?.call();
-    if (!mounted) return;
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_halfMade) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Guild setup didn\'t finish.'),
-          const SizedBox(height: 12),
-          GameButton(
-            label: 'Disband',
-            tone: GameButtonTone.danger,
-            waiting: _sending,
-            onPressed: _sending ? null : _disband,
-          ),
-        ],
-      );
-    }
     final form = createGuildFormView(widget.gold, _tag.text, name: _name.text);
     return SingleChildScrollView(
       child: Column(

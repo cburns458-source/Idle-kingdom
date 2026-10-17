@@ -524,7 +524,7 @@ void main() {
     expect(net.board.any((entry) => entry.userId == net.session?.userId), isTrue);
   });
 
-  testWidgets('a half-made founding shows one line and a red Disband button', (tester) async {
+  testWidgets('after a double failure the create form is still reachable', (tester) async {
     final transport = FakeTransport();
     transport.hostsGuildLifecycleRpcs = false;
     final controller = buildController(
@@ -538,9 +538,9 @@ void main() {
     await hostTheSave(net, transport, controller);
     await net.refresh(controller.save);
 
-    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
-    transport.failTimes['update:${RemoteTables.profiles}'] = 2;
+    transport.failOnce['insert:${RemoteTables.guildMembers}'] = 'permission denied';
     transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+    transport.failOnce['upsert:${RemoteTables.guildMembers}'] = 'permission denied';
     final leftover = await net.service.createGuild(
       const CreateGuildInput(
         name: 'Iron League',
@@ -550,24 +550,20 @@ void main() {
       controller.save.gold,
     );
     expect(leftover.ok, isFalse);
-    expect(net.foundingHalfMade, isTrue);
+    expect(leftover.reason, remoteGuildCreateFailed);
+    expect(leftover.goldCost, isNull);
+    expect(transport.tables[RemoteTables.guildMembers], isEmpty);
 
+    await net.refresh(controller.save);
     await pumpPanel(tester, guildScreen(net, controller));
+    expect(find.textContaining('Create guild ('), findsOneWidget);
+
     await tester.tap(find.textContaining('Create guild ('));
     await tester.pumpAndSettle();
-
-    expect(onTheSheet(find.text('Guild setup didn\'t finish.')), findsOneWidget);
-    expect(onTheSheet(find.textContaining('to try again')), findsNothing);
-    expect(onTheSheet(find.text('Create guild')), findsNothing);
-    expect(find.widgetWithText(TextField, 'Tag (2–4 letters)'), findsNothing);
-    final disband = tester.widget<GameButton>(
-      onTheSheet(find.widgetWithText(GameButton, 'Disband')),
-    );
-    expect(disband.tone, GameButtonTone.danger);
-
-    await tester.tap(onTheSheet(find.widgetWithText(GameButton, 'Disband')));
-    await tester.pumpAndSettle();
-    expect(transport.tables[RemoteTables.guilds], isEmpty);
-    expect(net.foundingHalfMade, isFalse);
+    expect(onTheSheet(find.text('Create guild')), findsOneWidget);
+    expect(onTheSheet(find.widgetWithText(TextField, 'Tag (2–4 letters)')), findsOneWidget);
+    expect(onTheSheet(find.widgetWithText(TextField, 'Name')), findsOneWidget);
+    expect(onTheSheet(find.text('Disband')), findsNothing);
+    expect(onTheSheet(find.text('Guild setup didn\'t finish.')), findsNothing);
   });
 }
