@@ -388,12 +388,19 @@ class FakeTransport implements RemoteTransport {
       final missing = _missingColumnRefusal(table, columns);
       if (missing != null) return RemoteQueryResult.failed(missing);
 
+      final locked = _lockedColumnRefusal(table, columns);
+      if (locked != null) return RemoteQueryResult.failed(locked);
+
       final storedTable = table == RemoteTables.leaderboardEntries
           ? RemoteTables.leaderboard
           : table == RemoteTables.publicProfiles
           ? RemoteTables.profiles
           : table == RemoteTables.guildHallTiers
           ? RemoteTables.guildHalls
+          : table == RemoteTables.guildsVisible
+          ? RemoteTables.guilds
+          : table == RemoteTables.guildApplicationsVisible
+          ? RemoteTables.guildApplications
           : table;
       var rows = (tables[storedTable] ?? const <RemoteRow>[])
           .where((row) => equals.entries.every((filter) => row[filter.key] == filter.value))
@@ -422,6 +429,21 @@ class FakeTransport implements RemoteTransport {
               'completed_tiers': row['completed_tiers'] ?? const <Object?>[],
               'debt_paid_off': row['debt_paid_off'] == true,
             },
+        ];
+      }
+      if (table == RemoteTables.guildsVisible) {
+        final allowed = _currentChatAllowed;
+        rows = [
+          for (final row in rows) <String, Object?>{...row, if (!allowed) 'description': ''},
+        ];
+      }
+      if (table == RemoteTables.guildApplicationsVisible) {
+        final me = _current?.userId;
+        final allowed = _currentChatAllowed;
+        rows = [
+          for (final row in rows)
+            if (me != null && (row['user_id'] == me || _isGuildManager(me, row['guild_id'])))
+              <String, Object?>{...row, if (!allowed) 'message': ''},
         ];
       }
 
@@ -551,6 +573,13 @@ class FakeTransport implements RemoteTransport {
         if (table == RemoteTables.guilds) {
           final blocked = _guildLeaderGuardRefusal(at >= 0 ? stored[at] : null, next);
           if (blocked != null) return blocked;
+          final previous = at >= 0 ? stored[at]['description'] : null;
+          if (row.containsKey('description') &&
+              previous != next['description'] &&
+              _current != null &&
+              !_currentChatAllowed) {
+            return ageGateError;
+          }
         }
         if (at >= 0) {
           stored[at] = next;
@@ -575,6 +604,14 @@ class FakeTransport implements RemoteTransport {
     final key = _keys[table]!;
     final stored = tables.putIfAbsent(table, () => <RemoteRow>[]);
     final written = <String, Object?>{..._defaults(table), ...row};
+    final returningLocked = _lockedColumnRefusal(table, columns);
+    if (returningLocked != null) return RemoteQueryResult.failed(returningLocked);
+    if (table == RemoteTables.guilds) {
+      final description = '${written['description'] ?? ''}'.trim();
+      if (description.isNotEmpty && _current != null && !_currentChatAllowed) {
+        return const RemoteQueryResult.failed(ageGateError);
+      }
+    }
     if (table == RemoteTables.guildApplications) {
       final userId = written['user_id'];
       final message = '${written['message'] ?? ''}'.trim();
@@ -641,6 +678,12 @@ class FakeTransport implements RemoteTransport {
       if (table == RemoteTables.guilds) {
         final blocked = _guildLeaderGuardRefusal(stored[i], next);
         if (blocked != null) return blocked;
+        if (row.containsKey('description') &&
+            stored[i]['description'] != next['description'] &&
+            _current != null &&
+            !_currentChatAllowed) {
+          return ageGateError;
+        }
       }
       stored[i] = next;
       if (table == RemoteTables.guildMembers) {
@@ -745,6 +788,34 @@ class FakeTransport implements RemoteTransport {
     }
     next[remoteUsernameRenamedAtColumn] = _clockIso();
     return null;
+  }
+
+  /// Column SELECT revoked from anon/authenticated on the base tables.
+  String? _lockedColumnRefusal(String table, String columns) {
+    final asked = columns.split(',').map((part) => part.trim()).toSet();
+    if (table == RemoteTables.guilds && asked.contains('description')) {
+      return 'permission denied for column guilds.description';
+    }
+    if (table == RemoteTables.guildApplications && asked.contains('message')) {
+      return 'permission denied for column guild_applications.message';
+    }
+    return null;
+  }
+
+  bool get _currentChatAllowed {
+    final me = _current?.userId;
+    return me != null && statusFor(me).chatAllowed;
+  }
+
+  bool _isGuildManager(String userId, Object? guildId) {
+    final guild = _guildRow(guildId);
+    if (guild == null) return false;
+    if (guild['leader_id'] == userId) return true;
+    final membership = _membershipFor(userId);
+    final role = '${membership?['role'] ?? ''}';
+    return membership != null &&
+        membership['guild_id'] == guildId &&
+        (role == guildRoleLeader || role == guildRoleOfficer);
   }
 
   /// Matches the SQL trigger: only the current leader may write leader_id.
@@ -1857,11 +1928,16 @@ class FakeTransport implements RemoteTransport {
     if (guilds.any((row) => row['name'] == name || row['tag'] == tag)) {
       return _refused(remoteGuildNameTaken);
     }
+    final description = '${wanted['description'] ?? ''}'.trim();
+    if (!statusFor(userId).chatAllowed) {
+      if (description.isNotEmpty) return _refused(ageGateError);
+    }
     final guild = <String, Object?>{
       ..._defaults(RemoteTables.guilds),
       ...wanted,
       'name': name,
       'tag': tag,
+      'description': statusFor(userId).chatAllowed ? description : '',
       'leader_id': userId,
     };
     guilds.add(guild);

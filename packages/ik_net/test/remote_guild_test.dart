@@ -630,10 +630,61 @@ void main() {
     );
     expect((await leader.setGuildMotto(guildId, 'For the forge')).ok, isFalse);
     expect((await leader.setGuildMotto(guildId, 'For the forge')).reason, ageGateError);
-    expect((await leader.guild(guildId))!.description, 'Hammer and anvil.');
+    expect(
+      (await leader.guild(guildId))!.description,
+      isEmpty,
+      reason: 'guilds_visible blanks the motto when the reader is not chat_allowed',
+    );
+    expect((await hopeful.listGuilds()).single.guild.description, isEmpty);
 
     transport.setAccountStatus(leader.session!.userId, const AccountSocialStatus.playable());
+    expect((await leader.guild(guildId))!.description, 'Hammer and anvil.');
     expect((await leader.setGuildMotto(guildId, 'For the forge')).ok, isTrue);
     expect((await leader.guild(guildId))!.description, 'For the forge');
+  });
+
+  test('under-13s cannot found a guild with a motto', () async {
+    final transport = FakeTransport();
+    final founder = await _player(transport, 'kid@example.com', 'Kid');
+    transport.setAccountStatus(
+      founder.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    final refused = await founder.createGuild(_ironLeague, guildCreateGoldCost);
+    expect(refused.ok, isFalse);
+    expect(refused.reason, ageGateError);
+    expect(transport.tables[RemoteTables.guilds], isEmpty);
+
+    final empty = await founder.createGuild(
+      const CreateGuildInput(
+        name: 'Quiet League',
+        tag: 'QT',
+        description: '',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      guildCreateGoldCost,
+    );
+    expect(empty.ok, isTrue, reason: empty.reason);
+    expect(empty.guild!.description, isEmpty);
+  });
+
+  test('application messages blank for under-13 readers', () async {
+    final transport = FakeTransport();
+    final leader = await _player(transport, 'leader@example.com', 'Leader');
+    final hopeful = await _player(transport, 'hopeful@example.com', 'Hopeful');
+    final guildId = (await leader.createGuild(_ironLeague, guildCreateGoldCost)).guild!.id;
+    expect((await leader.setGuildJoinPolicy(guildId, guildJoinClosed)).ok, isTrue);
+
+    expect((await hopeful.applyToGuild(guildId, 'Let me in, please.')).ok, isTrue);
+    expect((await leader.guildApplications(guildId)).single.message, 'Let me in, please.');
+
+    transport.setAccountStatus(
+      leader.session!.userId,
+      const AccountSocialStatus(ageAnswered: true, chatAllowed: false),
+    );
+    expect((await leader.guildApplications(guildId)).single.message, isEmpty);
+
+    transport.setAccountStatus(leader.session!.userId, const AccountSocialStatus.playable());
+    expect((await leader.guildApplications(guildId)).single.message, 'Let me in, please.');
   });
 }

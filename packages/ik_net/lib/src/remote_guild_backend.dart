@@ -85,7 +85,7 @@ class RemoteGuildBackend {
 
   Future<List<GuildRecord>> _guildRows({String? guildId}) async {
     var result = await transport.select(
-      RemoteTables.guilds,
+      RemoteTables.guildsVisible,
       columns: _guildSelectColumns,
       equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
       orderBy: 'name',
@@ -94,7 +94,7 @@ class RemoteGuildBackend {
       _guildsHaveSkillMilestones = false;
       clearReadProblem?.call(remoteMissingGuildSkillMilestoneColumn);
       result = await transport.select(
-        RemoteTables.guilds,
+        RemoteTables.guildsVisible,
         columns: remoteGuildBaseColumns,
         equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
         orderBy: 'name',
@@ -103,7 +103,7 @@ class RemoteGuildBackend {
     if (!result.ok && remoteMissingGuildBannerColumn(result.reason)) {
       clearReadProblem?.call(remoteMissingGuildBannerColumn);
       result = await transport.select(
-        RemoteTables.guilds,
+        RemoteTables.guildsVisible,
         columns: remoteGuildColumnsWithoutBanner,
         equals: guildId == null ? const <String, Object?>{} : <String, Object?>{'id': guildId},
         orderBy: 'name',
@@ -225,7 +225,7 @@ class RemoteGuildBackend {
 
   Future<List<GuildApplication>> guildApplications(String guildId) async {
     final result = await transport.select(
-      RemoteTables.guildApplications,
+      RemoteTables.guildApplicationsVisible,
       columns: remoteGuildApplicationColumns,
       equals: <String, Object?>{'guild_id': guildId},
       orderBy: 'created_at',
@@ -259,14 +259,14 @@ class RemoteGuildBackend {
     var written = await transport.insert(
       RemoteTables.guilds,
       _guildCreateRow(current.userId, wanted),
-      columns: _guildSelectColumns,
+      columns: remoteGuildWriteColumns,
     );
     if (!written.ok && remoteMissingGuildSkillMilestoneColumn(written.reason)) {
       _guildsHaveSkillMilestones = false;
       written = await transport.insert(
         RemoteTables.guilds,
         _guildCreateRow(current.userId, wanted),
-        columns: remoteGuildBaseColumns,
+        columns: remoteGuildWriteColumns,
       );
     }
     if (written.ok) _guildsHaveSkillMilestones ??= true;
@@ -277,7 +277,10 @@ class RemoteGuildBackend {
     }
     final row = written.single;
     if (row == null) return const CreateGuildResult.failed(remoteGuildCreateFailed);
-    final guild = guildRecordFrom(row);
+    final id = row['id'];
+    final guild = id is String
+        ? (await guildById(id) ?? guildRecordFrom(row))
+        : guildRecordFrom(row);
 
     final facts = await factsOf();
     final seated = await transport.insert(
@@ -369,7 +372,7 @@ class RemoteGuildBackend {
         message: guildApplicationMessage(message),
         guest: false,
       ),
-      columns: remoteGuildApplicationColumns,
+      columns: remoteGuildApplicationWriteColumns,
     );
     if (!asked.ok) {
       return ApplyToGuildResult.failed(
@@ -435,7 +438,7 @@ class RemoteGuildBackend {
         message: guildApplicationMessage(message),
         guest: true,
       ),
-      columns: remoteGuildApplicationColumns,
+      columns: remoteGuildApplicationWriteColumns,
     );
     if (!asked.ok) {
       return ApplyToGuildResult.failed(
@@ -502,7 +505,7 @@ class RemoteGuildBackend {
     });
     if (hosted != null) return hosted;
     final found = await transport.select(
-      RemoteTables.guildApplications,
+      RemoteTables.guildApplicationsVisible,
       columns: remoteGuildApplicationColumns,
       equals: <String, Object?>{'id': applicationId},
       limit: 1,

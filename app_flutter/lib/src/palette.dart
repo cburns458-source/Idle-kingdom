@@ -48,12 +48,16 @@ abstract final class Palette {
   /// Error copy on wood and stone boards. Lighter than [danger] so it clears
   /// 4.5:1 on wood `#2A1C12`, wood slot `#3D2A1A`, stone `#2C2C2C`, and stone
   /// slot `#3D3D3D`. Button fill stays [dangerFill].
+  ///
+  /// Never render this on [panelMuted] (`#6B5338`) — that pair fails 4.5:1.
   static const dangerText = Color(0xFFF0A080);
 
   /// Secondary body text, the old client's `.muted`.
   static const muted = Color(0xFFCBB894);
 
   /// Muted copy on tan inner panels.
+  ///
+  /// Do not put [dangerText] on this fill; the contrast is below 4.5:1.
   static const panelMuted = Color(0xFF6B5338);
 
   /// Body ink on tan inner panels.

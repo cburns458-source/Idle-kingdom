@@ -282,7 +282,35 @@ Checklist, in order:
     month uses the last day of that month in the as-of year, same safe rule
     as year-only = 31 December. Apply to test with this PR; live only after
     Conor merges `test-launch` into `main`.
-    Status: pending apply on test.
+    Status: applied on test Oct 17 2026 (file `20261017154000`, MCP
+    `20261017025222` / `account_age_month_end`); live pending.
+
+19. [ ] `20261017155000_account_age_guild_column_lock.sql` (ADM-08 QA).
+    BEFORE INSERT OR UPDATE trigger refuses `guilds.description` writes when
+    the signed-in caller is not `chat_allowed` (service-role / purge still
+    work). `guild_create_hosted` stores an empty motto or refuses a
+    non-empty one when the founder is not `chat_allowed`. Replaces
+    table-level SELECT on `guilds` / `guild_applications` with explicit
+    columns so anon/authenticated cannot read `description` or `message`.
+    Serves those fields through `guilds_visible` / `guild_applications_visible`
+    (blank when the reader is not `chat_allowed`). Apply to test with this
+    PR; live only after Conor merges `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017155000`, MCP
+    `20261017025955` / `account_age_guild_column_lock`); live pending.
+
+20. [ ] `20261017155100_account_age_guild_column_grants.sql` (ADM-08 QA).
+    Follow-up that actually replaces the table-level SELECT grants (a
+    column REVOKE does not punch through them). Apply to test with this PR;
+    live only after Conor merges `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017155100`, MCP
+    `20261017030023` / `account_age_guild_column_grants`); live pending.
+
+21. [ ] `20261017155200_account_age_guild_lock_revoke_trigger.sql` (ADM-08 QA).
+    Revokes EXECUTE on `guilds_description_requires_chat` so it is not an
+    RPC. Apply to test with this PR; live only after Conor merges
+    `test-launch` into `main`.
+    Status: applied on test Oct 17 2026 (file `20261017155200`, MCP
+    `20261017030045` / `account_age_guild_lock_revoke_trigger`); live pending.
 
 Skip `20261016160000_guild_hall_paid_off_gold.sql`. Guilds reset with this
 update, so paid-off halls are not migrated. Already applied on test Oct 16
