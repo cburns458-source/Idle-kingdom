@@ -101,6 +101,13 @@ begin
     'late joiner gets no drop';
   snap := public.mass_settle(enc);
   assert snap->>'alreadySettled' = 'true', 'settle is once only';
+  dmg := public.mass_record_damage(a, enc, 50, 'after-settle');
+  assert (dmg->>'damageAdded')::numeric = 0, 'damage after settle is ignored';
+  assert position(
+    'for share' in lower(pg_get_functiondef(
+      'public.mass_record_damage(uuid, uuid, numeric, text)'::regprocedure
+    ))
+  ) > 0, 'mass_record_damage must share-lock the encounter while reading status';
 
   -- Mother squid uses average locked player base HP.
   delete from public.mass_encounters where enemy_id = 'ENM-0023';

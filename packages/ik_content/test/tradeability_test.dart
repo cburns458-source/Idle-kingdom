@@ -129,6 +129,24 @@ void main() {
       expect(issues.single.id, _goldenSpud);
     });
 
+    test('does not skip every cosmetic: a bound critter pet still warns', () {
+      final raw = _rawCopy();
+      _itemRow(raw, 'ITEM-0403')['Tradeable'] = false;
+      final issues = validateTradeability(assertGameDatabaseShape(raw));
+      expect(issues, hasLength(1));
+      expect(issues.single.severity, IssueSeverity.warning);
+      expect(issues.single.id, 'ITEM-0403');
+    });
+
+    test('keeps baby dragon and baby squid untradeable without a warning', () {
+      final db = assertGameDatabaseShape(_rawCopy());
+      expect(tradeabilityBoundBossPetItemIds, <String>{'ITEM-0404', 'ITEM-0443'});
+      expect(_item(db, 'ITEM-0404').isTradeable, isFalse);
+      expect(_item(db, 'ITEM-0443').isTradeable, isFalse);
+      expect(_item(db, 'ITEM-0403').isTradeable, isTrue);
+      expect(validateTradeability(db), isEmpty);
+    });
+
     test('errors on a cell that is not a boolean', () {
       final raw = _rawCopy();
       _itemRow(raw, _goldenSpud)['Tradeable'] = 'no';
