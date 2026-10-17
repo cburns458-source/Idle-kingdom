@@ -157,7 +157,9 @@ void main() {
     expect(snap('lobby').isLobby, isTrue);
     expect(snap('fighting').isFighting, isTrue);
     expect(snap('closed').isClosed, isTrue);
-    expect(snap('settled').isClosed, isTrue);
+    expect(snap('closed').isSettled, isFalse);
+    expect(snap('settled').isSettled, isTrue);
+    expect(snap('settled').isClosed, isFalse);
     expect(snap('closed').isLobby, isFalse);
     expect(snap('settled').isFighting, isFalse);
   });

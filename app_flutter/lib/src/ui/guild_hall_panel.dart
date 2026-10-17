@@ -179,7 +179,7 @@ class _GuildHallPanelState extends State<GuildHallPanel> {
                   style: TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
-              GoldAmount(amount: save.gold),
+              GoldAmount(key: const Key('guild-gold-balance'), amount: save.gold),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),

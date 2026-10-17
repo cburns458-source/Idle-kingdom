@@ -5,7 +5,9 @@ import '../theme.dart';
 
 /// Overlay copy on location art: parchment, not tan-panel ink.
 const Color _rosterInk = Palette.parchmentText;
-const Color _rosterGold = Palette.gold;
+
+/// Gold on location art and stone boards. [Palette.gold] is ~4.1:1 on stone.
+const Color _rosterGold = Palette.heading;
 
 /// Seconds left before a mass lobby locks, never below zero.
 int massCountdownRemainingSeconds(MassEncounterSnapshot mass, num nowMs) {
@@ -16,11 +18,11 @@ int massCountdownRemainingSeconds(MassEncounterSnapshot mass, num nowMs) {
   return remaining < 0 ? 0 : remaining;
 }
 
-/// Lobby: players still here. Fight: the locked-in list, even if someone left.
+/// Lobby: players still here. Fight: locked-in names plus late spectators.
 List<MassParticipantView> massRosterRows(MassEncounterSnapshot mass) {
   final rows = [
     for (final row in mass.participants)
-      if (mass.isFighting ? row.lockedIn : row.present) row,
+      if (mass.isFighting ? row.lockedIn || row.late : row.present) row,
   ];
   rows.sort((a, b) {
     final byDamage = b.damageDealt.compareTo(a.damageDealt);

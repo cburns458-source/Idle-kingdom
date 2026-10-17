@@ -518,6 +518,8 @@ class GameController extends ChangeNotifier {
     if (combatBlowHold || defeatedFlash) {
       return _outcomeHold?.enemyId ?? lastRound?.enemyId;
     }
+    if (save.combatEnemyId != null) return save.combatEnemyId;
+    if (_mass?.isSettled == true) return _mass!.enemyId;
     return save.combatEnemyId;
   }
 
@@ -529,7 +531,7 @@ class GameController extends ChangeNotifier {
   num get stagedEnemyHp {
     if (combatBlowHold || defeatedFlash) return _outcomeHold?.enemyHp ?? 0;
     final mass = _mass;
-    if (mass != null && mass.isFighting && !isBossAddFight(save)) {
+    if (mass != null && (mass.isFighting || mass.isSettled) && !isBossAddFight(save)) {
       return mass.remainingHp;
     }
     return save.combatEnemyHp ?? 0;

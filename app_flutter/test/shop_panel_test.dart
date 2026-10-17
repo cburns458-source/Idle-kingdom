@@ -342,18 +342,37 @@ void main() {
     expect(find.byKey(const Key('shop-gold-balance')), findsNothing);
     expect(find.byType(GoldAmount), findsNothing);
     expect(find.byKey(const Key('shop-offer-summary')), findsOne);
+    expect(find.byKey(const Key('shop-offer-net')), findsOne);
 
     final offer = tester.getRect(find.byKey(const Key('shop-offer-summary')));
+    final net = tester.getRect(find.byKey(const Key('shop-offer-net')));
     final close = tester.getRect(find.byTooltip('Close'));
     final title = tester.getRect(find.text('General Store'));
-    expect(offer.center.dy, closeTo(close.center.dy, 16));
+    expect(offer.top, closeTo(close.top, 16));
     expect(title.right, lessThan(offer.left + 8));
     expect(offer.right, lessThanOrEqualTo(close.left + 8));
+    expect(net.bottom, lessThanOrEqualTo(tester.getRect(find.byType(ShopPanel)).bottom));
+    expect(find.byKey(const Key('shop-offer-net')).hitTestable(), findsOne);
 
     final cell = tester.getRect(find.byTooltip('Clay'));
     final icon = tester.getRect(
       find.descendant(of: find.byTooltip('Clay'), matching: find.byType(ItemIcon)),
     );
     expect(icon.center.dx, closeTo(cell.center.dx, 6));
+  });
+
+  testWidgets('the offer net stays fully visible on a narrow phone', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(gold: 12, inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+    );
+    addTearDown(controller.dispose);
+    await pumpPanel(
+      tester,
+      ShopPanel(controller: controller, shopId: shopId, onClose: () {}),
+      size: const Size(360, 740),
+    );
+    expect(find.byKey(const Key('shop-offer-net')).hitTestable(), findsOne);
+    expect(find.textContaining('net '), findsOne);
   });
 }

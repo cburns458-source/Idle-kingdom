@@ -30,6 +30,7 @@ MassEncounterSnapshot _snap({
   String status = 'lobby',
   String? countdownEndsAt,
   num lockedCount = 0,
+  num remainingHp = 800,
   List<MassParticipantView> participants = const <MassParticipantView>[],
   MassYouView? you,
 }) {
@@ -42,7 +43,7 @@ MassEncounterSnapshot _snap({
     soloHp: 1000,
     healthMultiplier: 1,
     totalHp: 1000,
-    remainingHp: 800,
+    remainingHp: remainingHp,
     dropScale: 1,
     minDamage: 30,
     participants: participants,
@@ -73,11 +74,11 @@ void main() {
       participants: [
         _player(id: 'a', name: 'Ash', damage: 40, present: false, lockedIn: true),
         _player(id: 'b', name: 'Bea', damage: 10, present: true, lockedIn: true),
-        _player(id: 'c', name: 'Cy', damage: 99, present: true, lockedIn: false, late: true),
+        _player(id: 'c', name: 'Cy', damage: 0, present: true, lockedIn: false, late: true),
       ],
     );
     expect(massRosterCount(fight), 2);
-    expect(massRosterRows(fight).map((row) => row.username).toList(), ['Ash', 'Bea']);
+    expect(massRosterRows(fight).map((row) => row.username).toList(), ['Ash', 'Bea', 'Cy']);
   });
 
   test('damage shares ignore late joiners and sum to 100 when there is damage', () {
@@ -172,7 +173,18 @@ void main() {
     expect(find.text('80%'), findsOne);
     expect(find.text('Bea'), findsOne);
     expect(find.text('20%'), findsOne);
+    expect(find.text('Cy'), findsOne);
+    expect(find.text('Spectating'), findsOne);
     expect(find.byKey(const Key('mass-countdown')), findsNothing);
+  });
+
+  test('roster gold clears 4.5:1 on wood and stone boards', () {
+    for (final chrome in [UiChrome.wood, UiChrome.stone]) {
+      expect(contrastRatio(Palette.heading, chrome.board), greaterThanOrEqualTo(4.5));
+      expect(contrastRatio(Palette.heading, chrome.slot), greaterThanOrEqualTo(4.5));
+      expect(contrastRatio(Palette.parchmentText, chrome.board), greaterThanOrEqualTo(4.5));
+    }
+    expect(contrastRatio(Palette.gold, UiChrome.stone.board), lessThan(4.5));
   });
 
   testWidgets('closed encounters hide the roster', (tester) async {
@@ -207,6 +219,40 @@ void main() {
     );
     await pumpPanel(tester, ActionStage(controller: controller));
     expect(find.text('60s'), findsOne);
+    expect(find.text('1/100'), findsOne);
+    expect(find.text('Ash'), findsOne);
+  });
+
+  testWidgets('a settled mass fight keeps the combat result on stage', (tester) async {
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(
+        currentLocationId: dragonLocationId,
+        currentActivityId: dragonActivityId,
+        massEncounterId: 'enc-1',
+        combatEnemyId: null,
+      ),
+    );
+    addTearDown(controller.dispose);
+    controller.acceptMassSnapshot(
+      _snap(
+        status: 'settled',
+        lockedCount: 1,
+        remainingHp: 0,
+        participants: [_player(id: 'a', name: 'Ash', damage: 100)],
+        you: const MassYouView(
+          late: false,
+          lockedIn: true,
+          present: true,
+          damageDealt: 100,
+          payoutEligible: true,
+          payoutClaimed: false,
+        ),
+      ),
+    );
+    await pumpPanel(tester, ActionStage(controller: controller));
+    expect(find.byType(ActionStage), findsOne);
+    expect(find.textContaining('Dragon'), findsWidgets);
     expect(find.text('1/100'), findsOne);
     expect(find.text('Ash'), findsOne);
   });

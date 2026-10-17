@@ -6,6 +6,7 @@ import '../session/game_controller.dart';
 import '../session/multiplayer_controller.dart';
 import '../theme.dart';
 import 'format.dart';
+import 'item_icon.dart';
 import 'item_label.dart';
 import 'quantity_sheet.dart';
 
@@ -211,7 +212,14 @@ class _GuildBankBodyState extends State<_GuildBankBody> {
     ];
     return ListView(
       children: [
-        const Text('Bank', style: TextStyle(fontWeight: FontWeight.w400)),
+        Row(
+          children: [
+            const Expanded(
+              child: Text('Bank', style: TextStyle(fontWeight: FontWeight.w400)),
+            ),
+            GoldAmount(key: const Key('guild-bank-gold-balance'), amount: save.gold),
+          ],
+        ),
         const SizedBox(height: 6),
         for (final row in main)
           Padding(

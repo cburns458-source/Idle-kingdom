@@ -83,7 +83,10 @@ class ActionStage extends StatelessWidget {
     if (controller.massEncounter?.isClosed == true && save.combatEnemyId == null) {
       return const SizedBox.shrink();
     }
-    if (save.combatEnemyId != null || controller.combatBlowHold || controller.defeatedFlash) {
+    if (controller.massEncounter?.isSettled == true ||
+        save.combatEnemyId != null ||
+        controller.combatBlowHold ||
+        controller.defeatedFlash) {
       return _CombatStage(controller: controller);
     }
     if (save.productionRecipeId != null || controller.craftPopup != null) {
@@ -288,7 +291,9 @@ Widget _groundedSceneArt(GameController controller) {
   if (controller.defeatedFlash) {
     return SizedBox(height: slotHeight);
   }
-  if (save.combatEnemyId != null || controller.combatBlowHold) {
+  if (save.combatEnemyId != null ||
+      controller.combatBlowHold ||
+      controller.massEncounter?.isSettled == true) {
     final enemyId = controller.stagedEnemyId ?? save.combatEnemyId;
     if (enemyId == null) return SizedBox(height: slotHeight);
     return _Portrait(

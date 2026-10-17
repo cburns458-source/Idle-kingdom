@@ -348,14 +348,22 @@ class _ShopPanelState extends State<ShopPanel> {
 
     return _frame(
       title: title,
-      headerSlot: GoldCopy(
-        'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)} · '
-        'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
+      headerSlot: Column(
         key: const Key('shop-offer-summary'),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.right,
-        style: const TextStyle(fontWeight: FontWeight.w400),
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          GoldCopy(
+            'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)}',
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.w400),
+          ),
+          GoldCopy(
+            'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
+            key: const Key('shop-offer-net'),
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.w400),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
