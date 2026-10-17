@@ -647,14 +647,14 @@ Cooking turns raw ingredients into food and meals and requires a Kitchen.
 Current products:
 - Baked Potato.
 - Cooked Crawfish.
-- Cooked Trout.
-- Cooked Salmon.
-- Cooked Bass.
-- Cooked Shark.
-- Cooked Rabbit.
-- Cooked Pheasant.
-- Cooked Beef.
-- Cooked Venison.
+- Trout fillet.
+- Salmon steak.
+- Bass fillet.
+- Shark steak.
+- Roast rabbit.
+- Pheasant breast.
+- Beef steak.
+- Venison steak.
 - Pheasant Stew.
 - Venison Stew.
 
