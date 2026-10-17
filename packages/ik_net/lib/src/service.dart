@@ -28,6 +28,9 @@ abstract interface class MultiplayerService {
   /// Hosted play applies discrete intents on the server. Local demo applies them here.
   bool get hostedCommands;
 
+  /// True after a create left a half-made guild that the player must disband.
+  bool get foundingHalfMade;
+
   Future<SessionResult> signUp(String email, String username, String password);
 
   Future<SessionResult> signIn(String email, String password);
@@ -356,6 +359,9 @@ class LocalMultiplayerService implements MultiplayerService {
 
   @override
   bool get hostedCommands => false;
+
+  @override
+  bool get foundingHalfMade => false;
 
   /// A table on this device is always there to be read.
   @override

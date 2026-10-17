@@ -72,6 +72,11 @@ class RemoteGuildBackend {
   /// it; once we see that, later reads and writes skip the missing column.
   bool? _guildsHaveSkillMilestones;
 
+  /// Set when a create left a guild this player must disband themselves.
+  bool _halfMadeFounding = false;
+
+  bool get foundingHalfMade => _halfMadeFounding;
+
   String get _guildSelectColumns =>
       _guildsHaveSkillMilestones == false ? remoteGuildBaseColumns : remoteGuildColumns;
 
@@ -191,14 +196,21 @@ class RemoteGuildBackend {
 
   /// The roster row for [userId], or null when they are in no guild.
   Future<GuildMember?> _membershipOf(String userId) async {
+    return (await _readMembership(userId)).member;
+  }
+
+  Future<({GuildMember? member, String? error})> _readMembership(String userId) async {
     final result = await transport.select(
       RemoteTables.guildMembers,
       columns: remoteGuildMemberColumns,
       equals: <String, Object?>{'user_id': userId},
       limit: 1,
     );
-    if (!result.ok || result.single == null) return null;
-    return guildMemberFrom(result.single!);
+    if (!result.ok) {
+      return (member: null, error: result.reason ?? 'Could not read guild membership.');
+    }
+    if (result.single == null) return (member: null, error: null);
+    return (member: guildMemberFrom(result.single!), error: null);
   }
 
   Future<String?> currentGuildId() async {
@@ -236,13 +248,14 @@ class RemoteGuildBackend {
     return result.rows!.map(guildApplicationFrom).toList();
   }
 
-  Future<int> _memberCount(String guildId) async {
+  Future<int?> _memberCount(String guildId) async {
     final result = await transport.select(
       RemoteTables.guildMembers,
       columns: 'user_id',
       equals: <String, Object?>{'guild_id': guildId},
     );
-    return (result.rows ?? const <RemoteRow>[]).length;
+    if (!result.ok || result.rows == null) return null;
+    return result.rows!.length;
   }
 
   // --- Joining and leaving --------------------------------------------------
@@ -253,13 +266,15 @@ class RemoteGuildBackend {
 
     final refusal = createGuildRefusal(input, goldAvailable);
     if (refusal != null) return CreateGuildResult.failed(refusal);
-    final existing = await _membershipOf(current.userId);
-    if (existing != null) {
-      final leftover = await _adoptOrClearIncompleteFounding(current.userId, existing);
-      if (leftover != null) return leftover;
-      if (await _membershipOf(current.userId) != null) {
-        return const CreateGuildResult.failed('Leave your current guild before creating another.');
+    final membership = await _readMembership(current.userId);
+    if (membership.error != null) {
+      return CreateGuildResult.failed(membership.error!);
+    }
+    if (membership.member != null) {
+      if (_halfMadeFounding) {
+        return const CreateGuildResult.failed(remoteGuildSetupUnfinished);
       }
+      return const CreateGuildResult.failed('Leave your current guild before creating another.');
     }
 
     final wanted = guildFromCreateInput(current.userId, input, nowIso());
@@ -300,9 +315,16 @@ class RemoteGuildBackend {
       if (rolledBack == null) {
         return const CreateGuildResult.failed(remoteGuildCreateFailed);
       }
-      guild = await guildById(id);
+      final facts = await factsOf();
+      return _completeFoundingAfterFailedRollback(
+        guildId: id,
+        guild: null,
+        userId: current.userId,
+        facts: facts,
+        rollbackReason: rolledBack,
+      );
     }
-    final guildId = guild?.id ?? id;
+    final guildId = guild.id;
 
     final facts = await factsOf();
     final seated = await transport.insert(
@@ -346,12 +368,10 @@ class RemoteGuildBackend {
         rollbackReason: rolledBack,
       );
     }
-    final hallRefused = await _ensureGuildHall(guildId);
-    if (hallRefused != null) {
-      return CreateGuildResult.failed(hallRefused);
-    }
+    // A hall is created on the first contribution. Missing one is normal.
+    await _ensureGuildHall(guildId);
     await _seedGuildGoals(guildId);
-    guild ??= await guildById(guildId);
+    _halfMadeFounding = false;
     return CreateGuildResult.ok(guild, guildCreateGoldCost, guildId: guildId);
   }
 
@@ -380,6 +400,7 @@ class RemoteGuildBackend {
   }) async {
     final unfinished = await _ensureFoundingRows(guildId, userId, facts);
     if (unfinished != null) {
+      _halfMadeFounding = true;
       developer.log(
         'Guild $guildId rollback failed ($rollbackReason); founding unfinished: $unfinished',
         name: 'ik_net.guilds',
@@ -387,6 +408,11 @@ class RemoteGuildBackend {
       return const CreateGuildResult.failed(remoteGuildCreateFailed);
     }
     final finished = guild ?? await guildById(guildId);
+    if (finished == null) {
+      _halfMadeFounding = true;
+      return const CreateGuildResult.failed(remoteGuildCreateFailed);
+    }
+    _halfMadeFounding = false;
     return CreateGuildResult.ok(finished, guildCreateGoldCost, guildId: guildId);
   }
 
@@ -407,10 +433,11 @@ class RemoteGuildBackend {
     final linked = await _profileGuildId(userId);
     if (linked != guildId) return tagged ?? 'The guild was not linked to this account.';
 
-    final hallRefused = await _ensureGuildHall(guildId);
-    if (hallRefused != null) return hallRefused;
-
-    return _ensureGuildGoals(guildId);
+    // Hall and starting goals are best-effort. A real guild has no hall until
+    // the first contribution.
+    await _ensureGuildHall(guildId);
+    await _ensureGuildGoals(guildId);
+    return null;
   }
 
   /// TEST has no UPDATE policy on `guild_halls` (insert + select only). Skip
@@ -433,49 +460,6 @@ class RemoteGuildBackend {
       limit: 1,
     );
     return hall.ok && hall.single != null;
-  }
-
-  /// A leftover founding from a failed profile link: finish it, or disband it
-  /// when this player is the only member so a new create can continue.
-  Future<CreateGuildResult?> _adoptOrClearIncompleteFounding(
-    String userId,
-    GuildMember membership,
-  ) async {
-    final guild = await guildById(membership.guildId);
-    final foundedByThem = guild?.leaderId == userId || membership.role == guildRoleLeader;
-    if (!foundedByThem) return null;
-    if (!await _foundingIsIncomplete(membership.guildId, userId)) return null;
-
-    final facts = await factsOf();
-    final unfinished = await _ensureFoundingRows(membership.guildId, userId, facts);
-    if (unfinished == null) {
-      final finished = guild ?? await guildById(membership.guildId);
-      return CreateGuildResult.ok(finished, guildCreateGoldCost, guildId: membership.guildId);
-    }
-    if (await _memberCount(membership.guildId) > 1) return null;
-    final dropped = await transport.delete(
-      RemoteTables.guilds,
-      equals: <String, Object?>{'id': membership.guildId},
-    );
-    if (dropped != null) return CreateGuildResult.failed(dropped);
-    // FakeTransport has no FK cascades. Postgres already dropped this row
-    // with the guild; this only clears a leftover membership in tests.
-    final leftoverMember = await transport.delete(
-      RemoteTables.guildMembers,
-      equals: <String, Object?>{'user_id': userId},
-    );
-    if (leftoverMember != null && await _membershipOf(userId) != null) {
-      return CreateGuildResult.failed(leftoverMember);
-    }
-    final tagged = await _noteOwnGuild(userId, null);
-    if (tagged != null) return CreateGuildResult.failed(friendlyRemoteError(tagged));
-    return null;
-  }
-
-  Future<bool> _foundingIsIncomplete(String guildId, String userId) async {
-    final linked = await _profileGuildId(userId);
-    if (linked != guildId) return true;
-    return !await _hallExists(guildId);
   }
 
   Future<String?> _profileGuildId(String userId) async {
@@ -543,7 +527,9 @@ class RemoteGuildBackend {
     if (await _membershipOf(current.userId) != null) {
       return const ApplyToGuildResult.failed('Already in a guild.');
     }
-    if (await _memberCount(guildId) >= guildMaxMembers) {
+    final count = await _memberCount(guildId);
+    if (count == null) return const ApplyToGuildResult.failed(remoteGuildRosterUnread);
+    if (count >= guildMaxMembers) {
       return ApplyToGuildResult.failed('That guild is full ($guildMaxMembers members).');
     }
 
@@ -682,13 +668,18 @@ class RemoteGuildBackend {
     final current = sessionOf();
     if (current == null) return const ActionResult.failed('Sign in first.');
     final hosted = await _lifecycle(RemoteRpcs.guildLeave, const <String, Object?>{});
-    if (hosted != null) return hosted;
+    if (hosted != null) {
+      if (hosted.ok) _halfMadeFounding = false;
+      return hosted;
+    }
     final membership = await _membershipOf(current.userId);
     if (membership == null) return const ActionResult.failed('Not in a guild.');
     final guild = await guildById(membership.guildId);
 
     if (guild != null && guild.leaderId == current.userId) {
-      if (await _memberCount(guild.id) > 1) {
+      final count = await _memberCount(guild.id);
+      if (count == null) return const ActionResult.failed(remoteGuildRosterUnread);
+      if (count > 1) {
         return const ActionResult.failed('Transfer leadership or remove members before leaving.');
       }
       // Everything hanging off the guild goes with it: the roster, the requests,
@@ -698,8 +689,15 @@ class RemoteGuildBackend {
         equals: <String, Object?>{'id': guild.id},
       );
       if (refused != null) return ActionResult.failed(refused);
+      // FakeTransport has no FK cascades. Postgres already dropped this row
+      // with the guild.
+      await transport.delete(
+        RemoteTables.guildMembers,
+        equals: <String, Object?>{'user_id': current.userId},
+      );
       final tagged = await _noteOwnGuild(current.userId, null);
       if (tagged != null) return ActionResult.failed(friendlyRemoteError(tagged));
+      _halfMadeFounding = false;
       return const ActionResult.ok();
     }
 
@@ -710,6 +708,7 @@ class RemoteGuildBackend {
     if (refused != null) return ActionResult.failed(refused);
     final tagged = await _noteOwnGuild(current.userId, null);
     if (tagged != null) return ActionResult.failed(friendlyRemoteError(tagged));
+    _halfMadeFounding = false;
     return const ActionResult.ok();
   }
 
@@ -778,7 +777,9 @@ class RemoteGuildBackend {
       await drop();
       return const ActionResult.failed('Applicant already joined another guild.');
     }
-    if (await _memberCount(guild.id) >= guildMaxMembers) {
+    final count = await _memberCount(guild.id);
+    if (count == null) return const ActionResult.failed(remoteGuildRosterUnread);
+    if (count >= guildMaxMembers) {
       await drop();
       return ActionResult.failed('Guild is full ($guildMaxMembers members).');
     }

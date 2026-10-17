@@ -394,7 +394,10 @@ class FakeTransport implements RemoteTransport {
       for (final entry in like.entries) {
         selectedLikes.add('$table.${entry.key}=${entry.value}');
       }
-      final reason = _takeFailure('select:$table');
+      final specific = 'select:$table:$columns';
+      final reason = failOnce.containsKey(specific)
+          ? _takeFailure(specific)
+          : _takeFailure('select:$table');
       if (reason != null) return RemoteQueryResult.failed(reason);
       final missingTable = _missingTableRefusal(table);
       if (missingTable != null) return RemoteQueryResult.failed(missingTable);

@@ -523,4 +523,51 @@ void main() {
     expect(net.board.map((entry) => entry.username), contains('Rival'));
     expect(net.board.any((entry) => entry.userId == net.session?.userId), isTrue);
   });
+
+  testWidgets('a half-made founding shows one line and a red Disband button', (tester) async {
+    final transport = FakeTransport();
+    transport.hostsGuildLifecycleRpcs = false;
+    final controller = buildController(
+      database,
+      seed: startedCharacter(database).copyWith(gold: guildCreateGoldCost + 5),
+    );
+    addTearDown(controller.dispose);
+    final net = buildRemoteMultiplayer(database, transport: transport);
+    addTearDown(net.dispose);
+    expect((await net.service.signUp('leader@example.com', 'Leader', 'secret')).ok, isTrue);
+    await hostTheSave(net, transport, controller);
+    await net.refresh(controller.save);
+
+    transport.failOnce['update:${RemoteTables.profiles}'] = 'permission denied';
+    transport.failTimes['update:${RemoteTables.profiles}'] = 2;
+    transport.failOnce['delete:${RemoteTables.guilds}'] = 'permission denied';
+    final leftover = await net.service.createGuild(
+      const CreateGuildInput(
+        name: 'Iron League',
+        tag: 'IRN',
+        emblem: GuildEmblem(color: '#3d5a80', symbol: 'shield'),
+      ),
+      controller.save.gold,
+    );
+    expect(leftover.ok, isFalse);
+    expect(net.foundingHalfMade, isTrue);
+
+    await pumpPanel(tester, guildScreen(net, controller));
+    await tester.tap(find.textContaining('Create guild ('));
+    await tester.pumpAndSettle();
+
+    expect(onTheSheet(find.text('Guild setup didn\'t finish.')), findsOneWidget);
+    expect(onTheSheet(find.textContaining('to try again')), findsNothing);
+    expect(onTheSheet(find.text('Create guild')), findsNothing);
+    expect(find.widgetWithText(TextField, 'Tag (2–4 letters)'), findsNothing);
+    final disband = tester.widget<GameButton>(
+      onTheSheet(find.widgetWithText(GameButton, 'Disband')),
+    );
+    expect(disband.tone, GameButtonTone.danger);
+
+    await tester.tap(onTheSheet(find.widgetWithText(GameButton, 'Disband')));
+    await tester.pumpAndSettle();
+    expect(transport.tables[RemoteTables.guilds], isEmpty);
+    expect(net.foundingHalfMade, isFalse);
+  });
 }
