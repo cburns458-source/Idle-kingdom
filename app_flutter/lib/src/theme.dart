@@ -1050,7 +1050,7 @@ class OverlayChipButton extends StatelessWidget {
   /// Thicker pack rim when people are here; pass [highlightColor] for allies.
   final bool highlight;
 
-  /// Overrides the pack rim — green for a friend or guildmate.
+  /// Overrides the pack rim — gold on the dark well for a friend or guildmate.
   final Color? highlightColor;
 
   /// Skip the green/brown plate so a framed icon can be the whole button.

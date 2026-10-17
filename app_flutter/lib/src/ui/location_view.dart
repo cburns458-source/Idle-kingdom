@@ -475,7 +475,7 @@ class _LocationViewState extends State<LocationView> {
                                             dark: true,
                                             highlight: widget.multiplayer.peers.isNotEmpty,
                                             highlightColor: widget.multiplayer.nearbyHasAllies
-                                                ? Palette.softGreen
+                                                ? Palette.currencyOnSlot
                                                 : null,
                                             child: GameImage(
                                               uiNearbyAssetPath(),
