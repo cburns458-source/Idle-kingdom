@@ -504,4 +504,6 @@ begin
 end;
 $$;
 
+grant execute on function public.guild_set_message(uuid, text) to authenticated, service_role;
+
 notify pgrst, 'reload schema';
