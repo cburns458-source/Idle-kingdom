@@ -6,7 +6,7 @@ import '../theme.dart';
 
 /// Minimum height for one stacked bank/shop pane so the grid still scrolls
 /// on a short phone overlay instead of collapsing to zero.
-const double stackedInventoryPaneMinHeight = 168;
+const double stackedInventoryPaneMinHeight = 224;
 
 /// Two inventory panes stacked top-then-bottom at every width.
 ///

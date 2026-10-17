@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:idle_kingdoms/src/theme.dart';
+import 'package:idle_kingdoms/src/ui/item_icon.dart';
 import 'package:idle_kingdoms/src/ui/shop_panel.dart';
 import 'package:ik_content/ik_content.dart';
 import 'package:ik_rules/ik_rules.dart';
@@ -293,5 +294,31 @@ void main() {
     await tester.ensureVisible(find.byTooltip('Clay'));
     expect(find.byTooltip('Clay').hitTestable(), findsOne);
     expect(find.text('Confirm trade').hitTestable(), findsOne);
+  });
+
+  testWidgets('offer sits on the header line and gold stays off the menu', (tester) async {
+    final controller = buildController(
+      database,
+      seed: shopper(inventory: [const InventoryStack(itemId: clayId, quantity: 4)]),
+    );
+    addTearDown(controller.dispose);
+    await pumpPanel(tester, ShopPanel(controller: controller, shopId: shopId, onClose: () {}));
+
+    expect(find.byKey(const Key('shop-gold-balance')), findsNothing);
+    expect(find.byType(GoldAmount), findsNothing);
+    expect(find.byKey(const Key('shop-offer-summary')), findsOne);
+
+    final offer = tester.getRect(find.byKey(const Key('shop-offer-summary')));
+    final close = tester.getRect(find.byTooltip('Close'));
+    final title = tester.getRect(find.text('General Store'));
+    expect(offer.center.dy, closeTo(close.center.dy, 16));
+    expect(title.right, lessThan(offer.left + 8));
+    expect(offer.right, lessThanOrEqualTo(close.left + 8));
+
+    final cell = tester.getRect(find.byTooltip('Clay'));
+    final icon = tester.getRect(
+      find.descendant(of: find.byTooltip('Clay'), matching: find.byType(ItemIcon)),
+    );
+    expect(icon.center.dx, closeTo(cell.center.dx, 6));
   });
 }

@@ -456,12 +456,8 @@ void main() {
       addTearDown(controller.dispose);
       await pumpPanel(tester, BankPanel(controller: controller), size: phone);
 
-      expect(
-        find.text(
-          'Bag $inventorySlotLimit/$inventorySlotLimit · Bank $bankSlotLimit/$bankSlotLimit',
-        ),
-        findsOne,
-      );
+      expect(find.text(bagColumnHeading(inventorySlotLimit)), findsOne);
+      expect(find.text(bankColumnHeading(bankSlotLimit)), findsOne);
       expect(tester.takeException(), isNull);
       final rects = tileRects(tester);
       expect(rects, isNotEmpty);

@@ -243,14 +243,9 @@ Future<MassBossChoice> showMassBossChoice({
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Fight together?',
-              style: TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
-            ),
-            const SizedBox(height: 8),
             Text(
-              'Take on $bossName alone, or wait up to 60 seconds for other players and share the fight.',
-              style: const TextStyle(height: 1.4),
+              bossName,
+              style: const TextStyle(fontSize: gamePopupTitleSize, fontWeight: FontWeight.w400),
             ),
             const SizedBox(height: 14),
             Row(

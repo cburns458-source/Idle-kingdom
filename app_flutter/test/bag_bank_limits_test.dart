@@ -289,7 +289,8 @@ void main() {
     await pumpPanel(tester, BankPanel(controller: controller));
     expect(inventorySlotLimit, 84);
     expect(bankSlotLimit, 168);
-    expect(find.text('Bag 1/$inventorySlotLimit · Bank 1/$bankSlotLimit'), findsOne);
+    expect(find.text(bagColumnHeading(1)), findsOne);
+    expect(find.text(bankColumnHeading(1)), findsOne);
   });
 
   testWidgets('left-behind loot shows one popup listing each item', (tester) async {

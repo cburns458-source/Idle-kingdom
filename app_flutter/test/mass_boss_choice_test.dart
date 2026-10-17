@@ -6,7 +6,10 @@ import 'package:idle_kingdoms/src/theme.dart';
 import 'package:idle_kingdoms/src/ui/game_popup.dart';
 
 void main() {
-  Future<Completer<MassBossChoice>> openChoice(WidgetTester tester) async {
+  Future<Completer<MassBossChoice>> openChoice(
+    WidgetTester tester, {
+    String bossName = 'Dragon',
+  }) async {
     final completer = Completer<MassBossChoice>();
     await tester.pumpWidget(
       MaterialApp(
@@ -15,9 +18,9 @@ void main() {
           body: Builder(
             builder: (context) {
               return GameButton(
-                label: 'Fight dragon',
+                label: 'Fight $bossName',
                 onPressed: () {
-                  completer.complete(showMassBossChoice(context: context, bossName: 'dragon'));
+                  completer.complete(showMassBossChoice(context: context, bossName: bossName));
                 },
               );
             },
@@ -25,19 +28,27 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.text('Fight dragon'));
+    await tester.tap(find.text('Fight $bossName'));
     await tester.pump();
     return completer;
   }
 
-  testWidgets('mass boss prompt offers Solo, Mass, and Cancel', (tester) async {
+  testWidgets('mass boss prompt offers Solo, Mass, and Cancel without helper copy', (tester) async {
     await openChoice(tester);
-    expect(find.text('Fight together?'), findsOne);
-    expect(find.textContaining('wait up to 60 seconds for other players'), findsOne);
-    expect(find.textContaining('Take on dragon alone'), findsOne);
+    expect(find.text('Dragon'), findsWidgets);
     expect(find.text('Solo'), findsOne);
     expect(find.text('Mass'), findsOne);
     expect(find.text('Cancel'), findsOne);
+    expect(find.text('Fight together?'), findsNothing);
+    expect(find.textContaining('wait up to 60 seconds'), findsNothing);
+    expect(find.textContaining('Take on'), findsNothing);
+  });
+
+  testWidgets('Mother Squid uses the same Solo / Mass choice', (tester) async {
+    await openChoice(tester, bossName: 'Mother Squid');
+    expect(find.text('Mother Squid'), findsWidgets);
+    expect(find.text('Solo'), findsOne);
+    expect(find.text('Mass'), findsOne);
   });
 
   testWidgets('Mass returns mass, Solo returns solo, Cancel returns cancel', (tester) async {

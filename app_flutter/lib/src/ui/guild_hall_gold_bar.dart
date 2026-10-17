@@ -52,11 +52,7 @@ class GuildHallGoldBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        GoldAmount(
-          key: const Key('guild-gold-remaining'),
-          amount: remaining,
-          style: const TextStyle(color: Palette.currency),
-        ),
+        GoldAmount(key: const Key('guild-gold-remaining'), amount: remaining),
       ],
     );
   }

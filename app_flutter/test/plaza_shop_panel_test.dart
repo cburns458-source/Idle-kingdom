@@ -466,7 +466,7 @@ void main() {
     expect(controller.message, isNull);
   });
 
-  testWidgets('a gold shop header still shows gold, not plaza points', (tester) async {
+  testWidgets('a gold shop header shows the offer, not gold or plaza points', (tester) async {
     final controller = buildController(
       database,
       seed: startedCharacter(database).copyWith(currentLocationId: 'LOC-0024', gold: 1000),
@@ -475,9 +475,10 @@ void main() {
 
     await pumpPanel(tester, ShopPanel(controller: controller, shopId: 'SHP-0001'));
 
-    expect(find.byKey(const Key('shop-gold-balance')), findsOne);
+    expect(find.byKey(const Key('shop-gold-balance')), findsNothing);
+    expect(find.byKey(const Key('shop-offer-summary')), findsOne);
     expect(find.byKey(const Key('plaza-points-balance')), findsNothing);
-    expect(find.byType(GoldAmount), findsOne);
+    expect(find.byType(GoldAmount), findsNothing);
     expect(find.text('Hearthguard Shop'), findsNothing);
   });
 }

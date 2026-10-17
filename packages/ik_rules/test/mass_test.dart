@@ -137,6 +137,31 @@ void main() {
     expect(db.items.firstWhere((row) => row.itemId == 'ITEM-0443').isTradeable, isFalse);
   });
 
+  test('closed and settled snapshots are not lobby or fighting', () {
+    MassEncounterSnapshot snap(String status) {
+      return MassEncounterSnapshot(
+        encounterId: 'enc-1',
+        enemyId: dragonEnemyId,
+        status: status,
+        lockedCount: 0,
+        soloHp: 1,
+        healthMultiplier: 1,
+        totalHp: 1,
+        remainingHp: 1,
+        dropScale: 1,
+        minDamage: 1,
+        participants: const <MassParticipantView>[],
+      );
+    }
+
+    expect(snap('lobby').isLobby, isTrue);
+    expect(snap('fighting').isFighting, isTrue);
+    expect(snap('closed').isClosed, isTrue);
+    expect(snap('settled').isClosed, isTrue);
+    expect(snap('closed').isLobby, isFalse);
+    expect(snap('settled').isFighting, isFalse);
+  });
+
   test('clamps the caller-supplied squid health scale', () {
     expect(clampMassPlayerBaseHpScale(2.2), 2.2);
     expect(clampMassPlayerBaseHpScale(0), isNull);

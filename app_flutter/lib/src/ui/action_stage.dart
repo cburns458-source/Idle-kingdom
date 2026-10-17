@@ -14,6 +14,7 @@ import 'format.dart';
 import 'equipment_presets_bar.dart';
 import 'game_image.dart';
 import 'item_icon.dart';
+import 'mass_roster.dart';
 import 'out_of_sight.dart';
 import 'temple_stage.dart';
 
@@ -78,6 +79,9 @@ class ActionStage extends StatelessWidget {
     if (controller.showRecoveringStage) return _RecoveringStage(controller: controller);
     if (controller.massEncounter?.isLobby == true) {
       return _MassLobbyStage(controller: controller);
+    }
+    if (controller.massEncounter?.isClosed == true && save.combatEnemyId == null) {
+      return const SizedBox.shrink();
     }
     if (save.combatEnemyId != null || controller.combatBlowHold || controller.defeatedFlash) {
       return _CombatStage(controller: controller);
@@ -807,33 +811,10 @@ class _MassLobbyStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mass = controller.massEncounter;
-    final ends = mass?.countdownEndsAt;
-    final endMs = ends == null ? null : DateTime.tryParse(ends)?.millisecondsSinceEpoch;
-    final remaining = endMs == null
-        ? 60
-        : math.max(0, ((endMs - controller.session.clock()) / 1000).ceil());
-    final names = [
-      for (final row in mass?.participants ?? const <MassParticipantView>[])
-        if (row.present) row.username,
-    ];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            names.isEmpty ? 'Waiting for players…' : 'Mass fight starts in ${remaining}s',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: GameFont.m, color: _sceneNameColor),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            names.isEmpty ? 'You are first in line.' : names.join(', '),
-            textAlign: TextAlign.center,
-            style: const TextStyle(height: 1.3, color: Palette.parchmentText),
-          ),
-        ],
-      ),
+    if (mass == null || mass.isClosed) return const SizedBox.shrink();
+    return _OnTheClock(
+      controller: controller,
+      builder: (context) => MassRoster(mass: mass, nowMs: controller.session.clock()),
     );
   }
 }
@@ -850,9 +831,6 @@ class _CombatStage extends StatelessWidget {
     final enemy = enemyId == null ? null : getEnemy(controller.db, enemyId);
     final enemyName = _combatEnemyDisplayName(controller.db, save, enemy);
     final mass = controller.massEncounter;
-    final shownEnemyName = mass != null && mass.isFighting
-        ? '$enemyName · ${mass.lockedCount.round()} players'
-        : enemyName;
     final massMax = controller.massEnemyMaxHp;
     final enemyMaxHp = math.max(
       1,
@@ -888,7 +866,7 @@ class _CombatStage extends StatelessWidget {
         ),
         scene: _Portrait(
           assetPath: null,
-          semanticsLabel: shownEnemyName,
+          semanticsLabel: enemyName,
           height: _enemyArtHeight,
           slotHeight: _portraitSlotHeight,
           alignment: Alignment.centerLeft,
@@ -989,11 +967,11 @@ class _CombatStage extends StatelessWidget {
           builder: (context) {
             final hp = controller.stagedEnemyHp;
             return _FighterCaption(
-              name: shownEnemyName,
+              name: enemyName,
               hpLabel: '${hp.round()}/${enemyMaxHp.round()}',
               alignEnd: true,
               meter: _Meter(
-                label: '$shownEnemyName health',
+                label: '$enemyName health',
                 semanticsValue: '${hp.round()} / ${enemyMaxHp.round()}',
                 value: (hp / enemyMaxHp).clamp(0, 1).toDouble(),
                 gradient: Meters.hudHp,
@@ -1017,11 +995,25 @@ class _CombatStage extends StatelessWidget {
         ),
       ),
     );
-    if (ink == null) return shell;
+    Widget stage = shell;
+    if (mass != null && !mass.isClosed) {
+      stage = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          shell,
+          _OnTheClock(
+            controller: controller,
+            builder: (context) => MassRoster(mass: mass, nowMs: controller.session.clock()),
+          ),
+        ],
+      );
+    }
+    if (ink == null) return stage;
     return Stack(
       alignment: Alignment.center,
       children: [
-        shell,
+        stage,
         Positioned.fill(
           child: IgnorePointer(child: _InkSplatOverlay(key: ValueKey('ink-${ink.seq}'))),
         ),

@@ -423,6 +423,7 @@ class MassEncounterSnapshot {
 
   bool get isLobby => status == 'lobby';
   bool get isFighting => status == 'fighting';
+  bool get isClosed => status == 'closed' || status == 'settled';
 
   factory MassEncounterSnapshot.fromJson(Map<String, Object?> json) {
     final rawYou = json['you'];

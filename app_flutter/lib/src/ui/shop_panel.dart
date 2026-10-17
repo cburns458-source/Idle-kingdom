@@ -335,15 +335,18 @@ class _ShopPanelState extends State<ShopPanel> {
 
     return _frame(
       title: title,
+      headerSlot: GoldCopy(
+        'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)} · '
+        'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
+        key: const Key('shop-offer-summary'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.right,
+        style: const TextStyle(fontWeight: FontWeight.w400),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Offer — buy ${formatThousands(buyTotal)} / sell ${formatThousands(sellTotal)} · '
-            'net ${net >= 0 ? '+' : ''}${formatThousands(net)} gold',
-            style: const TextStyle(fontWeight: FontWeight.w400),
-          ),
-          const SizedBox(height: 4),
           Row(
             children: [
               GameButton(
@@ -499,7 +502,12 @@ class _ShopPanelState extends State<ShopPanel> {
     );
   }
 
-  Widget _frame({required String title, required Widget child, bool plaza = false}) {
+  Widget _frame({
+    required String title,
+    required Widget child,
+    bool plaza = false,
+    Widget? headerSlot,
+  }) {
     return GamePanel(
       framed: true,
       child: Column(
@@ -507,7 +515,7 @@ class _ShopPanelState extends State<ShopPanel> {
         children: [
           Row(
             children: [
-              Expanded(
+              Flexible(
                 child: GoldCopy(
                   title,
                   maxLines: 1,
@@ -515,20 +523,21 @@ class _ShopPanelState extends State<ShopPanel> {
                   style: const TextStyle(fontSize: GameFont.l, fontWeight: FontWeight.w400),
                 ),
               ),
-              if (plaza)
-                Builder(
-                  builder: (context) => Text(
-                    key: const Key('plaza-points-balance'),
-                    '${formatThousands(plazaPointsOf(save))} plaza points',
-                    style: TextStyle(color: goldForeground(context)),
-                  ),
-                )
-              else
-                GoldAmount(
-                  key: const Key('shop-gold-balance'),
-                  amount: save.gold,
-                  style: const TextStyle(color: Palette.currency),
-                ),
+              const SizedBox(width: 8),
+              Expanded(
+                child:
+                    headerSlot ??
+                    (plaza
+                        ? Builder(
+                            builder: (context) => Text(
+                              key: const Key('plaza-points-balance'),
+                              '${formatThousands(plazaPointsOf(save))} plaza points',
+                              textAlign: TextAlign.right,
+                              style: TextStyle(color: goldForeground(context)),
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+              ),
               if (widget.onClose != null) GameCloseButton(onPressed: widget.onClose),
             ],
           ),
@@ -566,6 +575,8 @@ class _ShopPanelState extends State<ShopPanel> {
       padding: const EdgeInsets.fromLTRB(2, 5, 2, 4),
       onTap: enabled ? () => onTap(unit, label) : null,
       child: Stack(
+        alignment: Alignment.center,
+        fit: StackFit.expand,
         children: [
           FittedBox(
             fit: BoxFit.scaleDown,

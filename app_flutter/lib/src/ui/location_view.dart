@@ -1496,10 +1496,9 @@ Future<void> _startOrComingSoon(
     }
   }
   if (isMassBossActivity(activity.activityId)) {
-    final bossName = (activity.contextualName ?? activity.internalKey).replaceFirst(
-      RegExp(r'^Fight\s+', caseSensitive: false),
-      '',
-    );
+    final enemyId = massBossActivityEnemy[activity.activityId];
+    final enemy = enemyId == null ? null : getEnemy(controller.db, enemyId);
+    final bossName = enemy?.displayName ?? activity.contextualName ?? activity.internalKey;
     final choice = await showMassBossChoice(context: context, bossName: bossName);
     if (!context.mounted) return;
     switch (choice) {
